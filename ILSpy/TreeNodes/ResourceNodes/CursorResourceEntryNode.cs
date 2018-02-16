@@ -21,7 +21,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy.TreeNodes

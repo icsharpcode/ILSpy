@@ -25,7 +25,7 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Windows;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -210,8 +210,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public TypeTreeNode FindTypeNode(TypeDefinition def)
 		{
-			if (!def.DeclaringType.IsNil) {
-				TypeTreeNode decl = FindTypeNode(def.DeclaringType);
+			var declaringType = def.This().GetDeclaringType();
+			if (!declaringType.IsNil) {
+				TypeTreeNode decl = FindTypeNode(new TypeDefinition(def.Module, declaringType));
 				if (decl != null) {
 					decl.EnsureLazyChildren();
 					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition == def && !t.IsHidden);
@@ -231,7 +232,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public ILSpyTreeNode FindMethodNode(MethodDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.This().GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -266,7 +267,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public FieldTreeNode FindFieldNode(FieldDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.This().GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -279,7 +280,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public PropertyTreeNode FindPropertyNode(PropertyDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
+			var metadata = def.Module.GetMetadataReader();
+			var accessor = metadata.GetMethodDefinition(metadata.GetPropertyDefinition(def.Handle).GetAccessors().GetAny());
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -292,7 +295,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public EventTreeNode FindEventNode(EventDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
+			var metadata = def.Module.GetMetadataReader();
+			var accessor = metadata.GetMethodDefinition(metadata.GetEventDefinition(def.Handle).GetAccessors().GetAny());
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();

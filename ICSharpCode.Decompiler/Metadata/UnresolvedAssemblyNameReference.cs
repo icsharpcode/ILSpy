@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public sealed class UnresolvedAssemblyNameReference
 	{

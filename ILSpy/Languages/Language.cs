@@ -21,7 +21,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 
 using static System.Reflection.Metadata.PEReaderExtensions;
 using SRM = System.Reflection.Metadata;
@@ -61,22 +62,30 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(method.DeclaringType, true) + "." + method.Name);
+			WriteCommentLine(output, TypeToString(new Entity(method.Module, method.This().GetDeclaringType()), true) + "." + method.Name);
 		}
 
 		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(property.DeclaringType, true) + "." + property.Name);
+			var metadata = property.Module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
+			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
+			WriteCommentLine(output, TypeToString(new Entity(property.Module, declaringType), true) + "." + metadata.GetString(propertyDefinition.Name));
 		}
 
 		public virtual void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(field.DeclaringType, true) + "." + field.Name);
+			var metadata = field.Module.GetMetadataReader();
+			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
+			WriteCommentLine(output, TypeToString(new Entity(field.Module, fieldDefinition.GetDeclaringType()), true) + "." + metadata.GetString(fieldDefinition.Name));
 		}
 
 		public virtual void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(ev.DeclaringType, true) + "." + ev.Name);
+			var metadata = ev.Module.GetMetadataReader();
+			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
+			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
+			WriteCommentLine(output, TypeToString(new Entity(ev.Module, declaringType), true) + "." + metadata.GetString(eventDefinition.Name));
 		}
 
 		public virtual void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
@@ -115,12 +124,14 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Converts a type reference into a string. This method is used by the member tree node for parameter and return types.
 		/// </summary>
-		public virtual string TypeToString(ITypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
+		public virtual string TypeToString(Entity type, bool includeNamespace, SRM.CustomAttributeHandleCollection typeAttributes = default(SRM.CustomAttributeHandleCollection))
 		{
+			var metadata = type.Module.GetMetadataReader();
+			var fullName = type.Handle.GetFullTypeName(metadata);
 			if (includeNamespace)
-				return type.FullName.ToString();
+				return fullName.ToString();
 			else
-				return type.Name;
+				return fullName.Name;
 		}
 
 		public virtual SRM.ISignatureTypeProvider<string, GenericContext> CreateSignatureTypeProvider(bool includeNamespace)
@@ -132,54 +143,67 @@ namespace ICSharpCode.ILSpy
 		/// Converts a member signature to a string.
 		/// This is used for displaying the tooltip on a member reference.
 		/// </summary>
-		public virtual string GetTooltip(IMemberReference member)
+		public virtual string GetTooltip(Entity entity)
 		{
-			return member.Name;
+			var metadata = entity.Module.GetMetadataReader();
+			switch (entity.Handle.Kind) {
+				case SRM.HandleKind.TypeReference:
+				case SRM.HandleKind.TypeDefinition:
+				case SRM.HandleKind.TypeSpecification:
+					return entity.Handle.GetFullTypeName(metadata).ToString();
+				case SRM.HandleKind.FieldDefinition:
+					var fieldDefinition = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)entity.Handle);
+					string fieldType = fieldDefinition.DecodeSignature(CreateSignatureTypeProvider(false), new GenericContext(fieldDefinition.GetDeclaringType(), entity.Module));
+					return fieldType + " " + fieldDefinition.GetDeclaringType().GetFullTypeName(metadata) +  "." + metadata.GetString(fieldDefinition.Name);
+				case SRM.HandleKind.MethodDefinition:
+					return TreeNodes.MethodTreeNode.GetText(entity, this).ToString();
+				case SRM.HandleKind.EventDefinition:
+					return TreeNodes.EventTreeNode.GetText(entity, this).ToString();
+				case SRM.HandleKind.PropertyDefinition:
+					return TreeNodes.PropertyTreeNode.GetText(entity, this).ToString();
+				default:
+					throw new NotSupportedException();
+			}
 		}
-
-		/// <summary>
-		/// Converts a member signature to a string.
-		/// This is used for displaying the tooltip on a member reference.
-		/// </summary>
-		public virtual string GetTooltip(ITypeReference type)
-		{
-			return TypeToString(type, true);
-		}
-
 
 		public virtual string FormatFieldName(FieldDefinition field)
 		{
 			if (field.Handle.IsNil)
 				throw new ArgumentNullException(nameof(field));
-			return field.Name;
+			var metadata = field.Module.GetMetadataReader();
+			return metadata.GetString(metadata.GetFieldDefinition(field.Handle).Name);
 		}
 
 		public virtual string FormatPropertyName(PropertyDefinition property, bool? isIndexer = null)
 		{
 			if (property.Handle.IsNil)
 				throw new ArgumentNullException(nameof(property));
-			return property.Name;
+			var metadata = property.Module.GetMetadataReader();
+			return metadata.GetString(metadata.GetPropertyDefinition(property.Handle).Name);
 		}
 
 		public virtual string FormatMethodName(MethodDefinition method)
 		{
 			if (method.Handle.IsNil)
 				throw new ArgumentNullException(nameof(method));
-			return method.Name;
+			var metadata = method.Module.GetMetadataReader();
+			return metadata.GetString(metadata.GetMethodDefinition(method.Handle).Name);
 		}
 
 		public virtual string FormatEventName(EventDefinition @event)
 		{
 			if (@event.Handle.IsNil)
 				throw new ArgumentNullException(nameof(@event));
-			return @event.Name;
+			var metadata = @event.Module.GetMetadataReader();
+			return metadata.GetString(metadata.GetEventDefinition(@event.Handle).Name);
 		}
 
 		public virtual string FormatTypeName(TypeDefinition type)
 		{
 			if (type.Handle.IsNil)
 				throw new ArgumentNullException(nameof(type));
-			return type.Name;
+			var metadata = type.Module.GetMetadataReader();
+			return metadata.GetString(metadata.GetTypeDefinition(type.Handle).Name);
 		}
 
 		/// <summary>
@@ -190,7 +214,7 @@ namespace ICSharpCode.ILSpy
 			return Name;
 		}
 
-		public virtual bool ShowMember(IMemberReference member)
+		public virtual bool ShowMember(IMetadataEntity member)
 		{
 			return true;
 		}
@@ -198,7 +222,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Used by the analyzer to map compiler generated code back to the original code's location
 		/// </summary>
-		public virtual IMemberReference GetOriginalCodeLocation(IMemberReference member)
+		public virtual IMetadataEntity GetOriginalCodeLocation(IMetadataEntity member)
 		{
 			return member;
 		}

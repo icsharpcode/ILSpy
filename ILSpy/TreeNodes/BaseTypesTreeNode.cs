@@ -19,7 +19,7 @@
 using System;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -48,10 +48,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static void AddBaseTypes(SharpTreeNodeCollection children, TypeDefinition type)
 		{
-			if (type.BaseType != null)
-				children.Add(new BaseTypesEntryNode(type.BaseType, false));
-			foreach (var i in type.Interfaces) {
-				children.Add(new BaseTypesEntryNode(i, true));
+			var metadata = type.Module.GetMetadataReader();
+			var def = type.This();
+			if (!def.BaseType.IsNil)
+				children.Add(new BaseTypesEntryNode(new Entity(type.Module, def.BaseType), false));
+			foreach (var i in def.GetInterfaceImplementations()) {
+				var interfaceImpl = metadata.GetInterfaceImplementation(i);
+				children.Add(new BaseTypesEntryNode(new Entity(type.Module, interfaceImpl.Interface), true));
 			}
 		}
 

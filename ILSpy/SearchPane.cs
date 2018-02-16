@@ -26,7 +26,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TreeNodes;
 using Mono.Cecil;
 
@@ -333,7 +333,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
 		
-		public IMemberReference Member { get; set; }
+		public IMetadataEntity Member { get; set; }
 		public float Fitness { get; set; }
 		
 		public string Location { get; set; }

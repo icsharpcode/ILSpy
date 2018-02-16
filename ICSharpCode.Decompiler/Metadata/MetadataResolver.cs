@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.Dom
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public interface IMetadataResolveContext
 	{
@@ -43,10 +43,33 @@ namespace ICSharpCode.Decompiler.Dom
 
 	public static class MetadataResolver
 	{
+		public static TypeDefinition ResolveType(EntityHandle handle, IMetadataResolveContext context)
+		{
+			switch (handle.Kind) {
+				case HandleKind.TypeDefinition:
+					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)handle);
+				case HandleKind.TypeReference:
+					return Resolve((TypeReferenceHandle)handle, context);
+				case HandleKind.TypeSpecification:
+					return Resolve((TypeSpecificationHandle)handle, context);
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		public static MethodDefinition ResolveMember(EntityHandle handle, IMetadataResolveContext context)
+		{
+			switch (handle.Kind) {
+				case HandleKind.MemberReference:
+					break;
+			}
+			throw new NotImplementedException();
+		}
+
 		/// <summary>
 		/// Implements resolving of TypeReferences to TypeDefinitions as decribed in II.7.3 of ECMA-335 6th edition.
 		/// </summary>
-		public static TypeDefinition Resolve(TypeReferenceHandle handle, IMetadataResolveContext context)
+		public static TypeDefinition Resolve(this TypeReferenceHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.GetMetadataReader();
 			var tr = metadata.GetTypeReference(handle);
@@ -101,7 +124,7 @@ namespace ICSharpCode.Decompiler.Dom
 			return default(TypeDefinitionHandle);
 		}
 
-		public static IMemberDefinition Resolve(MemberReferenceHandle handle, IMetadataResolveContext context)
+		public static IMetadataEntity Resolve(MemberReferenceHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.GetMetadataReader();
 			var mr = metadata.GetMemberReference(handle);
@@ -120,23 +143,24 @@ namespace ICSharpCode.Decompiler.Dom
 				default:
 					throw new NotSupportedException();
 			}
-			var name = metadata.GetString(mr.Name);
+			/*var name = metadata.GetString(mr.Name);
 			switch (mr.GetKind()) {
 				case MemberReferenceKind.Field:
 					return declaringType.Fields.FirstOrDefault(fd => fd.Name == name);
 				case MemberReferenceKind.Method:
 					var signature = mr.DecodeMethodSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default(Unit));
 					return declaringType.Methods.SingleOrDefault(md => MatchMethodDefinition(name, signature, md));
-			}
+			}*/
 			throw new NotSupportedException();
 		}
 
 		static bool MatchMethodDefinition(string name, MethodSignature<TypeSystem.ITypeReference> signature, MethodDefinition md)
 		{
-			if (name != md.Name || md.GenericParameters.Count != signature.GenericParameterCount || signature.RequiredParameterCount != md.Parameters.Count)
-				return false;
+			throw new NotImplementedException();
+			//if (name != md.Name || md.GenericParameters.Count != signature.GenericParameterCount || signature.RequiredParameterCount != md.Parameters.Count)
+			//	return false;
 			// TODO overload resolution... OMG
-			return true;
+			//return true;
 		}
 
 		public static TypeDefinition Resolve(TypeSpecificationHandle handle, IMetadataResolveContext context)

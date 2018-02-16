@@ -1,0 +1,64 @@
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Reflection.Metadata" #>
+<#@ import namespace="System.Reflection.Emit" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
+<#
+	var operandTypes = Enumerable.Repeat((OperandType)0xff, 0x11f).ToArray();
+	var operandNames = new string[0x11f];
+#>
+namespace ICSharpCode.Decompiler.Metadata
+{
+<#
+	foreach (var field in typeof(OpCodes).GetFields()) {
+		var opCode = (OpCode)field.GetValue(null);
+		ushort index = (ushort)(((opCode.Value & 0x200) >> 1) | (opCode.Value & 0xff));
+		operandTypes[index] = opCode.OperandType;
+		operandNames[index] = opCode.Name;
+	} #>
+
+	static partial class ILOpCodeExtensions
+	{
+		// We use a byte array instead of an enum array because it can be initialized more efficiently
+		static readonly byte[] operandTypes = { <#
+			foreach (var operandType in operandTypes) {
+				if ((byte)operandType == 255) {
+					Write("255, ");
+				} else {
+					string operandTypeName = operandType.ToString().Replace("Inline", "").Replace("Var", "Variable");
+					Write("(byte)OperandType." + operandTypeName + ", ");
+				}
+			}
+		#> };
+
+		static readonly string[] operandNames = { <#
+			foreach (var operandName in operandNames) {
+				Write("\"" + operandName + "\", ");
+			}
+		#> };
+	}
+}

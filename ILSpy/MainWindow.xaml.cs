@@ -274,12 +274,12 @@ namespace ICSharpCode.ILSpy
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							/*MemberReference mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
-							if (mr != null) {
+							var mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
+							if (!mr.IsNil) {
 								found = true;
 								JumpToReference(mr);
 								break;
-							}*/
+							}
 						}
 					}
 				}

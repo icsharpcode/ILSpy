@@ -23,13 +23,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+
+using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {

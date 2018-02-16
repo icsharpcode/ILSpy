@@ -22,10 +22,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
-using ArrayType = Mono.Cecil.ArrayType;
-using ByReferenceType = Mono.Cecil.ByReferenceType;
-using PointerType = Mono.Cecil.PointerType;
+using ICSharpCode.Decompiler.Metadata;
+using SRM = System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Util;
+using System.Collections.Immutable;
 
 namespace ICSharpCode.Decompiler.Documentation
 {
@@ -35,160 +35,233 @@ namespace ICSharpCode.Decompiler.Documentation
 	public sealed class XmlDocKeyProvider
 	{
 		#region GetKey
-		public static string GetKey(MemberReference member)
+		public static string GetKey(Entity entity)
+		{
+			return GetKey(entity.Module.GetMetadataReader(), entity.Handle);
+		}
+
+		public static string GetKey(SRM.MetadataReader metadata, SRM.EntityHandle member)
 		{
 			StringBuilder b = new StringBuilder();
-			if (member is TypeReference) {
-				b.Append("T:");
-				AppendTypeName(b, (TypeReference)member);
-			} else {
-				if (member is FieldReference)
-					b.Append("F:");
-				else if (member is PropertyDefinition)
-					b.Append("P:");
-				else if (member is EventDefinition)
-					b.Append("E:");
-				else if (member is MethodReference)
-					b.Append("M:");
-				AppendTypeName(b, member.DeclaringType);
-				b.Append('.');
-				b.Append(member.Name.Replace('.', '#'));
-				IList<ParameterDefinition> parameters;
-				TypeReference explicitReturnType = null;
-				if (member is PropertyDefinition) {
-					parameters = ((PropertyDefinition)member).Parameters;
-				} else if (member is MethodReference) {
-					MethodReference mr = (MethodReference)member;
-					if (mr.HasGenericParameters) {
-						b.Append("``");
-						b.Append(mr.GenericParameters.Count);
-					}
-					parameters = mr.Parameters;
-					if (mr.Name == "op_Implicit" || mr.Name == "op_Explicit") {
-						explicitReturnType = mr.ReturnType;
-					}
-				} else {
-					parameters = null;
+
+			void AppendTypeName(SRM.EntityHandle type)
+			{
+				switch (type.Kind) {
+					case SRM.HandleKind.TypeDefinition:
+						b.Append("T:");
+						b.Append(((SRM.TypeDefinitionHandle)type).GetFullTypeName(metadata));
+						break;
+					case SRM.HandleKind.TypeReference:
+						b.Append("T:");
+						b.Append(((SRM.TypeReferenceHandle)type).GetFullTypeName(metadata));
+						break;
+					default:
+						throw new NotImplementedException();
+					/*case SRM.HandleKind.TypeSpecification:
+						b.Append("T:");
+						var typeSpec = metadata.GetTypeSpecification((SRM.TypeSpecificationHandle)type);
+						b.Append(typeSpec.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)));
+						break;*/
 				}
-				if (parameters != null && parameters.Count > 0) {
-					b.Append('(');
-					for (int i = 0; i < parameters.Count; i++) {
-						if (i > 0) b.Append(',');
-						AppendTypeName(b, parameters[i].ParameterType);
-					}
-					b.Append(')');
+			}
+
+			void AppendSignature(SRM.MethodSignature<string> signature, bool printExplicitReturnType = false)
+			{
+				if (signature.GenericParameterCount > 0) {
+					b.Append("``");
+					b.Append(signature.GenericParameterCount);
 				}
-				if (explicitReturnType != null) {
+				b.Append('(');
+				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
+					if (i > 0)
+						b.Append(',');
+					b.Append(signature.ParameterTypes[i]);
+				}
+				b.Append(')');
+				if (printExplicitReturnType) {
 					b.Append('~');
-					AppendTypeName(b, explicitReturnType);
+					b.Append(signature.ReturnType);
 				}
+			}
+
+			switch (member.Kind) {
+				case SRM.HandleKind.TypeDefinition:
+				case SRM.HandleKind.TypeReference:
+				case SRM.HandleKind.TypeSpecification:
+					b.Append("T:");
+					AppendTypeName(member);
+					break;
+				case SRM.HandleKind.FieldDefinition:
+					b.Append("F:");
+					var field = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)member);
+					AppendTypeName(field.GetDeclaringType());
+					b.Append('.');
+					b.Append(metadata.GetString(field.Name).Replace('.', '#'));
+					break;
+				case SRM.HandleKind.PropertyDefinition: {
+					b.Append("P:");
+					var property = metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)member);
+					var accessors = property.GetAccessors();
+					SRM.TypeDefinitionHandle declaringType;
+					if (!accessors.Getter.IsNil) {
+						declaringType = metadata.GetMethodDefinition(accessors.Getter).GetDeclaringType();
+					} else {
+						declaringType = metadata.GetMethodDefinition(accessors.Setter).GetDeclaringType();
+					}
+					AppendTypeName(declaringType);
+					b.Append('.');
+					b.Append(metadata.GetString(property.Name).Replace('.', '#'));
+					AppendSignature(property.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)));
+					break;
+				}
+				case SRM.HandleKind.MethodDefinition:
+					b.Append("M:");
+					var method = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)member);
+					AppendTypeName(method.GetDeclaringType());
+					b.Append('.');
+					var methodName = metadata.GetString(method.Name);
+					b.Append(metadata.GetString(method.Name).Replace('.', '#'));
+					AppendSignature(method.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)), methodName == "op_Implicit" || methodName == "op_Explicit");
+					break;
+				case SRM.HandleKind.EventDefinition: {
+					b.Append("E:");
+					var @event = metadata.GetEventDefinition((SRM.EventDefinitionHandle)member);
+					var accessors = @event.GetAccessors();
+					SRM.TypeDefinitionHandle declaringType;
+					if (!accessors.Adder.IsNil) {
+						declaringType = metadata.GetMethodDefinition(accessors.Adder).GetDeclaringType();
+					} else if (!accessors.Remover.IsNil) {
+						declaringType = metadata.GetMethodDefinition(accessors.Remover).GetDeclaringType();
+					} else {
+						declaringType = metadata.GetMethodDefinition(accessors.Raiser).GetDeclaringType();
+					}
+					AppendTypeName(declaringType);
+					b.Append('.');
+					b.Append(metadata.GetString(@event.Name).Replace('.', '#'));
+					break;
+				}
+				default:
+					throw new NotImplementedException();
 			}
 			return b.ToString();
 		}
-		
-		static void AppendTypeName(StringBuilder b, TypeReference type)
+
+		public sealed class DocumentationKeySignatureTypeProvider : SRM.ISignatureTypeProvider<string, Unit>
 		{
-			if (type == null) {
-				// could happen when a TypeSpecification has no ElementType; e.g. function pointers in C++/CLI assemblies
-				return;
-			}
-			if (type is GenericInstanceType) {
-				GenericInstanceType giType = (GenericInstanceType)type;
-				AppendTypeNameWithArguments(b, giType.ElementType, giType.GenericArguments);
-			} else if (type is TypeSpecification) {
-				AppendTypeName(b, ((TypeSpecification)type).ElementType);
-				ArrayType arrayType = type as ArrayType;
-				if (arrayType != null) {
-					b.Append('[');
-					for (int i = 0; i < arrayType.Dimensions.Count; i++) {
-						if (i > 0)
-							b.Append(',');
-						ArrayDimension ad = arrayType.Dimensions[i];
-						if (ad.IsSized) {
-							b.Append(ad.LowerBound);
-							b.Append(':');
-							b.Append(ad.UpperBound);
-						}
+			public string GetArrayType(string elementType, SRM.ArrayShape shape)
+			{
+				string shapeString = "";
+				for (int i = 0; i < shape.Rank; i++) {
+					if (i > 0)
+						shapeString += ',';
+					int? lowerBound = i < shape.LowerBounds.Length ? (int?)shape.LowerBounds[i] : null;
+					int? size = i < shape.Sizes.Length ? (int?)shape.Sizes[i] : null;
+					if (lowerBound != null || size != null) {
+						shapeString += lowerBound.ToString();
+						shapeString += ':';
+						shapeString += (lowerBound + size - 1).ToString();
 					}
-					b.Append(']');
 				}
-				ByReferenceType refType = type as ByReferenceType;
-				if (refType != null) {
-					b.Append('@');
-				}
-				PointerType ptrType = type as PointerType;
-				if (ptrType != null) {
-					b.Append('*');
-				}
-			} else {
-				GenericParameter gp = type as GenericParameter;
-				if (gp != null) {
-					b.Append('`');
-					if (gp.Owner.GenericParameterType == GenericParameterType.Method) {
-						b.Append('`');
-					}
-					b.Append(gp.Position);
-				} else if (type.DeclaringType != null) {
-					AppendTypeName(b, type.DeclaringType);
-					b.Append('.');
-					b.Append(type.Name);
-				} else {
-					b.Append(type.FullName);
-				}
+				return elementType + "[" + shapeString + "]";
 			}
-		}
-		
-		static int AppendTypeNameWithArguments(StringBuilder b, TypeReference type, IList<TypeReference> genericArguments)
-		{
-			int outerTypeParameterCount = 0;
-			if (type.DeclaringType != null) {
-				TypeReference declType = type.DeclaringType;
-				outerTypeParameterCount = AppendTypeNameWithArguments(b, declType, genericArguments);
-				b.Append('.');
-			} else if (!string.IsNullOrEmpty(type.Namespace)) {
-				b.Append(type.Namespace);
-				b.Append('.');
+
+			public string GetByReferenceType(string elementType)
+			{
+				return elementType + '@';
 			}
-			int localTypeParameterCount = 0;
-			b.Append(ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out localTypeParameterCount));
-			
-			if (localTypeParameterCount > 0) {
-				int totalTypeParameterCount = outerTypeParameterCount + localTypeParameterCount;
-				b.Append('{');
-				for (int i = outerTypeParameterCount; i < totalTypeParameterCount && i < genericArguments.Count; i++) {
-					if (i > outerTypeParameterCount) b.Append(',');
-					AppendTypeName(b, genericArguments[i]);
+
+			public string GetFunctionPointerType(SRM.MethodSignature<string> signature)
+			{
+				return "";
+			}
+
+			public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
+			{
+				string arguments = "";
+				for (int i = 0; i < typeArguments.Length; i++) {
+					if (i > 0)
+						arguments += ',';
+					arguments += typeArguments[i];
 				}
-				b.Append('}');
+				return genericType + "{" + arguments + "}";
 			}
-			return outerTypeParameterCount + localTypeParameterCount;
+
+			public string GetGenericMethodParameter(Unit genericContext, int index)
+			{
+				return "``" + index;
+			}
+
+			public string GetGenericTypeParameter(Unit genericContext, int index)
+			{
+				return "`" + index;
+			}
+
+			public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string GetPinnedType(string elementType)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string GetPointerType(string elementType)
+			{
+				return elementType + '*';
+			}
+
+			public string GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
+			{
+				return $"System.{typeCode}";
+			}
+
+			public string GetSZArrayType(string elementType)
+			{
+				return elementType + "[]";
+			}
+
+			public string GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
+			{
+				return handle.GetFullTypeName(reader).ToString();
+			}
+
+			public string GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
+			{
+				return handle.GetFullTypeName(reader).ToString();
+			}
+
+			public string GetTypeFromSpecification(SRM.MetadataReader reader, Unit genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
+			{
+				return handle.GetFullTypeName(reader).ToString();
+			}
 		}
 		#endregion
-		
+
 		#region FindMemberByKey
-		public static MemberReference FindMemberByKey(ModuleDefinition module, string key)
+		public static Entity FindMemberByKey(PEFile module, string key)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
 			if (key == null || key.Length < 2 || key[1] != ':')
-				return null;
+				return default(Entity);
 			switch (key[0]) {
 				case 'T':
 					return FindType(module, key.Substring(2));
 				case 'F':
-					return FindMember(module, key, type => type.Fields);
+					return FindMember(module, key, type => type.This().GetFields().Select(f => new Entity(module, f)));
 				case 'P':
-					return FindMember(module, key, type => type.Properties);
+					return FindMember(module, key, type => type.This().GetProperties().Select(p => new Entity(module, p)));
 				case 'E':
-					return FindMember(module, key, type => type.Events);
+					return FindMember(module, key, type => type.This().GetEvents().Select(e => new Entity(module, e)));
 				case 'M':
-					return FindMember(module, key, type => type.Methods);
+					return FindMember(module, key, type => type.This().GetMethods().Select(m => new Entity(module, m)));
 				default:
-					return null;
+					return default(Entity);
 			}
 		}
 		
-		static MemberReference FindMember(ModuleDefinition module, string key, Func<TypeDefinition, IEnumerable<MemberReference>> memberSelector)
+		static Entity FindMember(PEFile module, string key, Func<TypeDefinition, IEnumerable<Entity>> memberSelector)
 		{
 			Debug.WriteLine("Looking for member " + key);
 			int parenPos = key.IndexOf('(');
@@ -198,50 +271,80 @@ namespace ICSharpCode.Decompiler.Documentation
 			} else {
 				dotPos = key.LastIndexOf('.');
 			}
-			if (dotPos < 0) return null;
+			if (dotPos < 0)
+				return default(Entity);
 			TypeDefinition type = FindType(module, key.Substring(2, dotPos - 2));
 			if (type == null)
-				return null;
+				return default(Entity);
 			string shortName;
 			if (parenPos > 0) {
 				shortName = key.Substring(dotPos + 1, parenPos - (dotPos + 1));
 			} else {
 				shortName = key.Substring(dotPos + 1);
 			}
-			Debug.WriteLine("Searching in type {0} for {1}", type.FullName, shortName);
-			MemberReference shortNameMatch = null;
-			foreach (MemberReference member in memberSelector(type)) {
+			Debug.WriteLine("Searching in type {0} for {1}", type.Handle.GetFullTypeName(module.GetMetadataReader()), shortName);
+			Entity shortNameMatch = default(Entity);
+			var metadata = module.GetMetadataReader();
+			foreach (var member in memberSelector(type)) {
 				string memberKey = GetKey(member);
 				Debug.WriteLine(memberKey);
 				if (memberKey == key)
 					return member;
-				if (shortName == member.Name.Replace('.', '#'))
+				string name;
+				switch (member.Handle.Kind) {
+					case SRM.HandleKind.MethodDefinition:
+						name = metadata.GetString(metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)member.Handle).Name);
+						break;
+					case SRM.HandleKind.FieldDefinition:
+						name = metadata.GetString(metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)member.Handle).Name);
+						break;
+					case SRM.HandleKind.PropertyDefinition:
+						name = metadata.GetString(metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)member.Handle).Name);
+						break;
+					case SRM.HandleKind.EventDefinition:
+						name = metadata.GetString(metadata.GetEventDefinition((SRM.EventDefinitionHandle)member.Handle).Name);
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+				if (shortName == name.Replace('.', '#'))
 					shortNameMatch = member;
 			}
 			// if there's no match by ID string (key), return the match by name.
 			return shortNameMatch;
 		}
 		
-		static TypeDefinition FindType(ModuleDefinition module, string name)
+		static TypeDefinition FindType(PEFile module, string name)
 		{
-			int pos = name.LastIndexOf('.');
-			string ns;
-			if (pos >= 0) {
-				ns = name.Substring(0, pos);
-				name = name.Substring(pos + 1);
-			} else {
-				ns = string.Empty;
+			var metadata = module.GetMetadataReader();
+			string[] segments = name.Split('.');
+			var currentNamespace = metadata.GetNamespaceDefinitionRoot();
+			int i = 0;
+			while (i < segments.Length) {
+				string part = segments[i];
+				var next = currentNamespace.NamespaceDefinitions.FirstOrDefault(ns => metadata.GetString(metadata.GetNamespaceDefinition(ns).Name) == part);
+				if (next.IsNil)
+					break;
+				currentNamespace = metadata.GetNamespaceDefinition(next);
+				i++;
 			}
-			if (string.IsNullOrEmpty(name)) return null;
-			TypeDefinition type = module.GetType(ns, name);
-			if (type == null && ns.Length > 0) {
-				// try if this is a nested type
-				type = FindType(module, ns);
-				if (type != null) {
-					type = type.NestedTypes.FirstOrDefault(t => t.Name == name);
+			if (i == segments.Length)
+				return default(TypeDefinition);
+			var typeDefinitions = currentNamespace.TypeDefinitions;
+			while (i < segments.Length) {
+				string part = segments[i];
+				foreach (var t in typeDefinitions) {
+					var type = metadata.GetTypeDefinition(t);
+					if (metadata.GetString(type.Name) == part) {
+						if (i + 1 == segments.Length)
+							return new TypeDefinition(module, t);
+						typeDefinitions = type.GetNestedTypes();
+						i++;
+						break;
+					}
 				}
 			}
-			return type;
+			return default(TypeDefinition);
 		}
 		#endregion
 	}

@@ -26,7 +26,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
@@ -163,11 +163,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (TypeDefinition type in metadata.GetTopLevelTypeDefinitions().Select(td => new TypeDefinition(module, td)).OrderBy(t => t.FullName.ToString(), NaturalStringComparer.Instance)) {
+			foreach (var typeHandle in metadata.GetTopLevelTypeDefinitions().OrderBy(t => t.GetFullTypeName(metadata).ToString(), NaturalStringComparer.Instance)) {
 				NamespaceTreeNode ns;
-				if (!namespaces.TryGetValue(type.Namespace, out ns)) {
-					ns = new NamespaceTreeNode(type.Namespace);
-					namespaces[type.Namespace] = ns;
+				var type = new TypeDefinition(module, typeHandle);
+				var namespaceString = metadata.GetString(metadata.GetTypeDefinition(typeHandle).Namespace);
+				if (!namespaces.TryGetValue(namespaceString, out ns)) {
+					ns = new NamespaceTreeNode(namespaceString);
+					namespaces[namespaceString] = ns;
 				}
 				TypeTreeNode node = new TypeTreeNode(type, this);
 				typeDict[type] = node;

@@ -20,7 +20,7 @@ using System.ComponentModel.Composition;
 using System.Drawing;
 using System.Windows.Forms;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {

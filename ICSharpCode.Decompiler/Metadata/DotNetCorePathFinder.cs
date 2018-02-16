@@ -5,10 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using ICSharpCode.Decompiler.Dom;
 using LightJson.Serialization;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public class DotNetCorePathFinder
 	{

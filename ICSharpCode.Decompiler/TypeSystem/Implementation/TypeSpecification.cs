@@ -17,22 +17,20 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
+using SRM = System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	class SignatureTypeReference : ITypeReference
 	{
-		readonly TypeSpecification typeSpecification;
-		readonly MetadataReader reader;
+		readonly SRM.TypeSpecification typeSpecification;
+		readonly SRM.MetadataReader reader;
 
-		public SignatureTypeReference(TypeSpecificationHandle handle, MetadataReader reader)
+		public SignatureTypeReference(SRM.TypeSpecificationHandle handle, SRM.MetadataReader reader)
 		{
 			this.typeSpecification = reader.GetTypeSpecification(handle);
 			this.reader = reader;
@@ -105,9 +103,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	class TypeReferenceSignatureDecoder : ISignatureTypeProvider<ITypeReference, Unit>
+	class TypeReferenceSignatureDecoder : SRM.ISignatureTypeProvider<ITypeReference, Unit>
 	{
-		public ITypeReference GetArrayType(ITypeReference elementType, ArrayShape shape)
+		public ITypeReference GetArrayType(ITypeReference elementType, SRM.ArrayShape shape)
 		{
 			return new ArrayTypeReference(elementType, shape.Rank);
 		}
@@ -117,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new ByReferenceTypeReference(elementType);
 		}
 
-		public ITypeReference GetFunctionPointerType(MethodSignature<ITypeReference> signature)
+		public ITypeReference GetFunctionPointerType(SRM.MethodSignature<ITypeReference> signature)
 		{
 			return KnownTypeReference.IntPtr;
 		}
@@ -152,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new PointerTypeReference(elementType);
 		}
 
-		public ITypeReference GetPrimitiveType(PrimitiveTypeCode typeCode)
+		public ITypeReference GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
 		{
 			return KnownTypeReference.Get(typeCode.ToKnownTypeCode());
 		}
@@ -162,12 +160,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new ArrayTypeReference(elementType);
 		}
 
-		public ITypeReference GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+		public ITypeReference GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
 			return new GetClassTypeReference(handle.GetFullTypeName(reader), DefaultAssemblyReference.CurrentAssembly);
 		}
 
-		public ITypeReference GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+		public ITypeReference GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
 			var asmref = handle.GetDeclaringAssembly(reader);
 			if (asmref.IsNil)
@@ -176,13 +174,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new GetClassTypeReference(handle.GetFullTypeName(reader), new DefaultAssemblyReference(reader.GetString(asm.Name)));
 		}
 
-		public ITypeReference GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+		public ITypeReference GetTypeFromSpecification(SRM.MetadataReader reader, Unit genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
 			return new SignatureTypeReference(handle, reader);
 		}
 	}
 
-	public class TypeSystemAttributeTypeProvider : ICustomAttributeTypeProvider<IType>
+	public class TypeSystemAttributeTypeProvider : SRM.ICustomAttributeTypeProvider<IType>
 	{
 		readonly ITypeResolveContext context;
 
@@ -193,7 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.context = context;
 		}
 
-		public IType GetPrimitiveType(PrimitiveTypeCode typeCode)
+		public IType GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
 		{
 			return context.Compilation.FindType(typeCode.ToKnownTypeCode());
 		}
@@ -208,13 +206,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new ArrayType(context.Compilation, elementType);
 		}
 
-		public IType GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
 			var type = reader.GetTypeDefinition(handle);
 			return new DefaultUnresolvedTypeDefinition(type.GetFullTypeName(reader).ToString()).Resolve(context);
 		}
 
-		public IType GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
 			return new DefaultUnresolvedTypeDefinition(handle.GetFullTypeName(reader).ToString()).Resolve(context);
 		}
@@ -224,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new GetClassTypeReference(new FullTypeName(name)).Resolve(context);
 		}
 
-		public PrimitiveTypeCode GetUnderlyingEnumType(IType type)
+		public SRM.PrimitiveTypeCode GetUnderlyingEnumType(IType type)
 		{
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			if (def == null)
@@ -240,11 +238,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 	public class MetadataUnresolvedAttributeBlob : IUnresolvedAttribute, ISupportsInterning
 	{
-		MetadataReader reader;
+		SRM.MetadataReader reader;
 		ITypeReference attributeType;
-		CustomAttribute attribute;
+		SRM.CustomAttribute attribute;
 
-		public MetadataUnresolvedAttributeBlob(MetadataReader reader, ITypeReference attributeType, CustomAttribute attribute)
+		public MetadataUnresolvedAttributeBlob(SRM.MetadataReader reader, ITypeReference attributeType, SRM.CustomAttribute attribute)
 		{
 			this.reader = reader;
 			this.attributeType = attributeType;

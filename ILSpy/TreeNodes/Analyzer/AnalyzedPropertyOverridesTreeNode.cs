@@ -55,7 +55,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				yield break;
 
 			foreach (PropertyDefinition property in type.Properties) {
-				analyzedProperty.
 				if (TypesHierarchyHelpers.IsBaseProperty(analyzedProperty, property)) {
 					MethodDefinition anyAccessor = property.GetMethod ?? property.SetMethod;
 					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;

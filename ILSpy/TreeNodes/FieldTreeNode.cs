@@ -20,7 +20,8 @@ using System;
 using System.Reflection;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -33,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public FieldTreeNode(FieldDefinition field)
 		{
-			if (field == null)
+			if (field.IsNil)
 				throw new ArgumentNullException(nameof(field));
 			this.FieldDefinition = field;
 		}
@@ -42,41 +43,47 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(FieldDefinition field, Language language)
 		{
-			string fieldType = field.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(field.DeclaringType));
-			return HighlightSearchMatch(field.Name, " : " + fieldType);
+			var metadata = field.Module.GetMetadataReader();
+			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
+			string fieldType = fieldDefinition.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(fieldDefinition.GetDeclaringType(), field.Module));
+			return HighlightSearchMatch(metadata.GetString(fieldDefinition.Name), " : " + fieldType);
 		}
 
 		public override object Icon => GetIcon(FieldDefinition);
 
 		public static ImageSource GetIcon(FieldDefinition field)
 		{
-			if (field.DeclaringType.IsEnum && !field.HasFlag(FieldAttributes.SpecialName))
-				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(field.Attributes), false);
+			var metadata = field.Module.GetMetadataReader();
+			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
+			if (fieldDefinition.GetDeclaringType().IsEnum(metadata) && !fieldDefinition.HasFlag(FieldAttributes.SpecialName))
+				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(fieldDefinition.Attributes), false);
 
-			if (field.HasFlag(FieldAttributes.Literal))
-				return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
-			else if (field.HasFlag(FieldAttributes.InitOnly)) {
+			if (fieldDefinition.HasFlag(FieldAttributes.Literal))
+				return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(fieldDefinition.Attributes), false);
+			else if (fieldDefinition.HasFlag(FieldAttributes.InitOnly)) {
 				if (IsDecimalConstant(field))
-					return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
+					return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(fieldDefinition.Attributes), false);
 				else
-					return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(field.Attributes), field.HasFlag(FieldAttributes.Static));
+					return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(fieldDefinition.Attributes), fieldDefinition.HasFlag(FieldAttributes.Static));
 			} else
-				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(field.Attributes), field.HasFlag(FieldAttributes.Static));
+				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(fieldDefinition.Attributes), fieldDefinition.HasFlag(FieldAttributes.Static));
 		}
 
 		private static bool IsDecimalConstant(FieldDefinition field)
 		{
-			/*var fieldType = field.FieldType;
-			if (fieldType.Name == "Decimal" && fieldType.Namespace == "System") {
-				if (field.HasCustomAttributes) {
-					var attrs = field.CustomAttributes;
-					for (int i = 0; i < attrs.Count; i++) {
-						var attrType = attrs[i].AttributeType;
-						if (attrType.Name == "DecimalConstantAttribute" && attrType.Namespace == "System.Runtime.CompilerServices")
-							return true;
-					}
+			var metadata = field.Module.GetMetadataReader();
+			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
+
+			var fieldType = fieldDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
+			if (fieldType.ToString() == "System.Decimal") {
+				var attrs = fieldDefinition.GetCustomAttributes();
+				foreach (var h in attrs) {
+					var attr = metadata.GetCustomAttribute(h);
+					var attrType = attr.GetAttributeType(metadata).GetFullTypeName(metadata);
+					if (attrType.ToString() == "System.Runtime.CompilerServices.DecimalConstantAttribute")
+						return true;
 				}
-			}*/
+			}
 			return false;
 		}
 
@@ -106,7 +113,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(FieldDefinition.Name) && settings.Language.ShowMember(FieldDefinition))
+			var metadata = FieldDefinition.Module.GetMetadataReader();
+			var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
+			if (settings.SearchTermMatches(metadata.GetString(fieldDefinition.Name)) && settings.Language.ShowMember(FieldDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -119,7 +128,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				switch (FieldDefinition.Attributes & FieldAttributes.FieldAccessMask) {
+				var metadata = FieldDefinition.Module.GetMetadataReader();
+				var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
+
+				switch (fieldDefinition.Attributes & FieldAttributes.FieldAccessMask) {
 					case FieldAttributes.Public:
 					case FieldAttributes.FamORAssem:
 					case FieldAttributes.Family:
@@ -130,6 +142,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMemberReference IMemberTreeNode.Member => FieldDefinition;
+		IMetadataEntity IMemberTreeNode.Member => FieldDefinition;
 	}
 }

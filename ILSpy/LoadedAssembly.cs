@@ -23,7 +23,7 @@ using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Options;
 
 using static System.Reflection.Metadata.PEReaderExtensions;

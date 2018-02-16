@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		public abstract IMemberReference Member { get; }
+		public abstract IMetadataEntity Member { get; }
 		
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{

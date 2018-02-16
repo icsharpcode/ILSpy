@@ -4,7 +4,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
-namespace ICSharpCode.Decompiler.Dom
+namespace ICSharpCode.Decompiler.Metadata
 {
 	using SRMDocument = System.Reflection.Metadata.Document;
 

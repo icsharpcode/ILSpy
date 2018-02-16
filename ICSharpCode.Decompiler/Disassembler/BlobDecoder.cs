@@ -133,14 +133,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public KeyValuePair<string, ResolveResult> ReadNamedArg()
 		{
-			SymbolKind memberType;
 			var b = blob.ReadByte();
 			switch (b) {
 				case 0x53:
-					memberType = SymbolKind.Field;
-					break;
 				case 0x54:
-					memberType = SymbolKind.Property;
 					break;
 				default:
 					throw new NotSupportedException(string.Format("Custom member type 0x{0:x} is not supported.", b));

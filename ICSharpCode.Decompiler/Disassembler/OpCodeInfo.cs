@@ -21,9 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
-using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -165,32 +163,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return targets;
 		}
 
-		public static string DecodeUserString(ref BlobReader blob, Dom.PEFile module)
+		public static string DecodeUserString(ref BlobReader blob, Metadata.PEFile module)
 		{
 			return module.GetMetadataReader().GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
-		}
-
-		public static Dom.IMemberReference DecodeMemberToken(ref BlobReader blob, Dom.PEFile module)
-		{
-			var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
-			switch (handle.Kind) {
-				case HandleKind.TypeDefinition:
-					return new Dom.TypeDefinition(module, (TypeDefinitionHandle)handle);
-				case HandleKind.TypeReference:
-					return new Dom.TypeReference(module, (TypeReferenceHandle)handle);
-				case HandleKind.TypeSpecification:
-					return new Dom.TypeSpecification(module, (TypeSpecificationHandle)handle);
-				case HandleKind.MethodDefinition:
-					return new Dom.MethodDefinition(module, (MethodDefinitionHandle)handle);
-				case HandleKind.MethodSpecification:
-					return new Dom.MethodSpecification(module, (MethodSpecificationHandle)handle);
-				case HandleKind.FieldDefinition:
-					return new Dom.FieldDefinition(module, (FieldDefinitionHandle)handle);
-				case HandleKind.MemberReference:
-					return new Dom.MemberReference(module, (MemberReferenceHandle)handle);
-				default:
-					throw new NotSupportedException();
-			}
 		}
 
 		public static bool IsReturn(this ILOpCode opCode)

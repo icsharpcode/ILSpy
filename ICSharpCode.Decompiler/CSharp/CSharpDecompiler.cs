@@ -1158,7 +1158,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// This only works correctly when the nodes in the syntax tree have line/column information.
 		/// </summary>
-		public Dictionary<ILFunction, List<Dom.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
+		public Dictionary<ILFunction, List<Metadata.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
 		{
 			SequencePointBuilder spb = new SequencePointBuilder();
 			syntaxTree.AcceptVisitor(spb);

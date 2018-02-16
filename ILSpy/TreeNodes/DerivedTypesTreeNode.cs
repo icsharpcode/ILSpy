@@ -18,13 +18,14 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
-using static System.Reflection.Metadata.PEReaderExtensions;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -70,16 +71,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
 		{
 			foreach (var module in assemblies) {
-				var reader = module.GetMetadataReader();
-				foreach (var h in TreeTraversal.PreOrder(reader.GetTopLevelTypeDefinitions(), t => reader.GetTypeDefinition(t).GetNestedTypes())) {
+				var metadata = module.GetMetadataReader();
+				foreach (var h in TreeTraversal.PreOrder(metadata.GetTopLevelTypeDefinitions(), t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
 					cancellationToken.ThrowIfCancellationRequested();
 					var td = new TypeDefinition(module, h);
-					if (type.IsInterface && td.HasInterfaces) {
-						foreach (var iface in td.Interfaces) {
-							if (IsSameType(iface, type))
+					var typeDefinition = metadata.GetTypeDefinition(h);
+					if ((typeDefinition.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface) {
+						foreach (var iface in typeDefinition.GetInterfaceImplementations()) {
+							var ifaceImpl = metadata.GetInterfaceImplementation(iface);
+							if (IsSameType(metadata, ifaceImpl.Interface, type.Handle))
 								yield return new DerivedTypesEntryNode(td, assemblies);
 						}
-					} else if (!type.IsInterface && td.BaseType != null && IsSameType(td.BaseType, type)) {
+					} else if (!typeDefinition.BaseType.IsNil && IsSameType(metadata, typeDefinition.BaseType, type.Handle)) {
 						yield return new DerivedTypesEntryNode(td, assemblies);
 					}
 				}
@@ -87,10 +90,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			yield break;
 		}
 		
-		static bool IsSameType(ITypeReference typeRef, TypeDefinition type)
+		static bool IsSameType(SRM.MetadataReader metadata, SRM.EntityHandle typeRef, SRM.TypeDefinitionHandle type)
 		{
 			// FullName contains only namespace, name and type parameter count, therefore this should suffice.
-			return typeRef.FullName == type.FullName;
+			return typeRef.GetFullTypeName(metadata) == type.GetFullTypeName(metadata);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

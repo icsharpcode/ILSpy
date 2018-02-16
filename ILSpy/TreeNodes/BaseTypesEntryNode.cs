@@ -19,41 +19,46 @@
 using System;
 using System.Linq;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		private readonly ITypeReference tr;
-		private TypeDefinition def;
-		private readonly bool isInterface;
+		readonly Entity tr;
+		TypeDefinition td;
+		readonly bool isInterface;
 
-		public BaseTypesEntryNode(ITypeReference tr, bool isInterface)
+		public BaseTypesEntryNode(Entity entity, bool isInterface)
 		{
-			this.tr = tr ?? throw new ArgumentNullException(nameof(tr));
-			this.def = tr.GetDefinition();
+			if (entity.IsNil) throw new ArgumentNullException(nameof(entity));
+			this.tr = entity;
+			this.td = tr.ResolveAsType();
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
 		}
 
 		public override bool ShowExpander
 		{
-			get { return !def.IsNil && (def.BaseType != null || def.HasInterfaces); }
+			get {
+				if (td.IsNil) return false;
+				var typeDef = td.This();
+				return !typeDef.BaseType.IsNil || typeDef.GetInterfaceImplementations().Any();
+			}
 		}
 
 		public override object Text
 		{
-			get { return def.FullName + def.Handle.ToSuffixString(); }
+			get { return tr.Handle.GetFullTypeName(tr.Module.GetMetadataReader()) + tr.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
 		{
 			get
 			{
-				if (def != null)
-					return TypeTreeNode.GetIcon(def);
+				if (td != null)
+					return TypeTreeNode.GetIcon(td);
 				else
 					return isInterface ? Images.Interface : Images.Class;
 			}
@@ -61,20 +66,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			if (def != null)
-				BaseTypesTreeNode.AddBaseTypes(this.Children, def);
+			if (td != null)
+				BaseTypesTreeNode.AddBaseTypes(this.Children, td);
 		}
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			// on item activation, try to resolve once again (maybe the user loaded the assembly in the meantime)
-			if (def == null) {
-				def = tr.GetDefinition();
-				if (def != null)
+			if (td.IsNil) {
+				td = tr.ResolveAsType();
+				if (!td.IsNil)
 					this.LazyLoading = true;
 				// re-load children
 			}
-			e.Handled = ActivateItem(this, def);
+			e.Handled = ActivateItem(this, td);
 		}
 
 		internal static bool ActivateItem(SharpTreeNode node, TypeDefinition def)
@@ -94,6 +99,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(tr, true));
 		}
 
-		IMemberReference IMemberTreeNode.Member => tr;
+		IMetadataEntity IMemberTreeNode.Member => tr;
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using SRM = System.Reflection.Metadata;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
@@ -13,43 +14,20 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
-		public static Dom.ITypeReference CoerceTypeReference(this EntityHandle handle, Dom.PEFile module)
+		#region Resolver
+		public static TypeDefinition ResolveAsType(this EntityHandle entity, PEFile module)
 		{
-			if (handle.IsNil)
-				return null;
-			switch (handle.Kind) {
-				case HandleKind.TypeDefinition:
-					return new Dom.TypeDefinition(module, (TypeDefinitionHandle)handle);
-				case HandleKind.TypeReference:
-					return new Dom.TypeReference(module, (TypeReferenceHandle)handle);
-				case HandleKind.TypeSpecification:
-					return new Dom.TypeSpecification(module, (TypeSpecificationHandle)handle);
-				default:
-					throw new ArgumentException("must be either TypeDef, TypeRef or TypeSpec!", nameof(handle));
-			}
+			return new Entity(module, entity).ResolveAsType();
 		}
+		#endregion
 
-		public static Dom.IMemberReference CoerceMemberReference(this EntityHandle handle, Dom.PEFile module)
+		public static bool IsNil(this IAssemblyReference reference)
 		{
-			if (handle.IsNil)
-				return null;
-			switch (handle.Kind) {
-				case HandleKind.MemberReference:
-					return new Dom.MemberReference(module, (MemberReferenceHandle)handle);
-				case HandleKind.MethodDefinition:
-					return new Dom.MethodDefinition(module, (MethodDefinitionHandle)handle);
-				default:
-					throw new ArgumentException("must be either MethodDef or MemberRef!", nameof(handle));
-			}
-		}
-
-		public static bool IsNil(this Dom.IAssemblyReference reference)
-		{
-			return reference == null || (reference is Dom.AssemblyReference ar && ar.IsNil);
+			return reference == null || (reference is Metadata.AssemblyReference ar && ar.IsNil);
 		}
 
 		public static string GetFullAssemblyName(this MetadataReader reader)
@@ -63,10 +41,10 @@ namespace ICSharpCode.Decompiler
 				var publicKeyTokenBytes = sha1.ComputeHash(reader.GetBlobBytes(asm.PublicKey)).Skip(12).ToArray();
 				publicKey = publicKeyTokenBytes.ToHexString();
 			}
-			return $"{reader.GetString(asm.Name)}, Version={asm.Version}, Culture={reader.GetString(asm.Culture)}, PublicKeyToken={publicKey}";
+			return $"{reader.GetString(asm.Name)}, Version={asm.Version}, Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, PublicKeyToken={publicKey}";
 		}
 
-		public static string GetFullAssemblyName(this AssemblyReference reference, MetadataReader reader)
+		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
 			string publicKey = "null";
 			if (!reference.PublicKeyOrToken.IsNil && (reference.Flags & AssemblyFlags.PublicKey) != 0) {
@@ -88,41 +66,6 @@ namespace ICSharpCode.Decompiler
 			return sb.ToString();
 		}
 
-		/// <summary>
-		/// Gets the type of the attribute.
-		/// </summary>
-		public static Dom.ITypeReference GetAttributeType(this CustomAttribute attribute, Dom.PEFile module)
-		{
-			var reader = module.GetMetadataReader();
-			switch (attribute.Constructor.Kind) {
-				case HandleKind.MethodDefinition:
-					var md = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor);
-					return new Dom.TypeDefinition(module, md.GetDeclaringType());
-				case HandleKind.MemberReference:
-					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
-					return mr.Parent.CoerceTypeReference(module);
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		/// <summary>
-		/// Gets the type of the attribute.
-		/// </summary>
-		public static EntityHandle GetAttributeType(this CustomAttribute attribute, MetadataReader reader)
-		{
-			switch (attribute.Constructor.Kind) {
-				case HandleKind.MethodDefinition:
-					var md = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor);
-					return md.GetDeclaringType();
-				case HandleKind.MemberReference:
-					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
-					return mr.Parent;
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
 		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
 		{
 			var queue = new Queue<NamespaceDefinition>();
@@ -136,62 +79,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static FullTypeName GetFullTypeName(this EntityHandle handle, MetadataReader reader)
-		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			switch (handle.Kind) {
-				case HandleKind.TypeDefinition:
-					return ((TypeDefinitionHandle)handle).GetFullTypeName(reader);
-				case HandleKind.TypeReference:
-					return ((TypeReferenceHandle)handle).GetFullTypeName(reader);
-				case HandleKind.TypeSpecification:
-					return ((TypeSpecificationHandle)handle).GetFullTypeName(reader);
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
-		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			var ts = reader.GetTypeSpecification(handle);
-			return ts.DecodeSignature(new Dom.FullTypeNameSignatureDecoder(reader), default(Unit));
-		}
-
-		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
-		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			var tr = reader.GetTypeReference(handle);
-			TypeReferenceHandle declaringTypeHandle;
-			if ((declaringTypeHandle = tr.GetDeclaringType()).IsNil) {
-				string @namespace = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(tr.Name)));
-			} else {
-				return declaringTypeHandle.GetFullTypeName(reader, omitGenericParamCount).NestedType(reader.GetString(tr.Name), 0);
-			}
-		}
-
-		public static FullTypeName GetFullTypeName(this TypeDefinitionHandle handle, MetadataReader reader)
-		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			return reader.GetTypeDefinition(handle).GetFullTypeName(reader);
-		}
-
-		public static FullTypeName GetFullTypeName(this TypeDefinition td, MetadataReader reader)
-		{
-			TypeDefinitionHandle declaringTypeHandle;
-			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil) {
-				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(td.Name)));
-			} else {
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(reader.GetString(td.Name), 0);
-			}
-		}
-
 		public static string ToILNameString(this FullTypeName typeName)
 		{
 			var escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
@@ -201,16 +88,6 @@ namespace ICSharpCode.Decompiler
 				return $"{typeName.TopLevelTypeName.Namespace}.{escapedName}";
 			} else {
 				return $"{escapedName}";
-			}
-		}
-
-		public static TypeReferenceHandle GetDeclaringType(this TypeReference tr)
-		{
-			switch (tr.ResolutionScope.Kind) {
-				case HandleKind.TypeReference:
-					return (TypeReferenceHandle)tr.ResolutionScope;
-				default:
-					return default(TypeReferenceHandle);
 			}
 		}
 
@@ -227,29 +104,47 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static bool IsValueType(this TypeDefinition typeDefinition, MetadataReader reader)
-		{
-			if (typeDefinition.BaseType.IsNil)
-				return false;
-			var baseType = typeDefinition.BaseType.GetFullTypeName(reader).ToString();
-			if (baseType == "System.Enum")
-				return true;
-			var thisType = typeDefinition.GetFullTypeName(reader).ToString();
-			return baseType == "System.ValueType" && thisType != "System.Enum";
-		}
-
-		public static bool IsConstructor(this MethodDefinition methodDefinition, MetadataReader reader)
+		public static bool IsConstructor(this SRM.MethodDefinition methodDefinition, MetadataReader reader)
 		{
 			string name = reader.GetString(methodDefinition.Name);
 			return (methodDefinition.Attributes & (MethodAttributes.RTSpecialName | MethodAttributes.SpecialName)) != 0
 				&& (name == ".cctor" || name == ".ctor");
 		}
 
-		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader)
+		public static bool HasMatchingDefaultMemberAttribute(this PropertyDefinitionHandle handle, PEFile module, out CustomAttributeHandle defaultMemberAttribute)
 		{
-			if (typeDefinition.BaseType.IsNil)
-				return false;
-			return typeDefinition.BaseType.GetFullTypeName(reader).ToString() == "System.Enum";
+			defaultMemberAttribute = default(CustomAttributeHandle);
+			var metadata = module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(handle);
+			var accessorHandle = propertyDefinition.GetAccessors().GetAny();
+			var accessor = metadata.GetMethodDefinition(accessorHandle);
+			if (accessor.GetParameters().Count > 0) {
+				var basePropDef = propertyDefinition;
+				var firstOverrideHandle = accessorHandle.GetMethodImplementations(metadata).FirstOrDefault();
+				if (!firstOverrideHandle.IsNil) {
+					// if the property is explicitly implementing an interface, look up the property in the interface:
+					var firstOverride = metadata.GetMethodImplementation(firstOverrideHandle);
+					var baseAccessor = new Metadata.Entity(module, firstOverride.MethodDeclaration).ResolveAsMethod();
+					if (!baseAccessor.IsNil) {
+						var declaringType = metadata.GetTypeDefinition(metadata.GetMethodDefinition(baseAccessor.Handle).GetDeclaringType());
+						foreach (var basePropHandle in declaringType.GetProperties()) {
+							var baseProp = metadata.GetPropertyDefinition(basePropHandle);
+							var accessors = baseProp.GetAccessors();
+							if (accessors.Getter == baseAccessor.Handle || accessors.Setter == baseAccessor.Handle) {
+								basePropDef = baseProp;
+								break;
+							}
+						}
+					} else
+						return false;
+				}
+				var defaultMemberName = accessor.GetDeclaringType().GetDefaultMemberName(metadata, out var attr);
+				if (defaultMemberName == metadata.GetString(basePropDef.Name)) {
+					defaultMemberAttribute = attr;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader)

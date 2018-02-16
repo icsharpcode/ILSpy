@@ -17,19 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
+
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly TypeDefinition typeDefinition;
+		readonly SRM.TypeDefinition metadataTypeDefinition;
 
 		public TypeTreeNode(TypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
 		{
@@ -37,6 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				throw new ArgumentNullException(nameof(typeDefinition));
 			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
 			this.typeDefinition = typeDefinition;
+			this.metadataTypeDefinition = typeDefinition.This();
 			this.LazyLoading = true;
 		}
 
@@ -48,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (TypeDefinition.Attributes & TypeAttributes.VisibilityMask) {
+				switch (metadataTypeDefinition.Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
 					case TypeAttributes.NestedPublic:
 					case TypeAttributes.NestedFamily:
@@ -64,7 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(TypeDefinition.Name)) {
+			if (settings.SearchTermMatches(TypeDefinition.Module.GetMetadataReader().GetString(metadataTypeDefinition.Name))) {
 				if (settings.Language.ShowMember(TypeDefinition))
 					return FilterResult.Match;
 				else
@@ -76,26 +79,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			//if (TypeDefinition.BaseType != null || TypeDefinition.HasInterfaces)
+			var metadata = TypeDefinition.Module.GetMetadataReader();
+			if (!metadataTypeDefinition.BaseType.IsNil || metadataTypeDefinition.GetInterfaceImplementations().Any())
 				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
-			if (!TypeDefinition.HasFlag(TypeAttributes.Sealed))
+			if (!metadataTypeDefinition.HasFlag(TypeAttributes.Sealed))
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			foreach (TypeDefinition nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
+			foreach (var nestedType in metadataTypeDefinition.GetNestedTypes().OrderBy(m => metadata.GetString(metadata.GetTypeDefinition(m).Name), NaturalStringComparer.Instance)) {
+				this.Children.Add(new TypeTreeNode(new TypeDefinition(TypeDefinition.Module, nestedType), ParentAssemblyNode));
 			}
-			foreach (FieldDefinition field in TypeDefinition.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				this.Children.Add(new FieldTreeNode(field));
+			foreach (var field in metadataTypeDefinition.GetFields().OrderBy(m => metadata.GetString(metadata.GetFieldDefinition(m).Name), NaturalStringComparer.Instance)) {
+				this.Children.Add(new FieldTreeNode(new FieldDefinition(TypeDefinition.Module, field)));
 			}
 			
-			foreach (PropertyDefinition property in TypeDefinition.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				this.Children.Add(new PropertyTreeNode(property));
+			foreach (var property in metadataTypeDefinition.GetProperties().OrderBy(m => metadata.GetString(metadata.GetPropertyDefinition(m).Name), NaturalStringComparer.Instance)) {
+				this.Children.Add(new PropertyTreeNode(new PropertyDefinition(TypeDefinition.Module, property)));
 			}
-			foreach (EventDefinition ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				this.Children.Add(new EventTreeNode(ev));
+			foreach (var ev in metadataTypeDefinition.GetEvents().OrderBy(m => metadata.GetString(metadata.GetEventDefinition(m).Name), NaturalStringComparer.Instance)) {
+				this.Children.Add(new EventTreeNode(new EventDefinition(TypeDefinition.Module, ev)));
 			}
-			foreach (MethodDefinition method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				if (method.GetMethodSemanticsAttributes() == 0) {
-					this.Children.Add(new MethodTreeNode(method));
+			foreach (var method in metadataTypeDefinition.GetMethods().OrderBy(m => metadata.GetString(metadata.GetMethodDefinition(m).Name), NaturalStringComparer.Instance)) {
+				if (method.GetMethodSemanticsAttributes(metadata) == 0) {
+					this.Children.Add(new MethodTreeNode(new MethodDefinition(TypeDefinition.Module, method)));
 				}
 			}
 		}
@@ -119,17 +123,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		static TypeIcon GetTypeIcon(TypeDefinition type)
 		{
-			if (type.IsValueType) {
-				if (type.IsEnum)
+			var metadata = type.Module.GetMetadataReader();
+			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
+			if (typeDefinition.IsValueType(metadata)) {
+				if (typeDefinition.IsEnum(metadata))
 					return TypeIcon.Enum;
 				else
 					return TypeIcon.Struct;
 			} else {
-				if (type.IsInterface)
+				if ((typeDefinition.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface)
 					return TypeIcon.Interface;
-				else if (type.IsDelegate)
+				else if (typeDefinition.IsDelegate(metadata))
 					return TypeIcon.Delegate;
-				else if (IsStaticClass(type))
+				else if (IsStaticClass(typeDefinition))
 					return TypeIcon.StaticClass;
 				else
 					return TypeIcon.Class;
@@ -138,8 +144,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private static AccessOverlayIcon GetOverlayIcon(TypeDefinition type)
 		{
+			var def = type.This();
 			AccessOverlayIcon overlay;
-			switch (type.Attributes & TypeAttributes.VisibilityMask) {
+			switch (def.Attributes & TypeAttributes.VisibilityMask) {
 				case TypeAttributes.Public:
 				case TypeAttributes.NestedPublic:
 					overlay = AccessOverlayIcon.Public;
@@ -164,11 +171,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return overlay;
 		}
 
-		private static bool IsStaticClass(TypeDefinition type)
+		static bool IsStaticClass(SRM.TypeDefinition type)
 		{
 			return type.HasFlag(TypeAttributes.Sealed) && type.HasFlag(TypeAttributes.Abstract);
 		}
 
-		IMemberReference IMemberTreeNode.Member => TypeDefinition;
+		IMetadataEntity IMemberTreeNode.Member => TypeDefinition;
 	}
 }

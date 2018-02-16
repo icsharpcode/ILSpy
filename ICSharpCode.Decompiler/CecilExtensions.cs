@@ -219,11 +219,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static FullTypeName GetFullTypeName(this TypeDefinition typeDef)
-		{
-			return new FullTypeName(typeDef.FullName);
-		}
-
 		public static bool IsDelegate(this TypeDefinition type)
 		{
 			if (type.BaseType != null && type.BaseType.Namespace == "System") {

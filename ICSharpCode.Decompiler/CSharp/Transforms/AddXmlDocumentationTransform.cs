@@ -41,8 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return;
 				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
 					var symbol = entity.GetSymbol();
-					Mono.Cecil.MemberReference mr;
-					switch (symbol) {
+#warning TODO : replace with SRM
+					/*switch (symbol) {
 						case IMember member:
 							mr = context.TypeSystem.GetCecil(member);
 							break;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
 					if (doc != null) {
 						InsertXmlDocumentation(entity, new StringReader(doc));
-					}
+					}*/
 				}
 			} catch (XmlException ex) {
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);

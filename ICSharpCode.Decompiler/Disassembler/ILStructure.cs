@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Disassembler
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// </summary>
 	public class ILStructure
 	{
-		public readonly Dom.MethodDefinition Method;
+		public readonly Metadata.MethodDefinition Method;
 		public readonly ILStructureType Type;
 
 		/// <summary>
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public readonly List<ILStructure> Children = new List<ILStructure>();
 
-		public ILStructure(Dom.MethodDefinition method, MethodBodyBlock body)
+		public ILStructure(Metadata.MethodDefinition method, MethodBodyBlock body)
 			: this(method, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			SortChildren();
 		}
 
-		public ILStructure(Dom.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default(ExceptionRegion))
+		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default(ExceptionRegion))
 		{
 			Debug.Assert(startOffset < endOffset);
 			this.Method = method;
@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.ExceptionHandler = handler;
 		}
 
-		public ILStructure(Dom.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
+		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);
 			this.Method = method;

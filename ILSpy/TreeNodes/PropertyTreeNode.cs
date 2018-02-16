@@ -20,7 +20,7 @@ using System;
 using System.Reflection;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 using SRM = System.Reflection.Metadata;
 
@@ -38,16 +38,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
 			this.PropertyDefinition = property;
+			var metadata = property.Module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
+			var accessors = propertyDefinition.GetAccessors();
 			using (LoadedAssembly.DisableAssemblyLoad()) {
-				this.isIndexer = property.IsIndexer;
+				this.isIndexer = property.Handle.HasMatchingDefaultMemberAttribute(property.Module, out _);
 			}
 
-			if (!property.GetMethod.IsNil)
-				this.Children.Add(new MethodTreeNode(property.GetMethod));
-			if (!property.SetMethod.IsNil)
-				this.Children.Add(new MethodTreeNode(property.SetMethod));
-			foreach (var m in property.OtherMethods)
-				this.Children.Add(new MethodTreeNode(m));
+			if (!accessors.Getter.IsNil)
+				this.Children.Add(new MethodTreeNode(new MethodDefinition(property.Module, accessors.Getter)));
+			if (!accessors.Setter.IsNil)
+				this.Children.Add(new MethodTreeNode(new MethodDefinition(property.Module, accessors.Setter)));
+			/*foreach (var m in property.OtherMethods)
+				this.Children.Add(new MethodTreeNode(m));*/
 		}
 
 		public PropertyDefinition PropertyDefinition { get; }
@@ -56,29 +59,28 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
 		{
+			var metadata = property.Module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
+
 			string name = language.FormatPropertyName(property, isIndexer);
-			var signature = property.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(property.DeclaringType));
+			var signature = propertyDefinition.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(propertyDefinition.GetAccessors().GetAny(), property.Module));
 
 			var b = new System.Text.StringBuilder();
-			if (property.HasParameters)
-			{
+			var hasParameters = property.Handle.HasParameters(metadata);
+			if (hasParameters) {
 				b.Append('(');
-				for (int i = 0; i < signature.ParameterTypes.Length; i++)
-				{
+				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
 					if (i > 0)
 						b.Append(", ");
 					b.Append(signature.ParameterTypes[i]);
 				}
-				if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs)
-				{
-					if (property.HasParameters)
+				if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+					if (hasParameters)
 						b.Append(", ");
 					b.Append("...");
 				}
 				b.Append(") : ");
-			}
-			else
-			{
+			} else {
 				b.Append(" : ");
 			}
 			b.Append(signature.ReturnType);
@@ -129,29 +131,35 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// in numeric order, so we can do an integer comparison of the masked attribute
 			int accessLevel = 0;
 
-			if (!property.GetMethod.IsNil) {
-				int methodAccessLevel = (int)(property.GetMethod.Attributes & MethodAttributes.MemberAccessMask);
+			var metadata = property.Module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
+			var accessors = propertyDefinition.GetAccessors();
+
+			if (!accessors.Getter.IsNil) {
+				var getter = metadata.GetMethodDefinition(accessors.Getter);
+				int methodAccessLevel = (int)(getter.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
-					result = property.GetMethod.Attributes;
+					result = getter.Attributes;
 				}
 			}
 
-			if (!property.SetMethod.IsNil) {
-				int methodAccessLevel = (int)(property.SetMethod.Attributes & MethodAttributes.MemberAccessMask);
+			if (!accessors.Setter.IsNil) {
+				var setter = metadata.GetMethodDefinition(accessors.Setter);
+				int methodAccessLevel = (int)(setter.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
-					result = property.SetMethod.Attributes;
+					result = setter.Attributes;
 				}
 			}
 
-			foreach (var m in property.OtherMethods) {
+			/*foreach (var m in property.OtherMethods) {
 				int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
 					result = m.Attributes;
 				}
-			}
+			}*/
 
 			return result;
 		}
@@ -160,7 +168,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(PropertyDefinition.Name) && settings.Language.ShowMember(PropertyDefinition))
+			var metadata = PropertyDefinition.Module.GetMetadataReader();
+			var propertyDefinition = metadata.GetPropertyDefinition(PropertyDefinition.Handle);
+			if (settings.SearchTermMatches(metadata.GetString(propertyDefinition.Name)) && settings.Language.ShowMember(PropertyDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -170,7 +180,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.DecompileProperty(PropertyDefinition, output, options);
 		}
-		
+
 		public override bool IsPublicAPI {
 			get {
 				switch (GetAttributesOfMostAccessibleMethod(PropertyDefinition) & MethodAttributes.MemberAccessMask) {
@@ -184,6 +194,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMemberReference IMemberTreeNode.Member => PropertyDefinition;
+		IMetadataEntity IMemberTreeNode.Member => PropertyDefinition;
 	}
 }

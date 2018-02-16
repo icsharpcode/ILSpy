@@ -21,7 +21,7 @@ using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -41,12 +41,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool ShowExpander
 		{
-			get { return !type.HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
+			get { return !type.This().HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
 		}
 
 		public override object Text
 		{
-			get { return type.FullName + type.Handle.ToSuffixString(); }
+			get { return type.Handle.GetFullTypeName(type.Module.GetMetadataReader()) + type.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
@@ -58,8 +58,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(type.Name)) {
-				if (!type.DeclaringType.IsNil && !settings.Language.ShowMember(type))
+			var metadata = type.Module.GetMetadataReader();
+			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
+			if (settings.SearchTermMatches(metadata.GetString(typeDefinition.Name))) {
+				if (!typeDefinition.GetDeclaringType().IsNil && !settings.Language.ShowMember(type))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;
@@ -69,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				switch (type.Attributes & TypeAttributes.VisibilityMask) {
+				switch (type.This().Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
 					case TypeAttributes.NestedPublic:
 					case TypeAttributes.NestedFamily:
@@ -102,6 +104,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(type, true));
 		}
 
-		IMemberReference IMemberTreeNode.Member => type;
+		IMetadataEntity IMemberTreeNode.Member => type;
 	}
 }

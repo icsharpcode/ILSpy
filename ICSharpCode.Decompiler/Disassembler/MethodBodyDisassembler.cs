@@ -23,6 +23,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public bool ShowSequencePoints { get; set; }
 
-		IList<Dom.SequencePoint> sequencePoints;
+		IList<Metadata.SequencePoint> sequencePoints;
 		int nextSequencePointIndex;
 
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -53,17 +54,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.cancellationToken = cancellationToken;
 		}
 
-		public unsafe virtual void Disassemble(Dom.MethodDefinition method)
+		public unsafe virtual void Disassemble(Metadata.MethodDefinition method)
 		{
 			// start writing IL code
-			output.WriteLine("// Method begins at RVA 0x{0:x4}", method.RVA);
-			if (method.RVA == 0) {
+			var metadata = method.Module.GetMetadataReader();
+			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			output.WriteLine("// Method begins at RVA 0x{0:x4}", methodDefinition.RelativeVirtualAddress);
+			if (methodDefinition.RelativeVirtualAddress == 0) {
 				output.WriteLine("// Code size {0} (0x{0:x})", 0);
 				output.WriteLine(".maxstack {0}", 0);
 				output.WriteLine();
 				return;
 			}
-			var body = method.Body;
+			var body = method.Module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var blob = body.GetILReader();
 			output.WriteLine("// Code size {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);
@@ -75,7 +78,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleLocalsBlock(method, body);
 			output.WriteLine();
 
-			var metadata = method.Module.GetMetadataReader();
 
 			sequencePoints = method.GetSequencePoints();
 			nextSequencePointIndex = 0;
@@ -93,11 +95,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			sequencePoints = null;
 		}
 
-		void DisassembleLocalsBlock(Dom.MethodDefinition method, MethodBodyBlock body)
+		void DisassembleLocalsBlock(Metadata.MethodDefinition method, MethodBodyBlock body)
 		{
 			if (body.LocalSignature.IsNil) return;
 			var metadata = method.Module.GetMetadataReader();
-			var signature = metadata.GetStandaloneSignature(body.LocalSignature).DecodeLocalSignature(new DisassemblerSignatureProvider(method.Module, output), new Dom.GenericContext(method));
+			var signature = metadata.GetStandaloneSignature(body.LocalSignature).DecodeLocalSignature(new DisassemblerSignatureProvider(method.Module, output), new Metadata.GenericContext(method));
 			if (!signature.IsEmpty) {
 				output.Write(".locals ");
 				if (body.LocalVariablesInitialized)
@@ -118,7 +120,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		internal void WriteExceptionHandlers(Dom.MethodDefinition method, MethodBodyBlock body)
+		internal void WriteExceptionHandlers(Metadata.MethodDefinition method, MethodBodyBlock body)
 		{
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty) {
@@ -169,7 +171,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write("catch");
 							if (!s.ExceptionHandler.CatchType.IsNil) {
 								output.Write(' ');
-								s.ExceptionHandler.CatchType.CoerceTypeReference(s.Method.Module).WriteTo(output, new Dom.GenericContext(s.Method), ILNameSyntax.TypeName);
+								s.ExceptionHandler.CatchType.WriteTo(s.Method.Module, output, new Metadata.GenericContext(s.Method), ILNameSyntax.TypeName);
 							}
 							output.WriteLine();
 							break;
@@ -243,12 +245,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		protected virtual void WriteInstruction(ITextOutput output, Dom.MethodDefinition method, ref BlobReader blob)
+		protected virtual void WriteInstruction(ITextOutput output, Metadata.MethodDefinition method, ref BlobReader blob)
 		{
 			var metadata = method.Module.GetMetadataReader();
 			int offset = blob.Offset;
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
-				Dom.SequencePoint sp = sequencePoints[nextSequencePointIndex];
+				Metadata.SequencePoint sp = sequencePoints[nextSequencePointIndex];
 				if (sp.Offset <= offset) {
 					output.Write("// sequence point: ");
 					if (sp.Offset != offset) {
@@ -280,7 +282,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Type:
 						output.Write(' ');
 						var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
-						WriteEntityHandle(handle, method.Module, new Dom.GenericContext(method), output);
+						handle.WriteTo(method.Module, output, new GenericContext(method));
 						break;
 					case OperandType.Tok:
 						output.Write(' ');
@@ -300,7 +302,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write("field ");
 								break;
 						}
-						WriteEntityHandle(handle, method.Module, new Dom.GenericContext(method), output);
+						handle.WriteTo(method.Module, output, new GenericContext(method));
 						break;
 					case OperandType.ShortI:
 						output.Write(' ');
@@ -360,33 +362,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write($".emitbyte 0x{opCode:x}");
 			}
 			output.WriteLine();
-		}
-
-		void WriteEntityHandle(EntityHandle entity, Dom.PEFile module, Dom.GenericContext context, ITextOutput output)
-		{
-			switch (entity.Kind) {
-				case HandleKind.TypeReference:
-					new Dom.TypeReference(module, (TypeReferenceHandle)entity).WriteTo(output); 
-					break;
-				case HandleKind.TypeDefinition:
-					new Dom.TypeDefinition(module, (TypeDefinitionHandle)entity).WriteTo(output);
-					break;
-				case HandleKind.FieldDefinition:
-					new Dom.FieldDefinition(module, (FieldDefinitionHandle)entity).WriteTo(output);
-					break;
-				case HandleKind.MethodDefinition:
-					new Dom.MethodDefinition(module, (MethodDefinitionHandle)entity).WriteTo(output);
-					break;
-				case HandleKind.MemberReference:
-					new Dom.MemberReference(module, (MemberReferenceHandle)entity).WriteTo(output, context);
-					break;
-				case HandleKind.TypeSpecification:
-					new Dom.TypeSpecification(module, (TypeSpecificationHandle)entity).WriteTo(output, context);
-					break;
-				case HandleKind.MethodSpecification:
-					new Dom.MethodSpecification(module, (MethodSpecificationHandle)entity).WriteTo(output, context);
-					break;
-			}
 		}
 	}
 }

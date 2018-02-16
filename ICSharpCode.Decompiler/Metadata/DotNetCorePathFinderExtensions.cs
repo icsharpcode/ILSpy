@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class DotNetCorePathFinderExtensions
 	{

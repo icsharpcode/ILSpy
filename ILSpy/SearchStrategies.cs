@@ -5,10 +5,14 @@ using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using System.Reflection;
 using ICSharpCode.Decompiler.Disassembler;
+using SRM = System.Reflection.Metadata;
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
+using ICSharpCode.Decompiler;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
 
 namespace ICSharpCode.ILSpy
 {
@@ -38,9 +42,29 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected float CalculateFitness(IMemberReference member)
+		protected float CalculateFitness(IMetadataEntity member)
 		{
-			string text = member.Name;
+			var metadata = member.Module.GetMetadataReader();
+			string text;
+			switch (member) {
+				case TypeDefinition td:
+					text = metadata.GetString(metadata.GetTypeDefinition(td.Handle).Name);
+					break;
+				case FieldDefinition fd:
+					text = metadata.GetString(metadata.GetFieldDefinition(fd.Handle).Name);
+					break;
+				case MethodDefinition md:
+					text = metadata.GetString(metadata.GetMethodDefinition(md.Handle).Name);
+					break;
+				case PropertyDefinition pd:
+					text = metadata.GetString(metadata.GetPropertyDefinition(pd.Handle).Name);
+					break;
+				case EventDefinition ed:
+					text = metadata.GetString(metadata.GetEventDefinition(ed.Handle).Name);
+					break;
+				default:
+					throw new NotSupportedException();
+			}
 
 			// Probably compiler generated types without meaningful names, show them last
 			if (text.StartsWith("<")) {
@@ -79,7 +103,7 @@ namespace ICSharpCode.ILSpy
 			return false;
 		}
 
-		protected virtual bool MatchName(IMemberDefinition m, Language language)
+		protected virtual bool MatchName(IMetadataEntity m, Language language)
 		{
 			return IsMatch(t => GetLanguageSpecificName(language, m, regex != null ? fullNameSearch : t.Contains(".")));
 		}
@@ -122,25 +146,26 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		string GetLanguageSpecificName(Language language, IMemberDefinition member, bool fullName = false)
+		string GetLanguageSpecificName(Language language, IMetadataEntity member, bool fullName = false)
 		{
+			var metadata = member.Module.GetMetadataReader();
 			switch (member) {
 				case TypeDefinition t:
 					return language.TypeToString(t, fullName);
 				case FieldDefinition f:
-					return fullName ? language.TypeToString(f.DeclaringType, fullName) + "." + language.FormatFieldName(f) : language.FormatFieldName(f);
+					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetFieldDefinition(f.Handle).GetDeclaringType()), fullName) + "." + language.FormatFieldName(f) : language.FormatFieldName(f);
 				case PropertyDefinition p:
-					return fullName ? language.TypeToString(p.DeclaringType, fullName) + "." + language.FormatPropertyName(p) : language.FormatPropertyName(p);
+					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(metadata.GetPropertyDefinition(p.Handle).GetAccessors().GetAny()).GetDeclaringType()), fullName) + "." + language.FormatPropertyName(p) : language.FormatPropertyName(p);
 				case MethodDefinition m:
-					return fullName ? language.TypeToString(m.DeclaringType, fullName) + "." + language.FormatMethodName(m) : language.FormatMethodName(m);
+					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(m.Handle).GetDeclaringType()), fullName) + "." + language.FormatMethodName(m) : language.FormatMethodName(m);
 				case EventDefinition e:
-					return fullName ? language.TypeToString(e.DeclaringType, fullName) + "." + language.FormatEventName(e) : language.FormatEventName(e);
+					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(metadata.GetEventDefinition(e.Handle).GetAccessors().GetAny()).GetDeclaringType()), fullName) + "." + language.FormatEventName(e) : language.FormatEventName(e);
 				default:
 					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}
 		}
 
-		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMemberReference
+		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMetadataEntity
 		{
 			foreach (var item in items) {
 				if (matcher(item, language)) {
@@ -149,7 +174,7 @@ namespace ICSharpCode.ILSpy
 						Member = item,
 						Fitness = CalculateFitness(item),
 						Image = image(item),
-						Name = GetLanguageSpecificName(language, (IMemberDefinition)item),
+						Name = GetLanguageSpecificName(language, item),
 						LocationImage = TypeTreeNode.GetIcon(type),
 						Location = language.TypeToString(type, includeNamespace: true)
 					});
@@ -159,19 +184,21 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			Add(type.Fields, type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
-			Add(type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
-			Add(type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
-			Add(type.Methods.Where(NotSpecialMethod), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
+			var td = type.This();
+			var metadata = type.Module.GetMetadataReader();
+			Add(td.GetFields().Select(f => new FieldDefinition(type.Module, f)), type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
+			Add(td.GetProperties().Select(p => new PropertyDefinition(type.Module, p)), type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
+			Add(td.GetEvents().Select(e => new EventDefinition(type.Module, e)), type, language, addResult, IsMatch, EventTreeNode.GetIcon);
+			Add(td.GetMethods().Where(m => NotSpecialMethod(m, metadata)).Select(m => new MethodDefinition(type.Module, m)), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
 
-			foreach (TypeDefinition nestedType in type.NestedTypes) {
-				Search(nestedType, language, addResult);
+			foreach (var nestedType in td.GetNestedTypes()) {
+				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
 			}
 		}
 
-		bool NotSpecialMethod(MethodDefinition arg)
+		bool NotSpecialMethod(SRM.MethodDefinitionHandle method, SRM.MetadataReader metadata)
 		{
-			return (arg.GetMethodSemanticsAttributes() & (
+			return (method.GetMethodSemanticsAttributes(metadata) & (
 				MethodSemanticsAttributes.Setter
 				| MethodSemanticsAttributes.Getter
 				| MethodSemanticsAttributes.Adder
@@ -233,17 +260,19 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(PropertyDefinition property, Language language)
 		{
-			return MethodIsLiteralMatch(property.GetMethod) || MethodIsLiteralMatch(property.SetMethod);
+			var accessors = property.This().GetAccessors();
+			return MethodIsLiteralMatch(accessors.Getter, property.Module) || MethodIsLiteralMatch(accessors.Setter, property.Module);
 		}
 
 		protected override bool IsMatch(EventDefinition ev, Language language)
 		{
-			return MethodIsLiteralMatch(ev.AddMethod) || MethodIsLiteralMatch(ev.RemoveMethod) || MethodIsLiteralMatch(ev.InvokeMethod);
+			var accessors = ev.This().GetAccessors();
+			return MethodIsLiteralMatch(accessors.Adder, ev.Module) || MethodIsLiteralMatch(accessors.Remover, ev.Module) || MethodIsLiteralMatch(accessors.Raiser, ev.Module);
 		}
 
 		protected override bool IsMatch(MethodDefinition m, Language language)
 		{
-			return MethodIsLiteralMatch(m);
+			return MethodIsLiteralMatch(m.Handle, m.Module);
 		}
 
 		bool IsLiteralMatch(object val)
@@ -267,11 +296,15 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		bool MethodIsLiteralMatch(MethodDefinition m)
+		bool MethodIsLiteralMatch(SRM.MethodDefinitionHandle m, PEFile module)
 		{
-			if (m == null || !m.HasBody)
+			if (module == null)
 				return false;
-			var blob = m.Body.GetILReader();
+			var metadata = module.GetMetadataReader();
+			if (m.IsNil || !m.HasBody(metadata))
+				return false;
+			var methodDefinition = metadata.GetMethodDefinition(m);
+			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
 			if (searchTermLiteralType == TypeCode.Int64) {
 				long val = (long)searchTermLiteralValue;
 				while (blob.RemainingBytes > 0) {
@@ -365,7 +398,7 @@ namespace ICSharpCode.ILSpy
 								return true;
 							break;
 						case ILOpCode.Ldstr:
-							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, m.Module))
+							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, module))
 								return true;
 							break;
 					}
@@ -377,7 +410,7 @@ namespace ICSharpCode.ILSpy
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					if (IsMatch(t => ILParser.DecodeUserString(ref blob, m.Module)))
+					if (IsMatch(t => ILParser.DecodeUserString(ref blob, module)))
 						return true;
 				}
 			}
@@ -441,18 +474,20 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language)) {
 				string name = language.TypeToString(type, includeNamespace: false);
+				var metadata = type.Module.GetMetadataReader();
+				var declaringType = type.This().GetDeclaringType();
 				addResult(new SearchResult {
 					Member = type,
 					Fitness = CalculateFitness(type),
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
-					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
-					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
+					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
+					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 
-			foreach (TypeDefinition nestedType in type.NestedTypes) {
-				Search(nestedType, language, addResult);
+			foreach (var nestedType in type.This().GetNestedTypes()) {
+				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
 			}
 		}
 	}
@@ -469,14 +504,15 @@ namespace ICSharpCode.ILSpy
 			if (MatchName(type, language))
 			{
 				string name = language.TypeToString(type, includeNamespace: false);
-				addResult(new SearchResult
-				{
+				var metadata = type.Module.GetMetadataReader();
+				var declaringType = type.This().GetDeclaringType();
+				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
 					Fitness = CalculateFitness(type),
 					Name = name,
-					LocationImage = !type.DeclaringType.IsNil ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
-					Location = !type.DeclaringType.IsNil ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
+					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
+					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 

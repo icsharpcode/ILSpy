@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection.PortableExecutable;
 using System.Text;
-using ICSharpCode.Decompiler.Dom;
-using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public class UniversalAssemblyResolver : IAssemblyResolver
 	{

@@ -9,10 +9,11 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.Dom
+namespace ICSharpCode.Decompiler.Metadata
 {
 	using SRMMemberRef = System.Reflection.Metadata.MemberReference;
 	using SRMMethod = System.Reflection.Metadata.MethodDefinition;
@@ -41,12 +42,6 @@ namespace ICSharpCode.Decompiler.Dom
 		}
 	}
 
-	public interface ICustomAttributeProvider
-	{
-		PEFile Module { get; }
-		CustomAttributeHandleCollection CustomAttributes { get; }
-	}
-
 	public interface IAssemblyResolver
 	{
 		PEFile Resolve(IAssemblyReference reference);
@@ -66,6 +61,13 @@ namespace ICSharpCode.Decompiler.Dom
 
 	public interface IAssemblyDocumentationResolver
 	{
+		XmlDocumentationProvider GetProvider();
+	}
+
+	public interface IMetadataEntity
+	{
+		PEFile Module { get; }
+		EntityHandle Handle { get; }
 	}
 
 	public struct Variable { }
@@ -74,37 +76,6 @@ namespace ICSharpCode.Decompiler.Dom
 	{
 		IList<SequencePoint> GetSequencePoints(MethodDefinition method);
 		IList<Variable> GetVariables(MethodDefinition method);
-	}
-
-	public interface IMemberReference
-	{
-		PEFile Module { get; }
-		string Name { get; }
-		IMemberDefinition GetDefinition();
-		ITypeReference DeclaringType { get; }
-	}
-
-	public interface IMemberDefinition : IMemberReference, ICustomAttributeProvider
-	{
-		new TypeDefinition DeclaringType { get; }
-	}
-
-	public interface IMethodReference : IMemberReference
-	{
-	}
-
-	public interface ITypeReference : IMemberReference
-	{
-		PEFile Module { get; }
-		FullTypeName FullName { get; }
-		string Namespace { get; }
-		new TypeDefinition GetDefinition();
-	}
-
-	public interface ITypeDefinition : ITypeReference, IMemberDefinition
-	{
-		new PEFile Module { get; }
-		TypeDefinitionHandle Handle { get; }
 	}
 
 	public class PEFile
@@ -348,11 +319,107 @@ namespace ICSharpCode.Decompiler.Dom
 		}
 	}
 
-	public struct MethodDefinition : IEquatable<MethodDefinition>, IMethodReference, IMemberDefinition
+	public struct Entity : IEquatable<Entity>, IMetadataEntity
+	{
+		public PEFile Module { get; }
+		public EntityHandle Handle { get; }
+		public bool IsNil => Handle.IsNil;
+
+		public Entity(PEFile module, EntityHandle handle) : this()
+		{
+			this.Module = module ?? throw new ArgumentNullException(nameof(module));
+			this.Handle = handle;
+		}
+
+		public bool IsType() => Handle.Kind == HandleKind.TypeDefinition || Handle.Kind == HandleKind.TypeReference || Handle.Kind == HandleKind.TypeSpecification;
+
+		public TypeDefinition ResolveAsType()
+		{
+			return MetadataResolver.ResolveType(Handle, new SimpleMetadataResolveContext(Module));
+		}
+
+		public MethodDefinition ResolveAsMethod()
+		{
+			return MetadataResolver.ResolveMember(Handle, new SimpleMetadataResolveContext(Module));
+		}
+
+		public bool Equals(Entity other)
+		{
+			return Module == other.Module && Handle == other.Handle;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is Entity entity)
+				return Equals(entity);
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
+		}
+
+		public static bool operator ==(Entity lhs, Entity rhs) => lhs.Equals(rhs);
+		public static bool operator !=(Entity lhs, Entity rhs) => !lhs.Equals(rhs);
+
+		public static implicit operator Entity(MethodDefinition method)
+		{
+			return new Entity(method.Module, method.Handle);
+		}
+
+		public static implicit operator Entity(PropertyDefinition property)
+		{
+			return new Entity(property.Module, property.Handle);
+		}
+
+		public static implicit operator Entity(EventDefinition @event)
+		{
+			return new Entity(@event.Module, @event.Handle);
+		}
+
+		public static implicit operator Entity(FieldDefinition field)
+		{
+			return new Entity(field.Module, field.Handle);
+		}
+
+		public static implicit operator Entity(TypeDefinition type)
+		{
+			return new Entity(type.Module, type.Handle);
+		}
+
+		public static implicit operator TypeDefinition(Entity entity)
+		{
+			return new TypeDefinition(entity.Module, (TypeDefinitionHandle)entity.Handle);
+		}
+
+		public static implicit operator MethodDefinition(Entity entity)
+		{
+			return new MethodDefinition(entity.Module, (MethodDefinitionHandle)entity.Handle);
+		}
+
+		public static implicit operator PropertyDefinition(Entity entity)
+		{
+			return new PropertyDefinition(entity.Module, (PropertyDefinitionHandle)entity.Handle);
+		}
+
+		public static implicit operator EventDefinition(Entity entity)
+		{
+			return new EventDefinition(entity.Module, (EventDefinitionHandle)entity.Handle);
+		}
+
+		public static implicit operator FieldDefinition(Entity entity)
+		{
+			return new FieldDefinition(entity.Module, (FieldDefinitionHandle)entity.Handle);
+		}
+	}
+
+	public struct MethodDefinition : IEquatable<MethodDefinition>, IMetadataEntity
 	{
 		public PEFile Module { get; }
 		public MethodDefinitionHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
+		EntityHandle IMetadataEntity.Handle => Handle;
 
 		public MethodDefinition(PEFile module, MethodDefinitionHandle handle) : this()
 		{
@@ -360,7 +427,7 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Handle = handle;
 		}
 
-		SRMMethod This() => Module.GetMetadataReader().GetMethodDefinition(Handle);
+		public SRMMethod This() => Module.GetMetadataReader().GetMethodDefinition(Handle);
 
 		public bool Equals(MethodDefinition other)
 		{
@@ -388,9 +455,8 @@ namespace ICSharpCode.Decompiler.Dom
 				return reader.GetString(reader.GetMethodDefinition(Handle).Name);
 			}
 		}
-
+		/*
 		public TypeDefinition DeclaringType => new TypeDefinition(Module, This().GetDeclaringType());
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
 
 		public MethodAttributes Attributes => This().Attributes;
 		public MethodImplAttributes ImplAttributes => This().ImplAttributes;
@@ -399,80 +465,7 @@ namespace ICSharpCode.Decompiler.Dom
 		public bool HasFlag(MethodAttributes attribute) => (This().Attributes & attribute) == attribute;
 		public bool HasPInvokeInfo => !This().GetImport().Module.IsNil || HasFlag(MethodAttributes.PinvokeImpl);
 		public bool IsConstructor => This().IsConstructor(Module.GetMetadataReader());
-		public bool HasParameters => This().GetParameters().Count > 0;
-		public bool HasBody => (Attributes & MethodAttributes.Abstract) == 0 &&
-			(Attributes & MethodAttributes.PinvokeImpl) == 0 &&
-			(ImplAttributes & MethodImplAttributes.InternalCall) == 0 &&
-			(ImplAttributes & MethodImplAttributes.Native) == 0 &&
-			(ImplAttributes & MethodImplAttributes.Unmanaged) == 0 &&
-			(ImplAttributes & MethodImplAttributes.Runtime) == 0;
-		public int RVA => This().RelativeVirtualAddress;
-		public MethodBodyBlock Body => Module.Reader.GetMethodBody(RVA);
-		public MethodImport Import => This().GetImport();
-		public GenericParameterHandleCollection GenericParameters => This().GetGenericParameters();
-		public ParameterHandleCollection Parameters => This().GetParameters();
-
-		public bool IsExtensionMethod {
-			get {
-				if (!HasFlag(MethodAttributes.Static)) {
-					var metadata = Module.GetMetadataReader();
-					foreach (var attribute in This().GetCustomAttributes()) {
-						string typeName = metadata.GetCustomAttribute(attribute).GetAttributeType(Module).FullName.ToString();
-						if (typeName == "System.Runtime.CompilerServices.ExtensionAttribute")
-							return true;
-					}
-				}
-				return false;
-			}
-		}
-
-		public unsafe MethodSemanticsAttributes GetMethodSemanticsAttributes()
-		{
-			var reader = Module.GetMetadataReader();
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
-			int rowCount = reader.GetTableRowCount(TableIndex.MethodSemantics);
-			var small = reader.IsSmallReference(TableIndex.MethodDef);
-
-			int methodRowNo = reader.GetRowNumber(Handle);
-			for (int row = rowCount - 1; row >= 0; row--) {
-				byte* ptr = startPointer + offset + rowSize * row;
-				uint rowNo = small ? *(ushort*)(ptr + 2) : *(uint*)(ptr + 2);
-				if (methodRowNo == rowNo) {
-					return (MethodSemanticsAttributes)(*(ushort*)ptr);
-				}
-			}
-			return 0;
-		}
-
-		public unsafe ImmutableArray<MethodImplementationHandle> GetMethodImplementations()
-		{
-			var reader = Module.GetMetadataReader();
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodImpl);
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodImpl);
-			int rowCount = reader.GetTableRowCount(TableIndex.MethodImpl);
-			var methodDefSize = reader.GetReferenceSize(TableIndex.MethodDef);
-			var typeDefSize = reader.GetReferenceSize(TableIndex.TypeDef);
-
-			var containingTypeRow = reader.GetRowNumber(This().GetDeclaringType());
-			var methodDefRow = reader.GetRowNumber(Handle);
-
-			var list = new List<MethodImplementationHandle>();
-
-			// TODO : if sorted -> binary search?
-			for (int row = 0; row < reader.GetTableRowCount(TableIndex.MethodImpl); row++) {
-				byte* ptr = startPointer + offset + rowSize * row;
-				uint currentTypeRow = typeDefSize == 2 ? *(ushort*)ptr : *(uint*)ptr;
-				if (currentTypeRow != containingTypeRow) continue;
-				uint currentMethodRowCoded = methodDefSize == 2 ? *(ushort*)(ptr + typeDefSize) : *(uint*)(ptr + typeDefSize);
-				if ((currentMethodRowCoded >> 1) != methodDefRow) continue;
-				list.Add(MetadataTokens.MethodImplementationHandle(row + 1));
-			}
-
-			return list.ToImmutableArray();
-		}
+		public bool HasParameters => This().GetParameters().Count > 0;*/
 
 		public IList<SequencePoint> GetSequencePoints()
 		{
@@ -483,20 +476,14 @@ namespace ICSharpCode.Decompiler.Dom
 		{
 			return Module.DebugInfo?.GetVariables(this);
 		}
-
-		public MethodSignature<TType> DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeSignature(provider, genericContext);
-		}
-
-		IMemberDefinition IMemberReference.GetDefinition() => this;
 	}
 
-	public struct PropertyDefinition : IEquatable<PropertyDefinition>, IMemberDefinition, ICustomAttributeProvider
+	public struct PropertyDefinition : IEquatable<PropertyDefinition>, IMetadataEntity
 	{
 		public PEFile Module { get; }
 		public PropertyDefinitionHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
+		EntityHandle IMetadataEntity.Handle => Handle;
 
 		public PropertyDefinition(PEFile module, PropertyDefinitionHandle handle) : this()
 		{
@@ -504,7 +491,7 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Handle = handle;
 		}
 
-		SRMProperty This() => Module.GetMetadataReader().GetPropertyDefinition(Handle);
+		public SRMProperty This() => Module.GetMetadataReader().GetPropertyDefinition(Handle);
 
 		public bool Equals(PropertyDefinition other)
 		{
@@ -525,7 +512,7 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public static bool operator ==(PropertyDefinition lhs, PropertyDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(PropertyDefinition lhs, PropertyDefinition rhs) => !lhs.Equals(rhs);
-
+		/*
 		public string Name {
 			get {
 				var reader = Module.GetMetadataReader();
@@ -534,7 +521,6 @@ namespace ICSharpCode.Decompiler.Dom
 		}
 
 		public TypeDefinition DeclaringType => GetAccessors().First().Method.DeclaringType;
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
 
 		public MethodDefinition GetMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Getter).Method;
 		public MethodDefinition SetMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Setter).Method;
@@ -547,44 +533,17 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public bool IsIndexer => HasMatchingDefaultMemberAttribute(out var attr);
 
-		public bool HasMatchingDefaultMemberAttribute(out CustomAttributeHandle defaultMemberAttribute)
-		{
-			var metadata = Module.GetMetadataReader();
-			defaultMemberAttribute = default(CustomAttributeHandle);
-			if (HasParameters) {
-				var accessor = GetAccessors().First(a => a.Kind != MethodSemanticsAttributes.Other).Method;
-				PropertyDefinition basePropDef = this;
-				var firstOverrideHandle = accessor.GetMethodImplementations().FirstOrDefault();
-				if (!firstOverrideHandle.IsNil) {
-					// if the property is explicitly implementing an interface, look up the property in the interface:
-					var firstOverride = metadata.GetMethodImplementation(firstOverrideHandle);
-					var baseAccessor = firstOverride.MethodDeclaration.CoerceMemberReference(Module).GetDefinition() as MethodDefinition?;
-					if (baseAccessor != null) {
-						foreach (PropertyDefinition baseProp in baseAccessor?.DeclaringType.Properties) {
-							if (baseProp.GetMethod == baseAccessor || baseProp.SetMethod == baseAccessor) {
-								basePropDef = baseProp;
-								break;
-							}
-						}
-					} else
-						return false;
-				}
-				var defaultMemberName = basePropDef.DeclaringType.Handle.GetDefaultMemberName(metadata, out var attr);
-				if (defaultMemberName == basePropDef.Name) {
-					defaultMemberAttribute = attr;
-					return true;
-				}
-			}
-			return false;
-		}
-
 		public unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors()
 		{
-			var reader = Module.GetMetadataReader();
+			return GetAccessors(Module, (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 1);
+		}
+
+		internal static unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors(PEFile module, uint encodedTag)
+		{
+			var reader = module.GetMetadataReader();
 			byte* startPointer = reader.MetadataPointer;
 			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
 
-			uint encodedTag = (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 1;
 			var methodDefRefSize = reader.GetReferenceSize(TableIndex.MethodDef);
 			(int startRow, int endRow) = reader.BinarySearchRange(TableIndex.MethodSemantics, 2 + methodDefRefSize, encodedTag, reader.IsSmallReference(TableIndex.MethodSemantics));
 			if (startRow == -1)
@@ -595,8 +554,9 @@ namespace ICSharpCode.Decompiler.Dom
 				int rowOffset = row * rowSize;
 				byte* ptr = startPointer + offset + rowOffset;
 				var kind = (MethodSemanticsAttributes)(*(ushort*)ptr);
-				var handle = MetadataTokens.MethodDefinitionHandle(*(ushort*)(ptr + 2));
-				methods[row - startRow] = (kind, new MethodDefinition(Module, handle));
+				uint rowNo = methodDefRefSize == 2 ? *(ushort*)(ptr + 2) : *(uint*)(ptr + 2);
+				var handle = MetadataTokens.MethodDefinitionHandle((int)rowNo);
+				methods[row - startRow] = (kind, new MethodDefinition(module, handle));
 			}
 			return methods.ToImmutableArray();
 		}
@@ -605,15 +565,15 @@ namespace ICSharpCode.Decompiler.Dom
 		{
 			return This().DecodeSignature(provider, genericContext);
 		}
-
-		IMemberDefinition IMemberReference.GetDefinition() => this;
+		*/
 	}
 
-	public struct FieldDefinition : IEquatable<FieldDefinition>, IMemberDefinition, ICustomAttributeProvider
+	public struct FieldDefinition : IEquatable<FieldDefinition>, IMetadataEntity
 	{
 		public PEFile Module { get; }
 		public FieldDefinitionHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
+		EntityHandle IMetadataEntity.Handle => Handle;
 
 		public FieldDefinition(PEFile module, FieldDefinitionHandle handle) : this()
 		{
@@ -621,7 +581,7 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Handle = handle;
 		}
 
-		SRMField This() => Module.GetMetadataReader().GetFieldDefinition(Handle);
+		public SRMField This() => Module.GetMetadataReader().GetFieldDefinition(Handle);
 
 		public bool Equals(FieldDefinition other)
 		{
@@ -643,34 +603,10 @@ namespace ICSharpCode.Decompiler.Dom
 		public static bool operator ==(FieldDefinition lhs, FieldDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(FieldDefinition lhs, FieldDefinition rhs) => !lhs.Equals(rhs);
 
-		public string Name {
-			get {
-				var reader = Module.GetMetadataReader();
-				return reader.GetString(reader.GetFieldDefinition(Handle).Name);
-			}
-		}
-
-		public TypeDefinition DeclaringType => new TypeDefinition(Module, This().GetDeclaringType());
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
-
-		public FieldAttributes Attributes => This().Attributes;
-		public bool HasFlag(FieldAttributes attribute) => (This().Attributes & attribute) == attribute;
-		public CustomAttributeHandleCollection CustomAttributes => This().GetCustomAttributes();
-		public int RVA => This().GetRelativeVirtualAddress();
-		public int Offset => This().GetOffset();
-
-		public BlobHandle GetMarshallingDescriptor() => This().GetMarshallingDescriptor();
-		public ConstantHandle GetDefaultValue() => This().GetDefaultValue();
-
-		public TType DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeSignature(provider, genericContext);
-		}
-
 		public object DecodeConstant()
 		{
 			var metadata = Module.GetMetadataReader();
-			var constant = metadata.GetConstant(GetDefaultValue());
+			var constant = metadata.GetConstant(This().GetDefaultValue());
 			var blob = metadata.GetBlobReader(constant.Value);
 			switch (constant.TypeCode) {
 				case ConstantTypeCode.Boolean:
@@ -705,15 +641,14 @@ namespace ICSharpCode.Decompiler.Dom
 					throw new NotSupportedException();
 			}
 		}
-
-		IMemberDefinition IMemberReference.GetDefinition() => this;
 	}
 
-	public struct EventDefinition : IEquatable<EventDefinition>, IMemberDefinition, ICustomAttributeProvider
+	public struct EventDefinition : IEquatable<EventDefinition>, IMetadataEntity
 	{
 		public PEFile Module { get; }
 		public EventDefinitionHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
+		EntityHandle IMetadataEntity.Handle => Handle;
 
 		public EventDefinition(PEFile module, EventDefinitionHandle handle)
 		{
@@ -721,7 +656,7 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Handle = handle;
 		}
 
-		SRMEvent This() => Module.GetMetadataReader().GetEventDefinition(Handle);
+		public SRMEvent This() => Module.GetMetadataReader().GetEventDefinition(Handle);
 
 		public bool Equals(EventDefinition other)
 		{
@@ -742,7 +677,7 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public static bool operator ==(EventDefinition lhs, EventDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(EventDefinition lhs, EventDefinition rhs) => !lhs.Equals(rhs);
-
+		/*
 		public string Name {
 			get {
 				var reader = Module.GetMetadataReader();
@@ -751,7 +686,6 @@ namespace ICSharpCode.Decompiler.Dom
 		}
 
 		public TypeDefinition DeclaringType => GetAccessors().First().Method.DeclaringType;
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
 
 		public EventAttributes Attributes => This().Attributes;
 		public bool HasFlag(EventAttributes attribute) => (This().Attributes & attribute) == attribute;
@@ -764,51 +698,17 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors()
 		{
-			var reader = Module.GetMetadataReader();
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
-
-			uint encodedTag = (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 0;
-			var methodDefRefSize = reader.GetReferenceSize(TableIndex.MethodDef);
-			(int startRow, int endRow) = reader.BinarySearchRange(TableIndex.MethodSemantics, 2 + methodDefRefSize, encodedTag, reader.IsSmallReference(TableIndex.MethodSemantics));
-			if (startRow == -1)
-				return ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)>.Empty;
-			var methods = new(MethodSemanticsAttributes Kind, MethodDefinition Method)[endRow - startRow + 1];
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
-			for (int row = startRow; row <= endRow; row++) {
-				int rowOffset = row * rowSize;
-				byte* ptr = startPointer + offset + rowOffset;
-				var kind = (MethodSemanticsAttributes)(*(ushort*)ptr);
-				var handle = MetadataTokens.MethodDefinitionHandle(*(ushort*)(ptr + 2));
-				methods[row - startRow] = (kind, new MethodDefinition(Module, handle));
-			}
-			return methods.ToImmutableArray();
-		}
-
-		public TType DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			var type = This().Type;
-			var reader = Module.GetMetadataReader();
-			switch (type.Kind) {
-				case HandleKind.TypeDefinition:
-					return provider.GetTypeFromDefinition(reader, (TypeDefinitionHandle)type, 0);
-				case HandleKind.TypeReference:
-					return provider.GetTypeFromReference(reader, (TypeReferenceHandle)type, 0);
-				case HandleKind.TypeSpecification:
-					return provider.GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)type, 0);
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		IMemberDefinition IMemberReference.GetDefinition() => this;
+			return PropertyDefinition.GetAccessors(Module, (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 0);
+		}*/
 	}
 
-	public struct TypeDefinition : IEquatable<TypeDefinition>, ITypeDefinition, ICustomAttributeProvider
+	public struct TypeDefinition : IEquatable<TypeDefinition>, IMetadataEntity
 	{
 		public PEFile Module { get; }
 		public TypeDefinitionHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
+
+		EntityHandle IMetadataEntity.Handle => Handle;
 
 		public TypeDefinition(PEFile module, TypeDefinitionHandle handle)
 		{
@@ -816,7 +716,7 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Handle = handle;
 		}
 
-		internal SRMTypeDef This() => Module.GetMetadataReader().GetTypeDefinition(Handle);
+		public SRMTypeDef This() => Module.GetMetadataReader().GetTypeDefinition(Handle);
 
 		public bool Equals(TypeDefinition other)
 		{
@@ -837,106 +737,9 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public static bool operator ==(TypeDefinition lhs, TypeDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(TypeDefinition lhs, TypeDefinition rhs) => !lhs.Equals(rhs);
-
-		public string Name => Module.GetMetadataReader().GetString(This().Name);
-		public string Namespace => Module.GetMetadataReader().GetString(This().Namespace);
-		public FullTypeName FullName => This().GetFullTypeName(Module.GetMetadataReader());
-		public TypeAttributes Attributes => This().Attributes;
-		public bool HasFlag(TypeAttributes attribute) => (This().Attributes & attribute) == attribute;
-		public TypeDefinition DeclaringType => new TypeDefinition(Module, This().GetDeclaringType());
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
-		public GenericParameterHandleCollection GenericParameters => This().GetGenericParameters();
-		public CustomAttributeHandleCollection CustomAttributes => This().GetCustomAttributes();
-		public DeclarativeSecurityAttributeHandleCollection DeclarativeSecurityAttributes => This().GetDeclarativeSecurityAttributes();
-		public TypeLayout GetLayout() => This().GetLayout();
-
-		public ITypeReference BaseType {
-			get {
-				var baseType = This().BaseType;
-				return CreateTypeReference(baseType);
-			}
-		}
-
-		ITypeReference CreateTypeReference(EntityHandle baseType)
-		{
-			if (baseType.IsNil)
-				return null;
-			switch (baseType.Kind) {
-				case HandleKind.TypeDefinition:
-					return new TypeDefinition(Module, (TypeDefinitionHandle)baseType);
-				case HandleKind.TypeReference:
-					return new TypeReference(Module, (TypeReferenceHandle)baseType);
-				case HandleKind.TypeSpecification:
-					return new TypeSpecification(Module, (TypeSpecificationHandle)baseType);
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		public bool HasInterfaces => This().GetInterfaceImplementations().Count > 0;
-
-		public ImmutableArray<ITypeReference> Interfaces => GetInterfaces().ToImmutableArray();
-
-		IEnumerable<ITypeReference> GetInterfaces()
-		{
-			var reader = Module.GetMetadataReader();
-			foreach (var h in This().GetInterfaceImplementations()) {
-				var interfaceImpl = reader.GetInterfaceImplementation(h);
-				yield return CreateTypeReference(interfaceImpl.Interface);
-			}
-		}
-
-		public bool IsValueType => This().IsValueType(Module.GetMetadataReader());
-		public bool IsEnum => This().IsEnum(Module.GetMetadataReader());
-		public bool IsInterface => (This().Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface;
-		public bool IsClass => (This().Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Class;
-		public bool IsNotPublic => (This().Attributes & TypeAttributes.VisibilityMask) == 0;
-		public bool IsDelegate {
-			get {
-				var baseType = This().BaseType;
-				return !baseType.IsNil && baseType.GetFullTypeName(Module.GetMetadataReader()).ToString() == typeof(MulticastDelegate).FullName;
-			}
-		}
-
-		public ImmutableArray<TypeDefinition> NestedTypes {
-			get {
-				var module = Module;
-				return This().GetNestedTypes().Select(nt => new TypeDefinition(module, nt)).ToImmutableArray();
-			}
-		}
-		public ImmutableArray<FieldDefinition> Fields {
-			get {
-				var module = Module;
-				return This().GetFields().Select(f => new FieldDefinition(module, f)).ToImmutableArray();
-			}
-		}
-		public ImmutableArray<PropertyDefinition> Properties {
-			get {
-				var module = Module;
-				return This().GetProperties().Select(p => new PropertyDefinition(module, p)).ToImmutableArray();
-			}
-		}
-		public ImmutableArray<EventDefinition> Events {
-			get {
-				var module = Module;
-				return This().GetEvents().Select(e => new EventDefinition(module, e)).ToImmutableArray();
-			}
-		}
-		public ImmutableArray<MethodDefinition> Methods {
-			get {
-				var module = Module;
-				return This().GetMethods().Select(m => new MethodDefinition(module, m)).ToImmutableArray();
-			}
-		}
-
-		TypeDefinition ITypeReference.GetDefinition() => this;
-
-		public InterfaceImplementationHandleCollection GetInterfaceImplementations() => This().GetInterfaceImplementations();
-
-		IMemberDefinition IMemberReference.GetDefinition() => this;
 	}
 
-	public struct TypeReference : ITypeReference
+	public struct TypeReference
 	{
 		public PEFile Module { get; }
 		public TypeReferenceHandle Handle { get; }
@@ -971,12 +774,9 @@ namespace ICSharpCode.Decompiler.Dom
 		{
 			return MetadataResolver.Resolve(Handle, new SimpleMetadataResolveContext(Module));
 		}
-
-		IMemberDefinition IMemberReference.GetDefinition() => GetDefinition();
-		ITypeReference IMemberReference.DeclaringType => new TypeReference(Module, This().GetDeclaringType());
 	}
 
-	public struct TypeSpecification : ITypeReference
+	public struct TypeSpecification
 	{
 		public PEFile Module { get; }
 		public TypeSpecificationHandle Handle { get; }
@@ -1000,16 +800,9 @@ namespace ICSharpCode.Decompiler.Dom
 
 		public string Namespace => FullName.TopLevelTypeName.Namespace;
 
-		public ITypeReference DeclaringType => GetDefinition().DeclaringType;
-
 		public TypeDefinition GetDefinition()
 		{
 			return MetadataResolver.Resolve(Handle, new SimpleMetadataResolveContext(Module));
-		}
-
-		IMemberDefinition IMemberReference.GetDefinition()
-		{
-			return GetDefinition();
 		}
 
 		public TType DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
@@ -1018,38 +811,20 @@ namespace ICSharpCode.Decompiler.Dom
 		}
 	}
 
-	public struct MethodSpecification : IMethodReference
+	public struct MethodSpecification
 	{
 		public PEFile Module { get; }
 		public MethodSpecificationHandle Handle { get; }
 		public bool IsNil => Handle.IsNil;
-
-		public string Name => This().Method.CoerceMemberReference(Module).Name;
 
 		public MethodSpecification(PEFile module, MethodSpecificationHandle handle)
 		{
 			this.Module = module ?? throw new ArgumentNullException(nameof(module));
 			this.Handle = handle;
 		}
-
-		SRMMethodSpec This() => Module.GetMetadataReader().GetMethodSpecification(Handle);
-
-		public ImmutableArray<TType> DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeSignature(provider, genericContext);
-		}
-
-		public IMemberDefinition GetDefinition()
-		{
-			return Method.GetDefinition();
-		}
-
-		public ITypeReference DeclaringType => Method.DeclaringType;
-
-		public IMemberReference Method => This().Method.CoerceMemberReference(Module);
 	}
 
-	public struct MemberReference : IMemberReference
+	public struct MemberReference
 	{
 		public PEFile Module { get; }
 		public MemberReferenceHandle Handle { get; }
@@ -1062,42 +837,9 @@ namespace ICSharpCode.Decompiler.Dom
 			this.Module = module ?? throw new ArgumentNullException(nameof(module));
 			this.Handle = handle;
 		}
-
-		public string Name {
-			get {
-				var reader = Module.GetMetadataReader();
-				return reader.GetString(reader.GetMemberReference(Handle).Name);
-			}
-		}
-
-		public MemberReferenceKind Kind => This().GetKind();
-
-		/// <summary>
-		/// MethodDef, ModuleRef,TypeDef, TypeRef, or TypeSpec handle.
-		/// </summary>
-		public EntityHandle Parent => This().Parent;
-
-		public MethodSignature<TType> DecodeMethodSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeMethodSignature(provider, genericContext);
-		}
-
-		public TType DecodeFieldSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeFieldSignature(provider, genericContext);
-		}
-
-		public IMemberDefinition GetDefinition()
-		{
-			return MetadataResolver.Resolve(Handle, new SimpleMetadataResolveContext(Module));
-		}
-
-		public TypeDefinition DeclaringType => GetDefinition().DeclaringType;
-
-		ITypeReference IMemberReference.DeclaringType => DeclaringType;
 	}
 
-	class FullTypeNameSignatureDecoder : ISignatureTypeProvider<FullTypeName, Unit>
+	public sealed class FullTypeNameSignatureDecoder : ISignatureTypeProvider<FullTypeName, Unit>
 	{
 		readonly MetadataReader metadata;
 
@@ -1179,53 +921,70 @@ namespace ICSharpCode.Decompiler.Dom
 
 	public class GenericContext
 	{
-		readonly MethodDefinition method;
-		readonly TypeDefinition declaringType;
+		readonly PEFile module;
 		readonly MetadataReader metadata;
+		readonly TypeDefinitionHandle declaringType;
+		readonly MethodDefinitionHandle method;
 
 		public static readonly GenericContext Empty = new GenericContext();
 
 		private GenericContext() { }
 
-		public GenericContext(MethodDefinition method)
+		public GenericContext(MethodDefinitionHandle method, PEFile module)
 		{
+			this.module = module;
+			this.metadata = module.GetMetadataReader();
 			this.method = method;
-			this.declaringType = method.DeclaringType;
-			this.metadata = method.Module.GetMetadataReader();
+			this.declaringType = metadata.GetMethodDefinition(method).GetDeclaringType();
+		}
+
+		public GenericContext(MethodDefinition method)
+			: this(method.Handle, method.Module)
+		{
+		}
+
+		public GenericContext(TypeDefinitionHandle declaringType, PEFile module)
+		{
+			this.module = module;
+			this.metadata = module.GetMetadataReader();
+			this.declaringType = declaringType;
 		}
 
 		public GenericContext(TypeDefinition declaringType)
+			: this(declaringType.Handle, declaringType.Module)
 		{
-			this.declaringType = declaringType;
-			this.metadata = declaringType.Module.GetMetadataReader();
 		}
 
 		public string GetGenericTypeParameterName(int index)
 		{
-			if (declaringType.IsNil || index < 0 || index >= declaringType.GenericParameters.Count)
+			GenericParameterHandle genericParameter = GetGenericTypeParameterHandleOrNull(index);
+			if (genericParameter.IsNil)
 				return index.ToString();
-			return metadata.GetString(metadata.GetGenericParameter(declaringType.GenericParameters[index]).Name);
+			return metadata.GetString(metadata.GetGenericParameter(genericParameter).Name);
 		}
 
 		public string GetGenericMethodTypeParameterName(int index)
 		{
-			if (method.IsNil || index < 0 || index >= method.GenericParameters.Count)
+			GenericParameterHandle genericParameter = GetGenericMethodTypeParameterHandleOrNull(index);
+			if (genericParameter.IsNil)
 				return index.ToString();
-			return metadata.GetString(metadata.GetGenericParameter(method.GenericParameters[index]).Name);
+			return metadata.GetString(metadata.GetGenericParameter(genericParameter).Name);
 		}
 
 		public GenericParameterHandle GetGenericTypeParameterHandleOrNull(int index)
 		{
-			if (declaringType.IsNil || index < 0 || index >= declaringType.GenericParameters.Count)
+			GenericParameterHandleCollection genericParameters;
+			if (declaringType.IsNil || index < 0 || index >= (genericParameters = metadata.GetTypeDefinition(declaringType).GetGenericParameters()).Count)
 				return MetadataTokens.GenericParameterHandle(0);
-			return declaringType.GenericParameters[index];
+			return genericParameters[index];
 		}
 
 		public GenericParameterHandle GetGenericMethodTypeParameterHandleOrNull(int index)
 		{
-			if (method.IsNil || index < 0 || index >= method.GenericParameters.Count)
+			GenericParameterHandleCollection genericParameters;
+			if (method.IsNil || index < 0 || index >= (genericParameters = metadata.GetMethodDefinition(method).GetGenericParameters()).Count)
 				return MetadataTokens.GenericParameterHandle(0);
-			return method.GenericParameters[index];
+			return genericParameters[index];
 		}
 	}
 }

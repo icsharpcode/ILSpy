@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
 
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Dom.MethodDefinition method, ITextOutput writer)
+		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.MethodDefinition method, ITextOutput writer)
 		{
 			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryOffset);
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			if (!exceptionHandler.CatchType.IsNil) {
 				writer.Write(' ');
-				exceptionHandler.CatchType.CoerceTypeReference(method.Module).WriteTo(writer, new GenericContext(method));
+				exceptionHandler.CatchType.WriteTo(method.Module, writer, new GenericContext(method));
 			}
 			writer.Write(' ');
 			WriteOffsetReference(writer, exceptionHandler.HandlerOffset);
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string Escape(string identifier)
 		{
-			if (IsValidIdentifier(identifier) && !IL.ILOpCodeExtensions.ILKeywords.Contains(identifier)) {
+			if (IsValidIdentifier(identifier) && !Metadata.ILOpCodeExtensions.ILKeywords.Contains(identifier)) {
 				return identifier;
 			} else {
 				// The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
@@ -129,15 +129,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static void WriteParameterReference(ITextOutput writer, Dom.MethodDefinition method, int sequence)
+		public static void WriteParameterReference(ITextOutput writer, Metadata.MethodDefinition method, int sequence)
 		{
 			var metadata = method.Module.GetMetadataReader();
-			var signatureHeader = method.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit)).Header;
+			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			var signatureHeader = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit)).Header;
 			int index = signatureHeader.IsInstance && !signatureHeader.HasExplicitThis ? sequence - 1 : sequence;
-			if (index < 0 || index >= method.Parameters.Count) {
+			var parameters = methodDefinition.GetParameters();
+			if (index < 0 || index >= parameters.Count) {
 				writer.Write(sequence.ToString());
 			} else {
-				var param = metadata.GetParameter(method.Parameters.ElementAt(index));
+				var param = metadata.GetParameter(parameters.ElementAt(index));
 				if (param.Name.IsNil) {
 					writer.Write(sequence.ToString());
 				} else {
@@ -146,7 +148,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static void WriteVariableReference(ITextOutput writer, Dom.MethodDefinition method, int index)
+		public static void WriteVariableReference(ITextOutput writer, Metadata.MethodDefinition method, int index)
 		{
 			writer.Write(index.ToString());
 		}

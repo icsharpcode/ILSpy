@@ -45,11 +45,11 @@ using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -206,20 +206,18 @@ namespace ICSharpCode.ILSpy.TextView
 					}
 				}
 				return $"{code.Name} (0x{code.Code:x})";
-			} else if (segment.Reference is MemberReference) {
-				MemberReference mr = (MemberReference)segment.Reference;
+			} else if (segment.Reference is Entity entity) {
 				// if possible, resolve the reference
-				if (mr is TypeReference) {
-					mr = ((TypeReference)mr).Resolve() ?? mr;
-				} else if (mr is MethodReference) {
-					mr = ((MethodReference)mr).Resolve() ?? mr;
+				if (entity.IsType()) {
+					var td = entity.ResolveAsType();
+					if (!td.IsNil) entity = td;
 				}
 				XmlDocRenderer renderer = new XmlDocRenderer();
-				//renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(mr));
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
 				try {
-					XmlDocumentationProvider docProvider = XmlDocLoader.LoadDocumentation(mr.Module);
+					var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
 					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
 						if (documentation != null) {
 							renderer.AppendText(Environment.NewLine);
 							renderer.AddXmlDocumentation(documentation);

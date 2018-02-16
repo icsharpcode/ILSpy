@@ -277,26 +277,27 @@
     <Compile Include="Documentation\XmlDocKeyProvider.cs" />
     <Compile Include="Documentation\XmlDocLoader.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
-    <Compile Include="Dom\Dom.cs" />
-    <Compile Include="Dom\MetadataResolver.cs" />
-    <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
-    <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonArray.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonObject.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonValue.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonValueType.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonParseException.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonSerializationException.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonWriter.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\TextPosition.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\TextScanner.cs" />
-    <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
-    <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="Metadata\Dom.cs" />
+    <Compile Include="Metadata\MetadataResolver.cs" />
+    <Compile Include="Metadata\DotNetCorePathFinder.cs" />
+    <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="Metadata\LightJson\JsonArray.cs" />
+    <Compile Include="Metadata\LightJson\JsonObject.cs" />
+    <Compile Include="Metadata\LightJson\JsonValue.cs" />
+    <Compile Include="Metadata\LightJson\JsonValueType.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonParseException.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonReader.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonSerializationException.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonWriter.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\TextPosition.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\TextScanner.cs" />
+    <Compile Include="Metadata\OperandType.cs" />
+    <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
+    <Compile Include="Metadata\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
-    <Compile Include="Dom\SequencePoint.cs" />
+    <Compile Include="Metadata\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
@@ -329,8 +330,10 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="SRMExtensions.cs" />
+    <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
-    <Compile Include="Dom\MetadataExtensions.cs" />
+    <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
@@ -396,7 +399,7 @@
     <Compile Include="Disassembler\ReflectionDisassembler.cs" />
     <Compile Include="IL\SemanticHelper.cs" />
     <Compile Include="IL\BlockBuilder.cs" />
-    <Compile Include="IL\ILOpCodes.cs">
+    <Compile Include="Metadata\ILOpCodes.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ILOpCodes.tt</DependentUpon>
@@ -576,7 +579,7 @@
     <None Include="ICSharpCode.Decompiler.nuspec.template" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
     <None Include="ICSharpCode.Decompiler.snk" />
-    <None Include="IL\ILOpCodes.tt">
+    <None Include="Metadata\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>
     </None>

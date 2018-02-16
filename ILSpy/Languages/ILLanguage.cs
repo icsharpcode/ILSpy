@@ -25,7 +25,7 @@ using System.Reflection.Metadata;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Linq;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
@@ -57,62 +57,69 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 
-		public override void DecompileMethod(Decompiler.Dom.MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleMethod(method);
 		}
 		
-		public override void DecompileField(Decompiler.Dom.FieldDefinition field, ITextOutput output, DecompilationOptions options)
+		public override void DecompileField(Decompiler.Metadata.FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleField(field);
 		}
 		
-		public override void DecompileProperty(Decompiler.Dom.PropertyDefinition property, ITextOutput output, DecompilationOptions options)
+		public override void DecompileProperty(Decompiler.Metadata.PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleProperty(property);
 
-			if (!property.GetMethod.IsNil) {
+			var accessors = property.This().GetAccessors();
+
+			if (!accessors.Getter.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(property.GetMethod);
+				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(property.Module, accessors.Getter));
 			}
-			if (!property.SetMethod.IsNil) {
+			if (!accessors.Setter.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(property.SetMethod);
+				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(property.Module, accessors.Setter));
 			}
-			foreach (var m in property.OtherMethods) {
+			/*foreach (var m in property.OtherMethods) {
 				output.WriteLine();
 				dis.DisassembleMethod(m);
-			}
+			}*/
 		}
 		
-		public override void DecompileEvent(Decompiler.Dom.EventDefinition ev, ITextOutput output, DecompilationOptions options)
+		public override void DecompileEvent(Decompiler.Metadata.EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleEvent(ev);
-			if (!ev.AddMethod.IsNil) {
+			var accessors = ev.This().GetAccessors();
+			if (!accessors.Adder.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(ev.AddMethod);
+				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Adder));
 			}
-			if (!ev.RemoveMethod.IsNil) {
+			if (!accessors.Remover.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(ev.RemoveMethod);
+				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Remover));
 			}
-			foreach (var m in ev.OtherMethods) {
+			if (!accessors.Raiser.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Raiser));
+			}
+			/*foreach (var m in ev.OtherMethods) {
 				output.WriteLine();
 				dis.DisassembleMethod(m);
-			}
+			}*/
 		}
 		
-		public override void DecompileType(Decompiler.Dom.TypeDefinition type, ITextOutput output, DecompilationOptions options)
+		public override void DecompileType(Decompiler.Metadata.TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleType(type);
 		}
 		
-		public override void DecompileNamespace(string nameSpace, IEnumerable<Decompiler.Dom.TypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		public override void DecompileNamespace(string nameSpace, IEnumerable<Decompiler.Metadata.TypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleNamespace(nameSpace, types);
@@ -137,8 +144,8 @@ namespace ICSharpCode.ILSpy
 				dis.WriteModuleContents(module);
 			}
 		}
-		
-		public override string TypeToString(Decompiler.Dom.ITypeReference type, bool includeNamespace, Decompiler.Dom.ICustomAttributeProvider typeAttributes = null)
+
+		public override string TypeToString(Entity type, bool includeNamespace, CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
 		{
 			PlainTextOutput output = new PlainTextOutput();
 			type.WriteTo(output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
