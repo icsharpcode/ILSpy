@@ -47,15 +47,18 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
 			string publicKey = "null";
-			if (!reference.PublicKeyOrToken.IsNil && (reference.Flags & AssemblyFlags.PublicKey) != 0) {
-				SHA1 sha1 = SHA1.Create();
-				var publicKeyTokenBytes = sha1.ComputeHash(reader.GetBlobBytes(reference.PublicKeyOrToken)).Skip(12).ToArray();
+			if (!reference.PublicKeyOrToken.IsNil) {
+				byte[] publicKeyTokenBytes = reader.GetBlobBytes(reference.PublicKeyOrToken);
+				if ((reference.Flags & AssemblyFlags.PublicKey) != 0) {
+					SHA1 sha1 = SHA1.Create();
+					publicKeyTokenBytes = sha1.ComputeHash(publicKeyTokenBytes).Skip(12).ToArray();
+				}
 				publicKey = publicKeyTokenBytes.ToHexString();
 			}
 			string properties = "";
 			if ((reference.Flags & AssemblyFlags.Retargetable) != 0)
 				properties = ", Retargetable=true";
-			return $"{reader.GetString(reference.Name)}, Version={reference.Version}, Culture={reader.GetString(reference.Culture)}, PublicKeyToken={publicKey}{properties}";
+			return $"{reader.GetString(reference.Name)}, Version={reference.Version}, Culture={(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture))}, PublicKeyToken={publicKey}{properties}";
 		}
 
 		static string ToHexString(this byte[] bytes)

@@ -157,7 +157,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			var metadata = module.GetMetadataReader();
 
-			this.Children.Add(new ReferenceFolderTreeNode(metadata, this));
+			this.Children.Add(new ReferenceFolderTreeNode(module, this));
 			if (module.Resources.Any())
 				this.Children.Add(new ResourceListTreeNode(module));
 			foreach (NamespaceTreeNode ns in namespaces.Values) {

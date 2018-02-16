@@ -18,36 +18,33 @@
 
 using System;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Node within assembly reference list.
 	/// </summary>
-	/*public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
+	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly AssemblyNameReference r;
+		readonly AssemblyReference r;
 		readonly AssemblyTreeNode parentAssembly;
 		
-		public AssemblyReferenceTreeNode(AssemblyNameReference r, AssemblyTreeNode parentAssembly)
+		public AssemblyReferenceTreeNode(AssemblyReference r, AssemblyTreeNode parentAssembly)
 		{
 			if (parentAssembly == null)
 				throw new ArgumentNullException(nameof(parentAssembly));
-			if (r == null)
+			if (r.IsNil)
 				throw new ArgumentNullException(nameof(r));
 			this.r = r;
 			this.parentAssembly = parentAssembly;
 			this.LazyLoading = true;
 		}
 
-		public AssemblyNameReference AssemblyNameReference
-		{
-			get { return r; }
-		}
-		
+		public IAssemblyReference AssemblyNameReference => r;
+
 		public override object Text {
-			get { return r.Name + r.MetadataToken.ToSuffixString(); }
+			get { return r.Name + ((System.Reflection.Metadata.EntityHandle)r.Handle).ToSuffixString(); }
 		}
 		
 		public override object Icon {
@@ -77,7 +74,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (assemblyListNode != null) {
 				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r));
 				if (refNode != null) {
-					ModuleDefinition module = refNode.LoadedAssembly.GetPEFileOrNull();
+					var module = refNode.LoadedAssembly.GetPEFileOrNull();
 					if (module != null) {
 						foreach (var childRef in module.AssemblyReferences)
 							this.Children.Add(new AssemblyReferenceTreeNode(childRef, refNode));
@@ -106,5 +103,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.WriteLine();
 			}
 		}
-	}*/
+	}
 }

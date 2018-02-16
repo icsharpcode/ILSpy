@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		IEnumerable<ModuleReferenceHandle> GetModuleReferences()
 		{
 			var rowCount = GetMetadataReader().GetTableRowCount(TableIndex.ModuleRef);
-			for (int row = 0; row < rowCount; row++) {
+			for (int row = 1; row <= rowCount; row++) {
 				yield return MetadataTokens.ModuleReferenceHandle(row);
 			}
 		}

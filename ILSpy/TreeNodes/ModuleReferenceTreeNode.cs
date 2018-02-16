@@ -17,27 +17,31 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Module reference in ReferenceFolderTreeNode.
 	/// </summary>
-	/*sealed class ModuleReferenceTreeNode : ILSpyTreeNode
+	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly ModuleReference r;
+		readonly MetadataReader metadata;
+		readonly ModuleReferenceHandle handle;
+		readonly ModuleReference reference;
 		
-		public ModuleReferenceTreeNode(ModuleReference r)
+		public ModuleReferenceTreeNode(ModuleReferenceHandle r, MetadataReader module)
 		{
-			if (r == null)
+			if (r.IsNil)
 				throw new ArgumentNullException(nameof(r));
-			this.r = r;
+			this.metadata = module;
+			this.handle = r;
+			this.reference = module.GetModuleReference(r);
 		}
 		
 		public override object Text {
-			get { return r.Name + r.MetadataToken.ToSuffixString(); }
+			get { return metadata.GetString(reference.Name) + ((EntityHandle)handle).ToSuffixString(); }
 		}
 		
 		public override object Icon {
@@ -46,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, r.Name);
+			language.WriteCommentLine(output, metadata.GetString(reference.Name));
 		}
-	}*/
+	}
 }
