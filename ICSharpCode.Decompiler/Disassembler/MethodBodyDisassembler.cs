@@ -99,7 +99,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (body.LocalSignature.IsNil) return;
 			var metadata = method.Module.GetMetadataReader();
-			var signature = metadata.GetStandaloneSignature(body.LocalSignature).DecodeLocalSignature(new DisassemblerSignatureProvider(method.Module, output), new Metadata.GenericContext(method));
+			var blob = metadata.GetStandaloneSignature(body.LocalSignature);
+			if (blob.GetKind() != StandaloneSignatureKind.LocalVariables)
+				return;
+			var reader = metadata.GetBlobReader(blob.Signature);
+			if (reader.Length < 2)
+				return;
+			reader.Offset = 1;
+			if (reader.ReadCompressedInteger() == 0)
+				return;
+			var signature = blob.DecodeLocalSignature(new DisassemblerSignatureProvider(method.Module, output), new GenericContext(method));
 			if (!signature.IsEmpty) {
 				output.Write(".locals ");
 				if (body.LocalVariablesInitialized)
