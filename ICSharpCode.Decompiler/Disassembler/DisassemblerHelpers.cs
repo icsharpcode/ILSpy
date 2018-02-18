@@ -133,13 +133,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var metadata = method.Module.GetMetadataReader();
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			var signatureHeader = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit)).Header;
-			int index = signatureHeader.IsInstance && !signatureHeader.HasExplicitThis ? sequence - 1 : sequence;
-			var parameters = methodDefinition.GetParameters();
-			if (index < 0 || index >= parameters.Count) {
+			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
+			var parameters = methodDefinition.GetParameters().Select(p => metadata.GetParameter(p)).ToArray();
+			var signatureHeader = signature.Header;
+			int index = sequence;
+			if (signatureHeader.IsInstance && signature.ParameterTypes.Length == parameters.Length) {
+				index--;
+			}
+			if (index < 0 || index >= parameters.Length) {
 				writer.Write(sequence.ToString());
 			} else {
-				var param = metadata.GetParameter(parameters.ElementAt(index));
+				var param = parameters[index];
 				if (param.Name.IsNil) {
 					writer.Write(sequence.ToString());
 				} else {
