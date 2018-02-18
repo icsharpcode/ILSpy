@@ -60,6 +60,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static MethodDefinition ResolveMember(EntityHandle handle, IMetadataResolveContext context)
 		{
 			switch (handle.Kind) {
+				case HandleKind.MethodDefinition:
+					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
 				case HandleKind.MemberReference:
 					break;
 			}

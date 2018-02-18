@@ -583,7 +583,20 @@ namespace ICSharpCode.ILSpy
 				case Resource res:
 					return assemblyListTreeNode.FindResourceNode(res);
 				case IMetadataEntity entity:
-					throw new NotImplementedException();
+					switch (entity) {
+						case TypeDefinition td:
+							return assemblyListTreeNode.FindTypeNode(td);
+						case FieldDefinition fd:
+							return assemblyListTreeNode.FindFieldNode(fd);
+						case MethodDefinition md:
+							return assemblyListTreeNode.FindMethodNode(md);
+						case PropertyDefinition pd:
+							return assemblyListTreeNode.FindPropertyNode(pd);
+						case EventDefinition ed:
+							return assemblyListTreeNode.FindEventNode(ed);
+						default:
+							throw new NotSupportedException();
+					}
 				default:
 					return null;
 			}
