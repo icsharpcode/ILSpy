@@ -71,14 +71,30 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
 		{
-			var queue = new Queue<NamespaceDefinition>();
-			queue.Enqueue(reader.GetNamespaceDefinitionRoot());
-			while (queue.Count > 0) {
-				var ns = queue.Dequeue();
-				foreach (var td in ns.TypeDefinitions)
-					yield return td;
-				foreach (var nestedNS in ns.NamespaceDefinitions)
-					queue.Enqueue(reader.GetNamespaceDefinition(nestedNS));
+			unsafe HashSet<uint> GetNestedTypes()
+			{
+				byte* startPointer = reader.MetadataPointer;
+				int offset = reader.GetTableMetadataOffset(TableIndex.NestedClass);
+				int rowSize = reader.GetTableRowSize(TableIndex.NestedClass);
+				int rowCount = reader.GetTableRowCount(TableIndex.NestedClass);
+				var typeDefSize = reader.GetReferenceSize(TableIndex.TypeDef);
+
+				var set = new HashSet<uint>();
+
+				for (int row = 0; row < rowCount; row++) {
+					byte* ptr = startPointer + offset + rowSize * row;
+					uint currentTypeRow = typeDefSize == 2 ? *(ushort*)ptr : *(uint*)ptr;
+					set.Add(currentTypeRow);
+				}
+
+				return set;
+			}
+
+			HashSet<uint> nestedTypes = GetNestedTypes();
+
+			foreach (var handle in reader.TypeDefinitions) {
+				if (!nestedTypes.Contains((uint)reader.GetRowNumber(handle)))
+					yield return handle;
 			}
 		}
 
