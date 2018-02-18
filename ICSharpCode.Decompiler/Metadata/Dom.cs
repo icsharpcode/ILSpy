@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var metadata = GetMetadataReader();
 			if (metadata.IsAssembly)
-				return metadata.GetString(metadata.GetAssemblyDefinition().Name) + " (" + metadata.GetAssemblyDefinition().Version + ")";
+				return metadata.GetString(metadata.GetAssemblyDefinition().Name);
 			return metadata.GetString(metadata.GetModuleDefinition().Name);
 		}
 
