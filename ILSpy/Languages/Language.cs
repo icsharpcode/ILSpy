@@ -304,7 +304,7 @@ namespace ICSharpCode.ILSpy
 
 		public string GetFunctionPointerType(SRM.MethodSignature<string> signature)
 		{
-			throw new NotImplementedException();
+			return "method " + signature.ReturnType + " *(" + string.Join(", ", signature.ParameterTypes) + ")";
 		}
 
 		public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
@@ -324,7 +324,8 @@ namespace ICSharpCode.ILSpy
 
 		public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
 		{
-			throw new NotImplementedException();
+			string modifierKeyword = isRequired ? "modreq" : "modopt";
+			return $"{unmodifiedType} {modifierKeyword}({modifier})";
 		}
 
 		public string GetPinnedType(string elementType)

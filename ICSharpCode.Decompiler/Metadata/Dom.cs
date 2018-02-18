@@ -785,7 +785,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetFunctionPointerType(MethodSignature<FullTypeName> signature)
 		{
-			throw new NotSupportedException();
+			return default(FullTypeName);
 		}
 
 		public FullTypeName GetGenericInstantiation(FullTypeName genericType, ImmutableArray<FullTypeName> typeArguments)
