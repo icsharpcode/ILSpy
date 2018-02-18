@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					int entryPoint = -1;
 
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
-					if (!isAfterConditionalBranch[loopStart])
+					if (loopStart > 0 && !isAfterConditionalBranch[loopStart])
 						entryPoint = allBranches[i].Target;
 					
 					bool multipleEntryPoints = false;
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		(List<Branch> Branches, BitSet IsAfterUnconditionalBranch) FindAllBranches(BlobReader body)
 		{
 			var result = new List<Branch>();
-			var bitset = new BitSet(body.Length);
+			var bitset = new BitSet(body.Length + 1);
 			body.Reset();
 			int target;
 			while (body.RemainingBytes > 0) {
@@ -231,6 +231,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						break;
 					default:
 						ILParser.SkipOperand(ref body, thisOpCode);
+						bitset[body.Offset] = IsUnconditionalBranch(thisOpCode);
 						break;
 				}
 			}
