@@ -158,6 +158,26 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				case HandleKind.PropertyDefinition:
 				case HandleKind.EventDefinition:
+					throw new NotSupportedException();
+				case HandleKind.StandaloneSignature:
+					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity.Handle);
+					switch (standaloneSig.GetKind()) {
+						case StandaloneSignatureKind.Method:
+							var methodSig = standaloneSig.DecodeMethodSignature(new DisassemblerSignatureProvider(entity.Module, output), genericContext);
+							methodSig.ReturnType(ILNameSyntax.SignatureNoNamedTypeParameters);
+							output.Write('(');
+							for (int i = 0; i < methodSig.ParameterTypes.Length; i++) {
+								if (i > 0)
+									output.Write(", ");
+								methodSig.ParameterTypes[i](ILNameSyntax.SignatureNoNamedTypeParameters);
+							}
+							output.Write(')');
+							break;
+						case StandaloneSignatureKind.LocalVariables:
+						default:
+							throw new NotSupportedException();
+					}
+					break;
 				default:
 					throw new NotSupportedException();
 			}
