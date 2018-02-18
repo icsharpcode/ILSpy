@@ -337,50 +337,60 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine(" = {");
 				output.Indent();
 				var blob = metadata.GetBlobReader(secdecl.PermissionSet);
-				if ((char)blob.ReadByte() != '.') throw new InvalidOperationException("sanity check!");
-				int count = blob.ReadCompressedInteger();
-				for (int i = 0; i < count; i++) {
-					var typeName = blob.ReadSerializedString();
-					string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
-					if (nameParts.Length != 2)
-						throw new NotImplementedException();
-					var referencedModule = module.AssemblyResolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
-					if (referencedModule == module) {
-						output.Write("class ");
-						output.Write(DisassemblerHelpers.Escape(typeName));
-					} else {
-						string[] typeNameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
-						if (typeNameParts.Length < 2)
+				if ((char)blob.ReadByte() != '.') {
+					blob.Reset();
+					WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
+				} else {
+					int count = blob.ReadCompressedInteger();
+					for (int i = 0; i < count; i++) {
+						var typeName = blob.ReadSerializedString();
+						string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
+						if (nameParts.Length != 2)
 							throw new NotImplementedException();
-						output.Write('[');
-						output.Write(typeNameParts[1]);
-						output.Write(']');
-						output.WriteReference(typeNameParts[0], null); // TODO : hyperlink!
-					}
-					output.Write(" = {");
-					blob.ReadCompressedInteger(); // ?
-					// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
-					int argCount = blob.ReadCompressedInteger();
-					if (argCount > 0) {
-						output.WriteLine();
-						output.Indent();
-
-						for (int j = 0; j < argCount; j++) {
-							WriteSecurityDeclarationArgument(module, ref blob);
-							output.WriteLine();
+						var referencedModule = module.AssemblyResolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
+						if (referencedModule == module) {
+							output.Write("class ");
+							output.Write(DisassemblerHelpers.Escape(typeName));
+						} else {
+							string[] typeNameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
+							if (typeNameParts.Length < 2)
+								throw new NotImplementedException();
+							output.Write('[');
+							output.Write(typeNameParts[1]);
+							output.Write(']');
+							output.WriteReference(typeNameParts[0], null); // TODO : hyperlink!
 						}
+						output.Write(" = {");
+						blob.ReadCompressedInteger(); // ?
+													  // The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
+						int argCount = blob.ReadCompressedInteger();
+						if (argCount > 0) {
+							output.WriteLine();
+							output.Indent();
 
-						output.Unindent();
+							for (int j = 0; j < argCount; j++) {
+								WriteSecurityDeclarationArgument(module, ref blob);
+								output.WriteLine();
+							}
+
+							output.Unindent();
+						}
+						output.Write('}');
+
+						if (i + 1 < count)
+							output.Write(',');
+						output.WriteLine();
 					}
-					output.Write('}');
-
-					if (i + 1 < count)
-						output.Write(',');
-					output.WriteLine();
 				}
 				output.Unindent();
 				output.WriteLine("}");
 			}
+		}
+
+		void WriteXmlSecurityDeclaration(string xml)
+		{
+			output.Write("property string XML = ");
+			output.Write("string('{0}')", DisassemblerHelpers.EscapeString(xml).Replace("'", "\'"));
 		}
 
 		enum TypeKind
@@ -709,7 +719,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("unsigned int");
 					break;
 				case 0x26: // NATIVE_TYPE_FUNC
-					goto default;  // ??
+					output.Write("Func");
+					break;
 				case 0x2a: // NATIVE_TYPE_ARRAY
 					if (blob.RemainingBytes > 0)
 						WriteNativeType(ref blob);
@@ -755,70 +766,72 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				case 0x1d: // SafeArray
 					output.Write("safearray ");
-					byte elementType = blob.ReadByte();
-					switch (elementType) {
-						case 0: // None
-							break;
-						case 2: // I2
-							output.Write("int16");
-							break;
-						case 3: // I4
-							output.Write("int32");
-							break;
-						case 4: // R4
-							output.Write("float32");
-							break;
-						case 5: // R8
-							output.Write("float64");
-							break;
-						case 6: // Currency
-							output.Write("currency");
-							break;
-						case 7: // Date
-							output.Write("date");
-							break;
-						case 8: // BStr
-							output.Write("bstr");
-							break;
-						case 9: // Dispatch
-							output.Write("idispatch");
-							break;
-						case 10: // Error
-							output.Write("error");
-							break;
-						case 11: // Bool
-							output.Write("bool");
-							break;
-						case 12: // Variant
-							output.Write("variant");
-							break;
-						case 13: // Unknown
-							output.Write("iunknown");
-							break;
-						case 14: // Decimal
-							output.Write("decimal");
-							break;
-						case 16: // I1
-							output.Write("int8");
-							break;
-						case 17: // UI1
-							output.Write("unsigned int8");
-							break;
-						case 18: // UI2
-							output.Write("unsigned int16");
-							break;
-						case 19: // UI4
-							output.Write("unsigned int32");
-							break;
-						case 22: // Int
-							output.Write("int");
-							break;
-						case 23: // UInt
-							output.Write("unsigned int");
-							break;
-						default:
-							output.Write(elementType.ToString());
-							break;
+					if (blob.RemainingBytes > 0) {
+						byte elementType = blob.ReadByte();
+						switch (elementType) {
+							case 0: // None
+								break;
+							case 2: // I2
+								output.Write("int16");
+								break;
+							case 3: // I4
+								output.Write("int32");
+								break;
+							case 4: // R4
+								output.Write("float32");
+								break;
+							case 5: // R8
+								output.Write("float64");
+								break;
+							case 6: // Currency
+								output.Write("currency");
+								break;
+							case 7: // Date
+								output.Write("date");
+								break;
+							case 8: // BStr
+								output.Write("bstr");
+								break;
+							case 9: // Dispatch
+								output.Write("idispatch");
+								break;
+							case 10: // Error
+								output.Write("error");
+								break;
+							case 11: // Bool
+								output.Write("bool");
+								break;
+							case 12: // Variant
+								output.Write("variant");
+								break;
+							case 13: // Unknown
+								output.Write("iunknown");
+								break;
+							case 14: // Decimal
+								output.Write("decimal");
+								break;
+							case 16: // I1
+								output.Write("int8");
+								break;
+							case 17: // UI1
+								output.Write("unsigned int8");
+								break;
+							case 18: // UI2
+								output.Write("unsigned int16");
+								break;
+							case 19: // UI4
+								output.Write("unsigned int32");
+								break;
+							case 22: // Int
+								output.Write("int");
+								break;
+							case 23: // UInt
+								output.Write("unsigned int");
+								break;
+							default:
+								output.Write(elementType.ToString());
+								break;
+						}
 					}
 					break;
 				case 0x1e: // FixedArray
