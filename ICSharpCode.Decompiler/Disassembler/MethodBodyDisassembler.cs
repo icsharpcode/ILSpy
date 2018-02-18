@@ -218,7 +218,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					prevInstructionWasBranch = currentOpCode.IsBranch()
 						|| currentOpCode.IsReturn()
 						|| currentOpCode == ILOpCode.Throw
-						|| currentOpCode == ILOpCode.Rethrow;
+						|| currentOpCode == ILOpCode.Rethrow
+						|| currentOpCode == ILOpCode.Switch;
 				}
 				isFirstInstructionInStructure = false;
 			}
@@ -337,7 +338,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write(", ");
 							output.WriteReference($"IL_{targets[i]:x4}", targets[i], true);
 						}
-						output.WriteLine(")");
+						output.Write(")");
 						break;
 					case OperandType.Variable:
 						output.Write(' ');
