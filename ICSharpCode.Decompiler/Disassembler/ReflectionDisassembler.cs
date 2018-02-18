@@ -877,20 +877,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			int parameterOffset = parameters.Length > signature.ParameterTypes.Length ? 1 : 0;
 			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-				var p = metadata.GetParameter(parameters[i + parameterOffset]);
-				if ((p.Attributes & ParameterAttributes.In) == ParameterAttributes.In)
-					output.Write("[in] ");
-				if ((p.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
-					output.Write("[out] ");
-				if ((p.Attributes & ParameterAttributes.Optional) == ParameterAttributes.Optional)
-					output.Write("[opt] ");
-				signature.ParameterTypes[i](ILNameSyntax.Signature);
-				output.Write(' ');
-				var md = p.GetMarshallingDescriptor();
-				if (!md.IsNil) {
-					WriteMarshalInfo(metadata.GetBlobReader(md));
+				if (i + parameterOffset < parameters.Length) {
+					var p = metadata.GetParameter(parameters[i + parameterOffset]);
+					if ((p.Attributes & ParameterAttributes.In) == ParameterAttributes.In)
+						output.Write("[in] ");
+					if ((p.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
+						output.Write("[out] ");
+					if ((p.Attributes & ParameterAttributes.Optional) == ParameterAttributes.Optional)
+						output.Write("[opt] ");
+					signature.ParameterTypes[i](ILNameSyntax.Signature);
+					output.Write(' ');
+					var md = p.GetMarshallingDescriptor();
+					if (!md.IsNil) {
+						WriteMarshalInfo(metadata.GetBlobReader(md));
+					}
+					output.WriteDefinition(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p);
+				} else {
+					signature.ParameterTypes[i](ILNameSyntax.Signature);
+					output.Write(" ''");
 				}
-				output.WriteDefinition(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p);
 				if (i < signature.ParameterTypes.Length - 1)
 					output.Write(',');
 				output.WriteLine();
