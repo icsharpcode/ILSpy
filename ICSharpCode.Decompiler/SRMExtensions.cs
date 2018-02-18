@@ -44,6 +44,26 @@ namespace ICSharpCode.Decompiler
 			return typeDefinition.BaseType.GetFullTypeName(reader).ToString() == "System.Enum";
 		}
 
+		public static bool IsEnum(this TypeDefinitionHandle handle, MetadataReader reader, out PrimitiveTypeCode underlyingType)
+		{
+			return reader.GetTypeDefinition(handle).IsEnum(reader, out underlyingType);
+		}
+
+		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader, out PrimitiveTypeCode underlyingType)
+		{
+			underlyingType = 0;
+			if (typeDefinition.BaseType.IsNil)
+				return false;
+			if (typeDefinition.BaseType.GetFullTypeName(reader).ToString() != "System.Enum")
+				return false;
+			var field = reader.GetFieldDefinition(typeDefinition.GetFields().First());
+			var blob = reader.GetBlobReader(field.Signature);
+			if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
+				return false;
+			underlyingType = (PrimitiveTypeCode)blob.ReadByte();
+			return true;
+		}
+
 		public static bool IsDelegate(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
 			return reader.GetTypeDefinition(handle).IsDelegate(reader);

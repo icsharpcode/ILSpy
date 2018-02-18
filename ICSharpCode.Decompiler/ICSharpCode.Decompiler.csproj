@@ -268,7 +268,6 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
-    <Compile Include="Disassembler\BlobDecoder.cs" />
     <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
