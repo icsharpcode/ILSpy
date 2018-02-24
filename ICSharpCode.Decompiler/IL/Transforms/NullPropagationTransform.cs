@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false; // setter/adder/remover cannot be called with ?. syntax
 					}
 					inst = call.Arguments[0];
-					if (call.Method.DeclaringType.IsReferenceType == false && inst.MatchAddressOf(out var arg)) {
+					if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && inst.MatchAddressOf(out var arg)) {
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
@@ -197,7 +197,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool IsValidEndOfChain()
 			{
 				if (testedVarHasReferenceType) {
-					return inst.MatchLdLoc(testedVar);
+					// either reference type (expect: ldloc(testedVar)) or unconstrained generic type (expect: ldloca(testedVar)).
+					return inst.MatchLdLocRef(testedVar);
 				} else {
 					return NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar);
 				}
@@ -219,7 +220,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				// Wrap varLoad in nullable.unwrap:
 				var children = varLoad.Parent.Children;
-				children[varLoad.ChildIndex] = new NullableUnwrap(testedVar.StackType, varLoad);
+				children[varLoad.ChildIndex] = new NullableUnwrap(varLoad.ResultType, varLoad);
 			}
 		}
 	}

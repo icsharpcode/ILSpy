@@ -102,9 +102,13 @@ namespace ICSharpCode.Decompiler.IL
 		ThreeValuedLogicAnd,
 		/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
 		ThreeValuedLogicOr,
-		/// <summary>The input operand must be either a nullable value type or a reference type.
+		/// <summary>The input operand must be one of:
+		///   1. a nullable value type
+		///   2. a reference type
+		///   3. a managed reference to a type parameter.
 		/// If the input is non-null, evaluates to the (unwrapped) input.
-		/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
+		/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.
+		/// In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction returns the managed reference unmodified (if the value is non-null).</summary>
 		NullableUnwrap,
 		/// <summary>Serves as jump target for the nullable.unwrap instruction.
 		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
@@ -2518,9 +2522,13 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>The input operand must be either a nullable value type or a reference type.
+	/// <summary>The input operand must be one of:
+	///   1. a nullable value type
+	///   2. a reference type
+	///   3. a managed reference to a type parameter.
 	/// If the input is non-null, evaluates to the (unwrapped) input.
-	/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
+	/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.
+	/// In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction returns the managed reference unmodified (if the value is non-null).</summary>
 	public sealed partial class NullableUnwrap : UnaryInstruction
 	{
 

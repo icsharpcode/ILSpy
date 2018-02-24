@@ -32,7 +32,11 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
+			if (this.ResultType == StackType.Ref) {
+				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
+			} else {
+				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
+			}
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}
 

@@ -1515,7 +1515,18 @@ namespace ICSharpCode.Decompiler.CSharp
 						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? member.DeclaringType), this);
 					}
 					if (translatedTarget.Expression is DirectionExpression) {
+						// (ref x).member => x.member
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
+					} else if (translatedTarget.Expression is UnaryOperatorExpression uoe 
+						&& uoe.Operator == UnaryOperatorType.NullConditional
+						&& uoe.Expression is DirectionExpression) {
+						// (ref x)?.member => x?.member
+						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)uoe.Expression).Expression);
+						// note: we need to create a new ResolveResult for the null-conditional operator,
+						// using the underlying type of the input expression without the DirectionExpression
+						translatedTarget = new UnaryOperatorExpression(UnaryOperatorType.NullConditional, translatedTarget)
+							.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
+							.WithoutILInstruction();
 					}
 					return translatedTarget;
 				}

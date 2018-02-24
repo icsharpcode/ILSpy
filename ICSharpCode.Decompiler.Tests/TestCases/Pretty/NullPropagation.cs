@@ -61,6 +61,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public interface ITest
+		{
+			int Int();
+			ITest Next();
+		}
+
 		private int GetInt()
 		{
 			return 9;
@@ -208,6 +214,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (c != null) {
 				c.Property = null;
 			}
+		}
+
+		private static int? GenericUnconstrainedInt<T>(T t) where T : ITest
+		{
+			return t?.Int();
+		}
+
+		private static int? GenericClassConstraintInt<T>(T t) where T : class, ITest
+		{
+			return t?.Int();
+		}
+
+		private static int? GenericStructConstraintInt<T>(T? t) where T : struct, ITest
+		{
+			return t?.Int();
 		}
 	}
 }

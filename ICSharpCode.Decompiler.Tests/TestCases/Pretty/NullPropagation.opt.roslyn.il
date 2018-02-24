@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module NullPropagation.dll
-// MVID: {DDAB2C82-C901-450A-B55D-2D0D7BC34C48}
+// MVID: {B228D113-C048-4D76-A7D1-78312CF90769}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x003E0000
+// Image base: 0x03040000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -216,6 +216,21 @@
       .get instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Item(int32)
     } // end of property MyStruct::Item
   } // end of class MyStruct
+
+  .class interface abstract auto ansi nested public ITest
+  {
+    .method public hidebysig newslot abstract virtual 
+            instance int32  Int() cil managed
+    {
+    } // end of method ITest::Int
+
+    .method public hidebysig newslot abstract virtual 
+            instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest 
+            Next() cil managed
+    {
+    } // end of method ITest::Next
+
+  } // end of class ITest
 
   .method private hidebysig instance int32 
           GetInt() cil managed
@@ -844,6 +859,76 @@
     IL_0014:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::set_Property(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass)
     IL_0019:  ret
   } // end of method NullPropagation::Setter
+
+  .method private hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
+          GenericUnconstrainedInt<(ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest) T>(!!T t) cil managed
+  {
+    // Code size       37 (0x25)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  brtrue.s   IL_0012
+
+    IL_0008:  ldloca.s   V_0
+    IL_000a:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+
+    IL_0012:  ldarga.s   t
+    IL_0014:  constrained. !!T
+    IL_001a:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest::Int()
+    IL_001f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0024:  ret
+  } // end of method NullPropagation::GenericUnconstrainedInt
+
+  .method private hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
+          GenericClassConstraintInt<class (ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest) T>(!!T t) cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  dup
+    IL_0007:  brtrue.s   IL_0014
+
+    IL_0009:  pop
+    IL_000a:  ldloca.s   V_0
+    IL_000c:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0012:  ldloc.0
+    IL_0013:  ret
+
+    IL_0014:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest::Int()
+    IL_0019:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_001e:  ret
+  } // end of method NullPropagation::GenericClassConstraintInt
+
+  .method private hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
+          GenericStructConstraintInt<valuetype .ctor (ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest, [mscorlib]System.ValueType) T>(valuetype [mscorlib]System.Nullable`1<!!T> t) cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             !!T V_1)
+    IL_0000:  ldarga.s   t
+    IL_0002:  call       instance bool valuetype [mscorlib]System.Nullable`1<!!T>::get_HasValue()
+    IL_0007:  brtrue.s   IL_0013
+
+    IL_0009:  ldloca.s   V_0
+    IL_000b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0011:  ldloc.0
+    IL_0012:  ret
+
+    IL_0013:  ldarga.s   t
+    IL_0015:  call       instance !0 valuetype [mscorlib]System.Nullable`1<!!T>::GetValueOrDefault()
+    IL_001a:  stloc.1
+    IL_001b:  ldloca.s   V_1
+    IL_001d:  constrained. !!T
+    IL_0023:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/ITest::Int()
+    IL_0028:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_002d:  ret
+  } // end of method NullPropagation::GenericStructConstraintInt
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
