@@ -46,6 +46,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 		}
 
+		enum Mode
+		{
+			/// <summary>
+			/// reference type or generic type (comparison is 'comp(ldloc(testedVar) == null)')
+			/// </summary>
+			ReferenceType,
+			/// <summary>
+			/// nullable type, used by value (comparison is 'call get_HasValue(ldloca(testedVar))')
+			/// </summary>
+			NullableByValue,
+			/// <summary>
+			/// nullable type, used by reference (comparison is 'call get_HasValue(ldloc(testedVar))')
+			/// </summary>
+			NullableByReference,
+		}
+
 		/// <summary>
 		/// Check if "condition ? trueInst : falseInst" can be simplified using the null-conditional operator.
 		/// Returns the replacement instruction, or null if no replacement is possible.
@@ -59,13 +75,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				if (comp.Kind == ComparisonKind.Equality) {
 					// testedVar == null ? trueInst : falseInst
-					return TryNullPropagation(testedVar, falseInst, trueInst, true, ilRange);
+					return TryNullPropagation(testedVar, falseInst, trueInst, Mode.ReferenceType, ilRange);
 				} else if (comp.Kind == ComparisonKind.Inequality) {
-					return TryNullPropagation(testedVar, trueInst, falseInst, true, ilRange);
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.ReferenceType, ilRange);
 				}
-			} else if (NullableLiftingTransform.MatchHasValueCall(condition, out testedVar)) {
-				// testedVar.HasValue ? trueInst : falseInst
-				return TryNullPropagation(testedVar, trueInst, falseInst, false, ilRange);
+			} else if (NullableLiftingTransform.MatchHasValueCall(condition, out ILInstruction loadInst)) {
+				// loadInst.HasValue ? trueInst : falseInst
+				if (loadInst.MatchLdLoca(out testedVar)) {
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByValue, ilRange);
+				} else if (loadInst.MatchLdLoc(out testedVar)) {
+					return TryNullPropagation(testedVar, trueInst, falseInst, Mode.NullableByReference, ilRange);
+				}
 			}
 			return null;
 		}
@@ -74,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// testedVar != null ? nonNullInst : nullInst
 		/// </summary>
 		ILInstruction TryNullPropagation(ILVariable testedVar, ILInstruction nonNullInst, ILInstruction nullInst,
-			bool testedVarHasReferenceType, Interval ilRange)
+			Mode mode, Interval ilRange)
 		{
 			bool removedRewrapOrNullableCtor = false;
 			if (NullableLiftingTransform.MatchNullableCtor(nonNullInst, out _, out var arg)) {
@@ -84,28 +104,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nonNullInst = arg;
 				removedRewrapOrNullableCtor = true;
 			}
-			if (!IsValidAccessChain(testedVar, testedVarHasReferenceType, nonNullInst, out var varLoad))
+			if (!IsValidAccessChain(testedVar, mode, nonNullInst, out var varLoad))
 				return null;
 			// note: InferType will be accurate in this case because the access chain consists of calls and field accesses
 			IType returnType = nonNullInst.InferType();
 			if (nullInst.MatchLdNull()) {
-				context.Step("Null propagation (reference type)", nonNullInst);
+				context.Step($"Null propagation (mode={mode}, output=reference type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : null
 				// => testedVar?.AccessChain
-				IntroduceUnwrap(testedVar, varLoad);
+				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullableRewrap(nonNullInst) { ILRange = ilRange };
 			} else if (nullInst.MatchDefaultValue(out var type) && type.IsKnownType(KnownTypeCode.NullableOfT)) {
-				context.Step("Null propagation (value type)", nonNullInst);
+				context.Step($"Null propagation (mode={mode}, output=value type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : default(T?)
 				// => testedVar?.AccessChain
-				IntroduceUnwrap(testedVar, varLoad);
+				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullableRewrap(nonNullInst) { ILRange = ilRange };
 			} else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType)) {
-				context.Step("Null propagation with null coalescing", nonNullInst);
+				context.Step($"Null propagation (mode={mode}, output=null coalescing)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : nullInst
 				// => testedVar?.AccessChain ?? nullInst
 				// (only valid if AccessChain returns a non-nullable value)
-				IntroduceUnwrap(testedVar, varLoad);
+				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullCoalescingInstruction(
 					NullCoalescingKind.NullableWithValueFallback,
 					new NullableRewrap(nonNullInst),
@@ -129,13 +149,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (ifInst.Condition is Comp comp && comp.Kind == ComparisonKind.Inequality
 				&& comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull()) {
-				TryNullPropForVoidCall(testedVar, true, ifInst.TrueInst as Block, ifInst);
-			} else if (NullableLiftingTransform.MatchHasValueCall(ifInst.Condition, out testedVar)) {
-				TryNullPropForVoidCall(testedVar, false, ifInst.TrueInst as Block, ifInst);
+				TryNullPropForVoidCall(testedVar, Mode.ReferenceType, ifInst.TrueInst as Block, ifInst);
+			} else if (NullableLiftingTransform.MatchHasValueCall(ifInst.Condition, out ILInstruction arg)) {
+				if (arg.MatchLdLoca(out testedVar)) {
+					TryNullPropForVoidCall(testedVar, Mode.NullableByValue, ifInst.TrueInst as Block, ifInst);
+				} else if (arg.MatchLdLoc(out testedVar)) {
+					TryNullPropForVoidCall(testedVar, Mode.NullableByReference, ifInst.TrueInst as Block, ifInst);
+				}
 			}
 		}
 
-		void TryNullPropForVoidCall(ILVariable testedVar, bool testedVarHasReferenceType, Block body, IfInstruction ifInst)
+		void TryNullPropForVoidCall(ILVariable testedVar, Mode mode, Block body, IfInstruction ifInst)
 		{
 			if (body == null || body.Instructions.Count != 1)
 				return;
@@ -143,18 +167,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (bodyInst.MatchNullableRewrap(out var arg)) {
 				bodyInst = arg;
 			}
-			if (!IsValidAccessChain(testedVar, testedVarHasReferenceType, bodyInst, out var varLoad))
+			if (!IsValidAccessChain(testedVar, mode, bodyInst, out var varLoad))
 				return;
-			context.Step("Null-propagation (void call)", body);
+			context.Step($"Null-propagation (mode={mode}, output=void call)", body);
 			// if (testedVar != null) { testedVar.AccessChain(); }
 			// => testedVar?.AccessChain();
-			IntroduceUnwrap(testedVar, varLoad);
+			IntroduceUnwrap(testedVar, varLoad, mode);
 			ifInst.ReplaceWith(new NullableRewrap(
 				bodyInst
 			) { ILRange = ifInst.ILRange });
 		}
 
-		bool IsValidAccessChain(ILVariable testedVar, bool testedVarHasReferenceType, ILInstruction inst, out ILInstruction finalLoad)
+		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, out ILInstruction finalLoad)
 		{
 			finalLoad = null;
 			int chainLength = 0;
@@ -196,11 +220,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			bool IsValidEndOfChain()
 			{
-				if (testedVarHasReferenceType) {
-					// either reference type (expect: ldloc(testedVar)) or unconstrained generic type (expect: ldloca(testedVar)).
-					return inst.MatchLdLocRef(testedVar);
-				} else {
-					return NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar);
+				switch (mode) {
+					case Mode.ReferenceType:
+						// either reference type (expect: ldloc(testedVar)) or unconstrained generic type (expect: ldloca(testedVar)).
+						return inst.MatchLdLocRef(testedVar);
+					case Mode.NullableByValue:
+						return NullableLiftingTransform.MatchGetValueOrDefault(inst, testedVar);
+					case Mode.NullableByReference:
+						return NullableLiftingTransform.MatchGetValueOrDefault(inst, out ILInstruction arg)
+							&& arg.MatchLdLoc(testedVar);
+					default:
+						throw new ArgumentOutOfRangeException("mode");
 				}
 			}
 		}
@@ -210,18 +240,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return method.AccessorOwner is IProperty p && p.Getter == method;
 		}
 
-		private void IntroduceUnwrap(ILVariable testedVar, ILInstruction varLoad)
+		private void IntroduceUnwrap(ILVariable testedVar, ILInstruction varLoad, Mode mode)
 		{
-			if (NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar)) {
-				varLoad.ReplaceWith(new NullableUnwrap(
-					varLoad.ResultType,
-					new LdLoc(testedVar) { ILRange = varLoad.Children[0].ILRange }
-				) { ILRange = varLoad.ILRange });
-			} else {
-				// Wrap varLoad in nullable.unwrap:
-				var children = varLoad.Parent.Children;
-				children[varLoad.ChildIndex] = new NullableUnwrap(varLoad.ResultType, varLoad);
+			var oldParentChildren = varLoad.Parent.Children;
+			var oldChildIndex = varLoad.ChildIndex;
+			ILInstruction replacement;
+			switch (mode) {
+				case Mode.ReferenceType:
+					// Wrap varLoad in nullable.unwrap:
+					replacement = new NullableUnwrap(varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
+					break;
+				case Mode.NullableByValue:
+					Debug.Assert(NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar));
+					replacement = new NullableUnwrap(
+						varLoad.ResultType,
+						new LdLoc(testedVar) { ILRange = varLoad.Children[0].ILRange }
+					) { ILRange = varLoad.ILRange };
+					break;
+				case Mode.NullableByReference:
+					replacement = new NullableUnwrap(
+						varLoad.ResultType,
+						new LdLoc(testedVar) { ILRange = varLoad.Children[0].ILRange },
+						refInput: true
+					) { ILRange = varLoad.ILRange };
+					break;
+				default:
+					throw new ArgumentOutOfRangeException("mode");
 			}
+			oldParentChildren[oldChildIndex] = replacement;
 		}
 	}
 

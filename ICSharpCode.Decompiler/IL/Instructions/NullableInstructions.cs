@@ -21,18 +21,61 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>
+	/// For a nullable input, gets the underlying value.
+	/// 
+	/// There are three possible input types:
+	///  * reference type: if input!=null, evaluates to the input
+	///  * nullable value type: if input.Has_Value, evaluates to input.GetValueOrDefault()
+	///  * generic type: behavior depends on the type at runtime.
+	///    If non-nullable value type, unconditionally evaluates to the input.
+	///
+	/// If the input is null, control-flow is tranferred to the nearest surrounding nullable.rewrap
+	/// instruction.
+	/// </summary>
 	partial class NullableUnwrap
 	{
-		public NullableUnwrap(StackType unwrappedType, ILInstruction argument)
+		/// <summary>
+		/// Whether the argument is dereferenced before checking for a null input.
+		/// If true, the argument must be a managed reference to a valid input type.
+		/// </summary>
+		/// <remarks>
+		/// This mode exists because the C# compiler sometimes avoids copying the whole Nullable{T} struct
+		/// before the null-check.
+		/// The underlying struct T is still copied by the GetValueOrDefault() call, but only in the non-null case.
+		/// </remarks>
+		public readonly bool RefInput;
+
+		/// <summary>
+		/// Consider the following code generated for <code>t?.Method()</code> on a generic t:
+		/// <code>if (comp(box ``0(ldloc t) != ldnull)) newobj Nullable..ctor(constrained[``0].callvirt Method(ldloca t)) else default.value Nullable</code>
+		/// Here, the method is called on the original reference, and any mutations performed by the method will be visible in the original variable.
+		/// 
+		/// To represent this, we use a nullable.unwrap with ResultType==Ref: instead of returning the input value,
+		/// the input reference is returned in the non-null case.
+		/// Note that in case the generic type ends up being <c>Nullable{T}</c>, this means methods will end up being called on
+		/// the nullable type, not on the underlying type. However, this ends up making no difference, because the only methods
+		/// that can be called that way are those on System.Object. All the virtual methods are overridden in <c>Nullable{T}</c>
+		/// and end up forwarding to <c>T</c>; and the non-virtual methods cause boxing which strips the <c>Nullable{T}</c> wrapper.
+		/// 
+		/// RefOutput can only be used if RefInput is also used.
+		/// </summary>
+		public bool RefOutput { get => ResultType == StackType.Ref; }
+
+		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput=false)
 			: base(OpCode.NullableUnwrap, argument)
 		{
 			this.ResultType = unwrappedType;
+			this.RefInput = refInput;
+			if (unwrappedType == StackType.Ref) {
+				Debug.Assert(refInput);
+			}
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			if (this.ResultType == StackType.Ref) {
+			if (this.RefInput) {
 				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
 			} else {
 				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
@@ -42,7 +85,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write("nullable.unwrap ");
+			output.Write("nullable.unwrap.");
+			if (RefInput) {
+				output.Write("refinput.");
+			}
 			output.Write(ResultType);
 			output.Write('(');
 			Argument.WriteTo(output, options);

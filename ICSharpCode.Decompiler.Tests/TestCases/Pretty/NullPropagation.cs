@@ -230,5 +230,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return t?.Int();
 		}
+
+		// See also: https://github.com/icsharpcode/ILSpy/issues/1050
+		// The C# compiler generates pretty weird code in this case.
+		//private static int? GenericRefUnconstrainedInt<T>(ref T t) where T : ITest
+		//{
+		//	return t?.Int();
+		//}
+
+		private static int? GenericRefClassConstraintInt<T>(ref T t) where T : class, ITest
+		{
+			return t?.Int();
+		}
+
+		private static int? GenericRefStructConstraintInt<T>(ref T? t) where T : struct, ITest
+		{
+			return t?.Int();
+		}
 	}
 }

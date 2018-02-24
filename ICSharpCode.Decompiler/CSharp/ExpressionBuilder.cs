@@ -2172,6 +2172,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitNullableUnwrap(NullableUnwrap inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			if (inst.RefInput && !inst.RefOutput && arg.Expression is DirectionExpression dir) {
+				arg = arg.UnwrapChild(dir.Expression);
+			}
 			return new UnaryOperatorExpression(UnaryOperatorType.NullConditional, arg)
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(NullableType.GetUnderlyingType(arg.Type)));
