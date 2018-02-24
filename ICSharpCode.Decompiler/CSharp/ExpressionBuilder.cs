@@ -439,7 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable)) {
 				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
 				// so we should replace them with more accurate types where possible:
-				if ((inst.Variable.IsSingleDefinition || IsOtherValueType(translatedValue.Type))
+				if ((inst.Variable.IsSingleDefinition || IsOtherValueType(translatedValue.Type) || inst.Variable.StackType == StackType.Ref)
 						&& inst.Variable.StackType == translatedValue.Type.GetStackType()
 						&& translatedValue.Type.Kind != TypeKind.Null) {
 					inst.Variable.Type = translatedValue.Type;
