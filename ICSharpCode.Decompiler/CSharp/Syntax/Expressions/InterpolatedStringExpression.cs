@@ -7,6 +7,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class InterpolatedStringExpression : Expression
 	{
+		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
+		public static readonly TokenRole CloseQuote = new TokenRole("\"");
+
 		public AstNodeCollection<InterpolatedStringContent> Content {
 			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
 		}

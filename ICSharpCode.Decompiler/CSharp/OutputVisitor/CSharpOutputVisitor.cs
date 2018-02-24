@@ -985,11 +985,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(interpolatedStringExpression);
 
-			writer.WriteToken(Roles.Error, "$\"");
+			writer.WriteToken(InterpolatedStringExpression.OpenQuote, "$\"");
 			foreach (var element in interpolatedStringExpression.Content) {
 				element.AcceptVisitor(this);
 			}
-			writer.WriteToken(Roles.Error, "\"");
+			writer.WriteToken(InterpolatedStringExpression.CloseQuote, "\"");
 			isAfterSpace = false;
 
 			EndNode(interpolatedStringExpression);
