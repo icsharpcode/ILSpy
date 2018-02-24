@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr.WithRR(new ILVariableResolveResult(variable, elementType));
 				
 				expr = new DirectionExpression(FieldDirection.Ref, expr);
-				return expr.WithRR(new ResolveResult(variable.Type));
+				return expr.WithRR(new ByReferenceResolveResult(elementType, isOut: false));
 			} else {
 				return expr.WithRR(new ILVariableResolveResult(variable, variable.Type));
 			}
@@ -1649,7 +1649,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				// ldflda producing managed pointer
 				return new DirectionExpression(FieldDirection.Ref, expr)
-					.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+					.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
 			}
 		}
 		
@@ -1657,7 +1657,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var expr = ConvertField(inst.Field).WithILInstruction(inst);
 			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
 		}
 		
 		protected internal override TranslatedExpression VisitLdElema(LdElema inst, TranslationContext context)
@@ -1672,7 +1672,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
 			).WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+				.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
 		}
 		
 		TranslatedExpression TranslateArrayIndex(ILInstruction i)
@@ -1720,7 +1720,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
 			return new DirectionExpression(FieldDirection.Ref, castExpression)
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(new ByReferenceType(inst.Type), arg.ResolveResult, Conversion.UnboxingConversion));
+				.WithRR(new ByReferenceResolveResult(castExpression.ResolveResult, isOut: false));
 		}
 
 		protected internal override TranslatedExpression VisitBox(Box inst, TranslationContext context)
@@ -2111,11 +2111,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr.Type.Kind == TypeKind.ByReference) {
 				// C# conditional ref looks like this:
 				// ref (arr != null ? ref trueBranch : ref falseBranch);
+				var conditionalResolveResult = new ResolveResult(((ByReferenceType)rr.Type).ElementType);
 				return new DirectionExpression(FieldDirection.Ref,
 					new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
 						.WithILInstruction(inst)
-						.WithRR(new ResolveResult(((ByReferenceType)rr.Type).ElementType))
-				).WithoutILInstruction().WithRR(rr);
+						.WithRR(conditionalResolveResult)
+				).WithoutILInstruction().WithRR(new ByReferenceResolveResult(conditionalResolveResult, isOut: false));
 			} else {
 				return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
 					.WithILInstruction(inst)

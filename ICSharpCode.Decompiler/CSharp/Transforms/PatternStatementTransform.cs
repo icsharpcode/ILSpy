@@ -616,8 +616,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new AssignmentExpression {
 							Left = new IdentifierExpressionBackreference("var1"),
 							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
-								"CompareExchange",
-								new AstType[] { new Backreference("type") }), // type argument
+								"CompareExchange"),
 								new Expression[] { // arguments
 									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
 									new IdentifierExpressionBackreference("var3"),
