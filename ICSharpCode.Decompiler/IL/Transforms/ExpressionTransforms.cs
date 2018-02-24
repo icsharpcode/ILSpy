@@ -155,6 +155,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitBox(Box inst)
+		{
+			inst.Argument.AcceptVisitor(this);
+			if (inst.Type.IsReferenceType == true && inst.Argument.ResultType == inst.ResultType) {
+				// For reference types, box is a no-op.
+				context.Step("box ref-type(arg) => arg", inst);
+				inst.Argument.AddILRange(inst.ILRange);
+				inst.ReplaceWith(inst.Argument);
+			}
+		}
+
 		protected internal override void VisitLdElema(LdElema inst)
 		{
 			base.VisitLdElema(inst);
