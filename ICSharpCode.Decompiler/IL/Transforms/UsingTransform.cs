@@ -199,26 +199,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			numObjVarLoadsInCheck = 2;
 			CallVirt callVirt;
 			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
-				if (!checkInst.MatchIfInstruction(out var condition, out var disposeInst))
+				if (checkInst.MatchIfInstruction(out var condition, out var disposeInst)) {
+					if (!NullableLiftingTransform.MatchHasValueCall(condition, objVar))
+						return false;
+					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
+						return false;
+					callVirt = disposeBlock.Instructions[0] as CallVirt;
+				} else if (checkInst.MatchNullableRewrap(out disposeInst)) {
+					callVirt = disposeInst as CallVirt;
+				} else {
 					return false;
-				if (!NullableLiftingTransform.MatchHasValueCall(condition, objVar))
+				}
+				if (callVirt == null)
 					return false;
-				if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
-					return false;
-				if (!(disposeBlock.Instructions[0] is CallVirt cv))
-					return false;
-				callVirt = cv;
 				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
 					return false;
 				if (callVirt.Method.Parameters.Count > 0)
 					return false;
 				if (callVirt.Arguments.Count != 1)
 					return false;
-				var firstArg = cv.Arguments.FirstOrDefault();
+				var firstArg = callVirt.Arguments.FirstOrDefault();
 				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable))) {
 					if (!firstArg.MatchAddressOf(out var innerArg2))
 						return false;
-					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar);
+					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar)
+						|| (innerArg2 is NullableUnwrap unwrap
+							&& unwrap.Argument.MatchLdLoc(objVar));
 				} else {
 					if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
 					NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
