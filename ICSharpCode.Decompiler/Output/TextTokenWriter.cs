@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler
 			if (definition != null) {
 				MemberReference cecil = SymbolToCecil(definition);
 				if (cecil != null) {
-					output.WriteDefinition(identifier.Name, definition, false);
+					output.WriteDefinition(identifier.Name, cecil, false);
 					return;
 				}
 			}
