@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
@@ -190,6 +191,24 @@ namespace ICSharpCode.ILSpy
 			} catch (ArgumentException) {
 				return null;
 			}
+		}
+	}
+
+	class MetadataTokenSearchStrategy : TypeAndMemberSearchStrategy
+	{
+		readonly int searchTermToken;
+
+		public MetadataTokenSearchStrategy(params string[] terms)
+			: base(terms)
+		{
+			if (searchTerm.Length == 1) {
+				int.TryParse(searchTerm[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out searchTermToken);
+			}
+		}
+
+		protected override bool MatchName(IMemberDefinition m, Language language)
+		{
+			return m.MetadataToken.ToInt32() == searchTermToken;
 		}
 	}
 
