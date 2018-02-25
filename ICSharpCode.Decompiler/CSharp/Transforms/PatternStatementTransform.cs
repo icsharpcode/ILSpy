@@ -177,6 +177,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
 			WhileStatement loop = (WhileStatement)next;
+			// Cannot convert to for loop, because that would change the semantics of the program.
+			// continue in while jumps to the condition block.
+			// Whereas continue in for jumps to the increment block.
+			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
+				return null;
 			node.Remove();
 			BlockStatement newBody = new BlockStatement();
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
@@ -189,6 +194,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
 			return forStatement;
+		}
+
+		bool DescendIntoStatement(AstNode node)
+		{
+			if (node is Expression || node is ExpressionStatement)
+				return false;
+			if (node is WhileStatement || node is ForeachStatement || node is DoWhileStatement || node is ForStatement)
+				return false;
+			return true;
 		}
 
 		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
