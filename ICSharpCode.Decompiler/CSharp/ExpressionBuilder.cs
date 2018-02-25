@@ -274,9 +274,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (ShouldDisplayAsHex(inst.Value, inst.Parent)) {
 				literalValue = $"0x{inst.Value:X}";
 			}
-			return new PrimitiveExpression(inst.Value, literalValue)
+			var expr = new PrimitiveExpression(inst.Value, literalValue)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Value));
+			return AdjustConstantExpressionToType(expr, context.TypeHint);
 		}
 
 		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst, TranslationContext context)
@@ -461,7 +462,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (inst.Kind == ComparisonKind.Equality && inst.Right.MatchLdcI4(0)) {
 					// lifted logic.not
 					var targetType = NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
-					var arg = Translate(inst.Left).ConvertTo(targetType, this);
+					var arg = Translate(inst.Left, targetType).ConvertTo(targetType, this);
 					return new UnaryOperatorExpression(UnaryOperatorType.Not, arg.Expression)
 						.WithRR(new OperatorResolveResult(targetType, ExpressionType.Not, arg.ResolveResult))
 						.WithILInstruction(inst);
@@ -1509,7 +1510,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(target)
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
-					var translatedTarget = Translate(target);
+					var translatedTarget = Translate(target, constrainedTo ?? member.DeclaringType);
 					if (CallInstruction.ExpectedTypeForThisPointer(constrainedTo ?? member.DeclaringType) == StackType.Ref && translatedTarget.Type.GetStackType().IsIntegerType()) {
 						// when accessing members on value types, ensure we use a reference and not a pointer
 						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? member.DeclaringType), this);
@@ -1874,11 +1875,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (lastElement.Indices?.Length > 0) {
 							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression))
 								.WithILInstruction(inst).WithRR(memberRR);
-							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single())));
+							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single(), typeHint: indexer.Type)));
 						} else {
 							var target = new IdentifierExpression(lastElement.Member.Name)
 								.WithILInstruction(inst).WithRR(memberRR);
-							elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single())));
+							elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single(), typeHint: target.Type)));
 						}
 						break;
 				}
@@ -1907,11 +1908,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Expression MakeInitializerElements(List<ILInstruction> values, IList<IParameter> parameters)
 		{
-			if (values.Count == 1)
-				return Translate(values[0]).ConvertTo(parameters[0].Type, this);
+			if (values.Count == 1) {
+				return Translate(values[0], typeHint: parameters[0].Type).ConvertTo(parameters[0].Type, this);
+			}
 			var expressions = new Expression[values.Count];
-			for (int i = 0; i < values.Count; i++)
-				expressions[i] = Translate(values[i]).ConvertTo(parameters[i].Type, this);
+			for (int i = 0; i < values.Count; i++) {
+				expressions[i] = Translate(values[i], typeHint: parameters[i].Type).ConvertTo(parameters[i].Type, this);
+			}
 			return new ArrayInitializerExpression(expressions);
 		}
 
@@ -1952,7 +1955,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					container.Peek().Elements.Add(aie);
 					container.Push(aie);
 				}
-				var val = Translate(value).ConvertTo(type, this, allowImplicitConversion: true);
+				var val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
 				container.Peek().Elements.Add(val);
 				elementResolveResults.Add(val.ResolveResult);
 				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
@@ -2053,8 +2056,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
 		{
 			var condition = TranslateCondition(inst.Condition);
-			var trueBranch = Translate(inst.TrueInst);
-			var falseBranch = Translate(inst.FalseInst);
+			var trueBranch = Translate(inst.TrueInst, typeHint: context.TypeHint);
+			var falseBranch = Translate(inst.FalseInst, typeHint: context.TypeHint);
 			BinaryOperatorType op = BinaryOperatorType.Any;
 			TranslatedExpression rhs = default(TranslatedExpression);
 

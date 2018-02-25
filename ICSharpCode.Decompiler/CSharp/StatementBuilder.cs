@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
 					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 				} else
 					return new ReturnStatement();
 			}
@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem.Compilation, true, out var isGeneric);
 			return new YieldReturnStatement {
-				Expression = exprBuilder.Translate(inst.Value).ConvertTo(elementType, exprBuilder)
+				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
 			};
 		}
 
@@ -706,7 +706,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Init.OpCode == OpCode.ArrayToPointer) {
 				initExpr = exprBuilder.Translate(((ArrayToPointer)inst.Init).Array);
 			} else {
-				initExpr = exprBuilder.Translate(inst.Init).ConvertTo(inst.Variable.Type, exprBuilder);
+				initExpr = exprBuilder.Translate(inst.Init, typeHint: inst.Variable.Type).ConvertTo(inst.Variable.Type, exprBuilder);
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
 			fixedStmt.EmbeddedStatement = Convert(inst.Body);

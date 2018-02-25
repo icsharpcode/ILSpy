@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module TypeAnalysisTests.dll
-// MVID: {6215C6B8-0FF3-4C9E-999F-BE9720986F05}
+// MVID: {A4070ABB-2C83-48F4-BD1F-AFD93DD2EF34}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03030000
+// Image base: 0x00B60000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -567,6 +567,26 @@
     IL_0001:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Implicit(uint64)
     IL_0006:  ret
   } // end of method TypeAnalysisTests::ImplicitConversionToDecimal
+
+  .method public hidebysig instance bool 
+          EnumInConditionalOperator(bool b) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  8
+    IL_0000:  ldstr      ""
+    IL_0005:  ldstr      ""
+    IL_000a:  ldarg.1
+    IL_000b:  brtrue.s   IL_0010
+
+    IL_000d:  ldc.i4.5
+    IL_000e:  br.s       IL_0011
+
+    IL_0010:  ldc.i4.4
+    IL_0011:  call       bool [mscorlib]System.String::Equals(string,
+                                                              string,
+                                                              valuetype [mscorlib]System.StringComparison)
+    IL_0016:  ret
+  } // end of method TypeAnalysisTests::EnumInConditionalOperator
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

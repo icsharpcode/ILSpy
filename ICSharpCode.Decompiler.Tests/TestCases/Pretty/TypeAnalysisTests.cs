@@ -239,5 +239,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return v;
 		}
+
+		public bool EnumInConditionalOperator(bool b)
+		{
+			return string.Equals("", "", b ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+		}
 	}
 }

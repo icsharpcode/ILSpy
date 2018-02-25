@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool isExpandedForm = false;
 			for (int i = 0; i < method.Parameters.Count; i++) {
 				var parameter = expectedParameters[i];
-				var arg = expressionBuilder.Translate(callArguments[firstParamIndex + i]);
+				var arg = expressionBuilder.Translate(callArguments[firstParamIndex + i], parameter.Type);
 				if (parameter.IsParams && i + 1 == method.Parameters.Count) {
 					// Parameter is marked params
 					// If the argument is an array creation, inline all elements into the call and add missing default values.
@@ -438,11 +438,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target;
 			IType targetType;
 			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
-				target = expressionBuilder.Translate(inst.Arguments[0]);
 				targetType = method.Parameters[0].Type;
+				target = expressionBuilder.Translate(inst.Arguments[0], targetType);
 			} else {
-				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
 				targetType = method.DeclaringType;
+				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
 			}
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
