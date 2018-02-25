@@ -36,12 +36,58 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (!TransformLockRoslyn(block, i))
 					if (!TransformLockV4(block, i))
-						TransformLockV2(block, i);
+						if (!TransformLockV2(block, i))
+							TransformLockMCS(block, i);
 				// This happens in some cases:
 				// Use correct index after transformation.
 				if (i >= block.Instructions.Count)
 					i = block.Instructions.Count;
 			}
+		}
+
+		/// <summary>
+		///	stloc lockObj(lockExpression)
+		///	call Enter(ldloc lockObj)
+		///	.try BlockContainer {
+		///		Block lockBlock (incoming: 1) {
+		///			call WriteLine()
+		///			leave lockBlock (nop)
+		///		}
+		///
+		///	} finally BlockContainer {
+		///		Block exitBlock (incoming: 1) {
+		///			call Exit(ldloc lockObj)
+		///			leave exitBlock (nop)
+		///		}
+		///
+		///	}
+		/// =>
+		/// .lock (lockExpression) BlockContainer {
+		/// 	Block lockBlock (incoming: 1) {
+		///			call WriteLine()
+		///			leave lockBlock (nop)
+		///		}
+		/// }
+		/// </summary>
+		bool TransformLockMCS(Block block, int i)
+		{
+			if (i < 2) return false;
+			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 2] is StLoc objectStore) ||
+				!MatchCall(block.Instructions[i - 1] as Call, "Enter", objectStore.Variable))
+				return false;
+			if (!objectStore.Variable.IsSingleDefinition)
+				return false;
+			if (!(body.TryBlock is BlockContainer tryContainer) || tryContainer.EntryPoint.Instructions.Count == 0 || tryContainer.EntryPoint.IncomingEdgeCount != 1)
+				return false;
+			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
+				return false;
+			if (objectStore.Variable.LoadCount > 2)
+				return false;
+			context.Step("LockTransformMCS", block);
+			block.Instructions.RemoveAt(i - 1);
+			block.Instructions.RemoveAt(i - 2);
+			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock) { ILRange = objectStore.ILRange });
+			return true;
 		}
 
 		/// <summary>
