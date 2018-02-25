@@ -54,6 +54,16 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
+		static readonly CompilerOptions[] defaultOptionsWithMcs =
+{
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
+			CompilerOptions.UseMcs,
+			CompilerOptions.Optimize | CompilerOptions.UseMcs
+		};
+
 		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
 			CompilerOptions.UseRoslyn,
@@ -79,7 +89,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void HelloWorld([ValueSource("defaultOptions")] CompilerOptions options)
+		public void HelloWorld([ValueSource("defaultOptionsWithMcs")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}

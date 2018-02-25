@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		Force32Bit = 0x4,
 		Library = 0x8,
 		UseRoslyn = 0x10,
+		UseMcs = 0x20,
 	}
 	
 	[Flags]
@@ -174,6 +175,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
 			}
+			if (flags.HasFlag(CompilerOptions.UseMcs)) {
+				preprocessorSymbols.Add("MONO_MCS");
+			}
 			return preprocessorSymbols;
 		}
 
@@ -208,6 +212,51 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					}
 					throw new Exception(b.ToString());
 				}
+				return results;
+			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
+				CompilerResults results = new CompilerResults(new TempFileCollection());
+				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				string testBasePath = Path.GetFullPath("../../../../ILSpy-tests");
+				if (!Directory.Exists(testBasePath)) {
+					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
+			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
+				}
+				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
+				string otherOptions = " -unsafe -o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ");
+
+				if (flags.HasFlag(CompilerOptions.Library)) {
+					otherOptions += "-t:library ";
+				} else {
+					otherOptions += "-t:exe ";
+				}
+
+				if (flags.HasFlag(CompilerOptions.UseDebug)) {
+					otherOptions += "-g ";
+				}
+
+				if (flags.HasFlag(CompilerOptions.Force32Bit)) {
+					otherOptions += "-platform:x86 ";
+				} else {
+					otherOptions += "-platform:anycpu ";
+				}
+
+				ProcessStartInfo info = new ProcessStartInfo(mcsPath);
+				info.Arguments = $"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
+				info.RedirectStandardError = true;
+				info.RedirectStandardOutput = true;
+				info.UseShellExecute = false;
+
+				Process process = Process.Start(info);
+
+				var outputTask = process.StandardOutput.ReadToEndAsync();
+				var errorTask = process.StandardError.ReadToEndAsync();
+
+				Task.WaitAll(outputTask, errorTask);
+				process.WaitForExit();
+
+				Console.WriteLine("output: " + outputTask.Result);
+				Console.WriteLine("errors: " + errorTask.Result);
+				Assert.AreEqual(0, process.ExitCode, "mcs failed");
 				return results;
 			} else {
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
@@ -278,6 +327,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				suffix += ".dbg";
 			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
 				suffix += ".roslyn";
+			if ((cscOptions & CompilerOptions.UseMcs) != 0)
+				suffix += ".mcs";
 			return suffix;
 		}
 
