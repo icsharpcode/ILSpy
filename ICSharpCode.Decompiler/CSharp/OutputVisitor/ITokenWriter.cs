@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (!(writer is ILocatable))
 				throw new InvalidOperationException("writer does not provide locations!");
-			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(writer, (ILocatable)writer)));
+			return new InsertMissingTokensDecorator(writer, (ILocatable)writer);
 		}
 	}
 	
