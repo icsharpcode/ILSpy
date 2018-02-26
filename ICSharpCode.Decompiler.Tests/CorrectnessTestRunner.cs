@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Tests
 				.Select(m => m.Name)
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
-				if (file.Extension == ".txt" || file.Extension == ".exe")
+				if (file.Extension == ".txt" || file.Extension == ".exe" || file.Extension == ".config")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
 				Assert.Contains(testName, testNames);
@@ -130,9 +130,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			if (options.HasFlag(CompilerOptions.UseMcs)) {
-				Assert.Ignore("Decompiler bug with mono!");
-			}
 			RunCS(options: options);
 		}
 
@@ -296,6 +293,20 @@ namespace ICSharpCode.Decompiler.Tests
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
+				if (options.HasFlag(CompilerOptions.UseMcs)) {
+					// For second pass, use roslyn instead of mcs.
+					// mcs has some compiler bugs that cause it to not accept ILSpy-generated code,
+					// for example when there's unreachable code due to other compiler bugs in the first mcs run.
+					options &= ~CompilerOptions.UseMcs;
+					options |= CompilerOptions.UseRoslyn;
+					// Also, add an .exe.config so that we consistently use the .NET 4.x runtime.
+					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+	<startup>
+		<supportedRuntime version=""v4.0"" sku="".NETFramework,Version=v4.0,Profile=Client"" />
+	</startup>
+</configuration>");
+				}
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);

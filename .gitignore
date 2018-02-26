@@ -12,4 +12,5 @@ _ReSharper*/
 .vs/
 /ILSpy.AddIn/Packages/*
 /ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe
+/ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe.config
 /ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec
