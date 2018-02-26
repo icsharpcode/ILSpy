@@ -31,6 +31,10 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="1.0.0.55" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.6.0" />

@@ -46,16 +46,16 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] defaultOptions =
+		static readonly CompilerOptions[] noMonoOptions =
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
 		};
 
-		static readonly CompilerOptions[] defaultOptionsWithMcs =
-{
+		static readonly CompilerOptions[] defaultOptions =
+		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
 			CompilerOptions.UseRoslyn,
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void HelloWorld([ValueSource("defaultOptionsWithMcs")] CompilerOptions options)
+		public void HelloWorld([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}
@@ -115,6 +115,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Switch([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 
@@ -127,6 +130,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 
@@ -161,7 +167,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void UndocumentedExpressions([ValueSource("defaultOptions")] CompilerOptions options)
+		public void UndocumentedExpressions([ValueSource("noMonoOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}
@@ -223,6 +229,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 
@@ -247,6 +256,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void YieldReturn([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 
@@ -259,12 +271,18 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void LINQRaytracer([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 
 		[Test]
 		public void MiniJSON([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 

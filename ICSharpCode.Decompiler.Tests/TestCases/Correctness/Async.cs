@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
@@ -40,14 +39,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			StreamCopyToWithConfigureAwait(new MemoryStream(new byte[1024]), 16);
 			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task.FromResult(i)));
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
-#if !LEGACY_CSC
+#if CS60
 			await AwaitCatch(Task.FromResult(1));
 			await AwaitFinally(Task.FromResult(2));
 #endif
 			await NestedAwait(Task.FromResult(Task.FromResult(5)));
 			await AwaitWithStack(Task.FromResult(3));
 			await AwaitWithStack2(Task.FromResult(4));
-#if !LEGACY_CSC
+#if CS60
 			await AwaitInCatch(Task.FromResult(1), Task.FromResult(2));
 			await AwaitInFinally(Task.FromResult(2), Task.FromResult(4));
 #endif
@@ -113,7 +112,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public async Task AwaitCatch(Task<int> task)
 		{
 			try {
@@ -155,7 +154,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public async Task AwaitInCatch(Task<int> task1, Task<int> task2)
 		{
 			try {

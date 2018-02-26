@@ -349,7 +349,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public static void SimpleDictInitializer()
 		{
 			InitializerTests.X(InitializerTests.Y(), new Data {

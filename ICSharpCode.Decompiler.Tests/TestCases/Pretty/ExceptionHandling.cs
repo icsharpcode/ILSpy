@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-#if !LEGACY_CSC
+#if CS60
 using System.IO;
 #endif
 using System.Threading;
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return false;
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public bool SimpleTryCatchExceptionWithNameAndCondition()
 		{
 			try {

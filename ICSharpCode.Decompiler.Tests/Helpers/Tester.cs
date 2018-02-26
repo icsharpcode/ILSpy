@@ -172,11 +172,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				preprocessorSymbols.Add("ROSLYN");
+				preprocessorSymbols.Add("CS60");
+				preprocessorSymbols.Add("CS70");
+				preprocessorSymbols.Add("CS71");
+				preprocessorSymbols.Add("CS72");
+			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
+				preprocessorSymbols.Add("MCS");
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
-			}
-			if (flags.HasFlag(CompilerOptions.UseMcs)) {
-				preprocessorSymbols.Add("MONO_MCS");
 			}
 			return preprocessorSymbols;
 		}
@@ -239,12 +242,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				} else {
 					otherOptions += "-platform:anycpu ";
 				}
+				if (preprocessorSymbols.Count > 0) {
+					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
+				}
 
 				ProcessStartInfo info = new ProcessStartInfo(mcsPath);
 				info.Arguments = $"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
 				info.RedirectStandardError = true;
 				info.RedirectStandardOutput = true;
 				info.UseShellExecute = false;
+
+				Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 
 				Process process = Process.Start(info);
 

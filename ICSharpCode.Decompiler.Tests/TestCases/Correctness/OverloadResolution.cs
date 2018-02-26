@@ -17,10 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -74,13 +70,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		#region params with nulls
 		static void TestParamsMethod()
 		{
-			TestCall(1, null, (TypeAccessException)null);
+			TestCall(1, null, (NullReferenceException)null);
 			TestCall(2, null, (AccessViolationException)null);
 			TestCall(3, null);
 			TestCall(3, null, null, null);
 		}
 
-		static void TestCall(int v, Type p1, TypeAccessException p2)
+		static void TestCall(int v, Type p1, NullReferenceException p2)
 		{
 			Console.WriteLine("TestCall without params");
 		}
