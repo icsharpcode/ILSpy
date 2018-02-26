@@ -26,9 +26,10 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
+	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class PrettyTestRunner
 	{
-		const string TestCasePath = DecompilerTestBase.TestCasePath + "/Pretty";
+		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Pretty";
 
 		[Test]
 		public void AllFilesHaveTests()

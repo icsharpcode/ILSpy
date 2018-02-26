@@ -26,9 +26,10 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
+	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class UglyTestRunner
 	{
-		const string TestCasePath = DecompilerTestBase.TestCasePath + "/Ugly";
+		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Ugly";
 
 		[Test]
 		public void AllFilesHaveTests()

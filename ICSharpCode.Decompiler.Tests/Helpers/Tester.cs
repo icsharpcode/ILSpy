@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				string testBasePath = Path.GetFullPath("../../../../ILSpy-tests");
+				string testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath)) {
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");

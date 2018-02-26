@@ -26,10 +26,10 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
-	[TestFixture]
+	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class CorrectnessTestRunner
 	{
-		const string TestCasePath = DecompilerTestBase.TestCasePath + "/Correctness";
+		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Correctness";
 
 		[Test]
 		public void AllFilesHaveTests()
