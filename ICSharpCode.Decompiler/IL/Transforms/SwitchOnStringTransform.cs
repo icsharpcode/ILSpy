@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!defaultBlockJump.MatchBranch(out var defaultBlock))
 				return false;
-			if (!(condition.MatchLogicNot(out var arg) && arg is Call c && c.Method.Name == "TryGetValue" &&
+			if (!(condition.MatchLogicNot(out var arg) && arg is CallInstruction c && c.Method.Name == "TryGetValue" &&
 				MatchDictionaryFieldLoad(c.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)))
 				return false;
 			if (!c.Arguments[1].MatchLdLoc(switchValueVar) || !c.Arguments[2].MatchLdLoca(out var switchIndexVar))
@@ -274,7 +274,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switchValue = new LdLoc(switchValueVar);
 				keepAssignmentBefore = true;
 			}
-			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
+			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			instructions[i + 1].ReplaceWith(inst);
@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		private bool AddNullSection(List<SwitchSection> sections, List<string> stringValues, Block nullValueCaseBlock)
+		bool AddNullSection(List<SwitchSection> sections, List<(string, int)> stringValues, Block nullValueCaseBlock)
 		{
 			var label = new LongSet(sections.Count);
 			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false; // cannot remove only label
 				possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
 			}
-			stringValues.Add(null);
+			stringValues.Add((null, (int)label.Values.First()));
 			sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
 			return true;
 		}
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches and extracts values from Add-call sequences.
 		/// </summary>
-		bool ExtractStringValuesFromInitBlock(Block block, out List<string> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
+		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
 		{
 			values = null;
 			// stloc dictVar(newobj Dictionary..ctor(ldc.i4 valuesLength))
@@ -342,10 +342,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
 					return false;
 			}
-			values = new List<string>(valuesLength);
+			values = new List<(string, int)>(valuesLength);
 			int i = 0;
-			while (MatchAddCall(dictionaryType, block.Instructions[i + 1], dictVar, i, out var value)) {
-				values.Add(value);
+			while (MatchAddCall(dictionaryType, block.Instructions[i + 1], dictVar, out var index, out var value)) {
+				values.Add((value, index));
 				i++;
 			}
 			// final store to compiler-generated variable:
@@ -362,16 +362,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -or-
 		/// call Add(ldloc dictVar, ldstr value, box System.Int32(ldc.i4 index))
 		/// </summary>
-		bool MatchAddCall(IType dictionaryType, ILInstruction inst, ILVariable dictVar, int index, out string value)
+		bool MatchAddCall(IType dictionaryType, ILInstruction inst, ILVariable dictVar, out int index, out string value)
 		{
 			value = null;
-			if (!(inst is Call c && c.Method.Name == "Add" && c.Arguments.Count == 3))
+			index = -1;
+			if (!(inst is CallInstruction c && c.Method.Name == "Add" && c.Arguments.Count == 3))
 				return false;
 			if (!(c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value)))
 				return false;
 			if (!(c.Method.DeclaringType.Equals(dictionaryType) && !c.Method.IsStatic))
 				return false;
-			return (c.Arguments[2].MatchLdcI4(index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(index)));
+			return (c.Arguments[2].MatchLdcI4(out index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(out index)));
 		}
 
 		bool IsStringToIntDictionary(IType dictionaryType)
@@ -474,7 +475,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				}
 			}
-			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
+			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			instructions[i + 1].ReplaceWith(inst);

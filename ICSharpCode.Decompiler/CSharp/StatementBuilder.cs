@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 
-		ConstantResolveResult CreateTypedCaseLabel(long i, IType type, string[] map = null)
+		IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -92,14 +92,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
 				value = i != 0;
 			} else if (type.IsKnownType(KnownTypeCode.String) && map != null) {
-				value = map[i];
+				var keys = map.Where(entry => entry.Value == i).Select(entry => entry.Key);
+				foreach (var key in keys)
+					yield return new ConstantResolveResult(type, key);
+				yield break;
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
-			return new ConstantResolveResult(type, value);
+			yield return new ConstantResolveResult(type, value);
 		}
 
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
@@ -143,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					astSection.CaseLabels.Add(new CaseLabel());
 					firstValueResolveResult = null;
 				} else {
-					var values = section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
+					var values = section.Labels.Values.SelectMany(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
 					if (section.HasNullLabel) {
 						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
 						firstValueResolveResult = new ConstantResolveResult(SpecialType.NullType, null);
