@@ -123,6 +123,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
+		public async Task AwaitMultipleCatchBlocks(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} catch (OutOfMemoryException ex) {
+				Console.WriteLine(ex.ToString());
+				Console.WriteLine(await task);
+			} catch {
+				Console.WriteLine(await task);
+			}
+		}
+
+
+		public async Task AwaitMultipleCatchBlocks2(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} catch (OutOfMemoryException ex) {
+				Console.WriteLine(ex.ToString());
+				Console.WriteLine(await task);
+			} catch (InternalBufferOverflowException ex) {
+				Console.WriteLine(ex.ToString());
+			} catch {
+				Console.WriteLine(await task);
+			}
+		}
+
 		public async Task AwaitFinally(Task<int> task)
 		{
 			try {

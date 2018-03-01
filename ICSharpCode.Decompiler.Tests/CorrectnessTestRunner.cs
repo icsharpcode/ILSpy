@@ -257,8 +257,11 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void Async([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions options)
+		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
 		{
+			if (options.HasFlag(CompilerOptions.UseMcs)) {
+				Assert.Ignore("Decompiler bug with mono!");
+			}
 			RunCS(options: options);
 		}
 

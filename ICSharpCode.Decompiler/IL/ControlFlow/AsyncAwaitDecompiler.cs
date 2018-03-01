@@ -126,6 +126,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
+
+			AwaitInCatchTransform.Run(function, context);
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)
@@ -513,15 +515,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-			#endregion
+		#endregion
 
-			#region AnalyzeStateMachine
+		#region AnalyzeStateMachine
 
-			/// <summary>
-			/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
-			/// entered on the next MoveNext() call.
-			/// </summary>
-			void AnalyzeStateMachine(ILFunction function)
+		/// <summary>
+		/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
+		/// entered on the next MoveNext() call.
+		/// </summary>
+		void AnalyzeStateMachine(ILFunction function)
 		{
 			context.Step("AnalyzeStateMachine()", function);
 			smallestAwaiterVarIndex = int.MaxValue;
