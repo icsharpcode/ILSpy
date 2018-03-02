@@ -205,7 +205,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!switchValueVar.IsSingleDefinition)
 				return false;
-			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock))
+			// either br nullCase or leave container
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave((BlockContainer)instructions[i].Parent.Parent))
 				return false;
 			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull()
 				&& ((SemanticHelper.IsPure(switchValue.Flags) && left.Match(switchValue).Success) || left.MatchLdLoc(switchValueVar))))
@@ -243,7 +244,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!tryGetValueBlock.Instructions[0].MatchIfInstruction(out condition, out var defaultBlockJump))
 				return false;
-			if (!defaultBlockJump.MatchBranch(out var defaultBlock))
+			if (!defaultBlockJump.MatchBranch(out var defaultBlock) && !defaultBlockJump.MatchLeave((BlockContainer)tryGetValueBlock.Parent))
 				return false;
 			if (!(condition.MatchLogicNot(out var arg) && arg is CallInstruction c && c.Method.Name == "TryGetValue" &&
 				MatchDictionaryFieldLoad(c.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)))
@@ -258,11 +259,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//  ... more cases ...
 			// 	case [long.MinValue..0),[13..long.MaxValue]: br defaultBlock
 			// }
-			if (switchBlock.IncomingEdgeCount != 1 || switchBlock.Instructions.Count != 1)
+			// mcs has a bug: when there is only one case it still generates the full-blown Dictionary<string, int> pattern,
+			// but uses only a simple if statement instead of the switch instruction.
+			if (switchBlock.IncomingEdgeCount != 1 || switchBlock.Instructions.Count == 0)
 				return false;
-			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst && switchInst.Value.MatchLdLoc(switchIndexVar)))
-				return false;
-			var sections = new List<SwitchSection>(switchInst.Sections);
+			var sections = new List<SwitchSection>();
+			switch (switchBlock.Instructions[0]) {
+				case SwitchInstruction switchInst:
+					if (switchBlock.Instructions.Count != 1)
+						return false;
+					if (!switchInst.Value.MatchLdLoc(switchIndexVar))
+						return false;
+					sections.AddRange(switchInst.Sections);
+					break;
+				case IfInstruction ifInst:
+					if (switchBlock.Instructions.Count != 2)
+						return false;
+					if (!ifInst.Condition.MatchCompEquals(out left, out right))
+						return false;
+					if (!left.MatchLdLoc(switchIndexVar))
+						return false;
+					if (!right.MatchLdcI4(0))
+						return false;
+					sections.Add(new SwitchSection() { Body = ifInst.TrueInst, Labels = new LongSet(0), ILRange = ifInst.ILRange });
+					sections.Add(new SwitchSection() { Body = switchBlock.Instructions[1], Labels = new LongSet(0).Invert(), ILRange = switchBlock.Instructions[1].ILRange });
+					break;
+			}
 			// switch contains case null:
 			if (nullValueCaseBlock != defaultBlock) {
 				if (!AddNullSection(sections, stringValues, nullValueCaseBlock)) {
