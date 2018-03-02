@@ -193,6 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ContainerKind.Switch:
 					Debug.Assert(EntryPoint.Instructions.Count == 1);
 					Debug.Assert(EntryPoint.Instructions[0] is SwitchInstruction);
+					Debug.Assert(EntryPoint.IncomingEdgeCount == 1);
 					break;
 				case ContainerKind.While:
 					Debug.Assert(EntryPoint.IncomingEdgeCount > 1);
