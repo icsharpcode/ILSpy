@@ -63,6 +63,8 @@
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="VBPrettyTestRunner.cs" />
+    <Compile Include="TestCases\VBPretty\Async.cs" />
     <Compile Include="UglyTestRunner.cs" />
     <Compile Include="TestCases\Correctness\ExpressionTrees.cs" />
     <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
@@ -166,6 +168,7 @@
     <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\ILPretty\Issue982.il" />
     <None Include="TestCases\Pretty\Readme.txt" />
+    <None Include="TestCases\VBPretty\Async.vb" />
   </ItemGroup>
 
   <ItemGroup>
