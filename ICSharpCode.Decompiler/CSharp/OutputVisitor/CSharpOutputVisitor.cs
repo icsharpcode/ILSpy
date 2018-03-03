@@ -866,7 +866,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				lambdaExpression.Parameters.Single().AcceptVisitor(this);
 			}
 			Space();
-			WriteToken(LambdaExpression.ArrowRole);
+			WriteToken(Roles.Arrow);
 			if (lambdaExpression.Body is BlockStatement) {
 				WriteBlock((BlockStatement)lambdaExpression.Body, policy.AnonymousMethodBraceStyle);
 			} else {
@@ -2179,22 +2179,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space();
 			WritePrivateImplementationType(propertyDeclaration.PrivateImplementationType);
 			WriteIdentifier(propertyDeclaration.NameToken);
-			OpenBrace(policy.PropertyBraceStyle);
-			// output get/set in their original order
-			foreach (AstNode node in propertyDeclaration.Children) {
-				if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
-					node.AcceptVisitor(this);
+			if (propertyDeclaration.ExpressionBody.IsNull) {
+				OpenBrace(policy.PropertyBraceStyle);
+				// output get/set in their original order
+				foreach (AstNode node in propertyDeclaration.Children) {
+					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
+						node.AcceptVisitor(this);
+					}
 				}
-			}
-			CloseBrace(policy.PropertyBraceStyle);
-			if (!propertyDeclaration.Initializer.IsNull) {
-				Space(policy.SpaceAroundAssignment);
-				WriteToken(Roles.Assign);
-				Space(policy.SpaceAroundAssignment);
-				propertyDeclaration.Initializer.AcceptVisitor(this);
+				CloseBrace(policy.PropertyBraceStyle);
+				if (!propertyDeclaration.Initializer.IsNull) {
+					Space(policy.SpaceAroundAssignment);
+					WriteToken(Roles.Assign);
+					Space(policy.SpaceAroundAssignment);
+					propertyDeclaration.Initializer.AcceptVisitor(this);
+					Semicolon();
+				}
+				NewLine();
+			} else {
+				Space();
+				WriteToken(Roles.Arrow);
+				Space();
+				propertyDeclaration.ExpressionBody.AcceptVisitor(this);
 				Semicolon();
 			}
-			NewLine();
 			EndNode(propertyDeclaration);
 		}
 

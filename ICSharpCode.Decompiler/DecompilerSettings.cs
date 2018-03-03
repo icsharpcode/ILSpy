@@ -421,6 +421,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool useExpressionBodyForCalculatedGetterOnlyProperties = true;
+
+		/// <summary>
+		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
+		/// </summary>
+		public bool UseExpressionBodyForCalculatedGetterOnlyProperties {
+			get { return useExpressionBodyForCalculatedGetterOnlyProperties; }
+			set {
+				if (useExpressionBodyForCalculatedGetterOnlyProperties != value) {
+					useExpressionBodyForCalculatedGetterOnlyProperties = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#region Options to aid VB decompilation
 		bool introduceIncrementAndDecrement = true;
 
