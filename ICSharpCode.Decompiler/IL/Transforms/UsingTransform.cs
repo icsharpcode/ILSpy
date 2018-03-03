@@ -233,6 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			} else {
 				ILInstruction target;
+				bool boxedValue = false;
 				if (isReference && checkInst is NullableRewrap rewrap) {
 					// the null check of reference types might have been transformed into "objVar?.Dispose();"
 					if (!(rewrap.Argument is CallVirt cv))
@@ -264,6 +265,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					target = cv.Arguments.FirstOrDefault();
 					if (target == null)
 						return false;
+					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type)) {
+						boxedValue = type.IsReferenceType != true;
+						target = newTarget;
+					}
 					callVirt = cv;
 				}
 				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
@@ -272,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (callVirt.Arguments.Count != 1)
 					return false;
-				return target.MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
+				return target.MatchLdLocRef(objVar) || (boxedValue && target.MatchLdLoc(objVar)) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 			}
 		}
 	}

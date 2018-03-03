@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void Loops([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		public void Loops([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

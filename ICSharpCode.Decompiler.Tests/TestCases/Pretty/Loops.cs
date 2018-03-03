@@ -252,6 +252,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if MCS
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+#endif
 		public struct DataItem
 		{
 			public int Property {
@@ -457,12 +460,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForEachBreakWhenFound(string name, ref StringComparison output)
 		{
+#if MCS
+			foreach (int value in Enum.GetValues(typeof(StringComparison))) {
+				if (((StringComparison)value).ToString() == name) {
+					output = (StringComparison)value;
+					break;
+				}
+			}
+#else
 			foreach (StringComparison value in Enum.GetValues(typeof(StringComparison))) {
 				if (value.ToString() == name) {
 					output = value;
 					break;
 				}
 			}
+#endif
 		}
 
 		public void ForEachOverListOfStruct(List<DataItem> items, int value)
@@ -496,6 +508,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !MCS
 		public void ForEachOverMultiDimArray(int[,] items)
 		{
 			foreach (int value in items) {
@@ -526,6 +539,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 #endif
 		}
+#endif
+
 #endregion
 
 		public void ForOverArray(string[] array)
