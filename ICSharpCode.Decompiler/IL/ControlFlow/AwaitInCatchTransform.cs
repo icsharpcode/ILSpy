@@ -231,24 +231,37 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 				if (globalCopyVarSplitted.StoreCount != 1 || globalCopyVarSplitted.LoadCount != 0)
 					continue;
-				context.Step("Inline finally block with await", tryCatch.Handlers[0]);
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
 				var exitOfFinallyNode = cfg.GetNode(exitOfFinally);
 				var entryPointOfFinallyNode = cfg.GetNode(entryPointOfFinally);
-				var nodes = new Stack<ControlFlowNode>(new[] { entryPointOfFinallyNode });
-				var blocksInFinally = new HashSet<Block>();
+
+				var additionalBlocksInFinally = new HashSet<Block>();
 				var invalidExits = new List<ControlFlowNode>();
-				while (nodes.Count > 0) {
-					var currentNode = nodes.Pop();
-					if (currentNode != exitOfFinallyNode) {
-						foreach (var successor in currentNode.Successors)
-							nodes.Push(successor);
-						if (entryPointOfFinallyNode.Dominates(currentNode))
-							blocksInFinally.Add((Block)currentNode.UserData);
+
+				TraverseDominatorTree(entryPointOfFinallyNode);
+
+				void TraverseDominatorTree(ControlFlowNode node)
+				{
+					if (entryPointOfFinallyNode != node) {
+						if (entryPointOfFinallyNode.Dominates(node))
+							additionalBlocksInFinally.Add((Block)node.UserData);
 						else
-							invalidExits.Add(currentNode);
+							invalidExits.Add(node);
+					}
+
+					if (node == exitOfFinallyNode)
+						return;
+
+					foreach (var child in node.DominatorTreeChildren) {
+						TraverseDominatorTree(child);
 					}
 				}
+
+				if (invalidExits.Any())
+					continue;
+
+				context.Step("Inline finally block with await", tryCatch.Handlers[0]);
+
 				foreach (var blockToRemove in blocksToRemove) {
 					blockToRemove.Remove();
 				}
@@ -264,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (branchToFinally.TargetBlock == entryPointOfFinally)
 						branchToFinally.ReplaceWith(new Branch(afterFinally));
 				}
-				foreach (var newBlock in blocksInFinally) {
+				foreach (var newBlock in additionalBlocksInFinally) {
 					newBlock.Remove();
 					finallyContainer.Blocks.Add(newBlock);
 				}

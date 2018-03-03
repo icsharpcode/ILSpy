@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			await AwaitCatch(Task.FromResult(1));
 			await AwaitMultipleCatchBlocks(Task.FromResult(1));
 			await AwaitMultipleCatchBlocks2(Task.FromResult(1));
+			Console.WriteLine(await AwaitInComplexFinally());
 			try {
 				await AwaitFinally(Task.FromResult(2));
 			} catch (Exception ex) {
@@ -217,6 +218,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("End finally");
 			}
 			Console.WriteLine("End Method");
+		}
+
+		public static async Task<int> AwaitInComplexFinally()
+		{
+			Console.WriteLine("a");
+			try {
+				Console.WriteLine("b");
+				await Task.Delay(1);
+				Console.WriteLine("c");
+			} catch (Exception ex) {
+				await Task.Delay(ex.HResult);
+			} finally {
+				Console.WriteLine("d");
+				int i = 0;
+				if (Console.CapsLock) {
+					i++;
+					await Task.Delay(i);
+				} else {
+					while (i < 5) {
+						Console.WriteLine("i: " + i);
+						i++;
+					}
+				}
+				Console.WriteLine("e");
+			}
+			Console.WriteLine("f");
+			return 1;
 		}
 
 		public async Task AwaitInCatchAndFinally(Task<int> task1, Task<int> task2, Task<int> task3)
