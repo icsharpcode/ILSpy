@@ -47,40 +47,40 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] noRoslynOptions =
+		static readonly CSharpCompilerOptions[] noRoslynOptions =
 		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize
+			CSharpCompilerOptions.None,
+			CSharpCompilerOptions.Optimize
 		};
 
-		static readonly CompilerOptions[] roslynOnlyOptions =
+		static readonly CSharpCompilerOptions[] roslynOnlyOptions =
 		{
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
 		};
 
-		static readonly CompilerOptions[] defaultOptions =
+		static readonly CSharpCompilerOptions[] defaultOptions =
 		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize,
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CSharpCompilerOptions.None,
+			CSharpCompilerOptions.Optimize,
+			CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
 		};
 
 		[Test]
-		public void NoArrayInitializers([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void NoArrayInitializers([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				ArrayInitializers = false
 			});
 		}
 
-		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);
 		}
 
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");

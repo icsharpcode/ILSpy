@@ -47,34 +47,34 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] noRoslynOptions =
+		static readonly CSharpCompilerOptions[] noRoslynOptions =
 		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize
+			CSharpCompilerOptions.None,
+			CSharpCompilerOptions.Optimize
 		};
 
-		static readonly CompilerOptions[] roslynOnlyOptions =
+		static readonly CSharpCompilerOptions[] roslynOnlyOptions =
 		{
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
 		};
 
-		static readonly CompilerOptions[] defaultOptions =
+		static readonly CSharpCompilerOptions[] defaultOptions =
 		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize,
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+			CSharpCompilerOptions.None,
+			CSharpCompilerOptions.Optimize,
+			CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
 		};
 
-		static readonly CompilerOptions[] defaultOptionsWithMcs =
+		static readonly CSharpCompilerOptions[] defaultOptionsWithMcs =
 		{
-			CompilerOptions.None,
-			CompilerOptions.Optimize,
-			CompilerOptions.UseRoslyn,
-			CompilerOptions.Optimize | CompilerOptions.UseRoslyn,
-			CompilerOptions.UseMcs,
-			CompilerOptions.Optimize | CompilerOptions.UseMcs
+			CSharpCompilerOptions.None,
+			CSharpCompilerOptions.Optimize,
+			CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn,
+			CSharpCompilerOptions.UseMcs,
+			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseMcs
 		};
 
 		[Test]
@@ -85,25 +85,25 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void InlineAssignmentTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void InlineAssignmentTest([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void CompoundAssignmentTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void CompoundAssignmentTest([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void ShortCircuit([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void ShortCircuit([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void ExceptionHandling([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void ExceptionHandling([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				NullPropagation = false
@@ -111,162 +111,162 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void Switch([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void Switch([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void DelegateConstruction([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void DelegateConstruction([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void AnonymousTypes([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
+		public void AnonymousTypes([Values(CSharpCompilerOptions.None, CSharpCompilerOptions.Optimize)] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void Async([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void Async([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void Lock([ValueSource("defaultOptionsWithMcs")] CompilerOptions cscOptions)
+		public void Lock([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void Using([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void Using([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void LiftedOperators([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void LiftedOperators([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void Generics([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void Generics([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void Loops([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void PropertiesAndEvents([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void PropertiesAndEvents([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void AutoProperties([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void AutoProperties([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void QueryExpressions([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void QueryExpressions([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void TypeAnalysisTests([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void TypeAnalysisTests([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void CheckedUnchecked([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void CheckedUnchecked([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void UnsafeCode([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void PInvoke([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void PInvoke([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			// This tests needs our own disassembler; ildasm has a bug with marshalinfo.
 			RunForLibrary(cscOptions: cscOptions, asmOptions: AssemblerOptions.UseOwnDisassembler);
 		}
 
 		[Test]
-		public void InitializerTests([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void InitializerTests([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void ExpressionTrees([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void ExpressionTrees([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void FixProxyCalls([Values(CompilerOptions.None, CompilerOptions.Optimize, CompilerOptions.UseRoslyn)] CompilerOptions cscOptions)
+		public void FixProxyCalls([Values(CSharpCompilerOptions.None, CSharpCompilerOptions.Optimize, CSharpCompilerOptions.UseRoslyn)] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void VariableNaming([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void VariableNaming([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void VariableNamingWithoutSymbols([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void VariableNamingWithoutSymbols([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
 		}
 
 		[Test]
-		public void CS72_PrivateProtected([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void CS72_PrivateProtected([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void AsyncMain([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void AsyncMain([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}
 
 		[Test]
-		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void NullPropagation([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
-		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
+			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);
 		}
 
 		[Test]
-		public void CS6_StringInterpolation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void CS6_StringInterpolation([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}
 
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
