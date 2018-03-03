@@ -128,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
 
 			AwaitInCatchTransform.Run(function, context);
+			AwaitInFinallyTransform.Run(function, context);
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)

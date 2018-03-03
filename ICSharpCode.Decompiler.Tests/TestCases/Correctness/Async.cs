@@ -41,7 +41,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
 #if CS60
 			await AwaitCatch(Task.FromResult(1));
-			await AwaitFinally(Task.FromResult(2));
+			await AwaitMultipleCatchBlocks(Task.FromResult(1));
+			await AwaitMultipleCatchBlocks2(Task.FromResult(1));
+			try {
+				await AwaitFinally(Task.FromResult(2));
+			} catch (Exception ex) {
+				Console.WriteLine(ex + " caught!");
+			}
 #endif
 			await NestedAwait(Task.FromResult(Task.FromResult(5)));
 			await AwaitWithStack(Task.FromResult(3));
@@ -49,6 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 #if CS60
 			await AwaitInCatch(Task.FromResult(1), Task.FromResult(2));
 			await AwaitInFinally(Task.FromResult(2), Task.FromResult(4));
+			await AwaitInCatchAndFinally(Task.FromResult(3), Task.FromResult(6), Task.FromResult(9));
 #endif
 		}
 
@@ -207,6 +214,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			} finally {
 				Console.WriteLine("Start finally");
 				await task2;
+				Console.WriteLine("End finally");
+			}
+			Console.WriteLine("End Method");
+		}
+
+		public async Task AwaitInCatchAndFinally(Task<int> task1, Task<int> task2, Task<int> task3)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} catch (Exception ex) {
+				Console.WriteLine("Start catch");
+				await task2;
+				Console.WriteLine("End catch");
+			} finally {
+				Console.WriteLine("Start finally");
+				await task3;
 				Console.WriteLine("End finally");
 			}
 			Console.WriteLine("End Method");
