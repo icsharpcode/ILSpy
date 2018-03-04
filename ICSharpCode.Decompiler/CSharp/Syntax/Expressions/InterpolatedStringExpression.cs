@@ -86,8 +86,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class Interpolation : InterpolatedStringContent
 	{
+		public static readonly TokenRole LBrace = new TokenRole("{");
+		public static readonly TokenRole RBrace = new TokenRole("}");
+
 		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
+			get { return GetChildByRole(LBrace); }
 		}
 
 		public Expression Expression {
@@ -98,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public string Suffix { get; }
 
 		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
+			get { return GetChildByRole(RBrace); }
 		}
 
 		public Interpolation()

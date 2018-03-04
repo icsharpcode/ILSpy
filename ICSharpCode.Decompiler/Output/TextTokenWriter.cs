@@ -214,6 +214,10 @@ namespace ICSharpCode.Decompiler
 		{
 			switch (token) {
 				case "{":
+					if (role != Roles.LBrace) {
+						output.Write("{");
+						break;
+					}
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
@@ -223,6 +227,7 @@ namespace ICSharpCode.Decompiler
 					break;
 				case "}":
 					output.Write('}');
+					if (role != Roles.RBrace) break;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
 						output.MarkFoldEnd();
 					if (braceLevelWithinType >= 0)

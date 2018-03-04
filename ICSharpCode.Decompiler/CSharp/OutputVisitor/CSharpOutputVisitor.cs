@@ -999,13 +999,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(interpolation);
 
-			writer.WriteToken(Roles.LBrace, "{");
+			writer.WriteToken(Interpolation.LBrace, "{");
 			interpolation.Expression.AcceptVisitor(this);
 			if (interpolation.Suffix != null) {
 				writer.WriteToken(Roles.Colon, ":");
 				writer.WritePrimitiveValue("", interpolation.Suffix);
 			}
-			writer.WriteToken(Roles.RBrace, "}");
+			writer.WriteToken(Interpolation.RBrace, "}");
 
 			EndNode(interpolation);
 		}
