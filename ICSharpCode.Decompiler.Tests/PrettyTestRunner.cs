@@ -261,6 +261,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void RefLocalsAndReturns([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
 		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);

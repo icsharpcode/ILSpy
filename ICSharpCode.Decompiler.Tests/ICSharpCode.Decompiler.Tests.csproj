@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
+    <Compile Include="TestCases\Pretty\RefLocalsAndReturns.cs" />
     <Compile Include="VBPrettyTestRunner.cs" />
     <Compile Include="TestCases\VBPretty\Async.cs" />
     <Compile Include="UglyTestRunner.cs" />

@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
 
+			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();

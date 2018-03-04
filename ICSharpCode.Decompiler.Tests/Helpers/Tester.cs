@@ -364,6 +364,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
