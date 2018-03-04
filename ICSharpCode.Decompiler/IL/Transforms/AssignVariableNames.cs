@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return CleanUpVariableName(m.Name.Substring(3));
 						}
 					}
-					var p = m.Parameters.ElementAtOrDefault((!(call is NewObj) && !m.IsStatic) ? i - 1 : i);
+					var p = call.GetParameter(i);
 					if (p != null && !string.IsNullOrEmpty(p.Name))
 						return CleanUpVariableName(p.Name);
 					break;
