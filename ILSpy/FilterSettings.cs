@@ -39,6 +39,8 @@ namespace ICSharpCode.ILSpy
 			this.ShowInternalApi = (bool?)element.Element("ShowInternalAPI") ?? true;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
+			if (this.LanguageVersion == default(LanguageVersion))
+				this.LanguageVersion = language.LanguageVersions.LastOrDefault();
 		}
 		
 		public XElement SaveAsXml()
