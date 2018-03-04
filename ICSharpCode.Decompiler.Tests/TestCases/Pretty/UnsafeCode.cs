@@ -58,14 +58,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private UnsafeDelegate unsafeDelegate;
 		private static UnsafeDelegate staticUnsafeDelegate;
 
-#if LEGACY_CSC
+#if CS60
+		public unsafe int* NullPointer => null;
+#else
 		public unsafe int* NullPointer {
 			get {
 				return null;
 			}
 		}
-#else
-		public unsafe int* NullPointer => null;
 #endif
 
 		unsafe static UnsafeCode()

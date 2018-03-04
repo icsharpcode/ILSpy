@@ -699,14 +699,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int Field = 3;
 
-#if LEGACY_CSC
+#if CS60
+		public static int StaticReadonlyProperty => 0;
+#else
 		public static int StaticReadonlyProperty {
 			get {
 				return 0;
 			}
 		}
-#else
-		public static int StaticReadonlyProperty => 0;
 #endif
 
 		public static int StaticProperty {
@@ -714,14 +714,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set;
 		}
 
-#if LEGACY_CSC
+#if CS60
+		public int ReadonlyProperty => 0;
+#else
 		public int ReadonlyProperty {
 			get {
 				return 0;
 			}
 		}
-#else
-		public int ReadonlyProperty => 0;
 #endif
 
 		public int Property {
