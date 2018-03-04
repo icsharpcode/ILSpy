@@ -7,6 +7,7 @@
 	<!-- The named colors 'Comment' and 'String' are used in SharpDevelop to detect if a line is inside a multiline string/comment -->
 	<Color name="Comment" foreground="Green" exampleText="// comment" />
 	<Color name="String" foreground="Blue" exampleText="string text = &quot;Hello, World!&quot;"/>
+	<Color name="StringInterpolation" foreground="Black" exampleText="string text = $&quot;Hello, {name}!&quot;"/>
 	<Color name="Char" foreground="Magenta" exampleText="char linefeed = '\n';"/>
 	<Color name="Preprocessor" foreground="Green" exampleText="#region Title" />
 	<Color name="Punctuation" exampleText="a(b.c);" />
@@ -120,6 +121,18 @@
 			<RuleSet>
 				<!-- span for escape sequences -->
 				<Span begin='""' end=""/>
+			</RuleSet>
+		</Span>
+		
+		<Span color="String">
+			<Begin>\$"</Begin>
+			<End>"</End>
+			<RuleSet>
+				<!-- span for escape sequences -->
+				<Span begin="\\" end="."/>
+				<Span begin="\{\{" end=""/>
+				<!-- string interpolation -->
+				<Span begin="{" end="}" color="StringInterpolation" ruleSet=""/>
 			</RuleSet>
 		</Span>
 
