@@ -67,6 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Unsafe,
 			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,
 			Modifiers.Readonly, Modifiers.Volatile,
+			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
 			Modifiers.Async,
 			Modifiers.Any
@@ -118,6 +119,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "unsafe";
 				case Modifiers.Async:
 					return "async";
+				case Modifiers.Ref:
+					return "ref";
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any";
@@ -163,6 +166,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "unsafe".Length;
 				case Modifiers.Async:
 					return "async".Length;
+				case Modifiers.Ref:
+					return "ref".Length;
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any".Length;
@@ -208,6 +213,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return Modifiers.Unsafe;
 				case "async":
 					return Modifiers.Async;
+				case "ref":
+					return Modifiers.Ref;
 				case "any":
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return Modifiers.Any;

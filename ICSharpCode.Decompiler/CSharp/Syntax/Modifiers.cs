@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Volatile  = 0x4000,
 		Unsafe    = 0x8000,
 		Async     = 0x10000,
+		Ref       = 0x20000,
 		
 		VisibilityMask = Private | Internal | Protected | Public,
 		
