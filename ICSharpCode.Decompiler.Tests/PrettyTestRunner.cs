@@ -255,15 +255,15 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
-		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
-		{
-			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);
-		}
-
 		[Test]
 		public void CS6_StringInterpolation([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
+		}
+
+		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		{
+			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);
 		}
 
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)

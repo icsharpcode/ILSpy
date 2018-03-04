@@ -699,22 +699,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int Field = 3;
 
+#if LEGACY_CSC
 		public static int StaticReadonlyProperty {
 			get {
 				return 0;
 			}
 		}
+#else
+		public static int StaticReadonlyProperty => 0;
+#endif
 
 		public static int StaticProperty {
 			get;
 			set;
 		}
 
+#if LEGACY_CSC
 		public int ReadonlyProperty {
 			get {
 				return 0;
 			}
 		}
+#else
+		public int ReadonlyProperty => 0;
+#endif
 
 		public int Property {
 			get;

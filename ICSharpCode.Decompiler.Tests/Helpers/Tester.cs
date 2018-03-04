@@ -302,6 +302,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				// disable C# features not available in legacy compiler
 				settings.NullPropagation = false;
 				settings.StringInterpolation = false;
+				settings.UseExpressionBodyForCalculatedGetterOnlyProperties = false;
 			}
 			return settings;
 		}

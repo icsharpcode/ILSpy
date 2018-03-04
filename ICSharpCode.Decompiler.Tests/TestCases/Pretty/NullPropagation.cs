@@ -32,16 +32,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public int IntVal;
 			public MyClass Field;
-			public MyStruct? Property1 {
-				get {
-					return null;
-				}
-			}
-			public MyStruct Property2 {
-				get {
-					return default(MyStruct);
-				}
-			}
+			public MyStruct? Property1 => null;
+			public MyStruct Property2 => default(MyStruct);
 			public MyStruct? this[int index] {
 				get {
 					return null;
