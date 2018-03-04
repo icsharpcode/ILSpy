@@ -1359,12 +1359,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitCall(Call inst, TranslationContext context)
 		{
-			return new CallBuilder(this, typeSystem, settings).Build(inst);
+			return WrapInRef(new CallBuilder(this, typeSystem, settings).Build(inst), inst.Method.ReturnType);
 		}
-		
+
 		protected internal override TranslatedExpression VisitCallVirt(CallVirt inst, TranslationContext context)
 		{
-			return new CallBuilder(this, typeSystem, settings).Build(inst);
+			return WrapInRef(new CallBuilder(this, typeSystem, settings).Build(inst), inst.Method.ReturnType);
+		}
+
+		TranslatedExpression WrapInRef(TranslatedExpression expr, IType type)
+		{
+			if (type.Kind == TypeKind.ByReference) {
+				return new DirectionExpression(FieldDirection.Ref, expr.Expression)
+					.WithoutILInstruction()
+					.WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
+			}
+			return expr;
 		}
 
 		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)

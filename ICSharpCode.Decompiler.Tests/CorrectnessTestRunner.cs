@@ -191,6 +191,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void RefLocalsAndReturns([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void BitNot([Values(false, true)] bool force32Bit)
 		{
 			CSharpCompilerOptions compiler = CSharpCompilerOptions.UseDebug;

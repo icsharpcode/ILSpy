@@ -76,6 +76,8 @@ namespace ICSharpCode.Decompiler.Semantics
 						return new PointerType(member.ReturnType);
 					break;
 			}
+			if (member.ReturnType.Kind == TypeKind.ByReference)
+				return ((ByReferenceType)member.ReturnType).ElementType;
 			return member.ReturnType;
 		}
 		
