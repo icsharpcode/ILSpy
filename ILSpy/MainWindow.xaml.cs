@@ -486,7 +486,7 @@ namespace ICSharpCode.ILSpy
 		void filterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			RefreshTreeViewFilter();
-			if (e.PropertyName == "Language") {
+			if (e.PropertyName == "Language" || e.PropertyName == "LanguageVersion") {
 				DecompileSelectedNodes(recordHistory: false);
 			}
 		}
@@ -762,7 +762,7 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(decompilerTextView))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions { TextViewState = state });
+			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions(CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings) { TextViewState = state });
 		}
 		
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -773,7 +773,7 @@ namespace ICSharpCode.ILSpy
 			}
 			this.TextView.SaveToDisk(this.CurrentLanguage,
 				this.SelectedNodes,
-				new DecompilationOptions { FullDecompilation = true });
+				new DecompilationOptions(CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings) { FullDecompilation = true });
 		}
 		
 		public void RefreshDecompiledView()
@@ -784,12 +784,9 @@ namespace ICSharpCode.ILSpy
 		public DecompilerTextView TextView {
 			get { return decompilerTextView; }
 		}
-		
-		public Language CurrentLanguage {
-			get {
-				return sessionSettings.FilterSettings.Language;
-			}
-		}
+
+		public Language CurrentLanguage => sessionSettings.FilterSettings.Language;
+		public LanguageVersion CurrentLanguageVersion => sessionSettings.FilterSettings.LanguageVersion;
 
 		public event SelectionChangedEventHandler SelectionChanged;
 

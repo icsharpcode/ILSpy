@@ -25,7 +25,6 @@ using System.Linq;
 using System.Resources;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.Options;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -35,8 +34,6 @@ using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.AvalonEdit.Highlighting;
-using System.Windows.Media;
 
 namespace ICSharpCode.ILSpy
 {
@@ -84,6 +81,27 @@ namespace ICSharpCode.ILSpy
 
 		public override string ProjectFileExtension {
 			get { return ".csproj"; }
+		}
+
+		IReadOnlyList<LanguageVersion> versions;
+
+		public override IReadOnlyList<LanguageVersion> LanguageVersions {
+			get {
+				if (versions == null) {
+					versions = new List<LanguageVersion>() {
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp1.ToString(), "C# 1.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp2.ToString(), "C# 2.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp3.ToString(), "C# 3.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp4.ToString(), "C# 4.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp5.ToString(), "C# 5.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp6.ToString(), "C# 6.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7.ToString(), "C# 7.0"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_1.ToString(), "C# 7.1"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_2.ToString(), "C# 7.2"),
+					};
+				}
+				return versions;
+			}
 		}
 
 		CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
@@ -478,14 +496,16 @@ namespace ICSharpCode.ILSpy
 			return TypeToString(ConvertTypeOptions.DoNotUsePrimitiveTypeNames | ConvertTypeOptions.IncludeTypeParameterDefinitions, type);
 		}
 
+		DecompilerSettings CurrentSettings => new DecompilationOptions(MainWindow.Instance.CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings).DecompilerSettings;
+
 		public override bool ShowMember(MemberReference member)
 		{
-			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, CurrentSettings);
 		}
 
 		public override MemberReference GetOriginalCodeLocation(MemberReference member)
 		{
-			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)
+			if (showAllMembers || !CurrentSettings.AnonymousMethods)
 				return member;
 			else
 				return TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);

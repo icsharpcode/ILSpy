@@ -18,6 +18,8 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpy
@@ -36,6 +38,7 @@ namespace ICSharpCode.ILSpy
 		{
 			this.ShowInternalApi = (bool?)element.Element("ShowInternalAPI") ?? true;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
+			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
 		}
 		
 		public XElement SaveAsXml()
@@ -43,7 +46,8 @@ namespace ICSharpCode.ILSpy
 			return new XElement(
 				"FilterSettings",
 				new XElement("ShowInternalAPI", this.ShowInternalApi),
-				new XElement("Language", this.Language.Name)
+				new XElement("Language", this.Language.Name),
+				new XElement("LanguageVersion", this.LanguageVersion.Version)
 			);
 		}
 		
@@ -102,14 +106,34 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (language != value) {
 					language = value;
-					OnPropertyChanged("Language");
+					LanguageVersion = language.LanguageVersions.LastOrDefault();
+					OnPropertyChanged();
 				}
 			}
 		}
-		
+
+		LanguageVersion languageVersion;
+
+		/// <summary>
+		/// Gets/Sets the current language version.
+		/// </summary>
+		/// <remarks>
+		/// While this isn't related to filtering, having it as part of the FilterSettings
+		/// makes it easy to pass it down into all tree nodes.
+		/// </remarks>
+		public LanguageVersion LanguageVersion {
+			get { return languageVersion; }
+			set {
+				if (languageVersion != value) {
+					languageVersion = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		
-		protected virtual void OnPropertyChanged(string propertyName)
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			if (PropertyChanged != null) {
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
