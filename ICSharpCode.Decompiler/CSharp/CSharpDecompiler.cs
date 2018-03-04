@@ -33,6 +33,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 using System.IO;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -667,19 +668,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
 				// Remove the [DefaultMember] attribute if the class contains indexers
-				foreach (AttributeSection section in typeDecl.Attributes) {
-					foreach (var attr in section.Attributes) {
-						var tr = attr.Type.GetResolveResult().Type;
-						if (tr.Name == "DefaultMemberAttribute" && tr.Namespace == "System.Reflection") {
+				RemoveAttribute(typeDecl, new TopLevelTypeName("System.Reflection", "DefaultMemberAttribute"));
+			}
+			if (settings.IntroduceRefAndReadonlyModifiersOnStructs && typeDecl.ClassType == ClassType.Struct) {
+				if (RemoveAttribute(typeDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IsByRefLikeAttribute"))) {
+					typeDecl.Modifiers |= Modifiers.Ref;
+				}
+				if (RemoveAttribute(typeDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IsReadOnlyAttribute"))) {
+					typeDecl.Modifiers |= Modifiers.Readonly;
+				}
+				if (FindAttribute(typeDecl, new TopLevelTypeName("System", "ObsoleteAttribute"), out var attr)) {
+					if (obsoleteAttributePattern.IsMatch(attr)) {
+						if (attr.Parent is Syntax.AttributeSection section && section.Attributes.Count == 1)
+							section.Remove();
+						else
 							attr.Remove();
-						}
 					}
-					if (section.Attributes.Count == 0)
-						section.Remove();
 				}
 			}
 			return typeDecl;
 		}
+
+		static readonly Syntax.Attribute obsoleteAttributePattern = new Syntax.Attribute() {
+			Type = new TypePattern(typeof(ObsoleteAttribute)),
+			Arguments = {
+				new PrimitiveExpression("Types with embedded references are not supported in this version of your compiler."),
+				new Choice() { new PrimitiveExpression(true), new PrimitiveExpression(false) }
+			}
+		};
 
 		MethodDeclaration GenerateConvHelper(string name, KnownTypeCode source, KnownTypeCode target, TypeSystemAstBuilder typeSystemAstBuilder,
 		                                     Expression intermediate32, Expression intermediate64)
@@ -806,19 +822,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void RemoveAttribute(EntityDeclaration entityDecl, FullTypeName attrName)
+		bool RemoveAttribute(EntityDeclaration entityDecl, FullTypeName attrName)
 		{
+			bool found = false;
 			foreach (var section in entityDecl.Attributes) {
 				foreach (var attr in section.Attributes) {
 					var symbol = attr.Type.GetSymbol();
 					if (symbol is ITypeDefinition td && td.FullTypeName == attrName) {
 						attr.Remove();
+						found = true;
 					}
 				}
 				if (section.Attributes.Count == 0) {
 					section.Remove();
 				}
 			}
+			return found;
+		}
+
+		bool FindAttribute(EntityDeclaration entityDecl, FullTypeName attrName, out Syntax.Attribute attribute)
+		{
+			attribute = null;
+			foreach (var section in entityDecl.Attributes) {
+				foreach (var attr in section.Attributes) {
+					var symbol = attr.Type.GetSymbol();
+					if (symbol is ITypeDefinition td && td.FullTypeName == attrName) {
+						attribute = attr;
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		HashSet<string> definedSymbols;

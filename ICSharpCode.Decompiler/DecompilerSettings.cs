@@ -75,6 +75,9 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
+				introduceRefAndReadonlyModifiersOnStructs = false;
+			}
 		}
 
 		bool anonymousMethods = true;
@@ -520,13 +523,28 @@ namespace ICSharpCode.Decompiler
 		bool outVariables = true;
 
 		/// <summary>
-		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
+		/// Gets/Sets whether out variable declarations should be used when possible.
 		/// </summary>
 		public bool OutVariables {
 			get { return outVariables; }
 			set {
 				if (outVariables != value) {
 					outVariables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceRefAndReadonlyModifiersOnStructs = true;
+
+		/// <summary>
+		/// Gets/Sets whether IsByRefLikeAttribute and IsReadOnlyAttribute should be replaced with 'ref' and 'readonly' modifiers on structs.
+		/// </summary>
+		public bool IntroduceRefAndReadonlyModifiersOnStructs {
+			get { return introduceRefAndReadonlyModifiersOnStructs; }
+			set {
+				if (introduceRefAndReadonlyModifiersOnStructs != value) {
+					introduceRefAndReadonlyModifiersOnStructs = value;
 					OnPropertyChanged();
 				}
 			}
