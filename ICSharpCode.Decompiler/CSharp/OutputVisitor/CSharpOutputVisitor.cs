@@ -806,7 +806,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space();
 			outVarDeclarationExpression.Type.AcceptVisitor(this);
 			Space();
-			outVarDeclarationExpression.Expression.AcceptVisitor(this);
+			outVarDeclarationExpression.Variable.AcceptVisitor(this);
 
 			EndNode(outVarDeclarationExpression);
 		}

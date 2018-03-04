@@ -72,6 +72,9 @@ namespace ICSharpCode.Decompiler
 				stringInterpolation = false;
 				dictionaryInitializers = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
+				outVariables = false;
+			}
 		}
 
 		bool anonymousMethods = true;
@@ -509,6 +512,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (useExpressionBodyForCalculatedGetterOnlyProperties != value) {
 					useExpressionBodyForCalculatedGetterOnlyProperties = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool outVariables = true;
+
+		/// <summary>
+		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
+		/// </summary>
+		public bool OutVariables {
+			get { return outVariables; }
+			set {
+				if (outVariables != value) {
+					outVariables = value;
 					OnPropertyChanged();
 				}
 			}

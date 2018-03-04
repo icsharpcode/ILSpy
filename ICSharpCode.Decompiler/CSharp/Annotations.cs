@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
@@ -158,10 +159,15 @@ namespace ICSharpCode.Decompiler.CSharp
 	public class ILVariableResolveResult : ResolveResult
 	{
 		public readonly ILVariable Variable;
-		
-		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
+
+		public ILVariableResolveResult(ILVariable v) : base(v.Type)
 		{
 			this.Variable = v;
+		}
+
+		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
+		{
+			this.Variable = v ?? throw new ArgumentNullException("v");
 		}
 	}
 
