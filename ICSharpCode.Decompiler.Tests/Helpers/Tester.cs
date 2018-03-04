@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
-				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: LanguageVersion.Latest);
+				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,
@@ -297,14 +297,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static DecompilerSettings GetSettings(CSharpCompilerOptions cscOptions)
 		{
-			var settings = new DecompilerSettings();
-			if ((cscOptions & CSharpCompilerOptions.UseRoslyn) == 0) {
-				// disable C# features not available in legacy compiler
-				settings.NullPropagation = false;
-				settings.StringInterpolation = false;
-				settings.UseExpressionBodyForCalculatedGetterOnlyProperties = false;
+			if (cscOptions.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+				return new DecompilerSettings(CSharp.LanguageVersion.Latest);
+			} else {
+				return new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
 			}
-			return settings;
 		}
 
 		public static CSharpDecompiler GetDecompilerForSnippet(string csharpText)

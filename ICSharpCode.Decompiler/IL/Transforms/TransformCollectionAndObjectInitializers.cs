@@ -168,6 +168,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// in the list of possible index variables.
 			// Index variables are used to implement dictionary initializers.
 			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
+				if (!context.Settings.DictionaryInitializers)
+					return false;
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 					return false;
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));

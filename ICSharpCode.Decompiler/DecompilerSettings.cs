@@ -28,6 +28,52 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerSettings : INotifyPropertyChanged
 	{
+		/// <summary>
+		/// Equivalent to <c>new DecompilerSettings(LanguageVersion.Latest)</c>
+		/// </summary>
+		public DecompilerSettings()
+		{
+		}
+
+		/// <summary>
+		/// Creates a new DecompilerSettings instance with initial settings
+		/// appropriate for the specified language version.
+		/// </summary>
+		/// <remarks>
+		/// This does not imply that the resulting
+		/// </remarks>
+		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
+		{
+			// By default, all decompiler features are enabled.
+			// Disable some of them based on language version:
+			if (languageVersion < CSharp.LanguageVersion.CSharp2) {
+				anonymousMethods = false;
+				liftNullables = false;
+				yieldReturn = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
+				anonymousTypes = false;
+				objectCollectionInitializers = false;
+				automaticProperties = false;
+				queryExpressions = false;
+				expressionTrees = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
+				// * dynamic (not supported yet)
+				// * named and optional arguments (not supported yet)
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
+				asyncAwait = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp6) {
+				awaitInCatchFinally = false;
+				useExpressionBodyForCalculatedGetterOnlyProperties = false;
+				nullPropagation = false;
+				stringInterpolation = false;
+				dictionaryInitializers = false;
+			}
+		}
+
 		bool anonymousMethods = true;
 
 		/// <summary>
@@ -98,6 +144,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (asyncAwait != value) {
 					asyncAwait = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool awaitInCatchFinally = true;
+
+		/// <summary>
+		/// Decompile await in catch/finally blocks.
+		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
+		/// </summary>
+		public bool AwaitInCatchFinally {
+			get { return awaitInCatchFinally; }
+			set {
+				if (awaitInCatchFinally != value) {
+					awaitInCatchFinally = value;
 					OnPropertyChanged();
 				}
 			}
@@ -347,6 +409,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (objectCollectionInitializers != value) {
 					objectCollectionInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool dictionaryInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 dictionary initializers.
+		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// </summary>
+		public bool DictionaryInitializers {
+			get { return dictionaryInitializers; }
+			set {
+				if (dictionaryInitializers != value) {
+					dictionaryInitializers = value;
 					OnPropertyChanged();
 				}
 			}
