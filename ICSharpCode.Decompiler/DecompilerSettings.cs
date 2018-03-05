@@ -74,6 +74,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
+				discards = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
 				introduceRefAndReadonlyModifiersOnStructs = false;
@@ -530,6 +531,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (outVariables != value) {
 					outVariables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool discards = true;
+
+		/// <summary>
+		/// Gets/Sets whether discards should be used when possible.
+		/// Only has an effect if <see cref="OutVariables"/> is enabled.
+		/// </summary>
+		public bool Discards {
+			get { return discards; }
+			set {
+				if (discards != value) {
+					discards = value;
 					OnPropertyChanged();
 				}
 			}

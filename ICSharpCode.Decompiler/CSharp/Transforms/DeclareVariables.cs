@@ -428,7 +428,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					} else {
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					}
-					var ovd = new OutVarDeclarationExpression(type, v.Name);
+					string name;
+					// Variable is not used and discards are allowed, we can simplify this to 'out var _'.
+					// TODO : if there are no other (non-out) variables named '_' and type is 'var', we can simplify this to 'out _'.
+					// However, this needs overload resolution, so we currently cannot do that, as OR does not yet understand out var.
+					// (for the specific rules see https://github.com/dotnet/roslyn/blob/master/docs/features/discards.md)
+					if (context.Settings.Discards && v.ILVariable.LoadCount == 0 && v.ILVariable.StoreCount == 0 && v.ILVariable.AddressCount == 1) {
+						name = "_";
+					} else {
+						name = v.Name;
+					}
+					var ovd = new OutVarDeclarationExpression(type, name);
 					ovd.Variable.AddAnnotation(new ILVariableResolveResult(ilVariable));
 					ovd.CopyAnnotationsFrom(dirExpr);
 					replacements.Add((dirExpr, ovd));
