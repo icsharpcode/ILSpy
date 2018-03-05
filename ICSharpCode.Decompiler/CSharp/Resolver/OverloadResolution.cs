@@ -348,20 +348,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MapCorrespondingParameters(Candidate candidate)
 		{
 			// C# 4.0 spec: §7.5.1.1 Corresponding parameters
+			// Updated for C# 7.2 non-trailing named arguments
 			candidate.ArgumentToParameterMap = new int[arguments.Length];
-			for (int i = 0; i < arguments.Length; i++) {
+			bool hasPositionalArgument = false;
+			// go backwards, so that hasPositionalArgument tells us whether there
+			// are non-trailing named arguments
+			for (int i = arguments.Length - 1; i >= 0; i--) {
 				candidate.ArgumentToParameterMap[i] = -1;
-				if (argumentNames[i] == null) {
-					// positional argument
+				if (argumentNames[i] == null || hasPositionalArgument) {
+					hasPositionalArgument = true;
+					// positional argument or non-trailing named argument
 					if (i < candidate.ParameterTypes.Length) {
 						candidate.ArgumentToParameterMap[i] = i;
+						if (argumentNames[i] != null && argumentNames[i] != candidate.Parameters[i].Name) {
+							// non-trailing named argument must match name
+							candidate.AddError(OverloadResolutionErrors.NoParameterFoundForNamedArgument);
+						}
 					} else if (candidate.IsExpandedForm) {
 						candidate.ArgumentToParameterMap[i] = candidate.ParameterTypes.Length - 1;
+						if (argumentNames[i] != null) {
+							// can't use non-trailing named argument here
+							candidate.AddError(OverloadResolutionErrors.NoParameterFoundForNamedArgument);
+						}
 					} else {
 						candidate.AddError(OverloadResolutionErrors.TooManyPositionalArguments);
 					}
 				} else {
-					// named argument
+					// (trailing) named argument
 					for (int j = 0; j < candidate.Parameters.Count; j++) {
 						if (argumentNames[i] == candidate.Parameters[j].Name) {
 							candidate.ArgumentToParameterMap[i] = j;
