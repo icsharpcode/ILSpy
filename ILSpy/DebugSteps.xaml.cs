@@ -127,7 +127,7 @@ namespace ICSharpCode.ILSpy
 			var window = MainWindow.Instance;
 			var state = window.TextView.GetState();
 			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
-				new DecompilationOptions(window.CurrentLanguageVersion, ILSpy.Options.DecompilerSettingsPanel.CurrentDecompilerSettings) {
+				new DecompilationOptions(window.CurrentLanguageVersion) {
 					StepLimit = step,
 					IsDebug = isDebug,
 					TextViewState = state

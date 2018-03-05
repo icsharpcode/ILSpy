@@ -762,7 +762,7 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(decompilerTextView))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions(CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings) { TextViewState = state });
+			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
 		}
 		
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -773,7 +773,7 @@ namespace ICSharpCode.ILSpy
 			}
 			this.TextView.SaveToDisk(this.CurrentLanguage,
 				this.SelectedNodes,
-				new DecompilationOptions(CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings) { FullDecompilation = true });
+				new DecompilationOptions() { FullDecompilation = true });
 		}
 		
 		public void RefreshDecompiledView()

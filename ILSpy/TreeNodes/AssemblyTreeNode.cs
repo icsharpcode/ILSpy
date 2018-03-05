@@ -291,7 +291,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + language.ProjectFileExtension;
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true) {
-				DecompilationOptions options = new DecompilationOptions(MainWindow.Instance.CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings);
+				DecompilationOptions options = new DecompilationOptions();
 				options.FullDecompilation = true;
 				if (dlg.FilterIndex == 1) {
 					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);

@@ -496,16 +496,14 @@ namespace ICSharpCode.ILSpy
 			return TypeToString(ConvertTypeOptions.DoNotUsePrimitiveTypeNames | ConvertTypeOptions.IncludeTypeParameterDefinitions, type);
 		}
 
-		DecompilerSettings CurrentSettings => new DecompilationOptions(MainWindow.Instance.CurrentLanguageVersion, Options.DecompilerSettingsPanel.CurrentDecompilerSettings).DecompilerSettings;
-
 		public override bool ShowMember(MemberReference member)
 		{
-			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, CurrentSettings);
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
 		}
 
 		public override MemberReference GetOriginalCodeLocation(MemberReference member)
 		{
-			if (showAllMembers || !CurrentSettings.AnonymousMethods)
+			if (showAllMembers || !new DecompilationOptions().DecompilerSettings.AnonymousMethods)
 				return member;
 			else
 				return TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);
