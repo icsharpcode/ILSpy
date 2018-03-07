@@ -301,16 +301,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// a type system type reference.</param>
 		/// <param name="typeAttributes">Attributes associated with the Cecil type reference.
 		/// This is used to support the 'dynamic' type.</param>
-		public ITypeReference ReadTypeReference(TypeReference type, ICustomAttributeProvider typeAttributes = null)
+		/// <param name="isFromSignature">Whether this TypeReference is from a context where
+		/// IsValueType is set correctly.</param>
+		public ITypeReference ReadTypeReference(TypeReference type, ICustomAttributeProvider typeAttributes = null, bool isFromSignature=false)
 		{
 			int typeIndex = 0;
-			return CreateType(type, typeAttributes, ref typeIndex);
+			return CreateType(type, typeAttributes, ref typeIndex, isFromSignature);
 		}
 		
-		ITypeReference CreateType(TypeReference type, ICustomAttributeProvider typeAttributes, ref int typeIndex)
+		ITypeReference CreateType(TypeReference type, ICustomAttributeProvider typeAttributes, ref int typeIndex, bool isFromSignature)
 		{
 			while (type is OptionalModifierType || type is RequiredModifierType) {
 				type = ((TypeSpecification)type).ElementType;
+				isFromSignature = true;
 			}
 			if (type == null) {
 				return SpecialType.UnknownType;
@@ -322,29 +325,29 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					new ByReferenceTypeReference(
 						CreateType(
 							(type as Mono.Cecil.ByReferenceType).ElementType,
-							typeAttributes, ref typeIndex)));
+							typeAttributes, ref typeIndex, isFromSignature: true)));
 			} else if (type is Mono.Cecil.PointerType) {
 				typeIndex++;
 				return interningProvider.Intern(
 					new PointerTypeReference(
 						CreateType(
 							(type as Mono.Cecil.PointerType).ElementType,
-							typeAttributes, ref typeIndex)));
+							typeAttributes, ref typeIndex, isFromSignature: true)));
 			} else if (type is Mono.Cecil.ArrayType) {
 				typeIndex++;
 				return interningProvider.Intern(
 					new ArrayTypeReference(
 						CreateType(
 							(type as Mono.Cecil.ArrayType).ElementType,
-							typeAttributes, ref typeIndex),
+							typeAttributes, ref typeIndex, isFromSignature: true),
 						(type as Mono.Cecil.ArrayType).Rank));
 			} else if (type is GenericInstanceType) {
 				GenericInstanceType gType = (GenericInstanceType)type;
-				ITypeReference baseType = CreateType(gType.ElementType, typeAttributes, ref typeIndex);
+				ITypeReference baseType = CreateType(gType.ElementType, typeAttributes, ref typeIndex, isFromSignature: true);
 				ITypeReference[] para = new ITypeReference[gType.GenericArguments.Count];
 				for (int i = 0; i < para.Length; ++i) {
 					typeIndex++;
-					para[i] = CreateType(gType.GenericArguments[i], typeAttributes, ref typeIndex);
+					para[i] = CreateType(gType.GenericArguments[i], typeAttributes, ref typeIndex, isFromSignature: true);
 				}
 				return interningProvider.Intern(new ParameterizedTypeReference(baseType, para));
 			} else if (type is GenericParameter) {
@@ -353,11 +356,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else if (type is FunctionPointerType) {
 				return KnownTypeReference.Get(KnownTypeCode.IntPtr);
 			} else if (type.IsNested) {
-				ITypeReference typeRef = CreateType(type.DeclaringType, typeAttributes, ref typeIndex);
+				ITypeReference typeRef = CreateType(type.DeclaringType, typeAttributes, ref typeIndex, isFromSignature);
 				int partTypeParameterCount;
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out partTypeParameterCount);
 				namepart = interningProvider.Intern(namepart);
-				return interningProvider.Intern(new NestedTypeReference(typeRef, namepart, partTypeParameterCount));
+				// type.IsValueType is only reliable if we got this TypeReference from a signature,
+				// or if it's a TypeSpecification.
+				bool? isReferenceType = isFromSignature ? (bool?)!type.IsValueType : null;
+				return interningProvider.Intern(new NestedTypeReference(typeRef, namepart, partTypeParameterCount, isReferenceType));
 			} else {
 				string ns = interningProvider.Intern(type.Namespace ?? string.Empty);
 				string name = type.Name;
@@ -375,7 +381,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						if (c != null)
 							return c;
 					}
-					return interningProvider.Intern(new GetClassTypeReference(GetAssemblyReference(type.Scope), ns, name, typeParameterCount));
+					// type.IsValueType is only reliable if we got this TypeReference from a signature,
+					// or if it's a TypeSpecification.
+					bool? isReferenceType = isFromSignature ? (bool?)!type.IsValueType : null;
+					return interningProvider.Intern(new GetClassTypeReference(
+						GetAssemblyReference(type.Scope), ns, name, typeParameterCount,
+						isReferenceType));
 				}
 			}
 		}
@@ -1323,7 +1334,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			
-			m.ReturnType = ReadTypeReference(method.ReturnType, typeAttributes: method.MethodReturnType);
+			m.ReturnType = ReadTypeReference(method.ReturnType, typeAttributes: method.MethodReturnType, isFromSignature: true);
 			
 			if (HasAnyAttributes(method))
 				AddAttributes(method, m.Attributes, m.ReturnTypeAttributes);
@@ -1431,7 +1442,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (parameter == null)
 				throw new ArgumentNullException("parameter");
-			var type = ReadTypeReference(parameter.ParameterType, typeAttributes: parameter);
+			var type = ReadTypeReference(parameter.ParameterType, typeAttributes: parameter, isFromSignature: true);
 			var p = new DefaultUnresolvedParameter(type, interningProvider.Intern(parameter.Name));
 			
 			if (parameter.ParameterType is Mono.Cecil.ByReferenceType) {
@@ -1516,7 +1527,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			f.Accessibility = GetAccessibility(field.Attributes);
 			f.IsReadOnly = field.IsInitOnly;
 			f.IsStatic = field.IsStatic;
-			f.ReturnType = ReadTypeReference(field.FieldType, typeAttributes: field);
+			f.ReturnType = ReadTypeReference(field.FieldType, typeAttributes: field, isFromSignature: true);
 			if (field.HasConstant) {
 				f.ConstantValue = CreateSimpleConstantValue(f.ReturnType, field.Constant);
 			}

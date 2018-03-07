@@ -218,11 +218,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			switch (type.Kind) {
 				case TypeKind.Unknown:
+					if (type.IsReferenceType == true) {
+						return StackType.O;
+					}
 					return StackType.Unknown;
 				case TypeKind.ByReference:
 					return StackType.Ref;
 				case TypeKind.Pointer:
 					return StackType.I;
+				case TypeKind.TypeParameter:
+					// Type parameters are always considered StackType.O, even
+					// though they might be instantiated with primitive types.
+					return StackType.O;
 			}
 			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)

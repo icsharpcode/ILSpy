@@ -223,6 +223,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IMethod method;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
 					method = FindNonGenericMethod(methodReference.GetElementMethod());
+					if (method == null) {
+						method = CreateFakeMethod(methodReference);
+					}
 					if (methodReference.CallingConvention == MethodCallingConvention.VarArg) {
 						method = new VarArgInstanceMethod(
 							method,
@@ -251,7 +254,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			ITypeDefinition typeDef = Resolve(methodReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
-				return CreateFakeMethod(methodReference);
+				return null;
 			IEnumerable<IMethod> methods;
 			if (methodReference.Name == ".ctor") {
 				methods = typeDef.GetConstructors();
@@ -283,7 +286,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				return method;
 			}
-			return CreateFakeMethod(methodReference);
+			return null;
 		}
 		
 		static bool CompareTypes(IType a, IType b)

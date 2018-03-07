@@ -674,7 +674,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			ITypeDefinition declTypeDef = this.DeclaringTypeDefinition;
 			if (declTypeDef != null) {
-				return new NestedTypeReference(declTypeDef.ToTypeReference(), this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount);
+				return new NestedTypeReference(declTypeDef.ToTypeReference(),
+					this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount,
+					this.IsReferenceType);
 			} else {
 				IAssembly asm = this.ParentAssembly;
 				IAssemblyReference asmRef;
@@ -682,7 +684,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					asmRef = new DefaultAssemblyReference(asm.AssemblyName);
 				else
 					asmRef = null;
-				return new GetClassTypeReference(asmRef, this.Namespace, this.Name, this.TypeParameterCount);
+				return new GetClassTypeReference(asmRef, this.Namespace, this.Name, this.TypeParameterCount, this.IsReferenceType);
 			}
 		}
 		
