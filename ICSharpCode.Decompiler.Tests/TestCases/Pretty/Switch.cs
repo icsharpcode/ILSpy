@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					return "ten thousand";
 				case 10001:
 					return "ten thousand and one";
-				case 2147483647:
+				case int.MaxValue:
 					return "int.MaxValue";
 				default:
 					return "something else";

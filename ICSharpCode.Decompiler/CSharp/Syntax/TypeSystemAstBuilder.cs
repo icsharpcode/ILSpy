@@ -71,6 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.ShowParameterNames = true;
 			this.ShowConstantValues = true;
 			this.UseAliases = true;
+			this.UseSpecialConstants = true;
 		}
 		
 		/// <summary>
@@ -171,6 +172,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool UseAliases { get; set; }
+
+		/// <summary>
+		/// Controls if constants like <c>int.MaxValue</c> are converted to a <see cref="MemberReferenceExpression"/> or <see cref="PrimitiveExpression" />.
+		/// The default value is <c>true</c>.
+		/// </summary>
+		public bool UseSpecialConstants { get; set; }
 		#endregion
 		
 		#region Convert Type
@@ -519,18 +526,129 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
+				if (IsSpecialConstant(type, constantValue, out var expr))
+					return expr;
 				if (type.IsCSharpSmallIntegerType()) { 
 					// C# does not have integer literals of small integer types,
 					// use `int` literal instead.
 					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
 					type = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
 				}
-				var expr = new PrimitiveExpression(constantValue);
+				expr = new PrimitiveExpression(constantValue);
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
 				return expr;
 			}
 		}
+
+		bool IsSpecialConstant(IType type, object constant, out Expression expression)
+		{
+			expression = null;
+			if (!specialConstants.TryGetValue(constant, out var info))
+				return false;
+			if (!UseSpecialConstants) {
+				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
+				// Use an equivalent arithmetic expression instead.
+				var resolver = this.resolver ?? new CSharpResolver(type.GetDefinition().Compilation);
+				if (info.Type == KnownTypeCode.Double) {
+					switch ((double)constant) {
+						case double.NegativeInfinity: // (-1.0 / 0.0)
+							var left = new PrimitiveExpression(-1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0));
+							var right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case double.PositiveInfinity: // (1.0 / 0.0)
+							left = new PrimitiveExpression(1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case double.NaN: // (0.0 / 0.0)
+							left = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+					}
+				}
+				if (info.Type == KnownTypeCode.Single) {
+					switch ((float)constant) {
+						case float.NegativeInfinity: // (-1.0f / 0.0f)
+							var left = new PrimitiveExpression(-1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0f));
+							var right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case float.PositiveInfinity: // (1.0f / 0.0f)
+							left = new PrimitiveExpression(1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case float.NaN: // (0.0f / 0.0f)
+							left = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+					}
+				}
+				return false;
+			}
+
+			expression = new TypeReferenceExpression(ConvertType(type));
+
+			if (AddResolveResultAnnotations)
+				expression.AddAnnotation(new TypeResolveResult(type));
+
+			expression = new MemberReferenceExpression(expression, info.Member);
+
+			if (AddResolveResultAnnotations)
+				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), type.GetFields(p => p.Name == info.Member).Single()));
+
+			return true;
+		}
+
+		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+			// byte:
+			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
+			// sbyte:
+			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue") },
+			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue") },
+			// short:
+			{ short.MinValue, (KnownTypeCode.Int16, "MinValue") },
+			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue") },
+			// ushort:
+			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue") },
+			// int:
+			{ int.MinValue, (KnownTypeCode.Int32, "MinValue") },
+			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue") },
+			// uint:
+			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue") },
+			// long:
+			{ long.MinValue, (KnownTypeCode.Int64, "MinValue") },
+			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue") },
+			// ulong:
+			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue") },
+			// float:
+			{ float.NaN, (KnownTypeCode.Single, "NaN") },
+			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity") },
+			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity") },
+			{ float.MinValue, (KnownTypeCode.Single, "MinValue") },
+			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue") },
+			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon") },
+			// double:
+			{ double.NaN, (KnownTypeCode.Double, "NaN") },
+			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity") },
+			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity") },
+			{ double.MinValue, (KnownTypeCode.Double, "MinValue") },
+			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue") },
+			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon") },
+			// decimal:
+			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue") },
+			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue") },
+		};
 
 		bool IsFlagsEnum(ITypeDefinition type)
 		{

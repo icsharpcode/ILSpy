@@ -895,6 +895,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				enumDec.AddAnnotation(new Semantics.MemberResolveResult(null, field));
 				return enumDec;
 			}
+			typeSystemAstBuilder.UseSpecialConstants = !field.DeclaringType.Equals(field.ReturnType);
 			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 			SetNewModifier(fieldDecl);
 			if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {

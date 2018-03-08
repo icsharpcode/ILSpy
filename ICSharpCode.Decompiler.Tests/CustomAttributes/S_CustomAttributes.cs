@@ -44,7 +44,7 @@ namespace CustomAttributes
 		public enum ULongEnum : ulong
 		{
 			[My(null)]
-			MaxUInt64 = 18446744073709551615uL
+			MaxUInt64 = ulong.MaxValue
 		}
 		[AttributeUsage(AttributeTargets.Field)]
 		public class TypesAttribute : Attribute

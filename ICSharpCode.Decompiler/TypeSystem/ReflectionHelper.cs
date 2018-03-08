@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type code for the specified type, or TypeCode.Empty if none of the other type codes match.
 		/// </summary>
-		public static TypeCode GetTypeCode(IType type)
+		public static TypeCode GetTypeCode(this IType type)
 		{
 			ITypeDefinition def = type as ITypeDefinition;
 			if (def != null) {
