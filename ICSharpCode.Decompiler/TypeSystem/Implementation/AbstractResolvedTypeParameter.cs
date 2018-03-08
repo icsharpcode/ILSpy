@@ -32,10 +32,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly int index;
 		readonly string name;
 		readonly IReadOnlyList<IAttribute> attributes;
-		readonly DomRegion region;
 		readonly VarianceModifier variance;
 		
-		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes, DomRegion region)
+		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
 		{
 			if (owner == null)
 				throw new ArgumentNullException("owner");
@@ -45,11 +44,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.index = index;
 			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.region = region;
 			this.variance = variance;
 		}
 		
-		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes, DomRegion region)
+		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
@@ -58,7 +56,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.index = index;
 			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.region = region;
 			this.variance = variance;
 		}
 		
@@ -84,10 +81,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public VarianceModifier Variance {
 			get { return variance; }
-		}
-		
-		public DomRegion Region {
-			get { return region; }
 		}
 		
 		public ICompilation Compilation {

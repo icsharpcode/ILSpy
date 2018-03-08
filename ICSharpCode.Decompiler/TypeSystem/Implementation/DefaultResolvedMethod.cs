@@ -174,8 +174,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IReadOnlyList<IType> TypeArguments {
 			get {
-				// ToList() call is necessary because IList<> isn't covariant
-				return TypeParameters.ToList<IType>();
+				return TypeParameters;
 			}
 		}
 

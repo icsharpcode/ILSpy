@@ -68,10 +68,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[LocalResolveResult {0}]", variable);
 		}
-		
-		public override DomRegion GetDefinitionRegion()
-		{
-			return variable.Region;
-		}
 	}
 }

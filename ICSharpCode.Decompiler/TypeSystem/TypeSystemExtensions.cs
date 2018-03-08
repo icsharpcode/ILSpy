@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					IVariable v = (IVariable)symbol;
 					return new DefaultVariable(
 						Import(compilation, v.Type),
-						v.Name, v.Region, v.IsConst, v.ConstantValue
+						v.Name, v.IsConst, v.ConstantValue
 					);
 				case SymbolKind.Parameter:
 					IParameter p = (IParameter)symbol;
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					} else {
 						return new DefaultParameter(
 							Import(compilation, p.Type),
-							p.Name, null, p.Region,
+							p.Name, null,
 							null, p.IsRef, p.IsOut, p.IsParams
 						);
 					}
@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
 		
-		public static IList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
+		public static IReadOnlyList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
 		{
 			if (constantValues == null)
 				throw new ArgumentNullException("constantValues");

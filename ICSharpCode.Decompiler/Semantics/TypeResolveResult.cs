@@ -33,14 +33,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		public override bool IsError {
 			get { return this.Type.Kind == TypeKind.Unknown; }
 		}
-		
-		public override DomRegion GetDefinitionRegion()
-		{
-			ITypeDefinition def = this.Type.GetDefinition();
-			if (def != null)
-				return def.Region;
-			else
-				return DomRegion.Empty;
-		}
 	}
 }

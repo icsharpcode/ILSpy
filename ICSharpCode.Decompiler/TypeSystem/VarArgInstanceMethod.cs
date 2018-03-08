@@ -229,14 +229,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region IEntity implementation
 		
-		public DomRegion Region {
-			get { return baseMethod.Region; }
-		}
-
-		public DomRegion BodyRegion {
-			get { return baseMethod.BodyRegion; }
-		}
-
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return baseMethod.DeclaringTypeDefinition; }
 		}

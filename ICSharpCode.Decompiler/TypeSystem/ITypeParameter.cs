@@ -46,11 +46,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		VarianceModifier Variance { get; }
 		
-		/// <summary>
-		/// Gets the region where the type parameter is defined.
-		/// </summary>
-		DomRegion Region { get; }
-		
 		ITypeParameter CreateResolvedTypeParameter(ITypeResolveContext context);
 	}
 	
@@ -95,11 +90,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the variance of this type parameter.
 		/// </summary>
 		VarianceModifier Variance { get; }
-		
-		/// <summary>
-		/// Gets the region where the type parameter is defined.
-		/// </summary>
-		DomRegion Region { get; }
 		
 		/// <summary>
 		/// Gets the effective base class of this type parameter.

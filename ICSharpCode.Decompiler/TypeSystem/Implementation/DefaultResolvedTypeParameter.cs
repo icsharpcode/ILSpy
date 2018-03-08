@@ -33,10 +33,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
-			DomRegion region = default(DomRegion),
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null)
-			: base(owner, index, name, variance, attributes, region)
+			: base(owner, index, name, variance, attributes)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
@@ -49,10 +48,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
-			DomRegion region = default(DomRegion),
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
 			IReadOnlyList<IType> constraints = null)
-			: base(compilation, ownerType, index, name, variance, attributes, region)
+			: base(compilation, ownerType, index, name, variance, attributes)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;

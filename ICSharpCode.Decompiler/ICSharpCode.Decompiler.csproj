@@ -235,7 +235,6 @@
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
     <Compile Include="CSharp\TypeSystem\ConstantValues.cs" />
-    <Compile Include="CSharp\TypeSystem\CSharpAttribute.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />

@@ -192,10 +192,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			readonly DefaultUnresolvedAttribute unresolved;
 			readonly ITypeResolveContext context;
 			readonly IType attributeType;
-			readonly IList<ResolveResult> positionalArguments;
-			
+			readonly IReadOnlyList<ResolveResult> positionalArguments;
+
 			// cannot use ProjectedList because KeyValuePair is value type
-			IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+			IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 			
 			IMethod constructor;
 			volatile bool constructorResolved;
@@ -244,25 +244,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return null;
 			}
 			
-			public IList<ResolveResult> PositionalArguments {
+			public IReadOnlyList<ResolveResult> PositionalArguments {
 				get { return positionalArguments; }
 			}
 			
-			public IList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
+			public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
 				get {
 					var namedArgs = LazyInit.VolatileRead(ref this.namedArguments);
 					if (namedArgs != null) {
 						return namedArgs;
 					} else {
-						namedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
+						var newNamedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
 						foreach (var pair in unresolved.NamedArguments) {
 							IMember member = pair.Key.Resolve(context);
 							if (member != null) {
 								ResolveResult val = pair.Value.Resolve(context);
-								namedArgs.Add(new KeyValuePair<IMember, ResolveResult>(member, val));
+								newNamedArgs.Add(new KeyValuePair<IMember, ResolveResult>(member, val));
 							}
 						}
-						return LazyInit.GetOrSet(ref this.namedArguments, namedArgs);
+						return LazyInit.GetOrSet(ref this.namedArguments, newNamedArgs);
 					}
 				}
 			}

@@ -152,14 +152,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return SymbolKind.Operator; }
 			}
 			
-			DomRegion IEntity.Region {
-				get { return DomRegion.Empty; }
-			}
-			
-			DomRegion IEntity.BodyRegion {
-				get { return DomRegion.Empty; }
-			}
-
 			IReadOnlyList<IAttribute> IEntity.Attributes {
 				get { return EmptyList<IAttribute>.Instance; }
 			}

@@ -44,14 +44,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return unresolved.SymbolKind; }
 		}
 		
-		public DomRegion Region {
-			get { return unresolved.Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return unresolved.BodyRegion; }
-		}
-		
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return parentContext.CurrentTypeDefinition; }
 		}

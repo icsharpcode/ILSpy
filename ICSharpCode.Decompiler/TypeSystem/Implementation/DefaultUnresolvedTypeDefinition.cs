@@ -71,7 +71,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.DeclaringTypeDefinition = declaringTypeDefinition;
 			this.namespaceName = declaringTypeDefinition.Namespace;
 			this.Name = name;
-			this.UnresolvedFile = declaringTypeDefinition.UnresolvedFile;
 		}
 		
 		protected override void FreezeInternal()

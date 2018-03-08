@@ -65,11 +65,6 @@ namespace ICSharpCode.Decompiler.Semantics
 			return Enumerable.Empty<ResolveResult>();
 		}
 		
-		public virtual DomRegion GetDefinitionRegion()
-		{
-			return DomRegion.Empty;
-		}
-		
 		public virtual ResolveResult ShallowClone()
 		{
 			return (ResolveResult)MemberwiseClone();

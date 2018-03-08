@@ -427,7 +427,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				readonly DefaultResolvedAssembly assembly;
 				readonly UnresolvedNamespace ns;
 				readonly INamespace parentNamespace;
-				readonly IList<NS> childNamespaces;
+				readonly IReadOnlyList<NS> childNamespaces;
 				IEnumerable<ITypeDefinition> types;
 				
 				public NS(DefaultResolvedAssembly assembly, UnresolvedNamespace ns, INamespace parentNamespace)

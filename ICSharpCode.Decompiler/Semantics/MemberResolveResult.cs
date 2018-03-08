@@ -139,10 +139,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, member);
 		}
-		
-		public override DomRegion GetDefinitionRegion()
-		{
-			return member.Region;
-		}
 	}
 }

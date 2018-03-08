@@ -32,27 +32,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		SymbolKind SymbolKind { get; }
 		
 		/// <summary>
-		/// Gets the complete entity region (including header+body)
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
-		/// Gets the entity body region.
-		/// </summary>
-		DomRegion BodyRegion { get; }
-		
-		/// <summary>
 		/// Gets the declaring class.
 		/// For members, this is the class that contains the member.
 		/// For nested classes, this is the outer class. For top-level entities, this property returns null.
 		/// </summary>
 		IUnresolvedTypeDefinition DeclaringTypeDefinition { get; }
-		
-		/// <summary>
-		/// Gets the parsed file in which this entity is defined.
-		/// Returns null if this entity wasn't parsed from source code (e.g. loaded from a .dll with CecilLoader).
-		/// </summary>
-		IUnresolvedFile UnresolvedFile { get; }
 		
 		/// <summary>
 		/// Gets the attributes on this entity.
@@ -97,16 +81,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the short name of the entity.
 		/// </summary>
 		new string Name { get; }
-		
-		/// <summary>
-		/// Gets the complete entity region (including header+body)
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
-		/// Gets the entity body region.
-		/// </summary>
-		DomRegion BodyRegion { get; }
 		
 		/// <summary>
 		/// Gets the declaring class.

@@ -170,14 +170,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.SymbolKind; }
 		}
 		
-		public DomRegion Region {
-			get { return baseMember.Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return baseMember.BodyRegion; }
-		}
-		
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
@@ -342,11 +334,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		protected IReadOnlyList<IParameter> CreateParameters(TypeVisitor substitution)
+		protected IParameter[] CreateParameters(TypeVisitor substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
 			if (paramDefs.Count == 0) {
-				return EmptyList<IParameter>.Instance;
+				return Empty<IParameter>.Array;
 			} else {
 				var parameters = new IParameter[paramDefs.Count];
 				for (int i = 0; i < parameters.Length; i++) {
@@ -354,11 +346,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					IType newType = p.Type.AcceptVisitor(substitution);
 					parameters[i] = new DefaultParameter(
 						newType, p.Name, this,
-						p.Region, p.Attributes, p.IsRef, p.IsOut,
+						p.Attributes, p.IsRef, p.IsOut,
 						p.IsParams, p.IsOptional, p.ConstantValue
 					);
 				}
-				return Array.AsReadOnly(parameters);
+				return parameters;
 			}
 		}
 		

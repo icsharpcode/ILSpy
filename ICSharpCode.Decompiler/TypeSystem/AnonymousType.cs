@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation compilation;
 		IUnresolvedProperty[] unresolvedProperties;
-		IList<IProperty> resolvedProperties;
+		IReadOnlyList<IProperty> resolvedProperties;
 		
 		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
 		{
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return true; }
 		}
 		
-		public IList<IProperty> Properties {
+		public IReadOnlyList<IProperty> Properties {
 			get { return resolvedProperties; }
 		}
 		

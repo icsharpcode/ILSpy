@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			public ResolvedMethodTypeParameterWithInheritedConstraints(MethodTypeParameterWithInheritedConstraints unresolved, ITypeResolveContext context)
 				: base(context.CurrentMember, unresolved.Index, unresolved.Name, unresolved.Variance,
-				       unresolved.Attributes.CreateResolvedAttributes(context), unresolved.Region)
+				       unresolved.Attributes.CreateResolvedAttributes(context))
 			{
 			}
 			

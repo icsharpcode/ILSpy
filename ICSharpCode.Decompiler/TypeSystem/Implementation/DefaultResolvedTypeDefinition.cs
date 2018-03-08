@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						else
 							typeParameters[i] = unresolvedTP.CreateResolvedTypeParameter(contextForTypeParameters);
 					}
-					result = Array.AsReadOnly(typeParameters);
+					result = typeParameters;
 				}
 				return LazyInit.GetOrSet(ref this.typeParameters, result);
 			}
@@ -548,14 +548,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public FullTypeName FullTypeName {
 			get { return parts[0].FullTypeName; }
-		}
-		
-		public DomRegion Region {
-			get { return parts[0].Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return parts[0].BodyRegion; }
 		}
 		
 		public ITypeDefinition DeclaringTypeDefinition {

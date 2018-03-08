@@ -181,10 +181,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return VarianceModifier.Invariant; }
 		}
 		
-		DomRegion ITypeParameter.Region {
-			get { return DomRegion.Empty; }
-		}
-		
 		IEntity ITypeParameter.Owner {
 			get { return null; }
 		}

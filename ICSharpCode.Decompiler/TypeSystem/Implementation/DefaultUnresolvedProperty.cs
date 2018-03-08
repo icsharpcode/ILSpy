@@ -63,8 +63,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.SymbolKind = SymbolKind.Property;
 			this.DeclaringTypeDefinition = declaringType;
 			this.Name = name;
-			if (declaringType != null)
-				this.UnresolvedFile = declaringType.UnresolvedFile;
 		}
 		
 		public bool IsIndexer {

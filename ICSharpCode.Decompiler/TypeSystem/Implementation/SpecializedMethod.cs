@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			internal TypeVisitor substitution;
 			
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
-				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes, baseTp.Region)
+				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.

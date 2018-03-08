@@ -36,7 +36,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		string name = string.Empty;
 		IList<IUnresolvedAttribute> attributes;
-		internal RareFields rareFields;
 		
 		// 1 byte per enum + 2 bytes for flags
 		SymbolKind symbolKind;
@@ -84,8 +83,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected virtual void FreezeInternal()
 		{
 			attributes = FreezableHelper.FreezeListAndElements(attributes);
-			if (rareFields != null)
-				rareFields.FreezeInternal();
 		}
 		
 		/// <summary>
@@ -101,8 +98,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ThrowIfFrozen();
 			name = provider.Intern(name);
 			attributes = provider.InternList(attributes);
-			if (rareFields != null)
-				rareFields.ApplyInterningProvider(provider);
 		}
 		
 		/// <summary>
@@ -117,30 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			copy.flags[FlagFrozen] = false;
 			if (attributes != null)
 				copy.attributes = new List<IUnresolvedAttribute>(attributes);
-			if (rareFields != null)
-				copy.rareFields = (RareFields)rareFields.Clone();
 			return copy;
-		}
-		
-		[Serializable]
-		internal class RareFields
-		{
-			internal DomRegion region;
-			internal DomRegion bodyRegion;
-			internal IUnresolvedFile unresolvedFile;
-			
-			protected internal virtual void FreezeInternal()
-			{
-			}
-			
-			public virtual void ApplyInterningProvider(InterningProvider provider)
-			{
-			}
-			
-			public virtual object Clone()
-			{
-				return MemberwiseClone();
-			}
 		}
 		
 		protected void ThrowIfFrozen()
@@ -153,37 +125,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			set {
 				ThrowIfFrozen();
 				symbolKind = value;
-			}
-		}
-		
-		internal virtual RareFields WriteRareFields()
-		{
-			ThrowIfFrozen();
-			if (rareFields == null) rareFields = new RareFields();
-			return rareFields;
-		}
-		
-		public DomRegion Region {
-			get { return rareFields != null ? rareFields.region : DomRegion.Empty; }
-			set {
-				if (value != DomRegion.Empty || rareFields != null)
-					WriteRareFields().region = value;
-			}
-		}
-		
-		public DomRegion BodyRegion {
-			get { return rareFields != null ? rareFields.bodyRegion : DomRegion.Empty; }
-			set {
-				if (value != DomRegion.Empty || rareFields != null)
-					WriteRareFields().bodyRegion = value;
-			}
-		}
-		
-		public IUnresolvedFile UnresolvedFile {
-			get { return rareFields != null ? rareFields.unresolvedFile : null; }
-			set {
-				if (value != null || rareFields != null)
-					WriteRareFields().unresolvedFile = value;
 			}
 		}
 		
