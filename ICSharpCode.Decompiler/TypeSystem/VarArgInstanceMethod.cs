@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.Parameters.Count - 1; }
 		}
 		
-		public IList<IParameter> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get { return parameters; }
 		}
 		
@@ -102,23 +102,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameters.Skip(baseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution)).ToList());
 		}
 
-		public IList<IUnresolvedMethod> Parts {
+		public IReadOnlyList<IUnresolvedMethod> Parts {
 			get { return baseMethod.Parts; }
 		}
 
-		public IList<IAttribute> ReturnTypeAttributes {
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get { return baseMethod.ReturnTypeAttributes; }
 		}
 
-		public IList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get { return baseMethod.TypeParameters; }
 		}
 
-		public bool IsParameterized {
-			get { return baseMethod.IsParameterized; }
-		}
-
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get { return baseMethod.TypeArguments; }
 		}
 
@@ -188,7 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.ReturnType; }
 		}
 
-		public IList<IMember> ImplementedInterfaceMembers {
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
 			get { return baseMethod.ImplementedInterfaceMembers; }
 		}
 
@@ -253,7 +249,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.ParentAssembly; }
 		}
 
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get { return baseMethod.Attributes; }
 		}
 

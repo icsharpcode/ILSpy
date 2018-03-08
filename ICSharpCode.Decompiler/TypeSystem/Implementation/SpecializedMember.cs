@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ToReference();
 		}
 		
-		internal static IList<ITypeReference> ToTypeReference(IList<IType> typeArguments)
+		internal static IList<ITypeReference> ToTypeReference(IReadOnlyList<IType> typeArguments)
 		{
 			if (typeArguments == null)
 				return null;
@@ -182,19 +182,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
 		
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get { return baseMember.Attributes; }
 		}
 		
-		IList<IMember> implementedInterfaceMembers;
+		IReadOnlyList<IMember> implementedInterfaceMembers;
 		
-		public IList<IMember> ImplementedInterfaceMembers {
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
 			get {
 				return LazyInitializer.EnsureInitialized(ref implementedInterfaceMembers, FindImplementedInterfaceMembers);
 			}
 		}
 		
-		IList<IMember> FindImplementedInterfaceMembers()
+		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
 		{
 			var definitionImplementations = baseMember.ImplementedInterfaceMembers;
 			IMember[] result = new IMember[definitionImplementations.Count];
@@ -317,14 +317,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public abstract class SpecializedParameterizedMember : SpecializedMember, IParameterizedMember
 	{
-		IList<IParameter> parameters;
+		IReadOnlyList<IParameter> parameters;
 		
 		protected SpecializedParameterizedMember(IParameterizedMember memberDefinition)
 			: base(memberDefinition)
 		{
 		}
 		
-		public IList<IParameter> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get {
 				var result = LazyInit.VolatileRead(ref this.parameters);
 				if (result != null)
@@ -342,7 +342,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		protected IList<IParameter> CreateParameters(TypeVisitor substitution)
+		protected IReadOnlyList<IParameter> CreateParameters(TypeVisitor substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
 			if (paramDefs.Count == 0) {

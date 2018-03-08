@@ -46,7 +46,20 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return max;
 		}
-		
+
+		public static int IndexOf<T>(this IReadOnlyList<T> collection, T value)
+		{
+			var comparer = EqualityComparer<T>.Default;
+			int index = 0;
+			foreach (T item in collection) {
+				if (comparer.Equals(item, value)) {
+					return index;
+				}
+				index++;
+			}
+			return -1;
+		}
+
 		public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> input)
 		{
 			foreach (T item in input)
@@ -60,6 +73,48 @@ namespace ICSharpCode.Decompiler.Util
 		public static U[] SelectArray<T, U>(this ICollection<T> collection, Func<T, U> func)
 		{
 			U[] result = new U[collection.Count];
+			int index = 0;
+			foreach (var element in collection) {
+				result[index++] = func(element);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToArray()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static U[] SelectArray<T, U>(this IReadOnlyCollection<T> collection, Func<T, U> func)
+		{
+			U[] result = new U[collection.Count];
+			int index = 0;
+			foreach (var element in collection) {
+				result[index++] = func(element);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToArray()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static U[] SelectArray<T, U>(this List<T> collection, Func<T, U> func)
+		{
+			U[] result = new U[collection.Count];
+			int index = 0;
+			foreach (var element in collection) {
+				result[index++] = func(element);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToArray()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static U[] SelectArray<T, U>(this T[] collection, Func<T, U> func)
+		{
+			U[] result = new U[collection.Length];
 			int index = 0;
 			foreach (var element in collection) {
 				result[index++] = func(element);

@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}

@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly IType ReturnType;
 
-		public readonly IList<IParameter> Parameters;
+		public readonly IReadOnlyList<IParameter> Parameters;
 
 		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
 		{
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Variables = new ILVariableCollection(this);
 		}
 
-		public ILFunction(IType returnType, IList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.ReturnType = returnType;

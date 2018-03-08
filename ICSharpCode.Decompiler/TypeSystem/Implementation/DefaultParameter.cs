@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IType type;
 		readonly string name;
 		readonly DomRegion region;
-		readonly IList<IAttribute> attributes;
+		readonly IReadOnlyList<IAttribute> attributes;
 		readonly bool isRef, isOut, isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
@@ -45,7 +46,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.name = name;
 		}
 		
-		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, DomRegion region = default(DomRegion), IList<IAttribute> attributes = null,
+		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, DomRegion region = default(DomRegion), IReadOnlyList<IAttribute> attributes = null,
 		                        bool isRef = false, bool isOut = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
@@ -72,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return owner; }
 		}
 		
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get { return attributes; }
 		}
 		

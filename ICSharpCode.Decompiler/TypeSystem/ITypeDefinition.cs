@@ -100,12 +100,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Returns all parts that contribute to this type definition.
 		/// Non-partial classes have a single part that represents the whole class.
 		/// </summary>
-		IList<IUnresolvedTypeDefinition> Parts { get; }
+		IReadOnlyList<IUnresolvedTypeDefinition> Parts { get; }
 		
-		IList<ITypeParameter> TypeParameters { get; }
-		
-		IList<ITypeDefinition> NestedTypes { get; }
-		IList<IMember> Members { get; }
+		IReadOnlyList<ITypeParameter> TypeParameters { get; }
+
+		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
+		IReadOnlyList<IMember> Members { get; }
 		
 		IEnumerable<IField> Fields { get; }
 		IEnumerable<IMethod> Methods { get; }
@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// or null if the type does not implement the interface.
 		/// </returns>
 		IMember GetInterfaceImplementation(IMember interfaceMember);
-		
+
 		/// <summary>
 		/// Determines how this type is implementing the specified interface members.
 		/// </summary>
@@ -163,6 +163,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For interface members that are missing an implementation, the
 		/// result collection will contain a null element.
 		/// </returns>
-		IList<IMember> GetInterfaceImplementation(IList<IMember> interfaceMembers);
+		IReadOnlyList<IMember> GetInterfaceImplementation(IReadOnlyList<IMember> interfaceMembers);
 	}
 }

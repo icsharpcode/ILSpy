@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	public sealed class ProjectedList<TInput, TOutput> : IList<TOutput> where TOutput : class
+	public sealed class ProjectedList<TInput, TOutput> : IList<TOutput>, IReadOnlyList<TOutput> where TOutput : class
 	{
 		readonly IList<TInput> input;
 		readonly Func<TInput, TOutput> projection;
@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 	}
 	
-	public sealed class ProjectedList<TContext, TInput, TOutput> : IList<TOutput> where TOutput : class
+	public sealed class ProjectedList<TContext, TInput, TOutput> : IList<TOutput>, IReadOnlyList<TOutput> where TOutput : class
 	{
 		readonly IList<TInput> input;
 		readonly TContext context;

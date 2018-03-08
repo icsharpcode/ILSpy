@@ -26,16 +26,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly bool hasValueTypeConstraint;
 		readonly bool hasReferenceTypeConstraint;
 		readonly bool hasDefaultConstructorConstraint;
-		readonly IList<IType> constraints;
+		readonly IReadOnlyList<IType> constraints;
 		
 		public DefaultTypeParameter(
 			IEntity owner,
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute> attributes = null,
 			DomRegion region = default(DomRegion),
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IList<IType> constraints = null)
+			IReadOnlyList<IType> constraints = null)
 			: base(owner, index, name, variance, attributes, region)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
@@ -48,10 +48,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			ICompilation compilation, SymbolKind ownerType,
 			int index, string name = null,
 			VarianceModifier variance = VarianceModifier.Invariant,
-			IList<IAttribute> attributes = null,
+			IReadOnlyList<IAttribute> attributes = null,
 			DomRegion region = default(DomRegion),
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IList<IType> constraints = null)
+			IReadOnlyList<IType> constraints = null)
 			: base(compilation, ownerType, index, name, variance, attributes, region)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;

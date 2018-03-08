@@ -74,23 +74,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
 		
-		public bool IsParameterized {
-			get { return isParameterized; }
-		}
-		
-		public IList<IUnresolvedMethod> Parts {
+		public IReadOnlyList<IUnresolvedMethod> Parts {
 			get { return methodDefinition.Parts; }
 		}
 		
-		public IList<IAttribute> ReturnTypeAttributes {
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get { return methodDefinition.ReturnTypeAttributes; }
 		}
 		
-		public IList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
 			}

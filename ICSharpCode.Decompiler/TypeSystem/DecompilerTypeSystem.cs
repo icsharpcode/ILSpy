@@ -232,8 +232,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							methodReference.Parameters.SkipWhile(p => !p.ParameterType.IsSentinel).Select(p => Resolve(p.ParameterType))
 						);
 					} else if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
-						IList<IType> classTypeArguments = null;
-						IList<IType> methodTypeArguments = null;
+						IReadOnlyList<IType> classTypeArguments = null;
+						IReadOnlyList<IType> methodTypeArguments = null;
 						if (methodReference.IsGenericInstance) {
 							var gim = ((GenericInstanceMethod)methodReference);
 							methodTypeArguments = gim.GenericArguments.SelectArray(Resolve);
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].Type.Kind == TypeKind.ArgList;
 		}
 		
-		static bool CompareSignatures(IList<IParameter> parameters, IType[] parameterTypes)
+		static bool CompareSignatures(IReadOnlyList<IParameter> parameters, IType[] parameterTypes)
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;

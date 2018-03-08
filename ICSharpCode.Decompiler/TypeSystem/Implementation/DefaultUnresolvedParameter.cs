@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public IType Type { get; internal set; }
 			public string Name { get; internal set; }
 			public DomRegion Region { get; internal set; }
-			public IList<IAttribute> Attributes { get; internal set; }
+			public IReadOnlyList<IAttribute> Attributes { get; internal set; }
 			public bool IsRef { get; internal set; }
 			public bool IsOut { get; internal set; }
 			public bool IsParams { get; internal set; }

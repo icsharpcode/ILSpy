@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		protected new readonly IUnresolvedMember unresolved;
 		protected readonly ITypeResolveContext context;
 		volatile IType returnType;
-		IList<IMember> implementedInterfaceMembers;
+		IReadOnlyList<IMember> implementedInterfaceMembers;
 		
 		protected AbstractResolvedMember(IUnresolvedMember unresolved, ITypeResolveContext parentContext)
 			: base(unresolved, parentContext)
@@ -53,9 +53,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return unresolved; }
 		}
 		
-		public IList<IMember> ImplementedInterfaceMembers {
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
 			get {
-				IList<IMember> result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
+				IReadOnlyList<IMember> result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
 				if (result != null) {
 					return result;
 				} else {
@@ -63,8 +63,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 		}
-		
-		IList<IMember> FindImplementedInterfaceMembers()
+
+		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
 		{
 			if (unresolved.IsExplicitInterfaceImplementation) {
 				List<IMember> result = new List<IMember>();

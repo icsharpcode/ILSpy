@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return index; }
 		}
 		
-		IList<IAttribute> ITypeParameter.Attributes {
+		IReadOnlyList<IAttribute> ITypeParameter.Attributes {
 			get { return EmptyList<IAttribute>.Instance; }
 		}
 		
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return SpecialType.UnknownType; }
 		}
 		
-		ICollection<IType> ITypeParameter.EffectiveInterfaceSet {
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
 			get { return EmptyList<IType>.Instance; }
 		}
 		

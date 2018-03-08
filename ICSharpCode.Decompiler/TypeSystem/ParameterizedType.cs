@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ReflectionName;
 		}
 		
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get {
 				return typeArguments;
 			}
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// of this parameterized type,
 		/// and also substitutes method type parameters with the specified method type arguments.
 		/// </summary>
-		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
 			return new TypeParameterSubstitution(typeArguments, methodTypeArguments);
 		}
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return GetMembersHelper.GetNestedTypes(this, filter, options);
 		}
 		
-		public IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return genericType.GetNestedTypes(typeArguments, filter, options);
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return GetMembersHelper.GetMethods(this, filter, options);
 		}
 		
-		public IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
 				return genericType.GetMethods(typeArguments, filter, options);

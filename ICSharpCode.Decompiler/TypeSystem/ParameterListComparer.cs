@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// For generic methods, "Method{T}(T a)" and "Method{S}(S b)" are considered equal.
 	/// However, "Method(T a)" and "Method(S b)" are not considered equal when the type parameters T and S belong to classes.
 	/// </remarks>
-	public sealed class ParameterListComparer : IEqualityComparer<IList<IParameter>>
+	public sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
 	{
 		public static readonly ParameterListComparer Instance = new ParameterListComparer();
 		
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor();
 		
-		public bool Equals(IList<IParameter> x, IList<IParameter> y)
+		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
 		{
 			if (x == y)
 				return true;
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return true;
 		}
 		
-		public int GetHashCode(IList<IParameter> obj)
+		public int GetHashCode(IReadOnlyList<IParameter> obj)
 		{
 			int hashCode = obj.Count;
 			unchecked {

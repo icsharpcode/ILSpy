@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -30,11 +31,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IEntity owner;
 		readonly int index;
 		readonly string name;
-		readonly IList<IAttribute> attributes;
+		readonly IReadOnlyList<IAttribute> attributes;
 		readonly DomRegion region;
 		readonly VarianceModifier variance;
 		
-		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IList<IAttribute> attributes, DomRegion region)
+		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes, DomRegion region)
 		{
 			if (owner == null)
 				throw new ArgumentNullException("owner");
@@ -48,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.variance = variance;
 		}
 		
-		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IList<IAttribute> attributes, DomRegion region)
+		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes, DomRegion region)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
@@ -77,7 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return index; }
 		}
 		
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get { return attributes; }
 		}
 		
@@ -135,9 +136,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return result;
 		}
 		
-		ICollection<IType> effectiveInterfaceSet;
+		IReadOnlyCollection<IType> effectiveInterfaceSet;
 		
-		public ICollection<IType> EffectiveInterfaceSet {
+		public IReadOnlyCollection<IType> EffectiveInterfaceSet {
 			get {
 				var result = LazyInit.VolatileRead(ref effectiveInterfaceSet);
 				if (result != null) {
@@ -152,8 +153,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 		}
-		
-		ICollection<IType> CalculateEffectiveInterfaceSet()
+
+		IReadOnlyCollection<IType> CalculateEffectiveInterfaceSet()
 		{
 			HashSet<IType> result = new HashSet<IType>();
 			foreach (IType constraint in this.DirectBaseTypes) {
@@ -163,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					result.UnionWith(((ITypeParameter)constraint).EffectiveInterfaceSet);
 				}
 			}
-			return result;
+			return result.ToArray();
 		}
 		
 		public abstract bool HasDefaultConstructorConstraint { get; }
@@ -210,13 +211,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return 0; }
 		}
 
-		bool IType.IsParameterized { 
-			get { return false; }
-		}
-
-		readonly static IList<IType> emptyTypeArguments = new IType[0];
-		IList<IType> IType.TypeArguments {
-			get { return emptyTypeArguments; }
+		IReadOnlyList<IType> IType.TypeArguments {
+			get { return Empty<IType>.Array; }
 		}
 
 		public abstract IEnumerable<IType> DirectBaseTypes { get; }
@@ -264,7 +260,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IType>.Instance;
 		}
 		
-		IEnumerable<IType> IType.GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		IEnumerable<IType> IType.GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			return EmptyList<IType>.Instance;
 		}
@@ -291,7 +287,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -344,7 +340,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 		
-		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
 			return TypeParameterSubstitution.Identity;
 		}

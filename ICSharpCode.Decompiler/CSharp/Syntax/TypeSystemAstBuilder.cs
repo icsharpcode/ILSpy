@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new SimpleType(type.Name);
 		}
 		
-		AstType ConvertTypeHelper(ITypeDefinition typeDef, IList<IType> typeArguments)
+		AstType ConvertTypeHelper(ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
 		{
 			Debug.Assert(typeArguments.Count >= typeDef.TypeParameterCount);
 			
@@ -282,18 +282,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 				}
 				
-				IList<IType> localTypeArguments;
+				IType[] localTypeArguments;
 				if (typeDef.TypeParameterCount > outerTypeParameterCount) {
 					localTypeArguments = new IType[typeDef.TypeParameterCount - outerTypeParameterCount];
-					for (int i = 0; i < localTypeArguments.Count; i++) {
+					for (int i = 0; i < localTypeArguments.Length; i++) {
 						localTypeArguments[i] = typeArguments[outerTypeParameterCount + i];
 					}
 				} else {
-					localTypeArguments = EmptyList<IType>.Instance;
+					localTypeArguments = Empty<IType>.Array;
 				}
 				ResolveResult rr = resolver.LookupSimpleNameOrTypeName(typeDef.Name, localTypeArguments, NameLookupMode);
 				TypeResolveResult trr = rr as TypeResolveResult;
-				if (trr != null || (localTypeArguments.Count == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
+				if (trr != null || (localTypeArguments.Length == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
 						SimpleType shortResult = new SimpleType(typeDef.Name);
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets whether 'type' is the same as 'typeDef' parameterized with the given type arguments.
 		/// </summary>
-		bool TypeMatches(IType type, ITypeDefinition typeDef, IList<IType> typeArguments)
+		bool TypeMatches(IType type, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
 		{
 			if (typeDef.TypeParameterCount == 0) {
 				return typeDef.Equals(type);
@@ -357,7 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <param name="typeArguments">The list of type arguments</param>
 		/// <param name="startIndex">Index of first type argument to add</param>
 		/// <param name="endIndex">Index after last type argument to add</param>
-		void AddTypeArguments(AstType result, ITypeDefinition typeDef, IList<IType> typeArguments, int startIndex, int endIndex)
+		void AddTypeArguments(AstType result, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments, int startIndex, int endIndex)
 		{
 			Debug.Assert(endIndex <= typeDef.TypeParameterCount);
 			for (int i = startIndex; i < endIndex; i++) {

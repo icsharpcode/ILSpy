@@ -1493,7 +1493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return SpecialType.UnknownType;
 		}
 
-		IEnumerable<ParameterDeclaration> MakeParameters(IList<IParameter> parameters, ILFunction function)
+		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			int i = 0;
@@ -1915,7 +1915,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new AssignmentExpression(target, value);
 		}
 
-		Expression MakeInitializerElements(List<ILInstruction> values, IList<IParameter> parameters)
+		Expression MakeInitializerElements(List<ILInstruction> values, IReadOnlyList<IParameter> parameters)
 		{
 			if (values.Count == 1) {
 				return Translate(values[0], typeHint: parameters[0].Type).ConvertTo(parameters[0].Type, this);
@@ -1979,7 +1979,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				typeExpression = ConvertType(type);
 				if (typeExpression is ComposedType compType && compType.ArraySpecifiers.Count > 0) {
-					additionalSpecifiers = compType.ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
+					additionalSpecifiers = compType.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
 					compType.ArraySpecifiers.Clear();
 				} else {
 					additionalSpecifiers = NoSpecifiers;

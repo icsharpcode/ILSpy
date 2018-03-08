@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type of the variable.
 		/// </summary>
 		ITypeReference Type { get; }
-		
+
 		/// <summary>
 		/// Gets the list of attributes.
 		/// </summary>
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the list of attributes.
 		/// </summary>
-		IList<IAttribute> Attributes { get; }
+		IReadOnlyList<IAttribute> Attributes { get; }
 		
 		/// <summary>
 		/// Gets whether this parameter is a C# 'ref' parameter.

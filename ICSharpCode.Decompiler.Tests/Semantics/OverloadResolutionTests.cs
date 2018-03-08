@@ -206,15 +206,15 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		/// </summary>
 		class MockLambda : LambdaResolveResult
 		{
-			IType inferredReturnType;
-			List<IParameter> parameters = new List<IParameter>();
+			readonly IType inferredReturnType;
+			internal readonly List<IParameter> parameters = new List<IParameter>();
 
 			public MockLambda(IType returnType)
 			{
 				this.inferredReturnType = returnType;
 			}
 
-			public override IList<IParameter> Parameters {
+			public override IReadOnlyList<IParameter> Parameters {
 				get { return parameters; }
 			}
 
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var container = compilation.FindType(typeof(BetterFunctionMemberIsNotTransitiveTestCase)).GetDefinition();
 
 			var args = new ResolveResult[] {
-				new MockLambda(compilation.FindType(KnownTypeCode.String)) { Parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } } 
+				new MockLambda(compilation.FindType(KnownTypeCode.String)) { parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } } 
 			};
 
 			OverloadResolution r = new OverloadResolution(compilation, args);

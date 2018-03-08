@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			ResolveResult targetRR = target.Resolve(resolver);
 			if (targetRR.IsError)
 				return targetRR;
-			IList<IType> typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
+			IReadOnlyList<IType> typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
 			return resolver.ResolveMemberAccess(targetRR, identifier, typeArgs, lookupMode);
 		}
 		

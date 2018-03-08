@@ -455,7 +455,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		#region Resolve on collections
-		public static IList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
+		public static IReadOnlyList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
 		{
 			if (attributes == null)
 				throw new ArgumentNullException("attributes");
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedAttribute, IAttribute>(context, attributes, (c, a) => a.CreateResolvedAttribute(c));
 		}
 		
-		public static IList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
+		public static IReadOnlyList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
 		{
 			if (typeParameters == null)
 				throw new ArgumentNullException("typeParameters");
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedTypeParameter, ITypeParameter>(context, typeParameters, (c, a) => a.CreateResolvedTypeParameter(c));
 		}
 		
-		public static IList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
+		public static IReadOnlyList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
 		{
 			if (parameters == null)
 				throw new ArgumentNullException("parameters");
@@ -485,7 +485,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedParameter, IParameter>(context, parameters, (c, a) => a.CreateResolvedParameter(c));
 		}
 		
-		public static IList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
+		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
 			if (typeReferences == null)
 				throw new ArgumentNullException("typeReferences");

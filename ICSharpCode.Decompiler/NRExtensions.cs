@@ -25,8 +25,8 @@ namespace ICSharpCode.Decompiler
 	{
 		public static IDecompilerTypeSystem GetSpecializingTypeSystem(this IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
 		{
-			IList<IType> classTypeParameters = null;
-			IList<IType> methodTypeParameters = null;
+			IReadOnlyList<IType> classTypeParameters = null;
+			IReadOnlyList<IType> methodTypeParameters = null;
 			
 			if (decompilationContext.CurrentTypeDefinition != null && decompilationContext.CurrentTypeDefinition.TypeParameterCount > 0)
 				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;

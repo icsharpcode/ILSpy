@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return parentContext.CurrentAssembly; }
 		}
 		
-		public IList<IAttribute> Attributes { get; protected set; }
+		public IReadOnlyList<IAttribute> Attributes { get; protected set; }
 
 		public abstract ISymbolReference ToReference();
 		

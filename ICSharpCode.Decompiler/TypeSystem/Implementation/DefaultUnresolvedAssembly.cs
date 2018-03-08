@@ -320,8 +320,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				get { return unresolvedAssembly.FullAssemblyName; }
 			}
 			
-			public IList<IAttribute> AssemblyAttributes { get; private set; }
-			public IList<IAttribute> ModuleAttributes { get; private set; }
+			public IReadOnlyList<IAttribute> AssemblyAttributes { get; private set; }
+			public IReadOnlyList<IAttribute> ModuleAttributes { get; private set; }
 			
 			public INamespace RootNamespace {
 				get { return rootNamespace; }

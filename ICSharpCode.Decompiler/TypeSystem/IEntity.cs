@@ -127,11 +127,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This property never returns null.
 		/// </summary>
 		IAssembly ParentAssembly { get; }
-		
+
 		/// <summary>
 		/// Gets the attributes on this entity.
 		/// </summary>
-		IList<IAttribute> Attributes { get; }
+		IReadOnlyList<IAttribute> Attributes { get; }
 		
 		/// <summary>
 		/// Gets whether this entity is static.

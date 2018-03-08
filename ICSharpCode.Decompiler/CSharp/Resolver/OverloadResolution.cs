@@ -62,12 +62,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			/// <summary>
 			/// Gets the original member parameters (before any substitution!)
 			/// </summary>
-			public readonly IList<IParameter> Parameters;
+			public readonly IReadOnlyList<IParameter> Parameters;
 			
 			/// <summary>
 			/// Gets the original method type parameters (before any substitution!)
 			/// </summary>
-			public readonly IList<ITypeParameter> TypeParameters;
+			public readonly IReadOnlyList<ITypeParameter> TypeParameters;
 			
 			/// <summary>
 			/// Conversions applied to the arguments.
@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// all methods in base types.
 		/// </summary>
 		/// <param name="methodLists">The methods, grouped by declaring type. Base types must come first in the list.</param>
-		public void AddMethodLists(IList<MethodListWithDeclaringType> methodLists)
+		public void AddMethodLists(IReadOnlyList<MethodListWithDeclaringType> methodLists)
 		{
 			if (methodLists == null)
 				throw new ArgumentNullException("methodLists");
@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 			ParameterizedType parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
-			IList<IType> classTypeArguments;
+			IReadOnlyList<IType> classTypeArguments;
 			if (parameterizedDeclaringType != null) {
 				classTypeArguments = parameterizedDeclaringType.TypeArguments;
 			} else {
@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			readonly CSharpConversions conversions;
 			public bool ConstraintsValid = true;
 			
-			public ConstraintValidatingSubstitution(IList<IType> classTypeArguments, IList<IType> methodTypeArguments, OverloadResolution overloadResolution)
+			public ConstraintValidatingSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments, OverloadResolution overloadResolution)
 				: base(classTypeArguments, methodTypeArguments)
 			{
 				this.conversions = overloadResolution.conversions;
@@ -816,7 +816,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get { return bestCandidateAmbiguousWith != null; }
 		}
 		
-		public IList<IType> InferredTypeArguments {
+		public IReadOnlyList<IType> InferredTypeArguments {
 			get {
 				if (bestCandidate != null && bestCandidate.InferredTypes != null)
 					return bestCandidate.InferredTypes;

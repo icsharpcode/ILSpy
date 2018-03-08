@@ -33,6 +33,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface IParameterizedMember : IMember
 	{
-		IList<IParameter> Parameters { get; }
+		IReadOnlyList<IParameter> Parameters { get; }
 	}
 }
