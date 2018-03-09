@@ -101,8 +101,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Non-partial classes have a single part that represents the whole class.
 		/// </summary>
 		IReadOnlyList<IUnresolvedTypeDefinition> Parts { get; }
-		
-		IReadOnlyList<ITypeParameter> TypeParameters { get; }
 
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }

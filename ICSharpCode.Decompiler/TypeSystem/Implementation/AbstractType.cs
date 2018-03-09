@@ -59,9 +59,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return 0; }
 		}
 
-		readonly static IReadOnlyList<IType> emptyTypeArguments = new IType[0];
+		public virtual IReadOnlyList<ITypeParameter> TypeParameters {
+			get { return EmptyList<ITypeParameter>.Instance; }
+		}
+
 		public virtual IReadOnlyList<IType> TypeArguments {
-			get { return emptyTypeArguments; }
+			get { return EmptyList<IType>.Instance; }
 		}
 
 		public virtual IType DeclaringType {

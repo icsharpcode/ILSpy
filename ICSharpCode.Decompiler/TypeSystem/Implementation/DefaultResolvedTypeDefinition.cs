@@ -457,11 +457,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return parts[0].TypeParameters.Count; }
 		}
 
-		public IReadOnlyList<IType> TypeArguments {
-			get {
-				return TypeParameters;
-			}
-		}
+		public IReadOnlyList<IType> TypeArguments => TypeParameters;
 
 		#region DirectBaseTypes
 		IList<IType> directBaseTypes;

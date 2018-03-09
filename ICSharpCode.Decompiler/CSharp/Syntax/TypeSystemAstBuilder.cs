@@ -233,10 +233,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			ParameterizedType pt = type as ParameterizedType;
 			if (pt != null) {
-				if (pt.Name == "Nullable" && pt.Namespace == "System" && pt.TypeParameterCount == 1) {
+				if (pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
-				return ConvertTypeHelper(pt.GetDefinition(), pt.TypeArguments);
+				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
 			ITypeDefinition typeDef = type as ITypeDefinition;
 			if (typeDef != null) {
@@ -254,22 +254,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new SimpleType(type.Name);
 		}
 		
-		AstType ConvertTypeHelper(ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
+		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
-			Debug.Assert(typeArguments.Count >= typeDef.TypeParameterCount);
-			
-			string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
-			if (keyword != null)
-				return new PrimitiveType(keyword);
+			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
+			Debug.Assert(genericType is ITypeDefinition || genericType.Kind == TypeKind.Unknown);
+
+			ITypeDefinition typeDef = genericType as ITypeDefinition;
+			if (typeDef != null) {
+				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
+				if (keyword != null)
+					return new PrimitiveType(keyword);
+			}
 			
 			// The number of type parameters belonging to outer classes
-			int outerTypeParameterCount;
-			if (typeDef.DeclaringType != null)
-				outerTypeParameterCount = typeDef.DeclaringType.TypeParameterCount;
-			else
-				outerTypeParameterCount = 0;
+			int outerTypeParameterCount = genericType.DeclaringType?.TypeParameterCount ?? 0;
 			
-			if (resolver != null) {
+			if (resolver != null && typeDef != null) {
 				// Look if there's an alias to the target type
 				if (UseAliases) {
 					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
@@ -297,32 +297,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
 						SimpleType shortResult = new SimpleType(typeDef.Name);
-						AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 						return shortResult;
 					}
 				}
 			}
 			
-			if (AlwaysUseShortTypeNames) {
-				var shortResult = new SimpleType(typeDef.Name);
-				AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
+				var shortResult = new SimpleType(genericType.Name);
+				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				return shortResult;
 			}
 			MemberType result = new MemberType();
-			if (typeDef.DeclaringTypeDefinition != null) {
+			if (genericType.DeclaringType != null) {
 				// Handle nested types
-				result.Target = ConvertTypeHelper(typeDef.DeclaringTypeDefinition, typeArguments);
+				result.Target = ConvertTypeHelper(genericType.DeclaringType, typeArguments);
 			} else {
 				// Handle top-level types
-				if (string.IsNullOrEmpty(typeDef.Namespace)) {
+				if (string.IsNullOrEmpty(genericType.Namespace)) {
 					result.Target = new SimpleType("global");
 					result.IsDoubleColon = true;
 				} else {
-					result.Target = ConvertNamespace(typeDef.Namespace);
+					result.Target = ConvertNamespace(genericType.Namespace);
 				}
 			}
-			result.MemberName = typeDef.Name;
-			AddTypeArguments(result, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+			result.MemberName = genericType.Name;
+			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 			return result;
 		}
 		
@@ -348,21 +348,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return true;
 			}
 		}
-		
+
 		/// <summary>
 		/// Adds type arguments to the result type.
 		/// </summary>
 		/// <param name="result">The result AST node (a SimpleType or MemberType)</param>
-		/// <param name="typeDef">The type definition that owns the type parameters</param>
+		/// <param name="typeParameters">The type parameters</param>
 		/// <param name="typeArguments">The list of type arguments</param>
 		/// <param name="startIndex">Index of first type argument to add</param>
 		/// <param name="endIndex">Index after last type argument to add</param>
-		void AddTypeArguments(AstType result, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments, int startIndex, int endIndex)
+		void AddTypeArguments(AstType result, IReadOnlyList<ITypeParameter> typeParameters, IReadOnlyList<IType> typeArguments, int startIndex, int endIndex)
 		{
-			Debug.Assert(endIndex <= typeDef.TypeParameterCount);
+			Debug.Assert(endIndex <= typeParameters.Count);
 			for (int i = startIndex; i < endIndex; i++) {
 				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument) {
-					result.AddChild(new SimpleType(typeDef.TypeParameters[i].Name), Roles.TypeArgument);
+					result.AddChild(new SimpleType(typeParameters[i].Name), Roles.TypeArgument);
 				} else {
 					result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
 				}

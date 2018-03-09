@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -91,10 +92,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
 		}
 		
-		public override int TypeParameterCount {
-			get { return fullTypeName.TypeParameterCount; }
-		}
-		
+		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
+		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
+		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
+
 		public override bool? IsReferenceType {
 			get { return isReferenceType; }
 		}

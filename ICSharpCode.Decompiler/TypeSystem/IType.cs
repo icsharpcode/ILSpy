@@ -82,6 +82,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int TypeParameterCount { get; }
 
 		/// <summary>
+		/// Gets the type parameters.
+		/// Returns an empty list if this type is not generic.
+		/// </summary>
+		IReadOnlyList<ITypeParameter> TypeParameters { get; }
+
+		/// <summary>
 		/// Gets the type arguments passed to this type.
 		/// If this type is a generic type definition that is not parameterized, this property returns the type parameters,
 		/// as if the type was parameterized with its own type arguments (<c>class C&lt;T&gt; { C&lt;T&gt; field; }</c>).

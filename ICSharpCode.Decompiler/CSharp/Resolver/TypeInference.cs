@@ -596,7 +596,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ParameterizedType pU = U as ParameterizedType;
 			ParameterizedType pV = V as ParameterizedType;
 			if (pU != null && pV != null
-			    && object.Equals(pU.GetDefinition(), pV.GetDefinition())
+			    && object.Equals(pU.GenericType, pV.GenericType)
 			    && pU.TypeParameterCount == pV.TypeParameterCount)
 			{
 				Log.Indent();
@@ -657,7 +657,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseU in U.GetAllBaseTypes()) {
 					ParameterizedType pU = baseU as ParameterizedType;
-					if (pU != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
+					if (pU != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pU;
 						else
@@ -671,7 +671,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						IType Vi = pV.GetTypeArgument(i);
 						if (Ui.IsReferenceType == true) {
 							// look for variance
-							ITypeParameter Xi = pV.GetDefinition().TypeParameters[i];
+							ITypeParameter Xi = pV.TypeParameters[i];
 							switch (Xi.Variance) {
 								case VarianceModifier.Covariant:
 									MakeLowerBoundInference(Ui, Vi);
@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (rt == null || rt.TypeParameterCount != 1)
 				return false;
-			switch (rt.GetDefinition().KnownTypeCode) {
+			switch (rt.GetDefinition()?.KnownTypeCode) {
 				case KnownTypeCode.IEnumerableOfT:
 				case KnownTypeCode.ICollectionOfT:
 				case KnownTypeCode.IListOfT:
@@ -743,7 +743,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseV in V.GetAllBaseTypes()) {
 					ParameterizedType pV = baseV as ParameterizedType;
-					if (pV != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
+					if (pV != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pV;
 						else
@@ -757,7 +757,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						IType Vi = uniqueBaseType.GetTypeArgument(i);
 						if (Ui.IsReferenceType == true) {
 							// look for variance
-							ITypeParameter Xi = pU.GetDefinition().TypeParameters[i];
+							ITypeParameter Xi = pU.TypeParameters[i];
 							switch (Xi.Variance) {
 								case VarianceModifier.Covariant:
 									MakeUpperBoundInference(Ui, Vi);

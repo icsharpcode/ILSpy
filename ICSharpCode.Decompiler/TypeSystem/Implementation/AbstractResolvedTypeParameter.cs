@@ -204,8 +204,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return 0; }
 		}
 
+		IReadOnlyList<ITypeParameter> IType.TypeParameters {
+			get { return EmptyList<ITypeParameter>.Instance; }
+		}
+
 		IReadOnlyList<IType> IType.TypeArguments {
-			get { return Empty<IType>.Array; }
+			get { return EmptyList<IType>.Instance; }
 		}
 
 		public abstract IEnumerable<IType> DirectBaseTypes { get; }
