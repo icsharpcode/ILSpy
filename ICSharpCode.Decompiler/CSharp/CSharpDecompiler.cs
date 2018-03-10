@@ -391,135 +391,55 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void CollectNamespacesForAllTypes(HashSet<string> namespaces)
 		{
-			foreach (var type in typeSystem.ModuleDefinition.Types) {
-				CollectNamespacesForDecompilation(new[] { type }, namespaces);
-			}
+			CollectNamespacesForDecompilation(typeSystem.ModuleDefinition.Types, namespaces, new HashSet<MemberReference>());
 
 			foreach (var typeRef in typeSystem.ModuleDefinition.GetTypeReferences()) {
 				namespaces.Add(typeRef.Namespace);
 			}
 		}
 
-		static void CollectNamespacesForDecompilation(MemberReference memberReference, HashSet<string> namespaces, bool decodeDetails = false)
+		static void CollectNamespacesForDecompilation(MemberReference memberReference, HashSet<string> namespaces, HashSet<MemberReference> visited)
 		{
-			void CollectAttributes(ICustomAttributeProvider provider)
-			{
-				if (!provider.HasCustomAttributes || !decodeDetails) return;
-				foreach (var ca in provider.CustomAttributes) {
-					CollectNamespacesForDecompilation(ca.AttributeType, namespaces);
-					CollectNamespacesForDecompilation(ca.Constructor, namespaces);
-					foreach (var val in ca.ConstructorArguments) {
-						if (val.Value is TypeReference tr)
-							namespaces.Add(tr.Namespace);
-					}
-				}
-			}
-
 			if (memberReference == null)
 				return;
-			if (memberReference is IGenericParameterProvider genericParamProvider && genericParamProvider.HasGenericParameters) {
-				foreach (var gp in genericParamProvider.GenericParameters) {
-					if (gp.HasConstraints) {
-						foreach (var constraint in gp.Constraints) {
-							// Avoid infinite recursion
-							if (!(constraint is GenericInstanceType git && git.ElementType == gp.Owner))
-								CollectNamespacesForDecompilation(constraint, namespaces);
-						}
-					}
-				}
-			}
-			if (memberReference is ICustomAttributeProvider cap) {
-				CollectAttributes(cap);
-			}
+
 			switch (memberReference) {
-				case TypeDefinition typeDef:
-					if (typeDef.IsNested) {
-						var tr = typeDef.DeclaringType;
-						while (tr.DeclaringType != null)
-							tr = tr.DeclaringType;
-						namespaces.Add(tr.Namespace);
-					} else {
-						namespaces.Add(typeDef.Namespace);
-					}
-					if (!decodeDetails) break;
-					CollectNamespacesForDecompilation(typeDef.BaseType, namespaces);
-					if (typeDef.HasInterfaces) {
-						foreach (var inter in typeDef.Interfaces)
-							CollectNamespacesForDecompilation(inter.InterfaceType, namespaces);
-					}
-					LayoutKind layoutKind = LayoutKind.Auto;
-					switch (typeDef.Attributes & TypeAttributes.LayoutMask) {
-						case TypeAttributes.SequentialLayout:
-							layoutKind = LayoutKind.Sequential;
-							break;
-						case TypeAttributes.ExplicitLayout:
-							layoutKind = LayoutKind.Explicit;
-							break;
-					}
-					CharSet charSet = CharSet.None;
-					switch (typeDef.Attributes & TypeAttributes.StringFormatMask) {
-						case TypeAttributes.AnsiClass:
-							charSet = CharSet.Ansi;
-							break;
-						case TypeAttributes.AutoClass:
-							charSet = CharSet.Auto;
-							break;
-						case TypeAttributes.UnicodeClass:
-							charSet = CharSet.Unicode;
-							break;
-					}
-					LayoutKind defaultLayoutKind = (typeDef.IsValueType && !typeDef.IsEnum) ? LayoutKind.Sequential : LayoutKind.Auto;
-					if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || typeDef.PackingSize > 0 || typeDef.ClassSize > 0)
-						namespaces.Add("System.Runtime.InteropServices");
-					if (typeDef.HasNestedTypes)
-						CollectNamespacesForDecompilation(typeDef.NestedTypes, namespaces);
-					if (typeDef.HasFields)
-						CollectNamespacesForDecompilation(typeDef.Fields, namespaces);
-					if (typeDef.HasProperties)
-						CollectNamespacesForDecompilation(typeDef.Properties, namespaces);
-					if (typeDef.HasMethods)
-						CollectNamespacesForDecompilation(typeDef.Methods, namespaces);
-					if (typeDef.HasEvents)
-						CollectNamespacesForDecompilation(typeDef.Events, namespaces);
-					break;
 				case Mono.Cecil.ArrayType arrayType:
-					CollectNamespacesForDecompilation(arrayType.ElementType, namespaces);
+					CollectNamespacesForDecompilation(arrayType.ElementType, namespaces, visited);
 					break;
 				case Mono.Cecil.FunctionPointerType fp:
-					CollectAttributes(fp.MethodReturnType);
-					CollectNamespacesForDecompilation(fp.ReturnType, namespaces);
+					CollectNamespacesForDecompilation(fp.ReturnType, namespaces, visited);
 					if (fp.HasParameters) {
 						foreach (var p in fp.Parameters) {
-							CollectAttributes(p);
-							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
+							CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
 						}
 					}
 					break;
 				case Mono.Cecil.GenericInstanceType git:
-					CollectNamespacesForDecompilation(git.ElementType, namespaces);
+					CollectNamespacesForDecompilation(git.ElementType, namespaces, visited);
 					if (git.HasGenericArguments) {
 						foreach (var ga in git.GenericArguments) {
-							CollectNamespacesForDecompilation(ga, namespaces);
+							CollectNamespacesForDecompilation(ga, namespaces, visited);
 						}
 					}
 					break;
 				case Mono.Cecil.OptionalModifierType modopt:
-					CollectNamespacesForDecompilation(modopt.ElementType, namespaces);
+					CollectNamespacesForDecompilation(modopt.ElementType, namespaces, visited);
 					break;
 				case Mono.Cecil.RequiredModifierType modreq:
-					CollectNamespacesForDecompilation(modreq.ElementType, namespaces);
+					CollectNamespacesForDecompilation(modreq.ElementType, namespaces, visited);
 					break;
 				case Mono.Cecil.PinnedType pinned:
-					CollectNamespacesForDecompilation(pinned.ElementType, namespaces);
+					CollectNamespacesForDecompilation(pinned.ElementType, namespaces, visited);
 					break;
 				case Mono.Cecil.PointerType pointer:
-					CollectNamespacesForDecompilation(pointer.ElementType, namespaces);
+					CollectNamespacesForDecompilation(pointer.ElementType, namespaces, visited);
 					break;
 				case Mono.Cecil.ByReferenceType byRef:
-					CollectNamespacesForDecompilation(byRef.ElementType, namespaces);
+					CollectNamespacesForDecompilation(byRef.ElementType, namespaces, visited);
 					break;
 				case SentinelType sentinel:
-					CollectNamespacesForDecompilation(sentinel.ElementType, namespaces);
+					CollectNamespacesForDecompilation(sentinel.ElementType, namespaces, visited);
 					break;
 				case TypeReference typeRef:
 					if (typeRef.IsNested) {
@@ -532,135 +452,196 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					break;
 				case FieldReference fieldRef:
-					CollectNamespacesForDecompilation(fieldRef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(fieldRef.FieldType, namespaces);
-					break;
-				case PropertyDefinition propertyDef:
-					CollectNamespacesForDecompilation(propertyDef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(propertyDef.PropertyType, namespaces);
-					if (!decodeDetails) break;
-					if (propertyDef.HasParameters) {
-						foreach (var p in propertyDef.Parameters) {
-							if (p.IsOut || p.IsIn || p.HasMarshalInfo) // these manifest as attributes in C#
-								namespaces.Add("System.Runtime.InteropServices");
-							CollectAttributes(p);
-							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
-						}
-					}
-					if (propertyDef.GetMethod != null) {
-						CollectNamespacesForDecompilation(propertyDef.GetMethod, namespaces, true);
-					}
-					if (propertyDef.SetMethod != null) {
-						CollectNamespacesForDecompilation(propertyDef.SetMethod, namespaces, true);
-					}
+					CollectNamespacesForDecompilation(fieldRef.DeclaringType, namespaces, visited);
+					CollectNamespacesForDecompilation(fieldRef.FieldType, namespaces, visited);
 					break;
 				case PropertyReference propertyRef:
-					CollectNamespacesForDecompilation(propertyRef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(propertyRef.PropertyType, namespaces);
-					break;
-				case EventDefinition eventDef:
-					CollectNamespacesForDecompilation(eventDef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(eventDef.EventType, namespaces);
-					if (!decodeDetails) break;
-					if (eventDef.AddMethod != null) {
-						CollectNamespacesForDecompilation(eventDef.AddMethod, namespaces, true);
-					}
-					if (eventDef.RemoveMethod != null) {
-						CollectNamespacesForDecompilation(eventDef.RemoveMethod, namespaces, true);
-					}
-					if (eventDef.InvokeMethod != null) {
-						CollectNamespacesForDecompilation(eventDef.InvokeMethod, namespaces, true);
-					}
+					CollectNamespacesForDecompilation(propertyRef.DeclaringType, namespaces, visited);
+					CollectNamespacesForDecompilation(propertyRef.PropertyType, namespaces, visited);
 					break;
 				case EventReference eventRef:
-					CollectNamespacesForDecompilation(eventRef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(eventRef.EventType, namespaces);
-					break;
-				case MethodDefinition methodDef:
-					CollectNamespacesForDecompilation(methodDef.DeclaringType, namespaces);
-					CollectAttributes(methodDef.MethodReturnType);
-					if (methodDef.HasPInvokeInfo || methodDef.MethodReturnType.HasMarshalInfo || methodDef.IsPreserveSig) // these manifest as attributes in C#
-						namespaces.Add("System.Runtime.InteropServices");
-					if (methodDef.ImplAttributes != 0)
-						namespaces.Add("System.Runtime.CompilerServices");
-					CollectNamespacesForDecompilation(methodDef.ReturnType, namespaces);
-					if (methodDef.HasParameters) {
-						foreach (var p in methodDef.Parameters) {
-							if (p.IsOut || p.IsIn || p.HasMarshalInfo) // these manifest as attributes in C#
-								namespaces.Add("System.Runtime.InteropServices");
-							CollectAttributes(p);
-							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
-						}
-					}
-					if (methodDef.HasBody && decodeDetails) {
-						CollectNamespacesForDecompilation(methodDef.Body, namespaces);
-					}
+					CollectNamespacesForDecompilation(eventRef.DeclaringType, namespaces, visited);
+					CollectNamespacesForDecompilation(eventRef.EventType, namespaces, visited);
 					break;
 				case GenericInstanceMethod methodSpec:
-					CollectNamespacesForDecompilation(methodSpec.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(methodSpec.ReturnType, namespaces);
+					CollectNamespacesForDecompilation(methodSpec.DeclaringType, namespaces, visited);
+					CollectNamespacesForDecompilation(methodSpec.ReturnType, namespaces, visited);
 					if (methodSpec.HasParameters) {
 						foreach (var p in methodSpec.Parameters) {
-							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
+							CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
 						}
 					}
 					if (methodSpec.HasGenericArguments) {
 						foreach (var ga in methodSpec.GenericArguments) {
-							CollectNamespacesForDecompilation(ga, namespaces);
+							CollectNamespacesForDecompilation(ga, namespaces, visited);
 						}
 					}
 					break;
 				case MethodReference methodRef:
-					CollectNamespacesForDecompilation(methodRef.DeclaringType, namespaces);
-					CollectNamespacesForDecompilation(methodRef.ReturnType, namespaces);
+					CollectNamespacesForDecompilation(methodRef.DeclaringType, namespaces, visited);
+					CollectNamespacesForDecompilation(methodRef.ReturnType, namespaces, visited);
 					if (methodRef.HasParameters) {
 						foreach (var p in methodRef.Parameters) {
-							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
+							CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
 						}
-					}
-					if (!decodeDetails) break;
-					var resolved = methodRef.ResolveWithinSameModule();
-					if (resolved != null && resolved.HasBody) {
-						CollectNamespacesForDecompilation(resolved.Body, namespaces);
 					}
 					break;
 			}
 		}
 
-		static void CollectNamespacesForDecompilation(Mono.Cecil.Cil.MethodBody body, HashSet<string> namespaces)
+		static void CollectNamespacesForDecompilation(Mono.Cecil.Cil.MethodBody body, HashSet<string> namespaces, HashSet<MemberReference> visited)
 		{
 			if (body.HasVariables) {
 				foreach (var v in body.Variables)
-					CollectNamespacesForDecompilation(v.VariableType, namespaces);
+					CollectNamespacesForDecompilation(v.VariableType, namespaces, visited);
 			}
 			if (body.HasExceptionHandlers) {
 				foreach (var eh in body.ExceptionHandlers)
-					CollectNamespacesForDecompilation(eh.CatchType, namespaces);
+					CollectNamespacesForDecompilation(eh.CatchType, namespaces, visited);
 			}
 			foreach (var inst in body.Instructions) {
-				if (inst.Operand is MemberReference mr)
-					CollectNamespacesForDecompilation(mr, namespaces, inst.OpCode.Code == Mono.Cecil.Cil.Code.Ldftn);
+				if (inst.Operand is MemberReference mr && visited.Add(mr)) {
+					if (inst.OpCode.Code == Mono.Cecil.Cil.Code.Ldftn && mr is MethodReference method)
+						CollectNamespacesForDecompilation(new[] { method.ResolveWithinSameModule() }, namespaces, visited);
+					else
+						CollectNamespacesForDecompilation(mr, namespaces, visited);
+				}
 			}
 		}
 
-		public static void CollectNamespacesForDecompilation(IEnumerable<IMemberDefinition> memberDefinitions, HashSet<string> namespaces)
+		public static void CollectNamespacesForDecompilation(IEnumerable<IMemberDefinition> memberDefinitions, HashSet<string> namespaces, HashSet<MemberReference> visited)
 		{
+			void CollectAttributes(ICustomAttributeProvider provider)
+			{
+				if (!provider.HasCustomAttributes) return;
+				foreach (var ca in provider.CustomAttributes) {
+					CollectNamespacesForDecompilation(ca.AttributeType, namespaces, visited);
+					CollectNamespacesForDecompilation(ca.Constructor, namespaces, visited);
+					foreach (var val in ca.ConstructorArguments) {
+						if (val.Value is TypeReference tr)
+							namespaces.Add(tr.Namespace);
+					}
+				}
+			}
+
 			foreach (var def in memberDefinitions) {
+				if (def is ICustomAttributeProvider cap) {
+					CollectAttributes(cap);
+				}
 				switch (def) {
 					case TypeDefinition typeDef:
-						CollectNamespacesForDecompilation(typeDef, namespaces, true);
+						if (typeDef.IsNested) {
+							var tr = typeDef.DeclaringType;
+							while (tr.DeclaringType != null)
+								tr = tr.DeclaringType;
+							namespaces.Add(tr.Namespace);
+						} else {
+							namespaces.Add(typeDef.Namespace);
+						}
+						CollectNamespacesForDecompilation(typeDef.BaseType, namespaces, visited);
+						if (typeDef.HasInterfaces) {
+							foreach (var inter in typeDef.Interfaces)
+								CollectNamespacesForDecompilation(inter.InterfaceType, namespaces, visited);
+						}
+						if (typeDef.HasGenericParameters) {
+							foreach (var gp in typeDef.GenericParameters) {
+								if (gp.HasConstraints) {
+									foreach (var constraint in gp.Constraints) {
+										// Avoid infinite recursion
+										if (!(constraint is GenericInstanceType git && git.ElementType == gp.Owner))
+											CollectNamespacesForDecompilation(constraint, namespaces, visited);
+									}
+								}
+							}
+						}
+						LayoutKind layoutKind = LayoutKind.Auto;
+						switch (typeDef.Attributes & TypeAttributes.LayoutMask) {
+							case TypeAttributes.SequentialLayout:
+								layoutKind = LayoutKind.Sequential;
+								break;
+							case TypeAttributes.ExplicitLayout:
+								layoutKind = LayoutKind.Explicit;
+								break;
+						}
+						CharSet charSet = CharSet.None;
+						switch (typeDef.Attributes & TypeAttributes.StringFormatMask) {
+							case TypeAttributes.AnsiClass:
+								charSet = CharSet.Ansi;
+								break;
+							case TypeAttributes.AutoClass:
+								charSet = CharSet.Auto;
+								break;
+							case TypeAttributes.UnicodeClass:
+								charSet = CharSet.Unicode;
+								break;
+						}
+						LayoutKind defaultLayoutKind = (typeDef.IsValueType && !typeDef.IsEnum) ? LayoutKind.Sequential : LayoutKind.Auto;
+						if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || typeDef.PackingSize > 0 || typeDef.ClassSize > 0)
+							namespaces.Add("System.Runtime.InteropServices");
+						if (typeDef.HasNestedTypes)
+							CollectNamespacesForDecompilation(typeDef.NestedTypes, namespaces, visited);
+						if (typeDef.HasFields)
+							CollectNamespacesForDecompilation(typeDef.Fields, namespaces, visited);
+						if (typeDef.HasProperties)
+							CollectNamespacesForDecompilation(typeDef.Properties, namespaces, visited);
+						if (typeDef.HasMethods)
+							CollectNamespacesForDecompilation(typeDef.Methods, namespaces, visited);
+						if (typeDef.HasEvents)
+							CollectNamespacesForDecompilation(typeDef.Events, namespaces, visited);
 						break;
 					case FieldDefinition fieldDef:
-						CollectNamespacesForDecompilation(fieldDef, namespaces, true);
+						CollectNamespacesForDecompilation(fieldDef, namespaces, visited);
 						break;
 					case PropertyDefinition propertyDef:
-						CollectNamespacesForDecompilation(propertyDef, namespaces, true);
+						CollectNamespacesForDecompilation(propertyDef.DeclaringType, namespaces, visited);
+						CollectNamespacesForDecompilation(propertyDef.PropertyType, namespaces, visited);
+						if (propertyDef.HasParameters) {
+							foreach (var p in propertyDef.Parameters) {
+								if (p.IsOut || p.IsIn || p.HasMarshalInfo) // these manifest as attributes in C#
+									namespaces.Add("System.Runtime.InteropServices");
+								CollectAttributes(p);
+								CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
+							}
+						}
+						if (propertyDef.GetMethod != null) {
+							CollectNamespacesForDecompilation(propertyDef.GetMethod, namespaces, visited);
+						}
+						if (propertyDef.SetMethod != null) {
+							CollectNamespacesForDecompilation(propertyDef.SetMethod, namespaces, visited);
+						}
 						break;
 					case EventDefinition eventDef:
-						CollectNamespacesForDecompilation(eventDef, namespaces, true);
+						CollectNamespacesForDecompilation(eventDef.DeclaringType, namespaces, visited);
+						CollectNamespacesForDecompilation(eventDef.EventType, namespaces, visited);
+						if (eventDef.AddMethod != null) {
+							CollectNamespacesForDecompilation(eventDef.AddMethod, namespaces, visited);
+						}
+						if (eventDef.RemoveMethod != null) {
+							CollectNamespacesForDecompilation(eventDef.RemoveMethod, namespaces, visited);
+						}
+						if (eventDef.InvokeMethod != null) {
+							CollectNamespacesForDecompilation(eventDef.InvokeMethod, namespaces, visited);
+						}
 						break;
 					case MethodDefinition methodDef:
-						CollectNamespacesForDecompilation(methodDef, namespaces, true);
+						CollectNamespacesForDecompilation(methodDef.DeclaringType, namespaces, visited);
+						CollectAttributes(methodDef.MethodReturnType);
+						if (methodDef.HasPInvokeInfo || methodDef.MethodReturnType.HasMarshalInfo || methodDef.IsPreserveSig) // these manifest as attributes in C#
+							namespaces.Add("System.Runtime.InteropServices");
+						if (methodDef.ImplAttributes != 0)
+							namespaces.Add("System.Runtime.CompilerServices");
+						CollectNamespacesForDecompilation(methodDef.ReturnType, namespaces, visited);
+						if (methodDef.HasParameters) {
+							foreach (var p in methodDef.Parameters) {
+								if (p.IsOut || p.IsIn || p.HasMarshalInfo) // these manifest as attributes in C#
+									namespaces.Add("System.Runtime.InteropServices");
+								CollectAttributes(p);
+								CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
+							}
+						}
+						if (methodDef.HasBody) {
+							CollectNamespacesForDecompilation(methodDef.Body, namespaces, visited);
+						}
 						break;
 				}
 			}
@@ -669,7 +650,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ILTransformContext CreateILTransformContext(ILFunction function)
 		{
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
-			CollectNamespacesForDecompilation(new[] { function.CecilMethod }, decompileRun.Namespaces);
+			CollectNamespacesForDecompilation(new[] { function.CecilMethod }, decompileRun.Namespaces, new HashSet<MemberReference>());
 			return new ILTransformContext(function, typeSystem, settings) {
 				CancellationToken = CancellationToken,
 				DecompileRun = decompileRun
@@ -700,7 +681,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 
-			CollectNamespacesForDecompilation(types, decompileRun.Namespaces);
+			CollectNamespacesForDecompilation(types, decompileRun.Namespaces, new HashSet<MemberReference>());
 			DoDecompileTypes(types, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -734,7 +715,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 			var cecilType = typeSystem.GetCecil(type);
-			CollectNamespacesForDecompilation(cecilType, decompileRun.Namespaces, true);
+			CollectNamespacesForDecompilation(cecilType, decompileRun.Namespaces, new HashSet<MemberReference>());
 			DoDecompileTypes(new[] { cecilType }, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -769,7 +750,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ITypeDefinition parentTypeDef = null;
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
-			CollectNamespacesForDecompilation(definitions, decompileRun.Namespaces);
+			CollectNamespacesForDecompilation(definitions, decompileRun.Namespaces, new HashSet<MemberReference>());
 			foreach (var def in definitions) {
 				if (def == null)
 					throw new ArgumentException("definitions contains null element");
