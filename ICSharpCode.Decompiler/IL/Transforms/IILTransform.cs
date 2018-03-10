@@ -17,10 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -40,15 +43,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public ILFunction Function { get; }
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public DecompilerSettings Settings { get; }
-		public IImmutableSet<string> RequiredNamespacesSuperset { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
 
-		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IImmutableSet<string> requiredNamespaces, DecompilerSettings settings = null)
+		internal DecompileRun DecompileRun { get; set; }
+		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem.Compilation);
+
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, DecompilerSettings settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
-			this.RequiredNamespacesSuperset = requiredNamespaces ?? throw new ArgumentNullException(nameof(requiredNamespaces));
 			this.Settings = settings ?? new DecompilerSettings();
 			Stepper = new Stepper();
 		}
@@ -58,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.Function = context.Function;
 			this.TypeSystem = context.TypeSystem;
 			this.Settings = context.Settings;
-			this.RequiredNamespacesSuperset = context.RequiredNamespacesSuperset;
+			this.DecompileRun = context.DecompileRun;
 			this.CancellationToken = context.CancellationToken;
 			this.Stepper = context.Stepper;
 		}

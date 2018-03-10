@@ -32,9 +32,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public readonly CancellationToken CancellationToken;
 		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
 		public readonly DecompilerSettings Settings;
-		
+		internal readonly DecompileRun DecompileRun;
+
 		readonly ITypeResolveContext decompilationContext;
-		
+
 		/// <summary>
 		/// Returns the member that is being decompiled; or null if a whole type or assembly is being decompiled.
 		/// </summary>
@@ -59,16 +60,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Returns the max possible set of namespaces that will be used during decompilation.
 		/// </summary>
-		public IImmutableSet<string> RequiredNamespacesSuperset { get; }
+		public IImmutableSet<string> RequiredNamespacesSuperset => DecompileRun.Namespaces.ToImmutableHashSet();
 
-		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IImmutableSet<string> namespaces, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, CancellationToken cancellationToken)
+		internal TransformContext(DecompilerTypeSystem typeSystem, DecompileRun decompileRun, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
 		{
 			this.TypeSystem = typeSystem;
+			this.DecompileRun = decompileRun;
 			this.decompilationContext = decompilationContext;
-			this.RequiredNamespacesSuperset = namespaces;
 			this.TypeSystemAstBuilder = typeSystemAstBuilder;
-			this.Settings = settings;
-			this.CancellationToken = cancellationToken;
+			this.CancellationToken = decompileRun.CancellationToken;
+			this.Settings = decompileRun.Settings;
 		}
 	}
 }

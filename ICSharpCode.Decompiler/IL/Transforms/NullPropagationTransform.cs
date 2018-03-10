@@ -246,26 +246,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var paramTypes = call.Method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
 			var paramNames = call.Method.Parameters.SelectArray(p => p.Name);
 			var typeArgs = call.Method.TypeArguments.ToArray();
-			var usingScope = CreateUsingScope(context.RequiredNamespacesSuperset).Resolve(context.TypeSystem.Compilation);
-			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, usingScope);
+			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
 			var resolver = new CSharp.Resolver.CSharpResolver(resolveContext);
 			return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(resolver, call.Method, typeArgs, targetType, paramTypes);
-		}
-
-		CSharp.TypeSystem.UsingScope CreateUsingScope(IImmutableSet<string> requiredNamespacesSuperset)
-		{
-			var usingScope = new CSharp.TypeSystem.UsingScope();
-			foreach (var ns in requiredNamespacesSuperset) {
-				string[] parts = ns.Split('.');
-				AstType nsType = new SimpleType(parts[0]);
-				for (int i = 1; i < parts.Length; i++) {
-					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
-				}
-				var reference = nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration) as CSharp.TypeSystem.TypeOrNamespaceReference;
-				if (reference != null)
-					usingScope.Usings.Add(reference);
-			}
-			return usingScope;
 		}
 
 		static bool IsGetter(IMethod method)

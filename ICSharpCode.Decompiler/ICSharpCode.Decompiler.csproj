@@ -265,6 +265,7 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
+    <Compile Include="DecompileRun.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />

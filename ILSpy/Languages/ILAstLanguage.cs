@@ -118,10 +118,8 @@ namespace ICSharpCode.ILSpy
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				var namespaces = new HashSet<string>();
-				CSharpDecompiler.CollectNamespacesForDecompilation(new[] { method }, namespaces);
-				ILTransformContext context = new ILTransformContext(il, typeSystem, namespaces.ToImmutableHashSet(), options.DecompilerSettings) {
-					CancellationToken = options.CancellationToken
-				};
+				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
+				ILTransformContext context = decompiler.CreateILTransformContext(il);
 				context.Stepper.StepLimit = options.StepLimit;
 				context.Stepper.IsDebug = options.IsDebug;
 				try {
