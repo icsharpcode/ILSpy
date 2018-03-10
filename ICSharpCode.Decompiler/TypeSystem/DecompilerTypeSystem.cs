@@ -421,5 +421,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 		#endregion
+
+		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution)
+		{
+			if (substitution.Equals(TypeParameterSubstitution.Identity)) {
+				return this;
+			} else {
+				return new SpecializingDecompilerTypeSystem(this, substitution);
+			}
+		}
 	}
 }

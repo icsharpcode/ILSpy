@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod)) {
 				target = value.Arguments[0];
 				var methodDefinition = (Mono.Cecil.MethodDefinition)context.TypeSystem.GetCecil(targetMethod);
-				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(targetMethod));
+				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
 				var ilReader = new ILReader(localTypeSystem);
 				ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
 				var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);

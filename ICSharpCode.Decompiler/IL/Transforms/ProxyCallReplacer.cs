@@ -17,7 +17,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (methodDef != null && methodDef.Body != null) {
 					if (inst.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
 						// partially copied from CSharpDecompiler
-						var specializingTypeSystem = this.context.TypeSystem.GetSpecializingTypeSystem(this.context.TypeSystem.Compilation.TypeResolveContext);
+						var specializingTypeSystem = this.context.TypeSystem.GetSpecializingTypeSystem(inst.Method.Substitution);
 						var ilReader = new ILReader(specializingTypeSystem);
 						System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
 						var proxyFunction = ilReader.ReadIL(methodDef.Body, cancellationToken);

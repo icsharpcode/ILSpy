@@ -186,5 +186,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   where x
 				   select (x);
 		}
+
+		public static Maybe<TB> Cast<TA, TB>(Maybe<TA> a) where TB : class
+		{
+			return from m in a
+				   let t = m as TB
+				   where t != null
+				   select t;
+		}
+	}
+
+	public struct Maybe<T>
+	{
+		public T Value;
+		public bool HasValue;
+	}
+
+	public static class MaybeExtensions
+	{
+		public static Maybe<TResult> Select<T, TResult>(this Maybe<T> a, Func<T, TResult> fn)
+		{
+			return default(Maybe<TResult>);
+		}
+
+		public static Maybe<T> Where<T>(this Maybe<T> a, Func<T, bool> predicate)
+		{
+			return default(Maybe<T>);
+		}
 	}
 }

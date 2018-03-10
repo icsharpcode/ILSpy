@@ -1393,8 +1393,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
-			var context = method == null ? decompilationContext : new SimpleTypeResolveContext(method);
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(context), this.decompilationContext, function, settings, cancellationToken);
+			var targetTS = method == null ? typeSystem : typeSystem.GetSpecializingTypeSystem(method.Substitution);
+			StatementBuilder builder = new StatementBuilder(targetTS, this.decompilationContext, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;

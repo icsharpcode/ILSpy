@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -17,6 +17,7 @@
 }
 .assembly QueryExpressions
 {
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -30,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module QueryExpressions.dll
-// MVID: {3A5F3986-5A3B-4A28-AEB6-FB53EAEF5C5A}
+// MVID: {EB5BEDE9-696D-429D-B567-B8D95F9E8155}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00AF0000
+// Image base: 0x05130000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -3111,6 +3112,193 @@
   } // end of property '<>f__AnonymousType14`2'::CustCount
 } // end of class '<>f__AnonymousType14`2'
 
+.class private auto ansi sealed beforefieldinit '<>f__AnonymousType15`2'<'<m>j__TPar','<t>j__TPar'>
+       extends [mscorlib]System.Object
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private initonly !'<m>j__TPar' '<m>i__Field'
+  .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
+  .field private initonly !'<t>j__TPar' '<t>i__Field'
+  .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
+  .method public hidebysig specialname instance !'<m>j__TPar' 
+          get_m() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_0006:  ret
+  } // end of method '<>f__AnonymousType15`2'::get_m
+
+  .method public hidebysig specialname instance !'<t>j__TPar' 
+          get_t() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_0006:  ret
+  } // end of method '<>f__AnonymousType15`2'::get_t
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(!'<m>j__TPar' m,
+                               !'<t>j__TPar' t) cil managed
+  {
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_0006:  ldarg.0
+    IL_0007:  ldarg.1
+    IL_0008:  stfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_000d:  ldarg.0
+    IL_000e:  ldarg.2
+    IL_000f:  stfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_0014:  ret
+  } // end of method '<>f__AnonymousType15`2'::.ctor
+
+  .method public hidebysig virtual instance bool 
+          Equals(object 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       59 (0x3b)
+    .maxstack  3
+    .locals init (class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'> V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  isinst     class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  brfalse.s  IL_0039
+
+    IL_000a:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<m>j__TPar'>::get_Default()
+    IL_000f:  ldarg.0
+    IL_0010:  ldfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_0015:  ldloc.0
+    IL_0016:  ldfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_001b:  callvirt   instance bool class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<m>j__TPar'>::Equals(!0,
+                                                                                                                            !0)
+    IL_0020:  brfalse.s  IL_0039
+
+    IL_0022:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<t>j__TPar'>::get_Default()
+    IL_0027:  ldarg.0
+    IL_0028:  ldfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_002d:  ldloc.0
+    IL_002e:  ldfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_0033:  callvirt   instance bool class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<t>j__TPar'>::Equals(!0,
+                                                                                                                            !0)
+    IL_0038:  ret
+
+    IL_0039:  ldc.i4.0
+    IL_003a:  ret
+  } // end of method '<>f__AnonymousType15`2'::Equals
+
+  .method public hidebysig virtual instance int32 
+          GetHashCode() cil managed
+  {
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       52 (0x34)
+    .maxstack  8
+    IL_0000:  ldc.i4     0x42e31eb
+    IL_0005:  ldc.i4     0xa5555529
+    IL_000a:  mul
+    IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<m>j__TPar'>::get_Default()
+    IL_0010:  ldarg.0
+    IL_0011:  ldfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_0016:  callvirt   instance int32 class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<m>j__TPar'>::GetHashCode(!0)
+    IL_001b:  add
+    IL_001c:  ldc.i4     0xa5555529
+    IL_0021:  mul
+    IL_0022:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<t>j__TPar'>::get_Default()
+    IL_0027:  ldarg.0
+    IL_0028:  ldfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_002d:  callvirt   instance int32 class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<t>j__TPar'>::GetHashCode(!0)
+    IL_0032:  add
+    IL_0033:  ret
+  } // end of method '<>f__AnonymousType15`2'::GetHashCode
+
+  .method public hidebysig virtual instance string 
+          ToString() cil managed
+  {
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       136 (0x88)
+    .maxstack  7
+    .locals init (!'<m>j__TPar' V_0,
+             !'<m>j__TPar' V_1,
+             !'<t>j__TPar' V_2,
+             !'<t>j__TPar' V_3)
+    IL_0000:  ldnull
+    IL_0001:  ldstr      "{{ m = {0}, t = {1} }}"
+    IL_0006:  ldc.i4.2
+    IL_0007:  newarr     [mscorlib]System.Object
+    IL_000c:  dup
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldarg.0
+    IL_000f:  ldfld      !0 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<m>i__Field'
+    IL_0014:  stloc.0
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  ldloca.s   V_1
+    IL_0019:  initobj    !'<m>j__TPar'
+    IL_001f:  ldloc.1
+    IL_0020:  box        !'<m>j__TPar'
+    IL_0025:  brtrue.s   IL_003b
+
+    IL_0027:  ldobj      !'<m>j__TPar'
+    IL_002c:  stloc.1
+    IL_002d:  ldloca.s   V_1
+    IL_002f:  ldloc.1
+    IL_0030:  box        !'<m>j__TPar'
+    IL_0035:  brtrue.s   IL_003b
+
+    IL_0037:  pop
+    IL_0038:  ldnull
+    IL_0039:  br.s       IL_0046
+
+    IL_003b:  constrained. !'<m>j__TPar'
+    IL_0041:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0046:  stelem.ref
+    IL_0047:  dup
+    IL_0048:  ldc.i4.1
+    IL_0049:  ldarg.0
+    IL_004a:  ldfld      !1 class '<>f__AnonymousType15`2'<!'<m>j__TPar',!'<t>j__TPar'>::'<t>i__Field'
+    IL_004f:  stloc.2
+    IL_0050:  ldloca.s   V_2
+    IL_0052:  ldloca.s   V_3
+    IL_0054:  initobj    !'<t>j__TPar'
+    IL_005a:  ldloc.3
+    IL_005b:  box        !'<t>j__TPar'
+    IL_0060:  brtrue.s   IL_0076
+
+    IL_0062:  ldobj      !'<t>j__TPar'
+    IL_0067:  stloc.3
+    IL_0068:  ldloca.s   V_3
+    IL_006a:  ldloc.3
+    IL_006b:  box        !'<t>j__TPar'
+    IL_0070:  brtrue.s   IL_0076
+
+    IL_0072:  pop
+    IL_0073:  ldnull
+    IL_0074:  br.s       IL_0081
+
+    IL_0076:  constrained. !'<t>j__TPar'
+    IL_007c:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0081:  stelem.ref
+    IL_0082:  call       string [mscorlib]System.String::Format(class [mscorlib]System.IFormatProvider,
+                                                                string,
+                                                                object[])
+    IL_0087:  ret
+  } // end of method '<>f__AnonymousType15`2'::ToString
+
+  .property instance !'<m>j__TPar' m()
+  {
+    .get instance !'<m>j__TPar' '<>f__AnonymousType15`2'::get_m()
+  } // end of property '<>f__AnonymousType15`2'::m
+  .property instance !'<t>j__TPar' t()
+  {
+    .get instance !'<t>j__TPar' '<>f__AnonymousType15`2'::get_t()
+  } // end of property '<>f__AnonymousType15`2'::t
+} // end of class '<>f__AnonymousType15`2'
+
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions
        extends [mscorlib]System.Object
 {
@@ -3195,10 +3383,10 @@
     .field public static class [mscorlib]System.Func`3<class '<>f__AnonymousType1`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,class '<>f__AnonymousType3`2'<class '<>f__AnonymousType1`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail>> '<>9__9_3'
     .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType3`2'<class '<>f__AnonymousType1`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail>,class '<>f__AnonymousType4`2'<class '<>f__AnonymousType3`2'<class '<>f__AnonymousType1`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail>,valuetype [mscorlib]System.Decimal>> '<>9__9_4'
     .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType4`2'<class '<>f__AnonymousType3`2'<class '<>f__AnonymousType1`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail>,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType5`3'<string,int32,valuetype [mscorlib]System.Decimal>> '<>9__9_5'
-    .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> '<>9__10_1'
+    .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> '<>9__10_3'
     .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>> '<>9__10_0'
-    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> '<>9__10_2'
-    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> '<>9__10_3'
+    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> '<>9__10_1'
+    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> '<>9__10_2'
     .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,class '<>f__AnonymousType8`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string>> '<>9__11_0'
     .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType8`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string>,class '<>f__AnonymousType9`2'<class '<>f__AnonymousType8`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string>,string>> '<>9__11_1'
     .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType9`2'<class '<>f__AnonymousType8`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string>,string>,string> '<>9__11_2'
@@ -3500,17 +3688,17 @@
       IL_0000:  ldarg.1
       IL_0001:  ldarg.1
       IL_0002:  ldfld      class [mscorlib]System.Collections.Generic.IEnumerable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order::Details
-      IL_0007:  ldsfld     class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_1'
+      IL_0007:  ldsfld     class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_3'
       IL_000c:  dup
       IL_000d:  brtrue.s   IL_0026
 
       IL_000f:  pop
       IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9'
-      IL_0015:  ldftn      instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_1'(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail)
+      IL_0015:  ldftn      instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_3'(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail)
       IL_001b:  newobj     instance void class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal>::.ctor(object,
                                                                                                                                                                                                    native int)
       IL_0020:  dup
-      IL_0021:  stsfld     class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_1'
+      IL_0021:  stsfld     class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_3'
       IL_0026:  call       valuetype [mscorlib]System.Decimal [System.Core]System.Linq.Enumerable::Sum<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,valuetype [mscorlib]System.Decimal>)
       IL_002b:  newobj     instance void class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>::.ctor(!0,
@@ -3519,7 +3707,7 @@
     } // end of method '<>c'::'<FromLetWhereSelect>b__10_0'
 
     .method assembly hidebysig instance valuetype [mscorlib]System.Decimal 
-            '<FromLetWhereSelect>b__10_1'(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail d) cil managed
+            '<FromLetWhereSelect>b__10_3'(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/OrderDetail d) cil managed
     {
       // Code size       23 (0x17)
       .maxstack  8
@@ -3531,10 +3719,10 @@
       IL_0011:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Multiply(valuetype [mscorlib]System.Decimal,
                                                                                                     valuetype [mscorlib]System.Decimal)
       IL_0016:  ret
-    } // end of method '<>c'::'<FromLetWhereSelect>b__10_1'
+    } // end of method '<>c'::'<FromLetWhereSelect>b__10_3'
 
     .method assembly hidebysig instance bool 
-            '<FromLetWhereSelect>b__10_2'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal> '<>h__TransparentIdentifier0') cil managed
+            '<FromLetWhereSelect>b__10_1'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal> '<>h__TransparentIdentifier0') cil managed
     {
       // Code size       22 (0x16)
       .maxstack  8
@@ -3545,10 +3733,10 @@
       IL_0010:  call       bool [mscorlib]System.Decimal::op_GreaterThanOrEqual(valuetype [mscorlib]System.Decimal,
                                                                                 valuetype [mscorlib]System.Decimal)
       IL_0015:  ret
-    } // end of method '<>c'::'<FromLetWhereSelect>b__10_2'
+    } // end of method '<>c'::'<FromLetWhereSelect>b__10_1'
 
     .method assembly hidebysig instance class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal> 
-            '<FromLetWhereSelect>b__10_3'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal> '<>h__TransparentIdentifier0') cil managed
+            '<FromLetWhereSelect>b__10_2'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal> '<>h__TransparentIdentifier0') cil managed
     {
       // Code size       23 (0x17)
       .maxstack  8
@@ -3560,7 +3748,7 @@
       IL_0011:  newobj     instance void class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>::.ctor(!0,
                                                                                                                         !1)
       IL_0016:  ret
-    } // end of method '<>c'::'<FromLetWhereSelect>b__10_3'
+    } // end of method '<>c'::'<FromLetWhereSelect>b__10_2'
 
     .method assembly hidebysig instance class '<>f__AnonymousType8`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string> 
             '<MultipleLet>b__11_0'(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer a) cil managed
@@ -3816,6 +4004,74 @@
     } // end of method '<>c'::'<Issue437>b__18_1'
 
   } // end of class '<>c'
+
+  .class auto ansi serializable sealed nested private beforefieldinit '<>c__19`2'<TA,class TB>
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!TA,!TB> '<>9'
+    .field public static class [mscorlib]System.Func`2<!TA,class '<>f__AnonymousType15`2'<!TA,!TB>> '<>9__19_0'
+    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!TA,!TB>,bool> '<>9__19_1'
+    .field public static class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!TA,!TB>,!TB> '<>9__19_2'
+    .method private hidebysig specialname rtspecialname static 
+            void  .cctor() cil managed
+    {
+      // Code size       11 (0xb)
+      .maxstack  8
+      IL_0000:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!TA,!TB>::.ctor()
+      IL_0005:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!0,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!TA,!TB>::'<>9'
+      IL_000a:  ret
+    } // end of method '<>c__19`2'::.cctor
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method '<>c__19`2'::.ctor
+
+    .method assembly hidebysig instance class '<>f__AnonymousType15`2'<!TA,!TB> 
+            '<Cast>b__19_0'(!TA m) cil managed
+    {
+      // Code size       23 (0x17)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  ldarg.1
+      IL_0002:  box        !TA
+      IL_0007:  isinst     !TB
+      IL_000c:  unbox.any  !TB
+      IL_0011:  newobj     instance void class '<>f__AnonymousType15`2'<!TA,!TB>::.ctor(!0,
+                                                                                        !1)
+      IL_0016:  ret
+    } // end of method '<>c__19`2'::'<Cast>b__19_0'
+
+    .method assembly hidebysig instance bool 
+            '<Cast>b__19_1'(class '<>f__AnonymousType15`2'<!TA,!TB> '<>h__TransparentIdentifier0') cil managed
+    {
+      // Code size       15 (0xf)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  callvirt   instance !1 class '<>f__AnonymousType15`2'<!TA,!TB>::get_t()
+      IL_0006:  box        !TB
+      IL_000b:  ldnull
+      IL_000c:  cgt.un
+      IL_000e:  ret
+    } // end of method '<>c__19`2'::'<Cast>b__19_1'
+
+    .method assembly hidebysig instance !TB 
+            '<Cast>b__19_2'(class '<>f__AnonymousType15`2'<!TA,!TB> '<>h__TransparentIdentifier0') cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  callvirt   instance !1 class '<>f__AnonymousType15`2'<!TA,!TB>::get_t()
+      IL_0006:  ret
+    } // end of method '<>c__19`2'::'<Cast>b__19_2'
+
+  } // end of class '<>c__19`2'
 
   .field public class [mscorlib]System.Collections.Generic.IEnumerable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer> customers
   .field public class [mscorlib]System.Collections.Generic.IEnumerable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order> orders
@@ -4123,30 +4379,30 @@
     IL_0020:  stsfld     class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_0'
     IL_0025:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!1> [System.Core]System.Linq.Enumerable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                                                                                                                                                                                             class [mscorlib]System.Func`2<!!0,!!1>)
-    IL_002a:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_2'
+    IL_002a:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_1'
     IL_002f:  dup
     IL_0030:  brtrue.s   IL_0049
 
     IL_0032:  pop
     IL_0033:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9'
-    IL_0038:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_2'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>)
+    IL_0038:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_1'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>)
     IL_003e:  newobj     instance void class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool>::.ctor(object,
                                                                                                                                                                                                                                native int)
     IL_0043:  dup
-    IL_0044:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_2'
+    IL_0044:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_1'
     IL_0049:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                                                                                                                 class [mscorlib]System.Func`2<!!0,bool>)
-    IL_004e:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_3'
+    IL_004e:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_2'
     IL_0053:  dup
     IL_0054:  brtrue.s   IL_006d
 
     IL_0056:  pop
     IL_0057:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9'
-    IL_005c:  ldftn      instance class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_3'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>)
+    IL_005c:  ldftn      instance class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<FromLetWhereSelect>b__10_2'(class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>)
     IL_0062:  newobj     instance void class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>>::.ctor(object,
                                                                                                                                                                                                                                                                                                   native int)
     IL_0067:  dup
-    IL_0068:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_3'
+    IL_0068:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__10_2'
     IL_006d:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!1> [System.Core]System.Linq.Enumerable::Select<class '<>f__AnonymousType6`2'<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Order,valuetype [mscorlib]System.Decimal>,class '<>f__AnonymousType7`2'<int32,valuetype [mscorlib]System.Decimal>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,!!1>)
     IL_0072:  ret
@@ -4508,6 +4764,54 @@
     IL_0049:  ret
   } // end of method QueryExpressions::Issue437
 
+  .method public hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!TB> 
+          Cast<TA,class TB>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!TA> a) cil managed
+  {
+    // Code size       110 (0x6e)
+    .maxstack  3
+    IL_0000:  ldarg.0
+    IL_0001:  ldsfld     class [mscorlib]System.Func`2<!0,class '<>f__AnonymousType15`2'<!0,!1>> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_0'
+    IL_0006:  dup
+    IL_0007:  brtrue.s   IL_0020
+
+    IL_0009:  pop
+    IL_000a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!0,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9'
+    IL_000f:  ldftn      instance class '<>f__AnonymousType15`2'<!0,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<Cast>b__19_0'(!0)
+    IL_0015:  newobj     instance void class [mscorlib]System.Func`2<!!TA,class '<>f__AnonymousType15`2'<!!TA,!!TB>>::.ctor(object,
+                                                                                                                            native int)
+    IL_001a:  dup
+    IL_001b:  stsfld     class [mscorlib]System.Func`2<!0,class '<>f__AnonymousType15`2'<!0,!1>> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_0'
+    IL_0020:  call       valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!1> ICSharpCode.Decompiler.Tests.TestCases.Pretty.MaybeExtensions::Select<!!0,class '<>f__AnonymousType15`2'<!!0,!!1>>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!0>,
+                                                                                                                                                                                                                 class [mscorlib]System.Func`2<!!0,!!1>)
+    IL_0025:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!0,!1>,bool> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_1'
+    IL_002a:  dup
+    IL_002b:  brtrue.s   IL_0044
+
+    IL_002d:  pop
+    IL_002e:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!0,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9'
+    IL_0033:  ldftn      instance bool class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<Cast>b__19_1'(class '<>f__AnonymousType15`2'<!0,!1>)
+    IL_0039:  newobj     instance void class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!!TA,!!TB>,bool>::.ctor(object,
+                                                                                                                            native int)
+    IL_003e:  dup
+    IL_003f:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!0,!1>,bool> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_1'
+    IL_0044:  call       valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!0> ICSharpCode.Decompiler.Tests.TestCases.Pretty.MaybeExtensions::Where<class '<>f__AnonymousType15`2'<!!0,!!1>>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!0>,
+                                                                                                                                                                                                            class [mscorlib]System.Func`2<!!0,bool>)
+    IL_0049:  ldsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!0,!1>,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_2'
+    IL_004e:  dup
+    IL_004f:  brtrue.s   IL_0068
+
+    IL_0051:  pop
+    IL_0052:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!0,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9'
+    IL_0057:  ldftn      instance !1 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<Cast>b__19_2'(class '<>f__AnonymousType15`2'<!0,!1>)
+    IL_005d:  newobj     instance void class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!!TA,!!TB>,!!TB>::.ctor(object,
+                                                                                                                            native int)
+    IL_0062:  dup
+    IL_0063:  stsfld     class [mscorlib]System.Func`2<class '<>f__AnonymousType15`2'<!0,!1>,!1> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c__19`2'<!!TA,!!TB>::'<>9__19_2'
+    IL_0068:  call       valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!1> ICSharpCode.Decompiler.Tests.TestCases.Pretty.MaybeExtensions::Select<class '<>f__AnonymousType15`2'<!!0,!!1>,!!1>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!0>,
+                                                                                                                                                                                                                 class [mscorlib]System.Func`2<!!0,!!1>)
+    IL_006d:  ret
+  } // end of method QueryExpressions::Cast
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -4519,6 +4823,47 @@
   } // end of method QueryExpressions::.ctor
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions
+
+.class public sequential ansi sealed beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<T>
+       extends [mscorlib]System.ValueType
+{
+  .field public !T Value
+  .field public bool HasValue
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1
+
+.class public abstract auto ansi sealed beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.MaybeExtensions
+       extends [mscorlib]System.Object
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+  .method public hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!TResult> 
+          Select<T,TResult>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!T> a,
+                            class [mscorlib]System.Func`2<!!T,!!TResult> fn) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       10 (0xa)
+    .maxstack  1
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!TResult> V_0)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  initobj    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!TResult>
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method MaybeExtensions::Select
+
+  .method public hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!T> 
+          Where<T>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!T> a,
+                   class [mscorlib]System.Func`2<!!T,bool> predicate) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       10 (0xa)
+    .maxstack  1
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!T> V_0)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  initobj    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Maybe`1<!!T>
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method MaybeExtensions::Where
+
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.MaybeExtensions
 
 
 // =============================================================
