@@ -996,7 +996,6 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(inst.ResultType != StackType.Void);
 			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
 			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType, inst.ILRange.Start);
-			v.Name = "S_" + inst.ILRange.Start.ToString("x4");
 			v.HasGeneratedName = true;
 			currentStack = currentStack.Push(v);
 			return new StLoc(v, inst);

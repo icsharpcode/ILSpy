@@ -252,5 +252,19 @@ namespace ICSharpCode.Decompiler.Util
 				throw new ArgumentNullException(nameof(list));
 			list.RemoveAt(list.Count - 1);
 		}
+
+		#region Aliases/shortcuts for Enumerable extension methods
+		public static bool Any<T>(this ICollection<T> list) => list.Count > 0;
+		public static bool Any<T>(this T[] array, Predicate<T> match) => Array.Exists(array, match);
+		public static bool Any<T>(this List<T> list, Predicate<T> match) => list.Exists(match);
+
+		public static bool All<T>(this T[] array, Predicate<T> match) => Array.TrueForAll(array, match);
+		public static bool All<T>(this List<T> list, Predicate<T> match) => list.TrueForAll(match);
+
+		public static T FirstOrDefault<T>(this T[] array, Predicate<T> predicate) => Array.Find(array, predicate);
+		public static T FirstOrDefault<T>(this List<T> list, Predicate<T> predicate) => list.Find(predicate);
+
+		public static T Last<T>(this IList<T> list) => list[list.Count - 1];
+		#endregion
 	}
 }

@@ -40,10 +40,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction stmt)
 		{
 			if (!(inst is CallInstruction call
-				&& call.Method.FullName == "System.Linq.Expressions.Expression.Lambda"
+				&& call.Method.FullNameIs("System.Linq.Expressions.Expression", "Lambda")
 				&& call.Arguments.Count == 2))
 				return false;
-			if (call.Parent is CallInstruction parentCall && parentCall.Method.FullName == "System.Linq.Expressions.Expression.Quote")
+			if (call.Parent is CallInstruction parentCall && parentCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Quote"))
 				return false;
 			if (!(IsEmptyParameterList(call.Arguments[1]) || (call.Arguments[1] is Block block && block.Kind == BlockKind.ArrayInitializer)))
 				return false;
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsEmptyParameterList(ILInstruction inst)
 		{
-			if (inst is CallInstruction emptyCall && emptyCall.Method.FullName == "System.Array.Empty" && emptyCall.Arguments.Count == 0)
+			if (inst is CallInstruction emptyCall && emptyCall.Method.FullNameIs("System.Array", "Empty") && emptyCall.Arguments.Count == 0)
 				return true;
 			if (inst.MatchNewArr(out var type) && type.FullName == "System.Linq.Expressions.ParameterExpression")
 				return true;
@@ -78,13 +78,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(init is CallInstruction initCall && initCall.Arguments.Count == 2))
 				return false;
-			IMethod parameterMethod = initCall.Method;
-			if (!(parameterMethod.Name == "Parameter" && parameterMethod.DeclaringType.FullName == "System.Linq.Expressions.Expression"))
+			if (!(initCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Parameter")))
 				return false;
 			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
 			if (typeArg == null || typeArg.Arguments.Count != 1)
 				return false;
-			if (typeArg.Method.FullName != "System.Type.GetTypeFromHandle")
+			if (!typeArg.Method.FullNameIs("System.Type", "GetTypeFromHandle"))
 				return false;
 			return typeArg.Arguments[0].MatchLdTypeToken(out type) && initCall.Arguments[1].MatchLdStr(out name);
 		}

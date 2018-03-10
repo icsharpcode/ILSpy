@@ -814,5 +814,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			isGeneric = null;
 			return SpecialType.UnknownType;
 		}
+
+		public static bool FullNameIs(this IMethod method, string type, string name)
+		{
+			return method.Name == name && method.DeclaringType?.FullName == type;
+		}
 	}
 }

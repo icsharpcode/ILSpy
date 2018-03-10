@@ -239,13 +239,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			
 			if (value is string) {
-				string tmp = "\"" + ConvertString(value.ToString()) + "\"";
-				column += tmp.Length;
+				string tmp = ConvertString(value.ToString());
+				column += tmp.Length + 2;
+				textWriter.Write('"');
 				textWriter.Write(tmp);
+				textWriter.Write('"');
 			} else if (value is char) {
-				string tmp = "'" + ConvertCharLiteral((char)value) + "'";
-				column += tmp.Length;
+				string tmp = ConvertCharLiteral((char)value);
+				column += tmp.Length + 2;
+				textWriter.Write('\'');
 				textWriter.Write(tmp);
+				textWriter.Write('\'');
 			} else if (value is decimal) {
 				string str = ((decimal)value).ToString(NumberFormatInfo.InvariantInfo) + "m";
 				column += str.Length;
@@ -342,7 +346,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (ch == '\'') {
 				return "\\'";
 			}
-			return ConvertChar(ch);
+			return ConvertChar(ch) ?? ch.ToString();
 		}
 		
 		/// <summary>
@@ -376,7 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case '^':
 					// ASCII characters we allow directly in the output even though we don't use
 					// other Unicode characters of the same category.
-					return ch.ToString();
+					return null;
 				default:
 					switch (char.GetUnicodeCategory(ch)) {
 						case UnicodeCategory.ModifierLetter:
@@ -395,7 +399,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						case UnicodeCategory.SpaceSeparator:
 							return "\\u" + ((int)ch).ToString("x4");
 						default:
-							return ch.ToString();
+							return null;
 					}
 			}
 		}
@@ -407,11 +411,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StringBuilder sb = new StringBuilder ();
 			foreach (char ch in str) {
-				if (ch == '"') {
-					sb.Append("\\\"");
-				} else {
-					sb.Append(ConvertChar(ch));
-				}
+				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+				if (s != null) sb.Append(s);
+				else sb.Append(ch);
 			}
 			return sb.ToString();
 		}
