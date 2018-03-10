@@ -456,7 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					ParameterizedType newParameterizedType = newType as ParameterizedType;
 					if (newParameterizedType != null) {
 						// C# 4.0 spec: §4.4.4 Satisfying constraints
-						var typeParameters = newParameterizedType.GetDefinition().TypeParameters;
+						var typeParameters = newParameterizedType.TypeParameters;
 						var substitution = newParameterizedType.GetSubstitution();
 						for (int i = 0; i < typeParameters.Count; i++) {
 							if (!ValidateConstraints(typeParameters[i], newParameterizedType.GetTypeArgument(i), substitution, conversions)) {
