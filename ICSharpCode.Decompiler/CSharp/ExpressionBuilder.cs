@@ -793,13 +793,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType, inst.CheckForOverflow)
 				?? FallBackToBytePointer();
-			if (!offsetExpr.Type.IsCSharpPrimitiveIntegerType()) {
-				// pointer arithmetic accepts all primitive integer types, but no enums etc.
-				StackType targetType = offsetExpr.Type.GetStackType() == StackType.I4 ? StackType.I4 : StackType.I8;
-				offsetExpr = offsetExpr.ConvertTo(
-					compilation.FindType(targetType.ToKnownTypeCode(offsetExpr.Type.GetSign())),
-					this);
-			}
 
 			if (left.Type.Kind == TypeKind.Pointer) {
 				Debug.Assert(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub);
@@ -821,50 +814,36 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression FallBackToBytePointer()
 			{
 				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
-				return byteOffsetExpr;
+				return EnsureIntegerType(byteOffsetExpr);
 			}
+		}
+
+		TranslatedExpression EnsureIntegerType(TranslatedExpression expr)
+		{
+			if (!expr.Type.IsCSharpPrimitiveIntegerType()) {
+				// pointer arithmetic accepts all primitive integer types, but no enums etc.
+				StackType targetType = expr.Type.GetStackType() == StackType.I4 ? StackType.I4 : StackType.I8;
+				expr = expr.ConvertTo(
+					compilation.FindType(targetType.ToKnownTypeCode(expr.Type.GetSign())),
+					this);
+			}
+			return expr;
 		}
 
 		TranslatedExpression? GetPointerArithmeticOffset(ILInstruction byteOffsetInst, TranslatedExpression byteOffsetExpr,
 			PointerType pointerType, bool checkForOverflow, bool unwrapZeroExtension = false)
 		{
-			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
-				byteOffsetInst = conv.Argument;
+			var countOffsetInst = PointerArithmeticOffset.Detect(byteOffsetInst, pointerType,
+				checkForOverflow: checkForOverflow,
+				unwrapZeroExtension: unwrapZeroExtension);
+			if (countOffsetInst == null) {
+				return null;
 			}
-			int? elementSize = ComputeSizeOf(pointerType.ElementType);
-			if (elementSize == 1) {
-				return byteOffsetExpr;
-			} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
-				if (mul.CheckForOverflow != checkForOverflow)
-					return null;
-				if (mul.IsLifted)
-					return null;
-				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
-					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType))
-				{
-					var countOffsetInst = mul.Left;
-					if (unwrapZeroExtension) {
-						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
-					}
-					return Translate(countOffsetInst);
-				}
-			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
-				return new PrimitiveExpression(1)
-					.WithILInstruction(byteOffsetInst)
-					.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1));
-			} else if (byteOffsetInst.MatchLdcI(out long val)) {
-				// If the offset is a constant, it's possible that the compiler
-				// constant-folded the multiplication.
-				if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
-					val /= elementSize.Value;
-					if (val <= int.MaxValue) {
-						return new PrimitiveExpression((int)val)
-							.WithILInstruction(byteOffsetInst)
-							.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
-					}
-				}
+			if (countOffsetInst == byteOffsetInst) {
+				return EnsureIntegerType(byteOffsetExpr);
+			} else {
+				return EnsureIntegerType(Translate(countOffsetInst));
 			}
-			return null;
 		}
 
 		/// <summary>
@@ -928,21 +907,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (elementType != null)
 						return elementType.Equals(pt.ElementType);
 					else if (elementSize > 0)
-						return ComputeSizeOf(pt.ElementType) == elementSize;
+						return PointerArithmeticOffset.ComputeSizeOf(pt.ElementType) == elementSize;
 				}
 				return false;
 			}
 		}
-
-		int? ComputeSizeOf(IType type)
-		{
-			var rr = resolver.ResolveSizeOf(type);
-			if (rr.IsCompileTimeConstant && rr.ConstantValue is int size)
-				return size;
-			else
-				return null;
-		}
-
+		
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
@@ -1125,6 +1095,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = Translate(inst.Value);
 			value = PrepareArithmeticArgument(value, inst.RightInputType, inst.Sign, inst.IsLifted);
 			
+
 			TranslatedExpression resultExpr;
 			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
@@ -1144,14 +1115,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				switch (op) {
 					case AssignmentOperatorType.Add:
-					case AssignmentOperatorType.Subtract: {
+					case AssignmentOperatorType.Subtract:
+						if (target.Type.Kind == TypeKind.Pointer) {
+							var pao = GetPointerArithmeticOffset(inst.Value, value, (PointerType)target.Type, inst.CheckForOverflow);
+							if (pao != null) {
+								value = pao.Value;
+							} else { 
+								value.Expression.AddChild(new Comment("ILSpy Error: GetPointerArithmeticOffset() failed", CommentType.MultiLine), Roles.Comment);
+							}
+						} else {
 							IType targetType = NullableType.GetUnderlyingType(target.Type).GetEnumUnderlyingType();
 							if (NullableType.IsNullable(value.Type)) {
 								targetType = NullableType.Create(compilation, targetType);
 							}
 							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
-							break;
 						}
+						break;
 					case AssignmentOperatorType.Multiply:
 					case AssignmentOperatorType.Divide:
 					case AssignmentOperatorType.Modulus:

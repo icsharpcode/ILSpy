@@ -370,5 +370,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Data* ptr = &data;
 			this.ConvertIntToFloat(ptr->Position.GetHashCode());
 		}
+
+		private unsafe static void Issue1021(ref byte* bytePtr, ref short* shortPtr)
+		{
+			bytePtr += 4;
+			shortPtr += 2;
+			bytePtr -= 4;
+			shortPtr = (short*)((byte*)shortPtr - 3);
+		}
 	}
 }

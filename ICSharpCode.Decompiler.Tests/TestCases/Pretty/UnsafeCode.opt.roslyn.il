@@ -1125,6 +1125,41 @@
     IL_0024:  ret
   } // end of method UnsafeCode::Issue990
 
+  .method private hidebysig static void  Issue1021(uint8*& bytePtr,
+                                                   int16*& shortPtr) cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.i
+    IL_0003:  ldc.i4.4
+    IL_0004:  add
+    IL_0005:  stind.i
+    IL_0006:  ldarg.1
+    IL_0007:  ldarg.1
+    IL_0008:  ldind.i
+    IL_0009:  ldc.i4.2
+    IL_000a:  conv.i
+    IL_000b:  ldc.i4.2
+    IL_000c:  mul
+    IL_000d:  add
+    IL_000e:  stind.i
+    IL_000f:  ldarg.0
+    IL_0010:  ldarg.0
+    IL_0011:  ldind.i
+    IL_0012:  ldc.i4.4
+    IL_0013:  sub
+    IL_0014:  stind.i
+    IL_0015:  ldarg.1
+    IL_0016:  ldarg.1
+    IL_0017:  ldind.i
+    IL_0018:  ldc.i4.3
+    IL_0019:  sub
+    IL_001a:  stind.i
+    IL_001b:  ret
+  } // end of method UnsafeCode::Issue1021
+
   .property instance int32* NullPointer()
   {
     .get instance int32* ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::get_NullPointer()

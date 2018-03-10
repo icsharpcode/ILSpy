@@ -1398,6 +1398,43 @@
     IL_0025:  ret
   } // end of method UnsafeCode::Issue990
 
+  .method private hidebysig static void  Issue1021(uint8*& bytePtr,
+                                                   int16*& shortPtr) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  dup
+    IL_0003:  ldind.i
+    IL_0004:  ldc.i4.4
+    IL_0005:  conv.i
+    IL_0006:  add
+    IL_0007:  stind.i
+    IL_0008:  ldarg.1
+    IL_0009:  dup
+    IL_000a:  ldind.i
+    IL_000b:  ldc.i4.4
+    IL_000c:  conv.i
+    IL_000d:  add
+    IL_000e:  stind.i
+    IL_000f:  ldarg.0
+    IL_0010:  dup
+    IL_0011:  ldind.i
+    IL_0012:  ldc.i4.4
+    IL_0013:  conv.i
+    IL_0014:  sub
+    IL_0015:  stind.i
+    IL_0016:  ldarg.1
+    IL_0017:  ldarg.1
+    IL_0018:  ldind.i
+    IL_0019:  ldc.i4.3
+    IL_001a:  conv.i
+    IL_001b:  sub
+    IL_001c:  stind.i
+    IL_001d:  ret
+  } // end of method UnsafeCode::Issue1021
+
   .property instance int32* NullPointer()
   {
     .get instance int32* ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::get_NullPointer()
@@ -1408,4 +1445,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\UnsafeCode.res
+// WARNING: Created Win32 resource file C:\work\ILSpy\ICSharpCode.Decompiler.Tests\bin\Debug\net46\../../../TestCases/Pretty\UnsafeCode.res
