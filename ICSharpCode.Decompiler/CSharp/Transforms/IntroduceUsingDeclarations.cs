@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -46,6 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				// Now add using declarations for those namespaces:
 				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
+					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 					// (always inserting at the start of the list)
 					string[] parts = ns.Split('.');

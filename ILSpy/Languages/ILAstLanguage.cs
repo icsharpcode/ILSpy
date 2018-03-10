@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
@@ -116,7 +117,9 @@ namespace ICSharpCode.ILSpy
 				var reader = new ILReader(specializingTypeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
-				ILTransformContext context = new ILTransformContext(il, typeSystem, options.DecompilerSettings) {
+				var namespaces = new HashSet<string>();
+				CSharpDecompiler.CollectNamespacesForDecompilation(new[] { method }, namespaces);
+				ILTransformContext context = new ILTransformContext(il, typeSystem, namespaces.ToImmutableHashSet(), options.DecompilerSettings) {
 					CancellationToken = options.CancellationToken
 				};
 				context.Stepper.StepLimit = options.StepLimit;

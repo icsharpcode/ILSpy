@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						var ilReader = new ILReader(specializingTypeSystem);
 						System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
 						var proxyFunction = ilReader.ReadIL(methodDef.Body, cancellationToken);
-						var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, this.context.Settings) {
+						var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, context.RequiredNamespacesSuperset, this.context.Settings) {
 							CancellationToken = cancellationToken
 						};
 						foreach (var transform in CSharp.CSharpDecompiler.GetILTransforms()) {

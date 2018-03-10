@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -55,10 +56,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			get { return decompilationContext.CurrentAssembly; }
 		}
 
-		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, CancellationToken cancellationToken)
+		/// <summary>
+		/// Returns the max possible set of namespaces that will be used during decompilation.
+		/// </summary>
+		public IImmutableSet<string> RequiredNamespacesSuperset { get; }
+
+		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IImmutableSet<string> namespaces, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			this.TypeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.RequiredNamespacesSuperset = namespaces;
 			this.TypeSystemAstBuilder = typeSystemAstBuilder;
 			this.Settings = settings;
 			this.CancellationToken = cancellationToken;

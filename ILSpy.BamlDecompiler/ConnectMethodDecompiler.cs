@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
@@ -60,7 +61,7 @@ namespace ILSpy.BamlDecompiler
 			var ilReader = new ILReader(typeSystem);
 			var function = ilReader.ReadIL(method.Body, cancellationToken);
 
-			var context = new ILTransformContext(function, typeSystem) {
+			var context = new ILTransformContext(function, typeSystem, ImmutableHashSet<string>.Empty) {
 				CancellationToken = cancellationToken
 			};
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);

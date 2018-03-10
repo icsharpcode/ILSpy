@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.Name = contextPrefix + v.Name;
 				}
 
-				var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
+				var nestedContext = new ILTransformContext(function, localTypeSystem, context.RequiredNamespacesSuperset, context.Settings) {
 					CancellationToken = context.CancellationToken
 				};
 				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
