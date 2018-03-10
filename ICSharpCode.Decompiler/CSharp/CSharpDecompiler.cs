@@ -638,7 +638,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static void CollectNamespacesForDecompilation(IEnumerable<IMemberDefinition> memberDefinitions, HashSet<string> namespaces)
 		{
-			var visitedItems = new HashSet<MemberReference>();
 			foreach (var def in memberDefinitions) {
 				switch (def) {
 					case TypeDefinition typeDef:

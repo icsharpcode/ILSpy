@@ -2,7 +2,7 @@
   "profiles": {
     "ILSpy": {
       "commandName": "Executable",
-      "executablePath": "$(OutDir)$(AssemblyName)$(TargetExt)",
+      "executablePath": "C:\\Users\\Siegfried\\Projects\\ILSpy master\\ILSpy\\bin\\Debug\\net46\\ILSpy.exe",
       "commandLineArgs": "/separate"
     }
   }
