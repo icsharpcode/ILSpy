@@ -18,8 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -193,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (call.Arguments.Count == 0) {
 						return false;
 					}
-					if (call.Method.IsStatic && !call.Method.IsExtensionMethod) {
+					if (call.Method.IsStatic && (!call.Method.IsExtensionMethod || !CanTransformToExtensionMethodCall(call))) {
 						return false; // only instance or extension methods can be called with ?. syntax
 					}
 					if (call.Method.IsAccessor && !IsGetter(call.Method)) {
@@ -233,6 +237,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						throw new ArgumentOutOfRangeException("mode");
 				}
 			}
+		}
+
+		bool CanTransformToExtensionMethodCall(CallInstruction call)
+		{
+			if (call.Method.Parameters.Count == 0) return false;
+			var targetType = call.Method.Parameters.Select(p => new ResolveResult(p.Type)).First();
+			var paramTypes = call.Method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
+			var paramNames = call.Method.Parameters.SelectArray(p => p.Name);
+			var typeArgs = call.Method.TypeArguments.ToArray();
+			var usingScope = CreateUsingScope(context.RequiredNamespacesSuperset).Resolve(context.TypeSystem.Compilation);
+			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, usingScope);
+			var resolver = new CSharp.Resolver.CSharpResolver(resolveContext);
+			return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(resolver, call.Method, typeArgs, targetType, paramTypes);
+		}
+
+		CSharp.TypeSystem.UsingScope CreateUsingScope(IImmutableSet<string> requiredNamespacesSuperset)
+		{
+			var usingScope = new CSharp.TypeSystem.UsingScope();
+			foreach (var ns in requiredNamespacesSuperset) {
+				string[] parts = ns.Split('.');
+				AstType nsType = new SimpleType(parts[0]);
+				for (int i = 1; i < parts.Length; i++) {
+					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
+				}
+				var reference = nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration) as CSharp.TypeSystem.TypeOrNamespaceReference;
+				if (reference != null)
+					usingScope.Usings.Add(reference);
+			}
+			return usingScope;
 		}
 
 		static bool IsGetter(IMethod method)

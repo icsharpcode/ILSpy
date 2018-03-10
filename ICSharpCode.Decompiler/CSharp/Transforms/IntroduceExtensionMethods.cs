@@ -22,6 +22,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -100,16 +101,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var firstArgument = invocationExpression.Arguments.First();
 			var target = firstArgument.GetResolveResult();
 			var args = invocationExpression.Arguments.Skip(1).Select(a => a.GetResolveResult()).ToArray();
-			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
-			if (rr == null)
-				return;
-			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, args, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
+			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args))
 				return;
 			if (firstArgument is NullReferenceExpression)
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
 			else
 				mre.Target = firstArgument.Detach();
+		}
+
+		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method, IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments)
+		{
+			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			if (rr == null)
+				return false;
+			// TODO : add support for argument names as soon as named arguments are implemented in the decompiler.
+			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, allowExtensionMethods: true);
+			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
+				return false;
+			return true;
 		}
 	}
 }
