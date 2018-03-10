@@ -618,6 +618,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							CollectNamespacesForDecompilation(p.ParameterType, namespaces);
 						}
 					}
+					if (!decodeDetails) break;
+					var resolved = methodRef.ResolveWithinSameModule();
+					if (resolved != null && resolved.HasBody) {
+						CollectNamespacesForDecompilation(resolved.Body, namespaces);
+					}
 					break;
 			}
 		}
@@ -634,7 +639,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			foreach (var inst in body.Instructions) {
 				if (inst.Operand is MemberReference mr)
-					CollectNamespacesForDecompilation(mr, namespaces);
+					CollectNamespacesForDecompilation(mr, namespaces, inst.OpCode.Code == Mono.Cecil.Cil.Code.Ldftn);
 			}
 		}
 
