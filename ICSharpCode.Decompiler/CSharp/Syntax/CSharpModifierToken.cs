@@ -25,7 +25,7 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		// Not worth using a dictionary for such few elements.
 		// This table is sorted in the order that modifiers should be output when generating code.
-		static readonly Modifiers[] allModifiers = {
+		public static ImmutableArray<Modifiers> AllModifiers { get; } = ImmutableArray.Create(
 			Modifiers.Public, Modifiers.Private, Modifiers.Protected, Modifiers.Internal,
 			Modifiers.New,
 			Modifiers.Unsafe,
@@ -71,11 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
 			Modifiers.Async,
 			Modifiers.Any
-		};
-		
-		public static IEnumerable<Modifiers> AllModifiers {
-			get { return allModifiers; }
-		}
+		);
 		
 		public CSharpModifierToken (TextLocation location, Modifiers modifier) : base (location, null)
 		{

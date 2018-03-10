@@ -386,20 +386,25 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			"from", "where", "join", "on", "equals", "into", "let", "orderby",
 			"ascending", "descending", "select", "group", "by"
 		};
-		
+		static readonly int maxKeywordLength = unconditionalKeywords.Concat(queryKeywords).Max(s => s.Length);
+
 		/// <summary>
 		/// Determines whether the specified identifier is a keyword in the given context.
 		/// </summary>
 		public static bool IsKeyword(string identifier, AstNode context)
 		{
+			// only 2-10 char lower-case identifiers can be keywords
+			if (identifier.Length > maxKeywordLength || identifier.Length < 2 || identifier[0] < 'a') {
+				return false;
+			}
 			if (unconditionalKeywords.Contains(identifier)) {
 				return true;
 			}
-			foreach (AstNode ancestor in context.Ancestors) {
-				if (ancestor is QueryExpression && queryKeywords.Contains(identifier)) {
-					return true;
-				}
-				if (identifier == "await") {
+			if (queryKeywords.Contains(identifier)) {
+				return context.Ancestors.Any(ancestor => ancestor is QueryExpression);
+			}
+			if (identifier == "await") {
+				foreach (AstNode ancestor in context.Ancestors) {
 					// with lambdas/anonymous methods,
 					if (ancestor is LambdaExpression) {
 						return ((LambdaExpression)ancestor).IsAsync;
