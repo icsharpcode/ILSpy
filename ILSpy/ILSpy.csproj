@@ -400,9 +400,18 @@
     <ItemGroup>
       <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.AttributedModel.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Convention.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Hosting.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Runtime.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.TypedParts.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
