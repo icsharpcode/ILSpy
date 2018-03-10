@@ -41,6 +41,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (T)(BaseClass)d;
 		}
 
+		public TTarget GenericAsGeneric<TSource, TTarget>(TSource source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? GenericAsNullable<TSource, TTarget>(TSource source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
+		public TTarget ObjectAsGeneric<TTarget>(object source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? ObjectAsNullable<TTarget>(object source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
+		public TTarget IntAsGeneric<TTarget>(int source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? IntAsNullable<TTarget>(int source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
 		public T New<T>() where T : new()
 		{
 			return new T();

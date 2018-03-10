@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly xjme13tr
+.assembly hdkktc2j
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module xjme13tr.dll
-// MVID: {46E33A68-F4FB-4A9A-BF39-6043E66E8EF6}
+.module hdkktc2j.dll
+// MVID: {E1E1D350-F9F6-4498-A05D-8F728F6F95CE}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04990000
+// Image base: 0x04410000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -107,6 +107,112 @@
     IL_000a:  ldloc.0
     IL_000b:  ret
   } // end of method Generics::CastToTypeParameter
+
+  .method public hidebysig instance !!TTarget 
+          GenericAsGeneric<TSource,class TTarget>(!!TSource source) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  1
+    .locals init (!!TTarget V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  box        !!TSource
+    IL_0007:  isinst     !!TTarget
+    IL_000c:  unbox.any  !!TTarget
+    IL_0011:  stloc.0
+    IL_0012:  br.s       IL_0014
+
+    IL_0014:  ldloc.0
+    IL_0015:  ret
+  } // end of method Generics::GenericAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          GenericAsNullable<TSource,valuetype .ctor ([mscorlib]System.ValueType) TTarget>(!!TSource source) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<!!TTarget> V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  box        !!TSource
+    IL_0007:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000c:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0011:  stloc.0
+    IL_0012:  br.s       IL_0014
+
+    IL_0014:  ldloc.0
+    IL_0015:  ret
+  } // end of method Generics::GenericAsNullable
+
+  .method public hidebysig instance !!TTarget 
+          ObjectAsGeneric<class TTarget>(object source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  1
+    .locals init (!!TTarget V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  isinst     !!TTarget
+    IL_0007:  unbox.any  !!TTarget
+    IL_000c:  stloc.0
+    IL_000d:  br.s       IL_000f
+
+    IL_000f:  ldloc.0
+    IL_0010:  ret
+  } // end of method Generics::ObjectAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          ObjectAsNullable<valuetype .ctor ([mscorlib]System.ValueType) TTarget>(object source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<!!TTarget> V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0007:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000c:  stloc.0
+    IL_000d:  br.s       IL_000f
+
+    IL_000f:  ldloc.0
+    IL_0010:  ret
+  } // end of method Generics::ObjectAsNullable
+
+  .method public hidebysig instance !!TTarget 
+          IntAsGeneric<class TTarget>(int32 source) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  1
+    .locals init (!!TTarget V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  box        [mscorlib]System.Int32
+    IL_0007:  isinst     !!TTarget
+    IL_000c:  unbox.any  !!TTarget
+    IL_0011:  stloc.0
+    IL_0012:  br.s       IL_0014
+
+    IL_0014:  ldloc.0
+    IL_0015:  ret
+  } // end of method Generics::IntAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          IntAsNullable<valuetype .ctor ([mscorlib]System.ValueType) TTarget>(int32 source) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<!!TTarget> V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  box        [mscorlib]System.Int32
+    IL_0007:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000c:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0011:  stloc.0
+    IL_0012:  br.s       IL_0014
+
+    IL_0014:  ldloc.0
+    IL_0015:  ret
+  } // end of method Generics::IntAsNullable
 
   .method public hidebysig instance !!T  New<.ctor T>() cil managed
   {
@@ -204,4 +310,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\Generics.res
+// WARNING: Created Win32 resource file C:\work\ILSpy\ICSharpCode.Decompiler.Tests\bin\Debug\net46\../../../TestCases/Pretty\Generics.res

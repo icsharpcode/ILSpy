@@ -210,6 +210,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			if (arg.Expression is CastExpression cast
+					&& arg.Type.IsKnownType(KnownTypeCode.Object)
+					&& arg.ResolveResult is ConversionResolveResult crr
+					&& crr.Conversion.IsBoxingConversion) {
+				// When 'as' used with value type or type parameter,
+				// the C# compiler implicitly boxes the input.
+				arg = arg.UnwrapChild(cast.Expression);
+			}
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
@@ -1703,6 +1711,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			if (arg.Type.Equals(inst.Type) && inst.Argument.OpCode == OpCode.IsInst) {
+				// isinst followed by unbox.any of the same type is used for as-casts to generic types
+				return arg.WithILInstruction(inst);
+			}
 			if (arg.Type.IsReferenceType != true) {
 				// ensure we treat the input as a reference type
 				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
