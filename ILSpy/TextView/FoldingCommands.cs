@@ -38,19 +38,17 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void Execute(TextViewContext context)
 		{
-			if (null == context.TextView)
+			var foldingManager = context.TextView?.FoldingManager;
+			if (foldingManager == null)
 				return;
-			FoldingManager foldingManager = context.TextView.FoldingManager;
-			if (null == foldingManager)
-				return;
-			bool doFold = true;
-			foreach (FoldingSection fm in foldingManager.AllFoldings) {
+			var doFold = true;
+			foreach (var fm in foldingManager.AllFoldings) {
 				if (fm.IsFolded) {
 					doFold = false;
 					break;
 				}
 			}
-			foreach (FoldingSection fm in foldingManager.AllFoldings) {
+			foreach (var fm in foldingManager.AllFoldings) {
 				fm.IsFolded = doFold;
 			}
 		}
@@ -75,16 +73,16 @@ namespace ICSharpCode.ILSpy.TextView
 			if (null == textView)
 				return;
 			var editor = textView.textEditor;
-			FoldingManager foldingManager = context.TextView.FoldingManager;
+			var foldingManager = context.TextView.FoldingManager;
 			if (null == foldingManager)
 				return;
 			// TODO: or use Caret if position is not given?
 			var posBox = context.Position;
 			if (null == posBox)
 				return;
-			TextViewPosition pos = posBox.Value;
+			var pos = posBox.Value;
 			// look for folding on this line:
-			FoldingSection folding = foldingManager.GetNextFolding(editor.Document.GetOffset(pos.Line, 1));
+			var folding = foldingManager.GetNextFolding(editor.Document.GetOffset(pos.Line, 1));
 			if (folding == null || editor.Document.GetLineByOffset(folding.StartOffset).LineNumber != pos.Line) {
 				// no folding found on current line: find innermost folding containing the mouse position
 				folding = foldingManager.GetFoldingsContaining(editor.Document.GetOffset(pos.Line, pos.Column)).LastOrDefault();

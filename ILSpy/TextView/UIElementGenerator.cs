@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (this.UIElements == null)
 				return -1;
-			int r = this.UIElements.BinarySearch(new Pair(startOffset, null), this);
+			var r = this.UIElements.BinarySearch(new Pair(startOffset, null), this);
 			// If the element isn't found, BinarySearch returns the complement of "insertion position".
 			// We use this to find the next element (if there wasn't any exact match).
 			if (r < 0)
@@ -57,11 +57,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (this.UIElements == null)
 				return null;
-			int r = UIElements.BinarySearch(new Pair(offset, null), this);
-			if (r >= 0)
-				return new InlineObjectElement(0, this.UIElements[r].Value.Value);
-			else
-				return null;
+			var r = UIElements.BinarySearch(new Pair(offset, null), this);
+			return r >= 0 ? new InlineObjectElement(0, this.UIElements[r].Value.Value) : null;
 		}
 		
 		int IComparer<Pair>.Compare(Pair x, Pair y)

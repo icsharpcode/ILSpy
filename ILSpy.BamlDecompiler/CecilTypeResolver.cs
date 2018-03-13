@@ -28,7 +28,7 @@ namespace ILSpy.BamlDecompiler
 		
 		string MakeShort(string name)
 		{
-			int endOffset = name.IndexOf(',');
+			var endOffset = name.IndexOf(',');
 			if (endOffset == -1)
 				return name;
 			
@@ -37,14 +37,14 @@ namespace ILSpy.BamlDecompiler
 		
 		public IType GetTypeByAssemblyQualifiedName(string name)
 		{
-			int bracket = name.LastIndexOf(']');
-			int comma = bracket > -1 ? name.IndexOf(',', bracket) : name.IndexOf(',');
+			var bracket = name.LastIndexOf(']');
+			var comma = bracket > -1 ? name.IndexOf(',', bracket) : name.IndexOf(',');
 			
 			if (comma == -1)
 				throw new ArgumentException("invalid name");
 
-			string fullName = bracket > -1 ? name.Substring(0, name.IndexOf('[')) : name.Substring(0, comma);
-			string assemblyName = name.Substring(comma + 1).Trim();
+			var fullName = bracket > -1 ? name.Substring(0, name.IndexOf('[')) : name.Substring(0, comma);
+			var assemblyName = name.Substring(comma + 1).Trim();
 			
 			var type = thisAssembly.MainModule.GetType(fullName);
 			
@@ -93,10 +93,6 @@ namespace ILSpy.BamlDecompiler
 			throw new ArgumentException("Invalid IType: " + ownerType.GetType());
 		}
 		
-		public string RuntimeVersion {
-			get {
-				return thisAssembly.MainModule.Runtime.ToString();
-			}
-		}
+		public string RuntimeVersion => thisAssembly.MainModule.Runtime.ToString();
 	}
 }

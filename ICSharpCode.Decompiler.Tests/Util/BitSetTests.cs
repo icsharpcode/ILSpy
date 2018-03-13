@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			bitset.Set(2, 300);
 			Assert.IsFalse(bitset[0]);
 			Assert.IsFalse(bitset[1]);
-			for (int i = 2; i < 300; ++i) {
+			for (var i = 2; i < 300; ++i) {
 				Assert.IsTrue(bitset[i]);
 			}
 			Assert.IsFalse(bitset[301]);
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			bitset.Set(0, 300);
 			bitset.Clear(1, 299);
 			Assert.IsTrue(bitset[0]);
-			for (int i = 1; i < 299; ++i) {
+			for (var i = 1; i < 299; ++i) {
 				Assert.IsFalse(bitset[i]);
 			}
 			Assert.IsTrue(bitset[299]);

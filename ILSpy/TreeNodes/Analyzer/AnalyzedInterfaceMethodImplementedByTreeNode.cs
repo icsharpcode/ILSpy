@@ -31,16 +31,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedInterfaceMethodImplementedByTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 		}
 
-		public override object Text
-		{
-			get { return "Implemented By"; }
-		}
+		public override object Text => "Implemented By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -52,11 +46,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (!type.HasInterfaces)
 				yield break;
-			TypeReference implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
+			var implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
 			if (implementedInterfaceRef == null)
 				yield break;
 
-			foreach (MethodDefinition method in type.Methods.Where(m => m.Name == analyzedMethod.Name)) {
+			foreach (var method in type.Methods.Where(m => m.Name == analyzedMethod.Name)) {
 				if (TypesHierarchyHelpers.MatchInterfaceMethod(method, analyzedMethod, implementedInterfaceRef)) {
 					var node = new AnalyzedMethodTreeNode(method);
 					node.Language = this.Language;
@@ -65,7 +59,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				yield break;
 			}
 
-			foreach (MethodDefinition method in type.Methods) {
+			foreach (var method in type.Methods) {
 				if (method.HasOverrides && method.Overrides.Any(m => m.Resolve() == analyzedMethod)) {
 					var node =  new AnalyzedMethodTreeNode(method);
 					node.Language = this.Language;

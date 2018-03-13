@@ -46,10 +46,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				foreach (var fieldDecl in typeDecl.Members.OfType<FieldDeclaration>()) {
 					if (fieldDecl.Variables.Count != 1)
 						continue;
-					string oldName = fieldDecl.Variables.Single().Name;
-					ISymbol symbol = fieldDecl.GetSymbol();
+					var oldName = fieldDecl.Variables.Single().Name;
+					var symbol = fieldDecl.GetSymbol();
 					if (memberNames.Contains(oldName) && ((IField)symbol).IsPrivate) {
-						string newName = PickNewName(memberNames, oldName);
+						var newName = PickNewName(memberNames, oldName);
 						if (symbol != null) {
 							fieldDecl.Variables.Single().Name = newName;
 							renamedSymbols[symbol] = newName;
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			foreach (var node in rootNode.DescendantsAndSelf) {
 				if (node is IdentifierExpression || node is MemberReferenceExpression) {
-					ISymbol symbol = node.GetSymbol();
+					var symbol = node.GetSymbol();
 					string newName;
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out newName)) {
 						node.GetChildByRole(Roles.Identifier).Name = newName;
@@ -73,8 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!memberNames.Contains("m_" + name))
 				return "m_" + name;
-			for (int num = 2;; num++) {
-				string newName = name + num;
+			for (var num = 2;; num++) {
+				var newName = name + num;
 				if (!memberNames.Contains(newName))
 					return newName;
 			}

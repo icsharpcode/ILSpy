@@ -83,10 +83,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
 		
-		public override bool IsError {
-			get { return this.OverloadResolutionErrors != OverloadResolutionErrors.None; }
-		}
-		
+		public override bool IsError => this.OverloadResolutionErrors != OverloadResolutionErrors.None;
+
 		/// <summary>
 		/// Gets an array that maps argument indices to parameter indices.
 		/// For arguments that could not be mapped to any parameter, the value will be -1.
@@ -100,10 +98,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public override IList<ResolveResult> GetArgumentsForCall()
 		{
-			ResolveResult[] results = new ResolveResult[Member.Parameters.Count];
-			List<ResolveResult> paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
+			var results = new ResolveResult[Member.Parameters.Count];
+			var paramsArguments = IsExpandedForm ? new List<ResolveResult>() : null;
 			// map arguments to parameters:
-			for (int i = 0; i < Arguments.Count; i++) {
+			for (var i = 0; i < Arguments.Count; i++) {
 				int mappedTo;
 				if (argumentToParameterMap != null)
 					mappedTo = argumentToParameterMap[i];
@@ -123,13 +121,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 			if (IsExpandedForm){
-				IType arrayType = Member.Parameters.Last().Type;
-				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
+				var arrayType = Member.Parameters.Last().Type;
+				var int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
 				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
 				results[results.Length - 1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
 			}
 			
-			for (int i = 0; i < results.Length; i++) {
+			for (var i = 0; i < results.Length; i++) {
 				if (results[i] == null) {
 					if (Member.Parameters[i].IsOptional) {
 						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].ConstantValue);

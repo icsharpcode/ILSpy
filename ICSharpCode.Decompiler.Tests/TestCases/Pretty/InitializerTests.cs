@@ -85,17 +85,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 
 			public Data this[int i] {
-				get {
-					return null;
-				}
+				get => null;
 				set {
 				}
 			}
 
 			public Data this[int i, string j] {
-				get {
-					return null;
-				}
+				get => null;
 				set {
 				}
 			}
@@ -147,7 +143,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test1()
 		{
-			C c = new C();
+			var c = new C();
 			c.L = new List<S>();
 			c.L.Add(new S(1));
 			return c;
@@ -164,7 +160,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test2()
 		{
-			C c = new C();
+			var c = new C();
 			c.Z = 1;
 			c.Z = 2;
 			return c;
@@ -172,7 +168,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test3()
 		{
-			C c = new C();
+			var c = new C();
 			c.Y = new S(1);
 			c.Y.A = 2;
 			return c;
@@ -190,7 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test4()
 		{
-			C c = new C();
+			var c = new C();
 			c.Y.A = 1;
 			c.Z = 2;
 			c.Y.B = 3;
@@ -209,7 +205,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static object RecursiveCollectionInitializer()
 		{
-			List<object> list = new List<object>();
+			var list = new List<object>();
 			list.Add(list);
 			return list;
 		}
@@ -248,7 +244,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NotACollectionInitializer()
 		{
-			List<int> list = new List<int>();
+			var list = new List<int>();
 			list.Add(1);
 			list.Add(2);
 			list.Add(3);
@@ -264,14 +260,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NotAnObjectInitializer()
 		{
-			Data data = new Data();
+			var data = new Data();
 			data.a = MyEnum.a;
 			InitializerTests.X(InitializerTests.Y(), data);
 		}
 
 		public static void NotAnObjectInitializerWithEvent()
 		{
-			Data data = new Data();
+			var data = new Data();
 			data.TestEvent += delegate {
 				Console.WriteLine();
 			};
@@ -380,7 +376,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void NestedListWithIndexInitializer()
 		{
 #if !OPT
-			List<List<int>> list = new List<List<int>> {
+			var list = new List<List<int>> {
 #else
 			List<List<int>> obj = new List<List<int>> {
 #endif
@@ -431,7 +427,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NotAStructInitializer_DefaultConstructor()
 		{
-			StructData structData = default(StructData);
+			var structData = default(StructData);
 			structData.Field = 1;
 			structData.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), structData);
@@ -447,7 +443,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
-			StructData structData = new StructData(0);
+			var structData = new StructData(0);
 			structData.Field = 1;
 			structData.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), structData);

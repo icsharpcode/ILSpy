@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				stateVariables.Add(v);
 		}
 		
-		public IEnumerable<ILVariable> StateVariables { get => stateVariables; }
+		public IEnumerable<ILVariable> StateVariables => stateVariables;
 
 		static readonly SymbolicValue Failed = new SymbolicValue(SymbolicValueType.Unknown);
 
@@ -144,9 +144,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var right = Eval(comp.Right);
 				if (left.Type == SymbolicValueType.State && right.Type == SymbolicValueType.IntegerConstant) {
 					// bool: (state + left.Constant == right.Constant)
-					LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
+					var trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
 					// symbolic value is true iff trueSums.Contains(state + left.Constant)
-					LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
+					var trueStates = trueSums.AddOffset(unchecked(-left.Constant));
 					// symbolic value is true iff trueStates.Contains(state)
 					return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
 				} else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant) {

@@ -31,16 +31,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedPropertyOverridesTreeNode(PropertyDefinition analyzedProperty)
 		{
-			if (analyzedProperty == null)
-				throw new ArgumentNullException(nameof(analyzedProperty));
-
-			this.analyzedProperty = analyzedProperty;
+			this.analyzedProperty = analyzedProperty ?? throw new ArgumentNullException(nameof(analyzedProperty));
 		}
 
-		public override object Text
-		{
-			get { return "Overridden By"; }
-		}
+		public override object Text => "Overridden By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -53,11 +47,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (!TypesHierarchyHelpers.IsBaseType(analyzedProperty.DeclaringType, type, resolveTypeArguments: false))
 				yield break;
 
-			foreach (PropertyDefinition property in type.Properties) {
+			foreach (var property in type.Properties) {
 
 				if (TypesHierarchyHelpers.IsBaseProperty(analyzedProperty, property)) {
-					MethodDefinition anyAccessor = property.GetMethod ?? property.SetMethod;
-					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
+					var anyAccessor = property.GetMethod ?? property.SetMethod;
+					var hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
 					var node = new AnalyzedPropertyTreeNode(property, hidesParent ? "(hides) " : "");
 					node.Language = this.Language;
 					yield return node;

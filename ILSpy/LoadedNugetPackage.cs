@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy
 		public string Name { get; }
 
 		public bool IsSelected {
-			get { return isSelected; }
+			get => isSelected;
 			set {
 				if (isSelected != value) {
 					isSelected = value;

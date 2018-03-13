@@ -31,22 +31,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public class IntersectionType : AbstractType
 	{
-		readonly ReadOnlyCollection<IType> types;
-		
-		public ReadOnlyCollection<IType> Types {
-			get { return types; }
-		}
-		
+		public ReadOnlyCollection<IType> Types { get; }
+
 		private IntersectionType(IType[] types)
 		{
 			Debug.Assert(types.Length >= 2);
-			this.types = Array.AsReadOnly(types);
+			this.Types = Array.AsReadOnly(types);
 		}
 		
 		public static IType Create(IEnumerable<IType> types)
 		{
-			IType[] arr = types.Distinct().ToArray();
-			foreach (IType type in arr) {
+			var arr = types.Distinct().ToArray();
+			foreach (var type in arr) {
 				if (type == null)
 					throw new ArgumentNullException();
 			}
@@ -58,14 +54,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new IntersectionType(arr);
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.Intersection; }
-		}
-		
+		public override TypeKind Kind => TypeKind.Intersection;
+
 		public override string Name {
 			get {
-				StringBuilder b = new StringBuilder();
-				foreach (var t in types) {
+				var b = new StringBuilder();
+				foreach (var t in Types) {
 					if (b.Length > 0)
 						b.Append(" & ");
 					b.Append(t.Name);
@@ -76,8 +70,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder();
-				foreach (var t in types) {
+				var b = new StringBuilder();
+				foreach (var t in Types) {
 					if (b.Length > 0)
 						b.Append(" & ");
 					b.Append(t.ReflectionName);
@@ -88,8 +82,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override bool? IsReferenceType {
 			get {
-				foreach (var t in types) {
-					bool? isReferenceType = t.IsReferenceType;
+				foreach (var t in Types) {
+					var isReferenceType = t.IsReferenceType;
 					if (isReferenceType.HasValue)
 						return isReferenceType.Value;
 				}
@@ -99,9 +93,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override int GetHashCode()
 		{
-			int hashCode = 0;
+			var hashCode = 0;
 			unchecked {
-				foreach (var t in types) {
+				foreach (var t in Types) {
 					hashCode *= 7137517;
 					hashCode += t.GetHashCode();
 				}
@@ -111,10 +105,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override bool Equals(IType other)
 		{
-			IntersectionType o = other as IntersectionType;
-			if (o != null && types.Count == o.types.Count) {
-				for (int i = 0; i < types.Count; i++) {
-					if (!types[i].Equals(o.types[i]))
+			var o = other as IntersectionType;
+			if (o != null && Types.Count == o.Types.Count) {
+				for (var i = 0; i < Types.Count; i++) {
+					if (!Types[i].Equals(o.Types[i]))
 						return false;
 				}
 				return true;
@@ -122,10 +116,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return false;
 		}
 		
-		public override IEnumerable<IType> DirectBaseTypes {
-			get { return types; }
-		}
-		
+		public override IEnumerable<IType> DirectBaseTypes => Types;
+
 		public override ITypeReference ToTypeReference()
 		{
 			throw new NotSupportedException();

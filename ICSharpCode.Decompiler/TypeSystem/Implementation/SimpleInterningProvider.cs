@@ -48,8 +48,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				if (a.GetType() != b.GetType())
 					return false;
-				IEnumerator e1 = a.GetEnumerator();
-				IEnumerator e2 = b.GetEnumerator();
+				var e1 = a.GetEnumerator();
+				var e2 = b.GetEnumerator();
 				while (e1.MoveNext()) {
 					// e1 has more elements than e2; or elements are different
 					if (!e2.MoveNext() || e1.Current != e2.Current)
@@ -64,9 +64,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			
 			public int GetHashCode(IEnumerable obj)
 			{
-				int hashCode = obj.GetType().GetHashCode();
+				var hashCode = obj.GetType().GetHashCode();
 				unchecked {
-					foreach (object o in obj) {
+					foreach (var o in obj) {
 						hashCode *= 27;
 						hashCode += RuntimeHelpers.GetHashCode(o);
 					}

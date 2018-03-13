@@ -401,7 +401,7 @@ namespace ICSharpCode.ILSpy
 
 		ISymbol GetCurrentMemberReference()
 		{
-			AstNode node = nodeStack.Peek();
+			var node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
 				symbol = node.Parent.GetSymbol();

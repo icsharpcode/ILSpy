@@ -37,29 +37,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool isAsync;
 		
 		public bool IsAsync {
-			get { return isAsync; }
+			get => isAsync;
 			set { ThrowIfFrozen(); isAsync = value; }
 		}
 		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
 
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole (Roles.Arrow); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
+		public CSharpTokenNode ArrowToken => GetChildByRole (Roles.Arrow);
+
 		public AstNode Body {
-			get { return GetChildByRole (BodyRole); }
-			set { SetChildByRole (BodyRole, value); }
+			get => GetChildByRole (BodyRole);
+			set => SetChildByRole (BodyRole, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -79,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LambdaExpression o = other as LambdaExpression;
+			var o = other as LambdaExpression;
 			return o != null && this.IsAsync == o.IsAsync && this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}

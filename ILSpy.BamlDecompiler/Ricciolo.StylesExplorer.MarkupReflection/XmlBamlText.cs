@@ -7,24 +7,13 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	internal class XmlBamlText : XmlBamlNode
 	{
-		private string _text;
-
 		public XmlBamlText(string text)
 		{
-			_text = text;
+			Text = text;
 		}
 
-		public string Text
-		{
-			get { return _text; }
-		}
+		public string Text { get; }
 
-		public override System.Xml.XmlNodeType NodeType
-		{
-			get
-			{
-				return XmlNodeType.Text;
-			}
-		}
+		public override System.Xml.XmlNodeType NodeType => XmlNodeType.Text;
 	}
 }

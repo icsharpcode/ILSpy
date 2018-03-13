@@ -32,22 +32,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class CastExpression : Expression
 	{
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole (Roles.Type, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public CastExpression ()
@@ -77,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CastExpression o = other as CastExpression;
+			var o = other as CastExpression;
 			return o != null && this.Type.DoMatch(o.Type, match) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

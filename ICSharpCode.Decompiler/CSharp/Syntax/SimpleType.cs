@@ -38,12 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullSimpleType : SimpleType
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -103,27 +99,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public string Identifier {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Syntax.Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Syntax.Identifier.Create (value));
 		}
 		
 		public Identifier IdentifierToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
-		}
-		
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole (Roles.TypeArgument);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitSimpleType (this);
@@ -141,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SimpleType o = other as SimpleType;
+			var o = other as SimpleType;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 		
@@ -153,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (var ta in this.TypeArguments) {
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
-			string identifier = interningProvider.Intern(this.Identifier);
+			var identifier = interningProvider.Intern(this.Identifier);
 			if (typeArguments.Count == 0 && string.IsNullOrEmpty(identifier)) {
 				// empty SimpleType is used for typeof(List<>).
 				return SpecialType.UnboundTypeArgument;

@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool isAsync;
 		
 		public bool IsAsync {
-			get { return isAsync; }
+			get => isAsync;
 			set { ThrowIfFrozen(); isAsync = value; }
 		}
 		
@@ -48,29 +48,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool hasParameterList;
 		
 		public bool HasParameterList {
-			get { return hasParameterList || Parameters.Any(); }
+			get => hasParameterList || Parameters.Any();
 			set { ThrowIfFrozen(); hasParameterList = value; }
 		}
 		
-		public CSharpTokenNode DelegateToken {
-			get { return GetChildByRole (DelegateKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode DelegateToken => GetChildByRole (DelegateKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		public AnonymousMethodExpression ()
@@ -109,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AnonymousMethodExpression o = other as AnonymousMethodExpression;
+			var o = other as AnonymousMethodExpression;
 			return o != null && this.IsAsync == o.IsAsync && this.HasParameterList == o.HasParameterList
 				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
 		}

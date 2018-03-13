@@ -33,16 +33,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodUsedByTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 		}
 
-		public override object Text
-		{
-			get { return "Used By"; }
-		}
+		public override object Text => "Used By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -58,13 +52,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			string name = analyzedMethod.Name;
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
+			var name = analyzedMethod.Name;
+			foreach (var method in type.Methods) {
+				var found = false;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
+				foreach (var instr in method.Body.Instructions) {
+					var mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name &&
 						Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
 						mr.Resolve() == analyzedMethod) {
@@ -76,7 +70,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				method.Body = null;
 
 				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
+					var codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
 					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
 						var node= new AnalyzedMethodTreeNode(codeLocation);
 						node.Language = this.Language;

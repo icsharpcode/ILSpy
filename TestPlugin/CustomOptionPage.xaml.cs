@@ -23,9 +23,9 @@ namespace TestPlugin
 		{
 			// For loading options, use ILSpySetting's indexer.
 			// If the specified section does exist, the indexer will return a new empty element.
-			XElement e = settings[ns + "CustomOptions"];
+			var e = settings[ns + "CustomOptions"];
 			// Now load the options from the XML document:
-			Options s = new Options();
+			var s = new Options();
 			s.UselessOption1 = (bool?)e.Attribute("useless1") ?? s.UselessOption1;
 			s.UselessOption2 = (double?)e.Attribute("useless2") ?? s.UselessOption2;
 			this.DataContext = s;
@@ -33,15 +33,15 @@ namespace TestPlugin
 		
 		public void Save(XElement root)
 		{
-			Options s = (Options)this.DataContext;
+			var s = (Options)this.DataContext;
 			// Save the options back into XML:
-			XElement section = new XElement(ns + "CustomOptions");
+			var section = new XElement(ns + "CustomOptions");
 			section.SetAttributeValue("useless1", s.UselessOption1);
 			section.SetAttributeValue("useless2", s.UselessOption2);
 			
 			// Replace the existing section in the settings file, or add a new section,
 			// if required.
-			XElement existingElement = root.Element(ns + "CustomOptions");
+			var existingElement = root.Element(ns + "CustomOptions");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else
@@ -54,7 +54,7 @@ namespace TestPlugin
 		bool uselessOption1;
 		
 		public bool UselessOption1 {
-			get { return uselessOption1; }
+			get => uselessOption1;
 			set {
 				if (uselessOption1 != value) {
 					uselessOption1 = value;
@@ -66,7 +66,7 @@ namespace TestPlugin
 		double uselessOption2;
 		
 		public double UselessOption2 {
-			get { return uselessOption2; }
+			get => uselessOption2;
 			set {
 				if (uselessOption2 != value) {
 					uselessOption2 = value;

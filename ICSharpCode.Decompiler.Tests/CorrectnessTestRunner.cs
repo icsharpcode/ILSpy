@@ -199,8 +199,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void BitNot([Values(false, true)] bool force32Bit)
 		{
-			CSharpCompilerOptions compiler = CSharpCompilerOptions.UseDebug;
-			AssemblerOptions asm = AssemblerOptions.None;
+			var compiler = CSharpCompilerOptions.UseDebug;
+			var asm = AssemblerOptions.None;
 			if (force32Bit) {
 				compiler |= CSharpCompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
@@ -217,8 +217,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void StackTypes([Values(false, true)] bool force32Bit)
 		{
-			CSharpCompilerOptions compiler = CSharpCompilerOptions.UseRoslyn | CSharpCompilerOptions.UseDebug;
-			AssemblerOptions asm = AssemblerOptions.None;
+			var compiler = CSharpCompilerOptions.UseRoslyn | CSharpCompilerOptions.UseDebug;
+			var asm = AssemblerOptions.None;
 			if (force32Bit) {
 				compiler |= CSharpCompilerOptions.Force32Bit;
 				asm |= AssemblerOptions.Force32Bit;
@@ -288,14 +288,14 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void RunCS([CallerMemberName] string testName = null, CSharpCompilerOptions options = CSharpCompilerOptions.UseDebug)
 		{
-			string testFileName = testName + ".cs";
-			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
+			var testFileName = testName + ".cs";
+			var testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try {
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
+				var decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
 				if (options.HasFlag(CSharpCompilerOptions.UseMcs)) {
 					// For second pass, use roslyn instead of mcs.
 					// mcs has some compiler bugs that cause it to not accept ILSpy-generated code,
@@ -331,7 +331,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			try {
 				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions);
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile, Tester.GetSettings(options));
+				var decompiledCodeFile = Tester.DecompileCSharp(outputFile, Tester.GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);

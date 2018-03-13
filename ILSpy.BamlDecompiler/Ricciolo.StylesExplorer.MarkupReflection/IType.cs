@@ -17,25 +17,15 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 	
 	public class UnresolvableType : IType
 	{
-		string assemblyQualifiedName;
-		
 		public UnresolvableType(string assemblyQualifiedName)
 		{
-			this.assemblyQualifiedName = assemblyQualifiedName;
+			this.AssemblyQualifiedName = assemblyQualifiedName;
 		}
 		
-		public IType BaseType {
-			get {
-				return null;
-			}
-		}
-		
-		public string AssemblyQualifiedName {
-			get {
-				return assemblyQualifiedName;
-			}
-		}
-		
+		public IType BaseType => null;
+
+		public string AssemblyQualifiedName { get; }
+
 		public bool IsSubclassOf(IType type)
 		{
 			return Equals(type);

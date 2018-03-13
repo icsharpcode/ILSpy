@@ -25,79 +25,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public struct DomRegion : IEquatable<DomRegion>
 	{
-		readonly string fileName;
-		readonly int beginLine;
-		readonly int endLine;
-		readonly int beginColumn;
-		readonly int endColumn;
-		
 		public readonly static DomRegion Empty = new DomRegion();
 		
-		public bool IsEmpty {
-			get {
-				return BeginLine <= 0;
-			}
-		}
-		
-		public string FileName {
-			get { return fileName; }
-		}
-		
-		public int BeginLine {
-			get {
-				return beginLine;
-			}
-		}
-		
+		public bool IsEmpty => BeginLine <= 0;
+
+		public string FileName { get; }
+
+		public int BeginLine { get; }
+
 		/// <value>
 		/// if the end line is == -1 the end column is -1 too
 		/// this stands for an unknwon end
 		/// </value>
-		public int EndLine {
-			get {
-				return endLine;
-			}
-		}
-		
-		public int BeginColumn {
-			get {
-				return beginColumn;
-			}
-		}
-		
+		public int EndLine { get; }
+
+		public int BeginColumn { get; }
+
 		/// <value>
 		/// if the end column is == -1 the end line is -1 too
 		/// this stands for an unknown end
 		/// </value>
-		public int EndColumn {
-			get {
-				return endColumn;
-			}
-		}
-		
-		public TextLocation Begin {
-			get {
-				return new TextLocation (beginLine, beginColumn);
-			}
-		}
-		
-		public TextLocation End {
-			get {
-				return new TextLocation (endLine, endColumn);
-			}
-		}
-		
+		public int EndColumn { get; }
+
+		public TextLocation Begin => new TextLocation (BeginLine, BeginColumn);
+
+		public TextLocation End => new TextLocation (EndLine, EndColumn);
+
 		public DomRegion (int beginLine, int beginColumn, int endLine, int endColumn) : this (null, beginLine, beginColumn, endLine, endColumn)
 		{
 		}
 
 		public DomRegion(string fileName, int beginLine, int beginColumn, int endLine, int endColumn)
 		{
-			this.fileName = fileName;
-			this.beginLine   = beginLine;
-			this.beginColumn = beginColumn;
-			this.endLine     = endLine;
-			this.endColumn   = endColumn;
+			this.FileName = fileName;
+			this.BeginLine   = beginLine;
+			this.BeginColumn = beginColumn;
+			this.EndLine     = endLine;
+			this.EndColumn   = endColumn;
 		}
 		
 		public DomRegion (int beginLine, int beginColumn) : this (null, beginLine, beginColumn)
@@ -106,11 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public DomRegion (string fileName, int beginLine, int beginColumn)
 		{
-			this.fileName = fileName;
-			this.beginLine = beginLine;
-			this.beginColumn = beginColumn;
-			this.endLine = -1;
-			this.endColumn = -1;
+			this.FileName = fileName;
+			this.BeginLine = beginLine;
+			this.BeginColumn = beginColumn;
+			this.EndLine = -1;
+			this.EndColumn = -1;
 		}
 		
 		public DomRegion (TextLocation begin, TextLocation end) : this (null, begin, end)
@@ -119,11 +83,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public DomRegion (string fileName, TextLocation begin, TextLocation end)
 		{
-			this.fileName = fileName;
-			this.beginLine = begin.Line;
-			this.beginColumn = begin.Column;
-			this.endLine = end.Line;
-			this.endColumn = end.Column;
+			this.FileName = fileName;
+			this.BeginLine = begin.Line;
+			this.BeginColumn = begin.Column;
+			this.EndLine = end.Line;
+			this.EndColumn = end.Column;
 		}
 		
 		public DomRegion (TextLocation begin) : this (null, begin)
@@ -132,11 +96,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public DomRegion (string fileName, TextLocation begin)
 		{
-			this.fileName = fileName;
-			this.beginLine = begin.Line;
-			this.beginColumn = begin.Column;
-			this.endLine = -1;
-			this.endColumn = -1;
+			this.FileName = fileName;
+			this.BeginLine = begin.Line;
+			this.BeginColumn = begin.Column;
+			this.EndLine = -1;
+			this.EndColumn = -1;
 		}
 		
 		/// <remarks>
@@ -194,7 +158,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return string.Format(
 				CultureInfo.InvariantCulture,
 				"[DomRegion FileName={0}, Begin=({1}, {2}), End=({3}, {4})]",
-				fileName, beginLine, beginColumn, endLine, endColumn);
+				FileName, BeginLine, BeginColumn, EndLine, EndColumn);
 		}
 		
 		public override bool Equals(object obj)
@@ -205,17 +169,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override int GetHashCode()
 		{
 			unchecked {
-				int hashCode = fileName != null ? fileName.GetHashCode() : 0;
-				hashCode ^= beginColumn + 1100009 * beginLine + 1200007 * endLine + 1300021 * endColumn;
+				var hashCode = FileName != null ? FileName.GetHashCode() : 0;
+				hashCode ^= BeginColumn + 1100009 * BeginLine + 1200007 * EndLine + 1300021 * EndColumn;
 				return hashCode;
 			}
 		}
 		
 		public bool Equals(DomRegion other)
 		{
-			return beginLine == other.beginLine && beginColumn == other.beginColumn
-				&& endLine == other.endLine && endColumn == other.endColumn
-				&& fileName == other.fileName;
+			return BeginLine == other.BeginLine && BeginColumn == other.BeginColumn
+				&& EndLine == other.EndLine && EndColumn == other.EndColumn
+				&& FileName == other.FileName;
 		}
 		
 		public static bool operator ==(DomRegion left, DomRegion right)

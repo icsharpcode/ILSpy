@@ -47,10 +47,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder (this, child);
@@ -78,42 +76,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public CSharpTokenNode LBracketToken => GetChildByRole (Roles.LBracket);
+
 		public string AttributeTarget {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier AttributeTargetToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public AstNodeCollection<Attribute> Attributes {
-			get { return base.GetChildrenByRole (Roles.Attribute); }
-		}
-		
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
+		public AstNodeCollection<Attribute> Attributes => base.GetChildrenByRole (Roles.Attribute);
+
+		public CSharpTokenNode RBracketToken => GetChildByRole (Roles.RBracket);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitAttributeSection (this);
@@ -131,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AttributeSection o = other as AttributeSection;
+			var o = other as AttributeSection;
 			return o != null && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 		

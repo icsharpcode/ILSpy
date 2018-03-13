@@ -34,26 +34,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole LockKeywordRole = new TokenRole ("lock");
 		
-		public CSharpTokenNode LockToken {
-			get { return GetChildByRole (LockKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode LockToken => GetChildByRole (LockKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get => GetChildByRole (Roles.EmbeddedStatement);
+			set => SetChildByRole (Roles.EmbeddedStatement, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -73,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LockStatement o = other as LockStatement;
+			var o = other as LockStatement;
 			return o != null && this.Expression.DoMatch(o.Expression, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}

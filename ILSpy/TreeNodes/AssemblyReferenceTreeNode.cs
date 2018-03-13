@@ -27,36 +27,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
-		readonly AssemblyNameReference r;
 		readonly AssemblyTreeNode parentAssembly;
 		
 		public AssemblyReferenceTreeNode(AssemblyNameReference r, AssemblyTreeNode parentAssembly)
 		{
-			if (parentAssembly == null)
-				throw new ArgumentNullException(nameof(parentAssembly));
-			if (r == null)
-				throw new ArgumentNullException(nameof(r));
-			this.r = r;
-			this.parentAssembly = parentAssembly;
+			this.AssemblyNameReference = r ?? throw new ArgumentNullException(nameof(r));
+			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
 			this.LazyLoading = true;
 		}
 
-		public AssemblyNameReference AssemblyNameReference
-		{
-			get { return r; }
-		}
-		
-		public override object Text {
-			get { return r.Name + r.MetadataToken.ToSuffixString(); }
-		}
-		
-		public override object Icon {
-			get { return Images.Assembly; }
-		}
-		
+		public AssemblyNameReference AssemblyNameReference { get; }
+
+		public override object Text => AssemblyNameReference.Name + AssemblyNameReference.MetadataToken.ToSuffixString();
+
+		public override object Icon => Images.Assembly;
+
 		public override bool ShowExpander {
 			get {
-				if (r.Name == "mscorlib")
+				if (AssemblyNameReference.Name == "mscorlib")
 					EnsureLazyChildren(); // likely doesn't have any children
 				return base.ShowExpander;
 			}
@@ -66,7 +54,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
 			if (assemblyListNode != null) {
-				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r)));
+				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(AssemblyNameReference)));
 				e.Handled = true;
 			}
 		}
@@ -75,9 +63,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
 			if (assemblyListNode != null) {
-				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r));
+				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(AssemblyNameReference));
 				if (refNode != null) {
-					ModuleDefinition module = refNode.LoadedAssembly.GetModuleDefinitionOrNull();
+					var module = refNode.LoadedAssembly.GetModuleDefinitionOrNull();
 					if (module != null) {
 						foreach (var childRef in module.AssemblyReferences)
 							this.Children.Add(new AssemblyReferenceTreeNode(childRef, refNode));
@@ -88,11 +76,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
-			if (r.IsWindowsRuntime) {
-				language.WriteCommentLine(output, r.Name + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
+			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(AssemblyNameReference.FullName, out var info);
+			if (AssemblyNameReference.IsWindowsRuntime) {
+				language.WriteCommentLine(output, AssemblyNameReference.Name + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			} else {
-				language.WriteCommentLine(output, r.FullName + (!loaded ? " (unresolved)" : ""));
+				language.WriteCommentLine(output, AssemblyNameReference.FullName + (!loaded ? " (unresolved)" : ""));
 			}
 			if (loaded) {
 				output.Indent();

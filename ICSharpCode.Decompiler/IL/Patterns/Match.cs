@@ -39,9 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// Gets whether the match was successful.
 		/// </summary>
 		public bool Success {
-			get {
-				return results != null;
-			}
+			get => results != null;
 			internal set {
 				if (value) {
 					if (results == null)

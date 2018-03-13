@@ -26,67 +26,41 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public abstract class AbstractTypeParameter : ITypeParameter, ICompilationProvider
 	{
-		readonly ICompilation compilation;
-		readonly SymbolKind ownerType;
-		readonly IEntity owner;
-		readonly int index;
-		readonly string name;
-		readonly IReadOnlyList<IAttribute> attributes;
-		readonly VarianceModifier variance;
-		
 		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
 		{
-			if (owner == null)
-				throw new ArgumentNullException("owner");
-			this.owner = owner;
-			this.compilation = owner.Compilation;
-			this.ownerType = owner.SymbolKind;
-			this.index = index;
-			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
-			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.variance = variance;
+			this.Owner = owner ?? throw new ArgumentNullException("owner");
+			this.Compilation = owner.Compilation;
+			this.OwnerType = owner.SymbolKind;
+			this.Index = index;
+			this.Name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
+			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;
+			this.Variance = variance;
 		}
 		
 		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
-			this.compilation = compilation;
-			this.ownerType = ownerType;
-			this.index = index;
-			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
-			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
-			this.variance = variance;
+			this.Compilation = compilation ?? throw new ArgumentNullException("compilation");
+			this.OwnerType = ownerType;
+			this.Index = index;
+			this.Name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
+			this.Attributes = attributes ?? EmptyList<IAttribute>.Instance;
+			this.Variance = variance;
 		}
 		
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.TypeParameter; }
-		}
-		
-		public SymbolKind OwnerType {
-			get { return ownerType; }
-		}
-		
-		public IEntity Owner {
-			get { return owner; }
-		}
-		
-		public int Index {
-			get { return index; }
-		}
-		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
-		
-		public VarianceModifier Variance {
-			get { return variance; }
-		}
-		
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
-		
+		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
+
+		public SymbolKind OwnerType { get; }
+
+		public IEntity Owner { get; }
+
+		public int Index { get; }
+
+		public IReadOnlyList<IAttribute> Attributes { get; }
+
+		public VarianceModifier Variance { get; }
+
+		public ICompilation Compilation { get; }
+
 		volatile IType effectiveBaseClass;
 		
 		public IType EffectiveBaseClass {
@@ -108,12 +82,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (HasValueTypeConstraint)
 				return this.Compilation.FindType(KnownTypeCode.ValueType);
 			
-			List<IType> classTypeConstraints = new List<IType>();
-			foreach (IType constraint in this.DirectBaseTypes) {
+			var classTypeConstraints = new List<IType>();
+			foreach (var constraint in this.DirectBaseTypes) {
 				if (constraint.Kind == TypeKind.Class) {
 					classTypeConstraints.Add(constraint);
 				} else if (constraint.Kind == TypeKind.TypeParameter) {
-					IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
+					var baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
 					if (baseClass.Kind == TypeKind.Class)
 						classTypeConstraints.Add(baseClass);
 				}
@@ -121,8 +95,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (classTypeConstraints.Count == 0)
 				return this.Compilation.FindType(KnownTypeCode.Object);
 			// Find the derived-most type in the resulting set:
-			IType result = classTypeConstraints[0];
-			for (int i = 1; i < classTypeConstraints.Count; i++) {
+			var result = classTypeConstraints[0];
+			for (var i = 1; i < classTypeConstraints.Count; i++) {
 				if (classTypeConstraints[i].GetDefinition().IsDerivedFrom(result.GetDefinition()))
 					result = classTypeConstraints[i];
 			}
@@ -149,8 +123,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyCollection<IType> CalculateEffectiveInterfaceSet()
 		{
-			HashSet<IType> result = new HashSet<IType>();
-			foreach (IType constraint in this.DirectBaseTypes) {
+			var result = new HashSet<IType>();
+			foreach (var constraint in this.DirectBaseTypes) {
 				if (constraint.Kind == TypeKind.Interface) {
 					result.Add(constraint);
 				} else if (constraint.Kind == TypeKind.TypeParameter) {
@@ -164,10 +138,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool HasReferenceTypeConstraint { get; }
 		public abstract bool HasValueTypeConstraint { get; }
 		
-		public TypeKind Kind {
-			get { return TypeKind.TypeParameter; }
-		}
-		
+		public TypeKind Kind => TypeKind.TypeParameter;
+
 		public bool? IsReferenceType {
 			get {
 				if (this.HasValueTypeConstraint)
@@ -177,9 +149,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				
 				// A type parameter is known to be a reference type if it has the reference type constraint
 				// or its effective base class is not object or System.ValueType.
-				IType effectiveBaseClass = this.EffectiveBaseClass;
+				var effectiveBaseClass = this.EffectiveBaseClass;
 				if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate) {
-					ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
+					var effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
 					if (effectiveBaseClassDef != null) {
 						switch (effectiveBaseClassDef.KnownTypeCode) {
 							case KnownTypeCode.Object:
@@ -196,42 +168,24 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		IType IType.DeclaringType {
-			get { return null; }
-		}
-		
-		int IType.TypeParameterCount {
-			get { return 0; }
-		}
+		IType IType.DeclaringType => null;
 
-		IReadOnlyList<ITypeParameter> IType.TypeParameters {
-			get { return EmptyList<ITypeParameter>.Instance; }
-		}
+		int IType.TypeParameterCount => 0;
 
-		IReadOnlyList<IType> IType.TypeArguments {
-			get { return EmptyList<IType>.Instance; }
-		}
+		IReadOnlyList<ITypeParameter> IType.TypeParameters => EmptyList<ITypeParameter>.Instance;
+
+		IReadOnlyList<IType> IType.TypeArguments => EmptyList<IType>.Instance;
 
 		public abstract IEnumerable<IType> DirectBaseTypes { get; }
 		
-		public string Name {
-			get { return name; }
-		}
-		
-		string INamedElement.Namespace {
-			get { return string.Empty; }
-		}
-		
-		string INamedElement.FullName {
-			get { return name; }
-		}
-		
-		public string ReflectionName {
-			get {
-				return (this.OwnerType == SymbolKind.Method ? "``" : "`") + index.ToString(CultureInfo.InvariantCulture);
-			}
-		}
-		
+		public string Name { get; }
+
+		string INamedElement.Namespace => string.Empty;
+
+		string INamedElement.FullName => Name;
+
+		public string ReflectionName => (this.OwnerType == SymbolKind.Method ? "``" : "`") + Index.ToString(CultureInfo.InvariantCulture);
+
 		ITypeDefinition IType.GetDefinition()
 		{
 			return null;
@@ -267,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint) {
 					if (filter == null || filter(DefaultUnresolvedMethod.DummyConstructor)) {
-						return new [] { DefaultResolvedMethod.GetDummyConstructor(compilation, this) };
+						return new [] { DefaultResolvedMethod.GetDummyConstructor(Compilation, this) };
 					}
 				}
 				return EmptyList<IMethod>.Instance;
@@ -367,14 +321,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public virtual ISymbolReference ToReference()
 		{
-			if (owner == null)
-				return TypeParameterReference.Create(ownerType, index);
-			return new OwnedTypeParameterReference(owner.ToReference(), index);
+			if (Owner == null)
+				return TypeParameterReference.Create(OwnerType, Index);
+			return new OwnedTypeParameterReference(Owner.ToReference(), Index);
 		}
 		
 		public override string ToString()
 		{
-			return this.ReflectionName + " (owner=" + owner + ")";
+			return this.ReflectionName + " (owner=" + Owner + ")";
 		}
 	}
 	
@@ -385,9 +339,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public OwnedTypeParameterReference(ISymbolReference owner, int index)
 		{
-			if (owner == null)
-				throw new ArgumentNullException("owner");
-			this.owner = owner;
+			this.owner = owner ?? throw new ArgumentNullException("owner");
 			this.index = index;
 		}
 		

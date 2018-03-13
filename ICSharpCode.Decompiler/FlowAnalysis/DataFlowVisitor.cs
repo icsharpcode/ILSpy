@@ -361,7 +361,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitBlockContainer(BlockContainer container)
 		{
 			DebugStartPoint(container);
-			SortedSet<int> worklist = new SortedSet<int>();
+			var worklist = new SortedSet<int>();
 			// register work list so that branches within this container can add to it
 			workLists.Add(container, worklist);
 			var stateOnEntry = GetBlockInputState(container.EntryPoint);
@@ -380,9 +380,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// reverse post-order. We use a SortedSet<int> for this, and assume that the block indices used in the SortedSet
 			// are ordered appropriately. The caller can use BlockContainer.SortBlocks() for this.
 			while (worklist.Count > 0) {
-				int blockIndex = worklist.Min;
+				var blockIndex = worklist.Min;
 				worklist.Remove(blockIndex);
-				Block block = container.Blocks[blockIndex];
+				var block = container.Blocks[blockIndex];
 				state.ReplaceWith(stateOnBranch[block]);
 				block.AcceptVisitor(this);
 			}
@@ -416,7 +416,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			if (!branchState.LessThanOrEqual(targetState)) {
 				targetState.JoinWith(branchState);
 
-				BlockContainer container = (BlockContainer)targetBlock.Parent;
+				var container = (BlockContainer)targetBlock.Parent;
 				workLists[container].Add(targetBlock.ChildIndex);
 			}
 		}
@@ -435,7 +435,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		void MergeBranchStateIntoStateOnLeave(Leave inst, State branchState)
 		{
-			if (stateOnLeave.TryGetValue(inst.TargetContainer, out State targetState)) {
+			if (stateOnLeave.TryGetValue(inst.TargetContainer, out var targetState)) {
 				targetState.JoinWith(branchState);
 			} else {
 				stateOnLeave.Add(inst.TargetContainer, branchState.Clone());
@@ -473,7 +473,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		protected State HandleTryBlock(TryInstruction inst)
 		{
-			State oldStateOnException = currentStateOnException;
+			var oldStateOnException = currentStateOnException;
 			State newStateOnException;
 			if (stateOnException.TryGetValue(inst, out newStateOnException)) {
 				newStateOnException.JoinWith(state);
@@ -498,8 +498,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitTryCatch(TryCatch inst)
 		{
 			DebugStartPoint(inst);
-			State onException = HandleTryBlock(inst);
-			State endpoint = state.Clone();
+			var onException = HandleTryBlock(inst);
+			var endpoint = state.Clone();
 			foreach (var handler in inst.Handlers) {
 				state.ReplaceWith(onException);
 				BeginTryCatchHandler(handler);
@@ -532,10 +532,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitTryFinally(TryFinally inst)
 		{
 			DebugStartPoint(inst);
-			int branchesTriggeringFinallyOldCount = branchesTriggeringFinally.Count;
+			var branchesTriggeringFinallyOldCount = branchesTriggeringFinally.Count;
 			// At first, handle 'try { .. } finally { .. }' like 'try { .. } catch {} .. if (?) rethrow; }'
-			State onException = HandleTryBlock(inst);
-			State onSuccess = state.Clone();
+			var onException = HandleTryBlock(inst);
+			var onSuccess = state.Clone();
 			state.JoinWith(onException);
 			inst.FinallyBlock.AcceptVisitor(this);
 			//PropagateStateOnException(); // rethrow the exception after the finally block -- should be redundant
@@ -558,13 +558,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		void ProcessBranchesLeavingTryFinally(TryFinally tryFinally, int branchesTriggeringFinallyOldCount)
 		{
-			int outPos = branchesTriggeringFinallyOldCount;
-			for (int i = branchesTriggeringFinallyOldCount; i < branchesTriggeringFinally.Count; ++i) {
+			var outPos = branchesTriggeringFinallyOldCount;
+			for (var i = branchesTriggeringFinallyOldCount; i < branchesTriggeringFinally.Count; ++i) {
 				var (branch, stateOnBranch) = branchesTriggeringFinally[i];
 				Debug.Assert(((ILInstruction)branch).IsDescendantOf(tryFinally));
 				Debug.Assert(tryFinally.IsDescendantOf(branch.TargetContainer));
 				stateOnBranch.TriggerFinally(state);
-				bool triggersAnotherFinally = Branch.GetExecutesFinallyBlock(tryFinally, branch.TargetContainer);
+				var triggersAnotherFinally = Branch.GetExecutesFinallyBlock(tryFinally, branch.TargetContainer);
 				if (triggersAnotherFinally) {
 					branchesTriggeringFinally[outPos++] = (branch, stateOnBranch);
 				} else {
@@ -584,8 +584,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			// try-fault executes fault block if an exception occurs in try,
 			// and always rethrows the exception at the end.
-			State onException = HandleTryBlock(inst);
-			State onSuccess = state;
+			var onException = HandleTryBlock(inst);
+			var onSuccess = state;
 			state = onException;
 			inst.FaultBlock.AcceptVisitor(this);
 			//PropagateStateOnException(); // rethrow the exception after the fault block
@@ -600,9 +600,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			DebugStartPoint(inst);
 			inst.Condition.AcceptVisitor(this);
-			State branchState = state.Clone();
+			var branchState = state.Clone();
 			inst.TrueInst.AcceptVisitor(this);
-			State afterTrueState = state;
+			var afterTrueState = state;
 			state = branchState;
 			inst.FalseInst.AcceptVisitor(this);
 			state.JoinWith(afterTrueState);
@@ -613,10 +613,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
-			State beforeSections = state.Clone();
+			var beforeSections = state.Clone();
 			inst.Sections[0].AcceptVisitor(this);
-			State afterSections = state.Clone();
-			for (int i = 1; i < inst.Sections.Count; ++i) {
+			var afterSections = state.Clone();
+			for (var i = 1; i < inst.Sections.Count; ++i) {
 				state.ReplaceWith(beforeSections);
 				inst.Sections[i].AcceptVisitor(this);
 				afterSections.JoinWith(state);

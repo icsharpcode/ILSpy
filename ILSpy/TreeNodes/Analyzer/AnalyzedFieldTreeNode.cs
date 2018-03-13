@@ -27,25 +27,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedFieldTreeNode(FieldDefinition analyzedField)
 		{
-			if (analyzedField == null)
-				throw new ArgumentNullException(nameof(analyzedField));
-			this.analyzedField = analyzedField;
+			this.analyzedField = analyzedField ?? throw new ArgumentNullException(nameof(analyzedField));
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return FieldTreeNode.GetIcon(analyzedField); }
-		}
+		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
-		public override object Text
-		{
-			get
-			{
-				return Language.TypeToString(analyzedField.DeclaringType, true) +
-					"." + analyzedField.Name + " : " + this.Language.TypeToString(analyzedField.FieldType, false, analyzedField);
-			}
-		}
+		public override object Text => Language.TypeToString(analyzedField.DeclaringType, true) +
+		                               "." + analyzedField.Name + " : " + this.Language.TypeToString(analyzedField.FieldType, false, analyzedField);
 
 		protected override void LoadChildren()
 		{
@@ -54,8 +43,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedFieldAccessTreeNode(analyzedField, true));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedField; }
-		}
+		public override MemberReference Member => analyzedField;
 	}
 }

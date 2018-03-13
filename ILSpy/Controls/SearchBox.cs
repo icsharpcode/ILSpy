@@ -50,23 +50,23 @@ namespace ICSharpCode.ILSpy.Controls
 		#region Public Properties
 		
 		public string WatermarkText {
-			get { return (string)GetValue(WatermarkTextProperty); }
-			set { SetValue(WatermarkTextProperty, value); }
+			get => (string)GetValue(WatermarkTextProperty);
+			set => SetValue(WatermarkTextProperty, value);
 		}
 
 		public Brush WatermarkColor {
-			get { return (Brush)GetValue(WatermarkColorProperty); }
-			set { SetValue(WatermarkColorProperty, value); }
+			get => (Brush)GetValue(WatermarkColorProperty);
+			set => SetValue(WatermarkColorProperty, value);
 		}
 		
 		public bool HasText {
-			get { return (bool)GetValue(HasTextProperty); }
-			private set { SetValue(HasTextProperty, value); }
+			get => (bool)GetValue(HasTextProperty);
+			private set => SetValue(HasTextProperty, value);
 		}
 
 		public TimeSpan UpdateDelay {
-			get { return (TimeSpan)GetValue(UpdateDelayProperty); }
-			set { SetValue(UpdateDelayProperty, value); }
+			get => (TimeSpan)GetValue(UpdateDelayProperty);
+			set => SetValue(UpdateDelayProperty, value);
 		}
 		
 		#endregion
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.Controls
 		protected override void OnLostFocus(RoutedEventArgs e)
 		{
 			if (!HasText) {
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
+				var wl = (Label)GetTemplateChild("WatermarkLabel");
 				if (wl != null)
 					wl.Visibility = Visibility.Visible;
 			}
@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy.Controls
 		protected override void OnGotFocus(RoutedEventArgs e)
 		{
 			if (!HasText) {
-				Label wl = (Label)GetTemplateChild("WatermarkLabel");
+				var wl = (Label)GetTemplateChild("WatermarkLabel");
 				if (wl != null)
 					wl.Visibility = Visibility.Hidden;
 			}
@@ -132,7 +132,7 @@ namespace ICSharpCode.ILSpy.Controls
 		public override void OnApplyTemplate() {
 			base.OnApplyTemplate();
 
-			Border iconBorder = GetTemplateChild("PART_IconBorder") as Border;
+			var iconBorder = GetTemplateChild("PART_IconBorder") as Border;
 			if (iconBorder != null) {
 				iconBorder.MouseLeftButtonUp += IconBorder_MouseLeftButtonUp;
 			}

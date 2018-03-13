@@ -26,25 +26,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class IdentifierExpressionBackreference : PatternMatching.Pattern
 	{
-		readonly string referencedGroupName;
-		
-		public string ReferencedGroupName {
-			get { return referencedGroupName; }
-		}
-		
+		public string ReferencedGroupName { get; }
+
 		public IdentifierExpressionBackreference(string referencedGroupName)
 		{
-			if (referencedGroupName == null)
-				throw new ArgumentNullException("referencedGroupName");
-			this.referencedGroupName = referencedGroupName;
+			this.ReferencedGroupName = referencedGroupName ?? throw new ArgumentNullException("referencedGroupName");
 		}
 		
 		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
-			IdentifierExpression ident = other as IdentifierExpression;
+			var ident = other as IdentifierExpression;
 			if (ident == null || ident.TypeArguments.Any())
 				return false;
-			AstNode referenced = (AstNode)match.Get(referencedGroupName).Last();
+			var referenced = (AstNode)match.Get(ReferencedGroupName).Last();
 			if (referenced == null)
 				return false;
 			return ident.Identifier == referenced.GetChildByRole(Roles.Identifier).Name;

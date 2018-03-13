@@ -30,16 +30,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeUsedByTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
-				throw new ArgumentNullException(nameof(analyzedType));
-
-			this.analyzedType = analyzedType;
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 		}
 
-		public override object Text
-		{
-			get { return "Used By"; }
-		}
+		public override object Text => "Used By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -126,20 +120,20 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (method.Body == null)
 				return false;
 
-			bool found = false;
+			var found = false;
 
 			foreach (var instruction in method.Body.Instructions) {
-				TypeReference tr = instruction.Operand as TypeReference;
+				var tr = instruction.Operand as TypeReference;
 				if (IsUsedInTypeReference(tr)) {
 					found = true;
 					break;
 				}
-				FieldReference fr = instruction.Operand as FieldReference;
+				var fr = instruction.Operand as FieldReference;
 				if (IsUsedInFieldReference(fr)) {
 					found = true;
 					break;
 				}
-				MethodReference mr = instruction.Operand as MethodReference;
+				var mr = instruction.Operand as MethodReference;
 				if (IsUsedInMethodReference(mr)) {
 					found = true;
 					break;

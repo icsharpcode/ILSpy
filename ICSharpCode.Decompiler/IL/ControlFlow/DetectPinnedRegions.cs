@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Sometimes there's leftover writes to the original pinned locals
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				for (int i = 0; i < block.Instructions.Count; i++) {
+				for (var i = 0; i < block.Instructions.Count; i++) {
 					var stloc = block.Instructions[i] as StLoc;
 					if (stloc != null && stloc.Variable.Kind == VariableKind.PinnedLocal && stloc.Variable.LoadCount == 0 && stloc.Variable.AddressCount == 0) {
 						if (SemanticHelper.IsPure(stloc.Value.Flags)) {
@@ -86,15 +86,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void SplitBlocksAtWritesToPinnedLocals(BlockContainer container)
 		{
-			for (int i = 0; i < container.Blocks.Count; i++) {
+			for (var i = 0; i < container.Blocks.Count; i++) {
 				var block = container.Blocks[i];
-				for (int j = 0; j < block.Instructions.Count - 1; j++) {
+				for (var j = 0; j < block.Instructions.Count - 1; j++) {
 					var inst = block.Instructions[j];
 					ILVariable v;
 					if (inst.MatchStLoc(out v) && v.Kind == VariableKind.PinnedLocal && block.Instructions[j + 1].OpCode != OpCode.Branch) {
 						// split block after j:
 						var newBlock = new Block();
-						for (int k = j + 1; k < block.Instructions.Count; k++) {
+						for (var k = j + 1; k < block.Instructions.Count; k++) {
 							newBlock.Instructions.Add(block.Instructions[k]);
 						}
 						newBlock.ILRange = newBlock.Instructions[0].ILRange;
@@ -131,8 +131,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//   ...
 			//   stloc P(array.to.pointer(V))
 			//   br B_target
-			bool modified = false;
-			for (int i = 0; i < container.Blocks.Count; i++) {
+			var modified = false;
+			for (var i = 0; i < container.Blocks.Count; i++) {
 				var block = container.Blocks[i];
 				ILVariable v, p;
 				Block targetBlock;
@@ -245,10 +245,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// stLoc is a store that starts a new pinned region
 			
 			// Collect the blocks to be moved into the region:
-			BlockContainer sourceContainer = (BlockContainer)block.Parent;
-			int[] reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
-			Queue<Block> workList = new Queue<Block>();
-			Block entryBlock = ((Branch)block.Instructions.Last()).TargetBlock;
+			var sourceContainer = (BlockContainer)block.Parent;
+			var reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
+			var workList = new Queue<Block>();
+			var entryBlock = ((Branch)block.Instructions.Last()).TargetBlock;
 			if (entryBlock.Parent != sourceContainer) {
 				// we didn't find a single block to be added to the pinned region
 				return false;
@@ -256,8 +256,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			reachedEdgesPerBlock[entryBlock.ChildIndex]++;
 			workList.Enqueue(entryBlock);
 			while (workList.Count > 0) {
-				Block workItem = workList.Dequeue();
-				StLoc workStLoc = workItem.Instructions.SecondToLastOrDefault() as StLoc;
+				var workItem = workList.Dequeue();
+				var workStLoc = workItem.Instructions.SecondToLastOrDefault() as StLoc;
 				int instructionCount;
 				if (workStLoc != null && workStLoc.Variable == stLoc.Variable && IsNullOrZero(workStLoc.Value)) {
 					// found unpin instruction: only consider branches prior to that instruction
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				} else {
 					instructionCount = workItem.Instructions.Count;
 				}
-				for (int i = 0; i < instructionCount; i++) {
+				for (var i = 0; i < instructionCount; i++) {
 					foreach (var branch in workItem.Instructions[i].Descendants.OfType<Branch>()) {
 						if (branch.TargetBlock.Parent == sourceContainer) {
 							Debug.Assert(branch.TargetBlock != block);
@@ -280,21 +280,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			
 			// Validate that all uses of a block consistently are inside or outside the pinned region.
 			// (we cannot do this anymore after we start moving blocks around)
-			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
+			for (var i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] != 0 && reachedEdgesPerBlock[i] != sourceContainer.Blocks[i].IncomingEdgeCount) {
 					return false;
 				}
 			}
 			
-			BlockContainer body = new BlockContainer();
-			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
+			var body = new BlockContainer();
+			for (var i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] > 0) {
 					var innerBlock = sourceContainer.Blocks[i];
-					Branch br = innerBlock.Instructions.LastOrDefault() as Branch;
+					var br = innerBlock.Instructions.LastOrDefault() as Branch;
 					if (br != null && br.TargetContainer == sourceContainer && reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0) {
 						// branch that leaves body.
 						// Should have an instruction that resets the pin; delete that instruction:
-						StLoc innerStLoc = innerBlock.Instructions.SecondToLastOrDefault() as StLoc;
+						var innerStLoc = innerBlock.Instructions.SecondToLastOrDefault() as StLoc;
 						if (innerStLoc != null && innerStLoc.Variable == stLoc.Variable && IsNullOrZero(innerStLoc.Value)) {
 							innerBlock.Instructions.RemoveAt(innerBlock.Instructions.Count - 2);
 						}
@@ -328,11 +328,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void ProcessPinnedRegion(PinnedRegion pinnedRegion)
 		{
-			BlockContainer body = (BlockContainer)pinnedRegion.Body;
+			var body = (BlockContainer)pinnedRegion.Body;
 			if (pinnedRegion.Variable.Type.Kind == TypeKind.ByReference) {
 				// C# doesn't support a "by reference" variable, so replace it with a native pointer
-				ILVariable oldVar = pinnedRegion.Variable;
-				ILVariable newVar = new ILVariable(
+				var oldVar = pinnedRegion.Variable;
+				var newVar = new ILVariable(
 					VariableKind.PinnedLocal,
 					new PointerType(((ByReferenceType)oldVar.Type).ElementType),
 					oldVar.Index);
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsOffsetToStringDataCall(ILInstruction inst)
 		{
-			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
+			var call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
 			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
 		}
 		#endregion

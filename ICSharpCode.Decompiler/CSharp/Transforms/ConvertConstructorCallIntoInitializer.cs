@@ -58,15 +58,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
-			ExpressionStatement stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
+			var stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
 			if (stmt == null)
 				return;
-			InvocationExpression invocation = stmt.Expression as InvocationExpression;
+			var invocation = stmt.Expression as InvocationExpression;
 			if (invocation == null)
 				return;
-			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
+			var mre = invocation.Target as MemberReferenceExpression;
 			if (mre != null && mre.MemberName == ".ctor") {
-				ConstructorInitializer ci = new ConstructorInitializer();
+				var ci = new ConstructorInitializer();
 				if (mre.Target is ThisReferenceExpression)
 					ci.ConstructorInitializerType = ConstructorInitializerType.This;
 				else if (mre.Target is BaseReferenceExpression)
@@ -124,24 +124,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
 				do {
-					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
+					var m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
 					
-					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
+					var fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
 					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
-					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
+					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
 					// Cannot transform if member is not found or if it is a custom event.
 					if (fieldOrPropertyOrEventDecl == null || fieldOrPropertyOrEventDecl is CustomEventDeclaration)
 						break;
-					Expression initializer = m.Get<Expression>("initializer").Single();
+					var initializer = m.Get<Expression>("initializer").Single();
 					// 'this'/'base' cannot be used in initializers
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 					
 					allSame = true;
-					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
+					for (var i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
 						if (!instanceCtorsNotChainingWithThis[0].Body.First().IsMatch(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault()))
 							allSame = false;
 					}
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (contextTypeDefinition == null) return;
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			if (instanceCtors.Length == 1 && (members.Skip(1).Any() || instanceCtors[0].Parent is TypeDeclaration)) {
-				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
+				var emptyCtor = new ConstructorDeclaration();
 				emptyCtor.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
 				emptyCtor.Body = new BlockStatement();
 				if (emptyCtor.IsMatch(instanceCtors[0]))
@@ -176,20 +176,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
-				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
-				MethodDefinition ctorMethodDef = context.TypeSystem.GetCecil(ctorMethod) as MethodDefinition;
+				var ctorMethod = staticCtor.GetSymbol() as IMethod;
+				var ctorMethodDef = context.TypeSystem.GetCecil(ctorMethod) as MethodDefinition;
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsBeforeFieldInit) {
 					while (true) {
-						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
+						var es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
 						if (es == null)
 							break;
-						AssignmentExpression assignment = es.Expression as AssignmentExpression;
+						var assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
-						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
+						var fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
 						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
 							break;
-						AstNode fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
+						var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
 						if (fieldOrPropertyDecl == null)
 							break;
 						if (fieldOrPropertyDecl is FieldDeclaration fd)

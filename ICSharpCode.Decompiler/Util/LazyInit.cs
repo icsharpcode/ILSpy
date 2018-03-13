@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public static T GetOrSet<T>(ref T target, T newValue) where T : class
 		{
-			T oldValue = Interlocked.CompareExchange(ref target, newValue, null);
+			var oldValue = Interlocked.CompareExchange(ref target, newValue, null);
 			return oldValue ?? newValue;
 		}
 	}

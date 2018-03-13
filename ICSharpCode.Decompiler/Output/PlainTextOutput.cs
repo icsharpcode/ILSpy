@@ -33,9 +33,7 @@ namespace ICSharpCode.Decompiler
 		
 		public PlainTextOutput(TextWriter writer)
 		{
-			if (writer == null)
-				throw new ArgumentNullException(nameof(writer));
-			this.writer = writer;
+			this.writer = writer ?? throw new ArgumentNullException(nameof(writer));
 		}
 		
 		public PlainTextOutput()
@@ -43,12 +41,8 @@ namespace ICSharpCode.Decompiler
 			this.writer = new StringWriter();
 		}
 		
-		public TextLocation Location {
-			get {
-				return new TextLocation(line, column + (needsIndent ? indent : 0));
-			}
-		}
-		
+		public TextLocation Location => new TextLocation(line, column + (needsIndent ? indent : 0));
+
 		public override string ToString()
 		{
 			return writer.ToString();
@@ -68,7 +62,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (needsIndent) {
 				needsIndent = false;
-				for (int i = 0; i < indent; i++) {
+				for (var i = 0; i < indent; i++) {
 					writer.Write('\t');
 				}
 				column += indent;

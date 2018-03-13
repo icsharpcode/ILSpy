@@ -62,9 +62,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			
 			public uint this[string name] {
-				get {
-					return 0u;
-				}
+				get => 0u;
 				set {
 				}
 			}
@@ -503,7 +501,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void Issue882()
 		{
-			Item item = CompoundAssignmentTest.GetItem(null);
+			var item = CompoundAssignmentTest.GetItem(null);
 			item.Self = item;
 		}
 
@@ -522,7 +520,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private void Issue1007(TimeSpan[] items, int startIndex, TimeSpan item)
 		{
-			int num = startIndex;
+			var num = startIndex;
 			items[num++] = item;
 			items[num++] = item;
 		}

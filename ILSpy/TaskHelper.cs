@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static Task<T> FromResult<T>(T result)
 		{
-			TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
+			var tcs = new TaskCompletionSource<T>();
 			tcs.SetResult(result);
 			return tcs.Task;
 		}
@@ -194,7 +194,7 @@ namespace ICSharpCode.ILSpy
 		public static void HandleExceptions(this Task task)
 		{
 			task.Catch<Exception>(exception => MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				var output = new AvalonEditTextOutput();
 				output.Write(exception.ToString());
 				MainWindow.Instance.TextView.ShowText(output);
 			}))).IgnoreExceptions();

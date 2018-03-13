@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler
 		#region GetPushDelta / GetPopDelta
 		public static int GetPushDelta(this Instruction instruction)
 		{
-			OpCode code = instruction.OpCode;
+			var code = instruction.OpCode;
 			switch (code.StackBehaviourPush) {
 				case StackBehaviour.Push0:
 					return 0;
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler
 					if (code.FlowControl != FlowControl.Call)
 						break;
 
-					IMethodSignature method = (IMethodSignature) instruction.Operand;
+					var method = (IMethodSignature) instruction.Operand;
 					return IsVoid (method.ReturnType) ? 0 : 1;
 			}
 
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler
 		
 		public static int? GetPopDelta(this Instruction instruction, MethodDefinition methodDef)
 		{
-			OpCode code = instruction.OpCode;
+			var code = instruction.OpCode;
 			switch (code.StackBehaviourPop) {
 				case StackBehaviour.Pop0:
 					return 0;
@@ -100,8 +100,8 @@ namespace ICSharpCode.Decompiler
 					if (code.FlowControl != FlowControl.Call)
 						break;
 
-					IMethodSignature method = (IMethodSignature) instruction.Operand;
-					int count = method.HasParameters ? method.Parameters.Count : 0;
+					var method = (IMethodSignature) instruction.Operand;
+					var count = method.HasParameters ? method.Parameters.Count : 0;
 					if (method.HasThis && code != OpCodes.Newobj)
 						++count;
 					if (code == OpCodes.Calli)
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler
 		
 		public static HashSet<MethodDefinition> GetAccessorMethods(this TypeDefinition type)
 		{
-			HashSet<MethodDefinition> accessorMethods = new HashSet<MethodDefinition>();
+			var accessorMethods = new HashSet<MethodDefinition>();
 			foreach (var property in type.Properties) {
 				accessorMethods.Add(property.GetMethod);
 				accessorMethods.Add(property.SetMethod);
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler
 						accessorMethods.Add(m);
 				}
 			}
-			foreach (EventDefinition ev in type.Events) {
+			foreach (var ev in type.Events) {
 				accessorMethods.Add(ev.AddMethod);
 				accessorMethods.Add(ev.RemoveMethod);
 				accessorMethods.Add(ev.InvokeMethod);
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler
 		public static bool IsCompilerGenerated(this ICustomAttributeProvider provider)
 		{
 			if (provider != null && provider.HasCustomAttributes) {
-				foreach (CustomAttribute a in provider.CustomAttributes) {
+				foreach (var a in provider.CustomAttributes) {
 					if (a.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
 						return true;
 				}
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler
 
 			var fields = type.Fields;
 
-			for (int i = 0; i < fields.Count; i++)
+			for (var i = 0; i < fields.Count; i++)
 			{
 				var field = fields[i];
 				if (!field.IsStatic)
@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler
 			if (type == null)
 				return false;
 			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
-				TypeDefinition td = type.Resolve();
+				var td = type.Resolve();
 				return td != null && td.IsCompilerGenerated();
 			}
 			return false;
@@ -274,17 +274,17 @@ namespace ICSharpCode.Decompiler
 		
 		public static bool ContainsAnonymousType(this TypeReference type)
 		{
-			GenericInstanceType git = type as GenericInstanceType;
+			var git = type as GenericInstanceType;
 			if (git != null) {
 				if (IsAnonymousType(git))
 					return true;
-				for (int i = 0; i < git.GenericArguments.Count; i++) {
+				for (var i = 0; i < git.GenericArguments.Count; i++) {
 					if (git.GenericArguments[i].ContainsAnonymousType())
 						return true;
 				}
 				return false;
 			}
-			TypeSpecification typeSpec = type as TypeSpecification;
+			var typeSpec = type as TypeSpecification;
 			if (typeSpec != null)
 				return typeSpec.ElementType.ContainsAnonymousType();
 			else
@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler
 		public static string GetDefaultMemberName(this TypeDefinition type, out CustomAttribute defaultMemberAttribute)
 		{
 			if (type.HasCustomAttributes)
-				foreach (CustomAttribute ca in type.CustomAttributes)
+				foreach (var ca in type.CustomAttributes)
 					if (ca.Constructor.DeclaringType.Name == "DefaultMemberAttribute" && ca.Constructor.DeclaringType.Namespace == "System.Reflection"
 						&& ca.Constructor.FullName == @"System.Void System.Reflection.DefaultMemberAttribute::.ctor(System.String)") {
 						defaultMemberAttribute = ca;
@@ -321,12 +321,12 @@ namespace ICSharpCode.Decompiler
 			defaultMemberAttribute = null;
 			if (property.HasParameters) {
 				var accessor = property.GetMethod ?? property.SetMethod;
-				PropertyDefinition basePropDef = property;
+				var basePropDef = property;
 				if (accessor.HasOverrides) {
 					// if the property is explicitly implementing an interface, look up the property in the interface:
-					MethodDefinition baseAccessor = accessor.Overrides.First().Resolve();
+					var baseAccessor = accessor.Overrides.First().Resolve();
 					if (baseAccessor != null) {
-						foreach (PropertyDefinition baseProp in baseAccessor.DeclaringType.Properties) {
+						foreach (var baseProp in baseAccessor.DeclaringType.Properties) {
 							if (baseProp.GetMethod == baseAccessor || baseProp.SetMethod == baseAccessor) {
 								basePropDef = baseProp;
 								break;

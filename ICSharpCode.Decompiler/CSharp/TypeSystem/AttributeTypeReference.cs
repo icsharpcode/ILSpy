@@ -32,18 +32,14 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public AttributeTypeReference(ITypeReference withoutSuffix, ITypeReference withSuffix)
 		{
-			if (withoutSuffix == null)
-				throw new ArgumentNullException("withoutSuffix");
-			if (withSuffix == null)
-				throw new ArgumentNullException("withSuffix");
-			this.withoutSuffix = withoutSuffix;
-			this.withSuffix = withSuffix;
+			this.withoutSuffix = withoutSuffix ?? throw new ArgumentNullException("withoutSuffix");
+			this.withSuffix = withSuffix ?? throw new ArgumentNullException("withSuffix");
 		}
 		
 		public IType Resolve(ITypeResolveContext context)
 		{
-			IType t1 = withoutSuffix.Resolve(context);
-			IType t2 = withSuffix.Resolve(context);
+			var t1 = withoutSuffix.Resolve(context);
+			var t2 = withSuffix.Resolve(context);
 			return PreferAttributeTypeWithSuffix(t1, t2, context.Compilation) ? t2 : t1;
 		}
 		
@@ -54,8 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			var attrTypeDef = compilation.FindType(KnownTypeCode.Attribute).GetDefinition();
 			if (attrTypeDef != null) {
-				bool t1IsAttribute = (t1.GetDefinition() != null && t1.GetDefinition().IsDerivedFrom(attrTypeDef));
-				bool t2IsAttribute = (t2.GetDefinition() != null && t2.GetDefinition().IsDerivedFrom(attrTypeDef));
+				var t1IsAttribute = (t1.GetDefinition() != null && t1.GetDefinition().IsDerivedFrom(attrTypeDef));
+				var t2IsAttribute = (t2.GetDefinition() != null && t2.GetDefinition().IsDerivedFrom(attrTypeDef));
 				if (t2IsAttribute && !t1IsAttribute)
 					return true;
 				// If both types exist and are attributes, C# considers that to be an ambiguity, but we are less strict.
@@ -77,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			AttributeTypeReference atr = other as AttributeTypeReference;
+			var atr = other as AttributeTypeReference;
 			return atr != null && this.withoutSuffix == atr.withoutSuffix && this.withSuffix == atr.withSuffix;
 		}
 	}

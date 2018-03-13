@@ -16,12 +16,6 @@ namespace ICSharpCode.TreeView
 
 		public static ResourceKey ItemContainerStyleKey { get; private set; }
 
-		protected override object ItemContainerDefaultStyleKey
-		{
-			get
-			{
-				return ItemContainerStyleKey;
-			}
-		}
+		protected override object ItemContainerDefaultStyleKey => ItemContainerStyleKey;
 	}
 }

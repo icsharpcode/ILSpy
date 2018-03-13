@@ -10,12 +10,12 @@
 
 		private void Test(string text, C c)
 		{
-			string name = c.Name;
+			var name = c.Name;
 		}
 
 		private void Test2(string text, C c)
 		{
-			string text2 = c.Text;
+			var text2 = c.Text;
 		}
 	}
 }

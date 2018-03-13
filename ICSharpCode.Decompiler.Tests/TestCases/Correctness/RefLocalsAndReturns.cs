@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static ref int FindNumber(int target)
 		{
-			for (int ctr = 0; ctr < numbers.Length; ctr++) {
+			for (var ctr = 0; ctr < numbers.Length; ctr++) {
 				if (numbers[ctr] >= target)
 					return ref numbers[ctr];
 			}

@@ -50,8 +50,8 @@ namespace ICSharpCode.ILSpy
 		public override void Fail(string message, string detailMessage)
 		{
 			base.Fail(message, detailMessage); // let base class write the assert to the debug console
-			string topFrame = "";
-			string stackTrace = "";
+			var topFrame = "";
+			var stackTrace = "";
 			try {
 				stackTrace = new StackTrace(true).ToString();
 				var frames = stackTrace.Split('\r', '\n')
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy
 			// we're on the UI thread but dispatcher processing is disabled.
 			// In any case, we don't want to pump messages while the dialog is displaying,
 			// so we create a separate UI thread for the dialog:
-			int result = 0;
+			var result = 0;
 			var thread = new Thread(() => result = ShowAssertionDialog(message, detailMessage, stackTrace));
 			thread.SetApartmentState(ApartmentState.STA);
 			thread.Start();
@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy
 		{
 			message = message + Environment.NewLine + detailMessage + Environment.NewLine + stackTrace;
 			string[] buttonTexts = { "Throw", "Debug", "Ignore", "Ignore All" };
-			CustomDialog inputBox = new CustomDialog("Assertion Failed", message.TakeStartEllipsis(750), -1, 2, buttonTexts);
+			var inputBox = new CustomDialog("Assertion Failed", message.TakeStartEllipsis(750), -1, 2, buttonTexts);
 			inputBox.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			inputBox.ShowInTaskbar = true; // make this window more visible, because it effectively interrupts the decompilation process.
 			try {

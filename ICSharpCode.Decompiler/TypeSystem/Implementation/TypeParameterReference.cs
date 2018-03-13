@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static TypeParameterReference Create(SymbolKind ownerType, int index)
 		{
 			if (index >= 0 && index < 8 && (ownerType == SymbolKind.TypeDefinition || ownerType == SymbolKind.Method)) {
-				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition) ? classTypeParameterReferences : methodTypeParameterReferences;
-				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]);
+				var arr = (ownerType == SymbolKind.TypeDefinition) ? classTypeParameterReferences : methodTypeParameterReferences;
+				var result = LazyInit.VolatileRead(ref arr[index]);
 				if (result == null) {
 					result = LazyInit.GetOrSet(ref arr[index], new TypeParameterReference(ownerType, index));
 				}
@@ -47,34 +47,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		readonly SymbolKind ownerType;
-		readonly int index;
 
-		public int Index {
-			get {
-				return index;
-			}
-		}
+		public int Index { get; }
 
 		public TypeParameterReference(SymbolKind ownerType, int index)
 		{
 			this.ownerType = ownerType;
-			this.index = index;
+			this.Index = index;
 		}
 		
 		public IType Resolve(ITypeResolveContext context)
 		{
 			if (ownerType == SymbolKind.Method) {
-				IMethod method = context.CurrentMember as IMethod;
-				if (method != null && index < method.TypeParameters.Count) {
-					return method.TypeParameters[index];
+				var method = context.CurrentMember as IMethod;
+				if (method != null && Index < method.TypeParameters.Count) {
+					return method.TypeParameters[Index];
 				}
-				return DummyTypeParameter.GetMethodTypeParameter(index);
+				return DummyTypeParameter.GetMethodTypeParameter(Index);
 			} else if (ownerType == SymbolKind.TypeDefinition) {
-				ITypeDefinition typeDef = context.CurrentTypeDefinition;
-				if (typeDef != null && index < typeDef.TypeParameters.Count) {
-					return typeDef.TypeParameters[index];
+				var typeDef = context.CurrentTypeDefinition;
+				if (typeDef != null && Index < typeDef.TypeParameters.Count) {
+					return typeDef.TypeParameters[Index];
 				}
-				return DummyTypeParameter.GetClassTypeParameter(index);
+				return DummyTypeParameter.GetClassTypeParameter(Index);
 			} else {
 				return SpecialType.UnknownType;
 			}
@@ -88,9 +83,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ToString()
 		{
 			if (ownerType == SymbolKind.Method)
-				return "!!" + index.ToString(CultureInfo.InvariantCulture);
+				return "!!" + Index.ToString(CultureInfo.InvariantCulture);
 			else
-				return "!" + index.ToString(CultureInfo.InvariantCulture);
+				return "!" + Index.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 }

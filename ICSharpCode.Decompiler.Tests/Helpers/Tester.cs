@@ -65,9 +65,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
-			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
-			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
-			string otherOptions = " ";
+			var ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
+			var outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
+			var otherOptions = " ";
 			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
 				outputFile += ".32";
 				otherOptions += "/32BitPreferred ";
@@ -85,13 +85,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				otherOptions += "/debug ";
 			}
 			
-			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
+			var info = new ProcessStartInfo(ilasmPath);
 			info.Arguments = $"/nologo {otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
 
-			Process process = Process.Start(info);
+			var process = Process.Start(info);
 
 			var outputTask = process.StandardOutput.ReadToEndAsync();
 			var errorTask = process.StandardError.ReadToEndAsync();
@@ -109,11 +109,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
-				using (ModuleDefinition module = ModuleDefinition.ReadModule(sourceFileName))
+				using (var module = ModuleDefinition.ReadModule(sourceFileName))
 				using (var writer = new StreamWriter(outputFile)) {
 					module.Name = Path.GetFileNameWithoutExtension(outputFile);
 					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
+					var rd = new ReflectionDisassembler(output, CancellationToken.None);
 					rd.DetectControlStructure = false;
 					rd.WriteAssemblyReferences(module);
 					if (module.Assembly != null)
@@ -126,15 +126,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return outputFile;
 			}
 
-			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
+			var ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
 			
-			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
+			var info = new ProcessStartInfo(ildasmPath);
 			info.Arguments = $"/out=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
 
-			Process process = Process.Start(info);
+			var process = Process.Start(info);
 
 			var outputTask = process.StandardOutput.ReadToEndAsync();
 			var errorTask = process.StandardError.ReadToEndAsync();
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
-			string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+			var refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5");
 			return new[]
 			{
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static CompilerResults CompileCSharp(string sourceFileName, CSharpCompilerOptions flags = CSharpCompilerOptions.UseDebug, string outputFileName = null)
 		{
-			List<string> sourceFileNames = new List<string> { sourceFileName };
+			var sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
@@ -205,11 +205,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					allowUnsafe: true,
 					deterministic: true
 				));
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				var results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				var emitResult = compilation.Emit(results.PathToAssembly);
 				if (!emitResult.Success) {
-					StringBuilder b = new StringBuilder("Compiler error:");
+					var b = new StringBuilder("Compiler error:");
 					foreach (var diag in emitResult.Diagnostics) {
 						b.AppendLine(diag.ToString());
 					}
@@ -217,15 +217,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				return results;
 			} else if (flags.HasFlag(CSharpCompilerOptions.UseMcs)) {
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				var results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				string testBasePath = RoundtripAssembly.TestDir;
+				var testBasePath = RoundtripAssembly.TestDir;
 				if (!Directory.Exists(testBasePath)) {
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
-				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
-				string otherOptions = " -unsafe -o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+ " : "- ");
+				var mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
+				var otherOptions = " -unsafe -o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+ " : "- ");
 
 				if (flags.HasFlag(CSharpCompilerOptions.Library)) {
 					otherOptions += "-t:library ";
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
-				ProcessStartInfo info = new ProcessStartInfo(mcsPath);
+				var info = new ProcessStartInfo(mcsPath);
 				info.Arguments = $"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
 				info.RedirectStandardError = true;
 				info.RedirectStandardOutput = true;
@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 
-				Process process = Process.Start(info);
+				var process = Process.Start(info);
 
 				var outputTask = process.StandardOutput.ReadToEndAsync();
 				var errorTask = process.StandardError.ReadToEndAsync();
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return results;
 			} else {
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
-				CompilerParameters options = new CompilerParameters();
+				var options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CSharpCompilerOptions.Library);
 				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.UseDebug) ? " /debug" : "");
@@ -283,9 +283,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
-				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
+				var results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
-					StringBuilder b = new StringBuilder("Compiler error:");
+					var b = new StringBuilder("Compiler error:");
 					foreach (var error in results.Errors) {
 						b.AppendLine(error.ToString());
 					}
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static string GetSuffix(CSharpCompilerOptions cscOptions)
 		{
-			string suffix = "";
+			var suffix = "";
 			if ((cscOptions & CSharpCompilerOptions.Optimize) != 0)
 				suffix += ".opt";
 			if ((cscOptions & CSharpCompilerOptions.Force32Bit) != 0)
@@ -340,12 +340,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static int Run(string assemblyFileName, out string output, out string error)
 		{
-			ProcessStartInfo info = new ProcessStartInfo(assemblyFileName);
+			var info = new ProcessStartInfo(assemblyFileName);
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
 
-			Process process = Process.Start(info);
+			var process = Process.Start(info);
 
 			var outputTask = process.StandardOutput.ReadToEndAsync();
 			var errorTask = process.StandardError.ReadToEndAsync();
@@ -363,17 +363,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+				var decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 
-				StringWriter output = new StringWriter();
+				var output = new StringWriter();
 				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
 				syntaxTree.AcceptVisitor(visitor);
 
-				string fileName = Path.GetTempFileName();
+				var fileName = Path.GetTempFileName();
 				File.WriteAllText(fileName, output.ToString());
 
 				return fileName;
@@ -383,14 +383,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)
 		{
 			string output1, output2, error1, error2;
-			int result1 = Tester.Run(outputFile, out output1, out error1);
-			int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
+			var result1 = Tester.Run(outputFile, out output1, out error1);
+			var result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
 			
 			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
 			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
 			
 			if (output1 != output2 || error1 != error2) {
-				StringBuilder b = new StringBuilder();
+				var b = new StringBuilder();
 				b.AppendLine($"Test {testFileName} failed: output does not match.");
 				if (decompiledCodeFile != null) {
 					b.AppendLine($"Decompiled code in {decompiledCodeFile}:line 1");
@@ -405,10 +405,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					b.AppendLine();
 				}
 				if (output1 != output2) {
-					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
+					var outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
 					File.WriteAllText(outputFileName + ".original.out", output1);
 					File.WriteAllText(outputFileName + ".decompiled.out", output2);
-					int diffLine = 0;
+					var diffLine = 0;
 					string lastHeader = null;
 					Tuple<string, string> errorItem = null;
 					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create)) {

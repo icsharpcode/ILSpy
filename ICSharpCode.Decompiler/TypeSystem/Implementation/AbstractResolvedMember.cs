@@ -39,23 +39,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.context = parentContext.WithCurrentMember(this);
 		}
 		
-		IMember IMember.MemberDefinition {
-			get { return this; }
-		}
-		
-		public IType ReturnType {
-			get {
-				return this.returnType ?? (this.returnType = unresolved.ReturnType.Resolve(context));
-			}
-		}
-		
-		public IUnresolvedMember UnresolvedMember {
-			get { return unresolved; }
-		}
-		
+		IMember IMember.MemberDefinition => this;
+
+		public IType ReturnType => this.returnType ?? (this.returnType = unresolved.ReturnType.Resolve(context));
+
+		public IUnresolvedMember UnresolvedMember => unresolved;
+
 		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
 			get {
-				IReadOnlyList<IMember> result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
+				var result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
 				if (result != null) {
 					return result;
 				} else {
@@ -67,9 +59,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
 		{
 			if (unresolved.IsExplicitInterfaceImplementation) {
-				List<IMember> result = new List<IMember>();
+				var result = new List<IMember>();
 				foreach (var memberReference in unresolved.ExplicitInterfaceImplementations) {
-					IMember member = memberReference.Resolve(context);
+					var member = memberReference.Resolve(context);
 					if (member != null)
 						result.Add(member);
 				}
@@ -91,25 +83,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public bool IsExplicitInterfaceImplementation {
-			get { return unresolved.IsExplicitInterfaceImplementation; }
-		}
-		
-		public bool IsVirtual {
-			get { return unresolved.IsVirtual; }
-		}
-		
-		public bool IsOverride {
-			get { return unresolved.IsOverride; }
-		}
-		
-		public bool IsOverridable {
-			get { return unresolved.IsOverridable; }
-		}
+		public bool IsExplicitInterfaceImplementation => unresolved.IsExplicitInterfaceImplementation;
 
-		public TypeParameterSubstitution Substitution {
-			get { return TypeParameterSubstitution.Identity; }
-		}
+		public bool IsVirtual => unresolved.IsVirtual;
+
+		public bool IsOverride => unresolved.IsOverride;
+
+		public bool IsOverridable => unresolved.IsOverridable;
+
+		public TypeParameterSubstitution Substitution => TypeParameterSubstitution.Identity;
 
 		public abstract IMember Specialize(TypeParameterSubstitution substitution);
 		
@@ -133,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (unresolvedAccessor == null)
 				return null;
-			IMethod result = LazyInit.VolatileRead(ref accessorField);
+			var result = LazyInit.VolatileRead(ref accessorField);
 			if (result != null) {
 				return result;
 			} else {

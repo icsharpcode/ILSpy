@@ -25,29 +25,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class NamedNode : Pattern
 	{
-		readonly string groupName;
-		readonly INode childNode;
-		
-		public string GroupName {
-			get { return groupName; }
-		}
-		
-		public INode ChildNode {
-			get { return childNode; }
-		}
-		
+		public string GroupName { get; }
+
+		public INode ChildNode { get; }
+
 		public NamedNode(string groupName, INode childNode)
 		{
-			if (childNode == null)
-				throw new ArgumentNullException("childNode");
-			this.groupName = groupName;
-			this.childNode = childNode;
+			this.GroupName = groupName;
+			this.ChildNode = childNode ?? throw new ArgumentNullException("childNode");
 		}
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			match.Add(this.groupName, other);
-			return childNode.DoMatch(other, match);
+			match.Add(this.GroupName, other);
+			return ChildNode.DoMatch(other, match);
 		}
 	}
 }

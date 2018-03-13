@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// RefOutput can only be used if RefInput is also used.
 		/// </summary>
-		public bool RefOutput { get => ResultType == StackType.Ref; }
+		public bool RefOutput => ResultType == StackType.Ref;
 
 		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput=false)
 			: base(OpCode.NullableUnwrap, argument)

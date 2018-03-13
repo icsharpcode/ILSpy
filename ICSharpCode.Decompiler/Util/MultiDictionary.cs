@@ -87,22 +87,16 @@ namespace ICSharpCode.Decompiler.Util
 		/// <summary>
 		/// Returns the number of different keys.
 		/// </summary>
-		public int Count {
-			get { return dict.Count; }
-		}
-		
-		public ICollection<TKey> Keys {
-			get { return dict.Keys; }
-		}
-		
+		public int Count => dict.Count;
+
+		public ICollection<TKey> Keys => dict.Keys;
+
 		public IEnumerable<TValue> Values {
 			get { return dict.Values.SelectMany(list => list); }
 		}
 		
-		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] {
-			get { return this[key]; }
-		}
-		
+		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] => this[key];
+
 		bool ILookup<TKey, TValue>.Contains(TKey key)
 		{
 			return dict.ContainsKey(key);
@@ -121,19 +115,16 @@ namespace ICSharpCode.Decompiler.Util
 		
 		sealed class Grouping : IGrouping<TKey, TValue>
 		{
-			readonly TKey key;
 			readonly List<TValue> values;
 			
 			public Grouping(TKey key, List<TValue> values)
 			{
-				this.key = key;
+				this.Key = key;
 				this.values = values;
 			}
 			
-			public TKey Key {
-				get { return key; }
-			}
-			
+			public TKey Key { get; }
+
 			public IEnumerator<TValue> GetEnumerator()
 			{
 				return values.GetEnumerator();

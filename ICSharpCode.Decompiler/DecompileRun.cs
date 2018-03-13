@@ -26,9 +26,9 @@ namespace ICSharpCode.Decompiler
 		{
 			var usingScope = new CSharp.TypeSystem.UsingScope();
 			foreach (var ns in requiredNamespacesSuperset) {
-				string[] parts = ns.Split('.');
+				var parts = ns.Split('.');
 				AstType nsType = new SimpleType(parts[0]);
-				for (int i = 1; i < parts.Length; i++) {
+				for (var i = 1; i < parts.Length; i++) {
 					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 				}
 				var reference = nsType.ToTypeReference(CSharp.Resolver.NameLookupMode.TypeInUsingDeclaration) as CSharp.TypeSystem.TypeOrNamespaceReference;

@@ -28,74 +28,57 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
-		readonly int dimensions;
-		readonly ICompilation compilation;
-		
 		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1) : base(elementType)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
-			this.compilation = compilation;
-			this.dimensions = dimensions;
+			this.Compilation = compilation ?? throw new ArgumentNullException("compilation");
+			this.Dimensions = dimensions;
 			
-			ICompilationProvider p = elementType as ICompilationProvider;
+			var p = elementType as ICompilationProvider;
 			if (p != null && p.Compilation != compilation)
 				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.Array; }
-		}
-		
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
-		
-		public int Dimensions {
-			get { return dimensions; }
-		}
-		
-		public override string NameSuffix {
-			get {
-				return "[" + new string(',', dimensions-1) + "]";
-			}
-		}
-		
-		public override bool? IsReferenceType {
-			get { return true; }
-		}
-		
+		public override TypeKind Kind => TypeKind.Array;
+
+		public ICompilation Compilation { get; }
+
+		public int Dimensions { get; }
+
+		public override string NameSuffix => "[" + new string(',', Dimensions-1) + "]";
+
+		public override bool? IsReferenceType => true;
+
 		public override int GetHashCode()
 		{
-			return unchecked(elementType.GetHashCode() * 71681 + dimensions);
+			return unchecked(elementType.GetHashCode() * 71681 + Dimensions);
 		}
 		
 		public override bool Equals(IType other)
 		{
-			ArrayType a = other as ArrayType;
-			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions;
+			var a = other as ArrayType;
+			return a != null && elementType.Equals(a.elementType) && a.Dimensions == Dimensions;
 		}
 		
 		public override ITypeReference ToTypeReference()
 		{
-			return new ArrayTypeReference(elementType.ToTypeReference(), dimensions);
+			return new ArrayTypeReference(elementType.ToTypeReference(), Dimensions);
 		}
 		
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
-				List<IType> baseTypes = new List<IType>();
-				IType t = compilation.FindType(KnownTypeCode.Array);
+				var baseTypes = new List<IType>();
+				var t = Compilation.FindType(KnownTypeCode.Array);
 				if (t.Kind != TypeKind.Unknown)
 					baseTypes.Add(t);
-				if (dimensions == 1 && elementType.Kind != TypeKind.Pointer) {
+				if (Dimensions == 1 && elementType.Kind != TypeKind.Pointer) {
 					// single-dimensional arrays implement IList<T>
-					ITypeDefinition def = compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
+					var def = Compilation.FindType(KnownTypeCode.IListOfT) as ITypeDefinition;
 					if (def != null)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 					// And in .NET 4.5 they also implement IReadOnlyList<T>
-					def = compilation.FindType(KnownTypeCode.IReadOnlyListOfT) as ITypeDefinition;
+					def = Compilation.FindType(KnownTypeCode.IReadOnlyListOfT) as ITypeDefinition;
 					if (def != null)
 						baseTypes.Add(new ParameterizedType(def, new[] { elementType }));
 				}
@@ -108,7 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 		
 		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
@@ -116,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 		
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
@@ -124,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 		
 		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
@@ -132,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;
 			else
-				return compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
+				return Compilation.FindType(KnownTypeCode.Array).GetProperties(filter, options);
 		}
 		
 		// NestedTypes, Events, Fields: System.Array doesn't have any; so we can use the AbstractType default implementation
@@ -145,57 +128,48 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
-			IType e = elementType.AcceptVisitor(visitor);
+			var e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
 			else
-				return new ArrayType(compilation, e, dimensions);
+				return new ArrayType(Compilation, e, Dimensions);
 		}
 	}
 	
 	[Serializable]
 	public sealed class ArrayTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-		readonly int dimensions;
-		
 		public ArrayTypeReference(ITypeReference elementType, int dimensions = 1)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException("elementType");
 			if (dimensions <= 0)
 				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
-			this.elementType = elementType;
-			this.dimensions = dimensions;
+			this.ElementType = elementType ?? throw new ArgumentNullException("elementType");
+			this.Dimensions = dimensions;
 		}
 		
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
-		
-		public int Dimensions {
-			get { return dimensions; }
-		}
-		
+		public ITypeReference ElementType { get; }
+
+		public int Dimensions { get; }
+
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return new ArrayType(context.Compilation, elementType.Resolve(context), dimensions);
+			return new ArrayType(context.Compilation, ElementType.Resolve(context), Dimensions);
 		}
 		
 		public override string ToString()
 		{
-			return elementType.ToString() + "[" + new string(',', dimensions - 1) + "]";
+			return ElementType.ToString() + "[" + new string(',', Dimensions - 1) + "]";
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ dimensions;
+			return ElementType.GetHashCode() ^ Dimensions;
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ArrayTypeReference o = other as ArrayTypeReference;
-			return o != null && elementType == o.elementType && dimensions == o.dimensions;
+			var o = other as ArrayTypeReference;
+			return o != null && ElementType == o.ElementType && Dimensions == o.Dimensions;
 		}
 	}
 }

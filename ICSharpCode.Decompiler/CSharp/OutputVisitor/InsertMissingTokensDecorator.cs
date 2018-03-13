@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WriteToken(Role role, string token)
 		{
-			CSharpTokenNode t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
+			var t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
 			t.Role = role;
-			EmptyStatement node = nodes.Peek().LastOrDefault() as EmptyStatement;
+			var node = nodes.Peek().LastOrDefault() as EmptyStatement;
 			if (node == null)
 				currentList.Add(t);
 			else {
@@ -73,18 +73,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WriteKeyword(Role role, string keyword)
 		{
-			TextLocation start = locationProvider.Location;
+			var start = locationProvider.Location;
 			CSharpTokenNode t = null;
 			if (role is TokenRole)
 				t = new CSharpTokenNode(start, (TokenRole)role);
 			else if (role == EntityDeclaration.ModifierRole)
 				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
 			else if (keyword == "this") {
-				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
+				var node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
 				if (node != null)
 					node.Location = start;
 			} else if (keyword == "base") {
-				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
+				var node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
 				if (node != null)
 					node.Location = start;
 			}
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WritePrimitiveValue(object value, string literalValue = null)
 		{
-			Expression node = nodes.Peek().LastOrDefault() as Expression;
+			var node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, literalValue);
 			if (node is PrimitiveExpression) {
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WritePrimitiveType(string type)
 		{
-			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
+			var node = nodes.Peek().LastOrDefault() as PrimitiveType;
 			if (node != null)
 				node.SetStartLocation(locationProvider.Location);
 			base.WritePrimitiveType(type);

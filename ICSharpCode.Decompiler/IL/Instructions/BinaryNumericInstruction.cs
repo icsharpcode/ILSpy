@@ -74,8 +74,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsLifted { get; }
 
-		readonly StackType resultType;
-
 		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 			: this(op, left, right, left.ResultType, right.ResultType, checkForOverflow, sign)
 		{
@@ -90,8 +88,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.LeftInputType = leftInputType;
 			this.RightInputType = rightInputType;
 			this.IsLifted = isLifted;
-			this.resultType = ComputeResultType(op, LeftInputType, RightInputType);
-			Debug.Assert(resultType != StackType.Unknown);
+			this.UnderlyingResultType = ComputeResultType(op, LeftInputType, RightInputType);
+			Debug.Assert(UnderlyingResultType != StackType.Unknown);
 		}
 		
 		internal static StackType ComputeResultType(BinaryNumericOperator op, StackType left, StackType right)
@@ -117,11 +115,9 @@ namespace ICSharpCode.Decompiler.IL
 			return StackType.Unknown;
 		}
 		
-		public StackType UnderlyingResultType { get => resultType; }
+		public StackType UnderlyingResultType { get; }
 
-		public sealed override StackType ResultType {
-			get => IsLifted ? StackType.O : resultType;
-		}
+		public sealed override StackType ResultType => IsLifted ? StackType.O : UnderlyingResultType;
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
@@ -190,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(".signed");
 			}
 			output.Write('.');
-			output.Write(resultType.ToString().ToLowerInvariant());
+			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
 			if (IsLifted) {
 				output.Write(".lifted");
 			}

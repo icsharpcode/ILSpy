@@ -11,10 +11,6 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 	
 	public class UnresolvableDependencyPropertyDescriptor : IDependencyPropertyDescriptor
 	{
-		public bool IsAttached {
-			get {
-				return false;
-			}
-		}
+		public bool IsAttached => false;
 	}
 }

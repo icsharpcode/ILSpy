@@ -65,9 +65,7 @@ namespace ICSharpCode.Decompiler.IL
 		VariableKind kind;
 
 		public VariableKind Kind {
-			get {
-				return kind;
-			}
+			get => kind;
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
@@ -79,9 +77,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		IType type;
 		public IType Type {
-			get {
-				return type;
-			}
+			get => type;
 			internal set {
 				if (value.GetStackType() != StackType)
 					throw new ArgumentException($"Expected stack-type: {StackType} may not be changed. Found: {value.GetStackType()}");
@@ -214,7 +210,7 @@ namespace ICSharpCode.Decompiler.IL
 		void RemoveInstruction<T>(List<T> list, int index, T inst) where T : class, IInstructionWithVariableOperand
 		{
 			Debug.Assert(list[index] == inst);
-			int indexToMove = list.Count - 1;
+			var indexToMove = list.Count - 1;
 			list[index] = list[indexToMove];
 			list[index].IndexInVariableInstructionMapping = index;
 			list.RemoveAt(indexToMove);
@@ -233,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// An initial value is counted as a store (adds 1 to StoreCount)
 		/// </remarks>
 		public bool HasInitialValue {
-			get { return hasInitialValue; }
+			get => hasInitialValue;
 			set {
 				if (Kind == VariableKind.Parameter && !value)
 					throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
@@ -241,11 +237,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public bool IsSingleDefinition {
-			get {
-				return StoreCount == 1 && AddressCount == 0;
-			}
-		}
+		public bool IsSingleDefinition => StoreCount == 1 && AddressCount == 0;
 
 		/// <summary>
 		/// The field which was converted to a local variable.
@@ -255,10 +247,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public ILVariable(VariableKind kind, IType type, int index)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 			this.StackType = type.GetStackType();
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
@@ -267,10 +257,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
 		{
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 			this.StackType = stackType;
 			this.Index = index;
 			if (kind == VariableKind.Parameter)

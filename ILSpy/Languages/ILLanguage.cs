@@ -36,14 +36,10 @@ namespace ICSharpCode.ILSpy
 	{
 		protected bool detectControlStructure = true;
 		
-		public override string Name {
-			get { return "IL"; }
-		}
-		
-		public override string FileExtension {
-			get { return ".il"; }
-		}
-		
+		public override string Name => "IL";
+
+		public override string FileExtension => ".il";
+
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
 			return new ReflectionDisassembler(output, options.CancellationToken) {
@@ -67,7 +63,7 @@ namespace ICSharpCode.ILSpy
 		
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
-			ReflectionDisassembler rd = CreateDisassembler(output, options);
+			var rd = CreateDisassembler(output, options);
 			rd.DisassembleProperty(property);
 			if (property.GetMethod != null) {
 				output.WriteLine();
@@ -85,7 +81,7 @@ namespace ICSharpCode.ILSpy
 		
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
-			ReflectionDisassembler rd = CreateDisassembler(output, options);
+			var rd = CreateDisassembler(output, options);
 			rd.DisassembleEvent(ev);
 			if (ev.AddMethod != null) {
 				output.WriteLine();
@@ -135,7 +131,7 @@ namespace ICSharpCode.ILSpy
 		
 		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
-			PlainTextOutput output = new PlainTextOutput();
+			var output = new PlainTextOutput();
 			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}

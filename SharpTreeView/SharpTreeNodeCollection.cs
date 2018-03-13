@@ -53,9 +53,7 @@ namespace ICSharpCode.TreeView
 		}
 		
 		public SharpTreeNode this[int index] {
-			get {
-				return list[index];
-			}
+			get => list[index];
 			set {
 				ThrowOnReentrancy();
 				var oldItem = list[index];
@@ -67,14 +65,10 @@ namespace ICSharpCode.TreeView
 			}
 		}
 		
-		public int Count {
-			get { return list.Count; }
-		}
-		
-		bool ICollection<SharpTreeNode>.IsReadOnly {
-			get { return false; }
-		}
-		
+		public int Count => list.Count;
+
+		bool ICollection<SharpTreeNode>.IsReadOnly => false;
+
 		public int IndexOf(SharpTreeNode node)
 		{
 			if (node == null || node.modelParent != parent)
@@ -96,10 +90,10 @@ namespace ICSharpCode.TreeView
 			if (nodes == null)
 				throw new ArgumentNullException("nodes");
 			ThrowOnReentrancy();
-			List<SharpTreeNode> newNodes = nodes.ToList();
+			var newNodes = nodes.ToList();
 			if (newNodes.Count == 0)
 				return;
-			foreach (SharpTreeNode node in newNodes) {
+			foreach (var node in newNodes) {
 				ThrowIfValueIsNullOrHasParent(node);
 			}
 			list.InsertRange(index, newNodes);
@@ -157,7 +151,7 @@ namespace ICSharpCode.TreeView
 		
 		public bool Remove(SharpTreeNode item)
 		{
-			int pos = IndexOf(item);
+			var pos = IndexOf(item);
 			if (pos >= 0) {
 				RemoveAt(pos);
 				return true;
@@ -181,8 +175,8 @@ namespace ICSharpCode.TreeView
 			if (match == null)
 				throw new ArgumentNullException("match");
 			ThrowOnReentrancy();
-			int firstToRemove = 0;
-			for (int i = 0; i < list.Count; i++) {
+			var firstToRemove = 0;
+			for (var i = 0; i < list.Count; i++) {
 				bool removeNode;
 				isRaisingEvent = true;
 				try {

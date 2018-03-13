@@ -57,20 +57,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public AwaitResolveResult(IType resultType, ResolveResult getAwaiterInvocation, IType awaiterType, IProperty isCompletedProperty, IMethod onCompletedMethod, IMethod getResultMethod)
 			: base(resultType)
 		{
-			if (awaiterType == null)
-				throw new ArgumentNullException("awaiterType");
-			if (getAwaiterInvocation == null)
-				throw new ArgumentNullException("getAwaiterInvocation");
-			this.GetAwaiterInvocation = getAwaiterInvocation;
-			this.AwaiterType = awaiterType;
+			this.GetAwaiterInvocation = getAwaiterInvocation ?? throw new ArgumentNullException("getAwaiterInvocation");
+			this.AwaiterType = awaiterType ?? throw new ArgumentNullException("awaiterType");
 			this.IsCompletedProperty = isCompletedProperty;
 			this.OnCompletedMethod = onCompletedMethod;
 			this.GetResultMethod = getResultMethod;
 		}
 		
-		public override bool IsError {
-			get { return this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null)); }
-		}
+		public override bool IsError => this.GetAwaiterInvocation.IsError || (AwaiterType.Kind != TypeKind.Dynamic && (this.IsCompletedProperty == null || this.OnCompletedMethod == null || this.GetResultMethod == null));
 
 		public override IEnumerable<ResolveResult> GetChildResults() {
 			return new[] { GetAwaiterInvocation };

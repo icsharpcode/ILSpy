@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (MatchLdcI8(out val))
 				return true;
-			if (MatchLdcI4(out int intVal)) {
+			if (MatchLdcI4(out var intVal)) {
 				val = intVal;
 				return true;
 			}
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchLdcI(long val)
 		{
-			return MatchLdcI(out long v) && v == val;
+			return MatchLdcI(out var v) && v == val;
 		}
 
 		public bool MatchLdLoc(ILVariable variable)
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL
 				// Swap trueInst<>falseInst for every logic.not in the condition.
 				while (condition.MatchLogicNot(out var arg)) {
 					condition = arg;
-					ILInstruction tmp = trueInst;
+					var tmp = trueInst;
 					trueInst = falseInst;
 					falseInst = tmp;
 				}

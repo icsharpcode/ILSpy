@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 			if (pattern == null)
 				throw new ArgumentNullException("pattern");
-			Match match = PatternMatching.Match.CreateNew();
+			var match = PatternMatching.Match.CreateNew();
 			if (pattern.DoMatch(other, match))
 				return match;
 			else

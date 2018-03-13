@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		public override bool DoMatch(INode other, Match match)
 		{
 			var checkPoint = match.CheckPoint();
-			foreach (INode alt in alternatives) {
+			foreach (var alt in alternatives) {
 				if (alt.DoMatch(other, match))
 					return true;
 				else

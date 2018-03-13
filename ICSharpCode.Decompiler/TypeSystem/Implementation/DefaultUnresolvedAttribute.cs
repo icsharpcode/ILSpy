@@ -29,7 +29,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class DefaultUnresolvedAttribute : AbstractFreezable, IUnresolvedAttribute, IFreezable, ISupportsInterning
 	{
-		ITypeReference attributeType;
 		DomRegion region;
 		IList<ITypeReference> constructorParameterTypes;
 		IList<IConstantValue> positionalArguments;
@@ -37,16 +36,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public DefaultUnresolvedAttribute(ITypeReference attributeType)
 		{
-			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
-			this.attributeType = attributeType;
+			this.AttributeType = attributeType ?? throw new ArgumentNullException("attributeType");
 		}
 		
 		public DefaultUnresolvedAttribute(ITypeReference attributeType, IEnumerable<ITypeReference> constructorParameterTypes)
 		{
-			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
-			this.attributeType = attributeType;
+			this.AttributeType = attributeType ?? throw new ArgumentNullException("attributeType");
 			this.ConstructorParameterTypes.AddRange(constructorParameterTypes);
 		}
 		
@@ -62,12 +57,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public ITypeReference AttributeType {
-			get { return attributeType; }
-		}
-		
+		public ITypeReference AttributeType { get; }
+
 		public DomRegion Region {
-			get { return region; }
+			get => region;
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				region = value;
@@ -101,7 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void AddNamedFieldArgument(string fieldName, IConstantValue value)
 		{
 			this.NamedArguments.Add(new KeyValuePair<IMemberReference, IConstantValue>(
-				new DefaultMemberReference(SymbolKind.Field, attributeType, fieldName),
+				new DefaultMemberReference(SymbolKind.Field, AttributeType, fieldName),
 				value
 			));
 		}
@@ -109,7 +102,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void AddNamedPropertyArgument(string propertyName, IConstantValue value)
 		{
 			this.NamedArguments.Add(new KeyValuePair<IMemberReference, IConstantValue>(
-				new DefaultMemberReference(SymbolKind.Property, attributeType, propertyName),
+				new DefaultMemberReference(SymbolKind.Property, AttributeType, propertyName),
 				value
 			));
 		}
@@ -121,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			int hash = attributeType.GetHashCode() ^ constructorParameterTypes.GetHashCode();
+			var hash = AttributeType.GetHashCode() ^ constructorParameterTypes.GetHashCode();
 			unchecked {
 				if (constructorParameterTypes != null) {
 					foreach (var type in constructorParameterTypes) {
@@ -147,8 +140,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultUnresolvedAttribute o = other as DefaultUnresolvedAttribute;
-			return o != null && attributeType == o.attributeType
+			var o = other as DefaultUnresolvedAttribute;
+			return o != null && AttributeType == o.AttributeType
 				&& ListEquals(constructorParameterTypes, o.constructorParameterTypes)
 				&& ListEquals(positionalArguments, o.positionalArguments)
 				&& ListEquals(namedArguments ?? EmptyList<KeyValuePair<IMemberReference, IConstantValue>>.Instance,
@@ -165,7 +158,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return true;
 			if (list1.Count != list2.Count)
 				return false;
-			for (int i = 0; i < list1.Count; i++) {
+			for (var i = 0; i < list1.Count; i++) {
 				if (list1[i] != list2[i])
 					return false;
 			}
@@ -178,7 +171,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return true;
 			if (list1.Count != list2.Count)
 				return false;
-			for (int i = 0; i < list1.Count; i++) {
+			for (var i = 0; i < list1.Count; i++) {
 				var a = list1[i];
 				var b = list2[i];
 				if (!(a.Key == b.Key && a.Value == b.Value))
@@ -191,8 +184,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			readonly DefaultUnresolvedAttribute unresolved;
 			readonly ITypeResolveContext context;
-			readonly IType attributeType;
-			readonly IReadOnlyList<ResolveResult> positionalArguments;
 
 			// cannot use ProjectedList because KeyValuePair is value type
 			IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
@@ -205,18 +196,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.unresolved = unresolved;
 				this.context = context;
 				
-				this.attributeType = unresolved.AttributeType.Resolve(context);
-				this.positionalArguments = unresolved.PositionalArguments.Resolve(context);
+				this.AttributeType = unresolved.AttributeType.Resolve(context);
+				this.PositionalArguments = unresolved.PositionalArguments.Resolve(context);
 			}
 			
-			public IType AttributeType {
-				get { return attributeType; }
-			}
-			
-			public DomRegion Region {
-				get { return unresolved.Region; }
-			}
-			
+			public IType AttributeType { get; }
+
+			public DomRegion Region => unresolved.Region;
+
 			public IMethod Constructor {
 				get {
 					if (!constructorResolved) {
@@ -230,9 +217,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IMethod ResolveConstructor()
 			{
 				var parameterTypes = unresolved.ConstructorParameterTypes.Resolve(context);
-				foreach (var ctor in attributeType.GetConstructors(m => m.Parameters.Count == parameterTypes.Count)) {
-					bool ok = true;
-					for (int i = 0; i < parameterTypes.Count; i++) {
+				foreach (var ctor in AttributeType.GetConstructors(m => m.Parameters.Count == parameterTypes.Count)) {
+					var ok = true;
+					for (var i = 0; i < parameterTypes.Count; i++) {
 						if (!ctor.Parameters[i].Type.Equals(parameterTypes[i])) {
 							ok = false;
 							break;
@@ -244,10 +231,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return null;
 			}
 			
-			public IReadOnlyList<ResolveResult> PositionalArguments {
-				get { return positionalArguments; }
-			}
-			
+			public IReadOnlyList<ResolveResult> PositionalArguments { get; }
+
 			public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
 				get {
 					var namedArgs = LazyInit.VolatileRead(ref this.namedArguments);
@@ -256,9 +241,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					} else {
 						var newNamedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
 						foreach (var pair in unresolved.NamedArguments) {
-							IMember member = pair.Key.Resolve(context);
+							var member = pair.Key.Resolve(context);
 							if (member != null) {
-								ResolveResult val = pair.Value.Resolve(context);
+								var val = pair.Value.Resolve(context);
 								newNamedArgs.Add(new KeyValuePair<IMember, ResolveResult>(member, val));
 							}
 						}
@@ -267,16 +252,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			
-			public ICompilation Compilation {
-				get { return context.Compilation; }
-			}
-			
+			public ICompilation Compilation => context.Compilation;
+
 			public override string ToString()
 			{
-				if (positionalArguments.Count == 0)
-					return "[" + attributeType.ToString() + "]";
+				if (PositionalArguments.Count == 0)
+					return "[" + AttributeType.ToString() + "]";
 				else
-					return "[" + attributeType.ToString() + "(...)]";
+					return "[" + AttributeType.ToString() + "(...)]";
 			}
 		}
 	}

@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".exe", ".dll" };
 			foreach (var directory in directories) {
 				foreach (var extension in extensions) {
-					string file = Path.Combine(directory, name.Name + extension);
+					var file = Path.Combine(directory, name.Name + extension);
 					if (!File.Exists(file))
 						continue;
 					try {
@@ -307,7 +307,7 @@ namespace ICSharpCode.Decompiler
 
 		string GetAssemblyInMonoGac(AssemblyNameReference reference)
 		{
-			for (int i = 0; i < gac_paths.Count; i++) {
+			for (var i = 0; i < gac_paths.Count; i++) {
 				var gac_path = gac_paths[i];
 				var file = GetAssemblyFile(reference, string.Empty, gac_path);
 				if (File.Exists(file))
@@ -322,8 +322,8 @@ namespace ICSharpCode.Decompiler
 			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			var prefixes = new[] { string.Empty, "v4.0_" };
 
-			for (int i = 0; i < gac_paths.Count; i++) {
-				for (int j = 0; j < gacs.Length; j++) {
+			for (var i = 0; i < gac_paths.Count; i++) {
+				for (var j = 0; j < gacs.Length; j++) {
 					var gac = Path.Combine(gac_paths[i], gacs[j]);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
 					if (Directory.Exists(gac) && File.Exists(file))
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler
 				.Append(reference.Version)
 				.Append("__");
 
-			for (int i = 0; i < reference.PublicKeyToken.Length; i++)
+			for (var i = 0; i < reference.PublicKeyToken.Length; i++)
 				gac_folder.Append(reference.PublicKeyToken[i].ToString("x2"));
 
 			return Path.Combine(

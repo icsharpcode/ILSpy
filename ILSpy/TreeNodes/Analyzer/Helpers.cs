@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					// because 'initobj' (or 'call .ctor') expects a managed ref.
 					return FindVariableOfTypeUsageInType(type.DeclaringType, type);
 				} else {
-					MethodDefinition constructor = GetTypeConstructor(type);
+					var constructor = GetTypeConstructor(type);
 					if (constructor == null)
 						return null;
 					return FindMethodUsageInType(type.DeclaringType, constructor);
@@ -97,13 +97,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private static MethodDefinition FindMethodUsageInType(TypeDefinition type, MethodDefinition analyzedMethod)
 		{
-			string name = analyzedMethod.Name;
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
+			var name = analyzedMethod.Name;
+			foreach (var method in type.Methods) {
+				var found = false;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
+				foreach (var instr in method.Body.Instructions) {
+					var mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name &&
 						IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
 						mr.Resolve() == analyzedMethod) {
@@ -122,8 +122,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		
 		private static MethodDefinition FindVariableOfTypeUsageInType(TypeDefinition type, TypeDefinition variableType)
 		{
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
+			foreach (var method in type.Methods) {
+				var found = false;
 				if (!method.HasBody)
 					continue;
 				foreach (var v in method.Body.Variables) {

@@ -30,16 +30,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeExtensionMethodsTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
-				throw new ArgumentNullException(nameof(analyzedType));
-
-			this.analyzedType = analyzedType;
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 		}
 
-		public override object Text
-		{
-			get { return "Extension Methods"; }
-		}
+		public override object Text => "Extension Methods";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -51,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (!HasExtensionAttribute(type))
 				yield break;
-			foreach (MethodDefinition method in type.Methods) {
+			foreach (var method in type.Methods) {
 				if (method.IsStatic && HasExtensionAttribute(method)) {
 					if (method.HasParameters && method.Parameters[0].ParameterType.Resolve() == analyzedType) {
 						var node = new AnalyzedMethodTreeNode(method);
@@ -65,8 +59,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		bool HasExtensionAttribute(ICustomAttributeProvider p)
 		{
 			if (p.HasCustomAttributes) {
-				foreach (CustomAttribute ca in p.CustomAttributes) {
-					TypeReference t = ca.AttributeType;
+				foreach (var ca in p.CustomAttributes) {
+					var t = ca.AttributeType;
 					if (t.Name == "ExtensionAttribute" && t.Namespace == "System.Runtime.CompilerServices")
 						return true;
 				}

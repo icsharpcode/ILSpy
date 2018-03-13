@@ -25,13 +25,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole ThrowKeywordRole = ThrowStatement.ThrowKeywordRole;
 		
-		public CSharpTokenNode ThrowToken {
-			get { return GetChildByRole (ThrowKeywordRole); }
-		}
-		
+		public CSharpTokenNode ThrowToken => GetChildByRole (ThrowKeywordRole);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public ThrowExpression()
@@ -60,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ThrowExpression o = other as ThrowExpression;
+			var o = other as ThrowExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

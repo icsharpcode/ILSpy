@@ -26,9 +26,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class NestedTypeReference : ITypeReference, ISymbolReference, ISupportsInterning
 	{
-		readonly ITypeReference declaringTypeRef;
-		readonly string name;
-		readonly int additionalTypeParameterCount;
 		readonly bool? isReferenceType;
 
 		/// <summary>
@@ -43,39 +40,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </remarks>
 		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount, bool? isReferenceType = null)
 		{
-			if (declaringTypeRef == null)
-				throw new ArgumentNullException("declaringTypeRef");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.declaringTypeRef = declaringTypeRef;
-			this.name = name;
-			this.additionalTypeParameterCount = additionalTypeParameterCount;
+			this.DeclaringTypeReference = declaringTypeRef ?? throw new ArgumentNullException("declaringTypeRef");
+			this.Name = name ?? throw new ArgumentNullException("name");
+			this.AdditionalTypeParameterCount = additionalTypeParameterCount;
 			this.isReferenceType = isReferenceType;
 		}
 		
-		public ITypeReference DeclaringTypeReference {
-			get { return declaringTypeRef; }
-		}
-		
-		public string Name {
-			get { return name; }
-		}
-		
-		public int AdditionalTypeParameterCount {
-			get { return additionalTypeParameterCount; }
-		}
-		
+		public ITypeReference DeclaringTypeReference { get; }
+
+		public string Name { get; }
+
+		public int AdditionalTypeParameterCount { get; }
+
 		public IType Resolve(ITypeResolveContext context)
 		{
-			ITypeDefinition declaringType = declaringTypeRef.Resolve(context) as ITypeDefinition;
+			var declaringType = DeclaringTypeReference.Resolve(context) as ITypeDefinition;
 			if (declaringType != null) {
-				int tpc = declaringType.TypeParameterCount;
+				var tpc = declaringType.TypeParameterCount;
 				foreach (IType type in declaringType.NestedTypes) {
-					if (type.Name == name && type.TypeParameterCount == tpc + additionalTypeParameterCount)
+					if (type.Name == Name && type.TypeParameterCount == tpc + AdditionalTypeParameterCount)
 						return type;
 				}
 			}
-			return new UnknownType(null, name, additionalTypeParameterCount);
+			return new UnknownType(null, Name, AdditionalTypeParameterCount);
 		}
 		
 		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
@@ -88,22 +75,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			if (additionalTypeParameterCount == 0)
-				return declaringTypeRef + "+" + name;
+			if (AdditionalTypeParameterCount == 0)
+				return DeclaringTypeReference + "+" + Name;
 			else
-				return declaringTypeRef + "+" + name + "`" + additionalTypeParameterCount;
+				return DeclaringTypeReference + "+" + Name + "`" + AdditionalTypeParameterCount;
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return declaringTypeRef.GetHashCode() ^ name.GetHashCode() ^ additionalTypeParameterCount;
+			return DeclaringTypeReference.GetHashCode() ^ Name.GetHashCode() ^ AdditionalTypeParameterCount;
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			NestedTypeReference o = other as NestedTypeReference;
-			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name 
-				&& additionalTypeParameterCount == o.additionalTypeParameterCount
+			var o = other as NestedTypeReference;
+			return o != null && DeclaringTypeReference == o.DeclaringTypeReference && Name == o.Name 
+				&& AdditionalTypeParameterCount == o.AdditionalTypeParameterCount
 				&& isReferenceType == o.isReferenceType;
 		}
 	}

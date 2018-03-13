@@ -61,8 +61,8 @@ namespace ICSharpCode.Decompiler
 		{
 			if (exception == null)
 				throw new ArgumentNullException("exception");
-			string exceptionType = GetTypeName(exception);
-			string stacktrace = GetStackTrace(exception);
+			var exceptionType = GetTypeName(exception);
+			var stacktrace = GetStackTrace(exception);
 			while (exception.InnerException != null) {
 				exception = exception.InnerException;
 
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler
 
 		static string GetTypeName(Exception exception)
 		{
-			string type = exception.GetType().FullName;
+			var type = exception.GetType().FullName;
 			if (exception is ExternalException || exception is IOException)
 				return type + " (" + Marshal.GetHRForException(exception).ToString("x8") + ")";
 			else
@@ -89,11 +89,11 @@ namespace ICSharpCode.Decompiler
 		{
 			// Output stacktrace in custom format (very similar to Exception.StackTrace property on English systems).
 			// Include filenames where available, but no paths.
-			StackTrace stackTrace = new StackTrace(exception, true);
-			StringBuilder b = new StringBuilder();
-			for (int i = 0; i < stackTrace.FrameCount; i++) {
-				StackFrame frame = stackTrace.GetFrame(i);
-				MethodBase method = frame.GetMethod();
+			var stackTrace = new StackTrace(exception, true);
+			var b = new StringBuilder();
+			for (var i = 0; i < stackTrace.FrameCount; i++) {
+				var frame = stackTrace.GetFrame(i);
+				var method = frame.GetMethod();
 				if (method == null)
 					continue;
 
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler
 					b.AppendLine();
 
 				b.Append("   at ");
-				Type declaringType = method.DeclaringType;
+				var declaringType = method.DeclaringType;
 				if (declaringType != null) {
 					b.Append(declaringType.FullName.Replace('+', '.'));
 					b.Append('.');
@@ -109,9 +109,9 @@ namespace ICSharpCode.Decompiler
 				b.Append(method.Name);
 				// output type parameters, if any
 				if ((method is MethodInfo) && ((MethodInfo)method).IsGenericMethod) {
-					Type[] genericArguments = ((MethodInfo)method).GetGenericArguments();
+					var genericArguments = ((MethodInfo)method).GetGenericArguments();
 					b.Append('[');
-					for (int j = 0; j < genericArguments.Length; j++) {
+					for (var j = 0; j < genericArguments.Length; j++) {
 						if (j > 0)
 							b.Append(',');
 						b.Append(genericArguments[j].Name);
@@ -121,8 +121,8 @@ namespace ICSharpCode.Decompiler
 
 				// output parameters, if any
 				b.Append('(');
-				ParameterInfo[] parameters = method.GetParameters();
-				for (int j = 0; j < parameters.Length; j++) {
+				var parameters = method.GetParameters();
+				for (var j = 0; j < parameters.Length; j++) {
 					if (j > 0)
 						b.Append(", ");
 					if (parameters[j].ParameterType != null) {
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler
 				if (frame.GetILOffset() >= 0) {
 					string filename = null;
 					try {
-						string fullpath = frame.GetFileName();
+						var fullpath = frame.GetFileName();
 						if (fullpath != null)
 							filename = Path.GetFileName(fullpath);
 					} catch (SecurityException) {

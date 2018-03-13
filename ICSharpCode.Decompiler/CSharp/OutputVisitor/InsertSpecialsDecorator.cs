@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void EndNode(AstNode node)
 		{
 			base.EndNode(node);
-			AstNode pos = positionStack.Pop();
+			var pos = positionStack.Pop();
 			Debug.Assert(pos == null || pos.Parent == node);
 			WriteSpecials(pos, null);
 		}
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		void WriteSpecials(AstNode start, AstNode end)
 		{
-			for (AstNode pos = start; pos != end; pos = pos.NextSibling) {
+			for (var pos = start; pos != end; pos = pos.NextSibling) {
 				if (pos.Role == Roles.Comment) {
 					var node = (Comment)pos;
 					base.StartNode(node);
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return;
 			}
 			// Look for the role between the current position and the nextNode.
-			for (AstNode pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling) {
+			for (var pos = positionStack.Peek(); pos != null && pos != nextNode; pos = pos.NextSibling) {
 				if (pos.Role == role) {
 					WriteSpecials(positionStack.Pop(), pos);
 					// Push the next sibling because the node matching the role is not a special,
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (positionStack.Count == 0) {
 				return;
 			}
-			for (AstNode pos = positionStack.Peek(); pos != null; pos = pos.NextSibling) {
+			for (var pos = positionStack.Peek(); pos != null; pos = pos.NextSibling) {
 				if (pos == node) {
 					WriteSpecials(positionStack.Pop(), pos);
 					// Push the next sibling because the node itself is not a special,

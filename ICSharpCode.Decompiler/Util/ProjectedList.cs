@@ -29,18 +29,14 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public ProjectedList(IList<TInput> input, Func<TInput, TOutput> projection)
 		{
-			if (input == null)
-				throw new ArgumentNullException("input");
-			if (projection == null)
-				throw new ArgumentNullException("projection");
-			this.input = input;
-			this.projection = projection;
+			this.input = input ?? throw new ArgumentNullException("input");
+			this.projection = projection ?? throw new ArgumentNullException("projection");
 			this.items = new TOutput[input.Count];
 		}
 		
 		public TOutput this[int index] {
 			get {
-				TOutput output = LazyInit.VolatileRead(ref items[index]);
+				var output = LazyInit.VolatileRead(ref items[index]);
 				if (output != null) {
 					return output;
 				}
@@ -48,13 +44,11 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 		
-		public int Count {
-			get { return items.Length; }
-		}
-		
+		public int Count => items.Length;
+
 		public IEnumerator<TOutput> GetEnumerator()
 		{
-			for (int i = 0; i < this.Count; i++) {
+			for (var i = 0; i < this.Count; i++) {
 				yield return this[i];
 			}
 		}
@@ -74,19 +68,15 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public ProjectedList(TContext context, IList<TInput> input, Func<TContext, TInput, TOutput> projection)
 		{
-			if (input == null)
-				throw new ArgumentNullException("input");
-			if (projection == null)
-				throw new ArgumentNullException("projection");
-			this.input = input;
+			this.input = input ?? throw new ArgumentNullException("input");
 			this.context = context;
-			this.projection = projection;
+			this.projection = projection ?? throw new ArgumentNullException("projection");
 			this.items = new TOutput[input.Count];
 		}
 		
 		public TOutput this[int index] {
 			get {
-				TOutput output = LazyInit.VolatileRead(ref items[index]);
+				var output = LazyInit.VolatileRead(ref items[index]);
 				if (output != null) {
 					return output;
 				}
@@ -94,13 +84,11 @@ namespace ICSharpCode.Decompiler.Util
 			}
 		}
 		
-		public int Count {
-			get { return items.Length; }
-		}
-		
+		public int Count => items.Length;
+
 		public IEnumerator<TOutput> GetEnumerator()
 		{
-			for (int i = 0; i < this.Count; i++) {
+			for (var i = 0; i < this.Count; i++) {
 				yield return this[i];
 			}
 		}

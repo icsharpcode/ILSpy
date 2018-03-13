@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal static int GetBlobHashCode(byte[] blob)
 		{
 			unchecked {
-				int hash = 0;
-				foreach (byte b in blob) {
+				var hash = 0;
+				foreach (var b in blob) {
 					hash *= 257;
 					hash += b;
 				}
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (a.Length != b.Length)
 				return false;
-			for (int i = 0; i < a.Length; i++) {
+			for (var i = 0; i < a.Length; i++) {
 				if (a[i] != b[i])
 					return false;
 			}
@@ -61,9 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public BlobReader(byte[] buffer, IAssembly currentResolvedAssembly)
 		{
-			if (buffer == null)
-				throw new ArgumentNullException("buffer");
-			this.buffer = buffer;
+			this.buffer = buffer ?? throw new ArgumentNullException("buffer");
 			this.currentResolvedAssembly = currentResolvedAssembly;
 		}
 		
@@ -90,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ushort ReadUInt16()
 		{
 			unchecked {
-				ushort value =(ushort)(buffer[position]
+				var value =(ushort)(buffer[position]
 				                       |(buffer[position + 1] << 8));
 				position += 2;
 				return value;
@@ -107,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public uint ReadUInt32()
 		{
 			unchecked {
-				uint value =(uint)(buffer[position]
+				var value =(uint)(buffer[position]
 				                   |(buffer[position + 1] << 8)
 				                   |(buffer[position + 2] << 16)
 				                   |(buffer[position + 3] << 24));
@@ -126,8 +124,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ulong ReadUInt64()
 		{
 			unchecked {
-				uint low = ReadUInt32();
-				uint high = ReadUInt32();
+				var low = ReadUInt32();
+				var high = ReadUInt32();
 
 				return(((ulong) high) << 32) | low;
 			}
@@ -143,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public uint ReadCompressedUInt32()
 		{
 			unchecked {
-				byte first = ReadByte();
+				var first = ReadByte();
 				if((first & 0x80) == 0)
 					return first;
 
@@ -167,7 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return BitConverter.ToSingle(bytes, 0);
 				}
 
-				float value = BitConverter.ToSingle(buffer, position);
+				var value = BitConverter.ToSingle(buffer, position);
 				position += 4;
 				return value;
 			}
@@ -182,7 +180,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return BitConverter.ToDouble(bytes, 0);
 				}
 
-				double value = BitConverter.ToDouble(buffer, position);
+				var value = BitConverter.ToDouble(buffer, position);
 				position += 8;
 				return value;
 			}
@@ -195,20 +193,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					// Only single-dimensional arrays are supported
 					return ErrorResolveResult.UnknownError;
 				}
-				IType elementType = ((ArrayType)argType).ElementType;
-				uint numElem = ReadUInt32();
+				var elementType = ((ArrayType)argType).ElementType;
+				var numElem = ReadUInt32();
 				if (numElem == 0xffffffff) {
 					// null reference
 					return new ConstantResolveResult(argType, null);
 				} else {
-					ResolveResult[] elements = new ResolveResult[numElem];
-					for (int i = 0; i < elements.Length; i++) {
+					var elements = new ResolveResult[numElem];
+					for (var i = 0; i < elements.Length; i++) {
 						elements[i] = ReadElem(elementType);
 						// Stop decoding when encountering an error:
 						if (elements[i].IsError)
 							return ErrorResolveResult.UnknownError;
 					}
-					IType int32 = currentResolvedAssembly.Compilation.FindType(KnownTypeCode.Int32);
+					var int32 = currentResolvedAssembly.Compilation.FindType(KnownTypeCode.Int32);
 					ResolveResult[] sizeArgs = { new ConstantResolveResult(int32, elements.Length) };
 					return new ArrayCreateResolveResult(argType, sizeArgs, elements);
 				}
@@ -227,11 +225,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			if (underlyingType == null)
 				return ErrorResolveResult.UnknownError;
-			KnownTypeCode typeCode = underlyingType.KnownTypeCode;
+			var typeCode = underlyingType.KnownTypeCode;
 			if (typeCode == KnownTypeCode.Object) {
 				// boxed value type
-				IType boxedTyped = ReadCustomAttributeFieldOrPropType();
-				ResolveResult elem = ReadFixedArg(boxedTyped);
+				var boxedTyped = ReadCustomAttributeFieldOrPropType();
+				var elem = ReadFixedArg(boxedTyped);
 				if (elem.IsCompileTimeConstant && elem.ConstantValue == null)
 					return new ConstantResolveResult(elementType, null);
 				else
@@ -289,11 +287,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return null;
 			}
 
-			int length = (int) ReadCompressedUInt32();
+			var length = (int) ReadCompressedUInt32();
 			if (length == 0)
 				return string.Empty;
 
-			string @string = System.Text.Encoding.UTF8.GetString(
+			var @string = System.Text.Encoding.UTF8.GetString(
 				buffer, position,
 				buffer [position + length - 1] == 0 ? length - 1 : length);
 
@@ -315,12 +313,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				default:
 					throw new NotSupportedException(string.Format("Custom member type 0x{0:x} is not supported.", b));
 			}
-			IType type = ReadCustomAttributeFieldOrPropType();
-			string name = ReadSerString();
-			ResolveResult val = ReadFixedArg(type);
+			var type = ReadCustomAttributeFieldOrPropType();
+			var name = ReadSerString();
+			var val = ReadFixedArg(type);
 			IMember member = null;
 			// Use last matching member, as GetMembers() returns members from base types first.
-			foreach (IMember m in attributeType.GetMembers(m => m.SymbolKind == memberType && m.Name == name)) {
+			foreach (var m in attributeType.GetMembers(m => m.SymbolKind == memberType && m.Name == name)) {
 				if (m.ReturnType.Equals(type))
 					member = m;
 			}
@@ -329,7 +327,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IType ReadCustomAttributeFieldOrPropType()
 		{
-			ICompilation compilation = currentResolvedAssembly.Compilation;
+			var compilation = currentResolvedAssembly.Compilation;
 			var b = ReadByte();
 			switch (b) {
 				case 0x02:
@@ -377,17 +375,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		IType ReadType()
 		{
-			string typeName = ReadSerString();
+			var typeName = ReadSerString();
 			if (typeName == null) {
 				return null;
 			}
-			ITypeReference typeReference = ReflectionHelper.ParseReflectionName(typeName);
-			IType typeInCurrentAssembly = typeReference.Resolve(new SimpleTypeResolveContext(currentResolvedAssembly));
+			var typeReference = ReflectionHelper.ParseReflectionName(typeName);
+			var typeInCurrentAssembly = typeReference.Resolve(new SimpleTypeResolveContext(currentResolvedAssembly));
 			if (typeInCurrentAssembly.Kind != TypeKind.Unknown)
 				return typeInCurrentAssembly;
 			
 			// look for the type in mscorlib
-			ITypeDefinition systemObject = currentResolvedAssembly.Compilation.FindType(KnownTypeCode.Object).GetDefinition();
+			var systemObject = currentResolvedAssembly.Compilation.FindType(KnownTypeCode.Object).GetDefinition();
 			if (systemObject != null) {
 				return typeReference.Resolve(new SimpleTypeResolveContext(systemObject.ParentAssembly));
 			} else {

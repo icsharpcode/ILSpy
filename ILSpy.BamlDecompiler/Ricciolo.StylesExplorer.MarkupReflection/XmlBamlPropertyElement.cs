@@ -7,35 +7,23 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	internal class XmlBamlPropertyElement : XmlBamlElement
 	{
-		private readonly PropertyType _propertyType;
-		private PropertyDeclaration propertyDeclaration;
-		
 		public XmlBamlPropertyElement(PropertyType propertyType, PropertyDeclaration propertyDeclaration)
 		{
-			_propertyType = propertyType;
-			this.propertyDeclaration = propertyDeclaration;
+			PropertyType = propertyType;
+			this.PropertyDeclaration = propertyDeclaration;
 		}
 
 		public XmlBamlPropertyElement(XmlBamlElement parent, PropertyType propertyType, PropertyDeclaration propertyDeclaration)
 			: base(parent)
 		{
-			_propertyType = propertyType;
-			this.propertyDeclaration = propertyDeclaration;
+			PropertyType = propertyType;
+			this.PropertyDeclaration = propertyDeclaration;
 			this.TypeDeclaration = propertyDeclaration.DeclaringType;
 		}
 
-		public PropertyDeclaration PropertyDeclaration
-		{
-			get
-			{
-				return this.propertyDeclaration;
-			}
-		}
+		public PropertyDeclaration PropertyDeclaration { get; }
 
-		public PropertyType PropertyType
-		{
-			get { return _propertyType; }
-		}
+		public PropertyType PropertyType { get; }
 
 		public override string ToString()
 		{

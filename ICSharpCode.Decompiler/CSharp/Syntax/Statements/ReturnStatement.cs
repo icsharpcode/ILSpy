@@ -34,19 +34,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole ReturnKeywordRole = new TokenRole ("return");
 
-		public CSharpTokenNode ReturnToken {
-			get { return GetChildByRole (ReturnKeywordRole); }
-		}
-		
+		public CSharpTokenNode ReturnToken => GetChildByRole (ReturnKeywordRole);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
-		
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
+
 		public ReturnStatement ()
 		{
 		}
@@ -73,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ReturnStatement o = other as ReturnStatement;
+			var o = other as ReturnStatement;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

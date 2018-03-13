@@ -34,22 +34,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole ("new");
 		
-		public CSharpTokenNode NewToken {
-			get { return GetChildByRole (NewKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<Expression> Initializers {
-			get { return GetChildrenByRole (Roles.Expression); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode NewToken => GetChildByRole (NewKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<Expression> Initializers => GetChildrenByRole (Roles.Expression);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public AnonymousTypeCreateExpression ()
 		{
 		}

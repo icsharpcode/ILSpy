@@ -73,12 +73,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets/Sets the interning provider.
 		/// </summary>
 		public InterningProvider InterningProvider {
-			get { return interningProvider; }
-			set {
-				if (value == null)
-					throw new ArgumentNullException();
-				interningProvider = value;
-			}
+			get => interningProvider;
+			set => interningProvider = value ?? throw new ArgumentNullException();
 		}
 		
 		public abstract IUnresolvedAssembly LoadAssemblyFile(string fileName);

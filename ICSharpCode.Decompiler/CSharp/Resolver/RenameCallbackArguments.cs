@@ -31,12 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public RenameCallbackArguments(AstNode nodeToReplace, AstNode newNode)
 		{
-			if (nodeToReplace == null)
-				throw new ArgumentNullException("nodeToReplace");
-			if (newNode == null)
-				throw new ArgumentNullException("newNode");
-			this.NodeToReplace = nodeToReplace;
-			this.NewNode = newNode;
+			this.NodeToReplace = nodeToReplace ?? throw new ArgumentNullException("nodeToReplace");
+			this.NewNode = newNode ?? throw new ArgumentNullException("newNode");
 		}
 	}
 }

@@ -31,17 +31,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		TextLocation location;
 
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
-		
-		public override TextLocation EndLocation {
-			get {
-				return location;
-			}
-		}
+		public override TextLocation StartLocation => location;
+
+		public override TextLocation EndLocation => location;
 
 		public string Error {
 			get;

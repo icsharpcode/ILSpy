@@ -26,8 +26,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class TypeReferenceExpression : Expression
 	{
 		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get => GetChildByRole(Roles.Type);
+			set => SetChildByRole(Roles.Type, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeReferenceExpression o = other as TypeReferenceExpression;
+			var o = other as TypeReferenceExpression;
 			return o != null && this.Type.DoMatch(o.Type, match);
 		}
 	}

@@ -50,9 +50,9 @@ namespace ICSharpCode.Decompiler.Tests
 		protected static void AssertRoundtripCode(string fileName, bool optimize = false, bool useDebug = false, int compilerVersion = 4)
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
-			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
+			var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
 
-			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
+			var decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
 
 			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
@@ -66,17 +66,17 @@ namespace ICSharpCode.Decompiler.Tests
 
 		protected static AssemblyDefinition CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)
 		{
-			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v" + new Version(compilerVersion, 0) } });
-			CompilerParameters options = new CompilerParameters();
+			var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v" + new Version(compilerVersion, 0) } });
+			var options = new CompilerParameters();
 			options.CompilerOptions = "/unsafe /o" + (optimize ? "+" : "-") + (useDebug ? " /debug" : "");
 			if (compilerVersion >= 4)
 				options.ReferencedAssemblies.Add("System.Core.dll");
-			CompilerResults results = provider.CompileAssemblyFromSource(options, code);
+			var results = provider.CompileAssemblyFromSource(options, code);
 			try
 			{
 				if (results.Errors.Cast<CompilerError>().Any((arg) => !arg.IsWarning))
 				{
-					StringBuilder b = new StringBuilder("Compiler error:");
+					var b = new StringBuilder("Compiler error:");
 					foreach (var error in results.Errors)
 					{
 						b.AppendLine(error.ToString());

@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
+			var er = resource as EmbeddedResource;
 			if (er != null && er.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
 				return new ResourcesFileTreeNode(er);
 			}
@@ -62,16 +62,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceResourcesFile; }
-		}
+		public override object Icon => Images.ResourceResourcesFile;
 
 		protected override void LoadChildren()
 		{
-			EmbeddedResource er = this.Resource as EmbeddedResource;
+			var er = this.Resource as EmbeddedResource;
 			if (er != null) {
-				Stream s = er.GetResourceStream();
+				var s = er.GetResourceStream();
 				s.Position = 0;
 				ResourceReader reader;
 				try {
@@ -80,7 +77,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				catch (ArgumentException) {
 					return;
 				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
+				foreach (var entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
 					ProcessResourceEntry(entry);
 				}
 			}
@@ -106,7 +103,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			}
 
-			string entryType = entry.Value.GetType().FullName;
+			var entryType = entry.Value.GetType().FullName;
 			if (entry.Value is System.Globalization.CultureInfo) {
 				otherEntries.Add(new SerializedObjectRepresentation(keyString, entryType, ((System.Globalization.CultureInfo)entry.Value).DisplayName));
 			} else {
@@ -116,13 +113,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool Save(DecompilerTextView textView)
 		{
-			EmbeddedResource er = this.Resource as EmbeddedResource;
+			var er = this.Resource as EmbeddedResource;
 			if (er != null) {
-				SaveFileDialog dlg = new SaveFileDialog();
+				var dlg = new SaveFileDialog();
 				dlg.FileName = DecompilerTextView.CleanUpName(er.Name);
 				dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
 				if (dlg.ShowDialog() == true) {
-					Stream s = er.GetResourceStream();
+					var s = er.GetResourceStream();
 					s.Position = 0;
 					switch (dlg.FilterIndex) {
 						case 1:
@@ -150,7 +147,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			EnsureLazyChildren();
 			base.Decompile(language, output, options);
 			if (stringTableEntries.Count != 0) {
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
+				var smartOutput = output as ISmartTextOutput;
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {
@@ -162,7 +159,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.WriteLine();
 			}
 			if (otherEntries.Count != 0) {
-				ISmartTextOutput smartOutput = output as ISmartTextOutput;
+				var smartOutput = output as ISmartTextOutput;
 				if (null != smartOutput) {
 					smartOutput.AddUIElement(
 						delegate {

@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		void CreateContainerStructure()
 		{
-			List<TryCatch> tryCatchList = new List<TryCatch>();
+			var tryCatchList = new List<TryCatch>();
 			foreach (var eh in body.ExceptionHandlers) {
 				var tryRange = new Interval(eh.TryStart.Offset, eh.TryEnd != null ? eh.TryEnd.Offset : body.CodeSize);
 				var handlerBlock = new BlockContainer();
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in instructions) {
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = inst.ILRange.Start;
+				var start = inst.ILRange.Start;
 				if (currentBlock == null || (incomingBranches[start] && !IsStackAdjustment(inst))) {
 					// Finish up the previous block
 					FinalizeCurrentBlock(start, fallthrough: true);

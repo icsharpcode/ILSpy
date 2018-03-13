@@ -50,11 +50,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			
 			public int Property { get; set; }
 			
-			public virtual int VirtProp {
-				get {
-					return 3;
-				}
-			}
+			public virtual int VirtProp => 3;
 		}
 		
 		class Child1 : Base1
@@ -91,11 +87,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			
 			new public int Property { get; set; }
 			
-			public override int VirtProp {
-				get {
-					return base.VirtProp * 2;
-				}
-			}
+			public override int VirtProp => base.VirtProp * 2;
 		}
 	}
 }

@@ -26,49 +26,36 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public class SpecializingDecompilerTypeSystem : IDecompilerTypeSystem
 	{
-		readonly IDecompilerTypeSystem context;
-		readonly TypeParameterSubstitution substitution;
-		
 		public SpecializingDecompilerTypeSystem(IDecompilerTypeSystem context, TypeParameterSubstitution substitution)
 		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			if (substitution == null)
-				throw new ArgumentNullException(nameof(substitution));
-			this.context = context;
-			this.substitution = substitution;
+			this.Context = context ?? throw new ArgumentNullException(nameof(context));
+			this.Substitution = substitution ?? throw new ArgumentNullException(nameof(substitution));
 		}
 
-		internal IDecompilerTypeSystem Context {
-			get { return context; }
-		}
-		
-		public ICompilation Compilation {
-			get { return context.Compilation; }
-		}
+		internal IDecompilerTypeSystem Context { get; }
 
-		public TypeParameterSubstitution Substitution {
-			get { return substitution; }
-		}
+		public ICompilation Compilation => Context.Compilation;
+
+		public TypeParameterSubstitution Substitution { get; }
 
 		public IType Resolve(Mono.Cecil.TypeReference typeReference)
 		{
-			return context.Resolve(typeReference).AcceptVisitor(substitution);
+			return Context.Resolve(typeReference).AcceptVisitor(Substitution);
 		}
 
 		public IField Resolve(Mono.Cecil.FieldReference fieldReference)
 		{
-			IField field = context.Resolve(fieldReference);
+			var field = Context.Resolve(fieldReference);
 			if (field != null)
-				field = (IField)field.Specialize(substitution);
+				field = (IField)field.Specialize(Substitution);
 			return field;
 		}
 
 		public IMethod Resolve(Mono.Cecil.MethodReference methodReference)
 		{
-			IMethod method = context.Resolve(methodReference);
+			var method = Context.Resolve(methodReference);
 			if (method != null)
-				method = (IMethod)method.Specialize(substitution);
+				method = (IMethod)method.Specialize(Substitution);
 			return method;
 		}
 
@@ -77,17 +64,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			//return context.GetSpecializingTypeSystem(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
 			// Because the input new substitution is taken from IMember.Substitution for some member that
 			// was resolved by this type system, it already contains 'this.substitution'.
-			return context.GetSpecializingTypeSystem(newSubstitution);
+			return Context.GetSpecializingTypeSystem(newSubstitution);
 		}
 
 		public Mono.Cecil.TypeDefinition GetCecil(ITypeDefinition typeDefinition)
 		{
-			return context.GetCecil(typeDefinition);
+			return Context.GetCecil(typeDefinition);
 		}
 
 		public Mono.Cecil.MemberReference GetCecil(IMember member)
 		{
-			return context.GetCecil(member);
+			return Context.GetCecil(member);
 		}
 	}
 }

@@ -30,10 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly ITypeResolveContext parentContext;
 		readonly IUnresolvedTypeDefinition[] parts;
-		Accessibility accessibility = Accessibility.Internal;
-		bool isAbstract, isSealed, isShadowing;
-		bool isSynthetic = true; // true if all parts are synthetic
-		
+
 		public DefaultResolvedTypeDefinition(ITypeResolveContext parentContext, params IUnresolvedTypeDefinition[] parts)
 		{
 			if (parentContext == null || parentContext.CurrentAssembly == null)
@@ -43,15 +40,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.parentContext = parentContext;
 			this.parts = parts;
 			
-			foreach (IUnresolvedTypeDefinition part in parts) {
-				isAbstract  |= part.IsAbstract;
-				isSealed    |= part.IsSealed;
-				isShadowing |= part.IsShadowing;
-				isSynthetic &= part.IsSynthetic; // true if all parts are synthetic
+			foreach (var part in parts) {
+				IsAbstract  |= part.IsAbstract;
+				IsSealed    |= part.IsSealed;
+				IsShadowing |= part.IsShadowing;
+				IsSynthetic &= part.IsSynthetic; // true if all parts are synthetic
 				
 				// internal is the default, so use another part's accessibility until we find a non-internal accessibility
-				if (accessibility == Accessibility.Internal)
-					accessibility = part.Accessibility;
+				if (Accessibility == Accessibility.Internal)
+					Accessibility = part.Accessibility;
 			}
 		}
 
@@ -63,15 +60,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null) {
 					return result;
 				}
-				ITypeResolveContext contextForTypeParameters = parts[0].CreateResolveContext(parentContext);
+				var contextForTypeParameters = parts[0].CreateResolveContext(parentContext);
 				contextForTypeParameters = contextForTypeParameters.WithCurrentTypeDefinition(this);
 				if (parentContext.CurrentTypeDefinition == null || parentContext.CurrentTypeDefinition.TypeParameterCount == 0) {
 					result = parts[0].TypeParameters.CreateResolvedTypeParameters(contextForTypeParameters);
 				} else {
 					// This is a nested class inside a generic class; copy type parameters from outer class if we can:
 					var outerClass = parentContext.CurrentTypeDefinition;
-					ITypeParameter[] typeParameters = new ITypeParameter[parts[0].TypeParameters.Count];
-					for (int i = 0; i < typeParameters.Length; i++) {
+					var typeParameters = new ITypeParameter[parts[0].TypeParameters.Count];
+					for (var i = 0; i < typeParameters.Length; i++) {
 						var unresolvedTP = parts[0].TypeParameters[i];
 						if (i < outerClass.TypeParameterCount && outerClass.TypeParameters[i].Name == unresolvedTP.Name)
 							typeParameters[i] = outerClass.TypeParameters[i];
@@ -94,8 +91,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				var newResult = new List<IAttribute>();
 				var context = parentContext.WithCurrentTypeDefinition(this);
-				foreach (IUnresolvedTypeDefinition part in parts) {
-					ITypeResolveContext parentContextForPart = part.CreateResolveContext(context);
+				foreach (var part in parts) {
+					var parentContextForPart = part.CreateResolveContext(context);
 					foreach (var attr in part.Attributes) {
 						newResult.Add(attr.CreateResolvedAttribute(parentContextForPart));
 					}
@@ -108,24 +105,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IReadOnlyList<IUnresolvedTypeDefinition> Parts {
-			get { return parts; }
-		}
-		
-		public SymbolKind SymbolKind {
-			get { return parts[0].SymbolKind; }
-		}
-		
-		public virtual TypeKind Kind {
-			get { return parts[0].Kind; }
-		}
+		public IReadOnlyList<IUnresolvedTypeDefinition> Parts => parts;
+
+		public SymbolKind SymbolKind => parts[0].SymbolKind;
+
+		public virtual TypeKind Kind => parts[0].Kind;
 
 		#region NestedTypes
 		IReadOnlyList<ITypeDefinition> nestedTypes;
 		
 		public IReadOnlyList<ITypeDefinition> NestedTypes {
 			get {
-				IReadOnlyList<ITypeDefinition> result = LazyInit.VolatileRead(ref this.nestedTypes);
+				var result = LazyInit.VolatileRead(ref this.nestedTypes);
 				if (result != null) {
 					return result;
 				} else {
@@ -158,9 +149,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.resolvedMembers = new IMember[unresolvedNonPartialMembers.Count];
 				} else {
 					this.resolvedMembers = new IMember[unresolvedNonPartialMembers.Count + partialMethodInfos.Count];
-					for (int i = 0; i < partialMethodInfos.Count; i++) {
+					for (var i = 0; i < partialMethodInfos.Count; i++) {
 						var info = partialMethodInfos[i];
-						int memberIndex = NonPartialMemberCount + i;
+						var memberIndex = NonPartialMemberCount + i;
 						resolvedMembers[memberIndex] = DefaultResolvedMethod.CreateFromMultipleParts(
 							info.Parts.ToArray(), info.Contexts.ToArray (), false);
 					}
@@ -169,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			
 			public IMember this[int index] {
 				get {
-					IMember output = LazyInit.VolatileRead(ref resolvedMembers[index]);
+					var output = LazyInit.VolatileRead(ref resolvedMembers[index]);
 					if (output != null) {
 						return output;
 					}
@@ -177,13 +168,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			
-			public int Count {
-				get { return resolvedMembers.Length; }
-			}
-			
+			public int Count => resolvedMembers.Length;
+
 			public int IndexOf(IMember item)
 			{
-				for (int i = 0; i < this.Count; i++) {
+				for (var i = 0; i < this.Count; i++) {
 					if (this[i].Equals(item))
 						return i;
 				}
@@ -192,7 +181,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			
 			public IEnumerator<IMember> GetEnumerator()
 			{
-				for (int i = 0; i < this.Count; i++) {
+				for (var i = 0; i < this.Count; i++) {
 					yield return this[i];
 				}
 			}
@@ -248,20 +237,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (result != null) {
 				return result;
 			}
-			List<IUnresolvedMember> unresolvedMembers = new List<IUnresolvedMember>();
-			List<ITypeResolveContext> contextPerMember = new List<ITypeResolveContext>();
+			var unresolvedMembers = new List<IUnresolvedMember>();
+			var contextPerMember = new List<ITypeResolveContext>();
 			List<PartialMethodInfo> partialMethodInfos = null;
-			bool addDefaultConstructorIfRequired = false;
-			foreach (IUnresolvedTypeDefinition part in parts) {
-				ITypeResolveContext parentContextForPart = part.CreateResolveContext(parentContext);
-				ITypeResolveContext contextForPart = parentContextForPart.WithCurrentTypeDefinition(this);
+			var addDefaultConstructorIfRequired = false;
+			foreach (var part in parts) {
+				var parentContextForPart = part.CreateResolveContext(parentContext);
+				var contextForPart = parentContextForPart.WithCurrentTypeDefinition(this);
 				foreach (var member in part.Members) {
-					IUnresolvedMethod method = member as IUnresolvedMethod;
+					var method = member as IUnresolvedMethod;
 					if (method != null && method.IsPartial) {
 						// Merge partial method declaration and implementation
 						if (partialMethodInfos == null)
 							partialMethodInfos = new List<PartialMethodInfo>();
-						PartialMethodInfo newInfo = new PartialMethodInfo(method, contextForPart);
+						var newInfo = new PartialMethodInfo(method, contextForPart);
 						PartialMethodInfo existingInfo = null;
 						foreach (var info in partialMethodInfos) {
 							if (newInfo.IsSameSignature(info, Compilation.NameComparer)) {
@@ -284,7 +273,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				addDefaultConstructorIfRequired |= part.AddDefaultConstructorIfRequired;
 			}
 			if (addDefaultConstructorIfRequired) {
-				TypeKind kind = this.Kind;
+				var kind = this.Kind;
 				if (kind == TypeKind.Class && !this.IsStatic && !unresolvedMembers.Any(m => m.SymbolKind == SymbolKind.Constructor && !m.IsStatic)
 				    || kind == TypeKind.Enum || kind == TypeKind.Struct)
 				{
@@ -296,14 +285,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return LazyInit.GetOrSet(ref this.memberList, result);
 		}
 		
-		public IReadOnlyList<IMember> Members {
-			get { return GetMemberList(); }
-		}
-		
+		public IReadOnlyList<IMember> Members => GetMemberList();
+
 		public IEnumerable<IField> Fields {
 			get {
 				var members = GetMemberList();
-				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+				for (var i = 0; i < members.unresolvedMembers.Length; i++) {
 					if (members.unresolvedMembers[i].SymbolKind == SymbolKind.Field)
 						yield return (IField)members[i];
 				}
@@ -313,11 +300,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IEnumerable<IMethod> Methods {
 			get {
 				var members = GetMemberList();
-				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+				for (var i = 0; i < members.unresolvedMembers.Length; i++) {
 					if (members.unresolvedMembers[i] is IUnresolvedMethod)
 						yield return (IMethod)members[i];
 				}
-				for (int i = members.unresolvedMembers.Length; i < members.Count; i++) {
+				for (var i = members.unresolvedMembers.Length; i < members.Count; i++) {
 					yield return (IMethod)members[i];
 				}
 			}
@@ -326,7 +313,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IEnumerable<IProperty> Properties {
 			get {
 				var members = GetMemberList();
-				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+				for (var i = 0; i < members.unresolvedMembers.Length; i++) {
 					switch (members.unresolvedMembers[i].SymbolKind) {
 						case SymbolKind.Property:
 						case SymbolKind.Indexer:
@@ -340,7 +327,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IEnumerable<IEvent> Events {
 			get {
 				var members = GetMemberList();
-				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+				for (var i = 0; i < members.unresolvedMembers.Length; i++) {
 					if (members.unresolvedMembers[i].SymbolKind == SymbolKind.Event)
 						yield return (IEvent)members[i];
 				}
@@ -352,11 +339,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public KnownTypeCode KnownTypeCode {
 			get {
-				KnownTypeCode result = this.knownTypeCode;
+				var result = this.knownTypeCode;
 				if (result == (KnownTypeCode)(-1)) {
 					result = KnownTypeCode.None;
-					ICompilation compilation = this.Compilation;
-					for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
+					var compilation = this.Compilation;
+					for (var i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
 						if (compilation.FindType((KnownTypeCode)i) == this) {
 							result = (KnownTypeCode)i;
 							break;
@@ -372,7 +359,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IType EnumUnderlyingType {
 			get {
-				IType result = this.enumUnderlyingType;
+				var result = this.enumUnderlyingType;
 				if (result == null) {
 					if (this.Kind == TypeKind.Enum) {
 						result = CalculateEnumUnderlyingType();
@@ -390,7 +377,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			foreach (var part in parts) {
 				var context = part.CreateResolveContext(parentContext).WithCurrentTypeDefinition(this);
 				foreach (var baseTypeRef in part.BaseTypes) {
-					IType type = baseTypeRef.Resolve(context);
+					var type = baseTypeRef.Resolve(context);
 					if (type.Kind != TypeKind.Unknown)
 						return type;
 				}
@@ -402,7 +389,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public bool HasExtensionMethods {
 			get {
-				byte val = this.hasExtensionMethods;
+				var val = this.hasExtensionMethods;
 				if (val == 0) {
 					if (CalculateHasExtensionMethods())
 						val = 1;
@@ -416,7 +403,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		bool CalculateHasExtensionMethods()
 		{
-			bool noExtensionMethods = true;
+			var noExtensionMethods = true;
 			foreach (var part in parts) {
 				// Return true if any part has extension methods
 				if (part.HasExtensionMethods == true)
@@ -431,10 +418,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return Methods.Any(m => m.IsExtensionMethod);
 		}
 		
-		public bool IsPartial {
-			get { return parts.Length > 1 || parts[0].IsPartial; }
-		}
-		
+		public bool IsPartial => parts.Length > 1 || parts[0].IsPartial;
+
 		public bool? IsReferenceType {
 			get {
 				switch (this.Kind) {
@@ -453,9 +438,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public int TypeParameterCount {
-			get { return parts[0].TypeParameters.Count; }
-		}
+		public int TypeParameterCount => parts[0].TypeParameters.Count;
 
 		public IReadOnlyList<IType> TypeArguments => TypeParameters;
 
@@ -464,7 +447,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IEnumerable<IType> DirectBaseTypes {
 			get {
-				IList<IType> result = LazyInit.VolatileRead(ref this.directBaseTypes);
+				var result = LazyInit.VolatileRead(ref this.directBaseTypes);
 				if (result != null) {
 					return result;
 				}
@@ -486,13 +469,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		IList<IType> CalculateDirectBaseTypes()
 		{
-			List<IType> result = new List<IType>();
-			bool hasNonInterface = false;
+			var result = new List<IType>();
+			var hasNonInterface = false;
 			if (this.Kind != TypeKind.Enum) {
 				foreach (var part in parts) {
 					var context = part.CreateResolveContext(parentContext).WithCurrentTypeDefinition(this);
 					foreach (var baseTypeRef in part.BaseTypes) {
-						IType baseType = baseTypeRef.Resolve(context);
+						var baseType = baseTypeRef.Resolve(context);
 						if (!(baseType.Kind == TypeKind.Unknown || result.Contains(baseType))) {
 							result.Add(baseType);
 							if (baseType.Kind != TypeKind.Interface)
@@ -518,7 +501,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						primitiveBaseType = KnownTypeCode.Object;
 						break;
 				}
-				IType t = parentContext.Compilation.FindType(primitiveBaseType);
+				var t = parentContext.Compilation.FindType(primitiveBaseType);
 				if (t.Kind != TypeKind.Unknown)
 					result.Add(t);
 			}
@@ -526,76 +509,45 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 		
-		public string FullName {
-			get { return parts[0].FullName; }
-		}
-		
-		public string Name {
-			get { return parts[0].Name; }
-		}
-		
-		public string ReflectionName {
-			get { return parts[0].ReflectionName; }
-		}
-		
-		public string Namespace {
-			get { return parts[0].Namespace; }
-		}
-		
-		public FullTypeName FullTypeName {
-			get { return parts[0].FullTypeName; }
-		}
-		
-		public ITypeDefinition DeclaringTypeDefinition {
-			get { return parentContext.CurrentTypeDefinition; }
-		}
-		
-		public IType DeclaringType {
-			get { return parentContext.CurrentTypeDefinition; }
-		}
-		
-		public IAssembly ParentAssembly {
-			get { return parentContext.CurrentAssembly; }
-		}
-		
-		public ICompilation Compilation {
-			get { return parentContext.Compilation; }
-		}
-		
+		public string FullName => parts[0].FullName;
+
+		public string Name => parts[0].Name;
+
+		public string ReflectionName => parts[0].ReflectionName;
+
+		public string Namespace => parts[0].Namespace;
+
+		public FullTypeName FullTypeName => parts[0].FullTypeName;
+
+		public ITypeDefinition DeclaringTypeDefinition => parentContext.CurrentTypeDefinition;
+
+		public IType DeclaringType => parentContext.CurrentTypeDefinition;
+
+		public IAssembly ParentAssembly => parentContext.CurrentAssembly;
+
+		public ICompilation Compilation => parentContext.Compilation;
+
 		#region Modifiers
-		public bool IsStatic    { get { return isAbstract && isSealed; } }
-		public bool IsAbstract  { get { return isAbstract; } }
-		public bool IsSealed    { get { return isSealed; } }
-		public bool IsShadowing { get { return isShadowing; } }
-		public bool IsSynthetic { get { return isSynthetic; } }
-		
-		public Accessibility Accessibility {
-			get { return accessibility; }
-		}
-		
-		bool IHasAccessibility.IsPrivate {
-			get { return accessibility == Accessibility.Private; }
-		}
-		
-		bool IHasAccessibility.IsPublic {
-			get { return accessibility == Accessibility.Public; }
-		}
-		
-		bool IHasAccessibility.IsProtected {
-			get { return accessibility == Accessibility.Protected; }
-		}
-		
-		bool IHasAccessibility.IsInternal {
-			get { return accessibility == Accessibility.Internal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedOrInternal {
-			get { return accessibility == Accessibility.ProtectedOrInternal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedAndInternal {
-			get { return accessibility == Accessibility.ProtectedAndInternal; }
-		}
+		public bool IsStatic => IsAbstract && IsSealed;
+		public bool IsAbstract { get; }
+		public bool IsSealed { get; }
+		public bool IsShadowing { get; }
+		public bool IsSynthetic { get; } = true;
+
+		public Accessibility Accessibility { get; } = Accessibility.Internal;
+
+		bool IHasAccessibility.IsPrivate => Accessibility == Accessibility.Private;
+
+		bool IHasAccessibility.IsPublic => Accessibility == Accessibility.Public;
+
+		bool IHasAccessibility.IsProtected => Accessibility == Accessibility.Protected;
+
+		bool IHasAccessibility.IsInternal => Accessibility == Accessibility.Internal;
+
+		bool IHasAccessibility.IsProtectedOrInternal => Accessibility == Accessibility.ProtectedOrInternal;
+
+		bool IHasAccessibility.IsProtectedAndInternal => Accessibility == Accessibility.ProtectedAndInternal;
+
 		#endregion
 		
 		ITypeDefinition IType.GetDefinition()
@@ -615,13 +567,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public ITypeReference ToTypeReference()
 		{
-			ITypeDefinition declTypeDef = this.DeclaringTypeDefinition;
+			var declTypeDef = this.DeclaringTypeDefinition;
 			if (declTypeDef != null) {
 				return new NestedTypeReference(declTypeDef.ToTypeReference(),
 					this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount,
 					this.IsReferenceType);
 			} else {
-				IAssembly asm = this.ParentAssembly;
+				var asm = this.ParentAssembly;
 				IAssemblyReference asmRef;
 				if (asm != null)
 					asmRef = new DefaultAssemblyReference(asm.AssemblyName);
@@ -666,14 +618,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IMember> GetFilteredMembers(Predicate<IUnresolvedMember> filter)
 		{
 			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+			for (var i = 0; i < members.unresolvedMembers.Length; i++) {
 				if (filter == null || filter(members.unresolvedMembers[i])) {
 					yield return members[i];
 				}
 			}
-			for (int i = members.unresolvedMembers.Length; i < members.Count; i++) {
+			for (var i = members.unresolvedMembers.Length; i < members.Count; i++) {
 				var method = (IMethod)members[i];
-				bool ok = false;
+				var ok = false;
 				foreach (var part in method.Parts) {
 					if (filter == null || filter(part)) {
 						ok = true;
@@ -688,15 +640,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IMethod> GetFilteredMethods(Predicate<IUnresolvedMethod> filter)
 		{
 			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				IUnresolvedMethod unresolved = members.unresolvedMembers[i] as IUnresolvedMethod;
+			for (var i = 0; i < members.unresolvedMembers.Length; i++) {
+				var unresolved = members.unresolvedMembers[i] as IUnresolvedMethod;
 				if (unresolved != null && (filter == null || filter(unresolved))) {
 					yield return (IMethod)members[i];
 				}
 			}
-			for (int i = members.unresolvedMembers.Length; i < members.Count; i++) {
+			for (var i = members.unresolvedMembers.Length; i < members.Count; i++) {
 				var method = (IMethod)members[i];
-				bool ok = false;
+				var ok = false;
 				foreach (var part in method.Parts) {
 					if (filter == null || filter(part)) {
 						ok = true;
@@ -711,8 +663,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<TResolved> GetFilteredNonMethods<TUnresolved, TResolved>(Predicate<TUnresolved> filter) where TUnresolved : class, IUnresolvedMember where TResolved : class, IMember
 		{
 			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				TUnresolved unresolved = members.unresolvedMembers[i] as TUnresolved;
+			for (var i = 0; i < members.unresolvedMembers.Length; i++) {
+				var unresolved = members.unresolvedMembers[i] as TUnresolved;
 				if (unresolved != null && (filter == null || filter(unresolved))) {
 					yield return (TResolved)members[i];
 				}
@@ -736,7 +688,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if (ComHelper.IsComImport(this)) {
-				IType coClass = ComHelper.GetCoClass(this);
+				var coClass = ComHelper.GetCoClass(this);
 				using (var busyLock = BusyManager.Enter(this)) {
 					if (busyLock.Success) {
 						return coClass.GetConstructors(filter, options)
@@ -800,8 +752,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IUnresolvedMethod> filter)
 		{
 			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				IUnresolvedMember unresolved = members.unresolvedMembers[i];
+			for (var i = 0; i < members.unresolvedMembers.Length; i++) {
+				var unresolved = members.unresolvedMembers[i];
 				var unresolvedProperty = unresolved as IUnresolvedProperty;
 				var unresolvedEvent = unresolved as IUnresolvedEvent;
 				if (unresolvedProperty != null) {
@@ -840,17 +792,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			
 			var result = new IMember[interfaceMembers.Count];
 			var signatureToIndexDict = new MultiDictionary<IMember, int>(SignatureComparer.Ordinal);
-			for (int i = 0; i < interfaceMembers.Count; i++) {
+			for (var i = 0; i < interfaceMembers.Count; i++) {
 				signatureToIndexDict.Add(interfaceMembers[i], i);
 			}
 			foreach (var member in GetMembers(m => !m.IsExplicitInterfaceImplementation)) {
-				foreach (int interfaceMemberIndex in signatureToIndexDict[member]) {
+				foreach (var interfaceMemberIndex in signatureToIndexDict[member]) {
 					result[interfaceMemberIndex] = member;
 				}
 			}
 			foreach (var explicitImpl in GetMembers(m => m.IsExplicitInterfaceImplementation)) {
 				foreach (var interfaceMember in explicitImpl.ImplementedInterfaceMembers) {
-					foreach (int potentialMatchingIndex in signatureToIndexDict[interfaceMember]) {
+					foreach (var potentialMatchingIndex in signatureToIndexDict[interfaceMember]) {
 						if (interfaceMember.Equals(interfaceMembers[potentialMatchingIndex])) {
 							result[potentialMatchingIndex] = explicitImpl;
 						}

@@ -30,18 +30,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public AccessorOwnerMemberReference(IMemberReference accessorReference)
 		{
-			if (accessorReference == null)
-				throw new ArgumentNullException("accessorReference");
-			this.accessorReference = accessorReference;
+			this.accessorReference = accessorReference ?? throw new ArgumentNullException("accessorReference");
 		}
 		
-		public ITypeReference DeclaringTypeReference {
-			get { return accessorReference.DeclaringTypeReference; }
-		}
-		
+		public ITypeReference DeclaringTypeReference => accessorReference.DeclaringTypeReference;
+
 		public IMember Resolve(ITypeResolveContext context)
 		{
-			IMethod method = accessorReference.Resolve(context) as IMethod;
+			var method = accessorReference.Resolve(context) as IMethod;
 			if (method != null)
 				return method.AccessorOwner;
 			else

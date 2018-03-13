@@ -73,14 +73,8 @@ namespace ICSharpCode.ILSpy
 			PropertyChanged?.Invoke(this, e);
 		}
 
-		public Entry[] SelectedItems {
-			get {
-				return Package.SelectedEntries.ToArray();
-			}
-		}
+		public Entry[] SelectedItems => Package.SelectedEntries.ToArray();
 
-		public bool HasSelection {
-			get { return SelectedItems.Length > 0; }
-		}
+		public bool HasSelection => SelectedItems.Length > 0;
 	}
 }

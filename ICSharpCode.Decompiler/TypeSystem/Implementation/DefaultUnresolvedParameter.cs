@@ -43,12 +43,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public DefaultUnresolvedParameter(ITypeReference type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.type = type;
-			this.name = name;
+			this.type = type ?? throw new ArgumentNullException("type");
+			this.name = name ?? throw new ArgumentNullException("name");
 		}
 		
 		void FreezeInternal()
@@ -58,7 +54,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public string Name {
-			get { return name; }
+			get => name;
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -68,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public ITypeReference Type {
-			get { return type; }
+			get => type;
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -86,7 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IConstantValue DefaultValue {
-			get { return defaultValue; }
+			get => defaultValue;
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				defaultValue = value;
@@ -106,10 +102,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.flags &= unchecked((byte)~flag);
 		}
 		
-		public bool IsFrozen {
-			get { return HasFlag(1); }
-		}
-		
+		public bool IsFrozen => HasFlag(1);
+
 		public void Freeze()
 		{
 			if (!this.IsFrozen) {
@@ -119,28 +113,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsRef {
-			get { return HasFlag(2); }
-			set { SetFlag(2, value); }
+			get => HasFlag(2);
+			set => SetFlag(2, value);
 		}
 		
 		public bool IsOut {
-			get { return HasFlag(4); }
-			set { SetFlag(4, value); }
+			get => HasFlag(4);
+			set => SetFlag(4, value);
 		}
 		
 		public bool IsParams {
-			get { return HasFlag(8); }
-			set { SetFlag(8, value); }
+			get => HasFlag(8);
+			set => SetFlag(8, value);
 		}
 		
-		public bool IsOptional {
-			get { return this.DefaultValue != null; }
-		}
-		
+		public bool IsOptional => this.DefaultValue != null;
+
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			unchecked {
-				int hashCode = 1919191 ^ (flags & ~1);
+				var hashCode = 1919191 ^ (flags & ~1);
 				hashCode *= 31;
 				hashCode += type.GetHashCode();
 				hashCode *= 31;
@@ -158,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			// compare everything except for the IsFrozen flag
-			DefaultUnresolvedParameter p = other as DefaultUnresolvedParameter;
+			var p = other as DefaultUnresolvedParameter;
 			return p != null && type == p.type && name == p.name &&
 				defaultValue == p.defaultValue && (flags & ~1) == (p.flags & ~1) && ListEquals(attributes, p.attributes);
 		}
@@ -170,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			if (IsRef)
 				b.Append("ref ");
 			if (IsOut)
@@ -207,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				var owner = context.CurrentMember as IParameterizedMember;
 				var resolvedAttributes = attributes.CreateResolvedAttributes (context);
-				bool isOptional = resolvedAttributes != null && resolvedAttributes.Any (a => IsOptionalAttribute (a.AttributeType));
+				var isOptional = resolvedAttributes != null && resolvedAttributes.Any (a => IsOptionalAttribute (a.AttributeType));
 				return new DefaultParameter (type.Resolve (context), name, owner,
 				                             resolvedAttributes, IsRef, IsOut, IsParams, isOptional);
 			}
@@ -224,22 +216,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.context = context;
 			}
 			
-			SymbolKind ISymbol.SymbolKind { get { return SymbolKind.Parameter; } }
-			public IParameterizedMember Owner { get { return context.CurrentMember as IParameterizedMember; } }
+			SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
+			public IParameterizedMember Owner => context.CurrentMember as IParameterizedMember;
 			public IType Type { get; internal set; }
 			public string Name { get; internal set; }
 			public IReadOnlyList<IAttribute> Attributes { get; internal set; }
 			public bool IsRef { get; internal set; }
 			public bool IsOut { get; internal set; }
 			public bool IsParams { get; internal set; }
-			public bool IsOptional { get { return true; } }
-			bool IVariable.IsConst { get { return false; } }
-			
+			public bool IsOptional => true;
+			bool IVariable.IsConst => false;
+
 			ResolveResult resolvedDefaultValue;
 			
 			public object ConstantValue {
 				get {
-					ResolveResult rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
+					var rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
 					if (rr == null) {
 						rr = defaultValue.Resolve(context);
 						LazyInit.GetOrSet(ref this.resolvedDefaultValue, rr);

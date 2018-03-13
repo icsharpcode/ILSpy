@@ -87,9 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		protected DecoratingTokenWriter(TokenWriter decoratedWriter)
 		{
-			if (decoratedWriter == null)
-				throw new ArgumentNullException("decoratedWriter");
-			this.decoratedWriter = decoratedWriter;
+			this.decoratedWriter = decoratedWriter ?? throw new ArgumentNullException("decoratedWriter");
 		}
 		
 		public override void StartNode(AstNode node)

@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
 			if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
-				foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
+				foreach (var ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var previousContext = resolveContextStack.Peek();
 			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
-			foreach (string ident in namespaceDeclaration.Identifiers) {
+			foreach (var ident in namespaceDeclaration.Identifiers) {
 				usingScope = new UsingScope(usingScope, ident);
 			}
 			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));

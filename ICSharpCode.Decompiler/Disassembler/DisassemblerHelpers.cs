@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		static void WriteLabelList(ITextOutput writer, Instruction[] instructions)
 		{
 			writer.Write("(");
-			for (int i = 0; i < instructions.Length; i++) {
+			for (var i = 0; i < instructions.Length; i++) {
 				if (i != 0) writer.Write(", ");
 				WriteOffsetReference(writer, instructions[i]);
 			}
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static string ToInvariantCultureString(object value)
 		{
-			IConvertible convertible = value as IConvertible;
+			var convertible = value as IConvertible;
 			return (null != convertible)
 				? convertible.ToString(System.Globalization.CultureInfo.InvariantCulture)
 				: value.ToString();
@@ -138,16 +138,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 				method.DeclaringType.WriteTo(writer, ILNameSyntax.TypeName);
 				writer.Write("::");
 			}
-			MethodDefinition md = method as MethodDefinition;
+			var md = method as MethodDefinition;
 			if (md != null && md.IsCompilerControlled) {
 				writer.WriteReference(Escape(method.Name + "$PST" + method.MetadataToken.ToInt32().ToString("X8")), method);
 			} else {
 				writer.WriteReference(Escape(method.Name), method);
 			}
-			GenericInstanceMethod gim = method as GenericInstanceMethod;
+			var gim = method as GenericInstanceMethod;
 			if (gim != null) {
 				writer.Write('<');
-				for (int i = 0; i < gim.GenericArguments.Count; i++) {
+				for (var i = 0; i < gim.GenericArguments.Count; i++) {
 					if (i > 0)
 						writer.Write(", ");
 					gim.GenericArguments[i].WriteTo(writer);
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			writer.Write("(");
 			var parameters = method.Parameters;
-			for (int i = 0; i < parameters.Count; ++i) {
+			for (var i = 0; i < parameters.Count; ++i) {
 				if (i > 0)
 					writer.Write(", ");
 				parameters[i].ParameterType.WriteTo(writer, ILNameSyntax.SignatureNoNamedTypeParameters);
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				// As a special case, .ctor and .cctor are valid despite starting with a dot
 				return identifier == ".ctor" || identifier == ".cctor";
 			}
-			for (int i = 1; i < identifier.Length; i++) {
+			for (var i = 1; i < identifier.Length; i++) {
 				if (!(char.IsLetterOrDigit(identifier[i]) || IsValidIdentifierCharacter(identifier[i]) || identifier[i] == '.'))
 					return false;
 			}
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		static HashSet<string> BuildKeywordList(params string[] keywords)
 		{
-			HashSet<string> s = new HashSet<string>(keywords);
+			var s = new HashSet<string>(keywords);
 			foreach (var field in typeof(OpCodes).GetFields()) {
 				s.Add(((OpCode)field.GetValue(null)).Name);
 			}
@@ -245,12 +245,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static void WriteTo(this TypeReference type, ITextOutput writer, ILNameSyntax syntax = ILNameSyntax.Signature)
 		{
-			ILNameSyntax syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
+			var syntaxForElementTypes = syntax == ILNameSyntax.SignatureNoNamedTypeParameters ? syntax : ILNameSyntax.Signature;
 			if (type is PinnedType) {
 				((PinnedType)type).ElementType.WriteTo(writer, syntaxForElementTypes);
 				writer.Write(" pinned");
 			} else if (type is ArrayType) {
-				ArrayType at = (ArrayType)type;
+				var at = (ArrayType)type;
 				at.ElementType.WriteTo(writer, syntaxForElementTypes);
 				writer.Write('[');
 				writer.Write(string.Join(", ", at.Dimensions));
@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				type.GetElementType().WriteTo(writer, syntaxForElementTypes);
 				writer.Write('<');
 				var arguments = ((GenericInstanceType)type).GenericArguments;
-				for (int i = 0; i < arguments.Count; i++) {
+				for (var i = 0; i < arguments.Count; i++) {
 					if (i > 0)
 						writer.Write(", ");
 					arguments[i].WriteTo(writer, syntaxForElementTypes);
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.Write("method ");
 				fpt.ReturnType.WriteTo(writer, syntax);
 				writer.Write(" *(");
-				bool first = true;
+				var first = true;
 				foreach (var p in fpt.Parameters) {
 					if (first)
 						first = false;
@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.Write("..., ");
 				((SentinelType)type).ElementType.WriteTo(writer, syntax);
 			} else {
-				string name = PrimitiveTypeName(type.FullName);
+				var name = PrimitiveTypeName(type.FullName);
 				if (syntax == ILNameSyntax.ShortTypeName) {
 					if (name != null)
 						writer.Write(name);
@@ -336,25 +336,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (operand == null)
 				throw new ArgumentNullException(nameof(operand));
 
-			Instruction targetInstruction = operand as Instruction;
+			var targetInstruction = operand as Instruction;
 			if (targetInstruction != null) {
 				WriteOffsetReference(writer, targetInstruction);
 				return;
 			}
 
-			Instruction[] targetInstructions = operand as Instruction[];
+			var targetInstructions = operand as Instruction[];
 			if (targetInstructions != null) {
 				WriteLabelList(writer, targetInstructions);
 				return;
 			}
 
-			VariableReference variableRef = operand as VariableReference;
+			var variableRef = operand as VariableReference;
 			if (variableRef != null) {
 				writer.WriteReference(variableRef.Index.ToString(), variableRef);
 				return;
 			}
 
-			ParameterReference paramRef = operand as ParameterReference;
+			var paramRef = operand as ParameterReference;
 			if (paramRef != null) {
 				if (string.IsNullOrEmpty(paramRef.Name)) {
 					var paramDef = paramRef.Resolve();
@@ -364,25 +364,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 				return;
 			}
 
-			MethodReference methodRef = operand as MethodReference;
+			var methodRef = operand as MethodReference;
 			if (methodRef != null) {
 				methodRef.WriteTo(writer);
 				return;
 			}
 
-			TypeReference typeRef = operand as TypeReference;
+			var typeRef = operand as TypeReference;
 			if (typeRef != null) {
 				typeRef.WriteTo(writer, ILNameSyntax.TypeName);
 				return;
 			}
 
-			FieldReference fieldRef = operand as FieldReference;
+			var fieldRef = operand as FieldReference;
 			if (fieldRef != null) {
 				fieldRef.WriteTo(writer);
 				return;
 			}
 
-			string s = operand as string;
+			var s = operand as string;
 			if (s != null) {
 				WriteOperand(writer, s);
 			} else if (operand is char) {
@@ -413,9 +413,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				writer.Write("0.0");
 			} else if (float.IsInfinity(val) || float.IsNaN(val)) {
-				byte[] data = BitConverter.GetBytes(val);
+				var data = BitConverter.GetBytes(val);
 				writer.Write('(');
-				for (int i = 0; i < data.Length; i++) {
+				for (var i = 0; i < data.Length; i++) {
 					if (i > 0)
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
@@ -435,9 +435,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				writer.Write("0.0");
 			} else if (double.IsInfinity(val) || double.IsNaN(val)) {
-				byte[] data = BitConverter.GetBytes(val);
+				var data = BitConverter.GetBytes(val);
 				writer.Write('(');
-				for (int i = 0; i < data.Length; i++) {
+				for (var i = 0; i < data.Length; i++) {
 					if (i > 0)
 						writer.Write(' ');
 					writer.Write(data[i].ToString("X2"));
@@ -457,8 +457,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static string EscapeString(string str)
 		{
-			StringBuilder sb = new StringBuilder();
-			foreach (char ch in str) {
+			var sb = new StringBuilder();
+			foreach (var ch in str) {
 				switch (ch) {
 					case '"':
 						sb.Append("\\\"");

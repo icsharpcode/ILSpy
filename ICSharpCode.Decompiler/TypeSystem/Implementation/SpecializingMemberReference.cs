@@ -30,9 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public SpecializingMemberReference(IMemberReference memberDefinitionReference, IList<ITypeReference> classTypeArgumentReferences = null, IList<ITypeReference> methodTypeArgumentReferences = null)
 		{
-			if (memberDefinitionReference == null)
-				throw new ArgumentNullException("memberDefinitionReference");
-			this.memberDefinitionReference = memberDefinitionReference;
+			this.memberDefinitionReference = memberDefinitionReference ?? throw new ArgumentNullException("memberDefinitionReference");
 			this.classTypeArgumentReferences = classTypeArgumentReferences;
 			this.methodTypeArgumentReferences = methodTypeArgumentReferences;
 		}

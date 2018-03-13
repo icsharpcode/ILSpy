@@ -25,7 +25,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class DefaultResolvedProperty : AbstractResolvedMember, IProperty
 	{
 		protected new readonly IUnresolvedProperty unresolved;
-		readonly IReadOnlyList<IParameter> parameters;
 		IMethod getter;
 		IMethod setter;
 		const Accessibility InvalidAccessibility = (Accessibility)0xff;
@@ -35,13 +34,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			: base(unresolved, parentContext)
 		{
 			this.unresolved = unresolved;
-			this.parameters = unresolved.Parameters.CreateResolvedParameters(context);
+			this.Parameters = unresolved.Parameters.CreateResolvedParameters(context);
 		}
 		
-		public IReadOnlyList<IParameter> Parameters {
-			get { return parameters; }
-		}
-		
+		public IReadOnlyList<IParameter> Parameters { get; }
+
 		public override Accessibility Accessibility {
 			get {
 				var acc = cachedAccessiblity;
@@ -64,26 +61,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseAcc;
 		}
 		
-		public bool CanGet {
-			get { return unresolved.CanGet; }
-		}
-		
-		public bool CanSet {
-			get { return unresolved.CanSet; }
-		}
-		
-		public IMethod Getter {
-			get { return GetAccessor(ref getter, unresolved.Getter); }
-		}
-		
-		public IMethod Setter {
-			get { return GetAccessor(ref setter, unresolved.Setter); }
-		}
-		
-		public bool IsIndexer {
-			get { return unresolved.IsIndexer; }
-		}
-		
+		public bool CanGet => unresolved.CanGet;
+
+		public bool CanSet => unresolved.CanSet;
+
+		public IMethod Getter => GetAccessor(ref getter, unresolved.Getter);
+
+		public IMethod Setter => GetAccessor(ref setter, unresolved.Setter);
+
+		public bool IsIndexer => unresolved.IsIndexer;
+
 		public override ISymbolReference ToReference()
 		{
 			var declType = this.DeclaringType;

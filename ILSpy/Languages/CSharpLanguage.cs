@@ -53,8 +53,8 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
 			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
-			string lastTransformName = "no transforms";
-			int transformCount = 0;
+			var lastTransformName = "no transforms";
+			var transformCount = 0;
 			foreach (var transform in decompiler.AstTransforms) {
 				yield return new CSharpLanguage {
 					transformCount = transformCount,
@@ -71,17 +71,11 @@ namespace ICSharpCode.ILSpy
 		}
 #endif
 
-		public override string Name {
-			get { return name; }
-		}
+		public override string Name => name;
 
-		public override string FileExtension {
-			get { return ".cs"; }
-		}
+		public override string FileExtension => ".cs";
 
-		public override string ProjectFileExtension {
-			get { return ".csproj"; }
-		}
+		public override string ProjectFileExtension => ".csproj";
 
 		IReadOnlyList<LanguageVersion> versions;
 
@@ -106,7 +100,7 @@ namespace ICSharpCode.ILSpy
 
 		CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+			var decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
@@ -127,9 +121,9 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(method.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
+			var decompiler = CreateDecompiler(method.Module, options);
 			if (method.IsConstructor && !method.DeclaringType.IsValueType) {
-				List<IMemberDefinition> members = CollectFieldsAndCtors(method.DeclaringType, method.IsStatic);
+				var members = CollectFieldsAndCtors(method.DeclaringType, method.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(decompiler.TypeSystem.Resolve(method)));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			} else {
@@ -192,7 +186,7 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(property.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
+			var decompiler = CreateDecompiler(property.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property), decompiler.TypeSystem);
 		}
 
@@ -200,11 +194,11 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(field.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(field.Module, options);
+			var decompiler = CreateDecompiler(field.Module, options);
 			if (field.IsLiteral) {
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field), decompiler.TypeSystem);
 			} else {
-				List<IMemberDefinition> members = CollectFieldsAndCtors(field.DeclaringType, field.IsStatic);
+				var members = CollectFieldsAndCtors(field.DeclaringType, field.IsStatic);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(decompiler.TypeSystem.Resolve(field)));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			}
@@ -258,7 +252,7 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(ev.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(ev.Module, options);
+			var decompiler = CreateDecompiler(ev.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev), decompiler.TypeSystem);
 		}
 
@@ -266,7 +260,7 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(type.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
-			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
+			var decompiler = CreateDecompiler(type.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type), decompiler.TypeSystem);
 		}
 
@@ -348,7 +342,7 @@ namespace ICSharpCode.ILSpy
 				AddReferenceWarningMessage(module.Assembly, output);
 				output.WriteLine();
 				base.DecompileAssembly(assembly, output, options);
-				ModuleDefinition mainModule = module;
+				var mainModule = module;
 				if (mainModule.Types.Count > 0) {
 					output.Write("// Global type: ");
 					output.WriteReference(mainModule.Types[0].FullName, mainModule.Types[0]);
@@ -363,7 +357,7 @@ namespace ICSharpCode.ILSpy
 				if ((mainModule.Attributes & ModuleAttributes.ILOnly) == 0) {
 					output.WriteLine("// This assembly contains unmanaged code.");
 				}
-				string runtimeName = GetRuntimeDisplayName(mainModule);
+				var runtimeName = GetRuntimeDisplayName(mainModule);
 				if (runtimeName != null) {
 					output.WriteLine("// Runtime: " + runtimeName);
 				}
@@ -371,7 +365,7 @@ namespace ICSharpCode.ILSpy
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+					var decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
 					SyntaxTree st;
 					if (options.FullDecompilation) {
@@ -399,9 +393,9 @@ namespace ICSharpCode.ILSpy
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
-					using (ResourceReader reader = new ResourceReader(entryStream))
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
+					using (var reader = new ResourceReader(entryStream))
+					using (var fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (var writer = new ResXResourceWriter(fs)) {
 						foreach (DictionaryEntry entry in reader) {
 							writer.AddResource((string)entry.Key, entry.Value);
 						}
@@ -420,7 +414,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
-			ConvertTypeOptions options = ConvertTypeOptions.IncludeTypeParameterDefinitions;
+			var options = ConvertTypeOptions.IncludeTypeParameterDefinitions;
 			if (includeNamespace)
 				options |= ConvertTypeOptions.IncludeNamespace;
 
@@ -429,11 +423,11 @@ namespace ICSharpCode.ILSpy
 
 		string TypeToString(ConvertTypeOptions options, TypeReference type, ICustomAttributeProvider typeAttributes = null)
 		{
-			AstType astType = CSharpDecompiler.ConvertType(type, typeAttributes, options);
+			var astType = CSharpDecompiler.ConvertType(type, typeAttributes, options);
 
-			StringWriter w = new StringWriter();
+			var w = new StringWriter();
 			if (type.IsByReference) {
-				ParameterDefinition pd = typeAttributes as ParameterDefinition;
+				var pd = typeAttributes as ParameterDefinition;
 				if (pd != null && (!pd.IsIn && pd.IsOut))
 					w.Write("out ");
 				else
@@ -466,7 +460,7 @@ namespace ICSharpCode.ILSpy
 					buffer.Append(@".");
 				}
 				buffer.Append(@"this[");
-				bool addSeparator = false;
+				var addSeparator = false;
 				foreach (var p in property.Parameters) {
 					if (addSeparator)
 						buffer.Append(@", ");

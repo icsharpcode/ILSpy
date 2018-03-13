@@ -39,23 +39,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var paramList = new List<IParameter>(baseMethod.Parameters);
 			Debug.Assert(paramList.Last().Type.Kind == TypeKind.ArgList);
 			paramList.RemoveAt(paramList.Count - 1);
-			foreach (IType varArg in varArgTypes) {
+			foreach (var varArg in varArgTypes) {
 				paramList.Add(new DefaultParameter(varArg, name: string.Empty, owner: this));
 			}
 			this.parameters = paramList.ToArray();
 		}
 		
-		public int RegularParameterCount {
-			get { return baseMethod.Parameters.Count - 1; }
-		}
-		
-		public IReadOnlyList<IParameter> Parameters {
-			get { return parameters; }
-		}
-		
+		public int RegularParameterCount => baseMethod.Parameters.Count - 1;
+
+		public IReadOnlyList<IParameter> Parameters => parameters;
+
 		public override bool Equals(object obj)
 		{
-			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			var other = obj as VarArgInstanceMethod;
 			return other != null && baseMethod.Equals(other.baseMethod);
 		}
 		
@@ -66,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			var b = new StringBuilder("[");
 			b.Append(this.SymbolKind);
 			if (this.DeclaringType != null) {
 				b.Append(this.DeclaringType.ReflectionName);
@@ -78,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
+			for (var i = 0; i < this.Parameters.Count; i++) {
 				if (i > 0)
 					b.Append(", ");
 				if (i == this.RegularParameterCount)
@@ -102,61 +98,33 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameters.Skip(baseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution)).ToList());
 		}
 
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return baseMethod.Parts; }
-		}
+		public IReadOnlyList<IUnresolvedMethod> Parts => baseMethod.Parts;
 
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return baseMethod.ReturnTypeAttributes; }
-		}
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes => baseMethod.ReturnTypeAttributes;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters {
-			get { return baseMethod.TypeParameters; }
-		}
+		public IReadOnlyList<ITypeParameter> TypeParameters => baseMethod.TypeParameters;
 
-		public IReadOnlyList<IType> TypeArguments {
-			get { return baseMethod.TypeArguments; }
-		}
+		public IReadOnlyList<IType> TypeArguments => baseMethod.TypeArguments;
 
-		public bool IsExtensionMethod {
-			get { return baseMethod.IsExtensionMethod; }
-		}
+		public bool IsExtensionMethod => baseMethod.IsExtensionMethod;
 
-		public bool IsConstructor {
-			get { return baseMethod.IsConstructor; }
-		}
+		public bool IsConstructor => baseMethod.IsConstructor;
 
-		public bool IsDestructor {
-			get { return baseMethod.IsDestructor; }
-		}
+		public bool IsDestructor => baseMethod.IsDestructor;
 
-		public bool IsOperator {
-			get { return baseMethod.IsOperator; }
-		}
+		public bool IsOperator => baseMethod.IsOperator;
 
-		public bool IsPartial {
-			get { return baseMethod.IsPartial; }
-		}
+		public bool IsPartial => baseMethod.IsPartial;
 
-		public bool IsAsync {
-			get { return baseMethod.IsAsync; }
-		}
+		public bool IsAsync => baseMethod.IsAsync;
 
-		public bool HasBody {
-			get { return baseMethod.HasBody; }
-		}
+		public bool HasBody => baseMethod.HasBody;
 
-		public bool IsAccessor {
-			get { return baseMethod.IsAccessor; }
-		}
+		public bool IsAccessor => baseMethod.IsAccessor;
 
-		public IMember AccessorOwner {
-			get { return baseMethod.AccessorOwner; }
-		}
+		public IMember AccessorOwner => baseMethod.AccessorOwner;
 
-		public IMethod ReducedFrom {
-			get { return baseMethod.ReducedFrom; }
-		}
+		public IMethod ReducedFrom => baseMethod.ReducedFrom;
 
 		#endregion
 
@@ -172,41 +140,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return Specialize(substitution);
 		}
 
-		public IMember MemberDefinition {
-			get { return baseMethod.MemberDefinition; }
-		}
+		public IMember MemberDefinition => baseMethod.MemberDefinition;
 
-		public IUnresolvedMember UnresolvedMember {
-			get { return baseMethod.UnresolvedMember; }
-		}
+		public IUnresolvedMember UnresolvedMember => baseMethod.UnresolvedMember;
 
-		public IType ReturnType {
-			get { return baseMethod.ReturnType; }
-		}
+		public IType ReturnType => baseMethod.ReturnType;
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
-			get { return baseMethod.ImplementedInterfaceMembers; }
-		}
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers => baseMethod.ImplementedInterfaceMembers;
 
-		public bool IsExplicitInterfaceImplementation {
-			get { return baseMethod.IsExplicitInterfaceImplementation; }
-		}
+		public bool IsExplicitInterfaceImplementation => baseMethod.IsExplicitInterfaceImplementation;
 
-		public bool IsVirtual {
-			get { return baseMethod.IsVirtual; }
-		}
+		public bool IsVirtual => baseMethod.IsVirtual;
 
-		public bool IsOverride {
-			get { return baseMethod.IsOverride; }
-		}
+		public bool IsOverride => baseMethod.IsOverride;
 
-		public bool IsOverridable {
-			get { return baseMethod.IsOverridable; }
-		}
+		public bool IsOverridable => baseMethod.IsOverridable;
 
-		public TypeParameterSubstitution Substitution {
-			get { return baseMethod.Substitution; }
-		}
+		public TypeParameterSubstitution Substitution => baseMethod.Substitution;
 
 		#endregion
 
@@ -217,109 +167,65 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ToReference();
 		}
 
-		public SymbolKind SymbolKind {
-			get { return baseMethod.SymbolKind; }
-		}
+		public SymbolKind SymbolKind => baseMethod.SymbolKind;
 
-		public string Name {
-			get { return baseMethod.Name; }
-		}
+		public string Name => baseMethod.Name;
 
 		#endregion
 
 		#region IEntity implementation
 		
-		public ITypeDefinition DeclaringTypeDefinition {
-			get { return baseMethod.DeclaringTypeDefinition; }
-		}
+		public ITypeDefinition DeclaringTypeDefinition => baseMethod.DeclaringTypeDefinition;
 
-		public IType DeclaringType {
-			get { return baseMethod.DeclaringType; }
-		}
+		public IType DeclaringType => baseMethod.DeclaringType;
 
-		public IAssembly ParentAssembly {
-			get { return baseMethod.ParentAssembly; }
-		}
+		public IAssembly ParentAssembly => baseMethod.ParentAssembly;
 
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return baseMethod.Attributes; }
-		}
+		public IReadOnlyList<IAttribute> Attributes => baseMethod.Attributes;
 
-		public bool IsStatic {
-			get { return baseMethod.IsStatic; }
-		}
+		public bool IsStatic => baseMethod.IsStatic;
 
-		public bool IsAbstract {
-			get { return baseMethod.IsAbstract; }
-		}
+		public bool IsAbstract => baseMethod.IsAbstract;
 
-		public bool IsSealed {
-			get { return baseMethod.IsSealed; }
-		}
+		public bool IsSealed => baseMethod.IsSealed;
 
-		public bool IsShadowing {
-			get { return baseMethod.IsShadowing; }
-		}
+		public bool IsShadowing => baseMethod.IsShadowing;
 
-		public bool IsSynthetic {
-			get { return baseMethod.IsSynthetic; }
-		}
+		public bool IsSynthetic => baseMethod.IsSynthetic;
 
 		#endregion
 
 		#region IHasAccessibility implementation
 
-		public Accessibility Accessibility {
-			get { return baseMethod.Accessibility; }
-		}
+		public Accessibility Accessibility => baseMethod.Accessibility;
 
-		public bool IsPrivate {
-			get { return baseMethod.IsPrivate; }
-		}
+		public bool IsPrivate => baseMethod.IsPrivate;
 
-		public bool IsPublic {
-			get { return baseMethod.IsPublic; }
-		}
+		public bool IsPublic => baseMethod.IsPublic;
 
-		public bool IsProtected {
-			get { return baseMethod.IsProtected; }
-		}
+		public bool IsProtected => baseMethod.IsProtected;
 
-		public bool IsInternal {
-			get { return baseMethod.IsInternal; }
-		}
+		public bool IsInternal => baseMethod.IsInternal;
 
-		public bool IsProtectedOrInternal {
-			get { return baseMethod.IsProtectedOrInternal; }
-		}
+		public bool IsProtectedOrInternal => baseMethod.IsProtectedOrInternal;
 
-		public bool IsProtectedAndInternal {
-			get { return baseMethod.IsProtectedAndInternal; }
-		}
+		public bool IsProtectedAndInternal => baseMethod.IsProtectedAndInternal;
 
 		#endregion
 
 		#region INamedElement implementation
 
-		public string FullName {
-			get { return baseMethod.FullName; }
-		}
+		public string FullName => baseMethod.FullName;
 
-		public string ReflectionName {
-			get { return baseMethod.ReflectionName; }
-		}
+		public string ReflectionName => baseMethod.ReflectionName;
 
-		public string Namespace {
-			get { return baseMethod.Namespace; }
-		}
+		public string Namespace => baseMethod.Namespace;
 
 		#endregion
 
 		#region ICompilationProvider implementation
 
-		public ICompilation Compilation {
-			get { return baseMethod.Compilation; }
-		}
+		public ICompilation Compilation => baseMethod.Compilation;
 
 		#endregion
 	}

@@ -37,26 +37,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly object AnyValue = new object();
 		
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
-		
+		public override TextLocation StartLocation => startLocation;
+
 		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
 			ThrowIfFrozen();
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
 		}
-		
-		string literalValue;
+
 		TextLocation? endLocation;
 		public override TextLocation EndLocation {
 			get {
 				if (!endLocation.HasValue) {
-					endLocation = value is string ? AdvanceLocation (StartLocation, literalValue ?? "") :
-						new TextLocation (StartLocation.Line, StartLocation.Column + (literalValue ?? "").Length);
+					endLocation = value is string ? AdvanceLocation (StartLocation, UnsafeLiteralValue ?? "") :
+						new TextLocation (StartLocation.Line, StartLocation.Column + (UnsafeLiteralValue ?? "").Length);
 				}
 				return endLocation.Value;
 			}
@@ -65,50 +60,46 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		object value;
 		
 		public object Value {
-			get { return this.value; }
+			get => this.value;
 			set {
 				ThrowIfFrozen();
 				this.value = value;
-				literalValue = null;
+				UnsafeLiteralValue = null;
 			}
 		}
 		
 		/// <remarks>Never returns null.</remarks>
-		public string LiteralValue {
-			get { return literalValue ?? ""; }
-		}
-		
+		public string LiteralValue => UnsafeLiteralValue ?? "";
+
 		/// <remarks>Can be null.</remarks>
-		public string UnsafeLiteralValue {
-			get { return literalValue; }
-		}
-		
+		public string UnsafeLiteralValue { get; private set; }
+
 		public void SetValue(object value, string literalValue)
 		{
 			if (value == null)
 				throw new ArgumentNullException();
 			ThrowIfFrozen();
 			this.value = value;
-			this.literalValue = literalValue;
+			this.UnsafeLiteralValue = literalValue;
 		}
 		
 		public PrimitiveExpression (object value)
 		{
 			this.Value = value;
-			this.literalValue = null;
+			this.UnsafeLiteralValue = null;
 		}
 		
 		public PrimitiveExpression (object value, string literalValue)
 		{
 			this.Value = value;
-			this.literalValue = literalValue;
+			this.UnsafeLiteralValue = literalValue;
 		}
 		
 		public PrimitiveExpression (object value, TextLocation startLocation, string literalValue)
 		{
 			this.Value = value;
 			this.startLocation = startLocation;
-			this.literalValue = literalValue;
+			this.UnsafeLiteralValue = literalValue;
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -128,14 +119,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		unsafe static TextLocation AdvanceLocation(TextLocation startLocation, string str)
 		{
-			int line = startLocation.Line;
-			int col  = startLocation.Column;
+			var line = startLocation.Line;
+			var col  = startLocation.Column;
 			fixed (char* start = str) {
-				char* p = start;
-				char* endPtr = start + str.Length;
+				var p = start;
+				var endPtr = start + str.Length;
 				while (p < endPtr) {
 					var nl = NewLine.GetDelimiterLength(*p, () => {
-						char* nextp = p + 1;
+						var nextp = p + 1;
 						if (nextp < endPtr)
 							return *nextp;
 						return '\0';
@@ -156,7 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveExpression o = other as PrimitiveExpression;
+			var o = other as PrimitiveExpression;
 			return o != null && (this.Value == AnyValue || object.Equals(this.Value, o.Value));
 		}
 	}

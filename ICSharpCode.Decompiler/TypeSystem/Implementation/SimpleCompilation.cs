@@ -27,9 +27,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly ISolutionSnapshot solutionSnapshot;
-		readonly ITypeResolveContext context;
-		readonly CacheManager cacheManager = new CacheManager();
 		readonly KnownTypeCache knownTypeCache;
 		readonly IAssembly mainAssembly;
 		readonly IList<IAssembly> assemblies;
@@ -53,22 +50,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public SimpleCompilation(ISolutionSnapshot solutionSnapshot, IUnresolvedAssembly mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
 		{
-			if (solutionSnapshot == null)
-				throw new ArgumentNullException("solutionSnapshot");
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");
 			if (assemblyReferences == null)
 				throw new ArgumentNullException("assemblyReferences");
-			this.solutionSnapshot = solutionSnapshot;
-			this.context = new SimpleTypeResolveContext(this);
-			this.mainAssembly = mainAssembly.Resolve(context);
-			List<IAssembly> assemblies = new List<IAssembly>();
+			this.SolutionSnapshot = solutionSnapshot ?? throw new ArgumentNullException("solutionSnapshot");
+			this.TypeResolveContext = new SimpleTypeResolveContext(this);
+			this.mainAssembly = mainAssembly.Resolve(TypeResolveContext);
+			var assemblies = new List<IAssembly>();
 			assemblies.Add(this.mainAssembly);
-			List<IAssembly> referencedAssemblies = new List<IAssembly>();
+			var referencedAssemblies = new List<IAssembly>();
 			foreach (var asmRef in assemblyReferences) {
 				IAssembly asm;
 				try {
-					asm = asmRef.Resolve(context);
+					asm = asmRef.Resolve(TypeResolveContext);
 				} catch (InvalidOperationException) {
 					throw new InvalidOperationException("Tried to initialize compilation with an invalid assembly reference. (Forgot to load the assembly reference ? - see CecilLoader)");
 				}
@@ -106,13 +101,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public ITypeResolveContext TypeResolveContext {
-			get { return context; }
-		}
-		
+		public ITypeResolveContext TypeResolveContext { get; }
+
 		public INamespace RootNamespace {
 			get {
-				INamespace ns = LazyInit.VolatileRead(ref this.rootNamespace);
+				var ns = LazyInit.VolatileRead(ref this.rootNamespace);
 				if (ns != null) {
 					return ns;
 				} else {
@@ -127,18 +120,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
-			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
+			var namespaces = new INamespace[referencedAssemblies.Count + 1];
 			namespaces[0] = mainAssembly.RootNamespace;
-			for (int i = 0; i < referencedAssemblies.Count; i++) {
+			for (var i = 0; i < referencedAssemblies.Count; i++) {
 				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
 			}
 			return new MergedNamespace(this, namespaces);
 		}
 		
-		public CacheManager CacheManager {
-			get { return cacheManager; }
-		}
-		
+		public CacheManager CacheManager { get; } = new CacheManager();
+
 		public virtual INamespace GetNamespaceForExternAlias(string alias)
 		{
 			if (string.IsNullOrEmpty(alias))
@@ -152,14 +143,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return knownTypeCache.FindType(typeCode);
 		}
 		
-		public StringComparer NameComparer {
-			get { return StringComparer.Ordinal; }
-		}
-		
-		public ISolutionSnapshot SolutionSnapshot {
-			get { return solutionSnapshot; }
-		}
-		
+		public StringComparer NameComparer => StringComparer.Ordinal;
+
+		public ISolutionSnapshot SolutionSnapshot { get; }
+
 		public override string ToString()
 		{
 			return "[SimpleCompilation " + mainAssembly.AssemblyName + "]";

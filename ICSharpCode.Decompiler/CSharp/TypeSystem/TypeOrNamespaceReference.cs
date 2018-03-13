@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public INamespace ResolveNamespace(CSharpResolver resolver)
 		{
-			NamespaceResolveResult nrr = Resolve(resolver) as NamespaceResolveResult;
+			var nrr = Resolve(resolver) as NamespaceResolveResult;
 			return nrr != null ? nrr.Namespace : null;
 		}
 		

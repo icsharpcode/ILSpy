@@ -17,10 +17,7 @@ namespace ICSharpCode.TreeView
 
 		static Pen pen;
 
-		SharpTreeNodeView NodeView
-		{
-			get { return TemplatedParent as SharpTreeNodeView; }
-		}
+		SharpTreeNodeView NodeView => TemplatedParent as SharpTreeNodeView;
 
 		protected override void OnRender(DrawingContext dc)
 		{

@@ -13,7 +13,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			{
 				if (this.Count > 0)
 				{
-					int i = this.Count - 1;
+					var i = this.Count - 1;
 					return this[i];
 				}
 				return null;
@@ -40,7 +40,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 			if (this.Count > 0)
 			{
-				XmlBamlNode node = this[0];
+				var node = this[0];
 				if (remove)
 					this.RemoveAt(0);
 				return node;

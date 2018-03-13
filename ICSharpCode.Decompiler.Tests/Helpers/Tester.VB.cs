@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		internal static string GetSuffix(VBCompilerOptions vbcOptions)
 		{
-			string suffix = "";
+			var suffix = "";
 			if ((vbcOptions & VBCompilerOptions.Optimize) != 0)
 				suffix += ".opt";
 			if ((vbcOptions & VBCompilerOptions.Force32Bit) != 0)
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static CompilerResults CompileVB(string sourceFileName, VBCompilerOptions flags = VBCompilerOptions.UseDebug, string outputFileName = null)
 		{
-			List<string> sourceFileNames = new List<string> { sourceFileName };
+			var sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
@@ -79,11 +79,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					optimizationLevel: flags.HasFlag(VBCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
 					deterministic: true
 				));
-				CompilerResults results = new CompilerResults(new TempFileCollection());
+				var results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				var emitResult = compilation.Emit(results.PathToAssembly);
 				if (!emitResult.Success) {
-					StringBuilder b = new StringBuilder("Compiler error:");
+					var b = new StringBuilder("Compiler error:");
 					foreach (var diag in emitResult.Diagnostics) {
 						b.AppendLine(diag.ToString());
 					}
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return results;
 			} else {
 				var provider = new VBCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v10.0" } });
-				CompilerParameters options = new CompilerParameters();
+				var options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(VBCompilerOptions.Library);
 				options.CompilerOptions = "/o" + (flags.HasFlag(VBCompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(VBCompilerOptions.UseDebug) ? " /debug" : "");
@@ -107,9 +107,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
-				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
+				var results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
-					StringBuilder b = new StringBuilder("Compiler error:");
+					var b = new StringBuilder("Compiler error:");
 					foreach (var error in results.Errors) {
 						b.AppendLine(error.ToString());
 					}

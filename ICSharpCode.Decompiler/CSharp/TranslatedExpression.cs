@@ -36,10 +36,8 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public readonly Expression Expression;
 		
-		public IEnumerable<ILInstruction> ILInstructions {
-			get { return Expression.Annotations.OfType<ILInstruction>(); }
-		}
-		
+		public IEnumerable<ILInstruction> ILInstructions => Expression.Annotations.OfType<ILInstruction>();
+
 		internal ExpressionWithILInstruction(Expression expression)
 		{
 			Debug.Assert(expression != null);
@@ -64,10 +62,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		// in this struct instead of accessing it through the list of annotations.
 		public readonly ResolveResult ResolveResult;
 		
-		public IType Type {
-			get { return ResolveResult.Type; }
-		}
-		
+		public IType Type => ResolveResult.Type;
+
 		internal ExpressionWithResolveResult(Expression expression, ResolveResult resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);
@@ -99,14 +95,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		// in this struct instead of accessing it through the list of annotations.
 		public readonly ResolveResult ResolveResult;
 		
-		public IEnumerable<ILInstruction> ILInstructions {
-			get { return Expression.Annotations.OfType<ILInstruction>(); }
-		}
-		
-		public IType Type {
-			get { return ResolveResult.Type; }
-		}
-		
+		public IEnumerable<ILInstruction> ILInstructions => Expression.Annotations.OfType<ILInstruction>();
+
+		public IType Type => ResolveResult.Type;
+
 		internal TranslatedExpression(Expression expression)
 		{
 			Debug.Assert(expression != null);
@@ -146,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (descendant == Expression)
 				return this;
-			for (AstNode parent = descendant.Parent; parent != null; parent = parent.Parent) {
+			for (var parent = descendant.Parent; parent != null; parent = parent.Parent) {
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);
 				if (parent == Expression)
@@ -209,9 +201,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
 			}
 			var compilation = expressionBuilder.compilation;
-			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
-			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
-			IType targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
+			var isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
+			var utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
+			var targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
 			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
@@ -300,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference && Expression is DirectionExpression) {
 				// convert from reference to pointer
-				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
+				var arg = ((DirectionExpression)Expression).Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
 				if (arg is UnaryOperatorExpression argUOE && argUOE.Operator == UnaryOperatorType.Dereference) {
 					// &*ptr -> ptr
@@ -355,7 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
-			bool avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
+			var avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
 			if (!avoidCheckAnnotation) {
 				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
@@ -387,15 +379,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			Debug.Assert(Type.GetStackType().IsIntegerType());
-			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
+			var boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
 			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int) {
-				bool val = (int)ResolveResult.ConstantValue != 0;
+				var val = (int)ResolveResult.ConstantValue != 0;
 				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(boolType, val));
 			} else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte) {
-				bool val = (byte)ResolveResult.ConstantValue != 0;
+				var val = (byte)ResolveResult.ConstantValue != 0;
 				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)

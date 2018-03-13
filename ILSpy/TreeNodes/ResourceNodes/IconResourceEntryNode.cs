@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Drawing;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -31,22 +32,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null) {
-				return CreateNode(er.Name, er.GetResourceStream());
-			}
-			return null;
+			var er = resource as EmbeddedResource;
+			return er != null ? CreateNode(er.Name, er.GetResourceStream()) : null;
 		}
 
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
-			if (data is System.Drawing.Icon) {
-				MemoryStream s = new MemoryStream();
-				((System.Drawing.Icon)data).Save(s);
-				return new IconResourceEntryNode(key, s);
+			switch (data)
+			{
+				case Icon _:
+					var s = new MemoryStream();
+					((System.Drawing.Icon)data).Save(s);
+					return new IconResourceEntryNode(key, s);
+				case Stream _ when key.EndsWith(".ico", StringComparison.OrdinalIgnoreCase):
+					return new IconResourceEntryNode(key, (Stream)data);
 			}
-			if (data is Stream && key.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
-				return new IconResourceEntryNode(key, (Stream)data);
+
 			return null;
 		}
 	}
@@ -58,17 +59,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		public override bool View(DecompilerTextView textView)
 		{
 			try {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				var output = new AvalonEditTextOutput();
 				Data.Position = 0;
-				IconBitmapDecoder decoder = new IconBitmapDecoder(Data, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+				var decoder = new IconBitmapDecoder(Data, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
 				foreach (var frame in decoder.Frames) {
 					output.Write(String.Format("{0}x{1}, {2} bit: ", frame.PixelHeight, frame.PixelWidth, frame.Thumbnail.Format.BitsPerPixel));
 					AddIcon(output, frame);

@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe int PointerCasts()
 		{
-			int result = 0;
+			var result = 0;
 			*(float*)(&result) = 0.5f;
 			((byte*)(&result))[3] = 3;
 			return result;
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe void FixedStringAccess(string text)
 		{
 			fixed (char* ptr = text) {
-				for (char* ptr2 = ptr; *ptr2 == 'a'; ptr2++) {
+				for (var ptr2 = ptr; *ptr2 == 'a'; ptr2++) {
 					*ptr2 = 'A';
 				}
 			}
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			char* ptr = stackalloc char[count];
 			char* ptr2 = stackalloc char[100];
-			for (int i = 0; i < count; i++) {
+			for (var i = 0; i < count; i++) {
 				ptr[i] = (char)i;
 				ptr2[i] = '\0';
 			}
@@ -353,7 +353,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			SimpleStruct* ptr2 = stackalloc SimpleStruct[10];
 			ptr->X = count;
 			ptr[1].X = ptr->X;
-			for (int i = 2; i < 10; i++) {
+			for (var i = 2; i < 10; i++) {
 				ptr[i].X = count;
 			}
 			return this.UsePointer(&ptr->Y);
@@ -366,8 +366,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private unsafe void Issue990()
 		{
-			Data data = default(Data);
-			Data* ptr = &data;
+			var data = default(Data);
+			var ptr = &data;
 			this.ConvertIntToFloat(ptr->Position.GetHashCode());
 		}
 

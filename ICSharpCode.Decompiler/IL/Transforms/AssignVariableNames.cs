@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var f in function.Descendants.OfType<ILFunction>()) {
 				if (f.Method != null) {
 					if (f.Method.IsAccessor && f.Method.Parameters.Count > 0) {
-						for (int i = 0; i < f.Method.Parameters.Count - 1; i++) {
+						for (var i = 0; i < f.Method.Parameters.Count - 1; i++) {
 							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
 						}
 						var lastParameter = f.Method.Parameters.Last();
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, p.Name);
 				}
 			}
-			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
+			foreach (var f in function.Descendants.OfType<ILFunction>().Reverse()) {
 				PerformAssignment(f);
 			}
 		}
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var mapping = new Dictionary<ILVariable, string>(ILVariableEqualityComparer.Instance);
 			foreach (var inst in function.Descendants.OfType<IInstructionWithVariableOperand>()) {
 				var v = inst.Variable;
-				if (!mapping.TryGetValue(v, out string name)) {
+				if (!mapping.TryGetValue(v, out var name)) {
 					if (string.IsNullOrEmpty(v.Name))
 						v.Name = GenerateNameForVariable(v);
 					mapping.Add(v, v.Name);
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(char.IsLetter(varName[0]) || varName[0] == '_'))
 				return false;
-			for (int i = 1; i < varName.Length; i++) {
+			for (var i = 1; i < varName.Length; i++) {
 				if (!(char.IsLetterOrDigit(varName[i]) || varName[i] == '_'))
 					return false;
 			}
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public string GetAlternativeName(string oldVariableName)
 		{
 			if (oldVariableName.Length == 1 && oldVariableName[0] >= 'i' && oldVariableName[0] <= maxLoopVariableName) {
-				for (char c = 'i'; c <= maxLoopVariableName; c++) {
+				for (var c = 'i'; c <= maxLoopVariableName; c++) {
 					if (!reservedVariableNames.ContainsKey(c.ToString())) {
 						reservedVariableNames.Add(c.ToString(), 1);
 						return c.ToString();
@@ -207,12 +207,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			string nameWithoutDigits = SplitName(oldVariableName, out int number);
+			var nameWithoutDigits = SplitName(oldVariableName, out var number);
 
 			if (!reservedVariableNames.ContainsKey(nameWithoutDigits)) {
 				reservedVariableNames.Add(nameWithoutDigits, number - 1);
 			}
-			int count = ++reservedVariableNames[nameWithoutDigits];
+			var count = ++reservedVariableNames[nameWithoutDigits];
 			if (count != 1) {
 				return nameWithoutDigits + count.ToString();
 			} else {
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var loopCounters = new HashSet<ILVariable>();
 			
-			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>()) {
+			foreach (var possibleLoop in function.Descendants.OfType<BlockContainer>()) {
 				if (possibleLoop.Kind != ContainerKind.For) continue;
 				foreach (var inst in possibleLoop.Blocks.Last().Instructions) {
 					if (HighLevelLoopTransform.MatchIncrement(inst, out var variable))
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// test whether the variable might be a loop counter
 				if (loopCounters.Contains(variable)) {
 					// For loop variables, use i,j,k,l,m,n
-					for (char c = 'i'; c <= maxLoopVariableName; c++) {
+					for (var c = 'i'; c <= maxLoopVariableName; c++) {
 						if (!reservedVariableNames.ContainsKey(c.ToString())) {
 							proposedName = c.ToString();
 							break;
@@ -279,12 +279,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// remove any numbers from the proposed name
-			proposedName = SplitName(proposedName, out int number);
+			proposedName = SplitName(proposedName, out var number);
 
 			if (!reservedVariableNames.ContainsKey(proposedName)) {
 				reservedVariableNames.Add(proposedName, 0);
 			}
-			int count = ++reservedVariableNames[proposedName];
+			var count = ++reservedVariableNames[proposedName];
 			if (count > 1) {
 				return proposedName + count.ToString();
 			} else {
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return CleanUpVariableName(ldsflda.Field.Name);
 				case CallInstruction call:
 					if (call is NewObj) break;
-					IMethod m = call.Method;
+					var m = call.Method;
 					if (m.Name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) && m.Parameters.Count == 0) {
 						// use name from properties, but not from indexers
 						return CleanUpVariableName(m.Name.Substring(4));
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					return CleanUpVariableName(field.Name);
 				case CallInstruction call:
-					IMethod m = call.Method;
+					var m = call.Method;
 					if (m.Parameters.Count == 1 && i == call.Arguments.Count - 1) {
 						// argument might be value of a setter
 						if (m.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase)) {
@@ -382,8 +382,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (string.IsNullOrEmpty(name))
 				return;
-			string nameWithoutDigits = SplitName(name, out int number);
-			if (reservedVariableNames.TryGetValue(nameWithoutDigits, out int existingNumber)) {
+			var nameWithoutDigits = SplitName(name, out var number);
+			if (reservedVariableNames.TryGetValue(nameWithoutDigits, out var existingNumber)) {
 				reservedVariableNames[nameWithoutDigits] = Math.Max(number, existingNumber);
 			} else {
 				reservedVariableNames.Add(nameWithoutDigits, number);
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static string SplitName(string name, out int number)
 		{
 			// First, identify whether the name already ends with a number:
-			int pos = name.Length;
+			var pos = name.Length;
 			while (pos > 0 && name[pos - 1] >= '0' && name[pos - 1] <= '9')
 				pos--;
 			if (pos < name.Length) {
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static string CleanUpVariableName(string name)
 		{
 			// remove the backtick (generics)
-			int pos = name.IndexOf('`');
+			var pos = name.IndexOf('`');
 			if (pos >= 0)
 				name = name.Substring(0, pos);
 
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
 
-			IType inferredType = inst.InferType();
+			var inferredType = inst.InferType();
 			if (inferredType.Kind != TypeKind.Unknown)
 				return inferredType;
 			else
@@ -460,13 +460,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
-			string baseName = GetNameFromInstruction(valueContext);
+			var baseName = GetNameFromInstruction(valueContext);
 			if (string.IsNullOrEmpty(baseName)) {
 				if (valueContext is LdLoc ldloc && ldloc.Variable.Kind == VariableKind.Parameter) {
 					baseName = ldloc.Variable.Name;
 				}
 			}
-			string proposedName = "item";
+			var proposedName = "item";
 			
 			if (!string.IsNullOrEmpty(baseName)) {
 				if (!IsPlural(baseName, ref proposedName)) {
@@ -481,12 +481,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// remove any numbers from the proposed name
-			proposedName = SplitName(proposedName, out int number);
+			proposedName = SplitName(proposedName, out var number);
 
 			if (!reservedVariableNames.ContainsKey(proposedName)) {
 				reservedVariableNames.Add(proposedName, 0);
 			}
-			int count = ++reservedVariableNames[proposedName];
+			var count = ++reservedVariableNames[proposedName];
 			if (count > 1) {
 				return proposedName + count.ToString();
 			} else {
@@ -500,8 +500,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
-			string baseName = valueContext != null ? GetNameFromInstruction(valueContext) ?? GetNameByType(type) : GetNameByType(type);
-			string proposedName = "obj";
+			var baseName = valueContext != null ? GetNameFromInstruction(valueContext) ?? GetNameByType(type) : GetNameByType(type);
+			var proposedName = "obj";
 
 			if (!string.IsNullOrEmpty(baseName)) {
 				if (!IsPlural(baseName, ref proposedName)) {
@@ -518,12 +518,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// remove any numbers from the proposed name
-			proposedName = SplitName(proposedName, out int number);
+			proposedName = SplitName(proposedName, out var number);
 
 			if (!reservedVariableNames.ContainsKey(proposedName)) {
 				reservedVariableNames.Add(proposedName, 0);
 			}
-			int count = ++reservedVariableNames[proposedName];
+			var count = ++reservedVariableNames[proposedName];
 			if (count > 1) {
 				return proposedName + count.ToString();
 			} else {

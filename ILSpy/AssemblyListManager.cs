@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public AssemblyListManager(ILSpySettings spySettings)
 		{
-			XElement doc = spySettings["AssemblyLists"];
+			var doc = spySettings["AssemblyLists"];
 			foreach (var list in doc.Elements("List")) {
 				AssemblyLists.Add((string)list.Attribute("name"));
 			}
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public AssemblyList LoadList(ILSpySettings spySettings, string listName)
 		{
-			AssemblyList list = DoLoadList(spySettings, listName);
+			var list = DoLoadList(spySettings, listName);
 			if (!AssemblyLists.Contains(list.ListName))
 				AssemblyLists.Add(list.ListName);
 			return list;
@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy
 		
 		AssemblyList DoLoadList(ILSpySettings spySettings, string listName)
 		{
-			XElement doc = spySettings["AssemblyLists"];
+			var doc = spySettings["AssemblyLists"];
 			if (listName != null) {
 				foreach (var list in doc.Elements("List")) {
 					if ((string)list.Attribute("name") == listName) {
@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 			}
-			XElement firstList = doc.Elements("List").FirstOrDefault();
+			var firstList = doc.Elements("List").FirstOrDefault();
 			if (firstList != null)
 				return new AssemblyList(firstList);
 			else
@@ -78,12 +78,12 @@ namespace ICSharpCode.ILSpy
 		{
 			ILSpySettings.Update(
 				delegate (XElement root) {
-					XElement doc = root.Element("AssemblyLists");
+					var doc = root.Element("AssemblyLists");
 					if (doc == null) {
 						doc = new XElement("AssemblyLists");
 						root.Add(doc);
 					}
-					XElement listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == list.ListName);
+					var listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == list.ListName);
 					if (listElement != null)
 						listElement.ReplaceWith(list.SaveAsXml());
 					else
@@ -111,12 +111,12 @@ namespace ICSharpCode.ILSpy
 				ILSpySettings.Update(
 					delegate(XElement root)
 					{
-						XElement doc = root.Element("AssemblyLists");
+						var doc = root.Element("AssemblyLists");
 						if (doc == null)
 						{
 							return;
 						}
-						XElement listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == Name);
+						var listElement = doc.Elements("List").FirstOrDefault(e => (string)e.Attribute("name") == Name);
 						if (listElement != null)
 							listElement.Remove();
 					});
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpy
 			AssemblyLists.Clear();
 			ILSpySettings.Update(
 				delegate (XElement root) {
-					XElement doc = root.Element("AssemblyLists");
+					var doc = root.Element("AssemblyLists");
 					if (doc == null) {
 						return;
 					}

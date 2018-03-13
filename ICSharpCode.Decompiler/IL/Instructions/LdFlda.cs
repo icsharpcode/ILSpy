@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(field.DeclaringType.IsReferenceType == true ? (target.ResultType == StackType.O) : (target.ResultType == StackType.I || target.ResultType == StackType.Ref));
+			Debug.Assert(Field.DeclaringType.IsReferenceType == true ? (target.ResultType == StackType.O) : (target.ResultType == StackType.I || target.ResultType == StackType.Ref));
 		}
 	}
 }

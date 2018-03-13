@@ -43,20 +43,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
 		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole (AttributeRole); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public AstNodeCollection<AttributeSection> Attributes => GetChildrenByRole (AttributeRole);
+
 		ParameterModifier parameterModifier;
 		
 		public ParameterModifier ParameterModifier {
-			get { return parameterModifier; }
+			get => parameterModifier;
 			set {
 				ThrowIfFrozen();
 				parameterModifier = value;
@@ -64,35 +58,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole (Roles.Type, value);
 		}
 		
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole (Roles.Assign);
 
 		public Expression DefaultExpression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -112,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ParameterDeclaration o = other as ParameterDeclaration;
+			var o = other as ParameterDeclaration;
 			return o != null && this.Attributes.DoMatch(o.Attributes, match) && this.ParameterModifier == o.ParameterModifier
 				&& this.Type.DoMatch(o.Type, match) && MatchString(this.Name, o.Name)
 				&& this.DefaultExpression.DoMatch(o.DefaultExpression, match);

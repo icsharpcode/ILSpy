@@ -13,13 +13,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 			foreach (var inst in function.Descendants.OfType<CallInstruction>()) {
-				MethodDefinition methodDef = context.TypeSystem.GetCecil(inst.Method) as MethodDefinition;
+				var methodDef = context.TypeSystem.GetCecil(inst.Method) as MethodDefinition;
 				if (methodDef != null && methodDef.Body != null) {
 					if (inst.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
 						// partially copied from CSharpDecompiler
 						var specializingTypeSystem = this.context.TypeSystem.GetSpecializingTypeSystem(inst.Method.Substitution);
 						var ilReader = new ILReader(specializingTypeSystem);
-						System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
+						var cancellationToken = new System.Threading.CancellationToken();
 						var proxyFunction = ilReader.ReadIL(methodDef.Body, cancellationToken);
 						var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, this.context.Settings) {
 							CancellationToken = cancellationToken,
@@ -40,14 +40,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						Call call = null;
 						if (block.Instructions.Count == 1) {
 							// leave IL_0000 (call Test(ldloc this, ldloc A_1))
-							if (!block.Instructions[0].MatchLeave(blockContainer, out ILInstruction returnValue))
+							if (!block.Instructions[0].MatchLeave(blockContainer, out var returnValue))
 								return;
 							call = returnValue as Call;
 						} else if (block.Instructions.Count == 2) {
 							// call Test(ldloc this, ldloc A_1)
 							// leave IL_0000(nop)
 							call = block.Instructions[0] as Call;
-							if (!block.Instructions[1].MatchLeave(blockContainer, out ILInstruction returnValue))
+							if (!block.Instructions[1].MatchLeave(blockContainer, out var returnValue))
 								return;
 							if (!returnValue.MatchNop())
 								return;
@@ -59,16 +59,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 
 						// check if original arguments are only correct ldloc calls
-						for (int i = 0; i < call.Arguments.Count; i++) {
+						for (var i = 0; i < call.Arguments.Count; i++) {
 							var originalArg = call.Arguments[i];
-							if (!originalArg.MatchLdLoc(out ILVariable var) ||
+							if (!originalArg.MatchLdLoc(out var var) ||
 								var.Kind != VariableKind.Parameter ||
 								var.Index != i - 1) {
 								return;
 							}
 						}
 
-						Call newInst = (Call)call.Clone();
+						var newInst = (Call)call.Clone();
 
 						newInst.Arguments.ReplaceList(inst.Arguments);
 						inst.ReplaceWith(newInst);

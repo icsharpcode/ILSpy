@@ -39,23 +39,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Returns the member that is being decompiled; or null if a whole type or assembly is being decompiled.
 		/// </summary>
-		public IMember DecompiledMember {
-			get { return decompilationContext.CurrentMember; }
-		}
-		
+		public IMember DecompiledMember => decompilationContext.CurrentMember;
+
 		/// <summary>
 		/// Returns the type definition that is being decompiled; or null if an assembly is being decompiled.
 		/// </summary>
-		public ITypeDefinition DecompiledTypeDefinition {
-			get { return decompilationContext.CurrentTypeDefinition; }
-		}
+		public ITypeDefinition DecompiledTypeDefinition => decompilationContext.CurrentTypeDefinition;
 
 		/// <summary>
 		/// Returns the assembly that is being decompiled.
 		/// </summary>
-		public IAssembly DecompiledAssembly {
-			get { return decompilationContext.CurrentAssembly; }
-		}
+		public IAssembly DecompiledAssembly => decompilationContext.CurrentAssembly;
 
 		/// <summary>
 		/// Returns the max possible set of namespaces that will be used during decompilation.

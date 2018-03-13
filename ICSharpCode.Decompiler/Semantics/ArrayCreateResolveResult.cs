@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		public ArrayCreateResolveResult(IType arrayType, IList<ResolveResult> sizeArguments, IList<ResolveResult> initializerElements)
 			: base(arrayType)
 		{
-			if (sizeArguments == null)
-				throw new ArgumentNullException("sizeArguments");
-			this.SizeArguments = sizeArguments;
+			this.SizeArguments = sizeArguments ?? throw new ArgumentNullException("sizeArguments");
 			this.InitializerElements = initializerElements;
 		}
 		

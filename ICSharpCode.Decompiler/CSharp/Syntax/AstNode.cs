@@ -45,18 +45,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullAstNode : AstNode
 		{
-			public override NodeType NodeType {
-				get {
-					return NodeType.Unknown;
-				}
-			}
-			
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override NodeType NodeType => NodeType.Unknown;
+
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -94,10 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder (this, child);
@@ -124,13 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		#endregion
-		
-		AstNode parent;
-		AstNode prevSibling;
-		AstNode nextSibling;
-		AstNode firstChild;
-		AstNode lastChild;
-		
+
 		// Flags, from least significant to most significant bits:
 		// - Role.RoleIndexBits: role index
 		// - 1 bit: IsFrozen
@@ -148,14 +132,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				Freeze();
 		}
 		
-		public bool IsFrozen {
-			get { return (flags & frozenBit) != 0; }
-		}
-		
+		public bool IsFrozen => (flags & frozenBit) != 0;
+
 		public void Freeze()
 		{
 			if (!IsFrozen) {
-				for (AstNode child = firstChild; child != null; child = child.nextSibling)
+				for (var child = FirstChild; child != null; child = child.NextSibling)
 					child.Freeze();
 				flags |= frozenBit;
 			}
@@ -171,15 +153,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 		}
 		
-		public virtual bool IsNull {
-			get {
-				return false;
-			}
-		}
-		
+		public virtual bool IsNull => false;
+
 		public virtual TextLocation StartLocation {
 			get {
-				var child = firstChild;
+				var child = FirstChild;
 				if (child == null)
 					return TextLocation.Empty;
 				return child.StartLocation;
@@ -188,19 +166,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public virtual TextLocation EndLocation {
 			get {
-				var child = lastChild;
+				var child = LastChild;
 				if (child == null)
 					return TextLocation.Empty;
 				return child.EndLocation;
 			}
 		}
 
-		public DomRegion Region {
-			get {
-				return new DomRegion (StartLocation, EndLocation);
-			}
-		}
-		
+		public DomRegion Region => new DomRegion (StartLocation, EndLocation);
+
 		/// <summary>
 		/// Gets the region from StartLocation to EndLocation for this node.
 		/// The file name of the region is set based on the parent SyntaxTree's file name.
@@ -209,18 +183,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public DomRegion GetRegion()
 		{
 			var syntaxTree = (this.Ancestors.LastOrDefault() ?? this) as SyntaxTree;
-			string fileName = (syntaxTree != null ? syntaxTree.FileName : null);
+			var fileName = (syntaxTree != null ? syntaxTree.FileName : null);
 			return new DomRegion(fileName, this.StartLocation, this.EndLocation);
 		}
 		
-		public AstNode Parent {
-			get { return parent; }
-		}
-		
+		public AstNode Parent { get; private set; }
+
 		public Role Role {
-			get {
-				return Role.GetByIndex(flags & roleIndexMask);
-			}
+			get => Role.GetByIndex(flags & roleIndexMask);
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -231,45 +201,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		internal uint RoleIndex {
-			get { return flags & roleIndexMask; }
-		}
-		
+		internal uint RoleIndex => flags & roleIndexMask;
+
 		void SetRole(Role role)
 		{
 			flags = (flags & ~roleIndexMask) | role.Index;
 		}
 		
-		public AstNode NextSibling {
-			get { return nextSibling; }
-		}
-		
-		public AstNode PrevSibling {
-			get { return prevSibling; }
-		}
-		
-		public AstNode FirstChild {
-			get { return firstChild; }
-		}
-		
-		public AstNode LastChild {
-			get { return lastChild; }
-		}
-		
-		public bool HasChildren {
-			get {
-				return firstChild != null;
-			}
-		}
-		
+		public AstNode NextSibling { get; private set; }
+
+		public AstNode PrevSibling { get; private set; }
+
+		public AstNode FirstChild { get; private set; }
+
+		public AstNode LastChild { get; private set; }
+
+		public bool HasChildren => FirstChild != null;
+
 		public IEnumerable<AstNode> Children {
 			get {
 				AstNode next;
-				for (AstNode cur = firstChild; cur != null; cur = next) {
-					Debug.Assert (cur.parent == this);
+				for (var cur = FirstChild; cur != null; cur = next) {
+					Debug.Assert (cur.Parent == this);
 					// Remember next before yielding cur.
 					// This allows removing/replacing nodes while iterating through the list.
-					next = cur.nextSibling;
+					next = cur.NextSibling;
 					yield return cur;
 				}
 			}
@@ -280,7 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<AstNode> Ancestors {
 			get {
-				for (AstNode cur = parent; cur != null; cur = cur.parent) {
+				for (var cur = Parent; cur != null; cur = cur.Parent) {
 					yield return cur;
 				}
 			}
@@ -291,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<AstNode> AncestorsAndSelf {
 			get {
-				for (AstNode cur = this; cur != null; cur = cur.parent) {
+				for (var cur = this; cur != null; cur = cur.Parent) {
 					yield return cur;
 				}
 			}
@@ -300,16 +256,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets all descendants of this node (excluding this node itself) in pre-order.
 		/// </summary>
-		public IEnumerable<AstNode> Descendants {
-			get { return GetDescendantsImpl(false); }
-		}
-		
+		public IEnumerable<AstNode> Descendants => GetDescendantsImpl(false);
+
 		/// <summary>
 		/// Gets all descendants of this node (including this node itself) in pre-order.
 		/// </summary>
-		public IEnumerable<AstNode> DescendantsAndSelf {
-			get { return GetDescendantsImpl(true); }
-		}
+		public IEnumerable<AstNode> DescendantsAndSelf => GetDescendantsImpl(true);
 
 		static bool IsInsideRegion(DomRegion region, AstNode pos)
 		{
@@ -348,18 +300,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					yield break;
 			}
 
-			Stack<AstNode> nextStack = new Stack<AstNode>();
+			var nextStack = new Stack<AstNode>();
 			nextStack.Push(null);
-			AstNode pos = firstChild;
+			var pos = FirstChild;
 			while (pos != null) {
 				// Remember next before yielding pos.
 				// This allows removing/replacing nodes while iterating through the list.
-				if (pos.nextSibling != null)
-					nextStack.Push(pos.nextSibling);
+				if (pos.NextSibling != null)
+					nextStack.Push(pos.NextSibling);
 				if (IsInsideRegion(region, pos))
 					yield return pos;
-				if (pos.firstChild != null && (descendIntoChildren == null || descendIntoChildren(pos)))
-					pos = pos.firstChild;
+				if (pos.FirstChild != null && (descendIntoChildren == null || descendIntoChildren(pos)))
+					pos = pos.FirstChild;
 				else
 					pos = nextStack.Pop();
 			}
@@ -373,8 +325,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (role == null)
 				throw new ArgumentNullException ("role");
-			uint roleIndex = role.Index;
-			for (var cur = firstChild; cur != null; cur = cur.nextSibling) {
+			var roleIndex = role.Index;
+			for (var cur = FirstChild; cur != null; cur = cur.NextSibling) {
 				if ((cur.flags & roleIndexMask) == roleIndex)
 					return (T)cur;
 			}
@@ -414,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ThrowIfFrozen();
 			if (child == this)
 				throw new ArgumentException ("Cannot add a node to itself as a child.", "child");
-			if (child.parent != null)
+			if (child.Parent != null)
 				throw new ArgumentException ("Node is already used in another tree.", "child");
 			if (child.IsFrozen)
 				throw new ArgumentException ("Cannot add a frozen node.", "child");
@@ -428,7 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ThrowIfFrozen();
 			if (child == this)
 				throw new ArgumentException ("Cannot add a node to itself as a child.", "child");
-			if (child.parent != null)
+			if (child.Parent != null)
 				throw new ArgumentException ("Node is already used in another tree.", "child");
 			if (child.IsFrozen)
 				throw new ArgumentException ("Cannot add a frozen node.", "child");
@@ -440,14 +392,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		internal void AddChildUnsafe (AstNode child, Role role)
 		{
-			child.parent = this;
+			child.Parent = this;
 			child.SetRole(role);
-			if (firstChild == null) {
-				lastChild = firstChild = child;
+			if (FirstChild == null) {
+				LastChild = FirstChild = child;
 			} else {
-				lastChild.nextSibling = child;
-				child.prevSibling = lastChild;
-				lastChild = child;
+				LastChild.NextSibling = child;
+				child.PrevSibling = LastChild;
+				LastChild = child;
 			}
 		}
 
@@ -463,11 +415,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (child == null || child.IsNull)
 				return;
 			ThrowIfFrozen();
-			if (child.parent != null)
+			if (child.Parent != null)
 				throw new ArgumentException ("Node is already used in another tree.", "child");
 			if (child.IsFrozen)
 				throw new ArgumentException ("Cannot add a frozen node.", "child");
-			if (nextSibling.parent != this)
+			if (nextSibling.Parent != this)
 				throw new ArgumentException ("NextSibling is not a child of this node.", "nextSibling");
 			// No need to test for "Cannot add children to null nodes",
 			// as there isn't any valid nextSibling in null nodes.
@@ -476,24 +428,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		internal void InsertChildBeforeUnsafe (AstNode nextSibling, AstNode child, Role role)
 		{
-			child.parent = this;
+			child.Parent = this;
 			child.SetRole(role);
-			child.nextSibling = nextSibling;
-			child.prevSibling = nextSibling.prevSibling;
+			child.NextSibling = nextSibling;
+			child.PrevSibling = nextSibling.PrevSibling;
 			
-			if (nextSibling.prevSibling != null) {
-				Debug.Assert (nextSibling.prevSibling.nextSibling == nextSibling);
-				nextSibling.prevSibling.nextSibling = child;
+			if (nextSibling.PrevSibling != null) {
+				Debug.Assert (nextSibling.PrevSibling.NextSibling == nextSibling);
+				nextSibling.PrevSibling.NextSibling = child;
 			} else {
-				Debug.Assert (firstChild == nextSibling);
-				firstChild = child;
+				Debug.Assert (FirstChild == nextSibling);
+				FirstChild = child;
 			}
-			nextSibling.prevSibling = child;
+			nextSibling.PrevSibling = child;
 		}
 		
 		public void InsertChildAfter<T> (AstNode prevSibling, T child, Role<T> role) where T : AstNode
 		{
-			InsertChildBefore ((prevSibling == null || prevSibling.IsNull) ? firstChild : prevSibling.nextSibling, child, role);
+			InsertChildBefore ((prevSibling == null || prevSibling.IsNull) ? FirstChild : prevSibling.NextSibling, child, role);
 		}
 		
 		/// <summary>
@@ -501,25 +453,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public void Remove ()
 		{
-			if (parent != null) {
+			if (Parent != null) {
 				ThrowIfFrozen();
-				if (prevSibling != null) {
-					Debug.Assert (prevSibling.nextSibling == this);
-					prevSibling.nextSibling = nextSibling;
+				if (PrevSibling != null) {
+					Debug.Assert (PrevSibling.NextSibling == this);
+					PrevSibling.NextSibling = NextSibling;
 				} else {
-					Debug.Assert (parent.firstChild == this);
-					parent.firstChild = nextSibling;
+					Debug.Assert (Parent.FirstChild == this);
+					Parent.FirstChild = NextSibling;
 				}
-				if (nextSibling != null) {
-					Debug.Assert (nextSibling.prevSibling == this);
-					nextSibling.prevSibling = prevSibling;
+				if (NextSibling != null) {
+					Debug.Assert (NextSibling.PrevSibling == this);
+					NextSibling.PrevSibling = PrevSibling;
 				} else {
-					Debug.Assert (parent.lastChild == this);
-					parent.lastChild = prevSibling;
+					Debug.Assert (Parent.LastChild == this);
+					Parent.LastChild = PrevSibling;
 				}
-				parent = null;
-				prevSibling = null;
-				nextSibling = null;
+				Parent = null;
+				PrevSibling = null;
+				NextSibling = null;
 			}
 		}
 		
@@ -534,7 +486,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (newNode == this)
 				return; // nothing to do...
-			if (parent == null) {
+			if (Parent == null) {
 				throw new InvalidOperationException (this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
 			}
 			ThrowIfFrozen();
@@ -543,7 +495,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (!this.Role.IsValid (newNode)) {
 				throw new ArgumentException (string.Format ("The new node '{0}' is not valid in the role {1}", newNode.GetType ().Name, this.Role.ToString ()), "newNode");
 			}
-			if (newNode.parent != null) {
+			if (newNode.Parent != null) {
 				// newNode is used within this tree?
 				if (newNode.Ancestors.Contains (this)) {
 					// e.g. "parenthesizedExpr.ReplaceWith(parenthesizedExpr.Expression);"
@@ -556,46 +508,46 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (newNode.IsFrozen)
 				throw new ArgumentException ("Cannot add a frozen node.", "newNode");
 			
-			newNode.parent = parent;
+			newNode.Parent = Parent;
 			newNode.SetRole(this.Role);
-			newNode.prevSibling = prevSibling;
-			newNode.nextSibling = nextSibling;
+			newNode.PrevSibling = PrevSibling;
+			newNode.NextSibling = NextSibling;
 
-			if (prevSibling != null) {
-				Debug.Assert (prevSibling.nextSibling == this);
-				prevSibling.nextSibling = newNode;
+			if (PrevSibling != null) {
+				Debug.Assert (PrevSibling.NextSibling == this);
+				PrevSibling.NextSibling = newNode;
 			} else {
-				Debug.Assert (parent.firstChild == this);
-				parent.firstChild = newNode;
+				Debug.Assert (Parent.FirstChild == this);
+				Parent.FirstChild = newNode;
 			}
-			if (nextSibling != null) {
-				Debug.Assert (nextSibling.prevSibling == this);
-				nextSibling.prevSibling = newNode;
+			if (NextSibling != null) {
+				Debug.Assert (NextSibling.PrevSibling == this);
+				NextSibling.PrevSibling = newNode;
 			} else {
-				Debug.Assert (parent.lastChild == this);
-				parent.lastChild = newNode;
+				Debug.Assert (Parent.LastChild == this);
+				Parent.LastChild = newNode;
 			}
-			parent = null;
-			prevSibling = null;
-			nextSibling = null;
+			Parent = null;
+			PrevSibling = null;
+			NextSibling = null;
 		}
 		
 		public AstNode ReplaceWith (Func<AstNode, AstNode> replaceFunction)
 		{
 			if (replaceFunction == null)
 				throw new ArgumentNullException ("replaceFunction");
-			if (parent == null) {
+			if (Parent == null) {
 				throw new InvalidOperationException (this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
 			}
-			AstNode oldParent = parent;
-			AstNode oldSuccessor = nextSibling;
-			Role oldRole = this.Role;
+			var oldParent = Parent;
+			var oldSuccessor = NextSibling;
+			var oldRole = this.Role;
 			Remove ();
-			AstNode replacement = replaceFunction (this);
-			if (oldSuccessor != null && oldSuccessor.parent != oldParent)
+			var replacement = replaceFunction (this);
+			if (oldSuccessor != null && oldSuccessor.Parent != oldParent)
 				throw new InvalidOperationException ("replace function changed nextSibling of node being replaced?");
 			if (!(replacement == null || replacement.IsNull)) {
-				if (replacement.parent != null)
+				if (replacement.Parent != null)
 					throw new InvalidOperationException ("replace function must return the root of a tree");
 				if (!oldRole.IsValid (replacement)) {
 					throw new InvalidOperationException (string.Format ("The new node '{0}' is not valid in the role {1}", replacement.GetType ().Name, oldRole.ToString ()));
@@ -615,17 +567,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <remarks>Annotations are copied over to the new nodes; and any annotations implementing ICloneable will be cloned.</remarks>
 		public AstNode Clone ()
 		{
-			AstNode copy = (AstNode)MemberwiseClone ();
+			var copy = (AstNode)MemberwiseClone ();
 			// First, reset the shallow pointer copies
-			copy.parent = null;
-			copy.firstChild = null;
-			copy.lastChild = null;
-			copy.prevSibling = null;
-			copy.nextSibling = null;
+			copy.Parent = null;
+			copy.FirstChild = null;
+			copy.LastChild = null;
+			copy.PrevSibling = null;
+			copy.NextSibling = null;
 			copy.flags &= ~frozenBit; // unfreeze the copy
 			
 			// Then perform a deep copy:
-			for (AstNode cur = firstChild; cur != null; cur = cur.nextSibling) {
+			for (var cur = FirstChild; cur != null; cur = cur.NextSibling) {
 				copy.AddChildUnsafe (cur.Clone (), cur.Role);
 			}
 			
@@ -656,24 +608,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		bool PatternMatching.INode.DoMatch (PatternMatching.INode other, PatternMatching.Match match)
 		{
-			AstNode o = other as AstNode;
+			var o = other as AstNode;
 			// try matching if other is null, or if other is an AstNode
 			return (other == null || o != null) && DoMatch (o, match);
 		}
 		
 		bool PatternMatching.INode.DoMatchCollection (Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 		{
-			AstNode o = pos as AstNode;
+			var o = pos as AstNode;
 			return (pos == null || o != null) && DoMatch (o, match);
 		}
 		
-		PatternMatching.INode PatternMatching.INode.NextSibling {
-			get { return nextSibling; }
-		}
-		
-		PatternMatching.INode PatternMatching.INode.FirstChild {
-			get { return firstChild; }
-		}
+		PatternMatching.INode PatternMatching.INode.NextSibling => NextSibling;
+
+		PatternMatching.INode PatternMatching.INode.FirstChild => FirstChild;
 
 		#endregion
 		
@@ -777,11 +725,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNode GetNodeAt (TextLocation location, Predicate<AstNode> pred = null)
 		{
 			AstNode result = null;
-			AstNode node = this;
+			var node = this;
 			while (node.LastChild != null) {
 				var child = node.LastChild;
 				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
+					child = child.PrevSibling;
 				if (child != null && location < child.EndLocation) {
 					if (pred == null || pred (child))
 						result = child;
@@ -812,11 +760,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T GetNodeAt<T> (TextLocation location) where T : AstNode
 		{
 			T result = null;
-			AstNode node = this;
+			var node = this;
 			while (node.LastChild != null) {
 				var child = node.LastChild;
 				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
+					child = child.PrevSibling;
 				if (child != null && location < child.EndLocation) {
 					if (child is T)
 						result = (T)child;
@@ -850,11 +798,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNode GetAdjacentNodeAt (TextLocation location, Predicate<AstNode> pred = null)
 		{
 			AstNode result = null;
-			AstNode node = this;
+			var node = this;
 			while (node.LastChild != null) {
 				var child = node.LastChild;
 				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
+					child = child.PrevSibling;
 				if (child != null && location <= child.EndLocation) {
 					if (pred == null || pred (child))
 						result = child;
@@ -885,11 +833,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T GetAdjacentNodeAt<T> (TextLocation location) where T : AstNode
 		{
 			T result = null;
-			AstNode node = this;
+			var node = this;
 			while (node.LastChild != null) {
 				var child = node.LastChild;
 				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
+					child = child.PrevSibling;
 				if (child != null && location <= child.EndLocation) {
 					if (child is T)
 						result = (T)child;
@@ -909,7 +857,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public AstNode GetNodeContaining(TextLocation startLocation, TextLocation endLocation)
 		{
-			for (AstNode child = firstChild; child != null; child = child.nextSibling) {
+			for (var child = FirstChild; child != null; child = child.NextSibling) {
 				if (child.StartLocation <= startLocation && endLocation <= child.EndLocation)
 					return child.GetNodeContaining(startLocation, endLocation);
 			}
@@ -929,7 +877,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<AstNode> GetNodesBetween (TextLocation start, TextLocation end)
 		{
-			AstNode node = this;
+			var node = this;
 			while (node != null) {
 				AstNode next;
 				if (start <= node.StartLocation && node.EndLocation <= end) {
@@ -1026,7 +974,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (IsNull)
 				return "Null";
-			string text = ToString();
+			var text = ToString();
 			text = text.TrimEnd().Replace("\t", "").Replace(Environment.NewLine, " ");
 			if (text.Length > 100)
 				return text.Substring(0, 97) + "...";

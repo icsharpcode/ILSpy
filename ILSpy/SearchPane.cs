@@ -42,10 +42,9 @@ namespace ICSharpCode.ILSpy
 		
 		public static SearchPane Instance {
 			get {
-				if (instance == null) {
-					App.Current.VerifyAccess();
-					instance = new SearchPane();
-				}
+				if (instance != null) return instance;
+				App.Current.VerifyAccess();
+				instance = new SearchPane();
 				return instance;
 			}
 		}
@@ -104,8 +103,8 @@ namespace ICSharpCode.ILSpy
 			                            new FrameworkPropertyMetadata(string.Empty, OnSearchTermChanged));
 		
 		public string SearchTerm {
-			get { return (string)GetValue(SearchTermProperty); }
-			set { SetValue(SearchTermProperty, value); }
+			get => (string)GetValue(SearchTermProperty);
+			set => SetValue(SearchTermProperty, value);
 		}
 		
 		static void OnSearchTermChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
@@ -127,7 +126,7 @@ namespace ICSharpCode.ILSpy
 				currentSearch = null;
 				listBox.ItemsSource = null;
 			} else {
-				MainWindow mainWindow = MainWindow.Instance;
+				var mainWindow = MainWindow.Instance;
 				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, (SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
 				listBox.ItemsSource = currentSearch.Results;
 				new Thread(currentSearch.Run).Start();
@@ -155,7 +154,7 @@ namespace ICSharpCode.ILSpy
 		
 		void JumpToSelectedItem()
 		{
-			SearchResult result = listBox.SelectedItem as SearchResult;
+			var result = listBox.SelectedItem as SearchResult;
 			if (result != null) {
 				MainWindow.Instance.JumpToReference(result.Member);
 			}
@@ -217,12 +216,12 @@ namespace ICSharpCode.ILSpy
 				try {
 					var searcher = GetSearchStrategy(searchMode, searchTerm);
 					foreach (var loadedAssembly in assemblies) {
-						ModuleDefinition module = loadedAssembly.GetModuleDefinitionOrNull();
+						var module = loadedAssembly.GetModuleDefinitionOrNull();
 						if (module == null)
 							continue;
-						CancellationToken cancellationToken = cts.Token;
+						var cancellationToken = cts.Token;
 
-						foreach (TypeDefinition type in module.Types) {
+						foreach (var type in module.Types) {
 							cancellationToken.ThrowIfCancellationRequested();
 							searcher.Search(type, language, AddResult);
 						}
@@ -254,7 +253,7 @@ namespace ICSharpCode.ILSpy
 				{
 					// Keep results collection sorted by "Fitness" by inserting result into correct place
 					// Inserts in the beginning shifts all elements, but there can be no more than 1000 items.
-					for (int i = 0; i < results.Count; i++)
+					for (var i = 0; i < results.Count; i++)
 					{
 						if (results[i].Fitness < result.Fitness)
 						{
@@ -267,7 +266,7 @@ namespace ICSharpCode.ILSpy
 				else
 				{
 					// Original Code
-					int index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
+					var index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
 					results.Insert(index < 0 ? ~index : index, result);
 				}
 			}

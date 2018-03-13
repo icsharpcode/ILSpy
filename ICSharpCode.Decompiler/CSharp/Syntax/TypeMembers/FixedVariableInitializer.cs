@@ -32,12 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class FixedVariableInitializer : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		public FixedVariableInitializer()
 		{
 		}
@@ -49,36 +45,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole (Roles.LBracket);
 
 		public Expression CountExpression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
+		public CSharpTokenNode RBracketToken => GetChildByRole (Roles.RBracket);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitFixedVariableInitializer (this);

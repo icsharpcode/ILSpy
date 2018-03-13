@@ -36,19 +36,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public AstNodeCollection(AstNode node, Role<T> role)
 		{
-			if (node == null)
-				throw new ArgumentNullException("node");
-			if (role == null)
-				throw new ArgumentNullException("role");
-			this.node = node;
-			this.role = role;
+			this.node = node ?? throw new ArgumentNullException("node");
+			this.role = role ?? throw new ArgumentNullException("role");
 		}
 		
 		public int Count {
 			get {
-				int count = 0;
-				uint roleIndex = role.Index;
-				for (AstNode cur = node.FirstChild; cur != null; cur = cur.NextSibling) {
+				var count = 0;
+				var roleIndex = role.Index;
+				for (var cur = node.FirstChild; cur != null; cur = cur.NextSibling) {
 					if (cur.RoleIndex == roleIndex)
 						count++;
 				}
@@ -66,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			// Evaluate 'nodes' first, since it might change when we add the new children
 			// Example: collection.AddRange(collection);
 			if (nodes != null) {
-				foreach (T node in nodes.ToList())
+				foreach (var node in nodes.ToList())
 					Add(node);
 			}
 		}
@@ -75,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			// Fast overload for arrays - we don't need to create a copy
 			if (nodes != null) {
-				foreach (T node in nodes)
+				foreach (var node in nodes)
 					Add(node);
 			}
 		}
@@ -88,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				nodes = nodes.ToList();
 			Clear();
 			if (nodes != null) {
-				foreach (T node in nodes)
+				foreach (var node in nodes)
 					Add(node);
 			}
 		}
@@ -97,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (targetCollection == null)
 				throw new ArgumentNullException("targetCollection");
-			foreach (T node in this) {
+			foreach (var node in this) {
 				node.Remove();
 				targetCollection.Add(node);
 			}
@@ -120,13 +116,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public void CopyTo(T[] array, int arrayIndex)
 		{
-			foreach (T item in this)
+			foreach (var item in this)
 				array[arrayIndex++] = item;
 		}
 		
 		public void Clear()
 		{
-			foreach (T item in this)
+			foreach (var item in this)
 				item.Remove();
 		}
 		
@@ -136,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T FirstOrNullObject(Func<T, bool> predicate = null)
 		{
-			foreach (T item in this)
+			foreach (var item in this)
 				if (predicate == null || predicate(item))
 					return item;
 			return role.NullObject;
@@ -148,22 +144,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T LastOrNullObject(Func<T, bool> predicate = null)
 		{
-			T result = role.NullObject;
-			foreach (T item in this)
+			var result = role.NullObject;
+			foreach (var item in this)
 				if (predicate == null || predicate(item))
 					result = item;
 			return result;
 		}
 		
-		bool ICollection<T>.IsReadOnly {
-			get { return false; }
-		}
-		
+		bool ICollection<T>.IsReadOnly => false;
+
 		public IEnumerator<T> GetEnumerator()
 		{
-			uint roleIndex = role.Index;
+			var roleIndex = role.Index;
 			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next) {
+			for (var cur = node.FirstChild; cur != null; cur = next) {
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.
 				// This allows removing/replacing nodes while iterating through the list.
@@ -186,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public override bool Equals(object obj)
 		{
-			AstNodeCollection<T> other = obj as AstNodeCollection<T>;
+			var other = obj as AstNodeCollection<T>;
 			if (other == null)
 				return false;
 			return this.node == other.node && this.role == other.role;
@@ -213,9 +207,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public void AcceptVisitor(IAstVisitor visitor)
 		{
-			uint roleIndex = role.Index;
+			var roleIndex = role.Index;
 			AstNode next;
-			for (AstNode cur = node.FirstChild; cur != null; cur = next) {
+			for (var cur = node.FirstChild; cur != null; cur = next) {
 				Debug.Assert(cur.Parent == node);
 				// Remember next before yielding cur.
 				// This allows removing/replacing nodes while iterating through the list.

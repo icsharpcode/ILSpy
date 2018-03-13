@@ -45,9 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Blocks in containers must have 'Nop' as a final instruction.
 		/// </remarks>
 		public ILInstruction FunctionPointer {
-			get {
-				return functionPointer;
-			}
+			get => functionPointer;
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref functionPointer, value, Arguments.Count);
@@ -95,7 +93,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("call.indirect ");
 			ReturnType.WriteTo(output);
 			output.Write('(');
-			bool first = true;
+			var first = true;
 			foreach (var (inst, type) in Arguments.Zip(ParameterTypes, (a,b) => (a,b))) {
 				if (first)
 					first = false;
@@ -149,11 +147,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 
 		bool EqualSignature(CallIndirect other)
 		{
@@ -161,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (ParameterTypes.Length != other.ParameterTypes.Length)
 				return false;
-			for (int i = 0; i < ParameterTypes.Length; i++) {
+			for (var i = 0; i < ParameterTypes.Length; i++) {
 				if (!ParameterTypes[i].Equals(other.ParameterTypes[i]))
 					return false;
 			}

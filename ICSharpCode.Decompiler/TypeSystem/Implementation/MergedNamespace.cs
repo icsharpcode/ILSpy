@@ -29,9 +29,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class MergedNamespace : INamespace
 	{
-		readonly string externAlias;
-		readonly ICompilation compilation;
-		readonly INamespace parentNamespace;
 		readonly INamespace[] namespaces;
 		Dictionary<string, INamespace> childNamespaces;
 		
@@ -43,13 +40,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="externAlias">The extern alias for this namespace.</param>
 		public MergedNamespace(ICompilation compilation, INamespace[] namespaces, string externAlias = null)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
-			if (namespaces == null)
-				throw new ArgumentNullException("namespaces");
-			this.compilation = compilation;
-			this.namespaces = namespaces;
-			this.externAlias = externAlias;
+			this.Compilation = compilation ?? throw new ArgumentNullException("compilation");
+			this.namespaces = namespaces ?? throw new ArgumentNullException("namespaces");
+			this.ExternAlias = externAlias;
 		}
 		
 		/// <summary>
@@ -59,54 +52,36 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="namespaces">The individual namespaces being merged.</param>
 		public MergedNamespace(INamespace parentNamespace, INamespace[] namespaces)
 		{
-			if (parentNamespace == null)
-				throw new ArgumentNullException("parentNamespace");
-			if (namespaces == null)
-				throw new ArgumentNullException("namespaces");
-			this.parentNamespace = parentNamespace;
-			this.namespaces = namespaces;
-			this.compilation = parentNamespace.Compilation;
-			this.externAlias = parentNamespace.ExternAlias;
+			this.ParentNamespace = parentNamespace ?? throw new ArgumentNullException("parentNamespace");
+			this.namespaces = namespaces ?? throw new ArgumentNullException("namespaces");
+			this.Compilation = parentNamespace.Compilation;
+			this.ExternAlias = parentNamespace.ExternAlias;
 		}
 		
-		public string ExternAlias {
-			get { return externAlias; }
-		}
-		
-		public string FullName {
-			get { return namespaces[0].FullName; }
-		}
-		
-		public string Name {
-			get { return namespaces[0].Name; }
-		}
-		
-		public INamespace ParentNamespace {
-			get { return parentNamespace; }
-		}
-		
+		public string ExternAlias { get; }
+
+		public string FullName => namespaces[0].FullName;
+
+		public string Name => namespaces[0].Name;
+
+		public INamespace ParentNamespace { get; }
+
 		public IEnumerable<ITypeDefinition> Types {
 			get {
 				return namespaces.SelectMany(ns => ns.Types);
 			}
 		}
 		
-		public SymbolKind SymbolKind {
-			get { return SymbolKind.Namespace; }
-		}
-		
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
-		
+		public SymbolKind SymbolKind => SymbolKind.Namespace;
+
+		public ICompilation Compilation { get; }
+
 		public IEnumerable<IAssembly> ContributingAssemblies {
 			get { return namespaces.SelectMany(ns => ns.ContributingAssemblies); }
 		}
 		
-		public IEnumerable<INamespace> ChildNamespaces {
-			get { return GetChildNamespaces().Values; }
-		}
-		
+		public IEnumerable<INamespace> ChildNamespaces => GetChildNamespaces().Values;
+
 		public INamespace GetChildNamespace(string name)
 		{
 			INamespace ns;
@@ -122,8 +97,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (result != null) {
 				return result;
 			} else {
-				result = new Dictionary<string, INamespace>(compilation.NameComparer);
-				foreach (var g in namespaces.SelectMany(ns => ns.ChildNamespaces).GroupBy(ns => ns.Name, compilation.NameComparer)) {
+				result = new Dictionary<string, INamespace>(Compilation.NameComparer);
+				foreach (var g in namespaces.SelectMany(ns => ns.ChildNamespaces).GroupBy(ns => ns.Name, Compilation.NameComparer)) {
 					result.Add(g.Key, new MergedNamespace(this, g.ToArray()));
 				}
 				return LazyInit.GetOrSet(ref this.childNamespaces, result);
@@ -134,7 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			ITypeDefinition anyTypeDef = null;
 			foreach (var ns in namespaces) {
-				ITypeDefinition typeDef = ns.GetTypeDefinition(name, typeParameterCount);
+				var typeDef = ns.GetTypeDefinition(name, typeParameterCount);
 				if (typeDef != null) {
 					if (typeDef.IsPublic) {
 						// Prefer accessible types over non-accessible types.
@@ -153,12 +128,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[MergedNamespace {0}{1} (from {2} assemblies)]",
-			                     externAlias != null ? externAlias + "::" : null, this.FullName, this.namespaces.Length);
+			                     ExternAlias != null ? ExternAlias + "::" : null, this.FullName, this.namespaces.Length);
 		}
 
 		public ISymbolReference ToReference()
 		{
-			return new MergedNamespaceReference(externAlias, FullName);
+			return new MergedNamespaceReference(ExternAlias, FullName);
 		}
 	}
 }

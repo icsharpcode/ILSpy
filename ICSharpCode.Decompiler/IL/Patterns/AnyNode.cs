@@ -28,12 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 			throw new NotSupportedException();
 		}
 
-		public override InstructionFlags DirectFlags
-		{
-			get {
-				throw new NotSupportedException();
-			}
-		}
+		public override InstructionFlags DirectFlags => throw new NotSupportedException();
 	}
 
 	partial class AnyNode : PatternInstruction

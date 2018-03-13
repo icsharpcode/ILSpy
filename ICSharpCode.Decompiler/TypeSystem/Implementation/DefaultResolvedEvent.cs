@@ -33,30 +33,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.unresolved = unresolved;
 		}
 		
-		public bool CanAdd {
-			get { return unresolved.CanAdd; }
-		}
-		
-		public bool CanRemove {
-			get { return unresolved.CanRemove; }
-		}
-		
-		public bool CanInvoke {
-			get { return unresolved.CanInvoke; }
-		}
-		
-		public IMethod AddAccessor {
-			get { return GetAccessor(ref addAccessor, unresolved.AddAccessor); }
-		}
-		
-		public IMethod RemoveAccessor {
-			get { return GetAccessor(ref removeAccessor, unresolved.RemoveAccessor); }
-		}
-		
-		public IMethod InvokeAccessor {
-			get { return GetAccessor(ref invokeAccessor, unresolved.InvokeAccessor); }
-		}
-		
+		public bool CanAdd => unresolved.CanAdd;
+
+		public bool CanRemove => unresolved.CanRemove;
+
+		public bool CanInvoke => unresolved.CanInvoke;
+
+		public IMethod AddAccessor => GetAccessor(ref addAccessor, unresolved.AddAccessor);
+
+		public IMethod RemoveAccessor => GetAccessor(ref removeAccessor, unresolved.RemoveAccessor);
+
+		public IMethod InvokeAccessor => GetAccessor(ref invokeAccessor, unresolved.InvokeAccessor);
+
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)

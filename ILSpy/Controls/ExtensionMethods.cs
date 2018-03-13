@@ -68,13 +68,9 @@ namespace ICSharpCode.ILSpy.Controls
 					return null;
 			}
 			
-			public object TargetObject {
-				get { return targetObject; }
-			}
-			
-			public object TargetProperty {
-				get { return targetProperty; }
-			}
+			public object TargetObject => targetObject;
+
+			public object TargetProperty => targetProperty;
 		}
 	}
 }

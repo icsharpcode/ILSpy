@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var (function, list) in dict.ToList()) {
 				// For each function, sort sequence points and fix overlaps+gaps
 				var newList = new List<SequencePoint>();
-				int pos = 0;
+				var pos = 0;
 				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset)) {
 					if (sequencePoint.Offset < pos) {
 						// overlapping sequence point?

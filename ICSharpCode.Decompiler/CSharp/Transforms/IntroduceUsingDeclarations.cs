@@ -46,13 +46,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 
 				// Now add using declarations for those namespaces:
-				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
+				foreach (var ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
 					Debug.Assert(context.RequiredNamespacesSuperset.Contains(ns), $"Should not insert using declaration for namespace that is missing from the superset: {ns}");
 					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 					// (always inserting at the start of the list)
-					string[] parts = ns.Split('.');
+					var parts = ns.Split('.');
 					AstType nsType = new SimpleType(parts[0]);
-					for (int i = 1; i < parts.Length; i++) {
+					for (var i = 1; i < parts.Length; i++) {
 						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
 					}
 					if (context.Settings.FullyQualifyAmbiguousTypeNames) {
@@ -107,8 +107,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
-				string oldNamespace = currentNamespace;
-				foreach (string ident in namespaceDeclaration.Identifiers) {
+				var oldNamespace = currentNamespace;
+				foreach (var ident in namespaceDeclaration.Identifiers) {
 					currentNamespace = NamespaceDeclaration.BuildQualifiedName(currentNamespace, ident);
 					DeclaredNamespaces.Add(currentNamespace);
 				}
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				this.context = new Stack<CSharpTypeResolveContext>();
 				if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
-					foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
+					foreach (var ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
 						usingScope = new UsingScope(usingScope, ns);
 					}
 				}
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var previousContext = context.Peek();
 				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
-				foreach (string ident in namespaceDeclaration.Identifiers) {
+				foreach (var ident in namespaceDeclaration.Identifiers) {
 					usingScope = new UsingScope(usingScope, ident);
 				}
 				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));

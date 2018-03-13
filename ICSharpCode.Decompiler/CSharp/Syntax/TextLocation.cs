@@ -54,41 +54,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public TextLocation(int line, int column)
 		{
-			this.line = line;
-			this.column = column;
+			this.Line = line;
+			this.Column = column;
 		}
-		
-		int column, line;
-		
+
 		/// <summary>
 		/// Gets the line number.
 		/// </summary>
-		public int Line {
-			get { return line; }
-		}
-		
+		public int Line { get; }
+
 		/// <summary>
 		/// Gets the column number.
 		/// </summary>
-		public int Column {
-			get { return column; }
-		}
-		
+		public int Column { get; }
+
 		/// <summary>
 		/// Gets whether the TextLocation instance is empty.
 		/// </summary>
-		public bool IsEmpty {
-			get {
-				return column < MinLine && line < MinColumn;
-			}
-		}
-		
+		public bool IsEmpty => Column < MinLine && Line < MinColumn;
+
 		/// <summary>
 		/// Gets a string representation for debugging purposes.
 		/// </summary>
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "(Line {1}, Col {0})", this.column, this.line);
+			return string.Format(CultureInfo.InvariantCulture, "(Line {1}, Col {0})", this.Column, this.Line);
 		}
 		
 		/// <summary>
@@ -96,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public override int GetHashCode()
 		{
-			return unchecked (191 * column.GetHashCode() ^ line.GetHashCode());
+			return unchecked (191 * Column.GetHashCode() ^ Line.GetHashCode());
 		}
 		
 		/// <summary>
@@ -121,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool operator ==(TextLocation left, TextLocation right)
 		{
-			return left.column == right.column && left.line == right.line;
+			return left.Column == right.Column && left.Line == right.Line;
 		}
 		
 		/// <summary>
@@ -129,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool operator !=(TextLocation left, TextLocation right)
 		{
-			return left.column != right.column || left.line != right.line;
+			return left.Column != right.Column || left.Line != right.Line;
 		}
 		
 		/// <summary>
@@ -137,10 +127,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool operator <(TextLocation left, TextLocation right)
 		{
-			if (left.line < right.line)
+			if (left.Line < right.Line)
 				return true;
-			else if (left.line == right.line)
-				return left.column < right.column;
+			else if (left.Line == right.Line)
+				return left.Column < right.Column;
 			else
 				return false;
 		}
@@ -150,10 +140,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static bool operator >(TextLocation left, TextLocation right)
 		{
-			if (left.line > right.line)
+			if (left.Line > right.Line)
 				return true;
-			else if (left.line == right.line)
-				return left.column > right.column;
+			else if (left.Line == right.Line)
+				return left.Column > right.Column;
 			else
 				return false;
 		}
@@ -203,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
 		{
 			if (value is string) {
-				string[] parts = ((string)value).Split(';', ',');
+				var parts = ((string)value).Split(';', ',');
 				if (parts.Length == 2) {
 					return new TextLocation(int.Parse(parts[0]), int.Parse(parts[1]));
 				}

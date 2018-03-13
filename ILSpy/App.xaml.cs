@@ -43,14 +43,10 @@ namespace ICSharpCode.ILSpy
 		
 		internal static CommandLineArguments CommandLineArguments;
 
-		static ExportProvider exportProvider;
-		
-		public static ExportProvider ExportProvider => exportProvider;
+		public static ExportProvider ExportProvider { get; private set; }
 
-		static IExportProviderFactory exportProviderFactory;
-		
-		public static IExportProviderFactory ExportProviderFactory => exportProviderFactory;
-		
+		public static IExportProviderFactory ExportProviderFactory { get; private set; }
+
 		internal static readonly IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
 		
 		internal class ExceptionData
@@ -65,7 +61,7 @@ namespace ICSharpCode.ILSpy
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
 			if ((App.CommandLineArguments.SingleInstance ?? true) && !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances) {
 				cmdArgs = cmdArgs.Select(FullyQualifyPath);
-				string message = string.Join(Environment.NewLine, cmdArgs);
+				var message = string.Join(Environment.NewLine, cmdArgs);
 				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate)) {
 					Environment.Exit(0);
 				}
@@ -102,8 +98,8 @@ namespace ICSharpCode.ILSpy
 				// If/When any part needs to import ICompositionService, this will be needed:
 				//   catalog.WithCompositionService();
 				var config = CompositionConfiguration.Create(catalog);
-				exportProviderFactory = config.CreateExportProviderFactory();
-				exportProvider = exportProviderFactory.CreateExportProvider();
+				ExportProviderFactory = config.CreateExportProviderFactory();
+				ExportProvider = ExportProviderFactory.CreateExportProvider();
 				// This throws exceptions for composition failures. Alternatively, the configuration's CompositionErrors property
 				// could be used to log the errors directly. Used at the end so that it does not prevent the export provider setup.
 				config.ThrowOnErrors();
@@ -117,7 +113,7 @@ namespace ICSharpCode.ILSpy
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
 			}
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
-			Languages.Initialize(exportProvider);
+			Languages.Initialize(ExportProvider);
 
 			EventManager.RegisterClassHandler(typeof(Window),
 			                                  Hyperlink.RequestNavigateEvent,
@@ -153,7 +149,7 @@ namespace ICSharpCode.ILSpy
 		
 		static void ShowErrorBox(object sender, UnhandledExceptionEventArgs e)
 		{
-			Exception ex = e.ExceptionObject as Exception;
+			var ex = e.ExceptionObject as Exception;
 			if (ex != null) {
 				UnhandledException(ex);
 			}
@@ -162,8 +158,8 @@ namespace ICSharpCode.ILSpy
 		static void UnhandledException(Exception exception)
 		{
 			Debug.WriteLine(exception.ToString());
-			for (Exception ex = exception; ex != null; ex = ex.InnerException) {
-				ReflectionTypeLoadException rtle = ex as ReflectionTypeLoadException;
+			for (var ex = exception; ex != null; ex = ex.InnerException) {
+				var rtle = ex as ReflectionTypeLoadException;
 				if (rtle != null && rtle.LoaderExceptions.Length > 0) {
 					exception = rtle.LoaderExceptions[0];
 					Debug.WriteLine(exception.ToString());
@@ -177,13 +173,13 @@ namespace ICSharpCode.ILSpy
 		#region Pass Command Line Arguments to previous instance
 		bool SendToPreviousInstance(string message, bool activate)
 		{
-			bool success = false;
+			var success = false;
 			NativeMethods.EnumWindows(
 				(hWnd, lParam) => {
-					string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
+					var windowTitle = NativeMethods.GetWindowText(hWnd, 100);
 					if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal)) {
 						Debug.WriteLine("Found {0:x4}: {1}", hWnd, windowTitle);
-						IntPtr result = Send(hWnd, message);
+						var result = Send(hWnd, message);
 						Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
 						if (result == (IntPtr)1) {
 							if (activate)
@@ -223,9 +219,9 @@ namespace ICSharpCode.ILSpy
 		void Window_RequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
 			if (e.Uri.Scheme == "resource") {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				using (Stream s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath)) {
-					using (StreamReader r = new StreamReader(s)) {
+				var output = new AvalonEditTextOutput();
+				using (var s = typeof(App).Assembly.GetManifestResourceStream(typeof(App), e.Uri.AbsolutePath)) {
+					using (var r = new StreamReader(s)) {
 						string line;
 						while ((line = r.ReadLine()) != null) {
 							output.Write(line);

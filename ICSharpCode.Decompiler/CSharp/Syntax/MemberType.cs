@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool isDoubleColon;
 		
 		public bool IsDoubleColon {
-			get { return isDoubleColon; }
+			get => isDoubleColon;
 			set {
 				ThrowIfFrozen();
 				isDoubleColon = value;
@@ -46,32 +46,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public AstType Target {
-			get { return GetChildByRole(TargetRole); }
-			set { SetChildByRole(TargetRole, value); }
+			get => GetChildByRole(TargetRole);
+			set => SetChildByRole(TargetRole, value);
 		}
 		
 		public string MemberName {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier MemberNameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
-		}
-		
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole (Roles.TypeArgument);
+
 		public MemberType ()
 		{
 		}
@@ -112,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberType o = other as MemberType;
+			var o = other as MemberType;
 			return o != null && this.IsDoubleColon == o.IsDoubleColon
 				&& MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match)
 				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
@@ -125,7 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			
 			TypeOrNamespaceReference t;
 			if (this.IsDoubleColon) {
-				SimpleType st = this.Target as SimpleType;
+				var st = this.Target as SimpleType;
 				if (st != null) {
 					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
 				} else {
@@ -140,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (var ta in this.TypeArguments) {
 				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
-			string memberName = interningProvider.Intern(this.MemberName);
+			var memberName = interningProvider.Intern(this.MemberName);
 			return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName, interningProvider.InternList(typeArguments), lookupMode));
 		}
 	}

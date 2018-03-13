@@ -36,27 +36,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class ExplicitInterfaceImplementationMemberReference : IMemberReference
 	{
-		ITypeReference typeReference;
 		IMemberReference interfaceMemberReference;
 		
 		public ExplicitInterfaceImplementationMemberReference(ITypeReference typeReference, IMemberReference interfaceMemberReference)
 		{
-			if (typeReference == null)
-				throw new ArgumentNullException("typeReference");
-			if (interfaceMemberReference == null)
-				throw new ArgumentNullException("interfaceMemberReference");
-			this.typeReference = typeReference;
-			this.interfaceMemberReference = interfaceMemberReference;
+			this.DeclaringTypeReference = typeReference ?? throw new ArgumentNullException("typeReference");
+			this.interfaceMemberReference = interfaceMemberReference ?? throw new ArgumentNullException("interfaceMemberReference");
 		}
 		
-		public ITypeReference DeclaringTypeReference {
-			get { return typeReference; }
-		}
-		
+		public ITypeReference DeclaringTypeReference { get; }
+
 		public IMember Resolve(ITypeResolveContext context)
 		{
-			IType declaringType = typeReference.Resolve(context);
-			IMember interfaceMember = interfaceMemberReference.Resolve(context.WithCurrentTypeDefinition(declaringType.GetDefinition()));
+			var declaringType = DeclaringTypeReference.Resolve(context);
+			var interfaceMember = interfaceMemberReference.Resolve(context.WithCurrentTypeDefinition(declaringType.GetDefinition()));
 			if (interfaceMember == null)
 				return null;
 			IEnumerable<IMember> members;

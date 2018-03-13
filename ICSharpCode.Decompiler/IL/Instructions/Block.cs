@@ -68,9 +68,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// but not in Block.Instructions!
 		/// </remarks>
 		public ILInstruction FinalInstruction {
-			get {
-				return finalInstruction;
-			}
+			get => finalInstruction;
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref finalInstruction, value, Instructions.Count);
@@ -93,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override ILInstruction Clone()
 		{
-			Block clone = new Block(Kind);
+			var clone = new Block(Kind);
 			clone.ILRange = this.ILRange;
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();
@@ -103,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			for (int i = 0; i < Instructions.Count - 1; i++) {
+			for (var i = 0; i < Instructions.Count - 1; i++) {
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
@@ -117,19 +115,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override StackType ResultType {
-			get {
-				return finalInstruction.ResultType;
-			}
-		}
-		
+		public override StackType ResultType => finalInstruction.ResultType;
+
 		/// <summary>
 		/// Gets the name of this block.
 		/// </summary>
-		public string Label
-		{
-			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start); }
-		}
+		public string Label => Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start);
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -194,11 +185,7 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
 
 		/// <summary>
 		/// Deletes this block from its parent container.

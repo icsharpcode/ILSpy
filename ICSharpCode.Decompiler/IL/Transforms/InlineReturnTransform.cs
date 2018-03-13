@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			foreach (var (container, b, br) in instructionsToModify) {
-				Block block = b;
+				var block = b;
 				// if there is only one branch to this return block, move it to the matching container.
 				// otherwise duplicate the return block.
 				if (block.IncomingEdgeCount == 1) {

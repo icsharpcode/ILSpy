@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether this function is async.
 		/// This flag gets set by the AsyncAwaitDecompiler.
 		/// </summary>
-		public bool IsAsync { get => AsyncReturnType != null; }
+		public bool IsAsync => AsyncReturnType != null;
 
 		/// <summary>
 		/// Return element type -- if the async method returns Task{T}, this field stores T.
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
-			for (int i = 0; i < Variables.Count; i++) {
+			for (var i = 0; i < Variables.Count; i++) {
 				Debug.Assert(Variables[i].Function == this);
 				Debug.Assert(Variables[i].IndexInFunction == i);
 			}
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 			output.WriteLine();
 
-			foreach (string warning in Warnings) {
+			foreach (var warning in Warnings) {
 				output.WriteLine("//" + warning);
 			}
 
@@ -186,12 +186,8 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
+
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
@@ -213,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
 		{
-			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
+			var index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
 			var variable = new ILVariable(kind, type, index);
 			if (string.IsNullOrWhiteSpace(name)) {
 				switch (kind) {
@@ -259,7 +255,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var ldloca in variable2.AddressInstructions.ToArray()) {
 				ldloca.Variable = variable1;
 			}
-			bool ok = Variables.Remove(variable2);
+			var ok = Variables.Remove(variable2);
 			Debug.Assert(ok);
 		}
 	}

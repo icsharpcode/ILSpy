@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static T CopyAnnotationsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
-			foreach (object annotation in other.Annotations) {
+			foreach (var annotation in other.Annotations) {
 				node.AddAnnotation(annotation);
 			}
 			return node;
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		public static Statement GetNextStatement(this Statement statement)
 		{
-			AstNode next = statement.NextSibling;
+			var next = statement.NextSibling;
 			while (next != null && !(next is Statement))
 				next = next.NextSibling;
 			return (Statement)next;

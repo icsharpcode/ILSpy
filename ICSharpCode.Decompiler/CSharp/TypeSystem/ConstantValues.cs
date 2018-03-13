@@ -39,12 +39,12 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			var csContext = (CSharpTypeResolveContext)context;
 			if (context.CurrentAssembly != context.Compilation.MainAssembly) {
 				// The constant needs to be resolved in a different compilation.
-				IProjectContent pc = context.CurrentAssembly as IProjectContent;
+				var pc = context.CurrentAssembly as IProjectContent;
 				if (pc != null) {
-					ICompilation nestedCompilation = context.Compilation.SolutionSnapshot.GetCompilation(pc);
+					var nestedCompilation = context.Compilation.SolutionSnapshot.GetCompilation(pc);
 					if (nestedCompilation != null) {
 						var nestedContext = MapToNestedCompilation(csContext, nestedCompilation);
-						ResolveResult rr = Resolve(new CSharpResolver(nestedContext));
+						var rr = Resolve(new CSharpResolver(nestedContext));
 						return MapToNewContext(rr, context);
 					}
 				}
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 					rr.Type.ToTypeReference().Resolve(newContext),
 					((TypeOfResolveResult)rr).ReferencedType.ToTypeReference().Resolve(newContext));
 			} else if (rr is ArrayCreateResolveResult) {
-				ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
+				var acrr = (ArrayCreateResolveResult)rr;
 				return new ArrayCreateResolveResult(
 					acrr.Type.ToTypeReference().Resolve(newContext),
 					MapToNewContext(acrr.SizeArguments, newContext),
@@ -91,8 +91,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			if (input == null)
 				return null;
-			ResolveResult[] output = new ResolveResult[input.Count];
-			for (int i = 0; i < output.Length; i++) {
+			var output = new ResolveResult[input.Count];
+			for (var i = 0; i < output.Length; i++) {
 				output[i] = MapToNewContext(input[i], newContext);
 			}
 			return output;
@@ -109,9 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ErrorConstantValue(ITypeReference type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 		}
 		
 		public ResolveResult Resolve(ITypeResolveContext context)
@@ -133,7 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			if (baseValue == null)
 				throw new ArgumentNullException("baseValue");
-			IncrementConstantValue icv = baseValue as IncrementConstantValue;
+			var icv = baseValue as IncrementConstantValue;
 			if (icv != null) {
 				this.baseValue = icv.baseValue;
 				this.incrementAmount = icv.incrementAmount + incrementAmount;
@@ -145,13 +143,13 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ResolveResult Resolve(ITypeResolveContext context)
 		{
-			ResolveResult rr = baseValue.Resolve(context);
+			var rr = baseValue.Resolve(context);
 			if (rr.IsCompileTimeConstant && rr.ConstantValue != null) {
-				object val = rr.ConstantValue;
-				TypeCode typeCode = Type.GetTypeCode(val.GetType());
+				var val = rr.ConstantValue;
+				var typeCode = Type.GetTypeCode(val.GetType());
 				if (typeCode >= TypeCode.SByte && typeCode <= TypeCode.UInt64) {
-					long intVal = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
-					object newVal = CSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
+					var intVal = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
+					var newVal = CSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
 					return new ConstantResolveResult(rr.Type, newVal);
 				}
 			}
@@ -167,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			IncrementConstantValue o = other as IncrementConstantValue;
+			var o = other as IncrementConstantValue;
 			return o != null && baseValue == o.baseValue && incrementAmount == o.incrementAmount;
 		}
 	}
@@ -178,59 +176,46 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public sealed class PrimitiveConstantExpression : ConstantExpression, ISupportsInterning
 	{
-		readonly ITypeReference type;
-		readonly object value;
-		
-		public ITypeReference Type {
-			get { return type; }
-		}
-		
-		public object Value {
-			get { return value; }
-		}
-		
+		public ITypeReference Type { get; }
+
+		public object Value { get; }
+
 		public PrimitiveConstantExpression(ITypeReference type, object value)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
-			this.value = value;
+			this.Type = type ?? throw new ArgumentNullException("type");
+			this.Value = value;
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			return new ConstantResolveResult(type.Resolve(resolver.CurrentTypeResolveContext), value);
+			return new ConstantResolveResult(Type.Resolve(resolver.CurrentTypeResolveContext), Value);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return type.GetHashCode() ^ (value != null ? value.GetHashCode() : 0);
+			return Type.GetHashCode() ^ (Value != null ? Value.GetHashCode() : 0);
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			PrimitiveConstantExpression scv = other as PrimitiveConstantExpression;
-			return scv != null && type == scv.type && value == scv.value;
+			var scv = other as PrimitiveConstantExpression;
+			return scv != null && Type == scv.Type && Value == scv.Value;
 		}
 	}
 	
 	[Serializable]
 	public sealed class TypeOfConstantExpression : ConstantExpression
 	{
-		readonly ITypeReference type;
-		
-		public ITypeReference Type {
-			get { return type; }
-		}
-		
+		public ITypeReference Type { get; }
+
 		public TypeOfConstantExpression(ITypeReference type)
 		{
-			this.type = type;
+			this.Type = type;
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			return resolver.ResolveTypeOf(type.Resolve(resolver.CurrentTypeResolveContext));
+			return resolver.ResolveTypeOf(Type.Resolve(resolver.CurrentTypeResolveContext));
 		}
 	}
 	
@@ -243,12 +228,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantCast(ITypeReference targetType, ConstantExpression expression, bool allowNullableConstants)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException("targetType");
-			if (expression == null)
-				throw new ArgumentNullException("expression");
-			this.targetType = targetType;
-			this.expression = expression;
+			this.targetType = targetType ?? throw new ArgumentNullException("targetType");
+			this.expression = expression ?? throw new ArgumentNullException("expression");
 			this.allowNullableConstants = allowNullableConstants;
 		}
 		
@@ -273,7 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ConstantCast cast = other as ConstantCast;
+			var cast = other as ConstantCast;
 			return cast != null
 				&& this.targetType == cast.targetType && this.expression == cast.expression && this.allowNullableConstants == cast.allowNullableConstants;
 		}
@@ -287,9 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantIdentifierReference(string identifier, IList<ITypeReference> typeArguments = null)
 		{
-			if (identifier == null)
-				throw new ArgumentNullException("identifier");
-			this.identifier = identifier;
+			this.identifier = identifier ?? throw new ArgumentNullException("identifier");
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
 		}
 		
@@ -309,23 +288,15 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantMemberReference(ITypeReference targetType, string memberName, IList<ITypeReference> typeArguments = null)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException("targetType");
-			if (memberName == null)
-				throw new ArgumentNullException("memberName");
-			this.targetType = targetType;
-			this.memberName = memberName;
+			this.targetType = targetType ?? throw new ArgumentNullException("targetType");
+			this.memberName = memberName ?? throw new ArgumentNullException("memberName");
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
 		}
 		
 		public ConstantMemberReference(ConstantExpression targetExpression, string memberName, IList<ITypeReference> typeArguments = null)
 		{
-			if (targetExpression == null)
-				throw new ArgumentNullException("targetExpression");
-			if (memberName == null)
-				throw new ArgumentNullException("memberName");
-			this.targetExpression = targetExpression;
-			this.memberName = memberName;
+			this.targetExpression = targetExpression ?? throw new ArgumentNullException("targetExpression");
+			this.memberName = memberName ?? throw new ArgumentNullException("memberName");
 			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
 		}
 		
@@ -348,10 +319,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantCheckedExpression(bool checkForOverflow, ConstantExpression expression)
 		{
-			if (expression == null)
-				throw new ArgumentNullException("expression");
 			this.checkForOverflow = checkForOverflow;
-			this.expression = expression;
+			this.expression = expression ?? throw new ArgumentNullException("expression");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
@@ -367,9 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantDefaultValue(ITypeReference type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
@@ -384,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ConstantDefaultValue o = other as ConstantDefaultValue;
+			var o = other as ConstantDefaultValue;
 			return o != null && this.type == o.type;
 		}
 	}
@@ -397,10 +364,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantUnaryOperator(UnaryOperatorType operatorType, ConstantExpression expression)
 		{
-			if (expression == null)
-				throw new ArgumentNullException("expression");
 			this.operatorType = operatorType;
-			this.expression = expression;
+			this.expression = expression ?? throw new ArgumentNullException("expression");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
@@ -418,19 +383,15 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantBinaryOperator(ConstantExpression left, BinaryOperatorType operatorType, ConstantExpression right)
 		{
-			if (left == null)
-				throw new ArgumentNullException("left");
-			if (right == null)
-				throw new ArgumentNullException("right");
-			this.left = left;
+			this.left = left ?? throw new ArgumentNullException("left");
 			this.operatorType = operatorType;
-			this.right = right;
+			this.right = right ?? throw new ArgumentNullException("right");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			ResolveResult lhs = left.Resolve(resolver);
-			ResolveResult rhs = right.Resolve(resolver);
+			var lhs = left.Resolve(resolver);
+			var rhs = right.Resolve(resolver);
 			return resolver.ResolveBinaryOperator(operatorType, lhs, rhs);
 		}
 	}
@@ -442,15 +403,9 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantConditionalOperator(ConstantExpression condition, ConstantExpression trueExpr, ConstantExpression falseExpr)
 		{
-			if (condition == null)
-				throw new ArgumentNullException("condition");
-			if (trueExpr == null)
-				throw new ArgumentNullException("trueExpr");
-			if (falseExpr == null)
-				throw new ArgumentNullException("falseExpr");
-			this.condition = condition;
-			this.trueExpr = trueExpr;
-			this.falseExpr = falseExpr;
+			this.condition = condition ?? throw new ArgumentNullException("condition");
+			this.trueExpr = trueExpr ?? throw new ArgumentNullException("trueExpr");
+			this.falseExpr = falseExpr ?? throw new ArgumentNullException("falseExpr");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
@@ -475,16 +430,14 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public ConstantArrayCreation(ITypeReference type, IList<ConstantExpression> arrayElements)
 		{
-			if (arrayElements == null)
-				throw new ArgumentNullException("arrayElements");
 			this.elementType = type;
-			this.arrayElements = arrayElements;
+			this.arrayElements = arrayElements ?? throw new ArgumentNullException("arrayElements");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			ResolveResult[] elements = new ResolveResult[arrayElements.Count];
-			for (int i = 0; i < elements.Length; i++) {
+			var elements = new ResolveResult[arrayElements.Count];
+			for (var i = 0; i < elements.Length; i++) {
 				elements[i] = arrayElements[i].Resolve(resolver);
 			}
 			int[] sizeArguments = { elements.Length };
@@ -506,9 +459,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public SizeOfConstantValue(ITypeReference type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)

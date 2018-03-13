@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Go through the children, and keep visiting a node as long as it changes.
 			// Because some transforms delete/replace nodes before and after the node being transformed, we rely
 			// on the transform's return value to know where we need to keep iterating.
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+			for (var child = node.FirstChild; child != null; child = child.NextSibling) {
 				AstNode oldChild;
 				do {
 					oldChild = child;
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement)
 		{
-			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
+			var simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
 			if (simplifiedIfElse != null)
 				return simplifiedIfElse;
 			return base.VisitIfElseStatement(ifElseStatement);
@@ -162,29 +162,29 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public ForStatement TransformFor(ExpressionStatement node)
 		{
-			Match m1 = variableAssignPattern.Match(node);
+			var m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
 			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
-			AstNode next = node.NextSibling;
+			var next = node.NextSibling;
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable)) {
 				node.Remove();
 				next.InsertChildAfter(null, node, ForStatement.InitializerRole);
 				return (ForStatement)next;
 			}
-			Match m3 = forPattern.Match(next);
+			var m3 = forPattern.Match(next);
 			if (!m3.Success) return null;
 			// ensure the variable in the for pattern is the same as in the declaration
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
-			WhileStatement loop = (WhileStatement)next;
+			var loop = (WhileStatement)next;
 			// Cannot convert to for loop, because that would change the semantics of the program.
 			// continue in while jumps to the condition block.
 			// Whereas continue in for jumps to the increment block.
 			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
 				return null;
 			node.Remove();
-			BlockStatement newBody = new BlockStatement();
-			foreach (Statement stmt in m3.Get<Statement>("statement"))
+			var newBody = new BlockStatement();
+			foreach (var stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
 			forStatement = new ForStatement();
 			forStatement.CopyAnnotationsFrom(loop);
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		Statement TransformForeachOnArray(ForStatement forStatement)
 		{
 			if (!context.Settings.ForEachStatement) return null;
-			Match m = forOnArrayPattern.Match(forStatement);
+			var m = forOnArrayPattern.Match(forStatement);
 			if (!m.Success) return null;
 			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
@@ -341,7 +341,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			index = null;
 			var m = variableAssignLowerBoundPattern.Match(statement);
 			if (!m.Success) return false;
-			if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value.ToString(), out int i) || indexNum != i)
+			if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value.ToString(), out var i) || indexNum != i)
 				return false;
 			index = m.Get<IdentifierExpression>("variable").Single().GetILVariable();
 			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
@@ -349,13 +349,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression foreachVariable, out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
 		{
-			int i = 0;
+			var i = 0;
 			foreachVariable = null;
 			statements = null;
 			lowerBounds = new IL.ILVariable[upperBounds.Length];
-			Statement stmt = firstInitializerStatement;
-			Match m = default(Match);
-			while (i < upperBounds.Length && MatchLowerBound(i, out IL.ILVariable indexVariable, collection, stmt)) {
+			var stmt = firstInitializerStatement;
+			var m = default(Match);
+			while (i < upperBounds.Length && MatchLowerBound(i, out var indexVariable, collection, stmt)) {
 				m = forOnArrayMultiDimPattern.Match(stmt.GetNextStatement());
 				if (!m.Success) return false;
 				var upperBound = m.Get<IdentifierExpression>("upperBoundVariable").Single().GetILVariable();
@@ -383,8 +383,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Statement stmt = expressionStatement;
 			IL.ILVariable collection = null;
 			IL.ILVariable[] upperBounds = null;
-			List<Statement> statementsToDelete = new List<Statement>();
-			int i = 0;
+			var statementsToDelete = new List<Statement>();
+			var i = 0;
 			// first we look for all the upper bound initializations
 			do {
 				m = variableAssignUpperBoundPattern.Match(stmt);
@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var nextCollection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
 				if (nextCollection != collection)
 					break;
-				if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value?.ToString() ?? "", out int index) || index != i)
+				if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value?.ToString() ?? "", out var index) || index != i)
 					break;
 				upperBounds[i] = m.Get<IdentifierExpression>("variable").Single().GetILVariable();
 				stmt = stmt.GetNextStatement();
@@ -486,24 +486,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
-			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
+			var cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
 			if (cecilProperty == null || cecilProperty.GetMethod == null)
 				return null;
 			if (!cecilProperty.GetMethod.IsCompilerGenerated() && (cecilProperty.SetMethod?.IsCompilerGenerated() == false))
 				return null;
 			IField fieldInfo = null;
-			Match m = automaticPropertyPattern.Match(property);
+			var m = automaticPropertyPattern.Match(property);
 			if (m.Success) {
 				fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 			} else {
-				Match m2 = automaticReadonlyPropertyPattern.Match(property);
+				var m2 = automaticReadonlyPropertyPattern.Match(property);
 				if (m2.Success) {
 					fieldInfo = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
 			}
 			if (fieldInfo == null)
 				return null;
-			FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
+			var field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
 			if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
 				RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
 				RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
@@ -521,7 +521,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
 		{
-			foreach (AttributeSection section in attributeSections) {
+			foreach (var section in attributeSections) {
 				foreach (var attr in section.Attributes) {
 					var tr = attr.Type.GetSymbol() as IType;
 					if (tr != null && attributesToRemove.Contains(tr.FullName)) {
@@ -748,7 +748,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
 				return null;
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
-			EventDeclaration ed = new EventDeclaration();
+			var ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes) {
 				attr.AttributeTarget = "method";
@@ -759,9 +759,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Variables.Add(new VariableInitializer(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 			
-			IEvent eventDef = ev.GetSymbol() as IEvent;
+			var eventDef = ev.GetSymbol() as IEvent;
 			if (eventDef != null) {
-				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
+				var field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
 					var attributes = field.Attributes
@@ -800,9 +800,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
 		{
-			Match m = destructorPattern.Match(methodDef);
+			var m = destructorPattern.Match(methodDef);
 			if (m.Success) {
-				DestructorDeclaration dd = new DestructorDeclaration();
+				var dd = new DestructorDeclaration();
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
@@ -833,7 +833,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		TryCatchStatement TransformTryCatchFinally(TryCatchStatement tryFinally)
 		{
 			if (tryCatchFinallyPattern.IsMatch(tryFinally)) {
-				TryCatchStatement tryCatch = (TryCatchStatement)tryFinally.TryBlock.Statements.Single();
+				var tryCatch = (TryCatchStatement)tryFinally.TryBlock.Statements.Single();
 				tryFinally.TryBlock = tryCatch.TryBlock.Detach();
 				tryCatch.CatchClauses.MoveTo(tryFinally.CatchClauses);
 			}
@@ -863,9 +863,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
 		{
-			Match m = cascadingIfElsePattern.Match(node);
+			var m = cascadingIfElsePattern.Match(node);
 			if (m.Success) {
-				IfElseStatement elseIf = m.Get<IfElseStatement>("nestedIfStatement").Single();
+				var elseIf = m.Get<IfElseStatement>("nestedIfStatement").Single();
 				node.FalseStatement = elseIf.Detach();
 			}
 			

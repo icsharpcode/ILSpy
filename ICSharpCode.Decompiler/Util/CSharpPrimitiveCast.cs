@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Util
 		static object CSharpPrimitiveCastChecked(TypeCode targetType, object input)
 		{
 			checked {
-				TypeCode sourceType = Type.GetTypeCode(input.GetType());
+				var sourceType = Type.GetTypeCode(input.GetType());
 				if (sourceType == targetType)
 					return input;
 				switch (targetType) {
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.Util
 		static object CSharpPrimitiveCastUnchecked(TypeCode targetType, object input)
 		{
 			unchecked {
-				TypeCode sourceType = Type.GetTypeCode(input.GetType());
+				var sourceType = Type.GetTypeCode(input.GetType());
 				if (sourceType == targetType)
 					return input;
 				switch (targetType) {

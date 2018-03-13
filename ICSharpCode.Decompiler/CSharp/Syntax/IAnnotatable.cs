@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		protected void CloneAnnotations()
 		{
-			ICloneable cloneable = annotations as ICloneable;
+			var cloneable = annotations as ICloneable;
 			if (cloneable != null)
 				annotations = cloneable.Clone();
 		}
@@ -118,10 +118,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			public object Clone ()
 			{
 				lock (this) {
-					AnnotationList copy = new AnnotationList (this.Count);
-					for (int i = 0; i < this.Count; i++) {
-						object obj = this [i];
-						ICloneable c = obj as ICloneable;
+					var copy = new AnnotationList (this.Count);
+					for (var i = 0; i < this.Count; i++) {
+						var obj = this [i];
+						var c = obj as ICloneable;
 						copy.Add (c != null ? c.Clone () : obj);
 					}
 					return copy;
@@ -134,11 +134,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (annotation == null)
 				throw new ArgumentNullException ("annotation");
 		retry: // Retry until successful
-			object oldAnnotation = Interlocked.CompareExchange (ref this.annotations, annotation, null);
+			var oldAnnotation = Interlocked.CompareExchange (ref this.annotations, annotation, null);
 			if (oldAnnotation == null) {
 				return; // we successfully added a single annotation
 			}
-			AnnotationList list = oldAnnotation as AnnotationList;
+			var list = oldAnnotation as AnnotationList;
 			if (list == null) {
 				// we need to transform the old annotation into a list
 				list = new AnnotationList (4);
@@ -159,8 +159,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual void RemoveAnnotations<T> () where T : class
 		{
 		retry: // Retry until successful
-			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
+			var oldAnnotations = this.annotations;
+			var list = oldAnnotations as AnnotationList;
 			if (list != null) {
 				lock (list)
 					list.RemoveAll (obj => obj is T);
@@ -177,8 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (type == null)
 				throw new ArgumentNullException ("type");
 		retry: // Retry until successful
-			object oldAnnotations = this.annotations;
-			AnnotationList list = oldAnnotations as AnnotationList;
+			var oldAnnotations = this.annotations;
+			var list = oldAnnotations as AnnotationList;
 			if (list != null) {
 				lock (list)
 					list.RemoveAll(type.IsInstanceOfType);
@@ -192,12 +192,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public T Annotation<T> () where T: class
 		{
-			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
+			var annotations = this.annotations;
+			var list = annotations as AnnotationList;
 			if (list != null) {
 				lock (list) {
-					foreach (object obj in list) {
-						T t = obj as T;
+					foreach (var obj in list) {
+						var t = obj as T;
 						if (t != null)
 							return t;
 					}
@@ -212,11 +212,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (type == null)
 				throw new ArgumentNullException ("type");
-			object annotations = this.annotations;
-			AnnotationList list = annotations as AnnotationList;
+			var annotations = this.annotations;
+			var list = annotations as AnnotationList;
 			if (list != null) {
 				lock (list) {
-					foreach (object obj in list) {
+					foreach (var obj in list) {
 						if (type.IsInstanceOfType (obj))
 							return obj;
 					}
@@ -233,8 +233,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public IEnumerable<object> Annotations {
 			get {
-				object annotations = this.annotations;
-				AnnotationList list = annotations as AnnotationList;
+				var annotations = this.annotations;
+				var list = annotations as AnnotationList;
 				if (list != null) {
 					lock (list) {
 						return list.ToArray ();

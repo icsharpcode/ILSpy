@@ -25,18 +25,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
-		public CSharpTokenNode OutKeywordToken {
-			get { return GetChildByRole(OutKeywordRole); }
-		}
+		public CSharpTokenNode OutKeywordToken => GetChildByRole(OutKeywordRole);
 
 		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get => GetChildByRole(Roles.Type);
+			set => SetChildByRole(Roles.Type, value);
 		}
 
 		public VariableInitializer Variable {
-			get { return GetChildByRole(Roles.Variable); }
-			set { SetChildByRole(Roles.Variable, value); }
+			get => GetChildByRole(Roles.Variable);
+			set => SetChildByRole(Roles.Variable, value);
 		}
 
 		public OutVarDeclarationExpression()

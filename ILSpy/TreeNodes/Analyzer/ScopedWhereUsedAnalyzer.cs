@@ -53,8 +53,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public ScopedWhereUsedAnalyzer(PropertyDefinition property, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
 			: this(property.DeclaringType, typeAnalysisFunction)
 		{
-			Accessibility getterAccessibility = (property.GetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.GetMethod);
-			Accessibility setterAccessibility = (property.SetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.SetMethod);
+			var getterAccessibility = (property.GetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.GetMethod);
+			var setterAccessibility = (property.SetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.SetMethod);
 			this.memberAccessibility = (Accessibility)Math.Max((int)getterAccessibility, (int)setterAccessibility);
 		}
 
@@ -143,7 +143,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		private void DetermineTypeAccessibility()
 		{
 			while (typeScope.IsNested) {
-				Accessibility accessibility = GetNestedTypeAccessibility(typeScope);
+				var accessibility = GetNestedTypeAccessibility(typeScope);
 				if ((int)typeAccessibility > (int)accessibility) {
 					typeAccessibility = accessibility;
 					if (typeAccessibility == Accessibility.Private)
@@ -217,7 +217,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<T> FindReferencesInAssembly(AssemblyDefinition asm, CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.MainModule.Types, t => t.NestedTypes)) {
+			foreach (var type in TreeTraversal.PreOrder(asm.MainModule.Types, t => t.NestedTypes)) {
 				ct.ThrowIfCancellationRequested();
 				foreach (var result in typeAnalysisFunction(type)) {
 					ct.ThrowIfCancellationRequested();
@@ -228,7 +228,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<T> FindReferencesInTypeScope(CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
+			foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
 				ct.ThrowIfCancellationRequested();
 				foreach (var result in typeAnalysisFunction(type)) {
 					ct.ThrowIfCancellationRequested();
@@ -239,7 +239,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<T> FindReferencesInEnclosingTypeScope(CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(typeScope.DeclaringType, t => t.NestedTypes)) {
+			foreach (var type in TreeTraversal.PreOrder(typeScope.DeclaringType, t => t.NestedTypes)) {
 				ct.ThrowIfCancellationRequested();
 				foreach (var result in typeAnalysisFunction(type)) {
 					ct.ThrowIfCancellationRequested();
@@ -252,13 +252,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			yield return asm;
 
-			string requiredAssemblyFullName = asm.FullName;
+			var requiredAssemblyFullName = asm.FullName;
 
-			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
+			var assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
 
 			foreach (var assembly in assemblies) {
 				ct.ThrowIfCancellationRequested();
-				bool found = false;
+				var found = false;
 				var module = assembly.GetModuleDefinitionOrNull();
 				if (module == null)
 					continue;
@@ -282,7 +282,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					.Where(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 				var friendAssemblies = new HashSet<string>();
 				foreach (var attribute in attributes) {
-					string assemblyName = attribute.ConstructorArguments[0].Value as string;
+					var assemblyName = attribute.ConstructorArguments[0].Value as string;
 					assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
 					friendAssemblies.Add(assemblyName);
 				}
@@ -306,7 +306,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private bool AssemblyReferencesScopeType(AssemblyDefinition asm)
 		{
-			bool hasRef = false;
+			var hasRef = false;
 			foreach (var typeref in asm.MainModule.GetTypeReferences()) {
 				if (typeref.Name == typeScope.Name && typeref.Namespace == typeScope.Namespace) {
 					hasRef = true;

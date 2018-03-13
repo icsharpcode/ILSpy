@@ -11,7 +11,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public override object VisitAttribute(CSharp.Syntax.Attribute attribute, object data)
 		{
 			var section = (AttributeSection)attribute.Parent;
-			SimpleType type = attribute.Type as SimpleType;
+			var type = attribute.Type as SimpleType;
 			if (section.AttributeTarget == "assembly" &&
 				(type.Identifier == "CompilationRelaxations" || type.Identifier == "RuntimeCompatibility" || type.Identifier == "SecurityPermission" || type.Identifier == "PermissionSet" || type.Identifier == "AssemblyVersion" || type.Identifier == "Debuggable"))
 			{

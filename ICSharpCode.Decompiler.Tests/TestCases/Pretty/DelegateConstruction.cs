@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public Action CaptureOfThisAndParameterInForEach(int a)
 			{
-				foreach (int item in Enumerable.Empty<int>()) {
+				foreach (var item in Enumerable.Empty<int>()) {
 					if (item > 0) {
 						return delegate {
 							this.CaptureOfThisAndParameter(item + a);
@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public Action CaptureOfThisAndParameterInForEachWithItemCopy(int a)
 			{
-				foreach (int item in Enumerable.Empty<int>()) {
-					int copyOfItem = item;
+				foreach (var item in Enumerable.Empty<int>()) {
+					var copyOfItem = item;
 					if (item > 0) {
 						return delegate {
 							this.CaptureOfThisAndParameter(item + a + copyOfItem);
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void LambdaInForLoop()
 			{
-				for (int i = 0; i < 100000; i++) {
+				for (var i = 0; i < 100000; i++) {
 					this.Bar(() => this.Foo());
 				}
 			}
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Bug951b()
 			{
-				int amount = this.Foo();
+				var amount = this.Foo();
 				this.DoAction(delegate {
 					if (amount < 0) {
 						amount = 0;
@@ -182,8 +182,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static List<Action<int>> AnonymousMethodStoreWithinLoop()
 		{
-			List<Action<int>> list = new List<Action<int>>();
-			for (int i = 0; i < 10; i++) {
+			var list = new List<Action<int>>();
+			for (var i = 0; i < 10; i++) {
 				int counter;
 				list.Add(delegate(int x) {
 					counter = x;
@@ -194,9 +194,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static List<Action<int>> AnonymousMethodStoreOutsideLoop()
 		{
-			List<Action<int>> list = new List<Action<int>>();
+			var list = new List<Action<int>>();
 			int counter;
-			for (int i = 0; i < 10; i++) {
+			for (var i = 0; i < 10; i++) {
 				list.Add(delegate(int x) {
 					counter = x;
 				});
@@ -218,12 +218,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// l is local in anonymous method,
 			// k is local in main method
 			// Ensure that the decompiler doesn't introduce name conflicts
-			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++) {
+			var list = new List<Action<int>>();
+			for (var k = 0; k < 10; k++) {
 				int i;
 				for (i = 0; i < 10; i++) {
 					list.Add(delegate(int j) {
-						for (int l = 0; l < i; l += j) {
+						for (var l = 0; l < i; l += j) {
 							Console.WriteLine();
 						}
 					});
@@ -233,8 +233,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NameConflict2(int j)
 		{
-			List<Action<int>> list = new List<Action<int>>();
-			for (int k = 0; k < 10; k++) {
+			var list = new List<Action<int>>();
+			for (var k = 0; k < 10; k++) {
 				list.Add(delegate(int i) {
 					Console.WriteLine(i);
 				});
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static Action<int> NameConflict3(int i)
 		{
 			return delegate(int j) {
-				for (int k = 0; k < j; k++) {
+				for (var k = 0; k < j; k++) {
 					Console.WriteLine(k);
 				}
 			};

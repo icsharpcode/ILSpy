@@ -36,38 +36,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole (UsingKeywordRole); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public CSharpTokenNode UsingToken => GetChildByRole (UsingKeywordRole);
+
 		public string Alias {
-			get {
-				return GetChildByRole (AliasRole).Name;
-			}
-			set {
-				SetChildByRole(AliasRole, Identifier.Create (value));
-			}
+			get => GetChildByRole (AliasRole).Name;
+			set => SetChildByRole(AliasRole, Identifier.Create (value));
 		}
 		
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
-		}
-		
+		public CSharpTokenNode AssignToken => GetChildByRole (Roles.Assign);
+
 		public AstType Import {
-			get { return GetChildByRole (ImportRole); }
-			set { SetChildByRole (ImportRole, value); }
+			get => GetChildByRole (ImportRole);
+			set => SetChildByRole (ImportRole, value);
 		}
 		
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
-		
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
+
 		public UsingAliasDeclaration ()
 		{
 		}
@@ -101,7 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingAliasDeclaration o = other as UsingAliasDeclaration;
+			var o = other as UsingAliasDeclaration;
 			return o != null && MatchString(this.Alias, o.Alias) && this.Import.DoMatch(o.Import, match);
 		}
 	}

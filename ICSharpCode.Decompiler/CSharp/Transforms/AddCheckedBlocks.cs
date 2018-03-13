@@ -180,10 +180,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			public override void Insert()
 			{
-				BlockStatement newBlock = new BlockStatement();
+				var newBlock = new BlockStatement();
 				// Move all statements except for the first
 				Statement next;
-				for (Statement stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next) {
+				for (var stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next) {
 					next = stmt.GetNextStatement();
 					newBlock.Add(stmt.Detach());
 				}
@@ -213,13 +213,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public void Run(AstNode node, TransformContext context)
 		{
-			BlockStatement block = node as BlockStatement;
+			var block = node as BlockStatement;
 			if (block == null) {
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+				for (var child = node.FirstChild; child != null; child = child.NextSibling) {
 					Run(child, context);
 				}
 			} else {
-				Result r = GetResultFromBlock(block);
+				var r = GetResultFromBlock(block);
 				if (r.NodesToInsertInUncheckedContext != null)
 					r.NodesToInsertInUncheckedContext.Insert();
 			}
@@ -229,21 +229,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// For a block, we are tracking 4 possibilities:
 			// a) context is checked, no unchecked block open
-			Cost costCheckedContext = new Cost(0, 0);
+			var costCheckedContext = new Cost(0, 0);
 			InsertedNode nodesCheckedContext = null;
 			// b) context is checked, an unchecked block is open
-			Cost costCheckedContextUncheckedBlockOpen = Cost.Infinite;
+			var costCheckedContextUncheckedBlockOpen = Cost.Infinite;
 			InsertedNode nodesCheckedContextUncheckedBlockOpen = null;
 			Statement uncheckedBlockStart = null;
 			// c) context is unchecked, no checked block open
-			Cost costUncheckedContext = new Cost(0, 0);
+			var costUncheckedContext = new Cost(0, 0);
 			InsertedNode nodesUncheckedContext = null;
 			// d) context is unchecked, a checked block is open
-			Cost costUncheckedContextCheckedBlockOpen = Cost.Infinite;
+			var costUncheckedContextCheckedBlockOpen = Cost.Infinite;
 			InsertedNode nodesUncheckedContextCheckedBlockOpen = null;
 			Statement checkedBlockStart = null;
 			
-			Statement statement = block.Statements.FirstOrDefault();
+			var statement = block.Statements.FirstOrDefault();
 			while (true) {
 				// Blocks can be closed 'for free'. We use '<=' so that blocks are closed as late as possible (goal 4b)
 				if (costCheckedContextUncheckedBlockOpen <= costCheckedContext) {
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					checkedBlockStart = statement;
 				}
 				// Now handle the statement
-				Result stmtResult = GetResult(statement);
+				var stmtResult = GetResult(statement);
 				
 				costCheckedContext += stmtResult.CostInCheckedContext;
 				nodesCheckedContext += stmtResult.NodesToInsertInCheckedContext;
@@ -299,17 +299,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (node is BlockStatement)
 				return GetResultFromBlock((BlockStatement)node);
-			Result result = new Result();
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
-				Result childResult = GetResult(child);
+			var result = new Result();
+			for (var child = node.FirstChild; child != null; child = child.NextSibling) {
+				var childResult = GetResult(child);
 				result.CostInCheckedContext += childResult.CostInCheckedContext;
 				result.NodesToInsertInCheckedContext += childResult.NodesToInsertInCheckedContext;
 				result.CostInUncheckedContext += childResult.CostInUncheckedContext;
 				result.NodesToInsertInUncheckedContext += childResult.NodesToInsertInUncheckedContext;
 			}
-			Expression expr = node as Expression;
+			var expr = node as Expression;
 			if (expr != null) {
-				CheckedUncheckedAnnotation annotation = expr.Annotation<CheckedUncheckedAnnotation>();
+				var annotation = expr.Annotation<CheckedUncheckedAnnotation>();
 				if (annotation != null) {
 					// If the annotation requires this node to be in a specific context, add a huge cost to the other context
 					// That huge cost gives us the option to ignore a required checked/unchecked expression when there wouldn't be any

@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		public virtual string FullName {
 			get {
-				string ns = this.Namespace;
-				string name = this.Name;
+				var ns = this.Namespace;
+				var name = this.Name;
 				if (string.IsNullOrEmpty(ns)) {
 					return name;
 				} else {
@@ -43,43 +43,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public abstract string Name { get; }
 		
-		public virtual string Namespace {
-			get { return string.Empty; }
-		}
-		
-		public virtual string ReflectionName {
-			get { return this.FullName; }
-		}
-		
+		public virtual string Namespace => string.Empty;
+
+		public virtual string ReflectionName => this.FullName;
+
 		public abstract bool? IsReferenceType  { get; }
 		
 		public abstract TypeKind Kind { get; }
 		
-		public virtual int TypeParameterCount {
-			get { return 0; }
-		}
+		public virtual int TypeParameterCount => 0;
 
-		public virtual IReadOnlyList<ITypeParameter> TypeParameters {
-			get { return EmptyList<ITypeParameter>.Instance; }
-		}
+		public virtual IReadOnlyList<ITypeParameter> TypeParameters => EmptyList<ITypeParameter>.Instance;
 
-		public virtual IReadOnlyList<IType> TypeArguments {
-			get { return EmptyList<IType>.Instance; }
-		}
+		public virtual IReadOnlyList<IType> TypeArguments => EmptyList<IType>.Instance;
 
-		public virtual IType DeclaringType {
-			get { return null; }
-		}
-		
+		public virtual IType DeclaringType => null;
+
 		public virtual ITypeDefinition GetDefinition()
 		{
 			return null;
 		}
 		
-		public virtual IEnumerable<IType> DirectBaseTypes {
-			get { return EmptyList<IType>.Instance; }
-		}
-		
+		public virtual IEnumerable<IType> DirectBaseTypes => EmptyList<IType>.Instance;
+
 		public abstract ITypeReference ToTypeReference();
 		
 		public virtual IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)

@@ -23,11 +23,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase1()
 		{
 			Console.WriteLine("TestCase1");
-			for (int i = 0; i < 10; i++)
+			for (var i = 0; i < 10; i++)
 				Console.WriteLine(i);
 			// i no longer declared
-			List<Action> actions = new List<Action>();
-			int max = 5;
+			var actions = new List<Action>();
+			var max = 5;
 			string line;
 			while (ReadLine(out line, ref max)) {
 				actions.Add(() => Console.WriteLine(line));
@@ -42,11 +42,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase2()
 		{
 			Console.WriteLine("TestCase2");
-			List<Action> actions = new List<Action>();
-			int max = 5;
+			var actions = new List<Action>();
+			var max = 5;
 			string line;
 			while (ReadLine(out line, ref max)) {
-				string capture = line;
+				var capture = line;
 				actions.Add(() => Console.WriteLine(capture));
 			}
 			// line still declared
@@ -59,8 +59,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase3()
 		{
 			Console.WriteLine("TestCase3");
-			List<Action> actions = new List<Action>();
-			int max = 5;
+			var actions = new List<Action>();
+			var max = 5;
 			string line, capture;
 			while (ReadLine(out line, ref max)) {
 				capture = line;
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestCase4(string capture)
 		{
 			Console.WriteLine("TestCase4");
-			List<Action> actions = new List<Action>();
+			var actions = new List<Action>();
 			actions.Add(() => Console.WriteLine(capture));
 			Console.WriteLine("----");
 			foreach (var action in actions)
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			var functions = new List<Func<int>>();
 			using (var e = list.GetEnumerator()) {
 				while (e.MoveNext()) {
-					int val = e.Current;
+					var val = e.Current;
 					functions.Add(() => val);
 				}
 			}
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			int val; // declared outside loop
 					 // The decompiler cannot convert this to a foreach-loop without
 					 // changing the lambda capture semantics.
-			for (int i = 0; i < array.Length; ++i) {
+			for (var i = 0; i < array.Length; ++i) {
 				val = array[i];
 				functions.Add(() => val);
 			}
@@ -149,8 +149,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			int val; // declared outside loop
 					 // The decompiler can convert this to a foreach-loop, but the 'val'
 					 // variable must be declared outside.
-			for (int i = 0; i < array.Length; ++i) {
-				int element = array[i];
+			for (var i = 0; i < array.Length; ++i) {
+				var element = array[i];
 				val = element * 2;
 				functions.Add(() => val);
 			}
@@ -164,9 +164,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("InsideLoopOverArray2:");
 			var functions = new List<Func<int>>();
 			var array = new int[] { 1, 2, 3 };
-			for (int i = 0; i < array.Length; ++i) {
-				int element = array[i];
-				int val = element * 2;
+			for (var i = 0; i < array.Length; ++i) {
+				var element = array[i];
+				var val = element * 2;
 				functions.Add(() => val);
 			}
 			foreach (var func in functions) {
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("NotDoWhileDueToVariableInsideLoop:");
 			var functions = new List<Func<int>>();
 			while (true) {
-				int v = GetVal();
+				var v = GetVal();
 				functions.Add(() => v);
 				if (v == 0)
 					break;

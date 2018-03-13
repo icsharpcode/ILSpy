@@ -42,15 +42,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.threading = new ThreadingSupport();
 		}
 
-		public override object Text
-		{
-			get { return "Derived Types"; }
-		}
+		public override object Text => "Derived Types";
 
-		public override object Icon
-		{
-			get { return Images.SubTypes; }
-		}
+		public override object Icon => Images.SubTypes;
 
 		protected override void LoadChildren()
 		{
@@ -66,8 +60,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, ModuleDefinition[] assemblies, CancellationToken cancellationToken)
 		{
-			foreach (ModuleDefinition module in assemblies) {
-				foreach (TypeDefinition td in TreeTraversal.PreOrder(module.Types, t => t.NestedTypes)) {
+			foreach (var module in assemblies) {
+				foreach (var td in TreeTraversal.PreOrder(module.Types, t => t.NestedTypes)) {
 					cancellationToken.ThrowIfCancellationRequested();
 					if (type.IsInterface && td.HasInterfaces) {
 						foreach (var iface in td.Interfaces) {

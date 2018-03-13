@@ -32,17 +32,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedInterfaceEventImplementedByTreeNode(EventDefinition analyzedEvent)
 		{
-			if (analyzedEvent == null)
-				throw new ArgumentNullException(nameof(analyzedEvent));
-
-			this.analyzedEvent = analyzedEvent;
+			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 			this.analyzedMethod = this.analyzedEvent.AddMethod ?? this.analyzedEvent.RemoveMethod;
 		}
 
-		public override object Text
-		{
-			get { return "Implemented By"; }
-		}
+		public override object Text => "Implemented By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -56,12 +50,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (!type.HasInterfaces)
 				yield break;
-			TypeReference implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
+			var implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
 			if (implementedInterfaceRef == null)
 				yield break;
 
-			foreach (EventDefinition ev in type.Events.Where(e => e.Name == analyzedEvent.Name)) {
-				MethodDefinition accessor = ev.AddMethod ?? ev.RemoveMethod;
+			foreach (var ev in type.Events.Where(e => e.Name == analyzedEvent.Name)) {
+				var accessor = ev.AddMethod ?? ev.RemoveMethod;
 				if (TypesHierarchyHelpers.MatchInterfaceMethod(accessor, analyzedMethod, implementedInterfaceRef)) {
 					var node = new AnalyzedEventTreeNode(ev);
 					node.Language = this.Language;
@@ -70,8 +64,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				yield break;
 			}
 
-			foreach (EventDefinition ev in type.Events.Where(e => e.Name.EndsWith(analyzedEvent.Name))) {
-				MethodDefinition accessor = ev.AddMethod ?? ev.RemoveMethod;
+			foreach (var ev in type.Events.Where(e => e.Name.EndsWith(analyzedEvent.Name))) {
+				var accessor = ev.AddMethod ?? ev.RemoveMethod;
 				if (accessor.HasOverrides && accessor.Overrides.Any(m => m.Resolve() == analyzedMethod)) {
 					var node = new AnalyzedEventTreeNode(ev);
 					node.Language = this.Language;

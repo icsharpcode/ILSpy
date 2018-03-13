@@ -34,10 +34,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Array = array;
 		}
 		
-		public override StackType ResultType {
-			get { return resultType; }
-		}
-		
+		public override StackType ResultType => resultType;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);

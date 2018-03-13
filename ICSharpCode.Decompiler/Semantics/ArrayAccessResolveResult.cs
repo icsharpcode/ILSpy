@@ -33,12 +33,8 @@ namespace ICSharpCode.Decompiler.Semantics
 		
 		public ArrayAccessResolveResult(IType elementType, ResolveResult array, IList<ResolveResult> indexes) : base(elementType)
 		{
-			if (array == null)
-				throw new ArgumentNullException("array");
-			if (indexes == null)
-				throw new ArgumentNullException("indexes");
-			this.Array = array;
-			this.Indexes = indexes;
+			this.Array = array ?? throw new ArgumentNullException("array");
+			this.Indexes = indexes ?? throw new ArgumentNullException("indexes");
 		}
 		
 		public override IEnumerable<ResolveResult> GetChildResults()

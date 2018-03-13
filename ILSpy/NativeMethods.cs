@@ -35,11 +35,8 @@ namespace ICSharpCode.ILSpy
 		
 		public static string GetWindowText(IntPtr hWnd, int maxLength)
 		{
-			StringBuilder b = new StringBuilder(maxLength + 1);
-			if (GetWindowText(hWnd, b, b.Capacity) != 0)
-				return b.ToString();
-			else
-				return string.Empty;
+			var b = new StringBuilder(maxLength + 1);
+			return GetWindowText(hWnd, b, b.Capacity) != 0 ? b.ToString() : string.Empty;
 		}
 		
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]

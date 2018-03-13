@@ -34,14 +34,12 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public CallbackOnDispose(Action action)
 		{
-			if (action == null)
-				throw new ArgumentNullException("action");
-			this.action = action;
+			this.action = action ?? throw new ArgumentNullException("action");
 		}
 		
 		public void Dispose()
 		{
-			Action a = Interlocked.Exchange(ref action, null);
+			var a = Interlocked.Exchange(ref action, null);
 			if (a != null) {
 				a();
 			}

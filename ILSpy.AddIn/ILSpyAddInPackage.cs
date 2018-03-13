@@ -63,28 +63,28 @@ namespace ICSharpCode.ILSpy.AddIn
 			base.Initialize();
 
 			// Add our command handlers for menu (commands must exist in the .vsct file)
-			OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+			var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 			if (null != mcs) {
 				// Create the command for the References context menu.
-				CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenReferenceInILSpy);
-				OleMenuCommand menuItem = new OleMenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
+				var menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenReferenceInILSpy);
+				var menuItem = new OleMenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
 				menuItem.BeforeQueryStatus += OpenReferenceInILSpyCallback_BeforeQueryStatus;
 				mcs.AddCommand(menuItem);
 
 				// Create the command for the Project context menu, to open the output assembly.
-				CommandID menuCommandID2 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenProjectOutputInILSpy);
-				MenuCommand menuItem2 = new MenuCommand(OpenProjectOutputInILSpyCallback, menuCommandID2);
+				var menuCommandID2 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenProjectOutputInILSpy);
+				var menuItem2 = new MenuCommand(OpenProjectOutputInILSpyCallback, menuCommandID2);
 				mcs.AddCommand(menuItem2);
 
 				// Create the command for the code window context menu.
-				CommandID menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenCodeItemInILSpy);
-				OleMenuCommand menuItem3 = new OleMenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
+				var menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenCodeItemInILSpy);
+				var menuItem3 = new OleMenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
 				menuItem3.BeforeQueryStatus += OpenCodeItemInILSpyCallback_BeforeQueryStatus;
 				mcs.AddCommand(menuItem3);
 
 				// Create the command for the Tools menu item.
-				CommandID menuCommandID4 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
-				MenuCommand menuItem4 = new MenuCommand(OpenILSpyCallback, menuCommandID4);
+				var menuCommandID4 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
+				var menuItem4 = new MenuCommand(OpenILSpyCallback, menuCommandID4);
 				mcs.AddCommand(menuItem4);
 			}
 		}
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private void OpenReferenceInILSpyCallback_BeforeQueryStatus(object sender, EventArgs e)
 		{
-			OleMenuCommand command = (OleMenuCommand)sender;
+			var command = (OleMenuCommand)sender;
 			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
 			var items = (object[])explorer.SelectedItems;
 			if (!items.OfType<EnvDTE.UIHierarchyItem>().Any()) {
@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			internal static ReferenceInfo FromFullName(string fullName)
 			{
-				string[] parts = fullName.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+				var parts = fullName.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
 				return new ReferenceInfo {
 					Name = parts[0],
 					Version = new Version(parts[1].Substring("Version=".Length)),
@@ -150,7 +150,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		private ReferenceInfo GetReference(object o)
 		{
 			var projectItem = (EnvDTE.ProjectItem)o;
-			string referenceType = o.GetType().FullName;
+			var referenceType = o.GetType().FullName;
 			string[] values;
 
 			switch (referenceType) {
@@ -196,11 +196,11 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private string[] GetProperties(EnvDTE.Properties properties, params string[] names)
 		{
-			string[] values = new string[names.Length];
+			var values = new string[names.Length];
 			foreach (dynamic p in properties) {
 				try {
 					ShowMessage("Name: " + p.Name + ", Value: " + p.Value);
-					for (int i = 0; i < names.Length; i++) {
+					for (var i = 0; i < names.Length; i++) {
 						if (names[i] == p.Name) {
 							values[i] = p.Value;
 							break;
@@ -252,7 +252,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			var items = (object[])explorer.SelectedItems;
 
 			foreach (EnvDTE.UIHierarchyItem item in items) {
-				EnvDTE.Project project = (EnvDTE.Project)item.Object;
+				var project = (EnvDTE.Project)item.Object;
 				OpenProjectInILSpy(project);
 			}
 		}
@@ -260,7 +260,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		// Called when the menu is popped, determines whether "Open code in ILSpy" option is available.
 		private void OpenCodeItemInILSpyCallback_BeforeQueryStatus(object sender, EventArgs e)
 		{
-			OleMenuCommand menuItem = sender as OleMenuCommand;
+			var menuItem = sender as OleMenuCommand;
 			if (menuItem != null) {
 				var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
 				menuItem.Enabled =
@@ -313,7 +313,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private void OpenCodeItemInILSpy(EnvDTE.CodeElement codeElement)
 		{
-			string codeElementKey = CodeElementXmlDocKeyProvider.GetKey(codeElement);
+			var codeElementKey = CodeElementXmlDocKeyProvider.GetKey(codeElement);
 			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, "/navigateTo:" + codeElementKey);
 		}
 
@@ -351,13 +351,13 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private void OpenAssembliesInILSpy(IEnumerable<string> assemblyFileNames, params string[] arguments)
 		{
-			foreach (string assemblyFileName in assemblyFileNames) {
+			foreach (var assemblyFileName in assemblyFileNames) {
 				if (!File.Exists(assemblyFileName)) {
 					ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
 				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileNames.ToArray());
+			var commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileNames.ToArray());
 			if (arguments != null) {
 				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
 			}
@@ -367,8 +367,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private void ShowMessage(string format, params object[] items)
 		{
-			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-			Guid clsid = Guid.Empty;
+			var uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+			var clsid = Guid.Empty;
 			int result;
 			Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(
 				uiShell.ShowMessageBox(

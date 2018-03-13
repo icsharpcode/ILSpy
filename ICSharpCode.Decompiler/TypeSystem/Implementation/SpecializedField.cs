@@ -32,28 +32,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			AddSubstitution(substitution);
 		}
 		
-		public bool IsReadOnly {
-			get { return fieldDefinition.IsReadOnly; }
-		}
-		
-		public bool IsVolatile {
-			get { return fieldDefinition.IsVolatile; }
-		}
-		
-		IType IVariable.Type {
-			get { return this.ReturnType; }
-		}
-		
-		public bool IsConst {
-			get { return fieldDefinition.IsConst; }
-		}
+		public bool IsReadOnly => fieldDefinition.IsReadOnly;
 
-		public bool IsFixed {
-			get { return fieldDefinition.IsFixed; }
-		}
+		public bool IsVolatile => fieldDefinition.IsVolatile;
 
-		public object ConstantValue {
-			get { return fieldDefinition.ConstantValue; }
-		}
+		IType IVariable.Type => this.ReturnType;
+
+		public bool IsConst => fieldDefinition.IsConst;
+
+		public bool IsFixed => fieldDefinition.IsFixed;
+
+		public object ConstantValue => fieldDefinition.ConstantValue;
 	}
 }

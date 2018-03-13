@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void LocalVariable()
 		{
-			bool a = true;
+			var a = true;
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => a);
 		}
 
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void IndexerAccess()
 		{
-			Dictionary<string, int> dict = Enumerable.Range(1, 20).ToDictionary((int n) => n.ToString());
+			var dict = Enumerable.Range(1, 20).ToDictionary((int n) => n.ToString());
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => dict["3"] == 3);
 		}
 
@@ -204,8 +204,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void StringsImplicitCast()
 		{
-			int i = 1;
-			string x = "X";
+			var i = 1;
+			var x = "X";
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 		}
 
@@ -270,7 +270,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			2012
 		}, DateTime.IsLeapYear));
 
-			HashSet<int> set = new HashSet<int>();
+			var set = new HashSet<int>();
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[4] {
 			2000,
 			2004,
@@ -372,8 +372,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void NotOperator()
 		{
-			bool x = true;
-			int y = 3;
+			var x = true;
+			var y = 3;
 			byte z = 42;
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~z == 0);
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~y == 0);
@@ -382,7 +382,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ObjectInitializers()
 		{
-			XmlReaderSettings s = new XmlReaderSettings {
+			var s = new XmlReaderSettings {
 				CloseInput = false,
 				CheckCharacters = false
 			};
@@ -448,8 +448,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Strings()
 		{
-			int i = 1;
-			string x = "X";
+			var i = 1;
+			var x = "X";
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 		}
 
@@ -599,7 +599,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Capturing()
 		{
-			int captured = 5;
+			var captured = 5;
 			ExpressionTrees.Test((Func<int>)(() => captured), (Expression<Func<int>>)(() => captured));
 		}
 

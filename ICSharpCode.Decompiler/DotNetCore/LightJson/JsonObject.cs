@@ -28,11 +28,7 @@ namespace LightJson
 		/// Gets the number of properties in this JsonObject.
 		/// </summary>
 		/// <value>The number of properties in this JsonObject.</value>
-		public int Count {
-			get {
-				return this.properties.Count;
-			}
-		}
+		public int Count => this.properties.Count;
 
 		/// <summary>
 		/// Gets or sets the property with the given key.
@@ -52,9 +48,7 @@ namespace LightJson
 				}
 			}
 
-			set {
-				this.properties[key] = value;
-			}
+			set => this.properties[key] = value;
 		}
 
 		/// <summary>
@@ -230,11 +224,7 @@ namespace LightJson
 				}
 
 				[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-				private JsonValueType Type {
-					get {
-						return this.value.Type;
-					}
-				}
+				private JsonValueType Type => this.value.Type;
 			}
 		}
 	}

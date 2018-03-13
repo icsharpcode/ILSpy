@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler
 			
 			if (decompilationContext.CurrentTypeDefinition != null && decompilationContext.CurrentTypeDefinition.TypeParameterCount > 0)
 				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
-			IMethod method = decompilationContext.CurrentMember as IMethod;
+			var method = decompilationContext.CurrentMember as IMethod;
 			if (method != null && method.TypeParameters.Count > 0)
 				methodTypeParameters = method.TypeArguments;
 			if (typeSystem is SpecializingDecompilerTypeSystem)
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler
 		public static bool IsCompilerGenerated(this IEntity entity)
 		{
 			if (entity != null) {
-				foreach (IAttribute a in entity.Attributes) {
+				foreach (var a in entity.Attributes) {
 					if (a.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
 						return true;
 				}
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler
 			if (type == null)
 				return false;
 			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
-				ITypeDefinition td = type.GetDefinition();
+				var td = type.GetDefinition();
 				return td != null && td.IsCompilerGenerated();
 			}
 			return false;

@@ -44,8 +44,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			Debug.WriteLine(xmlDocumentation);
 			try {
-				XmlTextReader r = new XmlTextReader(new StringReader("<docroot>" + xmlDocumentation + "</docroot>"));
-				r.XmlResolver = null;
+				var r = new XmlTextReader(new StringReader("<docroot>" + xmlDocumentation + "</docroot>")) {XmlResolver = null};
 				AddXmlDocumentation(r);
 			} catch (XmlException) {
 			}
@@ -57,7 +56,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			while (xml.Read()) {
 				if (xml.NodeType == XmlNodeType.Element) {
-					string elname = xml.Name.ToLowerInvariant();
+					var elname = xml.Name.ToLowerInvariant();
 					switch (elname) {
 						case "filterpriority":
 						case "remarks":

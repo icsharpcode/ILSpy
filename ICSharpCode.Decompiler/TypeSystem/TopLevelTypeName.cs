@@ -29,54 +29,42 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public struct TopLevelTypeName : IEquatable<TopLevelTypeName>
 	{
-		readonly string namespaceName;
-		readonly string name;
 		readonly int typeParameterCount;
 		
 		public TopLevelTypeName(string namespaceName, string name, int typeParameterCount = 0)
 		{
-			if (namespaceName == null)
-				throw new ArgumentNullException("namespaceName");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.namespaceName = namespaceName;
-			this.name = name;
+			this.Namespace = namespaceName ?? throw new ArgumentNullException("namespaceName");
+			this.Name = name ?? throw new ArgumentNullException("name");
 			this.typeParameterCount = typeParameterCount;
 		}
 		
 		public TopLevelTypeName(string reflectionName)
 		{
-			int pos = reflectionName.LastIndexOf('.');
+			var pos = reflectionName.LastIndexOf('.');
 			if (pos < 0) {
-				namespaceName = string.Empty;
-				name = reflectionName;
+				Namespace = string.Empty;
+				Name = reflectionName;
 			} else {
-				namespaceName = reflectionName.Substring(0, pos);
-				name = reflectionName.Substring(pos + 1);
+				Namespace = reflectionName.Substring(0, pos);
+				Name = reflectionName.Substring(pos + 1);
 			}
-			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out typeParameterCount);
+			Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Name, out typeParameterCount);
 		}
 		
-		public string Namespace {
-			get { return namespaceName; }
-		}
-		
-		public string Name {
-			get { return name; }
-		}
-		
-		public int TypeParameterCount {
-			get { return typeParameterCount; }
-		}
-		
+		public string Namespace { get; }
+
+		public string Name { get; }
+
+		public int TypeParameterCount => typeParameterCount;
+
 		public string ReflectionName {
 			get {
-				StringBuilder b = new StringBuilder();
-				if (!string.IsNullOrEmpty(namespaceName)) {
-					b.Append(namespaceName);
+				var b = new StringBuilder();
+				if (!string.IsNullOrEmpty(Namespace)) {
+					b.Append(Namespace);
 					b.Append('.');
 				}
-				b.Append(name);
+				b.Append(Name);
 				if (typeParameterCount > 0) {
 					b.Append('`');
 					b.Append(typeParameterCount);
@@ -97,12 +85,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public bool Equals(TopLevelTypeName other)
 		{
-			return this.namespaceName == other.namespaceName && this.name == other.name && this.typeParameterCount == other.typeParameterCount;
+			return this.Namespace == other.Namespace && this.Name == other.Name && this.typeParameterCount == other.typeParameterCount;
 		}
 		
 		public override int GetHashCode()
 		{
-			return (name != null ? name.GetHashCode() : 0) ^ (namespaceName != null ? namespaceName.GetHashCode() : 0) ^ typeParameterCount;
+			return (Name != null ? Name.GetHashCode() : 0) ^ (Namespace != null ? Namespace.GetHashCode() : 0) ^ typeParameterCount;
 		}
 		
 		public static bool operator ==(TopLevelTypeName lhs, TopLevelTypeName rhs)

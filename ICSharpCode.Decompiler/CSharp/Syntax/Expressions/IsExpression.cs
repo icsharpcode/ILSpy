@@ -35,17 +35,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole IsKeywordRole = new TokenRole ("is");
 		
 		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
+			get => GetChildByRole(Roles.Expression);
+			set => SetChildByRole(Roles.Expression, value);
 		}
 		
-		public CSharpTokenNode IsToken {
-			get { return GetChildByRole (IsKeywordRole); }
-		}
-		
+		public CSharpTokenNode IsToken => GetChildByRole (IsKeywordRole);
+
 		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get => GetChildByRole(Roles.Type);
+			set => SetChildByRole(Roles.Type, value);
 		}
 
 		public IsExpression()
@@ -76,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IsExpression o = other as IsExpression;
+			var o = other as IsExpression;
 			return o != null && this.Expression.DoMatch(o.Expression, match) && this.Type.DoMatch(o.Type, match);
 		}
 	}

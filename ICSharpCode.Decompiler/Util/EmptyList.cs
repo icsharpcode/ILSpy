@@ -30,18 +30,14 @@ namespace ICSharpCode.Decompiler.Util
 		private EmptyList() {}
 		
 		public T this[int index] {
-			get { throw new ArgumentOutOfRangeException("index"); }
-			set { throw new ArgumentOutOfRangeException("index"); }
+			get => throw new ArgumentOutOfRangeException("index");
+			set => throw new ArgumentOutOfRangeException("index");
 		}
 		
-		public int Count {
-			get { return 0; }
-		}
-		
-		bool ICollection<T>.IsReadOnly {
-			get { return true; }
-		}
-		
+		public int Count => 0;
+
+		bool ICollection<T>.IsReadOnly => true;
+
 		int IList<T>.IndexOf(T item)
 		{
 			return -1;
@@ -90,14 +86,10 @@ namespace ICSharpCode.Decompiler.Util
 			return this;
 		}
 		
-		T IEnumerator<T>.Current {
-			get { return default(T); }
-		}
-		
-		object IEnumerator.Current {
-			get { return default(T); }
-		}
-		
+		T IEnumerator<T>.Current => default(T);
+
+		object IEnumerator.Current => default(T);
+
 		void IDisposable.Dispose()
 		{
 		}

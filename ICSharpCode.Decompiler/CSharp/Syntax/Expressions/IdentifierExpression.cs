@@ -47,27 +47,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 //		}
 		
 		public string Identifier {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create (value));
 		}
 
 		public Identifier IdentifierToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
-		}
-		
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole (Roles.TypeArgument);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitIdentifierExpression (this);
@@ -85,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IdentifierExpression o = other as IdentifierExpression;
+			var o = other as IdentifierExpression;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}

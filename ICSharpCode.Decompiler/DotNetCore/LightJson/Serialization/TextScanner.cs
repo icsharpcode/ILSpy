@@ -27,11 +27,7 @@ namespace LightJson.Serialization
 		/// Gets the position of the scanner within the text.
 		/// </summary>
 		/// <value>The position of the scanner within the text.</value>
-		public TextPosition Position {
-			get {
-				return this.position;
-			}
-		}
+		public TextPosition Position => this.position;
 
 		/// <summary>
 		/// Reads the next character in the stream without changing the current position.
@@ -90,7 +86,7 @@ namespace LightJson.Serialization
 		public void SkipWhitespace()
 		{
 			while (true) {
-				char next = this.Peek();
+				var next = this.Peek();
 				if (char.IsWhiteSpace(next)) {
 					this.Read();
 					continue;
@@ -180,7 +176,7 @@ namespace LightJson.Serialization
 			// First character is the '*' of the opening '/*'
 			this.Read();
 
-			bool foundStar = false;
+			var foundStar = false;
 			while (true) {
 				switch (this.reader.Peek()) {
 					case '*':

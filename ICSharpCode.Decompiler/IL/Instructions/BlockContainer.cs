@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the container's entry point. This is the first block in the Blocks collection.
 		/// </summary>
 		public Block EntryPoint {
-			get { return entryPoint; }
+			get => entryPoint;
 			private set {
 				if (entryPoint != null && IsConnected)
 					entryPoint.IncomingEdgeCount--;
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer clone = new BlockContainer();
+			var clone = new BlockContainer();
 			clone.ILRange = this.ILRange;
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override InstructionFlags ComputeFlags()
 		{
-			InstructionFlags flags = InstructionFlags.ControlFlow;
+			var flags = InstructionFlags.ControlFlow;
 			foreach (var block in Blocks) {
 				flags |= block.Flags;
 			}
@@ -231,12 +231,8 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
+
 		/// <summary>
 		/// Sort the blocks in reverse post-order over the control flow graph between the blocks.
 		/// </summary>
@@ -246,8 +242,8 @@ namespace ICSharpCode.Decompiler.IL
 				return;
 
 			// Visit blocks in post-order
-			BitSet visited = new BitSet(Blocks.Count);
-			List<Block> postOrder = new List<Block>();
+			var visited = new BitSet(Blocks.Count);
+			var postOrder = new List<Block>();
 			
 			Action<Block> visit = null;
 			visit = delegate(Block block) {
@@ -268,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL
 			
 			postOrder.Reverse();
 			if (!deleteUnreachableBlocks) {
-				for (int i = 0; i < Blocks.Count; i++) {
+				for (var i = 0; i < Blocks.Count; i++) {
 					if (!visited[i])
 						postOrder.Add(Blocks[i]);
 				}

@@ -36,64 +36,50 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Accessor> GetterRole = PropertyDeclaration.GetterRole;
 		public static readonly Role<Accessor> SetterRole = PropertyDeclaration.SetterRole;
 		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Indexer; }
-		}
-		
+		public override SymbolKind SymbolKind => SymbolKind.Indexer;
+
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		public AstType PrivateImplementationType {
-			get { return GetChildByRole (PrivateImplementationTypeRole); }
-			set { SetChildByRole (PrivateImplementationTypeRole, value); }
+			get => GetChildByRole (PrivateImplementationTypeRole);
+			set => SetChildByRole (PrivateImplementationTypeRole, value);
 		}
 		
 		public override string Name {
-			get { return "Item"; }
-			set { throw new NotSupportedException(); }
+			get => "Item";
+			set => throw new NotSupportedException();
 		}
 		
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
-			set { throw new NotSupportedException(); }
+			get => Identifier.Null;
+			set => throw new NotSupportedException();
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
-		}
+		public CSharpTokenNode LBracketToken => GetChildByRole (Roles.LBracket);
 
-		public CSharpTokenNode ThisToken {
-			get { return GetChildByRole (ThisKeywordRole); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole (Roles.LBrace); }
-		}
-		
+		public CSharpTokenNode ThisToken => GetChildByRole (ThisKeywordRole);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
+		public CSharpTokenNode RBracketToken => GetChildByRole (Roles.RBracket);
+
+		public CSharpTokenNode LBraceToken => GetChildByRole (Roles.LBrace);
+
 		public Accessor Getter {
-			get { return GetChildByRole(GetterRole); }
-			set { SetChildByRole(GetterRole, value); }
+			get => GetChildByRole(GetterRole);
+			set => SetChildByRole(GetterRole, value);
 		}
 		
 		public Accessor Setter {
-			get { return GetChildByRole(SetterRole); }
-			set { SetChildByRole(SetterRole, value); }
+			get => GetChildByRole(SetterRole);
+			set => SetChildByRole(SetterRole, value);
 		}
 		
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole (Roles.RBrace); }
-		}
-		
+		public CSharpTokenNode RBraceToken => GetChildByRole (Roles.RBrace);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitIndexerDeclaration (this);
@@ -111,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IndexerDeclaration o = other as IndexerDeclaration;
+			var o = other as IndexerDeclaration;
 			return o != null
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)

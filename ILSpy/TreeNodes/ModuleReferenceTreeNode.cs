@@ -31,19 +31,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public ModuleReferenceTreeNode(ModuleReference r)
 		{
-			if (r == null)
-				throw new ArgumentNullException(nameof(r));
-			this.r = r;
+			this.r = r ?? throw new ArgumentNullException(nameof(r));
 		}
 		
-		public override object Text {
-			get { return r.Name + r.MetadataToken.ToSuffixString(); }
-		}
-		
-		public override object Icon {
-			get { return Images.Library; }
-		}
-		
+		public override object Text => r.Name + r.MetadataToken.ToSuffixString();
+
+		public override object Icon => Images.Library;
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, r.Name);

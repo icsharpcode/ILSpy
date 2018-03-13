@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		public IList<Node> Steps => steps;
+		public IList<Node> Steps { get; }
 
 		public int StepLimit { get; set; } = int.MaxValue;
 		public bool IsDebug { get; set; }
@@ -72,12 +72,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		readonly Stack<Node> groups;
-		readonly IList<Node> steps;
 		int step = 0;
 
 		public Stepper()
 		{
-			steps = new List<Node>();
+			Steps = new List<Node>();
 			groups = new Stack<Node>();
 		}
 		
@@ -110,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (p != null)
 				p.Children.Add(stepNode);
 			else
-				steps.Add(stepNode);
+				Steps.Add(stepNode);
 			step++;
 			return stepNode;
 		}
@@ -124,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var node = groups.Pop();
 			if (!keepIfEmpty && node.Children.Count == 0) {
-				var col = groups.PeekOrDefault()?.Children ?? steps;
+				var col = groups.PeekOrDefault()?.Children ?? Steps;
 				Debug.Assert(col.Last() == node);
 				col.RemoveAt(col.Count - 1);
 			}

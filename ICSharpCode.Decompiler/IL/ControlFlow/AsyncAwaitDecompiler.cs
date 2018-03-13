@@ -201,9 +201,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (startCall.Arguments.Count != 2)
 				return false;
-			if (!startCall.Arguments[0].MatchLdLocRef(out ILVariable builderVar))
+			if (!startCall.Arguments[0].MatchLdLocRef(out var builderVar))
 				return false;
-			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
+			if (!startCall.Arguments[1].MatchLdLoca(out var stateMachineVar))
 				return false;
 			stateMachineType = stateMachineVar.Type.GetDefinition();
 			if (stateMachineType == null)
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (createCall.Method.Name != "Create" || createCall.Arguments.Count != 0)
 				return false;
 
-			int pos = 0;
+			var pos = 0;
 			if (stateMachineType.Kind == TypeKind.Class) {
 				// If state machine is a class, the first instruction creates an instance:
 				// stloc stateMachine(newobj StateMachine.ctor())
@@ -331,7 +331,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				throw new SymbolicAnalysisFailedException();
 			if (blockContainer.EntryPoint.IncomingEdgeCount != 1)
 				throw new SymbolicAnalysisFailedException();
-			int pos = 0;
+			var pos = 0;
 			if (blockContainer.EntryPoint.Instructions[0].MatchStLoc(out cachedStateVar, out var cachedStateInit)) {
 				// stloc(cachedState, ldfld(valuetype StateMachineStruct::<>1__state, ldloc(this)))
 				if (!cachedStateInit.MatchLdFld(out var target, out var loadedField))
@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!stloc.Value.MatchLdLoc(handler.Variable))
 				throw new SymbolicAnalysisFailedException();
 			// stfld <>1__state(ldloc this, ldc.i4 -2)
-			if (!MatchStateAssignment(catchBlock.Instructions[1], out int newState) || newState != finalState)
+			if (!MatchStateAssignment(catchBlock.Instructions[1], out var newState) || newState != finalState)
 				throw new SymbolicAnalysisFailedException();
 			// call SetException(ldfld <>t__builder(ldloc this), ldloc exception)
 			if (!MatchCall(catchBlock.Instructions[2], "SetException", out var args))
@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// Delete dead loads of the state cache variable:
 			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				for (var i = block.Instructions.Count - 1; i >= 0; i--) {
 					if (block.Instructions[i].MatchStLoc(out var v, out var value)
 						&& v.IsSingleDefinition && v.LoadCount == 0
 						&& value.MatchLdLoc(cachedStateVar))
@@ -542,7 +542,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// This is likely an 'await' block
 						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
-							Block targetBlock = stateToBlockMap.GetOrDefault(state);
+							var targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null) {
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
@@ -573,7 +573,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaiter = null;
 			awaiterField = null;
 			state = 0;
-			int pos = block.Instructions.Count - 2;
+			var pos = block.Instructions.Count - 2;
 			if (doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
 				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
 					  && storeDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
@@ -690,7 +690,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// stloc awaiterVar(callvirt GetAwaiter(...))
 			if (!(block.Instructions[block.Instructions.Count - 3] is StLoc stLocAwaiter))
 				return;
-			ILVariable awaiterVar = stLocAwaiter.Variable;
+			var awaiterVar = stLocAwaiter.Variable;
 			if (!(stLocAwaiter.Value is CallInstruction getAwaiterCall))
 				return;
 			if (!(getAwaiterCall.Method.Name == "GetAwaiter" && (!getAwaiterCall.Method.IsStatic || getAwaiterCall.Method.IsExtensionMethod)))
@@ -732,7 +732,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
-			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
+			var awaitInst = new Await(getAwaiterCall.Arguments.Single());
 			awaitInst.GetResultMethod = getResultCall.Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
 			getResultCall.ReplaceWith(awaitInst);
@@ -755,7 +755,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			stackField = null;
 			if (block.Instructions.Count < 2)
 				return false;
-			int pos = 0;
+			var pos = 0;
 			if (block.Instructions[pos] is StLoc stloc && stloc.Variable.IsSingleDefinition) {
 				if (!block.Instructions[pos + 1].MatchStFld(out var target, out stackField, out var value))
 					return false;
@@ -772,7 +772,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool CheckResumeBlock(Block block, ILVariable awaiterVar, IField awaiterField, Block completedBlock, IField stackField)
 		{
-			int pos = 0;
+			var pos = 0;
 			if (!RestoreStack(block, ref pos, stackField))
 				return false;
 
@@ -887,7 +887,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return; // roslyn-compiled code doesn't use doFinallyBodies
 			}
 			context.StepStartGroup("CleanDoFinallyBodies", function);
-			Block entryPoint = GetBodyEntryPoint(function.Body as BlockContainer);
+			var entryPoint = GetBodyEntryPoint(function.Body as BlockContainer);
 			if (entryPoint != null && entryPoint.Instructions[0].MatchStLoc(doFinallyBodies, out var value) && value.MatchLdcI4(1)) {
 				// Remove initial doFinallyBodies assignment, if it wasn't already removed when
 				// we rearranged the control flow.
@@ -912,7 +912,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			// if there's any remaining loads (there shouldn't be), replace them with the constant 1
-			foreach (LdLoc load in doFinallyBodies.LoadInstructions.ToArray()) {
+			foreach (var load in doFinallyBodies.LoadInstructions.ToArray()) {
 				load.ReplaceWith(new LdcI4(1) { ILRange = load.ILRange });
 			}
 			context.StepEndGroup(keepIfEmpty: true);
@@ -922,7 +922,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (body == null)
 				return null;
-			Block entryPoint = body.EntryPoint;
+			var entryPoint = body.EntryPoint;
 			while (entryPoint.Instructions[0].MatchBranch(out var targetBlock) && targetBlock.IncomingEdgeCount == 1 && targetBlock.Parent == body) {
 				entryPoint = targetBlock;
 			}

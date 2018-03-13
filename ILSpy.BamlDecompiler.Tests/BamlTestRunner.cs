@@ -116,10 +116,10 @@ namespace ILSpy.BamlDecompiler.Tests
 			resolver.RemoveSearchDirectory(".");
 			resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 			var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters { AssemblyResolver = resolver, InMemory = true });
-			Resource res = assembly.MainModule.Resources.First();
-			Stream bamlStream = LoadBaml(res, name + ".baml");
+			var res = assembly.MainModule.Resources.First();
+			var bamlStream = LoadBaml(res, name + ".baml");
 			Assert.IsNotNull(bamlStream);
-			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream, CancellationToken.None);
+			var document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream, CancellationToken.None);
 
 			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 		}
@@ -139,9 +139,9 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		Stream LoadBaml(Resource res, string name)
 		{
-			EmbeddedResource er = res as EmbeddedResource;
+			var er = res as EmbeddedResource;
 			if (er != null) {
-				Stream s = er.GetResourceStream();
+				var s = er.GetResourceStream();
 				s.Position = 0;
 				ResourceReader reader;
 				try {
@@ -149,7 +149,7 @@ namespace ILSpy.BamlDecompiler.Tests
 				} catch (ArgumentException) {
 					return null;
 				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
+				foreach (var entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
 					if (entry.Key.ToString() == name) {
 						if (entry.Value is Stream)
 							return (Stream)entry.Value;

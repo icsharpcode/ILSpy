@@ -38,35 +38,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ElseKeywordRole = new TokenRole ("else");
 		public readonly static Role<Statement> FalseRole = new Role<Statement>("False", Statement.Null);
 		
-		public CSharpTokenNode IfToken {
-			get { return GetChildByRole (IfKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode IfToken => GetChildByRole (IfKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public Expression Condition {
-			get { return GetChildByRole (ConditionRole); }
-			set { SetChildByRole (ConditionRole, value); }
+			get => GetChildByRole (ConditionRole);
+			set => SetChildByRole (ConditionRole, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Statement TrueStatement {
-			get { return GetChildByRole (TrueRole); }
-			set { SetChildByRole (TrueRole, value); }
+			get => GetChildByRole (TrueRole);
+			set => SetChildByRole (TrueRole, value);
 		}
 		
-		public CSharpTokenNode ElseToken {
-			get { return GetChildByRole (ElseKeywordRole); }
-		}
-		
+		public CSharpTokenNode ElseToken => GetChildByRole (ElseKeywordRole);
+
 		public Statement FalseStatement {
-			get { return GetChildByRole (FalseRole); }
-			set { SetChildByRole (FalseRole, value); }
+			get => GetChildByRole (FalseRole);
+			set => SetChildByRole (FalseRole, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -86,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IfElseStatement o = other as IfElseStatement;
+			var o = other as IfElseStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
 		}
 		

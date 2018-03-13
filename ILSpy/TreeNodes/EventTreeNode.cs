@@ -31,9 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public EventTreeNode(EventDefinition ev)
 		{
-			if (ev == null)
-				throw new ArgumentNullException(nameof(ev));
-			this.EventDefinition = ev;
+			this.EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
 			
 			if (ev.AddMethod != null)
 				this.Children.Add(new MethodTreeNode(ev.AddMethod));
@@ -60,11 +58,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(EventDefinition eventDef)
 		{
-			MethodDefinition accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
-			if (accessor != null)
-				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(eventDef.AddMethod.Attributes), eventDef.AddMethod.IsStatic);
-			else
-				return Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
+			var accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
+			return accessor != null ? Images.GetIcon(MemberIcon.Event, GetOverlayIcon(eventDef.AddMethod.Attributes), eventDef.AddMethod.IsStatic) : Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
@@ -107,7 +102,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				MethodDefinition accessor = EventDefinition.AddMethod ?? EventDefinition.RemoveMethod;
+				var accessor = EventDefinition.AddMethod ?? EventDefinition.RemoveMethod;
 				return accessor != null && (accessor.IsPublic || accessor.IsFamilyOrAssembly || accessor.IsFamily);
 			}
 		}

@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public async void StreamCopyTo(Stream destination, int bufferSize)
 		{
 			Console.WriteLine("Before");
-			byte[] array = new byte[bufferSize];
+			var array = new byte[bufferSize];
 			int count;
 			Console.WriteLine("BeforeLoop");
 			while ((count = await destination.ReadAsync(array, 0, array.Length)) != 0) {
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public async void StreamCopyToWithConfigureAwait(Stream destination, int bufferSize)
 		{
 			Console.WriteLine("Before");
-			byte[] array = new byte[bufferSize];
+			var array = new byte[bufferSize];
 			int count;
 			Console.WriteLine("Before Loop");
 			while ((count = await destination.ReadAsync(array, 0, array.Length).ConfigureAwait(false)) != 0) {
@@ -98,9 +98,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public async Task<int> AwaitInForEach(IEnumerable<Task<int>> elements)
 		{
-			int num = 0;
+			var num = 0;
 			Console.WriteLine("Before Loop");
-			foreach (Task<int> current in elements) {
+			foreach (var current in elements) {
 				Console.WriteLine("Before Inner Await");
 				num += await current;
 				Console.WriteLine("After Inner Await");
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			if (await this.SimpleBoolTaskMethod()) {
 				Console.WriteLine("A", 1, await task);
 			} else {
-				int num = 1;
+				var num = 1;
 				Console.WriteLine("A", 1, num);
 			}
 		}
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				await Task.Delay(ex.HResult);
 			} finally {
 				Console.WriteLine("d");
-				int i = 0;
+				var i = 0;
 				if (Console.CapsLock) {
 					i++;
 					await Task.Delay(i);

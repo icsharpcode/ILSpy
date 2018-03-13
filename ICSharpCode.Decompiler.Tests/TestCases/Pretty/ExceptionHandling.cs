@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CatchWhenWithConditionWithoutExceptionVar()
 		{
-			int num = 0;
+			var num = 0;
 			try {
 				throw new Exception();
 			} catch (Exception) when (num == 0) {

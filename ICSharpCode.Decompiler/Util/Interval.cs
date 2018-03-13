@@ -71,18 +71,10 @@ namespace ICSharpCode.Decompiler.Util
 		/// (Start==End==int.MinValue is a special case referring to [int.MinValue..int.MaxValue]),
 		/// integer overflow is not a problem here.
 		/// </remarks>
-		public int InclusiveEnd {
-			get {
-				return unchecked(End - 1);
-			}
-		}
+		public int InclusiveEnd => unchecked(End - 1);
 
-		public bool IsEmpty {
-			get {
-				return Start > InclusiveEnd;
-			}
-		}
-		
+		public bool IsEmpty => Start > InclusiveEnd;
+
 		public bool Contains(int val)
 		{
 			// Use 'val <= InclusiveEnd' instead of 'val < End' to allow intervals to include int.MaxValue.
@@ -94,8 +86,8 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public Interval Intersect(Interval other)
 		{
-			int start = Math.Max(this.Start, other.Start);
-			int inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
+			var start = Math.Max(this.Start, other.Start);
+			var inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
 				return new Interval(start, unchecked(inclusiveEnd + 1));
 			else
@@ -207,18 +199,10 @@ namespace ICSharpCode.Decompiler.Util
 		/// (Start==End==int.MinValue is a special case referring to [int.MinValue..int.MaxValue]),
 		/// integer overflow is not a problem here.
 		/// </remarks>
-		public long InclusiveEnd {
-			get {
-				return unchecked(End - 1);
-			}
-		}
+		public long InclusiveEnd => unchecked(End - 1);
 
-		public bool IsEmpty {
-			get {
-				return Start > InclusiveEnd;
-			}
-		}
-		
+		public bool IsEmpty => Start > InclusiveEnd;
+
 		public bool Contains(long val)
 		{
 			// Use 'val <= InclusiveEnd' instead of 'val < End' to allow intervals to include long.MaxValue.
@@ -230,8 +214,8 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public LongInterval Intersect(LongInterval other)
 		{
-			long start = Math.Max(this.Start, other.Start);
-			long inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
+			var start = Math.Max(this.Start, other.Start);
+			var inclusiveEnd = Math.Min(this.InclusiveEnd, other.InclusiveEnd);
 			if (start <= inclusiveEnd)
 				return new LongInterval(start, unchecked(inclusiveEnd + 1));
 			else
@@ -244,7 +228,7 @@ namespace ICSharpCode.Decompiler.Util
 		public IEnumerable<long> Range()
 		{
 			if (End == long.MinValue) {
-				long i = Start;
+				var i = Start;
 				while (true) {
 					yield return i;
 					if (i == long.MaxValue)
@@ -252,7 +236,7 @@ namespace ICSharpCode.Decompiler.Util
 					i++;
 				}
 			} else {
-				for (long i = Start; i < End; i++)
+				for (var i = Start; i < End; i++)
 					yield return i;
 			}
 		}

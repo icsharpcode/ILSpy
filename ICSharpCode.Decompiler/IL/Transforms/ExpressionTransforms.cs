@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			} else if (rightWithoutConv.MatchLdcI4(0) && inst.Kind.IsEqualityOrInequality()) {
-				if (inst.Left.MatchLdLen(StackType.I, out ILInstruction array)) {
+				if (inst.Left.MatchLdLen(StackType.I, out var array)) {
 					// comp.unsigned(ldlen array == conv i4->i(ldc.i4 0))
 					// => comp(ldlen.i4 array == ldc.i4 0)
 					// This is a special case where the C# compiler doesn't generate conv.i4 after ldlen.
@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
+			if (inst.Argument.MatchLdLen(StackType.I, out var array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void CleanUpArrayIndices(InstructionCollection<ILInstruction> indices)
 		{
-			foreach (ILInstruction index in indices) {
+			foreach (var index in indices) {
 				if (index is Conv conv && conv.ResultType == StackType.I
 					&& (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
 						|| conv.Kind == ConversionKind.ZeroExtend || conv.Kind == ConversionKind.SignExtend)
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
 				context.Step("push negation into logic.and", inst);
-				IfInstruction ifInst = (IfInstruction)arg;
+				var ifInst = (IfInstruction)arg;
 				var ldc0 = ifInst.FalseInst;
 				Debug.Assert(ldc0.MatchLdcI4(0));
 				ifInst.Condition = Comp.LogicNot(lhs, inst.ILRange);
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// logic.not(if (lhs) ldc.i4 1 else rhs)
 				// ==> if (logic.not(lhs)) logic.not(rhs) else ldc.i4 0)
 				context.Step("push negation into logic.or", inst);
-				IfInstruction ifInst = (IfInstruction)arg;
+				var ifInst = (IfInstruction)arg;
 				var ldc1 = ifInst.TrueInst;
 				Debug.Assert(ldc1.MatchLdcI4(1));
 				ifInst.Condition = Comp.LogicNot(lhs, inst.ILRange);
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
 		{
-			IType t = inst.Method.DeclaringType;
+			var t = inst.Method.DeclaringType;
 			result = null;
 			if (!t.IsKnownType(KnownTypeCode.Decimal))
 				return false;
@@ -332,10 +332,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
+			var trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
+			var falseInst = inst.FalseInst as Block;
 			if (falseInst == null || falseInst.Instructions.Count != 1)
 				return inst;
 			ILVariable v;

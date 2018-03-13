@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			var typeContext = CreateGenericContext(property.DeclaringType);
 			var gProperty = typeContext.ApplyTo(property);
-			bool isIndexer = property.IsIndexer();
+			var isIndexer = property.IsIndexer();
 
 			foreach (var baseType in BaseTypes(property.DeclaringType))
 				foreach (var baseProperty in baseType.Item.Properties)
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (derivedType == null)
 				throw new ArgumentNullException(nameof(derivedType));
 
-			MethodAttributes attrs = GetAccessAttributes(baseMember) & MethodAttributes.MemberAccessMask;
+			var attrs = GetAccessAttributes(baseMember) & MethodAttributes.MemberAccessMask;
 			if (attrs == MethodAttributes.Private)
 				return false;
 
@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					var attributes = asm.CustomAttributes
 						.Where(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 					foreach (var attribute in attributes) {
-						string assemblyName = attribute.ConstructorArguments[0].Value as string;
+						var assemblyName = attribute.ConstructorArguments[0].Value as string;
 						assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
 						if (assemblyName == derivedTypeAsm.Name.Name)
 							return true;
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (!mCandidate.HasParameters || !mMethod.HasParameters || mCandidate.Parameters.Count != mMethod.Parameters.Count)
 					return false;
 
-				for (int index = 0; index < mCandidate.Parameters.Count; index++) {
+				for (var index = 0; index < mCandidate.Parameters.Count; index++) {
 					if (!MatchParameters(candidate.ApplyTo(mCandidate.Parameters[index]), method.ApplyTo(mMethod.Parameters[index])))
 						return false;
 				}
@@ -307,7 +307,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (!mCandidate.HasParameters || !mProperty.HasParameters || mCandidate.Parameters.Count != mProperty.Parameters.Count)
 					return false;
 
-				for (int index = 0; index < mCandidate.Parameters.Count; index++) {
+				for (var index = 0; index < mCandidate.Parameters.Count; index++) {
 					if (!MatchParameters(candidate.ApplyTo(mCandidate.Parameters[index]), property.ApplyTo(mProperty.Parameters[index])))
 						return false;
 				}
@@ -397,19 +397,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			public GenericContext(T item)
 			{
-				if (item == null)
-					throw new ArgumentNullException(nameof(item));
-
-				Item = item;
+				Item = item ?? throw new ArgumentNullException(nameof(item));
 				TypeArguments = Empty;
 			}
 
 			public GenericContext(T item, IEnumerable<TypeReference> typeArguments)
 			{
-				if (item == null)
-					throw new ArgumentNullException(nameof(item));
-
-				Item = item;
+				Item = item ?? throw new ArgumentNullException(nameof(item));
 				var list = new List<TypeReference>();
 				foreach (var arg in typeArguments) {
 					var resolved = arg != null ? arg.Resolve() : arg;
@@ -448,7 +442,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (newElementType == arrayType.ElementType)
 						return arrayType;
 					var newArrayType = new Mono.Cecil.ArrayType(newElementType, arrayType.Rank);
-					for (int dimension = 0; dimension < arrayType.Rank; dimension++)
+					for (var dimension = 0; dimension < arrayType.Rank; dimension++)
 						newArrayType.Dimensions[dimension] = arrayType.Dimensions[dimension];
 					return newArrayType;
 				}
@@ -478,46 +472,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					parameters.Add(new GenericParameter(this));
 		}
 
-				public GenericParameter DummyParameter
-				{
-					get { return parameters[0]; }
-	}
+				public GenericParameter DummyParameter => parameters[0];
 
-				bool IGenericParameterProvider.HasGenericParameters
-				{
-					get { throw new NotImplementedException(); }
-				}
+				bool IGenericParameterProvider.HasGenericParameters => throw new NotImplementedException();
 
-				bool IGenericParameterProvider.IsDefinition
-				{
-					get { throw new NotImplementedException(); }
-				}
+				bool IGenericParameterProvider.IsDefinition => throw new NotImplementedException();
 
-				ModuleDefinition IGenericParameterProvider.Module
-				{
-					get { throw new NotImplementedException(); }
-				}
+				ModuleDefinition IGenericParameterProvider.Module => throw new NotImplementedException();
 
-				Mono.Collections.Generic.Collection<GenericParameter> IGenericParameterProvider.GenericParameters
-				{
-					get { return parameters; }
-				}
+				Mono.Collections.Generic.Collection<GenericParameter> IGenericParameterProvider.GenericParameters => parameters;
 
-				GenericParameterType IGenericParameterProvider.GenericParameterType
-				{
-					get { return type; }
-				}
+				GenericParameterType IGenericParameterProvider.GenericParameterType => type;
 
 				MetadataToken IMetadataTokenProvider.MetadataToken
 				{
-					get
-					{
-						throw new NotImplementedException();
-					}
-					set
-					{
-						throw new NotImplementedException();
-					}
+					get => throw new NotImplementedException();
+					set => throw new NotImplementedException();
 				}
 			}
 		}

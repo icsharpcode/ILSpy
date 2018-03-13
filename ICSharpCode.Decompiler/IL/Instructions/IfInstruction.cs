@@ -70,12 +70,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.ControlFlow | condition.Flags | SemanticHelper.CombineBranches(trueInst.Flags, falseInst.Flags);

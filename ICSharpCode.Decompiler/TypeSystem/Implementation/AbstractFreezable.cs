@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IList<T> FreezeListAndElements<T>(IList<T> list)
 		{
 			if (list != null) {
-				foreach (T item in list)
+				foreach (var item in list)
 					Freeze(item);
 			}
 			return FreezeList(list);
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public static void Freeze(object item)
 		{
-			IFreezable f = item as IFreezable;
+			var f = item as IFreezable;
 			if (f != null)
 				f.Freeze();
 		}
@@ -84,23 +84,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public abstract class AbstractFreezable : IFreezable
 	{
-		bool isFrozen;
-		
 		/// <summary>
 		/// Gets if this instance is frozen. Frozen instances are immutable and thus thread-safe.
 		/// </summary>
-		public bool IsFrozen {
-			get { return isFrozen; }
-		}
-		
+		public bool IsFrozen { get; private set; }
+
 		/// <summary>
 		/// Freezes this instance.
 		/// </summary>
 		public void Freeze()
 		{
-			if (!isFrozen) {
+			if (!IsFrozen) {
 				FreezeInternal();
-				isFrozen = true;
+				IsFrozen = true;
 			}
 		}
 		

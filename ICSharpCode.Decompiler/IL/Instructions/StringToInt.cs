@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.IL
 		static List<(string Key, int Value)> ArrayToDictionary(string[] map)
 		{
 			var dict = new List<(string Key, int Value)>();
-			for (int i = 0; i < map.Length; i++) {
+			for (var i = 0; i < map.Length; i++) {
 				dict.Add((map[i], i));
 			}
 			return dict;
@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("string.to.int (");
 			Argument.WriteTo(output, options);
 			output.Write(", { ");
-			int i = 0;
+			var i = 0;
 			foreach (var entry in Map) {
 				if (i > 0) output.Write(", ");
 				output.Write($"[\"{entry.Key}\"] = {entry.Value}");

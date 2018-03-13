@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			InitializeComponent();
 			
-			Task<FontFamily[]> task = new Task<FontFamily[]>(FontLoader);
+			var task = new Task<FontFamily[]>(FontLoader);
 			task.Start();
 			task.ContinueWith(
 				delegate(Task continuation) {
@@ -65,12 +65,8 @@ namespace ICSharpCode.ILSpy.Options
 		
 		static DisplaySettings currentDisplaySettings;
 		
-		public static DisplaySettings CurrentDisplaySettings {
-			get {
-				return currentDisplaySettings ?? (currentDisplaySettings = LoadDisplaySettings(ILSpySettings.Load()));
-			}
-		}
-		
+		public static DisplaySettings CurrentDisplaySettings => currentDisplaySettings ?? (currentDisplaySettings = LoadDisplaySettings(ILSpySettings.Load()));
+
 		static bool IsSymbolFont(FontFamily fontFamily)
 		{
 			foreach (var tf in fontFamily.GetTypefaces()) {
@@ -95,7 +91,7 @@ namespace ICSharpCode.ILSpy.Options
 		
 		public static DisplaySettings LoadDisplaySettings(ILSpySettings settings)
 		{
-			XElement e = settings["DisplaySettings"];
+			var e = settings["DisplaySettings"];
 			var s = new DisplaySettings();
 			s.SelectedFont = new FontFamily((string)e.Attribute("Font") ?? "Consolas");
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
@@ -119,7 +115,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
 			section.SetAttributeValue("SortResults", s.SortResults);
 
-			XElement existingElement = root.Element("DisplaySettings");
+			var existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else

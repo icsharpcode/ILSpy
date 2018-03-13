@@ -41,17 +41,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static ITypeParameter GetTypeParameter(ref ITypeParameter[] typeParameters, SymbolKind symbolKind, int index)
 		{
-			ITypeParameter[] tps = typeParameters;
+			var tps = typeParameters;
 			while (index >= tps.Length) {
 				// We don't have a normal type parameter for this index, so we need to extend our array.
 				// Because the array can be used concurrently from multiple threads, we have to use
 				// Interlocked.CompareExchange.
-				ITypeParameter[] newTps = new ITypeParameter[index + 1];
+				var newTps = new ITypeParameter[index + 1];
 				tps.CopyTo(newTps, 0);
-				for (int i = tps.Length; i < newTps.Length; i++) {
+				for (var i = tps.Length; i < newTps.Length; i++) {
 					newTps[i] = new DummyTypeParameter(symbolKind, i);
 				}
-				ITypeParameter[] oldTps = Interlocked.CompareExchange(ref typeParameters, newTps, tps);
+				var oldTps = Interlocked.CompareExchange(ref typeParameters, newTps, tps);
 				if (oldTps == tps) {
 					// exchange successful
 					tps = newTps;
@@ -68,16 +68,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
 		{
-			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
+			var tps = classTypeParameterLists;
 			while (length >= tps.Length) {
 				// We don't have a normal type parameter for this index, so we need to extend our array.
 				// Because the array can be used concurrently from multiple threads, we have to use
 				// Interlocked.CompareExchange.
-				IReadOnlyList<ITypeParameter>[] newTps = new IReadOnlyList<ITypeParameter>[length + 1];
+				var newTps = new IReadOnlyList<ITypeParameter>[length + 1];
 				tps.CopyTo(newTps, 0);
-				for (int i = tps.Length; i < newTps.Length; i++) {
+				for (var i = tps.Length; i < newTps.Length; i++) {
 					var newList = new ITypeParameter[i];
-					for (int j = 0; j < newList.Length; j++) {
+					for (var j = 0; j < newList.Length; j++) {
 						newList[j] = GetClassTypeParameter(j);
 					}
 					newTps[i] = newList;
@@ -151,46 +151,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		readonly SymbolKind ownerType;
-		readonly int index;
-		
+
 		private DummyTypeParameter(SymbolKind ownerType, int index)
 		{
 			this.ownerType = ownerType;
-			this.index = index;
+			this.Index = index;
 		}
 		
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.TypeParameter; }
-		}
-		
-		public override string Name {
-			get {
-				return (ownerType == SymbolKind.Method ? "!!" : "!") + index;
-			}
-		}
-		
-		public override string ReflectionName {
-			get {
-				return (ownerType == SymbolKind.Method ? "``" : "`") + index;
-			}
-		}
-		
+		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
+
+		public override string Name => (ownerType == SymbolKind.Method ? "!!" : "!") + Index;
+
+		public override string ReflectionName => (ownerType == SymbolKind.Method ? "``" : "`") + Index;
+
 		public override string ToString()
 		{
 			return ReflectionName + " (dummy)";
 		}
 		
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
-		
-		public override TypeKind Kind {
-			get { return TypeKind.TypeParameter; }
-		}
-		
+		public override bool? IsReferenceType => null;
+
+		public override TypeKind Kind => TypeKind.TypeParameter;
+
 		public override ITypeReference ToTypeReference()
 		{
-			return TypeParameterReference.Create(ownerType, index);
+			return TypeParameterReference.Create(ownerType, Index);
 		}
 		
 		public override IType AcceptVisitor(TypeVisitor visitor)
@@ -198,49 +183,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return visitor.VisitTypeParameter(this);
 		}
 		
-		public int Index {
-			get { return index; }
-		}
-		
-		IReadOnlyList<IAttribute> ITypeParameter.Attributes {
-			get { return EmptyList<IAttribute>.Instance; }
-		}
-		
-		SymbolKind ITypeParameter.OwnerType {
-			get { return ownerType; }
-		}
-		
-		VarianceModifier ITypeParameter.Variance {
-			get { return VarianceModifier.Invariant; }
-		}
-		
-		IEntity ITypeParameter.Owner {
-			get { return null; }
-		}
-		
-		IType ITypeParameter.EffectiveBaseClass {
-			get { return SpecialType.UnknownType; }
-		}
-		
-		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
-			get { return EmptyList<IType>.Instance; }
-		}
-		
-		bool ITypeParameter.HasDefaultConstructorConstraint {
-			get { return false; }
-		}
-		
-		bool ITypeParameter.HasReferenceTypeConstraint {
-			get { return false; }
-		}
-		
-		bool ITypeParameter.HasValueTypeConstraint {
-			get { return false; }
-		}
+		public int Index { get; }
+
+		IReadOnlyList<IAttribute> ITypeParameter.Attributes => EmptyList<IAttribute>.Instance;
+
+		SymbolKind ITypeParameter.OwnerType => ownerType;
+
+		VarianceModifier ITypeParameter.Variance => VarianceModifier.Invariant;
+
+		IEntity ITypeParameter.Owner => null;
+
+		IType ITypeParameter.EffectiveBaseClass => SpecialType.UnknownType;
+
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet => EmptyList<IType>.Instance;
+
+		bool ITypeParameter.HasDefaultConstructorConstraint => false;
+
+		bool ITypeParameter.HasReferenceTypeConstraint => false;
+
+		bool ITypeParameter.HasValueTypeConstraint => false;
 
 		public ISymbolReference ToReference()
 		{
-			return new TypeParameterReference(ownerType, index);
+			return new TypeParameterReference(ownerType, Index);
 		}
 	}
 }

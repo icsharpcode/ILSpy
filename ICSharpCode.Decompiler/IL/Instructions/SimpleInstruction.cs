@@ -67,10 +67,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Message = message;
 		}
 		
-		public override StackType ResultType {
-			get { return ExpectedResultType; }
-		}
-		
+		public override StackType ResultType => ExpectedResultType;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
@@ -93,10 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Message = message;
 		}
 
-		public override StackType ResultType
-		{
-			get { return ExpectedResultType; }
-		}
+		public override StackType ResultType => ExpectedResultType;
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{

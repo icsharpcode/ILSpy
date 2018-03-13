@@ -35,35 +35,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole ("switch");
 		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection");
 		
-		public CSharpTokenNode SwitchToken {
-			get { return GetChildByRole (SwitchKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode SwitchToken => GetChildByRole (SwitchKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole (Roles.LBrace); }
-		}
-		
-		public AstNodeCollection<SwitchSection> SwitchSections {
-			get { return GetChildrenByRole (SwitchSectionRole); }
-		}
-		
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole (Roles.RBrace); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
+		public CSharpTokenNode LBraceToken => GetChildByRole (Roles.LBrace);
+
+		public AstNodeCollection<SwitchSection> SwitchSections => GetChildrenByRole (SwitchSectionRole);
+
+		public CSharpTokenNode RBraceToken => GetChildByRole (Roles.RBrace);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitSwitchStatement (this);
@@ -81,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchStatement o = other as SwitchStatement;
+			var o = other as SwitchStatement;
 			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
 		}
 	}
@@ -103,10 +91,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder(this, child);
@@ -136,20 +122,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public static readonly Role<CaseLabel> CaseLabelRole = new Role<CaseLabel>("CaseLabel");
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
-		public AstNodeCollection<CaseLabel> CaseLabels {
-			get { return GetChildrenByRole (CaseLabelRole); }
-		}
-		
-		public AstNodeCollection<Statement> Statements {
-			get { return GetChildrenByRole (Roles.EmbeddedStatement); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public AstNodeCollection<CaseLabel> CaseLabels => GetChildrenByRole (CaseLabelRole);
+
+		public AstNodeCollection<Statement> Statements => GetChildrenByRole (Roles.EmbeddedStatement);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitSwitchSection (this);
@@ -167,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SwitchSection o = other as SwitchSection;
+			var o = other as SwitchSection;
 			return o != null && this.CaseLabels.DoMatch(o.CaseLabels, match) && this.Statements.DoMatch(o.Statements, match);
 		}
 	}
@@ -177,23 +155,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole CaseKeywordRole = new TokenRole ("case");
 		public static readonly TokenRole DefaultKeywordRole = new TokenRole ("default");
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.
 		/// </summary>
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (Roles.Colon); }
-		}
+		public CSharpTokenNode ColonToken => GetChildByRole (Roles.Colon);
 
 		public CaseLabel ()
 		{
@@ -221,7 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CaseLabel o = other as CaseLabel;
+			var o = other as CaseLabel;
 			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

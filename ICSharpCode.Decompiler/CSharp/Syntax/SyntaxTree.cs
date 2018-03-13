@@ -34,36 +34,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		string fileName;
 		
 		/// <summary>
 		/// Gets/Sets the file name of this syntax tree.
 		/// </summary>
 		public string FileName {
-			get { return fileName; }
+			get => fileName;
 			set {
 				ThrowIfFrozen();
 				fileName = value;
 			}
 		}
 		
-		public AstNodeCollection<AstNode> Members {
-			get { return GetChildrenByRole(MemberRole); }
-		}
+		public AstNodeCollection<AstNode> Members => GetChildrenByRole(MemberRole);
 
 		IList<string> conditionalSymbols = null;
 
-		List<Error> errors = new List<Error> ();
-		
-		public List<Error> Errors {
-			get { return errors; }
-		}
+		public List<Error> Errors { get; } = new List<Error> ();
 
 
 		/// <summary>
@@ -72,12 +62,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// in the source file.
 		/// </summary>
 		public IList<string> ConditionalSymbols {
-			get {
-				return conditionalSymbols ?? EmptyList<string>.Instance;
-			}
-			internal set {
-				conditionalSymbols = value;
-			}
+			get => conditionalSymbols ?? EmptyList<string>.Instance;
+			internal set => conditionalSymbols = value;
 		}
 
 		/// <summary>
@@ -104,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </returns>
 		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
-			Stack<AstNode> nodeStack = new Stack<AstNode> ();
+			var nodeStack = new Stack<AstNode> ();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0) {
 				var curNode = nodeStack.Pop();
@@ -122,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			SyntaxTree o = other as SyntaxTree;
+			var o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);
 		}
 		

@@ -34,8 +34,6 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public sealed class AssemblyList
 	{
-		readonly string listName;
-		
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
 		
@@ -54,7 +52,7 @@ namespace ICSharpCode.ILSpy
 		
 		public AssemblyList(string listName)
 		{
-			this.listName = listName;
+			this.ListName = listName;
 			assemblies.CollectionChanged += Assemblies_CollectionChanged;
 		}
 		
@@ -95,10 +93,8 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the name of this list.
 		/// </summary>
-		public string ListName {
-			get { return listName; }
-		}
-		
+		public string ListName { get; }
+
 		void Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			ClearCache();
@@ -141,13 +137,13 @@ namespace ICSharpCode.ILSpy
 		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)
 		{
 			if (assemblyUri.StartsWith("nupkg://", StringComparison.OrdinalIgnoreCase)) {
-				string fileName = assemblyUri.Substring("nupkg://".Length);
-				int separator = fileName.LastIndexOf(';');
+				var fileName = assemblyUri.Substring("nupkg://".Length);
+				var separator = fileName.LastIndexOf(';');
 				string componentName = null;
 				if (separator > -1) {
 					componentName = fileName.Substring(separator + 1);
 					fileName = fileName.Substring(0, separator);
-					LoadedNugetPackage package = new LoadedNugetPackage(fileName);
+					var package = new LoadedNugetPackage(fileName);
 					var entry = package.Entries.FirstOrDefault(e => e.Name == componentName);
 					if (entry != null) {
 						return OpenAssembly(assemblyUri, entry.Stream, true);
@@ -169,7 +165,7 @@ namespace ICSharpCode.ILSpy
 			
 			file = Path.GetFullPath(file);
 			
-			foreach (LoadedAssembly asm in this.assemblies) {
+			foreach (var asm in this.assemblies) {
 				if (file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
@@ -189,7 +185,7 @@ namespace ICSharpCode.ILSpy
 		{
 			App.Current.Dispatcher.VerifyAccess();
 
-			foreach (LoadedAssembly asm in this.assemblies) {
+			foreach (var asm in this.assemblies) {
 				if (file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
@@ -275,7 +271,7 @@ namespace ICSharpCode.ILSpy
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			lock (assemblies) {
-				List<LoadedAssembly> list = new List<LoadedAssembly>(assemblies);
+				var list = new List<LoadedAssembly>(assemblies);
 				list.Sort(index, Math.Min(count, list.Count - index), comparer);
 				assemblies.Clear();
 				assemblies.AddRange(list);

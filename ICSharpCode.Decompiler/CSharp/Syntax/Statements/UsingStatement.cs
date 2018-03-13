@@ -35,29 +35,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole UsingKeywordRole = new TokenRole ("using");
 		public static readonly Role<AstNode> ResourceAcquisitionRole = new Role<AstNode>("ResourceAcquisition", AstNode.Null);
 		
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole (UsingKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode UsingToken => GetChildByRole (UsingKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		/// <summary>
 		/// Either a VariableDeclarationStatement, or an Expression.
 		/// </summary>
 		public AstNode ResourceAcquisition {
-			get { return GetChildByRole (ResourceAcquisitionRole); }
-			set { SetChildByRole (ResourceAcquisitionRole, value); }
+			get => GetChildByRole (ResourceAcquisitionRole);
+			set => SetChildByRole (ResourceAcquisitionRole, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get => GetChildByRole (Roles.EmbeddedStatement);
+			set => SetChildByRole (Roles.EmbeddedStatement, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -77,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UsingStatement o = other as UsingStatement;
+			var o = other as UsingStatement;
 			return o != null && this.ResourceAcquisition.DoMatch(o.ResourceAcquisition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 	}

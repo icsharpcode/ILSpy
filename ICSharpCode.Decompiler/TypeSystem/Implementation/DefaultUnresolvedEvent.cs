@@ -48,20 +48,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = name;
 		}
 		
-		public bool CanAdd {
-			get { return addAccessor != null; }
-		}
-		
-		public bool CanRemove {
-			get { return removeAccessor != null; }
-		}
-		
-		public bool CanInvoke {
-			get { return invokeAccessor != null; }
-		}
-		
+		public bool CanAdd => addAccessor != null;
+
+		public bool CanRemove => removeAccessor != null;
+
+		public bool CanInvoke => invokeAccessor != null;
+
 		public IUnresolvedMethod AddAccessor {
-			get { return addAccessor; }
+			get => addAccessor;
 			set {
 				ThrowIfFrozen();
 				addAccessor = value;
@@ -69,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IUnresolvedMethod RemoveAccessor {
-			get { return removeAccessor; }
+			get => removeAccessor;
 			set {
 				ThrowIfFrozen();
 				removeAccessor = value;
@@ -77,7 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IUnresolvedMethod InvokeAccessor {
-			get { return invokeAccessor; }
+			get => invokeAccessor;
 			set {
 				ThrowIfFrozen();
 				invokeAccessor = value;

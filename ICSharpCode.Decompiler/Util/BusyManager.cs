@@ -43,10 +43,8 @@ namespace ICSharpCode.Decompiler.Util
 				this.objectList = objectList;
 			}
 			
-			public bool Success {
-				get { return objectList != null; }
-			}
-			
+			public bool Success => objectList != null;
+
 			public void Dispose()
 			{
 				if (objectList != null) {
@@ -59,10 +57,10 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public static BusyLock Enter(object obj)
 		{
-			List<object> activeObjects = _activeObjects;
+			var activeObjects = _activeObjects;
 			if (activeObjects == null)
 				activeObjects = _activeObjects = new List<object>();
-			for (int i = 0; i < activeObjects.Count; i++) {
+			for (var i = 0; i < activeObjects.Count; i++) {
 				if (activeObjects[i] == obj)
 					return BusyLock.Failed;
 			}

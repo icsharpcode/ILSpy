@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void EmptyAt1()
 		{
-			Interval i = new Interval(1, 1);
+			var i = new Interval(1, 1);
 			Assert.IsTrue(default(Interval).IsEmpty);
 			Assert.IsFalse(default(Interval).Contains(-1));
 			Assert.IsFalse(default(Interval).Contains(0));
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void OneToThree()
 		{
-			Interval i = new Interval(1, 3);
+			var i = new Interval(1, 3);
 			Assert.IsFalse(i.IsEmpty);
 			Assert.IsFalse(i.Contains(0));
 			Assert.IsTrue(i.Contains(1));
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void FullInterval()
 		{
-			Interval full = new Interval(int.MinValue, int.MinValue);
+			var full = new Interval(int.MinValue, int.MinValue);
 			Assert.IsFalse(full.IsEmpty);
 			Assert.IsTrue(full.Contains(int.MinValue));
 			Assert.IsTrue(full.Contains(0));
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void NonNegativeIntegers()
 		{
-			Interval i = new Interval(0, int.MinValue);
+			var i = new Interval(0, int.MinValue);
 			Assert.IsFalse(i.IsEmpty);
 			Assert.IsTrue(i.Contains(0));
 			Assert.IsTrue(i.Contains(1000));
@@ -79,13 +79,13 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void Intersection()
 		{
-			Interval empty = new Interval(0, 0);
-			Interval emptyAtOne = new Interval(0, 0);
-			Interval zero = new Interval(0, 1);
-			Interval full = new Interval(int.MinValue, int.MinValue);
-			Interval nonneg = new Interval(0, int.MinValue);
-			Interval nonpos = new Interval(int.MinValue, 1);
-			Interval maxval = new Interval(int.MaxValue, int.MinValue);
+			var empty = new Interval(0, 0);
+			var emptyAtOne = new Interval(0, 0);
+			var zero = new Interval(0, 1);
+			var full = new Interval(int.MinValue, int.MinValue);
+			var nonneg = new Interval(0, int.MinValue);
+			var nonpos = new Interval(int.MinValue, 1);
+			var maxval = new Interval(int.MaxValue, int.MinValue);
 			Assert.AreEqual(nonneg, full.Intersect(nonneg));
 			Assert.AreEqual(nonneg, nonneg.Intersect(full));
 			Assert.AreEqual(zero, nonneg.Intersect(zero));

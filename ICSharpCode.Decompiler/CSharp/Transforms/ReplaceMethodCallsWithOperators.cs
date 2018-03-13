@@ -59,8 +59,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
-				Expression expr = arguments[0];
-				for (int i = 1; i < arguments.Length; i++) {
+				var expr = arguments[0];
+				for (var i = 1; i < arguments.Length; i++) {
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i]);
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "System.Type.GetTypeFromHandle":
 					if (arguments.Length == 1) {
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0])) {
-							Expression target = ((MemberReferenceExpression)arguments[0]).Target;
+							var target = ((MemberReferenceExpression)arguments[0]).Target;
 							target.CopyInstructionsFrom(invocationExpression);
 							invocationExpression.ReplaceWith(target);
 							return;
@@ -81,20 +81,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 				case "System.Reflection.FieldInfo.GetFieldFromHandle":
 					if (arguments.Length == 1) {
-						MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
+						var mre = arguments[0] as MemberReferenceExpression;
 						if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
 							invocationExpression.ReplaceWith(mre.Target);
 							return;
 						}
 					} else if (arguments.Length == 2) {
-						MemberReferenceExpression mre1 = arguments[0] as MemberReferenceExpression;
-						MemberReferenceExpression mre2 = arguments[1] as MemberReferenceExpression;
+						var mre1 = arguments[0] as MemberReferenceExpression;
+						var mre2 = arguments[1] as MemberReferenceExpression;
 						if (mre1 != null && mre1.MemberName == "FieldHandle" && mre1.Target.Annotation<LdTokenAnnotation>() != null) {
 							if (mre2 != null && mre2.MemberName == "TypeHandle" && mre2.Target is TypeOfExpression) {
-								Expression oldArg = ((InvocationExpression)mre1.Target).Arguments.Single();
-								FieldReference field = oldArg.Annotation<FieldReference>();
+								var oldArg = ((InvocationExpression)mre1.Target).Arguments.Single();
+								var field = oldArg.Annotation<FieldReference>();
 								if (field != null) {
-									AstType declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
+									var declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
 									oldArg.ReplaceWith(new MemberReferenceExpression(new TypeReferenceExpression(declaringType), field.Name).CopyAnnotationsFrom(oldArg));
 									invocationExpression.ReplaceWith(mre1.Target);
 									return;
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						&& arguments.Skip(1).All(a => !a.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 					{
 						var tokens = new List<(TokenKind, int, string)>();
-						int i = 0;
+						var i = 0;
 						foreach (var (kind, data) in TokenizeFormatString((string)stringExpression.Value)) {
 							int index;
 							switch (kind) {
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									tokens.Add((kind, index, null));
 									break;
 								case TokenKind.ArgumentWithFormat:
-									string[] arg = data.Split(new[] { ':' }, 2);
+									var arg = data.Split(new[] { ':' }, 2);
 									if (arg.Length != 2 || arg[1].Length == 0)
 										return;
 									if (!int.TryParse(arg[0], out index) || index != i)
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 						if (i != arguments.Length - 1)
 							return;
-						List<InterpolatedStringContent> content = new List<InterpolatedStringContent>();
+						var content = new List<InterpolatedStringContent>();
 						if (tokens.Count > 0) {
 							foreach (var (kind, index, text) in tokens) {
 								switch (kind) {
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 			}
 
-			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
+			var bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
 			if (bop != null && arguments.Length == 2) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				invocationExpression.ReplaceWith(
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
+			var uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
 			if (uop != null && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
 		{
-			int pos = -1;
+			var pos = -1;
 
 			int Peek(int steps = 1)
 			{
@@ -229,14 +229,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			int Next()
 			{
-				int val = Peek();
+				var val = Peek();
 				pos++;
 				return val;
 			}
 
 			int next;
-			TokenKind kind = TokenKind.String;
-			StringBuilder sb = new StringBuilder();
+			var kind = TokenKind.String;
+			var sb = new StringBuilder();
 
 			while ((next = Next()) > -1) {
 				switch ((char)next) {
@@ -363,9 +363,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitCastExpression(castExpression);
 			// Handle methodof
-			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
+			var m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success) {
-				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
+				var method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
 				if (m.Has("declaringType") && method != null) {
 					Expression newNode = new MemberReferenceExpression(new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
 					newNode = new InvocationExpression(newNode, method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));

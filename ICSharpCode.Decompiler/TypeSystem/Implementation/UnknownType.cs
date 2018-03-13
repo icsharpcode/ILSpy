@@ -64,10 +64,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.Unknown; }
-		}
-		
+		public override TypeKind Kind => TypeKind.Unknown;
+
 		public override ITypeReference ToTypeReference()
 		{
 			return this;
@@ -80,26 +78,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 		
-		public override string Name {
-			get { return fullTypeName.Name; }
-		}
-		
-		public override string Namespace {
-			get { return fullTypeName.TopLevelTypeName.Namespace; }
-		}
-		
-		public override string ReflectionName {
-			get { return namespaceKnown ? fullTypeName.ReflectionName : "?"; }
-		}
-		
+		public override string Name => fullTypeName.Name;
+
+		public override string Namespace => fullTypeName.TopLevelTypeName.Namespace;
+
+		public override string ReflectionName => namespaceKnown ? fullTypeName.ReflectionName : "?";
+
 		public override int TypeParameterCount => fullTypeName.TypeParameterCount;
 		public override IReadOnlyList<ITypeParameter> TypeParameters => DummyTypeParameter.GetClassTypeParameterList(TypeParameterCount);
 		public override IReadOnlyList<IType> TypeArguments => TypeParameters;
 
-		public override bool? IsReferenceType {
-			get { return isReferenceType; }
-		}
-		
+		public override bool? IsReferenceType => isReferenceType;
+
 		public override int GetHashCode()
 		{
 			return (namespaceKnown ? 812571 : 12651) ^ fullTypeName.GetHashCode();
@@ -107,7 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override bool Equals(IType other)
 		{
-			UnknownType o = other as UnknownType;
+			var o = other as UnknownType;
 			if (o == null)
 				return false;
 			return this.namespaceKnown == o.namespaceKnown && this.fullTypeName == o.fullTypeName && this.isReferenceType == o.isReferenceType;

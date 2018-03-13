@@ -38,19 +38,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return PropertyTreeNode.GetIcon(analyzedProperty, isIndexer); }
-		}
+		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty, isIndexer);
 
-		public override object Text
-		{
-			get
-			{
-				// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-				return prefix + Language.TypeToString(analyzedProperty.DeclaringType, true) + "." + PropertyTreeNode.GetText(analyzedProperty, Language, isIndexer);
-			}
-		}
+		public override object Text => prefix + Language.TypeToString(analyzedProperty.DeclaringType, true) + "." + PropertyTreeNode.GetText(analyzedProperty, Language, isIndexer);
 
 		protected override void LoadChildren()
 		{
@@ -85,8 +75,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			    || AnalyzedPropertyOverridesTreeNode.CanShow(property);
 		}
 		
-		public override MemberReference Member {
-			get { return analyzedProperty; }
-		}
+		public override MemberReference Member => analyzedProperty;
 	}
 }

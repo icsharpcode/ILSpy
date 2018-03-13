@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public virtual void Disassemble(MethodBody body)
 		{
 			// start writing IL code
-			MethodDefinition method = body.Method;
+			var method = body.Method;
 			output.WriteLine("// Method begins at RVA 0x{0:x4}", method.RVA);
 			output.WriteLine("// Code size {0} (0x{0:x})", body.CodeSize);
 			output.WriteLine(".maxstack {0}", body.MaxStackSize);
@@ -68,8 +68,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			sequencePoints = method.DebugInformation?.SequencePoints;
 			nextSequencePointIndex = 0;
 			if (DetectControlStructure && body.Instructions.Count > 0) {
-				Instruction inst = body.Instructions[0];
-				HashSet<int> branchTargets = GetBranchTargets(body.Instructions);
+				var inst = body.Instructions[0];
+				var branchTargets = GetBranchTargets(body.Instructions);
 				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, method.Body.CodeSize);
 			} else {
 				foreach (var inst in method.Body.Instructions) {
@@ -114,14 +114,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		HashSet<int> GetBranchTargets(IEnumerable<Instruction> instructions)
 		{
-			HashSet<int> branchTargets = new HashSet<int>();
+			var branchTargets = new HashSet<int>();
 			foreach (var inst in instructions) {
-				Instruction target = inst.Operand as Instruction;
+				var target = inst.Operand as Instruction;
 				if (target != null)
 					branchTargets.Add(target.Offset);
-				Instruction[] targets = inst.Operand as Instruction[];
+				var targets = inst.Operand as Instruction[];
 				if (targets != null)
-					foreach (Instruction t in targets)
+					foreach (var t in targets)
 						branchTargets.Add(t.Offset);
 			}
 			return branchTargets;
@@ -177,13 +177,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteStructureBody(ILStructure s, HashSet<int> branchTargets, ref Instruction inst, int codeSize)
 		{
-			bool isFirstInstructionInStructure = true;
-			bool prevInstructionWasBranch = false;
-			int childIndex = 0;
+			var isFirstInstructionInStructure = true;
+			var prevInstructionWasBranch = false;
+			var childIndex = 0;
 			while (inst != null && inst.Offset < s.EndOffset) {
-				int offset = inst.Offset;
+				var offset = inst.Offset;
 				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset) {
-					ILStructure child = s.Children[childIndex++];
+					var child = s.Children[childIndex++];
 					WriteStructureHeader(child);
 					WriteStructureBody(child, branchTargets, ref inst, codeSize);
 					WriteStructureFooter(child);
@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		protected virtual void WriteInstruction(ITextOutput output, Instruction instruction)
 		{
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
-				SequencePoint sp = sequencePoints[nextSequencePointIndex];
+				var sp = sequencePoints[nextSequencePointIndex];
 				if (sp.Offset <= instruction.Offset) {
 					output.Write("// sequence point: ");
 					if (sp.Offset != instruction.Offset) {

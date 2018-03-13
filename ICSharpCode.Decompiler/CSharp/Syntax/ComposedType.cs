@@ -46,42 +46,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Parameters use ParameterDeclaration.ParameterModifier instead.
 		/// </summary>
 		public bool HasRefSpecifier {
-			get {
-				return !GetChildByRole(RefRole).IsNull;
-			}
-			set {
-				SetChildByRole(RefRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
-			}
+			get => !GetChildByRole(RefRole).IsNull;
+			set => SetChildByRole(RefRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
 		}
 
 		public AstType BaseType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get => GetChildByRole(Roles.Type);
+			set => SetChildByRole(Roles.Type, value);
 		}
 		
 		public bool HasNullableSpecifier {
-			get {
-				return !GetChildByRole(NullableRole).IsNull;
-			}
-			set {
-				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
-			}
+			get => !GetChildByRole(NullableRole).IsNull;
+			set => SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
 		}
 
-		public CSharpTokenNode NullableSpecifierToken {
-			get {
-				return GetChildByRole(NullableRole);
-			}
-		}
-		
+		public CSharpTokenNode NullableSpecifierToken => GetChildByRole(NullableRole);
+
 		public int PointerRank {
-			get {
-				return GetChildrenByRole(PointerRole).Count;
-			}
+			get => GetChildrenByRole(PointerRole).Count;
 			set {
 				if (value < 0)
 					throw new ArgumentOutOfRangeException();
-				int d = this.PointerRank;
+				var d = this.PointerRank;
 				while (d > value) {
 					GetChildByRole(PointerRole).Remove();
 					d--;
@@ -93,14 +79,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		public AstNodeCollection<ArraySpecifier> ArraySpecifiers {
-			get { return GetChildrenByRole (ArraySpecifierRole); }
-		}
+		public AstNodeCollection<ArraySpecifier> ArraySpecifiers => GetChildrenByRole (ArraySpecifierRole);
 
-		public AstNodeCollection<CSharpTokenNode> PointerTokens {
-			get { return GetChildrenByRole (PointerRole); }
-		}
-		
+		public AstNodeCollection<CSharpTokenNode> PointerTokens => GetChildrenByRole (PointerRole);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitComposedType (this);
@@ -118,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ComposedType o = other as ComposedType;
+			var o = other as ComposedType;
 			return o != null
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
@@ -129,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			if (this.HasRefSpecifier)
 				b.Append("ref ");
 			b.Append(this.BaseType.ToString());
@@ -170,12 +152,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (interningProvider == null)
 				interningProvider = InterningProvider.Dummy;
-			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
+			var t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
 			if (this.HasNullableSpecifier) {
 				t = interningProvider.Intern(NullableType.Create(t));
 			}
-			int pointerRank = this.PointerRank;
-			for (int i = 0; i < pointerRank; i++) {
+			var pointerRank = this.PointerRank;
+			for (var i = 0; i < pointerRank; i++) {
 				t = interningProvider.Intern(new PointerTypeReference(t));
 			}
 			foreach (var a in this.ArraySpecifiers.Reverse()) {
@@ -193,12 +175,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ArraySpecifier : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		public ArraySpecifier()
 		{
 		}
@@ -208,14 +186,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Dimensions = dimensions;
 		}
 		
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
-		}
-		
+		public CSharpTokenNode LBracketToken => GetChildByRole (Roles.LBracket);
+
 		public int Dimensions {
-			get { return 1 + GetChildrenByRole(Roles.Comma).Count; }
+			get => 1 + GetChildrenByRole(Roles.Comma).Count;
 			set {
-				int d = this.Dimensions;
+				var d = this.Dimensions;
 				while (d > value) {
 					GetChildByRole(Roles.Comma).Remove();
 					d--;
@@ -227,10 +203,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
+		public CSharpTokenNode RBracketToken => GetChildByRole (Roles.RBracket);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitArraySpecifier (this);
@@ -248,7 +222,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArraySpecifier o = other as ArraySpecifier;
+			var o = other as ArraySpecifier;
 			return o != null && this.Dimensions == o.Dimensions;
 		}
 

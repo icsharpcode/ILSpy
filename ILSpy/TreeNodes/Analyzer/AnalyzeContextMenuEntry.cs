@@ -29,14 +29,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
 				return false;
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is MemberReference;
+				return context.Reference?.Reference is MemberReference;
 			return context.SelectedTreeNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is MemberReference;
+				return context.Reference?.Reference is MemberReference;
 			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
 				if (!(node.Member is TypeDefinition
 				      || node.Member is FieldDefinition
@@ -65,27 +65,27 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public static void Analyze(MemberReference member)
 		{
 			if (member is TypeReference) {
-				TypeDefinition type = ((TypeReference)member).Resolve();
+				var type = ((TypeReference)member).Resolve();
 				if (type != null)
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(type));
 			}
 			else if (member is FieldReference) {
-				FieldDefinition field = ((FieldReference)member).Resolve();
+				var field = ((FieldReference)member).Resolve();
 				if (field != null)
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(field));
 			}
 			else if (member is MethodReference) {
-				MethodDefinition method = ((MethodReference)member).Resolve();
+				var method = ((MethodReference)member).Resolve();
 				if (method != null)
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(method));
 			}
 			else if (member is PropertyReference) {
-				PropertyDefinition property = ((PropertyReference)member).Resolve();
+				var property = ((PropertyReference)member).Resolve();
 				if (property != null)
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(property));
 			}
 			else if (member is EventReference) {
-				EventDefinition @event = ((EventReference)member).Resolve();
+				var @event = ((EventReference)member).Resolve();
 				if (@event != null)
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(@event));
 			}

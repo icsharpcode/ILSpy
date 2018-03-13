@@ -1335,7 +1335,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public bool IsKnownType(string type)
 		{
-			foreach (TypeDeclaration td in KnownTypeTable)
+			foreach (var td in KnownTypeTable)
 				if (String.CompareOrdinal(td.Name, type) == 0)
 					return true;
 

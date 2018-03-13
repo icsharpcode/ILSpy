@@ -56,8 +56,8 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		Color Interpolate(float v1, Color c1, float v2, Color c2)
 		{
-			float v = (val - v1) / (v2 - v1);
-			Color c = c1 * (1 - v) + c2 * v;
+			var v = (val - v1) / (v2 - v1);
+			var c = c1 * (1 - v) + c2 * v;
 			return c * (1 - Highlight) + SystemColors.HighlightColor * Highlight;
 		}
 	}

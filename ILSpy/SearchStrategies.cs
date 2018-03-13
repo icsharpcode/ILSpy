@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy
 
 		protected float CalculateFitness(MemberReference member)
 		{
-			string text = member.Name;
+			var text = member.Name;
 
 			// Probably compiler generated types without meaningful names, show them last
 			if (text.StartsWith("<")) {
@@ -90,11 +90,11 @@ namespace ICSharpCode.ILSpy
 				return regex.IsMatch(getText(""));
 			}
 
-			for (int i = 0; i < searchTerm.Length; ++i) {
+			for (var i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = getText(term);
+				var text = getText(term);
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);
@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy
 
 		void Add<T>(Func<IEnumerable<T>> itemsGetter, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
 		{
-			IEnumerable<T> items = Enumerable.Empty<T>();
+			var items = Enumerable.Empty<T>();
 			try {
 				items = itemsGetter();
 			} catch (Exception ex) {
@@ -169,7 +169,7 @@ namespace ICSharpCode.ILSpy
 			Add(() => type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
 			Add(() => type.Methods.Where(NotSpecialMethod), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
 
-			foreach (TypeDefinition nestedType in type.NestedTypes) {
+			foreach (var nestedType in type.NestedTypes) {
 				Search(nestedType, language, addResult);
 			}
 		}
@@ -225,7 +225,7 @@ namespace ICSharpCode.ILSpy
 				var value = lexer.NextToken();
 
 				if (value != null && value.LiteralValue != null) {
-					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
+					var valueType = Type.GetTypeCode(value.LiteralValue.GetType());
 					switch (valueType) {
 					case TypeCode.Byte:
 					case TypeCode.SByte:
@@ -275,7 +275,7 @@ namespace ICSharpCode.ILSpy
 				return false;
 			switch (searchTermLiteralType) {
 				case TypeCode.Int64:
-					TypeCode tc = Type.GetTypeCode(val.GetType());
+					var tc = Type.GetTypeCode(val.GetType());
 					if (tc >= TypeCode.SByte && tc <= TypeCode.UInt64)
 						return CSharpPrimitiveCast.Cast(TypeCode.Int64, val, false).Equals(searchTermLiteralValue);
 					else
@@ -298,7 +298,7 @@ namespace ICSharpCode.ILSpy
 			if (body == null)
 				return false;
 			if (searchTermLiteralType == TypeCode.Int64) {
-				long val = (long)searchTermLiteralValue;
+				var val = (long)searchTermLiteralValue;
 				foreach (var inst in body.Instructions) {
 					switch (inst.OpCode.Code) {
 					case Code.Ldc_I8:
@@ -439,7 +439,7 @@ namespace ICSharpCode.ILSpy
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (MatchName(type, language)) {
-				string name = language.TypeToString(type, includeNamespace: false);
+				var name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult {
 					Member = type,
 					Fitness = CalculateFitness(type),
@@ -450,7 +450,7 @@ namespace ICSharpCode.ILSpy
 				});
 			}
 
-			foreach (TypeDefinition nestedType in type.NestedTypes) {
+			foreach (var nestedType in type.NestedTypes) {
 				Search(nestedType, language, addResult);
 			}
 		}
@@ -467,7 +467,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language))
 			{
-				string name = language.TypeToString(type, includeNamespace: false);
+				var name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult
 				{
 					Member = type,

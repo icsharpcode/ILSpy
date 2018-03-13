@@ -41,14 +41,14 @@ namespace ICSharpCode.ILSpy.Options
 			// FIXME: Ideally, the export provider should be disposed when it's no longer needed.
 			var ep = App.ExportProviderFactory.CreateExportProvider();
 			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
-			ILSpySettings settings = ILSpySettings.Load();
+			var settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order)) {
-				TabItem tabItem = new TabItem();
+				var tabItem = new TabItem();
 				tabItem.Header = optionPage.Metadata.Title;
 				tabItem.Content = optionPage.Value;
 				tabControl.Items.Add(tabItem);
 				
-				IOptionPage page = optionPage.Value as IOptionPage;
+				var page = optionPage.Value as IOptionPage;
 				if (page != null)
 					page.Load(settings);
 			}
@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpy.Options
 			ILSpySettings.Update(
 				delegate (XElement root) {
 					foreach (var optionPage in optionPages) {
-						IOptionPage page = optionPage.Value as IOptionPage;
+						var page = optionPage.Value as IOptionPage;
 						if (page != null)
 							page.Save(root);
 					}
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		public override void Execute(object parameter)
 		{
-			OptionsDialog dlg = new OptionsDialog();
+			var dlg = new OptionsDialog();
 			dlg.Owner = MainWindow.Instance;
 			if (dlg.ShowDialog() == true) {
 				new RefreshCommand().Execute(parameter);

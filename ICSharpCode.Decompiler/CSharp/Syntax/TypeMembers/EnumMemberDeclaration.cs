@@ -32,17 +32,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<Expression> InitializerRole = new Role<Expression>("Initializer", Expression.Null);
 		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Field; }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Field;
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
-		}
+		public CSharpTokenNode AssignToken => GetChildByRole (Roles.Assign);
 
 		public Expression Initializer {
-			get { return GetChildByRole (InitializerRole); }
-			set { SetChildByRole (InitializerRole, value); }
+			get => GetChildByRole (InitializerRole);
+			set => SetChildByRole (InitializerRole, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -62,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			EnumMemberDeclaration o = other as EnumMemberDeclaration;
+			var o = other as EnumMemberDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}

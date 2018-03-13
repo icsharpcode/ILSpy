@@ -32,11 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class WhitespaceNode : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
+		public override NodeType NodeType => NodeType.Whitespace;
 
 		public string WhiteSpaceText {
 			get;
@@ -44,17 +40,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get { 
-				return startLocation;
-			}
-		}
-		
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation (startLocation.Line, startLocation.Column + WhiteSpaceText.Length);
-			}
-		}
+		public override TextLocation StartLocation => startLocation;
+
+		public override TextLocation EndLocation => new TextLocation (startLocation.Line, startLocation.Column + WhiteSpaceText.Length);
 
 		public WhitespaceNode(string whiteSpaceText) : this (whiteSpaceText, TextLocation.Empty)
 		{

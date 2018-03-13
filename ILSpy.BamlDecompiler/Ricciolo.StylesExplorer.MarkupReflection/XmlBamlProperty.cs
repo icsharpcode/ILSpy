@@ -8,19 +8,17 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	internal class XmlBamlProperty : XmlBamlNode
 	{
-		PropertyType propertyType;
-
 		public XmlBamlProperty(XmlBamlElement parent, PropertyType propertyType)
 		{
 			this.Parent = parent;
-			this.propertyType = propertyType;
+			this.PropertyType = propertyType;
 		}
 
 		public XmlBamlProperty(XmlBamlElement parent, PropertyType propertyType, PropertyDeclaration propertyDeclaration)
 		{
 			this.Parent = parent;
 			this.PropertyDeclaration = propertyDeclaration;
-			this.propertyType = propertyType;
+			this.PropertyType = propertyType;
 		}
 
 		public override string ToString()
@@ -32,15 +30,11 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		
 		public PropertyDeclaration PropertyDeclaration { get; set; }
 
-		public PropertyType PropertyType {
-			get { return this.propertyType; }
-		}
+		public PropertyType PropertyType { get; }
 
 		public object Value { get; set; }
 
-		public override XmlNodeType NodeType {
-			get { return XmlNodeType.Attribute; }
-		}
+		public override XmlNodeType NodeType => XmlNodeType.Attribute;
 	}
 
 	internal enum PropertyType

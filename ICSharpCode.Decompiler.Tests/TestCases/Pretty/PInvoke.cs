@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CallMethodWithInOutParameter()
 		{
-			int num = 0;
+			var num = 0;
 			PInvoke.ioctlsocket(IntPtr.Zero, 0, ref num);
 		}
 	}

@@ -26,20 +26,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public class Repeat : Pattern
 	{
-		readonly INode childNode;
-		
 		public int MinCount { get; set; }
 		public int MaxCount { get; set; }
 		
-		public INode ChildNode {
-			get { return childNode; }
-		}
-		
+		public INode ChildNode { get; }
+
 		public Repeat(INode childNode)
 		{
-			if (childNode == null)
-				throw new ArgumentNullException("childNode");
-			this.childNode = childNode;
+			this.ChildNode = childNode ?? throw new ArgumentNullException("childNode");
 			this.MinCount = 0;
 			this.MaxCount = int.MaxValue;
 		}
@@ -48,10 +42,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 			var backtrackingStack = backtrackingInfo.backtrackingStack;
 			Debug.Assert(pos == null || pos.Role == role);
-			int matchCount = 0;
+			var matchCount = 0;
 			if (this.MinCount <= 0)
 				backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
-			while (matchCount < this.MaxCount && pos != null && childNode.DoMatch(pos, match)) {
+			while (matchCount < this.MaxCount && pos != null && ChildNode.DoMatch(pos, match)) {
 				matchCount++;
 				do {
 					pos = pos.NextSibling;
@@ -67,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			if (other == null || other.IsNull)
 				return this.MinCount <= 0;
 			else
-				return this.MaxCount >= 1 && childNode.DoMatch(other, match);
+				return this.MaxCount >= 1 && ChildNode.DoMatch(other, match);
 		}
 	}
 }

@@ -47,14 +47,10 @@ namespace ICSharpCode.Decompiler.IL
 			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+
 		public BlockContainer TargetContainer {
-			get { return targetContainer; }
+			get => targetContainer;
 			set {
 				if (targetContainer != null && IsConnected)
 					targetContainer.LeaveCount--;
@@ -78,10 +74,8 @@ namespace ICSharpCode.Decompiler.IL
 				targetContainer.LeaveCount--;
 		}
 		
-		public string TargetLabel {
-			get { return targetContainer?.EntryPoint != null ? targetContainer.EntryPoint.Label : string.Empty; }
-		}
-		
+		public string TargetLabel => targetContainer?.EntryPoint != null ? targetContainer.EntryPoint.Label : string.Empty;
+
 		/// <summary>
 		/// Gets whether the leave instruction is leaving the whole ILFunction.
 		/// (TargetContainer == main container of the function).
@@ -89,18 +83,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// This is only valid for functions returning void (representing value-less "return;"),
 		/// and for iterators (representing "yield break;").
 		/// </summary>
-		public bool IsLeavingFunction {
-			get { return targetContainer?.Parent is ILFunction; }
-		}
+		public bool IsLeavingFunction => targetContainer?.Parent is ILFunction;
 
 		/// <summary>
 		/// Gets whether this branch executes at least one finally block before jumping to the end of the target block container.
 		/// </summary>
-		public bool TriggersFinallyBlock {
-			get {
-				return Branch.GetExecutesFinallyBlock(this, TargetContainer);
-			}
-		}
+		public bool TriggersFinallyBlock => Branch.GetExecutesFinallyBlock(this, TargetContainer);
 
 		internal override void CheckInvariant(ILPhase phase)
 		{

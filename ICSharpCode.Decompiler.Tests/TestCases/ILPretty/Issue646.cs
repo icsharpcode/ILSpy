@@ -11,8 +11,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		[STAThread]
 		public static void Main()
 		{
-			List<string> list = new List<string>();
-			foreach (string item in list) {
+			var list = new List<string>();
+			foreach (var item in list) {
 				Debug.WriteLine(item);
 			}
 		}

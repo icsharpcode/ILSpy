@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		/// before it can be reused.</returns>
 		internal static bool DoMatch(IReadOnlyList<ILInstruction> patterns, IReadOnlyList<ILInstruction> syntaxList, ref Match match)
 		{
-			ListMatch listMatch = new ListMatch(syntaxList);
+			var listMatch = new ListMatch(syntaxList);
 			do {
 				if (PerformMatchSequence(patterns, ref listMatch, ref match)) {
 					// If we have a successful match and it matches the whole list,
@@ -74,9 +74,9 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			// The patterns may create savepoints, so we need to save the 'i' variable
 			// as part of those checkpoints.
-			for (int i = listMatch.PopFromSavePoint() ?? 0; i < patterns.Count; i++) {
-				int startMarker = listMatch.GetSavePointStartMarker();
-				bool success = patterns[i].PerformMatch(ref listMatch, ref match);
+			for (var i = listMatch.PopFromSavePoint() ?? 0; i < patterns.Count; i++) {
+				var startMarker = listMatch.GetSavePointStartMarker();
+				var success = patterns[i].PerformMatch(ref listMatch, ref match);
 				listMatch.PushToSavePoints(startMarker, i);
 				if (!success)
 					return false;
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		{
 			if (backtrackingStack == null)
 				return;
-			for (int i = startMarker; i < backtrackingStack.Count; i++) {
+			for (var i = startMarker; i < backtrackingStack.Count; i++) {
 				backtrackingStack[i].stack.Push(data);
 			}
 		}

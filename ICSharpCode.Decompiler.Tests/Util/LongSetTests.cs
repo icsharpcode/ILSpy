@@ -31,9 +31,9 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		{
 			var longSet = new LongSet(new[] { new LongInterval(1, 5), new LongInterval(6, 7) }.ToImmutableArray());
 			Assert.AreEqual(0, longSet.upper_bound(0));
-			for (int i = 1; i <= 5; i++)
+			for (var i = 1; i <= 5; i++)
 				Assert.AreEqual(1, longSet.upper_bound(i));
-			for (int i = 6; i <= 10; i++)
+			for (var i = 6; i <= 10; i++)
 				Assert.AreEqual(2, longSet.upper_bound(i));
 		}
 

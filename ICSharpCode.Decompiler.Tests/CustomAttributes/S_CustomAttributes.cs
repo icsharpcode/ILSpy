@@ -91,13 +91,8 @@ namespace CustomAttributes
 		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
 		[My(EnumWithFlag.All)]
-		public static string Property
-		{
-			get
-			{
-				return "aa";
-			}
-		}
+		public static string Property => "aa";
+
 		[Obsolete("some message")]
 		public static void ObsoletedMethod()
 		{

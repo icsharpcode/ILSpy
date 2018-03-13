@@ -30,39 +30,35 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class MemberResolveResult : ResolveResult
 	{
-		readonly IMember member;
 		readonly bool isConstant;
-		readonly object constantValue;
-		readonly ResolveResult targetResult;
-		readonly bool isVirtualCall;
-		
+
 		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnTypeOverride = null)
 			: base(returnTypeOverride ?? ComputeType(member))
 		{
-			this.targetResult = targetResult;
-			this.member = member;
+			this.TargetResult = targetResult;
+			this.Member = member;
 			var thisRR = targetResult as ThisResolveResult;
-			this.isVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
+			this.IsVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
 			
-			IField field = member as IField;
+			var field = member as IField;
 			if (field != null) {
 				isConstant = field.IsConst;
 				if (isConstant)
-					constantValue = field.ConstantValue;
+					ConstantValue = field.ConstantValue;
 			}
 		}
 		
 		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall, IType returnTypeOverride = null)
 			: base(returnTypeOverride ?? ComputeType(member))
 		{
-			this.targetResult = targetResult;
-			this.member = member;
-			this.isVirtualCall = isVirtualCall;
-			IField field = member as IField;
+			this.TargetResult = targetResult;
+			this.Member = member;
+			this.IsVirtualCall = isVirtualCall;
+			var field = member as IField;
 			if (field != null) {
 				isConstant = field.IsConst;
 				if (isConstant)
-					constantValue = field.ConstantValue;
+					ConstantValue = field.ConstantValue;
 			}
 		}
 		
@@ -84,60 +80,50 @@ namespace ICSharpCode.Decompiler.Semantics
 		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType, bool isConstant, object constantValue)
 			: base(returnType)
 		{
-			this.targetResult = targetResult;
-			this.member = member;
+			this.TargetResult = targetResult;
+			this.Member = member;
 			this.isConstant = isConstant;
-			this.constantValue = constantValue;
+			this.ConstantValue = constantValue;
 		}
 		
 		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType, bool isConstant, object constantValue, bool isVirtualCall)
 			: base(returnType)
 		{
-			this.targetResult = targetResult;
-			this.member = member;
+			this.TargetResult = targetResult;
+			this.Member = member;
 			this.isConstant = isConstant;
-			this.constantValue = constantValue;
-			this.isVirtualCall = isVirtualCall;
+			this.ConstantValue = constantValue;
+			this.IsVirtualCall = isVirtualCall;
 		}
 		
-		public ResolveResult TargetResult {
-			get { return targetResult; }
-		}
-		
+		public ResolveResult TargetResult { get; }
+
 		/// <summary>
 		/// Gets the member.
 		/// This property never returns null.
 		/// </summary>
-		public IMember Member {
-			get { return member; }
-		}
-		
+		public IMember Member { get; }
+
 		/// <summary>
 		/// Gets whether this MemberResolveResult is a virtual call.
 		/// </summary>
-		public bool IsVirtualCall {
-			get { return isVirtualCall; }
-		}
-		
-		public override bool IsCompileTimeConstant {
-			get { return isConstant; }
-		}
-		
-		public override object ConstantValue {
-			get { return constantValue; }
-		}
-		
+		public bool IsVirtualCall { get; }
+
+		public override bool IsCompileTimeConstant => isConstant;
+
+		public override object ConstantValue { get; }
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			if (targetResult != null)
-				return new[] { targetResult };
+			if (TargetResult != null)
+				return new[] { TargetResult };
 			else
 				return Enumerable.Empty<ResolveResult>();
 		}
 		
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, member);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, Member);
 		}
 	}
 }

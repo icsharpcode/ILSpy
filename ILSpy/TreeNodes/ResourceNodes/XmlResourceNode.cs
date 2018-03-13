@@ -35,17 +35,15 @@ namespace ICSharpCode.ILSpy.Xaml
 
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null)
-				return CreateNode(er.Name, er.GetResourceStream());
-			return null;
+			var er = resource as EmbeddedResource;
+			return er != null ? CreateNode(er.Name, er.GetResourceStream()) : null;
 		}
 		
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (!(data is Stream))
 			    return null;
-			foreach (string fileExt in xmlFileExtensions)
+			foreach (var fileExt in xmlFileExtensions)
 			{
 				if (key.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase))
 					return new XmlResourceEntryNode(key, (Stream)data);
@@ -67,7 +65,7 @@ namespace ICSharpCode.ILSpy.Xaml
 		{
 			get
 			{
-				string text = (string)Text;
+				var text = (string)Text;
 				if (text.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
 					return Images.ResourceXml;
 				else if (text.EndsWith(".xsd", StringComparison.OrdinalIgnoreCase))
@@ -81,7 +79,7 @@ namespace ICSharpCode.ILSpy.Xaml
 
 		public override bool View(DecompilerTextView textView)
 		{
-			AvalonEditTextOutput output = new AvalonEditTextOutput();
+			var output = new AvalonEditTextOutput();
 			IHighlightingDefinition highlighting = null;
 			
 			textView.RunWithCancellation(

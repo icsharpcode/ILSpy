@@ -33,23 +33,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class LabelStatement : Statement
 	{
 		public string Label {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole(Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier LabelToken {
-			get { return GetChildByRole (Roles.Identifier); }
-			set { SetChildByRole (Roles.Identifier, value); }
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (Roles.Colon); }
-		}
-		
+		public CSharpTokenNode ColonToken => GetChildByRole (Roles.Colon);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitLabelStatement (this);
@@ -67,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			LabelStatement o = other as LabelStatement;
+			var o = other as LabelStatement;
 			return o != null && MatchString(this.Label, o.Label);
 		}
 	}

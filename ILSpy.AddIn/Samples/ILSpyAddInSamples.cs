@@ -21,49 +21,35 @@ namespace ILSpy.AddIn.Tests
 		public event Action OnEvent;
 
 		// F:ILSpy.AddIn.Tests.SomeClass.mField
-		private int mField;
 
 		// P:ILSpy.AddIn.Tests.SomeClass.Property
-		private int Property
-		{
-			get
-			{
-				return mField;
-			}
-			set
-			{
-				mField = value;
-			}
-		}
+		private int Property { get; set; }
 
 		// P:ILSpy.AddIn.Tests.SomeClass.Item(System.Int32,System.Int32)
-		public int this[int x, int y]
-		{
-			get { return x + y + mField; }
-		}
+		public int this[int x, int y] => x + y + Property;
 
 		// M:ILSpy.AddIn.Tests.SomeClass.#ctor
 		public SomeClass()
 		{
-			mField = 0;
+			Property = 0;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.#ctor(System.Int32)
 		public SomeClass(int x)
 		{
-			mField = x;
+			Property = x;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.#ctor(System.Int32,System.Int32)
 		public SomeClass(int x, int y)
 		{
-			mField = x + y;
+			Property = x + y;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.Method
 		public int Method()
 		{
-			return mField;
+			return Property;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.MethodWithGenericParameter(System.IEquatable{System.String})
@@ -81,79 +67,79 @@ namespace ILSpy.AddIn.Tests
 		// M:ILSpy.AddIn.Tests.SomeClass.GenericMethod``1(``0)
 		public int GenericMethod<T>(T x)
 		{
-			return mField + x.GetHashCode();
+			return Property + x.GetHashCode();
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.GenericOverloadedMethod``1(System.Int32,``0)
 		public int GenericOverloadedMethod<T1>(int x, T1 y)
 		{
-			return mField + x + y.GetHashCode();
+			return Property + x + y.GetHashCode();
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.GenericOverloadedMethod``2(System.Int32,``0,``1)
 		public int GenericOverloadedMethod<T1, T2>(int x, T1 y, T2 z)
 		{
-			return mField + x + y.GetHashCode() + z.GetHashCode();
+			return Property + x + y.GetHashCode() + z.GetHashCode();
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedMethod
 		public int OverloadedMethod()
 		{
-			return mField * mField;
+			return Property * Property;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedMethod(System.Int32)
 		public int OverloadedMethod(int m)
 		{
-			return mField * m;
+			return Property * m;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedMethod(System.Int32,System.Int32)
 		public int OverloadedMethod(int m1, int m2)
 		{
-			return mField * m1 * m2;
+			return Property * m1 * m2;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1
 		public int OverloadedGenericMethod<T>()
 		{
-			return mField * mField;
+			return Property * Property;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Int32)
 		public int OverloadedGenericMethod<T>(int m)
 		{
-			return mField * m;
+			return Property * m;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Int32,System.Int32)
 		public int OverloadedGenericMethod<T>(int m1, int m2)
 		{
-			return mField * m1 * m2;
+			return Property * m1 * m2;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Int32,System.Int32,System.Collections.IEnumerable)
 		public int OverloadedGenericMethod<T>(int m1, int m2, IEnumerable m3)
 		{
-			return mField * m1 * m2;
+			return Property * m1 * m2;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{``0})
 		public int OverloadedGenericMethod<T>(int m1, int m2, IEnumerable<T> m3)
 		{
-			return mField * m1 * m2;
+			return Property * m1 * m2;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.String})
 		public int OverloadedGenericMethod<T>(int m1, int m2, IEnumerable<string> m3)
 		{
-			return mField * m1 * m2;
+			return Property * m1 * m2;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{ILSpy.AddIn.Tests.SomeGenericClass{System.String,``0}}})
 		public int OverloadedGenericMethod<T>(IEnumerable<IEnumerable<SomeGenericClass<string, T>>> m3)
 		{
-			return mField;
+			return Property;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeClass.OverloadedGenericMethod``1(ILSpy.AddIn.Tests.SomeGenericClass{``0,ILSpy.AddIn.Tests.SomeGenericClass{``0,``0}}.NestedGeneric{System.String,``0})
@@ -184,30 +170,26 @@ namespace ILSpy.AddIn.Tests
 		public class NestedClass : NestedInterface
 		{
 			// F:ILSpy.AddIn.Tests.SomeClass.NestedClass.mX
-			private int mX;
 
 			// M:ILSpy.AddIn.Tests.SomeClass.NestedClass.#ctor(System.Int32)
 			public NestedClass(int x)
 			{
-				mX = x;
+				SomeProperty = x;
 			}
 
 			// M:ILSpy.AddIn.Tests.SomeClass.NestedClass.#ctor(ILSpy.AddIn.Tests.SomeClass.NestedEnum)
 			public NestedClass(NestedEnum x)
 			{
-				mX = (int)x;
+				SomeProperty = (int)x;
 			}
 
 			// P:ILSpy.AddIn.Tests.SomeClass.NestedClass.SomeProperty
-			public int SomeProperty
-			{
-				get { return mX; }
-			}
+			public int SomeProperty { get; }
 
 			// M:ILSpy.AddIn.Tests.SomeClass.NestedClass.SomeMethod
 			public int SomeMethod()
 			{
-				return mX * mX;
+				return SomeProperty * SomeProperty;
 			}
 		}
 
@@ -220,10 +202,7 @@ namespace ILSpy.AddIn.Tests
 			public int Y;
 
 			// P:ILSpy.AddIn.Tests.SomeClass.NestedStruct.SomeProperty
-			public int SomeProperty
-			{
-				get { return X + Y; }
-			}
+			public int SomeProperty => X + Y;
 
 			// M:ILSpy.AddIn.Tests.SomeClass.NestedStruct.SomeMethod
 			public int SomeMethod()
@@ -313,7 +292,7 @@ namespace ILSpy.AddIn.Tests
 		public T4 GenericClassGenericMethod<T3, T4>(T1 x, T4 y, int z, out T2 result)
 		{
 			mField1 = x;
-			string foo = y.ToString() + z.ToString();
+			var foo = y.ToString() + z.ToString();
 			result = mField2;
 			return y;
 		}
@@ -322,7 +301,7 @@ namespace ILSpy.AddIn.Tests
 		public T3 GenericClassGenericMethod<T3, T4>(T1 x, T3 y, int[] z)
 		{
 			mField1 = x;
-			string foo = y.ToString() + z.ToString();
+			var foo = y.ToString() + z.ToString();
 			return y;
 		}
 

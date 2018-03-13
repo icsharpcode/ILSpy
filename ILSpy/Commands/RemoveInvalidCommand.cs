@@ -8,12 +8,12 @@ namespace ICSharpCode.ILSpy.Commands
 
 	sealed class RemoveInvalidCommand:SimpleCommand
 	{
-		private IEnumerable<LoadedAssembly> InvalidAssemblys()
+		private static IEnumerable<LoadedAssembly> InvalidAssemblys()
 		{
 			return MainWindow.Instance?.CurrentAssemblyList?.assemblies.Where(o => o.HasLoadError);
 		}
 
-		private List<SharpTreeNode> GetNodes()
+		private static List<SharpTreeNode> GetNodes()
 		{
 			var result = InvalidAssemblys()
 				.Select(assm =>
@@ -25,9 +25,7 @@ namespace ICSharpCode.ILSpy.Commands
 		public override bool CanExecute(object parameter)
 		{
 			var invalid = InvalidAssemblys();
-			if (invalid == null)
-				return false;
-			return invalid.Any();
+			return invalid != null && invalid.Any();
 		}
 
 		public override void Execute(object parameter)

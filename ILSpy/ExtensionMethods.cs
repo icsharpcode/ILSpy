@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> items)
 		{
-			foreach (T item in items)
+			foreach (var item in items)
 				if (!list.Contains(item))
 					list.Add(item);
 		}
@@ -50,10 +50,10 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentOutOfRangeException(nameof(start), start, "Value must be between 0 and " + (list.Count - 1));
 			if (count < 0 || count > list.Count - start)
 				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
-			int end = start + count - 1;
+			var end = start + count - 1;
 			while (start <= end) {
-				int pivot = (start + end) / 2;
-				int result = comparer.Compare(item, list[pivot]);
+				var pivot = (start + end) / 2;
+				var result = comparer.Compare(item, list[pivot]);
 				if (result == 0)
 					return pivot;
 				if (result < 0)
@@ -72,13 +72,13 @@ namespace ICSharpCode.ILSpy
 			if (keySelector == null)
 				throw new ArgumentNullException(nameof(keySelector));
 
-			int start = 0;
-			int end = instance.Count - 1;
+			var start = 0;
+			var end = instance.Count - 1;
 
 			while (start <= end) {
-				int m = (start + end) / 2;
-				TKey key = keySelector(instance[m]);
-				int result = key.CompareTo(itemKey);
+				var m = (start + end) / 2;
+				var key = keySelector(instance[m]);
+				var result = key.CompareTo(itemKey);
 				if (result == 0)
 					return m;
 				if (result < 0)

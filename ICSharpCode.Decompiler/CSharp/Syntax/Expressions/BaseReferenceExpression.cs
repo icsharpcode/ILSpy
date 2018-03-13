@@ -37,17 +37,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 		
-		public override TextLocation StartLocation {
-			get {
-				return Location;
-			}
-		}
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation (Location.Line, Location.Column + "base".Length);
-			}
-		}
-		
+		public override TextLocation StartLocation => Location;
+
+		public override TextLocation EndLocation => new TextLocation (Location.Line, Location.Column + "base".Length);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitBaseReferenceExpression (this);
@@ -65,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BaseReferenceExpression o = other as BaseReferenceExpression;
+			var o = other as BaseReferenceExpression;
 			return o != null;
 		}
 	}

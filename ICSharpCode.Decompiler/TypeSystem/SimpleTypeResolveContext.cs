@@ -25,68 +25,53 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public class SimpleTypeResolveContext : ITypeResolveContext
 	{
-		readonly ICompilation compilation;
-		readonly IAssembly currentAssembly;
-		readonly ITypeDefinition currentTypeDefinition;
-		readonly IMember currentMember;
-		
 		public SimpleTypeResolveContext(ICompilation compilation)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
-			this.compilation = compilation;
+			this.Compilation = compilation ?? throw new ArgumentNullException("compilation");
 		}
 		
 		public SimpleTypeResolveContext(IAssembly assembly)
 		{
 			if (assembly == null)
 				throw new ArgumentNullException("assembly");
-			this.compilation = assembly.Compilation;
-			this.currentAssembly = assembly;
+			this.Compilation = assembly.Compilation;
+			this.CurrentAssembly = assembly;
 		}
 		
 		public SimpleTypeResolveContext(IEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException("entity");
-			this.compilation = entity.Compilation;
-			this.currentAssembly = entity.ParentAssembly;
-			this.currentTypeDefinition = (entity as ITypeDefinition) ?? entity.DeclaringTypeDefinition;
-			this.currentMember = entity as IMember;
+			this.Compilation = entity.Compilation;
+			this.CurrentAssembly = entity.ParentAssembly;
+			this.CurrentTypeDefinition = (entity as ITypeDefinition) ?? entity.DeclaringTypeDefinition;
+			this.CurrentMember = entity as IMember;
 		}
 		
 		private SimpleTypeResolveContext(ICompilation compilation, IAssembly currentAssembly, ITypeDefinition currentTypeDefinition, IMember currentMember)
 		{
-			this.compilation = compilation;
-			this.currentAssembly = currentAssembly;
-			this.currentTypeDefinition = currentTypeDefinition;
-			this.currentMember = currentMember;
+			this.Compilation = compilation;
+			this.CurrentAssembly = currentAssembly;
+			this.CurrentTypeDefinition = currentTypeDefinition;
+			this.CurrentMember = currentMember;
 		}
 		
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
-		
-		public IAssembly CurrentAssembly {
-			get { return currentAssembly; }
-		}
-		
-		public ITypeDefinition CurrentTypeDefinition {
-			get { return currentTypeDefinition; }
-		}
-		
-		public IMember CurrentMember {
-			get { return currentMember; }
-		}
-		
+		public ICompilation Compilation { get; }
+
+		public IAssembly CurrentAssembly { get; }
+
+		public ITypeDefinition CurrentTypeDefinition { get; }
+
+		public IMember CurrentMember { get; }
+
 		public ITypeResolveContext WithCurrentTypeDefinition(ITypeDefinition typeDefinition)
 		{
-			return new SimpleTypeResolveContext(compilation, currentAssembly, typeDefinition, currentMember);
+			return new SimpleTypeResolveContext(Compilation, CurrentAssembly, typeDefinition, CurrentMember);
 		}
 		
 		public ITypeResolveContext WithCurrentMember(IMember member)
 		{
-			return new SimpleTypeResolveContext(compilation, currentAssembly, currentTypeDefinition, member);
+			return new SimpleTypeResolveContext(Compilation, CurrentAssembly, CurrentTypeDefinition, member);
 		}
 	}
 }

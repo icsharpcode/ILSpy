@@ -66,8 +66,6 @@ namespace ICSharpCode.ILSpy
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple=false)]
 	public class ExportMainMenuCommandAttribute : ExportAttribute, IMainMenuCommandMetadata
 	{
-		bool isEnabled = true;
-		
 		public ExportMainMenuCommandAttribute()
 			: base("MainMenuCommand", typeof(ICommand))
 		{
@@ -78,10 +76,8 @@ namespace ICSharpCode.ILSpy
 		public string Menu { get; set; }
 		public string MenuCategory { get; set; }
 		public string InputGestureText { get; set; }
-		public bool IsEnabled {
-			get { return isEnabled; }
-			set { isEnabled = value; }
-		}
+		public bool IsEnabled { get; set; } = true;
+
 		public double MenuOrder { get; set; }
 	}
 	#endregion

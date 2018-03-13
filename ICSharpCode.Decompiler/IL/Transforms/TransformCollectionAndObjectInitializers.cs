@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool DoTransform(Block body, int pos)
 		{
-			ILInstruction inst = body.Instructions[pos];
+			var inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
 			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)) {
 				IType instType;
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
-				int initializerItemsCount = 0;
+				var initializerItemsCount = 0;
 				var blockKind = BlockKind.CollectionInitializer;
 				possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
 				currentPath = new List<AccessPathElement>();
@@ -111,11 +111,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("CollectionOrObjectInitializer", inst);
 				// Create a new block and final slot (initializer target variable)
 				var initializerBlock = new Block(blockKind);
-				ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
+				var finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
 				initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
 				// Move all instructions to the initializer block.
-				for (int i = 1; i <= initializerItemsCount; i++) {
+				for (var i = 1; i <= initializerItemsCount; i++) {
 					switch (body.Instructions[i + pos]) {
 						case CallInstruction call:
 							if (!(call is CallVirt || call is Call)) continue;
@@ -183,8 +183,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var lastElement = newPath.Last();
 			newPath.RemoveLast();
 			// Compare new path with current path:
-			int minLen = Math.Min(currentPath.Count, newPath.Count);
-			int firstDifferenceIndex = 0;
+			var minLen = Math.Min(currentPath.Count, newPath.Count);
+			var firstDifferenceIndex = 0;
 			while (firstDifferenceIndex < minLen && newPath[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
 				firstDifferenceIndex++;
 			while (currentPath.Count > firstDifferenceIndex) {
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				pathStack.Pop();
 			}
 			while (currentPath.Count < newPath.Count) {
-				AccessPathElement newElement = newPath[currentPath.Count];
+				var newElement = newPath[currentPath.Count];
 				currentPath.Add(newElement);
 				if (isCollection || !pathStack.Peek().Add(newElement))
 					return false;
@@ -242,9 +242,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(
 			ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
 		{
-			List<AccessPathElement> path = new List<AccessPathElement>();
+			var path = new List<AccessPathElement>();
 			ILVariable target = null;
-			AccessPathKind kind = AccessPathKind.Invalid;
+			var kind = AccessPathKind.Invalid;
 			List<ILInstruction> values = null;
 			IMethod method;
 			var inst = instruction;
@@ -367,7 +367,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public override int GetHashCode()
 		{
-			int hashCode = 0;
+			var hashCode = 0;
 			unchecked {
 				if (Member != null)
 					hashCode += 1000000007 * Member.GetHashCode();

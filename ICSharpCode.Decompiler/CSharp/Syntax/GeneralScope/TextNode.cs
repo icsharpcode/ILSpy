@@ -33,30 +33,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TextNode : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
+		public override NodeType NodeType => NodeType.Whitespace;
 
 		public string Text {
 			get;
 			set;
 		}
 
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get { 
-				return startLocation;
-			}
-		}
-		
-		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
+		public override TextLocation StartLocation { get; }
+
+		public override TextLocation EndLocation { get; }
 
 		public TextNode(string text) : this (text, TextLocation.Empty, TextLocation.Empty)
 		{
@@ -65,8 +51,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public TextNode(string text, TextLocation startLocation, TextLocation endLocation)
 		{
 			this.Text = text;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
+			this.StartLocation = startLocation;
+			this.EndLocation = endLocation;
 		}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

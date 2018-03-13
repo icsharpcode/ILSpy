@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void UnsignedShiftRightInstanceField()
 		{
 #if CS70
-			ref int f = ref new CompoundAssignment().instanceField;
+			ref var f = ref new CompoundAssignment().instanceField;
 			Test(X(), f = (int)((uint)f >> 2));
 #endif
 		}

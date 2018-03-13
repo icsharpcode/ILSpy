@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		protected override bool VisitChildren(AstNode node)
 		{
-			bool result = false;
+			var result = false;
 			AstNode next;
-			for (AstNode child = node.FirstChild; child != null; child = next) {
+			for (var child = node.FirstChild; child != null; child = next) {
 				// Store next to allow the loop to continue
 				// if the visitor removes/replaces child.
 				next = child.NextSibling;
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
-			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
+			var result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference) {
 				var bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
 				if (bop != null && bop.Operator == BinaryOperatorType.Add 
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
 				{
 					// transform "*(ptr + int)" to "ptr[int]"
-					IndexerExpression indexer = new IndexerExpression();
+					var indexer = new IndexerExpression();
 					indexer.Target = bop.Left.Detach();
 					indexer.Arguments.Add(bop.Right.Detach());
 					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
@@ -96,10 +96,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
 		{
-			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
-			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
+			var result = base.VisitMemberReferenceExpression(memberReferenceExpression);
+			var uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference) {
-				PointerReferenceExpression pre = new PointerReferenceExpression();
+				var pre = new PointerReferenceExpression();
 				pre.Target = uoe.Expression.Detach();
 				pre.MemberName = memberReferenceExpression.MemberName;
 				memberReferenceExpression.TypeArguments.MoveTo(pre.TypeArguments);
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
-			bool result = base.VisitInvocationExpression(invocationExpression);
+			var result = base.VisitInvocationExpression(invocationExpression);
 			var rr = invocationExpression.GetResolveResult();
 			if (rr != null && rr.Type is PointerType)
 				return true;

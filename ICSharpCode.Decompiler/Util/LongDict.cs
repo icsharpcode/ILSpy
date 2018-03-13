@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public LongDict(IEnumerable<(LongSet, T)> entries)
 		{
-			LongSet available = LongSet.Universe;
+			var available = LongSet.Universe;
 			var keys = new List<LongInterval>();
 			var values = new List<T>();
 			foreach (var (key, val) in entries) {
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public bool TryGetValue(long key, out T value)
 		{
-			int pos = Array.BinarySearch(this.keys, new LongInterval(key, key), LongDict.StartComparer);
+			var pos = Array.BinarySearch(this.keys, new LongInterval(key, key), LongDict.StartComparer);
 			// If the element isn't found, BinarySearch returns the complement of "insertion position".
 			// We use this to find the previous element (if there wasn't any exact match).
 			if (pos < 0)
@@ -79,13 +79,13 @@ namespace ICSharpCode.Decompiler.Util
 
 		public T GetOrDefault(long key)
 		{
-			TryGetValue(key, out T val);
+			TryGetValue(key, out var val);
 			return val;
 		}
 
 		public IEnumerator<KeyValuePair<LongInterval, T>> GetEnumerator()
 		{
-			for (int i = 0; i < this.keys.Length; ++i) {
+			for (var i = 0; i < this.keys.Length; ++i) {
 				yield return new KeyValuePair<LongInterval, T>(this.keys[i], this.values[i]);
 			}
 		}

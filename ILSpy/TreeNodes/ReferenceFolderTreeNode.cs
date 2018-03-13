@@ -39,18 +39,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 		
-		public override object Text {
-			get { return "References"; }
-		}
-		
-		public override object Icon {
-			get { return Images.ReferenceFolderClosed; }
-		}
-		
-		public override object ExpandedIcon {
-			get { return Images.ReferenceFolderOpen; }
-		}
-		
+		public override object Text => "References";
+
+		public override object Icon => Images.ReferenceFolderClosed;
+
+		public override object ExpandedIcon => Images.ReferenceFolderOpen;
+
 		protected override void LoadChildren()
 		{
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))

@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Sugar for logic.not/and/or.
 		/// </summary>
 		public bool UseLogicOperationSugar {
-			get { return useLogicOperationSugar; }
+			get => useLogicOperationSugar;
 			set {
 				if (useLogicOperationSugar != value) {
 					useLogicOperationSugar = value;
@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Sugar for ldfld/stfld.
 		/// </summary>
 		public bool UseFieldSugar {
-			get { return useFieldSugar; }
+			get => useFieldSugar;
 			set {
 				if (useFieldSugar != value) {
 					useFieldSugar = value;
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Show IL ranges in ILAst output.
 		/// </summary>
 		public bool ShowILRanges {
-			get { return showILRanges; }
+			get => showILRanges;
 			set {
 				if (showILRanges != value) {
 					showILRanges = value;

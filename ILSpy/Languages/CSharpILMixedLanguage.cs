@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 
 		static CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+			var decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			return decompiler;
 		}
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy
 				var method = body.Method;
 				try {
 					var csharpOutput = new StringWriter();
-					CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
+					var decompiler = CreateDecompiler(method.Module, options);
 					var st = decompiler.Decompile(method);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
 					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.CecilMethod == method);
@@ -85,16 +85,16 @@ namespace ICSharpCode.ILSpy
 
 			protected override void WriteInstruction(ITextOutput output, Instruction instruction)
 			{
-				int index = sequencePoints.BinarySearch(instruction.Offset, seq => seq.Offset);
+				var index = sequencePoints.BinarySearch(instruction.Offset, seq => seq.Offset);
 				if (index >= 0) {
 					var info = sequencePoints[index];
 					var highlightingOutput = output as ISmartTextOutput;
 					if (!info.IsHidden) {
-						for (int line = info.StartLine; line <= info.EndLine; line++) {
+						for (var line = info.StartLine; line <= info.EndLine; line++) {
 							if (highlightingOutput != null) {
-								string text = codeLines[line - 1];
-								int startColumn = 1;
-								int endColumn = text.Length + 1;
+								var text = codeLines[line - 1];
+								var startColumn = 1;
+								var endColumn = text.Length + 1;
 								if (line == info.StartLine)
 									startColumn = info.StartColumn;
 								if (line == info.EndLine)

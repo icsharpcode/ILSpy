@@ -18,17 +18,13 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				throw new ArgumentException("namespaceName");
 			if (string.IsNullOrWhiteSpace(localName))
 				throw new ArgumentException("localName");
-			if (value == null)
-				throw new ArgumentNullException("value");
 			this.NamespaceName = namespaceName;
 			this.LocalName = localName;
-			this.Value = value;
+			this.Value = value ?? throw new ArgumentNullException("value");
 		}
 		
-		public override XmlNodeType NodeType {
-			get { return XmlNodeType.Attribute; }
-		}
-		
+		public override XmlNodeType NodeType => XmlNodeType.Attribute;
+
 		public override string ToString()
 		{
 			return string.Format("{{{0}}}{1}=\"{2}\"", NamespaceName, LocalName, Value);

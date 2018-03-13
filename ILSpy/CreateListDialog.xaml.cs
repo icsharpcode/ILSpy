@@ -26,13 +26,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public string NewListName
-		{
-			get
-			{
-				return ListName.Text;
-			}
-		}
-
+		public string NewListName => ListName.Text;
 	}
 }

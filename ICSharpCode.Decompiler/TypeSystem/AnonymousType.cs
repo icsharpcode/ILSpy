@@ -31,18 +31,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation compilation;
 		IUnresolvedProperty[] unresolvedProperties;
-		IReadOnlyList<IProperty> resolvedProperties;
-		
+
 		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
 		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
 			if (properties == null)
 				throw new ArgumentNullException("properties");
-			this.compilation = compilation;
+			this.compilation = compilation ?? throw new ArgumentNullException("compilation");
 			this.unresolvedProperties = properties.ToArray();
 			var context = new SimpleTypeResolveContext(compilation.MainAssembly);
-			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
+			this.Properties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
 		}
 		
 		sealed class AnonymousTypeProperty : DefaultResolvedProperty
@@ -55,13 +52,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.declaringType = declaringType;
 			}
 			
-			public override IType DeclaringType {
-				get { return declaringType; }
-			}
-			
+			public override IType DeclaringType => declaringType;
+
 			public override bool Equals(object obj)
 			{
-				AnonymousTypeProperty p = obj as AnonymousTypeProperty;
+				var p = obj as AnonymousTypeProperty;
 				return p != null && this.Name == p.Name && declaringType.Equals(p.declaringType);
 			}
 			
@@ -86,17 +81,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.owner = owner;
 			}
 			
-			public override IMember AccessorOwner {
-				get { return owner; }
-			}
-			
-			public override IType DeclaringType {
-				get { return owner.DeclaringType; }
-			}
-			
+			public override IMember AccessorOwner => owner;
+
+			public override IType DeclaringType => owner.DeclaringType;
+
 			public override bool Equals(object obj)
 			{
-				AnonymousTypeAccessor p = obj as AnonymousTypeAccessor;
+				var p = obj as AnonymousTypeAccessor;
 				return p != null && this.Name == p.Name && owner.DeclaringType.Equals(p.owner.DeclaringType);
 			}
 			
@@ -111,13 +102,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new AnonymousTypeReference(unresolvedProperties);
 		}
 		
-		public override string Name {
-			get { return "Anonymous Type"; }
-		}
-		
-		public override TypeKind Kind {
-			get { return TypeKind.Anonymous; }
-		}
+		public override string Name => "Anonymous Type";
+
+		public override TypeKind Kind => TypeKind.Anonymous;
 
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
@@ -125,14 +112,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		
-		public override bool? IsReferenceType {
-			get { return true; }
-		}
-		
-		public IReadOnlyList<IProperty> Properties {
-			get { return resolvedProperties; }
-		}
-		
+		public override bool? IsReferenceType => true;
+
+		public IReadOnlyList<IProperty> Properties { get; }
+
 		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
@@ -151,22 +134,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
-			for (int i = 0; i < unresolvedProperties.Length; i++) {
+			for (var i = 0; i < unresolvedProperties.Length; i++) {
 				if (filter == null || filter(unresolvedProperties[i]))
-					yield return resolvedProperties[i];
+					yield return Properties[i];
 			}
 		}
 		
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
-			for (int i = 0; i < unresolvedProperties.Length; i++) {
+			for (var i = 0; i < unresolvedProperties.Length; i++) {
 				if (unresolvedProperties[i].CanGet) {
 					if (filter == null || filter(unresolvedProperties[i].Getter))
-						yield return resolvedProperties[i].Getter;
+						yield return Properties[i].Getter;
 				}
 				if (unresolvedProperties[i].CanSet) {
 					if (filter == null || filter(unresolvedProperties[i].Setter))
-						yield return resolvedProperties[i].Setter;
+						yield return Properties[i].Setter;
 				}
 			}
 		}
@@ -174,8 +157,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override int GetHashCode()
 		{
 			unchecked {
-				int hashCode = resolvedProperties.Count;
-				foreach (var p in resolvedProperties) {
+				var hashCode = Properties.Count;
+				foreach (var p in Properties) {
 					hashCode *= 31;
 					hashCode += p.Name.GetHashCode() ^ p.ReturnType.GetHashCode();
 				}
@@ -185,12 +168,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override bool Equals(IType other)
 		{
-			AnonymousType o = other as AnonymousType;
-			if (o == null || resolvedProperties.Count != o.resolvedProperties.Count)
+			var o = other as AnonymousType;
+			if (o == null || Properties.Count != o.Properties.Count)
 				return false;
-			for (int i = 0; i < resolvedProperties.Count; i++) {
-				IProperty p1 = resolvedProperties[i];
-				IProperty p2 = o.resolvedProperties[i];
+			for (var i = 0; i < Properties.Count; i++) {
+				var p1 = Properties[i];
+				var p2 = o.Properties[i];
 				if (p1.Name != p2.Name || !p1.ReturnType.Equals(p2.ReturnType))
 					return false;
 			}
@@ -208,9 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public AnonymousTypeReference(IUnresolvedProperty[] properties)
 		{
-			if (properties == null)
-				throw new ArgumentNullException("properties");
-			this.unresolvedProperties = properties;
+			this.unresolvedProperties = properties ?? throw new ArgumentNullException("properties");
 		}
 		
 		public IType Resolve(ITypeResolveContext context)

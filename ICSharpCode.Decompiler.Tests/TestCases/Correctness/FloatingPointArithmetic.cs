@@ -12,7 +12,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Issue999()
 		{
-			for (float i = -10f; i <= 10f; i += 0.01f) 
+			for (var i = -10f; i <= 10f; i += 0.01f) 
 				Console.WriteLine("{1:R}: {0:R}", M(i), i);
 		}
 

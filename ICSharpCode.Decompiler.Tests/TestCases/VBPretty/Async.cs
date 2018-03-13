@@ -16,19 +16,19 @@ namespace EquivalentCSharpConsoleApp
 
 		public async static void ProcessDataAsync()
 		{
-			Task<int> task = HandleFileAsync("C:\\enable1.txt");
+			var task = HandleFileAsync("C:\\enable1.txt");
 			Console.WriteLine("Please wait, processing");
-			int result = await task;
+			var result = await task;
 			Console.WriteLine("Count: " + result.ToString());
 		}
 
 		public async static Task<int> HandleFileAsync(string file)
 		{
 			Console.WriteLine("HandleFile enter");
-			int count = 0;
-			using (StreamReader reader = new StreamReader(file))
+			var count = 0;
+			using (var reader = new StreamReader(file))
 			{
-				string value = await reader.ReadToEndAsync();
+				var value = await reader.ReadToEndAsync();
 				count += value.Length;
 				for (var i = 0; i <= 10000; i += 1)
 				{

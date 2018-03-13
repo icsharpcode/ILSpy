@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private static void RemoveNopInstructions(Block block)
 		{
 			// Move ILRanges of special nop instructions to the previous non-nop instruction.
-			for (int i = block.Instructions.Count - 1; i > 0; i--) {
+			for (var i = block.Instructions.Count - 1; i > 0; i--) {
 				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop) {
 					block.Instructions[i - 1].AddILRange(nop.ILRange);
 				}
@@ -77,10 +77,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (where 'v' has no other uses)
 			// Simplify these to a simple `ret(<inst>)` so that they match the release build version.
 			// 
-			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction value)) {
+			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out var value)) {
 				var ret = (Leave)block.Instructions[1];
-				if (value.MatchLdLoc(out ILVariable v)
-					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst)) {
+				if (value.MatchLdLoc(out var v)
+					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out var inst)) {
 					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value.ILRange);
 					inst.AddILRange(block.Instructions[0].ILRange);
@@ -92,8 +92,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
-			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
-			HashSet<Block> visitedBlocks = new HashSet<Block>();
+			var blocksToAdd = new List<(BlockContainer, Block)>();
+			var visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				// Resolve chained branches to the final target:
 				var targetBlock = branch.TargetBlock;
@@ -124,8 +124,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// so that loop detection at least has the option to put it inside
 						// the loop body.
 						context.Step("Copy return block into try block", branch);
-						Block blockCopy = (Block)branch.TargetBlock.Clone();
-						BlockContainer localContainer = branch.Ancestors.OfType<BlockContainer>().First();
+						var blockCopy = (Block)branch.TargetBlock.Clone();
+						var localContainer = branch.Ancestors.OfType<BlockContainer>().First();
 						blocksToAdd.Add((localContainer, blockCopy));
 						branch.TargetBlock = blockCopy;
 					}
@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
 			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
 				return false;
-			Branch br = block.Instructions.Last() as Branch;
+			var br = block.Instructions.Last() as Branch;
 			// Check whether we can combine the target block with this block
 			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
 				return false;

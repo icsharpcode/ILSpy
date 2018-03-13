@@ -28,11 +28,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static int Main()
 		{
-			int[,] test = new int[2, 3];
+			var test = new int[2, 3];
 			test[0, 0] = 0;
 			test[0, 1] = 1;
 			test[0, 2] = 2;
-			int result = test.Length + test[0, 0] + test[0, 2];
+			var result = test.Length + test[0, 0] + test[0, 2];
 			Console.WriteLine(result);
 			return 0;
 		}
@@ -82,16 +82,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			public InitializerTests.Data this[int i]
 			{
-				get {
-					return null;
-				}
+				get => null;
 				set { }
 			}
 
 			public InitializerTests.Data this[int i, string j] {
-				get {
-					return null;
-				}
+				get => null;
 				set { }
 			}
 		}
@@ -450,7 +446,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void RecursiveArrayInitializer()
 		{
-			int[] array = new int[3];
+			var array = new int[3];
 			array[0] = 1;
 			array[1] = 2;
 			array[2] = array[1] + 1;
@@ -470,7 +466,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static object RecursiveCollectionInitializer()
 		{
-			List<object> list = new List<object>();
+			var list = new List<object>();
 			list.Add(list);
 			return list;
 		}
@@ -511,7 +507,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotACollectionInitializer()
 		{
-			List<int> list = new List<int>();
+			var list = new List<int>();
 			list.Add(1);
 			list.Add(2);
 			list.Add(3);
@@ -528,7 +524,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAnObjectInitializer()
 		{
-			InitializerTests.Data data = new InitializerTests.Data();
+			var data = new InitializerTests.Data();
 			data.a = InitializerTests.MyEnum.a;
 			InitializerTests.X(InitializerTests.Y(), data);
 		}
@@ -652,7 +648,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void CollectionInitializerInsideObjectInitializers()
 		{
-			InitializerTests.Data castPattern = new InitializerTests.Data {
+			var castPattern = new InitializerTests.Data {
 				MoreData = new InitializerTests.Data {
 					a = InitializerTests.MyEnum.a,
 					b = InitializerTests.MyEnum.b,
@@ -663,7 +659,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAStructInitializer_DefaultConstructor()
 		{
-			InitializerTests.StructData data = new InitializerTests.StructData();
+			var data = new InitializerTests.StructData();
 			data.Field = 1;
 			data.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), data);
@@ -680,7 +676,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NotAStructInitializer_ExplicitConstructor()
 		{
-			InitializerTests.StructData data = new InitializerTests.StructData(0);
+			var data = new InitializerTests.StructData(0);
 			data.Field = 1;
 			data.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), data);
@@ -727,7 +723,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			NumberFormatInfo[] numberFormats = null;
 
-			Thread t = new Thread(Bug270_NestedInitialisers) {
+			var t = new Thread(Bug270_NestedInitialisers) {
 				Priority = ThreadPriority.BelowNormal,
 				CurrentCulture = new CultureInfo(0) {
 					DateTimeFormat = new DateTimeFormatInfo {
@@ -1095,9 +1091,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				Items items = null;
 
-				int num = 0;
+				var num = 0;
 
-				for (int i = 0; i < 2; i++) {
+				for (var i = 0; i < 2; i++) {
 					if (num < 10)
 						items.SetItem(num, Item(string.Empty, new Data { Obj = null }));
 				}

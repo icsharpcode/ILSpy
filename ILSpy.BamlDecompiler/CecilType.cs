@@ -13,18 +13,12 @@ namespace ILSpy.BamlDecompiler
 		
 		public CecilType(TypeDefinition type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 		}
 		
-		public string AssemblyQualifiedName {
-			get {
-				return type.FullName +
-					", " + type.Module.Assembly.FullName;
-			}
-		}
-		
+		public string AssemblyQualifiedName => type.FullName +
+		                                       ", " + type.Module.Assembly.FullName;
+
 		public bool IsSubclassOf(IType type)
 		{
 			if (type == null)
@@ -32,7 +26,7 @@ namespace ILSpy.BamlDecompiler
 			if (!(type is CecilType))
 				return false;
 			
-			CecilType ct = (CecilType)type;
+			var ct = (CecilType)type;
 			
 			var t = this.type;
 			
@@ -73,7 +67,7 @@ namespace ILSpy.BamlDecompiler
 		
 		public IType BaseType {
 			get {
-				TypeDefinition td = type.BaseType.Resolve();
+				var td = type.BaseType.Resolve();
 				if (td == null)
 					throw new Exception("could not resolve '" + type.BaseType.FullName + "'!");
 				

@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy
 	{
 		static BitmapImage LoadBitmap(string name)
 		{
-			BitmapImage image = new BitmapImage(new Uri("pack://application:,,,/Images/" + name + ".png"));
+			var image = new BitmapImage(new Uri("pack://application:,,,/Images/" + name + ".png"));
 			image.Freeze();
 			return image;
 		}
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy
 				var name = assembly.GetName();
 				uri = new Uri("pack://application:,,,/" + name.Name + ";v" + name.Version + ";component/" + icon);
 			}
-			BitmapImage image = new BitmapImage(uri);
+			var image = new BitmapImage(uri);
 			image.Freeze();
 			return image;
 		}
@@ -261,7 +261,7 @@ namespace ICSharpCode.ILSpy
 				if (cache.ContainsKey(iconKey)) {
 					return cache[iconKey];
 				} else {
-					ImageSource result = BuildMemberIcon(icon, overlay, isStatic);
+					var result = BuildMemberIcon(icon, overlay, isStatic);
 					cache.Add(iconKey, result);
 					return result;
 				}
@@ -269,8 +269,8 @@ namespace ICSharpCode.ILSpy
 
 			private ImageSource BuildMemberIcon(T icon, AccessOverlayIcon overlay, bool isStatic)
 			{
-				ImageSource baseImage = GetBaseImage(icon);
-				ImageSource overlayImage = GetOverlayImage(overlay);
+				var baseImage = GetBaseImage(icon);
+				var overlayImage = GetOverlayImage(overlay);
 
 				return CreateOverlayImage(baseImage, overlayImage, isStatic);
 			}

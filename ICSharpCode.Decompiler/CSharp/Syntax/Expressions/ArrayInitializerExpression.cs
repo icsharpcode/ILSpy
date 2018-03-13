@@ -39,11 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// If IsSingleElement is true then this array initializer expression is a generated one.
 		/// That has no meaning in the source code (and contains no brace tokens).
 		/// </summary>
-		public virtual bool IsSingleElement {
-			get {
-				return false;
-			}
-		}
+		public virtual bool IsSingleElement => false;
 
 		public ArrayInitializerExpression()
 		{
@@ -64,12 +60,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullArrayInitializerExpression : ArrayInitializerExpression
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -92,18 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 		
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole (Roles.LBrace); }
-		}
-		
-		public AstNodeCollection<Expression> Elements {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
-		
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole (Roles.RBrace); }
-		}
-		
+		public CSharpTokenNode LBraceToken => GetChildByRole (Roles.LBrace);
+
+		public AstNodeCollection<Expression> Elements => GetChildrenByRole(Roles.Expression);
+
+		public CSharpTokenNode RBraceToken => GetChildByRole (Roles.RBrace);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitArrayInitializerExpression (this);
@@ -121,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ArrayInitializerExpression o = other as ArrayInitializerExpression;
+			var o = other as ArrayInitializerExpression;
 			return o != null && this.Elements.DoMatch(o.Elements, match);
 		}
 
@@ -134,12 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		class SingleArrayInitializerExpression : ArrayInitializerExpression
 		{
-			public override bool IsSingleElement {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsSingleElement => true;
 		}
 		
 		#region PatternPlaceholder
@@ -157,10 +138,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder(this, child);

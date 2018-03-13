@@ -36,10 +36,10 @@ namespace ICSharpCode.ILSpy
 		public override void Execute(object parameter)
 		{
 			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				var output = new AvalonEditTextOutput();
 				Parallel.ForEach(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, delegate(LoadedAssembly asm) {
 					if (!asm.HasLoadError) {
-						Stopwatch w = Stopwatch.StartNew();
+						var w = Stopwatch.StartNew();
 						Exception exception = null;
 						using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs")) {
 							try {

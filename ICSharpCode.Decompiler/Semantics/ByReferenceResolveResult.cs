@@ -29,8 +29,8 @@ namespace ICSharpCode.Decompiler.Semantics
 	public class ByReferenceResolveResult : ResolveResult
 	{
 		public bool IsOut { get; private set; }
-		public bool IsRef { get { return !IsOut;} }
-		
+		public bool IsRef => !IsOut;
+
 		public readonly ResolveResult ElementResult;
 		
 		public ByReferenceResolveResult(ResolveResult elementResult, bool isOut)
@@ -45,10 +45,8 @@ namespace ICSharpCode.Decompiler.Semantics
 			this.IsOut = isOut;
 		}
 		
-		public IType ElementType {
-			get { return ((ByReferenceType)this.Type).ElementType; }
-		}
-		
+		public IType ElementType => ((ByReferenceType)this.Type).ElementType;
+
 		public override IEnumerable<ResolveResult> GetChildResults()
 		{
 			if (ElementResult != null)

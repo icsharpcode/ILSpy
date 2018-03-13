@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Dictionary<string, object> ParseObject()
 			{
-				Dictionary<string, object> table = new Dictionary<string, object>();
+				var table = new Dictionary<string, object>();
 
 				// ditch opening brace
 				json.Read();
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							return table;
 						case TOKEN.STRING:
 							// name
-							string name = ParseString();
+							var name = ParseString();
 							if (name == null) {
 								return null;
 							}
@@ -135,8 +135,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							json.Read();
 
 							// value
-							TOKEN valueToken = NextToken;
-							object value = ParseByToken(valueToken);
+							var valueToken = NextToken;
+							var value = ParseByToken(valueToken);
 							if (value == null && valueToken != TOKEN.NULL)
 								return null;
 							table[name] = value;
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			List<object> ParseArray()
 			{
-				List<object> array = new List<object>();
+				var array = new List<object>();
 
 				// ditch opening bracket
 				json.Read();
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				// [
 				var parsing = true;
 				while (parsing) {
-					TOKEN nextToken = NextToken;
+					var nextToken = NextToken;
 
 					switch (nextToken) {
 						case TOKEN.NONE:
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							parsing = false;
 							break;
 						default:
-							object value = ParseByToken(nextToken);
+							var value = ParseByToken(nextToken);
 							if (value == null && nextToken != TOKEN.NULL)
 								return null;
 							array.Add(value);
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			object ParseValue()
 			{
-				TOKEN nextToken = NextToken;
+				var nextToken = NextToken;
 				return ParseByToken(nextToken);
 			}
 
@@ -209,13 +209,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			string ParseString()
 			{
-				StringBuilder s = new StringBuilder();
+				var s = new StringBuilder();
 				char c;
 
 				// ditch opening quote
 				json.Read();
 
-				bool parsing = true;
+				var parsing = true;
 				while (parsing) {
 
 					if (json.Peek() == -1) {
@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 								case 'u':
 									var hex = new char[4];
 
-									for (int i = 0; i < 4; i++) {
+									for (var i = 0; i < 4; i++) {
 										hex[i] = NextChar;
 										if (!IsHexDigit(hex[i]))
 											return null;
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			object ParseNumber()
 			{
-				string number = NextWord;
+				var number = NextWord;
 
 				if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1) {
 					long parsedInt;
@@ -304,21 +304,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 			}
 
-			char PeekChar {
-				get {
-					return Convert.ToChar(json.Peek());
-				}
-			}
+			char PeekChar => Convert.ToChar(json.Peek());
 
-			char NextChar {
-				get {
-					return Convert.ToChar(json.Read());
-				}
-			}
+			char NextChar => Convert.ToChar(json.Read());
 
 			string NextWord {
 				get {
-					StringBuilder word = new StringBuilder();
+					var word = new StringBuilder();
 
 					while (!IsWordBreak(PeekChar)) {
 						word.Append(NextChar);
@@ -439,11 +431,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			void SerializeObject(IDictionary obj)
 			{
-				bool first = true;
+				var first = true;
 
 				builder.Append('{');
 
-				foreach (object e in obj.Keys) {
+				foreach (var e in obj.Keys) {
 					if (!first) {
 						builder.Append(',');
 					}
@@ -463,10 +455,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				builder.Append('[');
 
-				bool first = true;
+				var first = true;
 
-				for (int i = 0; i < anArray.Count; i++) {
-					object obj = anArray[i];
+				for (var i = 0; i < anArray.Count; i++) {
+					var obj = anArray[i];
 					if (!first) {
 						builder.Append(',');
 					}
@@ -483,9 +475,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				builder.Append('\"');
 
-				char[] charArray = str.ToCharArray();
-				for (int i = 0; i < charArray.Length; i++) {
-					char c = charArray[i];
+				var charArray = str.ToCharArray();
+				for (var i = 0; i < charArray.Length; i++) {
+					var c = charArray[i];
 					switch (c) {
 						case '"':
 							builder.Append("\\\"");
@@ -509,7 +501,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 							builder.Append("\\t");
 							break;
 						default:
-							int codepoint = Convert.ToInt32(c);
+							var codepoint = Convert.ToInt32(c);
 							if ((codepoint >= 32) && (codepoint <= 126)) {
 								builder.Append(c);
 							} else {

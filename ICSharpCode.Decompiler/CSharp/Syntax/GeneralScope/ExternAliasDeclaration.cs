@@ -32,41 +32,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ExternAliasDeclaration : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode ExternToken {
-			get { return GetChildByRole (Roles.ExternKeyword); }
-		}
+		public CSharpTokenNode ExternToken => GetChildByRole (Roles.ExternKeyword);
 
-		public CSharpTokenNode AliasToken {
-			get { return GetChildByRole (Roles.AliasKeyword); }
-		}
+		public CSharpTokenNode AliasToken => GetChildByRole (Roles.AliasKeyword);
 
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
 
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{

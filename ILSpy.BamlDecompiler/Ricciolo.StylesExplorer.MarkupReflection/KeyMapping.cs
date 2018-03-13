@@ -7,15 +7,11 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	public class KeyMapping
 	{
-		List<object> staticResources;
-		
-		public List<object> StaticResources {
-			get { return staticResources; }
-		}
-		
+		public List<object> StaticResources { get; }
+
 		public bool HasStaticResource(int identifier)
 		{
-			return staticResources != null && staticResources.Count > identifier;
+			return StaticResources != null && StaticResources.Count > identifier;
 		}
 		
 		public string KeyString { get; set; }
@@ -26,14 +22,14 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		
 		public KeyMapping()
 		{
-			this.staticResources = new List<object>();
+			this.StaticResources = new List<object>();
 			this.Position = -1;
 		}
 		
 		public KeyMapping(string key)
 		{
 			this.KeyString = key;
-			this.staticResources = new List<object>();
+			this.StaticResources = new List<object>();
 			this.Position = -1;
 		}
 		

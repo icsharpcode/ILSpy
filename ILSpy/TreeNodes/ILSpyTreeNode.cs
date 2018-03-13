@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public FilterSettings FilterSettings
 		{
-			get { return filterSettings; }
+			get => filterSettings;
 			set
 			{
 				if (filterSettings != value) {
@@ -44,17 +44,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public Language Language
-		{
-			get { return filterSettings != null ? filterSettings.Language : Languages.AllLanguages[0]; }
-		}
+		public Language Language => filterSettings != null ? filterSettings.Language : Languages.AllLanguages[0];
 
 		public virtual FilterResult Filter(FilterSettings settings)
 		{
-			if (string.IsNullOrEmpty(settings.SearchTerm))
-				return FilterResult.Match;
-			else
-				return FilterResult.Hidden;
+			return string.IsNullOrEmpty(settings.SearchTerm) ? FilterResult.Match : FilterResult.Hidden;
 		}
 
 		protected static object HighlightSearchMatch(string text, string suffix = null)
@@ -143,7 +137,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			RaisePropertyChanged("Text");
 			if (IsVisible) {
-				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
+				foreach (var node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);
 			} else {
 				childrenNeedFiltering = true;
@@ -161,20 +155,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			EnsureLazyChildren();
 			if (childrenNeedFiltering) {
 				childrenNeedFiltering = false;
-				foreach (ILSpyTreeNode node in this.Children.OfType<ILSpyTreeNode>())
+				foreach (var node in this.Children.OfType<ILSpyTreeNode>())
 					ApplyFilterToChild(node);
 			}
 		}
 		
-		public virtual bool IsPublicAPI {
-			get { return true; }
-		}
+		public virtual bool IsPublicAPI => true;
 
-		public virtual bool IsAutoLoaded
-		{
-			get { return false; }
-		}
-		
+		public virtual bool IsAutoLoaded => false;
+
 		public override System.Windows.Media.Brush Foreground {
 			get {
 				if (IsPublicAPI)

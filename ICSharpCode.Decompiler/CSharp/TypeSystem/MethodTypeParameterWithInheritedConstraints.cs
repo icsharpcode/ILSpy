@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		{
 			IMethod baseMethod = null;
 			if (parentMethod.IsOverride) {
-				foreach (IMethod m in InheritanceHelper.GetBaseMembers(parentMethod, false).OfType<IMethod>()) {
+				foreach (var m in InheritanceHelper.GetBaseMembers(parentMethod, false).OfType<IMethod>()) {
 					if (!m.IsOverride) {
 						baseMethod = m;
 						break;
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			ITypeParameter GetBaseTypeParameter()
 			{
-				ITypeParameter baseTP = this.baseTypeParameter;
+				var baseTP = this.baseTypeParameter;
 				if (baseTP == null) {
 					// ResolveBaseTypeParameter() is idempotent, so this is thread-safe.
 					this.baseTypeParameter = baseTP = ResolveBaseTypeParameter((IMethod)this.Owner, this.Index);
@@ -83,32 +83,32 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			public override bool HasValueTypeConstraint {
 				get {
-					ITypeParameter baseTP = GetBaseTypeParameter();
+					var baseTP = GetBaseTypeParameter();
 					return baseTP != null ? baseTP.HasValueTypeConstraint : false;
 				}
 			}
 			
 			public override bool HasReferenceTypeConstraint {
 				get {
-					ITypeParameter baseTP = GetBaseTypeParameter();
+					var baseTP = GetBaseTypeParameter();
 					return baseTP != null ? baseTP.HasReferenceTypeConstraint : false;
 				}
 			}
 			
 			public override bool HasDefaultConstructorConstraint {
 				get {
-					ITypeParameter baseTP = GetBaseTypeParameter();
+					var baseTP = GetBaseTypeParameter();
 					return baseTP != null ? baseTP.HasDefaultConstructorConstraint : false;
 				}
 			}
 			
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
-					ITypeParameter baseTP = GetBaseTypeParameter();
+					var baseTP = GetBaseTypeParameter();
 					if (baseTP != null) {
 						// Substitute occurrences of the base method's type parameters in the constraints
 						// with the type parameters from the
-						IMethod owner = (IMethod)this.Owner;
+						var owner = (IMethod)this.Owner;
 						var substitution = new TypeParameterSubstitution(null, owner.TypeParameters);
 						return baseTP.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));
 					} else {

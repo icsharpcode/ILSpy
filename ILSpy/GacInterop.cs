@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 				uint nChars = 0;
 				assemblyName.GetDisplayName(null, ref nChars, 0);
 				
-				StringBuilder name = new StringBuilder((int)nChars);
+				var name = new StringBuilder((int)nChars);
 				assemblyName.GetDisplayName(name, ref nChars, 0);
 				
 				AssemblyNameReference r = null;
@@ -100,8 +100,8 @@ namespace ICSharpCode.ILSpy
 			if (reference.PublicKeyToken == null)
 				return null;
 			
-			for (int i = 0; i < 2; i++) {
-				for (int j = 0; j < gacs.Length; j++) {
+			for (var i = 0; i < 2; i++) {
+				for (var j = 0; j < gacs.Length; j++) {
 					var gac = Path.Combine (gac_paths [i], gacs [j]);
 					var file = GetAssemblyFile (reference, prefixes [i], gac);
 					if (File.Exists (file))
@@ -119,7 +119,7 @@ namespace ICSharpCode.ILSpy
 				.Append (reference.Version)
 				.Append ("__");
 
-			for (int i = 0; i < reference.PublicKeyToken.Length; i++)
+			for (var i = 0; i < reference.PublicKeyToken.Length; i++)
 				gac_folder.Append (reference.PublicKeyToken [i].ToString ("x2"));
 
 			return Path.Combine (

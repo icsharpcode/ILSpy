@@ -15,8 +15,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public class DecompilerTypeSystem : IDecompilerTypeSystem
 	{
-		readonly ModuleDefinition moduleDefinition;
-		readonly ICompilation compilation;
 		readonly ITypeResolveContext context;
 
 		/// <summary>
@@ -38,12 +36,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public DecompilerTypeSystem(ModuleDefinition moduleDefinition)
 		{
-			if (moduleDefinition == null)
-				throw new ArgumentNullException(nameof(moduleDefinition));
-			this.moduleDefinition = moduleDefinition;
-			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			this.ModuleDefinition = moduleDefinition ?? throw new ArgumentNullException(nameof(moduleDefinition));
+			var cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
-			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
+			var mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
@@ -62,27 +58,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			Compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Fallback to MinimalCorlib to provide the primitive types.
-			if (compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || compilation.FindType(KnownTypeCode.Int32).Kind == TypeKind.Unknown) {
+			if (Compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || Compilation.FindType(KnownTypeCode.Int32).Kind == TypeKind.Unknown) {
 				referencedAssemblies.Add(MinimalCorlib.Instance);
-				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+				Compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			}
-			context = new SimpleTypeResolveContext(compilation.MainAssembly);
+			context = new SimpleTypeResolveContext(Compilation.MainAssembly);
 		}
 
-		public ICompilation Compilation {
-			get { return compilation; }
-		}
-		
-		public IAssembly MainAssembly {
-			get { return compilation.MainAssembly; }
-		}
+		public ICompilation Compilation { get; }
 
-		public ModuleDefinition ModuleDefinition {
-			get { return moduleDefinition; }
-		}
+		public IAssembly MainAssembly => Compilation.MainAssembly;
+
+		public ModuleDefinition ModuleDefinition { get; }
 
 		void StoreMemberReference(IUnresolvedEntity entity, MemberReference mr)
 		{
@@ -177,10 +167,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IField FindNonGenericField(FieldReference fieldReference)
 		{
-			ITypeDefinition typeDef = Resolve(fieldReference.DeclaringType).GetDefinition();
+			var typeDef = Resolve(fieldReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return CreateFakeField(fieldReference);
-			foreach (IField field in typeDef.Fields)
+			foreach (var field in typeDef.Fields)
 				if (field.Name == fieldReference.Name)
 					return field;
 			return CreateFakeField(fieldReference);
@@ -199,18 +189,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		class ResolvedFakeField : DefaultResolvedField
 		{
-			readonly IType declaringType;
-
 			public ResolvedFakeField(DefaultUnresolvedField unresolved, ITypeResolveContext parentContext, IType declaringType)
 				: base(unresolved, parentContext)
 			{
-				this.declaringType = declaringType;
+				this.DeclaringType = declaringType;
 			}
 
-			public override IType DeclaringType
-			{
-				get { return declaringType; }
-			}
+			public override IType DeclaringType { get; }
 		}
 		#endregion
 
@@ -249,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IMethod FindNonGenericMethod(MethodReference methodReference)
 		{
-			ITypeDefinition typeDef = Resolve(methodReference.DeclaringType).GetDefinition();
+			var typeDef = Resolve(methodReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return CreateFakeMethod(methodReference);
 			IEnumerable<IMethod> methods;
@@ -288,8 +273,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		static bool CompareTypes(IType a, IType b)
 		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			var type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
+			var type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
 			return type1.Equals(type2);
 		}
 		
@@ -302,7 +287,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
-			for (int i = 0; i < parameterTypes.Length; i++) {
+			for (var i = 0; i < parameterTypes.Length; i++) {
 				if (!CompareTypes(parameterTypes[i], parameters[i].Type))
 					return false;
 			}
@@ -323,7 +308,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				m.Name = methodReference.Name;
 				m.ReturnType = typeReferenceCecilLoader.ReadTypeReference(methodReference.ReturnType);
 				m.IsStatic = !methodReference.HasThis;
-				for (int i = 0; i < methodReference.GenericParameters.Count; i++) {
+				for (var i = 0; i < methodReference.GenericParameters.Count; i++) {
 					m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, methodReference.GenericParameters[i].Name));
 				}
 				foreach (var p in methodReference.Parameters) {
@@ -336,18 +321,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		class ResolvedFakeMethod : DefaultResolvedMethod
 		{
-			readonly IType declaringType;
-
 			public ResolvedFakeMethod(DefaultUnresolvedMethod unresolved, ITypeResolveContext parentContext, IType declaringType)
 				: base(unresolved, parentContext)
 			{
-				this.declaringType = declaringType;
+				this.DeclaringType = declaringType;
 			}
 
-			public override IType DeclaringType
-			{
-				get { return declaringType; }
-			}
+			public override IType DeclaringType { get; }
 		}
 		#endregion
 
@@ -373,12 +353,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IProperty FindNonGenericProperty(PropertyReference propertyReference)
 		{
-			ITypeDefinition typeDef = Resolve(propertyReference.DeclaringType).GetDefinition();
+			var typeDef = Resolve(propertyReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
 			var parameterTypes = propertyReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
 			var returnType = Resolve(propertyReference.PropertyType);
-			foreach (IProperty property in typeDef.Properties) {
+			foreach (var property in typeDef.Properties) {
 				if (property.Name == propertyReference.Name
 				    && CompareTypes(property.ReturnType, returnType)
 				    && CompareSignatures(property.Parameters, parameterTypes))
@@ -410,11 +390,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IEvent FindNonGenericEvent(EventReference eventReference)
 		{
-			ITypeDefinition typeDef = Resolve(eventReference.DeclaringType).GetDefinition();
+			var typeDef = Resolve(eventReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
 			var returnType = Resolve(eventReference.EventType);
-			foreach (IEvent ev in typeDef.Events) {
+			foreach (var ev in typeDef.Events) {
 				if (ev.Name == eventReference.Name && CompareTypes(ev.ReturnType, returnType))
 					return ev;
 			}
