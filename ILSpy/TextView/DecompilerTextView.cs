@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
-		List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
+		readonly List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
 		RichTextColorizer activeRichTextColorizer;
 		ILSpyTreeNode[] decompiledNodes;
 		

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		class Base1
 		{
-			public int Field = 1;
+			public readonly int Field = 1;
 			
 			protected virtual void TestMethod()
 			{

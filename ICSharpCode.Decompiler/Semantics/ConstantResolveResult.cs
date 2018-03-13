@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ConstantResolveResult : ResolveResult
 	{
-		object constantValue;
+		readonly object constantValue;
 		
 		public ConstantResolveResult(IType type, object constantValue) : base(type)
 		{

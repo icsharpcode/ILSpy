@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	
 	public struct GenericValueType<T>
 	{
-		T data;
+		readonly T data;
 		int num;
 		
 		public GenericValueType(T data)

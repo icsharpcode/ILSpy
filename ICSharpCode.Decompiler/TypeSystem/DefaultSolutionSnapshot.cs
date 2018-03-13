@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class DefaultSolutionSnapshot : ISolutionSnapshot
 	{
 		readonly Dictionary<string, IProjectContent> projectDictionary = new Dictionary<string, IProjectContent>(Platform.FileNameComparer);
-		ConcurrentDictionary<IProjectContent, ICompilation> dictionary = new ConcurrentDictionary<IProjectContent, ICompilation>();
+		readonly ConcurrentDictionary<IProjectContent, ICompilation> dictionary = new ConcurrentDictionary<IProjectContent, ICompilation>();
 		
 		/// <summary>
 		/// Creates a new DefaultSolutionSnapshot with the specified projects.

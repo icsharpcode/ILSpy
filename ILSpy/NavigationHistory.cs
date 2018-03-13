@@ -31,8 +31,8 @@ namespace ICSharpCode.ILSpy
 
 		private DateTime lastNavigationTime = DateTime.MinValue;
 		T current;
-		List<T> back = new List<T>();
-		List<T> forward = new List<T>();
+		readonly List<T> back = new List<T>();
+		readonly List<T> forward = new List<T>();
 		
 		public bool CanNavigateBack => back.Count > 0;
 

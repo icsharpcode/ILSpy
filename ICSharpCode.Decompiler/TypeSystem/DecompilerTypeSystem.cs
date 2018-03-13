@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Dictionary for NRefactory->Cecil lookup.
 		/// May only be accessed within lock(entityDict)
 		/// </summary>
-		Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
+		readonly Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
 
-		Dictionary<FieldReference, IField> fieldLookupCache = new Dictionary<FieldReference, IField>();
-		Dictionary<PropertyReference, IProperty> propertyLookupCache = new Dictionary<PropertyReference, IProperty>();
-		Dictionary<MethodReference, IMethod> methodLookupCache = new Dictionary<MethodReference, IMethod>();
-		Dictionary<EventReference, IEvent> eventLookupCache = new Dictionary<EventReference, IEvent>();
+		readonly Dictionary<FieldReference, IField> fieldLookupCache = new Dictionary<FieldReference, IField>();
+		readonly Dictionary<PropertyReference, IProperty> propertyLookupCache = new Dictionary<PropertyReference, IProperty>();
+		readonly Dictionary<MethodReference, IMethod> methodLookupCache = new Dictionary<MethodReference, IMethod>();
+		readonly Dictionary<EventReference, IEvent> eventLookupCache = new Dictionary<EventReference, IEvent>();
 		
 		public DecompilerTypeSystem(ModuleDefinition moduleDefinition)
 		{

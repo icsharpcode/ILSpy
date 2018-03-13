@@ -82,10 +82,10 @@ namespace ICSharpCode.ILSpy.TextView
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 		
 		/// <summary>List of all references that were written to the output</summary>
-		TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
+		readonly TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
 		
 		/// <summary>Stack of the fold markers that are open but not closed yet</summary>
-		Stack<NewFolding> openFoldings = new Stack<NewFolding>();
+		readonly Stack<NewFolding> openFoldings = new Stack<NewFolding>();
 		
 		/// <summary>List of all foldings that were written to the output</summary>
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();

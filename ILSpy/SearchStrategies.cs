@@ -395,7 +395,7 @@ namespace ICSharpCode.ILSpy
 
 	class MemberSearchStrategy : AbstractSearchStrategy
 	{
-		MemberSearchKind searchKind;
+		readonly MemberSearchKind searchKind;
 
 		public MemberSearchStrategy(string term, MemberSearchKind searchKind = MemberSearchKind.All)
 			: this(new[] { term }, searchKind)

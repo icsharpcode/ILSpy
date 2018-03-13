@@ -212,7 +212,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region FindInsertionPoints
-		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
+
+		readonly List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`

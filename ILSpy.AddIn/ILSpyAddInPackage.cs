@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		}
 		#endregion
 
-		string[] SupportedItems = new[] {
+		readonly string[] SupportedItems = new[] {
 			"Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAProjectItem",
 			"Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAReferenceItem"
 		};

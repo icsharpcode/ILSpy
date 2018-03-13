@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	sealed class GraphVizGraph
 	{
-		List<GraphVizNode> nodes = new List<GraphVizNode>();
-		List<GraphVizEdge> edges = new List<GraphVizEdge>();
+		readonly List<GraphVizNode> nodes = new List<GraphVizNode>();
+		readonly List<GraphVizEdge> edges = new List<GraphVizEdge>();
 
 		public string rankdir;
 		public string Title;

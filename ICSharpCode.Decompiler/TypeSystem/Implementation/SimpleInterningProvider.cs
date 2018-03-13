@@ -74,10 +74,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return hashCode;
 			}
 		}
-		
-		Dictionary<object, object> byValueDict = new Dictionary<object, object>();
-		Dictionary<ISupportsInterning, ISupportsInterning> supportsInternDict = new Dictionary<ISupportsInterning, ISupportsInterning>(new InterningComparer());
-		Dictionary<IEnumerable, IEnumerable> listDict = new Dictionary<IEnumerable, IEnumerable>(new ListComparer());
+
+		readonly Dictionary<object, object> byValueDict = new Dictionary<object, object>();
+		readonly Dictionary<ISupportsInterning, ISupportsInterning> supportsInternDict = new Dictionary<ISupportsInterning, ISupportsInterning>(new InterningComparer());
+		readonly Dictionary<IEnumerable, IEnumerable> listDict = new Dictionary<IEnumerable, IEnumerable>(new ListComparer());
 		
 		public override ISupportsInterning Intern(ISupportsInterning obj)
 		{

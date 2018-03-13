@@ -17,17 +17,17 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 	public class XmlBamlReader : XmlReader, IXmlNamespaceResolver
 	{
 		BamlBinaryReader reader;
-		Dictionary<short, string> assemblyTable = new Dictionary<short, string>();
-		Dictionary<short, string> stringTable = new Dictionary<short, string>();
-		Dictionary<short, TypeDeclaration> typeTable = new Dictionary<short, TypeDeclaration>();
-		Dictionary<short, PropertyDeclaration> propertyTable = new Dictionary<short, PropertyDeclaration>();
+		readonly Dictionary<short, string> assemblyTable = new Dictionary<short, string>();
+		readonly Dictionary<short, string> stringTable = new Dictionary<short, string>();
+		readonly Dictionary<short, TypeDeclaration> typeTable = new Dictionary<short, TypeDeclaration>();
+		readonly Dictionary<short, PropertyDeclaration> propertyTable = new Dictionary<short, PropertyDeclaration>();
 
 		BamlRecordType currentType;
 
-		Stack<XmlBamlElement> elements = new Stack<XmlBamlElement>();
-		Stack<XmlBamlElement> readingElements = new Stack<XmlBamlElement>();
-		NodesCollection nodes = new NodesCollection();
-		List<XmlToClrNamespaceMapping> mappings = new List<XmlToClrNamespaceMapping>();
+		readonly Stack<XmlBamlElement> elements = new Stack<XmlBamlElement>();
+		readonly Stack<XmlBamlElement> readingElements = new Stack<XmlBamlElement>();
+		readonly NodesCollection nodes = new NodesCollection();
+		readonly List<XmlToClrNamespaceMapping> mappings = new List<XmlToClrNamespaceMapping>();
 
 		readonly KnownInfo KnownInfo;
 
@@ -38,7 +38,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		bool _eof;
 		
 		#region Context
-		Stack<ReaderContext> layer = new Stack<ReaderContext>();
+
+		readonly Stack<ReaderContext> layer = new Stack<ReaderContext>();
 		
 		class ReaderContext
 		{

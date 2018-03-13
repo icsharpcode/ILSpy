@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class SwitchDetection : IILTransform
 	{
-		SwitchAnalysis analysis = new SwitchAnalysis();
+		readonly SwitchAnalysis analysis = new SwitchAnalysis();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{

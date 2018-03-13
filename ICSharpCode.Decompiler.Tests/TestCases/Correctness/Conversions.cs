@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TypeCode.Decimal
 		};
 		
-		static object[] inputValues = {
+		static readonly object[] inputValues = {
 			'\0',
 			'a',
 			'\uFFFE',

@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] array1;
 		private StructContainer field1;
 		private MyEnum enumField;
-		private Dictionary<ushort, ushort> ushortDict = new Dictionary<ushort, ushort>();
+		private readonly Dictionary<ushort, ushort> ushortDict = new Dictionary<ushort, ushort>();
 		private ushort ushortField;
 		private ShortEnum shortEnumField;
 		public static int StaticField;

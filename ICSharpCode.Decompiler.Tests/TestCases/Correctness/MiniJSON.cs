@@ -390,7 +390,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		sealed class Serializer
 		{
-			StringBuilder builder;
+			readonly StringBuilder builder;
 
 			Serializer()
 			{

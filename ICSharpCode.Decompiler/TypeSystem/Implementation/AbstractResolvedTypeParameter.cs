@@ -334,8 +334,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public sealed class OwnedTypeParameterReference : ISymbolReference
 	{
-		ISymbolReference owner;
-		int index;
+		readonly ISymbolReference owner;
+		readonly int index;
 		
 		public OwnedTypeParameterReference(ISymbolReference owner, int index)
 		{

@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		//List<Candidate> candidates = new List<Candidate>();
 		Candidate bestCandidate;
 		Candidate bestCandidateAmbiguousWith;
-		IType[] explicitlyGivenTypeArguments;
+		readonly IType[] explicitlyGivenTypeArguments;
 		bool bestCandidateWasValidated;
 		OverloadResolutionErrors bestCandidateValidationResult;
 		

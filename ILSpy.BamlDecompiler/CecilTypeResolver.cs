@@ -12,8 +12,8 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	public class CecilTypeResolver : ITypeResolver
 	{
-		IAssemblyResolver resolver;
-		AssemblyDefinition thisAssembly;
+		readonly IAssemblyResolver resolver;
+		readonly AssemblyDefinition thisAssembly;
 		
 		public CecilTypeResolver(IAssemblyResolver resolver, AssemblyDefinition asm)
 		{

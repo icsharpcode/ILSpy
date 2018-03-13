@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		#endregion
 
 		// per-run members
-		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
+		readonly HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
 
 		/// <summary>
 		/// The target directory that the decompiled files are written to.

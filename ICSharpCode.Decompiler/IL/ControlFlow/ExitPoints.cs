@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
 		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
 
-		bool canIntroduceExitForReturn;
+		readonly bool canIntroduceExitForReturn;
 
 		public DetectExitPoints(bool canIntroduceExitForReturn)
 		{

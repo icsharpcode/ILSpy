@@ -10,8 +10,8 @@ namespace ILSpy.BamlDecompiler
 {
 	public class CecilDependencyPropertyDescriptor : IDependencyPropertyDescriptor
 	{
-		string member;
-		TypeDefinition type;
+		readonly string member;
+		readonly TypeDefinition type;
 		
 		public CecilDependencyPropertyDescriptor(string member, TypeDefinition type)
 		{

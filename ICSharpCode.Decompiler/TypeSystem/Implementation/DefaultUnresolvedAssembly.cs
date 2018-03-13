@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		string assemblyName;
 		string fullAssemblyName;
-		Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition> typeDefinitions = new Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition>(TopLevelTypeNameComparer.Ordinal);
-		Dictionary<TopLevelTypeName, ITypeReference> typeForwarders = new Dictionary<TopLevelTypeName, ITypeReference>(TopLevelTypeNameComparer.Ordinal);
+		readonly Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition> typeDefinitions = new Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition>(TopLevelTypeNameComparer.Ordinal);
+		readonly Dictionary<TopLevelTypeName, ITypeReference> typeForwarders = new Dictionary<TopLevelTypeName, ITypeReference>(TopLevelTypeNameComparer.Ordinal);
 		
 		protected override void FreezeInternal()
 		{
@@ -471,8 +471,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public sealed class NamespaceReference : ISymbolReference
 	{
-		IAssemblyReference assemblyReference;
-		string fullName;
+		readonly IAssemblyReference assemblyReference;
+		readonly string fullName;
 		
 		public NamespaceReference(IAssemblyReference assemblyReference, string fullName)
 		{
@@ -499,8 +499,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public sealed class MergedNamespaceReference : ISymbolReference
 	{
-		string externAlias;
-		string fullName;
+		readonly string externAlias;
+		readonly string fullName;
 		
 		public MergedNamespaceReference(string externAlias, string fullName)
 		{

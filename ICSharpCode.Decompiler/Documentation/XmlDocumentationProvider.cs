@@ -234,8 +234,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			int currentLine = 1;
 			
 			// buffers for use with Decoder:
-			byte[] input = new byte[1];
-			char[] output = new char[1];
+			readonly byte[] input = new byte[1];
+			readonly char[] output = new char[1];
 			
 			public LinePositionMapper(FileStream fs, Encoding encoding)
 			{

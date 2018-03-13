@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy
 			ILSpySettings.SaveSettings(doc);
 		}
 		
-		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		static readonly Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
 		
 		static string Escape(string p)
 		{

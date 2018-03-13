@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy
 			base.AssertUiEnabled = false;
 		}
 
-		HashSet<string> ignoredStacks = new HashSet<string>();
+		readonly HashSet<string> ignoredStacks = new HashSet<string>();
 		bool dialogIsOpen;
 
 		public override void Fail(string message)

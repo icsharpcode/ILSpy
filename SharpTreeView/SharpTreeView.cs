@@ -126,7 +126,7 @@ namespace ICSharpCode.TreeView
 
 		class UpdateLock : IDisposable
 		{
-			SharpTreeView instance;
+			readonly SharpTreeView instance;
 
 			public UpdateLock(SharpTreeView instance)
 			{

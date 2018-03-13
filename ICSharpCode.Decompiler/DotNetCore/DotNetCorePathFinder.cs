@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler
 		};
 
 		readonly Dictionary<string, DotNetCorePackageInfo> packages;
-		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
+		readonly ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
 		readonly string assemblyName;
 		readonly string basePath;
 		readonly string targetFrameworkId;

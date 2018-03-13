@@ -19,8 +19,8 @@ namespace RayTracer
 			rayTracer.Render(rayTracer.DefaultScene);
 		}
 
-		private int screenWidth;
-		private int screenHeight;
+		private readonly int screenWidth;
+		private readonly int screenHeight;
 		private const int MaxDepth = 5;
 
 		public Action<int, int, Color> setPixel;

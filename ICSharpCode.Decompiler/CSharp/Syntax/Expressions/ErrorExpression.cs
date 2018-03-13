@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class ErrorExpression : Expression
 	{
-		TextLocation location;
+		readonly TextLocation location;
 
 		public override TextLocation StartLocation => location;
 

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 
 	partial class AnyNode : PatternInstruction
 	{
-		CaptureGroup group;
+		readonly CaptureGroup group;
 
 		public AnyNode(CaptureGroup group = null)
 			: base(OpCode.AnyNode)

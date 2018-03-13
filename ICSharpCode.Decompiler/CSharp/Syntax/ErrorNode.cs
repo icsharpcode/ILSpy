@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class ErrorNode : AstNode
 	{
-		static TextLocation maxLoc = new TextLocation (int.MaxValue, int.MaxValue);
+		static readonly TextLocation maxLoc = new TextLocation (int.MaxValue, int.MaxValue);
 		
 		public override NodeType NodeType => NodeType.Unknown;
 

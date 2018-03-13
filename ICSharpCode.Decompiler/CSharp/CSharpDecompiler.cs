@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 		SyntaxTree syntaxTree;
 
-		List<IILTransform> ilTransforms = GetILTransforms();
+		readonly List<IILTransform> ilTransforms = GetILTransforms();
 
 		/// <summary>
 		/// Pre-yield/await transforms.
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
-		List<IAstTransform> astTransforms = new List<IAstTransform> {
+		readonly List<IAstTransform> astTransforms = new List<IAstTransform> {
 			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
 			new IntroduceUnsafeModifier(),

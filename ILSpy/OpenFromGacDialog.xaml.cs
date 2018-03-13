@@ -37,8 +37,8 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class OpenFromGacDialog : Window
 	{
-		ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
-		ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
 		Predicate<GacEntry> filterMethod = _ => true;
 		volatile bool cancelFetchThread;
 

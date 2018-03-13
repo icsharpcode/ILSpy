@@ -227,8 +227,8 @@ namespace ICSharpCode.ILSpy
 		public AssemblyList CurrentAssemblyList { get; private set; }
 
 		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
-		
-		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
+
+		readonly List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
 		
 		bool HandleCommandLineArguments(CommandLineArguments args)
 		{

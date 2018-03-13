@@ -11,8 +11,8 @@ namespace ICSharpCode.ILSpy
 {
 	public class LATextReader : TextReader
 	{
-		List<int> buffer;
-		TextReader reader;
+		readonly List<int> buffer;
+		readonly TextReader reader;
 
 		public LATextReader(TextReader reader)
 		{
@@ -396,7 +396,7 @@ namespace ICSharpCode.ILSpy
 		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
 		// it's also faster than using a string builder.
 		const int MAX_IDENTIFIER_LENGTH = 512;
-		char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
+		readonly char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
 
 		string ReadIdent(char ch, out bool canBeKeyword)
 		{

@@ -29,7 +29,7 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	sealed class ConnectMethodDecompiler
 	{
-		AssemblyDefinition assembly;
+		readonly AssemblyDefinition assembly;
 		
 		public ConnectMethodDecompiler(AssemblyDefinition assembly)
 		{

@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	
 	sealed class LdTokenPattern : Pattern
 	{
-		AnyNode childNode;
+		readonly AnyNode childNode;
 		
 		public LdTokenPattern(string groupName)
 		{
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	sealed class TypeOfPattern : Pattern
 	{
-		INode childNode;
+		readonly INode childNode;
 		
 		public TypeOfPattern(string groupName)
 		{

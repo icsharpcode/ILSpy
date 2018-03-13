@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests
 	{
 		class RDTest : ReachingDefinitionsVisitor
 		{
-			ILVariable v;
+			readonly ILVariable v;
 
 			public RDTest(ILFunction f, ILVariable v) : base(f, _ => true, CancellationToken.None)
 			{

@@ -14,7 +14,7 @@ namespace LightJson.Serialization
 	/// </summary>
 	internal sealed class JsonReader
 	{
-		private TextScanner scanner;
+		private readonly TextScanner scanner;
 
 		private JsonReader(TextReader reader)
 		{

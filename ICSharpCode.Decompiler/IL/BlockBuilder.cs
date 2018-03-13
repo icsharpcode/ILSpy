@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		List<TryInstruction> tryInstructionList = new List<TryInstruction>();
-		Dictionary<int, BlockContainer> handlerContainers = new Dictionary<int, BlockContainer>();
+		readonly Dictionary<int, BlockContainer> handlerContainers = new Dictionary<int, BlockContainer>();
 		
 		void CreateContainerStructure()
 		{
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		BlockContainer currentContainer;
 		Block currentBlock;
-		Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
+		readonly Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 		
 		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{

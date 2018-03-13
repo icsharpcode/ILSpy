@@ -11,7 +11,7 @@ namespace LightJson.Serialization
 	/// </summary>
 	internal sealed class TextScanner
 	{
-		private TextReader reader;
+		private readonly TextReader reader;
 		private TextPosition position;
 
 		/// <summary>

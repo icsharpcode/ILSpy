@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		class ListOfLists<T> : IList<T>, IReadOnlyList<T>
 		{
-			List<IReadOnlyList<T>> lists =new List<IReadOnlyList<T>> ();
+			readonly List<IReadOnlyList<T>> lists =new List<IReadOnlyList<T>> ();
 
 			public void AddList(IReadOnlyList<T> list)
 			{

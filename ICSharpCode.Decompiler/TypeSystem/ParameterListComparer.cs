@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public sealed class SignatureComparer : IEqualityComparer<IMember>
 	{
-		StringComparer nameComparer;
+		readonly StringComparer nameComparer;
 		
 		public SignatureComparer(StringComparer nameComparer)
 		{

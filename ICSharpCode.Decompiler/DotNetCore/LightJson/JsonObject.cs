@@ -14,7 +14,7 @@ namespace LightJson
 	[DebuggerTypeProxy(typeof(JsonObjectDebugView))]
 	internal sealed class JsonObject : IEnumerable<KeyValuePair<string, JsonValue>>, IEnumerable<JsonValue>
 	{
-		private IDictionary<string, JsonValue> properties;
+		private readonly IDictionary<string, JsonValue> properties;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JsonObject"/> class.
@@ -173,7 +173,7 @@ namespace LightJson
 		[ExcludeFromCodeCoverage]
 		private class JsonObjectDebugView
 		{
-			private JsonObject jsonObject;
+			private readonly JsonObject jsonObject;
 
 			public JsonObjectDebugView(JsonObject jsonObject)
 			{

@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		class PrintOnDispose : IDisposable
 		{
-			private string v;
+			private readonly string v;
 
 			public PrintOnDispose(string v)
 			{

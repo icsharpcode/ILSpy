@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			return result.ToArray();
 		}
-		
-		IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
-		IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
+
+		readonly IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
+		readonly IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
 		
 		void InitParameterArrays()
 		{
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
-			UnaryOperatorMethod baseMethod;
+			readonly UnaryOperatorMethod baseMethod;
 			
 			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(operators.compilation)
 			{

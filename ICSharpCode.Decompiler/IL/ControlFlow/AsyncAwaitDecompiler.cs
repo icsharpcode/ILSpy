@@ -68,8 +68,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		IField builderField;
 		IField stateField;
 		int initialState;
-		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
-		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
+		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
+		readonly Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
 
 		// These fields are set by AnalyzeMoveNext():
 		ILFunction moveNextFunction;
@@ -82,11 +82,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
-		HashSet<Leave> moveNextLeaves = new HashSet<Leave>();
+		readonly HashSet<Leave> moveNextLeaves = new HashSet<Leave>();
 
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
-		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
+		readonly Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{

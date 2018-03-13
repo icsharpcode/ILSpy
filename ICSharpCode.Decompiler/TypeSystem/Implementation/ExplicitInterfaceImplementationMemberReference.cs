@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class ExplicitInterfaceImplementationMemberReference : IMemberReference
 	{
-		IMemberReference interfaceMemberReference;
+		readonly IMemberReference interfaceMemberReference;
 		
 		public ExplicitInterfaceImplementationMemberReference(ITypeReference typeReference, IMemberReference interfaceMemberReference)
 		{

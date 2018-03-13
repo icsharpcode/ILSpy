@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 
 		static int instanceCount;
-		int instanceNumber = ++instanceCount;
+		readonly int instanceNumber = ++instanceCount;
 		
 		int instanceField;
 

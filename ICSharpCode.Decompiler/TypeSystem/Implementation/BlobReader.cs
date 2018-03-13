@@ -54,8 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			return true;
 		}
-		
-		byte[] buffer;
+
+		readonly byte[] buffer;
 		int position;
 		readonly IAssembly currentResolvedAssembly;
 

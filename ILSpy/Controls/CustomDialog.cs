@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.Controls
 		System.Windows.Forms.Label label;
 		System.Windows.Forms.Panel panel;
 		int acceptButton;
-		int cancelButton;
+		readonly int cancelButton;
 
 		/// <summary>
 		/// Gets the index of the button pressed.

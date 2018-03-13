@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
-			Stack<CSharpTypeResolveContext> context;
+			readonly Stack<CSharpTypeResolveContext> context;
 			TypeSystemAstBuilder astBuilder;
 			
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)

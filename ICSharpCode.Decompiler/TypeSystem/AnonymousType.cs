@@ -29,8 +29,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public class AnonymousType : AbstractType
 	{
-		ICompilation compilation;
-		IUnresolvedProperty[] unresolvedProperties;
+		readonly ICompilation compilation;
+		readonly IUnresolvedProperty[] unresolvedProperties;
 
 		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
 		{

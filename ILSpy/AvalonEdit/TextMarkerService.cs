@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.AvalonEdit
 	sealed class TextMarkerService : DocumentColorizingTransformer, IBackgroundRenderer, ITextMarkerService
 	{
 		TextSegmentCollection<TextMarker> markers;
-		TextView textView;
+		readonly TextView textView;
 		
 		public TextMarkerService(TextView textView)
 		{

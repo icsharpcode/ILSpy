@@ -15,7 +15,7 @@ namespace ICSharpCode.TreeView
 			pen.Freeze();
 		}
 
-		static Pen pen;
+		static readonly Pen pen;
 
 		SharpTreeNodeView NodeView => TemplatedParent as SharpTreeNodeView;
 

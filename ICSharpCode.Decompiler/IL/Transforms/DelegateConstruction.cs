@@ -214,8 +214,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		class TransformDisplayClassUsages : ILVisitor
 		{
-			ILFunction currentFunction;
-			BlockContainer captureScope;
+			readonly ILFunction currentFunction;
+			readonly BlockContainer captureScope;
 			readonly IInstructionWithVariableOperand targetLoad;
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;

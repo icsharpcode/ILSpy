@@ -57,10 +57,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public sealed class VariableReference : ISymbolReference
 	{
-		ITypeReference variableTypeReference;
-		string name;
-		bool isConst;
-		object constantValue;
+		readonly ITypeReference variableTypeReference;
+		readonly string name;
+		readonly bool isConst;
+		readonly object constantValue;
 		
 		public VariableReference(ITypeReference variableTypeReference, string name, bool isConst, object constantValue)
 		{

@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public class RemoveEmbeddedAtttributes : DepthFirstAstVisitor<object, object>, IAstTransform
 	{
-		HashSet<string> attributeNames = new HashSet<string>() {
+		readonly HashSet<string> attributeNames = new HashSet<string>() {
 			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
 			"System.Runtime.CompilerServices.IsByRefLikeAttribute",
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
