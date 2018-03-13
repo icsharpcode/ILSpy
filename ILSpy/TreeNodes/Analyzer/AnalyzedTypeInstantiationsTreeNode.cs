@@ -33,18 +33,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeInstantiationsTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
-				throw new ArgumentNullException(nameof(analyzedType));
-
-			this.analyzedType = analyzedType;
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 
 			this.isSystemObject = (analyzedType.FullName == "System.Object");
 		}
 
-		public override object Text
-		{
-			get { return "Instantiated By"; }
-		}
+		public override object Text => "Instantiated By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -54,8 +48,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
+			foreach (var method in type.Methods) {
+				var found = false;
 				if (!method.HasBody)
 					continue;
 
@@ -65,8 +59,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					(isSystemObject || analyzedType == type || TypesHierarchyHelpers.IsBaseType(analyzedType, type, false)))
 					continue;
 
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
+				foreach (var instr in method.Body.Instructions) {
+					var mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == ".ctor") {
 						if (Helpers.IsReferencedBy(analyzedType, mr.DeclaringType)) {
 							found = true;

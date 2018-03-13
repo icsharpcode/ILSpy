@@ -37,13 +37,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
-			foreach (LoadedAssembly asm in removedAssemblies) {
+			foreach (var asm in removedAssemblies) {
 				if (this.Member.Module == asm.GetModuleDefinitionOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(
 				delegate(SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
+					var an = n as AnalyzerTreeNode;
 					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 				});
 			return true;

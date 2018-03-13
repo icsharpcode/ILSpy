@@ -33,18 +33,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole ("out");
 		public static readonly TokenRole InVarianceKeywordRole = new TokenRole ("in");
 		
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
-		
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole (AttributeRole); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public AstNodeCollection<AttributeSection> Attributes => GetChildrenByRole (AttributeRole);
+
 		VarianceModifier variance;
 		
 		public VarianceModifier Variance {
-			get { return variance; }
+			get => variance;
 			set { ThrowIfFrozen(); variance = value; }
 		}
 		
@@ -62,21 +58,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole(Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 
 		public TypeParameterDeclaration ()
@@ -105,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeParameterDeclaration o = other as TypeParameterDeclaration;
+			var o = other as TypeParameterDeclaration;
 			return o != null && this.Variance == o.Variance && MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}

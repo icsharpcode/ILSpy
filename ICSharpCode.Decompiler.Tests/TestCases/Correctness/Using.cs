@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		class PrintOnDispose : IDisposable
 		{
-			private string v;
+			private readonly string v;
 
 			public PrintOnDispose(string v)
 			{
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToAssignment()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
+			var printOnDispose = new PrintOnDispose("Wrong");
 			try {
 				printOnDispose = new PrintOnDispose("Correct");
 			} finally {
@@ -76,11 +76,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToAssignment2()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
+			var printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
 			try {
 				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
 			} finally {
-				IDisposable disposable = (object)printOnDispose as IDisposable;
+				var disposable = (object)printOnDispose as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
@@ -94,12 +94,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsingDueToByRefCall()
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsingDueToByRefCall(): Wrong");
+			var printOnDispose = new PrintOnDispose("NoUsingDueToByRefCall(): Wrong");
 			try {
 				Console.WriteLine("NoUsingDueToByRefCall");
 				Clear(ref printOnDispose);
 			} finally {
-				IDisposable disposable = (object)printOnDispose as IDisposable;
+				var disposable = (object)printOnDispose as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try {
 				obj.WriteLine("ContinuedObjectUse");
 			} finally {
-				IDisposable disposable = (object)obj as IDisposable;
+				var disposable = (object)obj as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
@@ -137,14 +137,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void VariableAlreadyUsedBefore()
 		{
-			System.IO.StringWriter obj = new System.IO.StringWriter();
+			var obj = new System.IO.StringWriter();
 			obj.Write("VariableAlreadyUsedBefore - 1");
 			Console.WriteLine(obj);
 			obj = new System.IO.StringWriter();
 			try {
 				obj.WriteLine("VariableAlreadyUsedBefore - 2");
 			} finally {
-				IDisposable disposable = (object)obj as IDisposable;
+				var disposable = (object)obj as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
@@ -153,11 +153,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void UsingObject()
 		{
-			object obj = new object();
+			var obj = new object();
 			try {
 				Console.WriteLine("UsingObject: {0}", obj);
 			} finally {
-				IDisposable disposable = obj as IDisposable;
+				var disposable = obj as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}

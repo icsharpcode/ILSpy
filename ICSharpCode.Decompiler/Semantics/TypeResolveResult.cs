@@ -30,8 +30,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 		}
 		
-		public override bool IsError {
-			get { return this.Type.Kind == TypeKind.Unknown; }
-		}
+		public override bool IsError => this.Type.Kind == TypeKind.Unknown;
 	}
 }

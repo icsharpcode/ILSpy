@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			foreach (var inst in inst2.Descendants) {
 				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals)) {
-					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
+					var v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (variables.Contains(v)) {
 						return true;
 					}

@@ -32,9 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public PropertyTreeNode(PropertyDefinition property)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
-			this.PropertyDefinition = property;
+			this.PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
 			using (LoadedAssembly.DisableAssemblyLoad()) {
 				this.isIndexer = property.IsIndexer();
 			}
@@ -43,10 +41,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new MethodTreeNode(property.GetMethod));
 			if (property.SetMethod != null)
 				this.Children.Add(new MethodTreeNode(property.SetMethod));
-			if (property.HasOtherMethods) {
-				foreach (var m in property.OtherMethods)
-					this.Children.Add(new MethodTreeNode(m));
-			}
+			if (!property.HasOtherMethods) return;
+			foreach (var m in property.OtherMethods)
+				this.Children.Add(new MethodTreeNode(m));
 		}
 
 		public PropertyDefinition PropertyDefinition { get; }
@@ -55,13 +52,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
 		{
-			string name = language.FormatPropertyName(property, isIndexer);
+			var name = language.FormatPropertyName(property, isIndexer);
 
 			var b = new System.Text.StringBuilder();
 			if (property.HasParameters)
 			{
 				b.Append('(');
-				for (int i = 0; i < property.Parameters.Count; i++)
+				for (var i = 0; i < property.Parameters.Count; i++)
 				{
 					if (i > 0)
 						b.Append(", ");
@@ -89,9 +86,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(PropertyDefinition property, bool isIndexer = false)
 		{
-			MemberIcon icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
-			MethodAttributes attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
-			bool isStatic = (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0;
+			var icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
+			var attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
+			var isStatic = (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0;
 			return Images.GetIcon(icon, GetOverlayIcon(attributesOfMostAccessibleMethod), isStatic);
 		}
 
@@ -122,14 +119,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// There should always be at least one method from which to
 			// obtain the result, but the compiler doesn't know this so
 			// initialize the result with a default value
-			MethodAttributes result = (MethodAttributes)0;
+			var result = (MethodAttributes)0;
 
 			// Method access is defined from inaccessible (lowest) to public (highest)
 			// in numeric order, so we can do an integer comparison of the masked attribute
-			int accessLevel = 0;
+			var accessLevel = 0;
 
 			if (property.GetMethod != null) {
-				int methodAccessLevel = (int)(property.GetMethod.Attributes & MethodAttributes.MemberAccessMask);
+				var methodAccessLevel = (int)(property.GetMethod.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
 					result = property.GetMethod.Attributes;
@@ -137,7 +134,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 
 			if (property.SetMethod != null) {
-				int methodAccessLevel = (int)(property.SetMethod.Attributes & MethodAttributes.MemberAccessMask);
+				var methodAccessLevel = (int)(property.SetMethod.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
 					result = property.SetMethod.Attributes;
@@ -146,7 +143,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			if (property.HasOtherMethods) {
 				foreach (var m in property.OtherMethods) {
-					int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
+					var methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
 					if (accessLevel < methodAccessLevel) {
 						accessLevel = methodAccessLevel;
 						result = m.Attributes;

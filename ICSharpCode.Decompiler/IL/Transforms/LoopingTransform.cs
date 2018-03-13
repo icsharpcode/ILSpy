@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
 			running = true;
 			try {
-				int count = 1;
+				var count = 1;
 				do {
 					block.ResetDirty();
 					block.RunTransforms(children, context);
@@ -52,9 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		public IReadOnlyCollection<IBlockTransform> Transforms {
-			get { return children; }
-		}
+		public IReadOnlyCollection<IBlockTransform> Transforms => children;
 	}
 }
 

@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public SimpleConstantValue(ITypeReference type, object value)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 			this.value = value;
 		}
 		
@@ -62,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			SimpleConstantValue scv = other as SimpleConstantValue;
+			var scv = other as SimpleConstantValue;
 			return scv != null && type == scv.type && value == scv.value;
 		}
 	}

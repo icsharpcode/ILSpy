@@ -24,10 +24,8 @@ namespace ICSharpCode.TreeView
 		/// <summary>Length in the flat list, including children (children within the flat list). -1 = invalidated</summary>
 		int totalListLength = -1;
 		
-		int Balance {
-			get { return Height(right) - Height(left); }
-		}
-		
+		int Balance => Height(right) - Height(left);
+
 		static int Height(SharpTreeNode node)
 		{
 			return node != null ? node.height : 0;
@@ -35,7 +33,7 @@ namespace ICSharpCode.TreeView
 		
 		internal SharpTreeNode GetListRoot()
 		{
-			SharpTreeNode node = this;
+			var node = this;
 			while (node.listParent != null)
 				node = node.listParent;
 			return node;
@@ -55,7 +53,7 @@ namespace ICSharpCode.TreeView
 			Debug.Assert(right == null || right.listParent == this);
 			Debug.Assert(height == 1 + Math.Max(Height(left), Height(right)));
 			Debug.Assert(Math.Abs(this.Balance) <= 1);
-			Debug.Assert(totalListLength == -1 || totalListLength == (left != null ? left.totalListLength : 0) + (isVisible ? 1 : 0) + (right != null ? right.totalListLength : 0));
+			Debug.Assert(totalListLength == -1 || totalListLength == (left != null ? left.totalListLength : 0) + (IsVisible ? 1 : 0) + (right != null ? right.totalListLength : 0));
 			if (left != null) left.CheckInvariants();
 			if (right != null) right.CheckInvariants();
 		}
@@ -73,7 +71,7 @@ namespace ICSharpCode.TreeView
 			if (left != null)
 				left.DumpTree();
 			Debug.Unindent();
-			Debug.WriteLine("{0}, totalListLength={1}, height={2}, Balance={3}, isVisible={4}", ToString(), totalListLength, height, Balance, isVisible);
+			Debug.WriteLine("{0}, totalListLength={1}, height={2}, Balance={3}, isVisible={4}", ToString(), totalListLength, height, Balance, IsVisible);
 			Debug.Indent();
 			if (right != null)
 				right.DumpTree();
@@ -87,7 +85,7 @@ namespace ICSharpCode.TreeView
 			root.GetTotalListLength(); // ensure all list lengths are calculated
 			Debug.Assert(index >= 0);
 			Debug.Assert(index < root.totalListLength);
-			SharpTreeNode node = root;
+			var node = root;
 			while (true) {
 				if (node.left != null && index < node.left.totalListLength) {
 					node = node.left;
@@ -95,7 +93,7 @@ namespace ICSharpCode.TreeView
 					if (node.left != null) {
 						index -= node.left.totalListLength;
 					}
-					if (node.isVisible) {
+					if (node.IsVisible) {
 						if (index == 0)
 							return node;
 						index--;
@@ -107,12 +105,12 @@ namespace ICSharpCode.TreeView
 		
 		internal static int GetVisibleIndexForNode(SharpTreeNode node)
 		{
-			int index = node.left != null ? node.left.GetTotalListLength() : 0;
+			var index = node.left != null ? node.left.GetTotalListLength() : 0;
 			while (node.listParent != null) {
 				if (node == node.listParent.right) {
 					if (node.listParent.left != null)
 						index += node.listParent.left.GetTotalListLength();
-					if (node.listParent.isVisible)
+					if (node.listParent.IsVisible)
 						index++;
 				}
 				node = node.listParent;
@@ -164,7 +162,7 @@ namespace ICSharpCode.TreeView
 		{
 			if (totalListLength >= 0)
 				return totalListLength;
-			int length = (isVisible ? 1 : 0);
+			var length = (IsVisible ? 1 : 0);
 			if (left != null) {
 				length += left.GetTotalListLength();
 			}
@@ -184,8 +182,8 @@ namespace ICSharpCode.TreeView
 			 *           / \          / \
 			 *          B   C        A   B
 			 */
-			SharpTreeNode b = right.left;
-			SharpTreeNode newTop = right;
+			var b = right.left;
+			var newTop = right;
 			
 			if (b != null) b.listParent = this;
 			this.right = b;
@@ -207,8 +205,8 @@ namespace ICSharpCode.TreeView
 			 *     / \                   /  \
 			 *    A   B                 B    C
 			 */
-			SharpTreeNode b = left.right;
-			SharpTreeNode newTop = left;
+			var b = left.right;
+			var newTop = left;
 			
 			if (b != null) b.listParent = this;
 			this.left = b;
@@ -230,7 +228,7 @@ namespace ICSharpCode.TreeView
 				}
 				pos = pos.listParent;
 			}
-			SharpTreeNode newRoot = Rebalance(pos);
+			var newRoot = Rebalance(pos);
 			if (newRoot != pos && pos.treeFlattener != null) {
 				Debug.Assert(newRoot.treeFlattener == null);
 				newRoot.treeFlattener = pos.treeFlattener;
@@ -270,13 +268,13 @@ namespace ICSharpCode.TreeView
 			// All removed nodes will be reorganized in a separate tree, do not delete
 			// regions that don't belong together in the tree model!
 			
-			List<SharpTreeNode> removedSubtrees = new List<SharpTreeNode>();
+			var removedSubtrees = new List<SharpTreeNode>();
 			SharpTreeNode oldPos;
-			SharpTreeNode pos = start;
+			var pos = start;
 			do {
 				// recalculate the endAncestors every time, because the tree might have been rebalanced
-				HashSet<SharpTreeNode> endAncestors = new HashSet<SharpTreeNode>();
-				for (SharpTreeNode tmp = end; tmp != null; tmp = tmp.listParent)
+				var endAncestors = new HashSet<SharpTreeNode>();
+				for (var tmp = end; tmp != null; tmp = tmp.listParent)
 					endAncestors.Add(tmp);
 				
 				removedSubtrees.Add(pos);
@@ -288,7 +286,7 @@ namespace ICSharpCode.TreeView
 						pos.right = null;
 					}
 				}
-				SharpTreeNode succ = pos.Successor();
+				var succ = pos.Successor();
 				DeleteNode(pos); // this will also rebalance out the deletion of the right subtree
 				
 				oldPos = pos;
@@ -296,15 +294,15 @@ namespace ICSharpCode.TreeView
 			} while (oldPos != end);
 			
 			// merge back together the removed subtrees:
-			SharpTreeNode removed = removedSubtrees[0];
-			for (int i = 1; i < removedSubtrees.Count; i++) {
+			var removed = removedSubtrees[0];
+			for (var i = 1; i < removedSubtrees.Count; i++) {
 				removed = ConcatTrees(removed, removedSubtrees[i]);
 			}
 		}
 		
 		static SharpTreeNode ConcatTrees(SharpTreeNode first, SharpTreeNode second)
 		{
-			SharpTreeNode tmp = first;
+			var tmp = first;
 			while (tmp.right != null)
 				tmp = tmp.right;
 			InsertNodeAfter(tmp, second);
@@ -314,12 +312,12 @@ namespace ICSharpCode.TreeView
 		SharpTreeNode Successor()
 		{
 			if (right != null) {
-				SharpTreeNode node = right;
+				var node = right;
 				while (node.left != null)
 					node = node.left;
 				return node;
 			} else {
-				SharpTreeNode node = this;
+				var node = this;
 				SharpTreeNode oldNode;
 				do {
 					oldNode = node;
@@ -342,7 +340,7 @@ namespace ICSharpCode.TreeView
 				node.ReplaceWith(node.left);
 				node.left = null;
 			} else {
-				SharpTreeNode tmp = node.right;
+				var tmp = node.right;
 				while (tmp.left != null)
 					tmp = tmp.left;
 				// First replace tmp with tmp.right

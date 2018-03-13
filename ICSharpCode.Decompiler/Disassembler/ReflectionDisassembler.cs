@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		readonly ITextOutput output;
 		CancellationToken cancellationToken;
 		bool isInType;   // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
-		MethodBodyDisassembler methodBodyDisassembler;
+		readonly MethodBodyDisassembler methodBodyDisassembler;
 		MemberReference currentMember;
 
 		public bool DetectControlStructure {
@@ -54,15 +54,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public ReflectionDisassembler(ITextOutput output, MethodBodyDisassembler methodBodyDisassembler, CancellationToken cancellationToken)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			this.output = output;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
 			this.cancellationToken = cancellationToken;
 			this.methodBodyDisassembler = methodBodyDisassembler;
 		}
 
 		#region Disassemble Method
-		EnumNameCollection<MethodAttributes> methodAttributeFlags = new EnumNameCollection<MethodAttributes>() {
+
+		readonly EnumNameCollection<MethodAttributes> methodAttributeFlags = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Final, "final" },
 			{ MethodAttributes.HideBySig, "hidebysig" },
 			{ MethodAttributes.SpecialName, "specialname" },
@@ -78,7 +77,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.HasSecurity, null },	// ?? also invisible in ILDasm
 		};
 
-		EnumNameCollection<MethodAttributes> methodVisibility = new EnumNameCollection<MethodAttributes>() {
+		readonly EnumNameCollection<MethodAttributes> methodVisibility = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Private, "private" },
 			{ MethodAttributes.FamANDAssem, "famandassem" },
 			{ MethodAttributes.Assembly, "assembly" },
@@ -87,7 +86,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.Public, "public" },
 		};
 
-		EnumNameCollection<MethodCallingConvention> callingConvention = new EnumNameCollection<MethodCallingConvention>() {
+		readonly EnumNameCollection<MethodCallingConvention> callingConvention = new EnumNameCollection<MethodCallingConvention>() {
 			{ MethodCallingConvention.C, "unmanaged cdecl" },
 			{ MethodCallingConvention.StdCall, "unmanaged stdcall" },
 			{ MethodCallingConvention.ThisCall, "unmanaged thiscall" },
@@ -96,14 +95,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodCallingConvention.Generic, null },
 		};
 
-		EnumNameCollection<MethodImplAttributes> methodCodeType = new EnumNameCollection<MethodImplAttributes>() {
+		readonly EnumNameCollection<MethodImplAttributes> methodCodeType = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.IL, "cil" },
 			{ MethodImplAttributes.Native, "native" },
 			{ MethodImplAttributes.OPTIL, "optil" },
 			{ MethodImplAttributes.Runtime, "runtime" },
 		};
 
-		EnumNameCollection<MethodImplAttributes> methodImpl = new EnumNameCollection<MethodImplAttributes>() {
+		readonly EnumNameCollection<MethodImplAttributes> methodImpl = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.Synchronized, "synchronized" },
 			{ MethodImplAttributes.NoInlining, "noinlining" },
 			{ MethodImplAttributes.NoOptimization, "nooptimization" },
@@ -142,7 +141,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if ((method.Attributes & MethodAttributes.PInvokeImpl) == MethodAttributes.PInvokeImpl) {
 				output.Write("pinvokeimpl");
 				if (method.HasPInvokeInfo && method.PInvokeInfo != null) {
-					PInvokeInfo info = method.PInvokeInfo;
+					var info = method.PInvokeInfo;
 					output.Write("(\"" + DisassemblerHelpers.EscapeString(info.Module.Name) + "\"");
 
 					if (!string.IsNullOrEmpty(info.EntryPoint) && info.EntryPoint != method.Name)
@@ -306,8 +305,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				output.WriteLine(" = {");
 				output.Indent();
-				for (int i = 0; i < secdecl.SecurityAttributes.Count; i++) {
-					SecurityAttribute sa = secdecl.SecurityAttributes[i];
+				for (var i = 0; i < secdecl.SecurityAttributes.Count; i++) {
+					var sa = secdecl.SecurityAttributes[i];
 					if (sa.AttributeType.Scope == sa.AttributeType.Module) {
 						output.Write("class ");
 						output.Write(DisassemblerHelpers.Escape(GetAssemblyQualifiedName(sa.AttributeType)));
@@ -319,13 +318,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.WriteLine();
 						output.Indent();
 
-						foreach (CustomAttributeNamedArgument na in sa.Fields) {
+						foreach (var na in sa.Fields) {
 							output.Write("field ");
 							WriteSecurityDeclarationArgument(na);
 							output.WriteLine();
 						}
 
-						foreach (CustomAttributeNamedArgument na in sa.Properties) {
+						foreach (var na in sa.Properties) {
 							output.Write("property ");
 							WriteSecurityDeclarationArgument(na);
 							output.WriteLine();
@@ -346,7 +345,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteSecurityDeclarationArgument(CustomAttributeNamedArgument na)
 		{
-			TypeReference type = na.Argument.Type;
+			var type = na.Argument.Type;
 			if (type.MetadataType == MetadataType.Class || type.MetadataType == MetadataType.ValueType) {
 				output.Write("enum ");
 				if (type.Scope != type.Module) {
@@ -371,9 +370,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		string GetAssemblyQualifiedName(TypeReference type)
 		{
-			AssemblyNameReference anr = type.Scope as AssemblyNameReference;
+			var anr = type.Scope as AssemblyNameReference;
 			if (anr == null) {
-				ModuleDefinition md = type.Scope as ModuleDefinition;
+				var md = type.Scope as ModuleDefinition;
 				if (md != null) {
 					anr = md.Assembly.Name;
 				}
@@ -444,7 +443,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case NativeType.Func:
 					goto default;  // ??
 				case NativeType.Array:
-					ArrayMarshalInfo ami = (ArrayMarshalInfo)marshalInfo;
+					var ami = (ArrayMarshalInfo)marshalInfo;
 					if (ami == null)
 						goto default;
 					if (ami.ElementType != NativeType.Max)
@@ -488,7 +487,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				case NativeType.SafeArray:
 					output.Write("safearray ");
-					SafeArrayMarshalInfo sami = marshalInfo as SafeArrayMarshalInfo;
+					var sami = marshalInfo as SafeArrayMarshalInfo;
 					if (sami != null) {
 						switch (sami.ElementType) {
 							case VariantType.None:
@@ -558,7 +557,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				case NativeType.FixedArray:
 					output.Write("fixed array");
-					FixedArrayMarshalInfo fami = marshalInfo as FixedArrayMarshalInfo;
+					var fami = marshalInfo as FixedArrayMarshalInfo;
 					if (fami != null) {
 						output.Write("[{0}]", fami.Size);
 						if (fami.ElementType != NativeType.None) {
@@ -586,7 +585,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("lpstruct");
 					break;
 				case NativeType.CustomMarshaler:
-					CustomMarshalInfo cmi = marshalInfo as CustomMarshalInfo;
+					var cmi = marshalInfo as CustomMarshalInfo;
 					if (cmi == null)
 						goto default;
 					output.Write("custom(\"{0}\", \"{1}\"",
@@ -609,7 +608,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteParameters(Collection<ParameterDefinition> parameters)
 		{
-			for (int i = 0; i < parameters.Count; i++) {
+			for (var i = 0; i < parameters.Count; i++) {
 				var p = parameters[i];
 				if (p.IsIn)
 					output.Write("[in] ");
@@ -647,12 +646,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (constant == null) {
 				output.Write("nullref");
 			} else {
-				string typeName = DisassemblerHelpers.PrimitiveTypeName(constant.GetType().FullName);
+				var typeName = DisassemblerHelpers.PrimitiveTypeName(constant.GetType().FullName);
 				if (typeName != null && typeName != "string") {
 					output.Write(typeName);
 					output.Write('(');
-					float? cf = constant as float?;
-					double? cd = constant as double?;
+					var cf = constant as float?;
+					var cd = constant as double?;
 					if (cf.HasValue && (float.IsNaN(cf.Value) || float.IsInfinity(cf.Value))) {
 						output.Write("0x{0:x8}", BitConverter.ToInt32(BitConverter.GetBytes(cf.Value), 0));
 					} else if (cd.HasValue && (double.IsNaN(cd.Value) || double.IsInfinity(cd.Value))) {
@@ -669,7 +668,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Field
-		EnumNameCollection<FieldAttributes> fieldVisibility = new EnumNameCollection<FieldAttributes>() {
+
+		readonly EnumNameCollection<FieldAttributes> fieldVisibility = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Private, "private" },
 			{ FieldAttributes.FamANDAssem, "famandassem" },
 			{ FieldAttributes.Assembly, "assembly" },
@@ -678,7 +678,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.Public, "public" },
 		};
 
-		EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
+		readonly EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Static, "static" },
 			{ FieldAttributes.Literal, "literal" },
 			{ FieldAttributes.InitOnly, "initonly" },
@@ -719,7 +719,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Property
-		EnumNameCollection<PropertyAttributes> propertyAttributes = new EnumNameCollection<PropertyAttributes>() {
+
+		readonly EnumNameCollection<PropertyAttributes> propertyAttributes = new EnumNameCollection<PropertyAttributes>() {
 			{ PropertyAttributes.SpecialName, "specialname" },
 			{ PropertyAttributes.RTSpecialName, "rtspecialname" },
 			{ PropertyAttributes.HasDefault, "hasdefault" },
@@ -771,7 +772,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Event
-		EnumNameCollection<EventAttributes> eventAttributes = new EnumNameCollection<EventAttributes>() {
+
+		readonly EnumNameCollection<EventAttributes> eventAttributes = new EnumNameCollection<EventAttributes>() {
 			{ EventAttributes.SpecialName, "specialname" },
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
@@ -799,7 +801,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#endregion
 
 		#region Disassemble Type
-		EnumNameCollection<TypeAttributes> typeVisibility = new EnumNameCollection<TypeAttributes>() {
+
+		readonly EnumNameCollection<TypeAttributes> typeVisibility = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Public, "public" },
 			{ TypeAttributes.NotPublic, "private" },
 			{ TypeAttributes.NestedPublic, "nested public" },
@@ -810,19 +813,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.NestedFamORAssem, "nested famorassem" },
 		};
 
-		EnumNameCollection<TypeAttributes> typeLayout = new EnumNameCollection<TypeAttributes>() {
+		readonly EnumNameCollection<TypeAttributes> typeLayout = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.AutoLayout, "auto" },
 			{ TypeAttributes.SequentialLayout, "sequential" },
 			{ TypeAttributes.ExplicitLayout, "explicit" },
 		};
 
-		EnumNameCollection<TypeAttributes> typeStringFormat = new EnumNameCollection<TypeAttributes>() {
+		readonly EnumNameCollection<TypeAttributes> typeStringFormat = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.AutoClass, "auto" },
 			{ TypeAttributes.AnsiClass, "ansi" },
 			{ TypeAttributes.UnicodeClass, "unicode" },
 		};
 
-		EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
+		readonly EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Abstract, "abstract" },
 			{ TypeAttributes.Sealed, "sealed" },
 			{ TypeAttributes.SpecialName, "specialname" },
@@ -860,7 +863,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			if (type.HasInterfaces) {
 				output.Indent();
-				for (int index = 0; index < type.Interfaces.Count; index++) {
+				for (var index = 0; index < type.Interfaces.Count; index++) {
 					if (index > 0)
 						output.WriteLine(",");
 					if (index == 0)
@@ -877,7 +880,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.WriteLine("{");
 			output.Indent();
-			bool oldIsInType = isInType;
+			var oldIsInType = isInType;
 			isInType = true;
 			WriteAttributes(type.CustomAttributes);
 			WriteSecurityDeclarations(type);
@@ -936,10 +939,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (p.HasGenericParameters) {
 				output.Write('<');
-				for (int i = 0; i < p.GenericParameters.Count; i++) {
+				for (var i = 0; i < p.GenericParameters.Count; i++) {
 					if (i > 0)
 						output.Write(", ");
-					GenericParameter gp = p.GenericParameters[i];
+					var gp = p.GenericParameters[i];
 					if (gp.HasReferenceTypeConstraint) {
 						output.Write("class ");
 					} else if (gp.HasNotNullableValueTypeConstraint) {
@@ -950,7 +953,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					if (gp.HasConstraints) {
 						output.Write('(');
-						for (int j = 0; j < gp.Constraints.Count; j++) {
+						for (var j = 0; j < gp.Constraints.Count; j++) {
 							if (j > 0)
 								output.Write(", ");
 							gp.Constraints[j].WriteTo(output, ILNameSyntax.TypeName);
@@ -972,10 +975,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#region Helper methods
 		void WriteAttributes(Collection<CustomAttribute> attributes)
 		{
-			foreach (CustomAttribute a in attributes) {
+			foreach (var a in attributes) {
 				output.Write(".custom ");
 				a.Constructor.WriteTo(output);
-				byte[] blob = a.GetBlob();
+				var blob = a.GetBlob();
 				if (blob != null) {
 					output.Write(" = ");
 					WriteBlob(blob);
@@ -989,7 +992,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Write("(");
 			output.Indent();
 
-			for (int i = 0; i < blob.Length; i++) {
+			for (var i = 0; i < blob.Length; i++) {
 				if (i % 16 == 0 && i < blob.Length - 1) {
 					output.WriteLine();
 				} else {
@@ -1023,7 +1026,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteFlags<T>(T flags, EnumNameCollection<T> flagNames) where T : struct
 		{
-			long val = Convert.ToInt64(flags);
+			var val = Convert.ToInt64(flags);
 			long tested = 0;
 			foreach (var pair in flagNames) {
 				tested |= pair.Key;
@@ -1038,7 +1041,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteEnum<T>(T enumValue, EnumNameCollection<T> enumNames) where T : struct
 		{
-			long val = Convert.ToInt64(enumValue);
+			var val = Convert.ToInt64(enumValue);
 			foreach (var pair in enumNames) {
 				if (pair.Key == val) {
 					if (pair.Value != null) {
@@ -1057,7 +1060,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
 		{
-			List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
+			readonly List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
 
 			public void Add(T flag, string name)
 			{
@@ -1082,9 +1085,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write(".namespace " + DisassemblerHelpers.Escape(nameSpace));
 				OpenBlock(false);
 			}
-			bool oldIsInType = isInType;
+			var oldIsInType = isInType;
 			isInType = true;
-			foreach (TypeDefinition td in types) {
+			foreach (var td in types) {
 				cancellationToken.ThrowIfCancellationRequested();
 				DisassembleType(td);
 				output.WriteLine();
@@ -1115,7 +1118,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(" // SHA1");
 				output.WriteLine();
 			}
-			Version v = asm.Name.Version;
+			var v = asm.Name.Version;
 			if (v != null) {
 				output.WriteLine(".ver {0}:{1}:{2}:{3}", v.Major, v.Minor, v.Build, v.Revision);
 			}
@@ -1148,7 +1151,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public void WriteModuleHeader(ModuleDefinition module)
 		{
 			if (module.HasExportedTypes) {
-				foreach (ExportedType exportedType in module.ExportedTypes) {
+				foreach (var exportedType in module.ExportedTypes) {
 					output.Write(".class extern ");
 					if (exportedType.IsForwarder)
 						output.Write("forwarder ");
@@ -1172,7 +1175,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void WriteModuleContents(ModuleDefinition module)
 		{
-			foreach (TypeDefinition td in module.Types) {
+			foreach (var td in module.Types) {
 				DisassembleType(td);
 				output.WriteLine();
 			}

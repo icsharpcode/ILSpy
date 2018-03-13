@@ -43,8 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public static CSharpOperators Get(ICompilation compilation)
 		{
-			CacheManager cache = compilation.CacheManager;
-			CSharpOperators operators = (CSharpOperators)cache.GetShared(typeof(CSharpOperators));
+			var cache = compilation.CacheManager;
+			var operators = (CSharpOperators)cache.GetShared(typeof(CSharpOperators));
 			if (operators == null) {
 				operators = (CSharpOperators)cache.GetOrAddShared(typeof(CSharpOperators), new CSharpOperators(compilation));
 			}
@@ -54,25 +54,25 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region class OperatorMethod
 		OperatorMethod[] Lift(params OperatorMethod[] methods)
 		{
-			List<OperatorMethod> result = new List<OperatorMethod>(methods);
-			foreach (OperatorMethod method in methods) {
-				OperatorMethod lifted = method.Lift(this);
+			var result = new List<OperatorMethod>(methods);
+			foreach (var method in methods) {
+				var lifted = method.Lift(this);
 				if (lifted != null)
 					result.Add(lifted);
 			}
 			return result.ToArray();
 		}
-		
-		IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
-		IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
+
+		readonly IParameter[] normalParameters = new IParameter[(int)(TypeCode.String + 1 - TypeCode.Object)];
+		readonly IParameter[] nullableParameters = new IParameter[(int)(TypeCode.Decimal + 1 - TypeCode.Boolean)];
 		
 		void InitParameterArrays()
 		{
-			for (TypeCode i = TypeCode.Object; i <= TypeCode.String; i++) {
+			for (var i = TypeCode.Object; i <= TypeCode.String; i++) {
 				normalParameters[i - TypeCode.Object] = new DefaultParameter(compilation.FindType(i), string.Empty);
 			}
-			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
-				IType type = NullableType.Create(compilation, compilation.FindType(i));
+			for (var i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
+				var type = NullableType.Create(compilation, compilation.FindType(i));
 				nullableParameters[i - TypeCode.Boolean] = new DefaultParameter(type, string.Empty);
 			}
 		}
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		IParameter MakeNullableParameter(IParameter normalParameter)
 		{
-			for (TypeCode i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
+			for (var i = TypeCode.Boolean; i <= TypeCode.Decimal; i++) {
 				if (normalParameter == normalParameters[i - TypeCode.Object])
 					return nullableParameters[i - TypeCode.Boolean];
 			}
@@ -93,125 +93,72 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		internal class OperatorMethod : IParameterizedMember
 		{
-			readonly ICompilation compilation;
 			internal readonly List<IParameter> parameters = new List<IParameter>();
 			
 			protected OperatorMethod(ICompilation compilation)
 			{
-				this.compilation = compilation;
+				this.Compilation = compilation;
 			}
 			
-			public IReadOnlyList<IParameter> Parameters {
-				get { return parameters; }
-			}
-			
+			public IReadOnlyList<IParameter> Parameters => parameters;
+
 			public IType ReturnType { get; internal set; }
 			
-			public ICompilation Compilation {
-				get { return compilation; }
-			}
-			
+			public ICompilation Compilation { get; }
+
 			public virtual OperatorMethod Lift(CSharpOperators operators)
 			{
 				return null;
 			}
 			
-			ITypeDefinition IEntity.DeclaringTypeDefinition {
-				get { return null; }
-			}
-			
-			IType IEntity.DeclaringType {
-				get { return null; }
-			}
-			
-			IMember IMember.MemberDefinition {
-				get { return this; }
-			}
-			
-			IUnresolvedMember IMember.UnresolvedMember {
-				get { return null; }
-			}
+			ITypeDefinition IEntity.DeclaringTypeDefinition => null;
 
-			IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers {
-				get { return EmptyList<IMember>.Instance; }
-			}
-			
-			bool IMember.IsVirtual {
-				get { return false; }
-			}
-			
-			bool IMember.IsOverride {
-				get { return false; }
-			}
-			
-			bool IMember.IsOverridable {
-				get { return false; }
-			}
-			
-			SymbolKind ISymbol.SymbolKind {
-				get { return SymbolKind.Operator; }
-			}
-			
-			IReadOnlyList<IAttribute> IEntity.Attributes {
-				get { return EmptyList<IAttribute>.Instance; }
-			}
-			
-			Accessibility IHasAccessibility.Accessibility {
-				get { return Accessibility.Public; }
-			}
-			
-			bool IEntity.IsStatic {
-				get { return true; }
-			}
-			
-			bool IEntity.IsAbstract {
-				get { return false; }
-			}
-			
-			bool IEntity.IsSealed {
-				get { return false; }
-			}
-			
-			bool IEntity.IsShadowing {
-				get { return false; }
-			}
-			
-			bool IEntity.IsSynthetic {
-				get { return true; }
-			}
-			
-			bool IHasAccessibility.IsPrivate {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsPublic {
-				get { return true; }
-			}
-			
-			bool IHasAccessibility.IsProtected {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsInternal {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsProtectedOrInternal {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsProtectedAndInternal {
-				get { return false; }
-			}
-			
-			bool IMember.IsExplicitInterfaceImplementation {
-				get { return false; }
-			}
-			
-			IAssembly IEntity.ParentAssembly {
-				get { return compilation.MainAssembly; }
-			}
-			
+			IType IEntity.DeclaringType => null;
+
+			IMember IMember.MemberDefinition => this;
+
+			IUnresolvedMember IMember.UnresolvedMember => null;
+
+			IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+
+			bool IMember.IsVirtual => false;
+
+			bool IMember.IsOverride => false;
+
+			bool IMember.IsOverridable => false;
+
+			SymbolKind ISymbol.SymbolKind => SymbolKind.Operator;
+
+			IReadOnlyList<IAttribute> IEntity.Attributes => EmptyList<IAttribute>.Instance;
+
+			Accessibility IHasAccessibility.Accessibility => Accessibility.Public;
+
+			bool IEntity.IsStatic => true;
+
+			bool IEntity.IsAbstract => false;
+
+			bool IEntity.IsSealed => false;
+
+			bool IEntity.IsShadowing => false;
+
+			bool IEntity.IsSynthetic => true;
+
+			bool IHasAccessibility.IsPrivate => false;
+
+			bool IHasAccessibility.IsPublic => true;
+
+			bool IHasAccessibility.IsProtected => false;
+
+			bool IHasAccessibility.IsInternal => false;
+
+			bool IHasAccessibility.IsProtectedOrInternal => false;
+
+			bool IHasAccessibility.IsProtectedAndInternal => false;
+
+			bool IMember.IsExplicitInterfaceImplementation => false;
+
+			IAssembly IEntity.ParentAssembly => Compilation.MainAssembly;
+
 			ISymbolReference ISymbol.ToReference()
 			{
 				throw new NotSupportedException();
@@ -222,11 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new NotSupportedException();
 			}
 
-			TypeParameterSubstitution IMember.Substitution {
-				get {
-					return TypeParameterSubstitution.Identity;
-				}
-			}
+			TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 			IMember IMember.Specialize(TypeParameterSubstitution substitution)
 			{
@@ -235,27 +178,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new NotSupportedException();
 			}
 
-			string INamedElement.FullName {
-				get { return "operator"; }
-			}
-			
-			public string Name {
-				get { return "operator"; }
-			}
-			
-			string INamedElement.Namespace {
-				get { return string.Empty; }
-			}
-			
-			string INamedElement.ReflectionName {
-				get { return "operator"; }
-			}
-			
+			string INamedElement.FullName => "operator";
+
+			public string Name => "operator";
+
+			string INamedElement.Namespace => string.Empty;
+
+			string INamedElement.ReflectionName => "operator";
+
 			public override string ToString()
 			{
-				StringBuilder b = new StringBuilder();
+				var b = new StringBuilder();
 				b.Append(ReturnType + " operator(");
-				for (int i = 0; i < parameters.Count; i++) {
+				for (var i = 0; i < parameters.Count; i++) {
 					if (i > 0)
 						b.Append(", ");
 					b.Append(parameters[i].Type);
@@ -269,8 +204,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Unary operator class definitions
 		internal class UnaryOperatorMethod : OperatorMethod
 		{
-			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
-			
+			public virtual bool CanEvaluateAtCompileTime => false;
+
 			public virtual object Invoke(CSharpResolver resolver, object input)
 			{
 				throw new NotSupportedException();
@@ -288,16 +223,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public LambdaUnaryOperatorMethod(CSharpOperators operators, Func<T, T> func)
 				: base(operators.compilation)
 			{
-				TypeCode typeCode = Type.GetTypeCode(typeof(T));
+				var typeCode = Type.GetTypeCode(typeof(T));
 				this.ReturnType = operators.compilation.FindType(typeCode);
 				parameters.Add(operators.MakeParameter(typeCode));
 				this.func = func;
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime => true;
+
 			public override object Invoke(CSharpResolver resolver, object input)
 			{
 				if (input == null)
@@ -313,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
-			UnaryOperatorMethod baseMethod;
+			readonly UnaryOperatorMethod baseMethod;
 			
 			public LiftedUnaryOperatorMethod(CSharpOperators operators, UnaryOperatorMethod baseMethod) : base(operators.compilation)
 			{
@@ -333,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] UnaryPlusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref unaryPlusOperators);
+				var ops = LazyInit.VolatileRead(ref unaryPlusOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -355,7 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] UncheckedUnaryMinusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref uncheckedUnaryMinusOperators);
+				var ops = LazyInit.VolatileRead(ref uncheckedUnaryMinusOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -374,7 +307,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] CheckedUnaryMinusOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref checkedUnaryMinusOperators);
+				var ops = LazyInit.VolatileRead(ref checkedUnaryMinusOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -394,7 +327,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] LogicalNegationOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalNegationOperators);
+				var ops = LazyInit.VolatileRead(ref logicalNegationOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -410,7 +343,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] BitwiseComplementOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseComplementOperators);
+				var ops = LazyInit.VolatileRead(ref bitwiseComplementOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -428,7 +361,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region Binary operator class definitions
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
-			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
+			public virtual bool CanEvaluateAtCompileTime => false;
+
 			public virtual object Invoke(CSharpResolver resolver, object lhs, object rhs) {
 				throw new NotSupportedException();
 			}
@@ -449,7 +383,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public LambdaBinaryOperatorMethod(CSharpOperators operators, Func<T1, T2, T1> checkedFunc, Func<T1, T2, T1> uncheckedFunc)
 				: base(operators.compilation)
 			{
-				TypeCode t1 = Type.GetTypeCode(typeof(T1));
+				var t1 = Type.GetTypeCode(typeof(T1));
 				this.ReturnType = operators.compilation.FindType(t1);
 				parameters.Add(operators.MakeParameter(t1));
 				parameters.Add(operators.MakeParameter(Type.GetTypeCode(typeof(T2))));
@@ -457,15 +391,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.uncheckedFunc = uncheckedFunc;
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime => true;
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
-				Func<T1, T2, T1> func = resolver.CheckForOverflow ? checkedFunc : uncheckedFunc;
+				var func = resolver.CheckForOverflow ? checkedFunc : uncheckedFunc;
 				return func((T1)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T1)), lhs),
 				            (T2)resolver.CSharpPrimitiveCast(Type.GetTypeCode(typeof(T2)), rhs));
 			}
@@ -501,7 +433,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] MultiplicationOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref multiplicationOperators);
+				var ops = LazyInit.VolatileRead(ref multiplicationOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -523,7 +455,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] DivisionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref divisionOperators);
+				var ops = LazyInit.VolatileRead(ref divisionOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -545,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] RemainderOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref remainderOperators);
+				var ops = LazyInit.VolatileRead(ref remainderOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -567,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] AdditionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref additionOperators);
+				var ops = LazyInit.VolatileRead(ref additionOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -590,21 +522,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		// not in this list, but handled manually: enum addition, delegate combination
 		sealed class StringConcatenation : BinaryOperatorMethod
 		{
-			bool canEvaluateAtCompileTime;
-			
 			public StringConcatenation(CSharpOperators operators, TypeCode p1, TypeCode p2)
 				: base(operators.compilation)
 			{
-				this.canEvaluateAtCompileTime = p1 == TypeCode.String && p2 == TypeCode.String;
+				this.CanEvaluateAtCompileTime = p1 == TypeCode.String && p2 == TypeCode.String;
 				this.ReturnType = operators.compilation.FindType(KnownTypeCode.String);
 				parameters.Add(operators.MakeParameter(p1));
 				parameters.Add(operators.MakeParameter(p2));
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return canEvaluateAtCompileTime; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime { get; }
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				return string.Concat(lhs, rhs);
@@ -616,7 +544,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] SubtractionOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref subtractionOperators);
+				var ops = LazyInit.VolatileRead(ref subtractionOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -638,7 +566,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ShiftLeftOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftLeftOperators);
+				var ops = LazyInit.VolatileRead(ref shiftLeftOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -656,7 +584,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ShiftRightOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref shiftRightOperators);
+				var ops = LazyInit.VolatileRead(ref shiftRightOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -687,10 +615,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				parameters.Add(operators.MakeParameter(type));
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return Type != TypeCode.Object; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime => Type != TypeCode.Object;
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null && rhs == null)
@@ -728,15 +654,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				this.baseMethod = baseMethod;
 				this.ReturnType = baseMethod.ReturnType;
-				IParameter p = operators.MakeNullableParameter(baseMethod.Parameters[0]);
+				var p = operators.MakeNullableParameter(baseMethod.Parameters[0]);
 				parameters.Add(p);
 				parameters.Add(p);
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return baseMethod.CanEvaluateAtCompileTime; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime => baseMethod.CanEvaluateAtCompileTime;
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
@@ -759,7 +683,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ValueEqualityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueEqualityOperators);
+				var ops = LazyInit.VolatileRead(ref valueEqualityOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -774,7 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ValueInequalityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref valueInequalityOperators);
+				var ops = LazyInit.VolatileRead(ref valueInequalityOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -789,7 +713,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ReferenceEqualityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceEqualityOperators);
+				var ops = LazyInit.VolatileRead(ref referenceEqualityOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -805,7 +729,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] ReferenceInequalityOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref referenceInequalityOperators);
+				var ops = LazyInit.VolatileRead(ref referenceInequalityOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -832,10 +756,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.func = func;
 			}
 			
-			public override bool CanEvaluateAtCompileTime {
-				get { return true; }
-			}
-			
+			public override bool CanEvaluateAtCompileTime => true;
+
 			public override object Invoke(CSharpResolver resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
@@ -856,7 +778,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] LessThanOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOperators);
+				var ops = LazyInit.VolatileRead(ref lessThanOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -877,7 +799,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] LessThanOrEqualOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref lessThanOrEqualOperators);
+				var ops = LazyInit.VolatileRead(ref lessThanOrEqualOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -898,7 +820,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] GreaterThanOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOperators);
+				var ops = LazyInit.VolatileRead(ref greaterThanOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -919,7 +841,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] GreaterThanOrEqualOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref greaterThanOrEqualOperators);
+				var ops = LazyInit.VolatileRead(ref greaterThanOrEqualOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -942,7 +864,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] LogicalAndOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalAndOperators);
+				var ops = LazyInit.VolatileRead(ref logicalAndOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -958,7 +880,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] BitwiseAndOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseAndOperators);
+				var ops = LazyInit.VolatileRead(ref bitwiseAndOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -978,7 +900,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] LogicalOrOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref logicalOrOperators);
+				var ops = LazyInit.VolatileRead(ref logicalOrOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -993,7 +915,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public OperatorMethod[] BitwiseOrOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseOrOperators);
+				var ops = LazyInit.VolatileRead(ref bitwiseOrOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -1016,7 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public OperatorMethod[] BitwiseXorOperators {
 			get {
-				OperatorMethod[] ops = LazyInit.VolatileRead(ref bitwiseXorOperators);
+				var ops = LazyInit.VolatileRead(ref bitwiseXorOperators);
 				if (ops != null) {
 					return ops;
 				} else {
@@ -1042,7 +964,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (!NullableType.IsNonNullableValueType(m.ReturnType))
 					return null; // cannot lift this operator
 			}
-			for (int i = 0; i < m.Parameters.Count; i++) {
+			for (var i = 0; i < m.Parameters.Count; i++) {
 				if (!NullableType.IsNonNullableValueType(m.Parameters[i].Type))
 					return null; // cannot lift this operator
 			}
@@ -1077,7 +999,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			public override bool Equals(object obj)
 			{
-				LiftedUserDefinedOperator op = obj as LiftedUserDefinedOperator;
+				var op = obj as LiftedUserDefinedOperator;
 				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
 			}
 

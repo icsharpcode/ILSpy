@@ -25,70 +25,47 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class DefaultVariable : IVariable
 	{
-		readonly string name;
-		readonly IType type;
-		readonly object constantValue;
-		readonly bool isConst;
-		
 		public DefaultVariable(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.type = type;
-			this.name = name;
+			this.Type = type ?? throw new ArgumentNullException("type");
+			this.Name = name ?? throw new ArgumentNullException("name");
 		}
 		
 		public DefaultVariable(IType type, string name,
 		                       bool isConst = false, object constantValue = null)
 			: this(type, name)
 		{
-			this.isConst = isConst;
-			this.constantValue = constantValue;
+			this.IsConst = isConst;
+			this.ConstantValue = constantValue;
 		}
 		
-		public string Name {
-			get { return name; }
-		}
-		
-		public IType Type {
-			get { return type; }
-		}
-		
-		public bool IsConst {
-			get { return isConst; }
-		}
-		
-		public object ConstantValue {
-			get { return constantValue; }
-		}
-		
-		public SymbolKind SymbolKind {
-			get { return SymbolKind.Variable; }
-		}
+		public string Name { get; }
+
+		public IType Type { get; }
+
+		public bool IsConst { get; }
+
+		public object ConstantValue { get; }
+
+		public SymbolKind SymbolKind => SymbolKind.Variable;
 
 		public ISymbolReference ToReference()
 		{
-			return new VariableReference(type.ToTypeReference(), name, isConst, constantValue);
+			return new VariableReference(Type.ToTypeReference(), Name, IsConst, ConstantValue);
 		}
 	}
 	
 	public sealed class VariableReference : ISymbolReference
 	{
-		ITypeReference variableTypeReference;
-		string name;
-		bool isConst;
-		object constantValue;
+		readonly ITypeReference variableTypeReference;
+		readonly string name;
+		readonly bool isConst;
+		readonly object constantValue;
 		
 		public VariableReference(ITypeReference variableTypeReference, string name, bool isConst, object constantValue)
 		{
-			if (variableTypeReference == null)
-				throw new ArgumentNullException("variableTypeReference");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.variableTypeReference = variableTypeReference;
-			this.name = name;
+			this.variableTypeReference = variableTypeReference ?? throw new ArgumentNullException("variableTypeReference");
+			this.name = name ?? throw new ArgumentNullException("name");
 			this.isConst = isConst;
 			this.constantValue = constantValue;
 		}

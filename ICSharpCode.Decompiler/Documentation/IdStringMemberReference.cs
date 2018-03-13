@@ -24,13 +24,12 @@ namespace ICSharpCode.Decompiler.Documentation
 	[Serializable]
 	class IdStringMemberReference : IMemberReference
 	{
-		readonly ITypeReference declaringTypeReference;
 		readonly char memberType;
 		readonly string memberIdString;
 		
 		public IdStringMemberReference(ITypeReference declaringTypeReference, char memberType, string memberIdString)
 		{
-			this.declaringTypeReference = declaringTypeReference;
+			this.DeclaringTypeReference = declaringTypeReference;
 			this.memberType = memberType;
 			this.memberIdString = memberIdString;
 		}
@@ -55,13 +54,11 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 		}
 		
-		public ITypeReference DeclaringTypeReference {
-			get { return declaringTypeReference; }
-		}
-		
+		public ITypeReference DeclaringTypeReference { get; }
+
 		public IMember Resolve(ITypeResolveContext context)
 		{
-			IType declaringType = declaringTypeReference.Resolve(context);
+			var declaringType = DeclaringTypeReference.Resolve(context);
 			foreach (var member in declaringType.GetMembers(CanMatch, GetMemberOptions.IgnoreInheritedMembers)) {
 				if (IdStringProvider.GetIdString(member) == memberIdString)
 					return member;

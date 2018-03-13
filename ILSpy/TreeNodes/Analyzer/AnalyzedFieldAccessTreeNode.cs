@@ -35,17 +35,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedFieldAccessTreeNode(FieldDefinition analyzedField, bool showWrites)
 		{
-			if (analyzedField == null)
-				throw new ArgumentNullException(nameof(analyzedField));
-
-			this.analyzedField = analyzedField;
+			this.analyzedField = analyzedField ?? throw new ArgumentNullException(nameof(analyzedField));
 			this.showWrites = showWrites;
 		}
 
-		public override object Text
-		{
-			get { return showWrites ? "Assigned By" : "Read By"; }
-		}
+		public override object Text => showWrites ? "Assigned By" : "Read By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -61,15 +55,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			string name = analyzedField.Name;
+			var name = analyzedField.Name;
 
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
+			foreach (var method in type.Methods) {
+				var found = false;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
+				foreach (var instr in method.Body.Instructions) {
 					if (CanBeReference(instr.OpCode.Code)) {
-						FieldReference fr = instr.Operand as FieldReference;
+						var fr = instr.Operand as FieldReference;
 						if (fr != null && fr.Name == name &&
 							Helpers.IsReferencedBy(analyzedField.DeclaringType, fr.DeclaringType) &&
 							fr.Resolve() == analyzedField) {
@@ -82,7 +76,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				method.Body = null;
 
 				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
+					var codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
 					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
 						var node = new AnalyzedMethodTreeNode(codeLocation);
 						node.Language = this.Language;
@@ -111,7 +105,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private bool HasAlreadyBeenFound(MethodDefinition method)
 		{
-			Hashtable hashtable = foundMethods.Value;
+			var hashtable = foundMethods.Value;
 			lock (hashLock) {
 				if (hashtable.Contains(method)) {
 					return true;

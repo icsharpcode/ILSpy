@@ -58,9 +58,7 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		public bool this[int index] {
-			get {
-				return (words[WordIndex(index)] & (1UL << index)) != 0;
-			}
+			get => (words[WordIndex(index)] & (1UL << index)) != 0;
 			set {
 				if (value)
 					Set(index);
@@ -74,7 +72,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public bool Any()
 		{
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				if (words[i] != 0)
 					return true;
 			}
@@ -90,16 +88,16 @@ namespace ICSharpCode.Decompiler.Util
 			if (startIndex >= endIndex) {
 				return true;
 			}
-			int startWordIndex = WordIndex(startIndex);
-			int endWordIndex = WordIndex(endIndex - 1);
-			ulong startMask = Mask << startIndex;
-			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			var startWordIndex = WordIndex(startIndex);
+			var endWordIndex = WordIndex(endIndex - 1);
+			var startMask = Mask << startIndex;
+			var endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
 			if (startWordIndex == endWordIndex) {
 				return (words[startWordIndex] & (startMask & endMask)) == (startMask & endMask);
 			} else {
 				if ((words[startWordIndex] & startMask) != startMask)
 					return false;
-				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+				for (var i = startWordIndex + 1; i < endWordIndex; i++) {
 					if (words[i] != ulong.MaxValue)
 						return false;
 				}
@@ -113,7 +111,7 @@ namespace ICSharpCode.Decompiler.Util
 		public bool SetEquals(BitSet other)
 		{
 			Debug.Assert(words.Length == other.words.Length);
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				if (words[i] != other.words[i])
 					return false;
 			}
@@ -125,7 +123,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public bool IsSubsetOf(BitSet other)
 		{
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				if ((words[i] & ~other.words[i]) != 0)
 					return false;
 			}
@@ -155,7 +153,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public bool Overlaps(BitSet other)
 		{
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				if ((words[i] & other.words[i]) != 0)
 					return true;
 			}
@@ -165,14 +163,14 @@ namespace ICSharpCode.Decompiler.Util
 		public void UnionWith(BitSet other)
 		{
 			Debug.Assert(words.Length == other.words.Length);
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				words[i] |= other.words[i];
 			}
 		}
 		
 		public void IntersectWith(BitSet other)
 		{
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				words[i] &= other.words[i];
 			}
 		}
@@ -191,15 +189,15 @@ namespace ICSharpCode.Decompiler.Util
 			if (startIndex >= endIndex) {
 				return;
 			}
-			int startWordIndex = WordIndex(startIndex);
-			int endWordIndex = WordIndex(endIndex - 1);
-			ulong startMask = Mask << startIndex;
-			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			var startWordIndex = WordIndex(startIndex);
+			var endWordIndex = WordIndex(endIndex - 1);
+			var startMask = Mask << startIndex;
+			var endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
 			if (startWordIndex == endWordIndex) {
 				words[startWordIndex] |= (startMask & endMask);
 			} else {
 				words[startWordIndex] |= startMask;
-				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+				for (var i = startWordIndex + 1; i < endWordIndex; i++) {
 					words[i] = ulong.MaxValue;
 				}
 				words[endWordIndex] |= endMask;
@@ -223,15 +221,15 @@ namespace ICSharpCode.Decompiler.Util
 			if (startIndex >= endIndex) {
 				return;
 			}
-			int startWordIndex = WordIndex(startIndex);
-			int endWordIndex = WordIndex(endIndex - 1);
-			ulong startMask = Mask << startIndex;
-			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			var startWordIndex = WordIndex(startIndex);
+			var endWordIndex = WordIndex(endIndex - 1);
+			var startMask = Mask << startIndex;
+			var endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
 			if (startWordIndex == endWordIndex) {
 				words[startWordIndex] &= ~(startMask & endMask);
 			} else {
 				words[startWordIndex] &= ~startMask;
-				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+				for (var i = startWordIndex + 1; i < endWordIndex; i++) {
 					words[i] = 0;
 				}
 				words[endWordIndex] &= ~endMask;
@@ -240,7 +238,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void ClearAll()
 		{
-			for (int i = 0; i < words.Length; i++) {
+			for (var i = 0; i < words.Length; i++) {
 				words[i] = 0;
 			}
 		}
@@ -253,9 +251,9 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			b.Append('{');
-			for (int i = 0; i < words.Length * BitsPerWord; i++) {
+			for (var i = 0; i < words.Length * BitsPerWord; i++) {
 				if (this[i]) {
 					if (b.Length > 1)
 						b.Append(", ");

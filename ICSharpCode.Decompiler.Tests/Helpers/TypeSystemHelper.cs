@@ -36,10 +36,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 			});
 		
-		public static DecompilerTypeSystem Instance {
-			get { return decompilerTypeSystem.Value; }
-		}
-		
+		public static DecompilerTypeSystem Instance => decompilerTypeSystem.Value;
+
 		public static IAssembly FromReflection(Assembly assembly)
 		{
 			return decompilerTypeSystem.Value.Compilation.Assemblies.Single(asm => asm.AssemblyName == assembly.GetName().Name);

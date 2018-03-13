@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}*/
 		
 		public ITypeReference ReturnType {
-			get { return returnType; }
+			get => returnType;
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsExplicitInterfaceImplementation {
-			get { return flags[FlagExplicitInterfaceImplementation]; }
+			get => flags[FlagExplicitInterfaceImplementation];
 			set {
 				ThrowIfFrozen();
 				flags[FlagExplicitInterfaceImplementation] = value;
@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsVirtual {
-			get { return flags[FlagVirtual]; }
+			get => flags[FlagVirtual];
 			set {
 				ThrowIfFrozen();
 				flags[FlagVirtual] = value;
@@ -123,24 +123,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsOverride {
-			get { return flags[FlagOverride]; }
+			get => flags[FlagOverride];
 			set {
 				ThrowIfFrozen();
 				flags[FlagOverride] = value;
 			}
 		}
 		
-		public bool IsOverridable {
-			get {
-				// override or virtual or abstract but not sealed
-				return (flags.Data & (FlagOverride | FlagVirtual | FlagAbstract)) != 0 && !this.IsSealed;
-			}
-		}
-		
-		ITypeReference IMemberReference.DeclaringTypeReference {
-			get { return this.DeclaringTypeDefinition; }
-		}
-		
+		public bool IsOverridable => (flags.Data & (FlagOverride | FlagVirtual | FlagAbstract)) != 0 && !this.IsSealed;
+
+		ITypeReference IMemberReference.DeclaringTypeReference => this.DeclaringTypeDefinition;
+
 		#region Resolve
 		public abstract IMember CreateResolved(ITypeResolveContext context);
 		
@@ -166,7 +159,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				parentContext = ExtendContextForType(assemblyContext, typeDef.DeclaringTypeDefinition);
 			else
 				parentContext = assemblyContext;
-			ITypeDefinition resolvedTypeDef = typeDef.Resolve(assemblyContext).GetDefinition();
+			var resolvedTypeDef = typeDef.Resolve(assemblyContext).GetDefinition();
 			return typeDef.CreateResolveContext(parentContext).WithCurrentTypeDefinition(resolvedTypeDef);
 		}
 		
@@ -186,15 +179,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// In this case, we can simply resolve the parameter types in the given context
 				var parameterTypes = parameterTypeReferences.Resolve(context);
 				if (explicitInterfaceTypeReference == null) {
-					foreach (IMember member in context.CurrentTypeDefinition.Members) {
+					foreach (var member in context.CurrentTypeDefinition.Members) {
 						if (member.IsExplicitInterfaceImplementation)
 							continue;
 						if (IsNonGenericMatch(member, symbolKind, name, parameterTypes))
 							return member;
 					}
 				} else {
-					IType explicitInterfaceType = explicitInterfaceTypeReference.Resolve(context);
-					foreach (IMember member in context.CurrentTypeDefinition.Members) {
+					var explicitInterfaceType = explicitInterfaceTypeReference.Resolve(context);
+					foreach (var member in context.CurrentTypeDefinition.Members) {
 						if (!member.IsExplicitInterfaceImplementation)
 							continue;
 						if (member.ImplementedInterfaceMembers.Count != 1)
@@ -208,7 +201,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				// generic member
 				// In this case, we must specify the correct context for resolving the parameter types
-				foreach (IMethod method in context.CurrentTypeDefinition.Methods) {
+				foreach (var method in context.CurrentTypeDefinition.Methods) {
 					if (method.SymbolKind != symbolKind)
 						continue;
 					if (method.Name != name)
@@ -228,7 +221,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						if (!method.IsExplicitInterfaceImplementation)
 							return method;
 					} else if (method.IsExplicitInterfaceImplementation && method.ImplementedInterfaceMembers.Count == 1) {
-						IType explicitInterfaceType = explicitInterfaceTypeReference.Resolve(contextForMethod);
+						var explicitInterfaceType = explicitInterfaceTypeReference.Resolve(contextForMethod);
 						if (explicitInterfaceType.Equals(method.ImplementedInterfaceMembers[0].DeclaringType))
 							return method;
 					}
@@ -243,7 +236,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			if (member.Name != name)
 				return false;
-			IMethod method = member as IMethod;
+			var method = member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0)
 				return false;
 			return IsParameterTypeMatch(member, parameterTypes);
@@ -251,13 +244,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static bool IsParameterTypeMatch(IMember member, IReadOnlyList<IType> parameterTypes)
 		{
-			IParameterizedMember parameterizedMember = member as IParameterizedMember;
+			var parameterizedMember = member as IParameterizedMember;
 			if (parameterizedMember == null) {
 				return parameterTypes.Count == 0;
 			} else if (parameterTypes.Count == parameterizedMember.Parameters.Count) {
-				for (int i = 0; i < parameterTypes.Count; i++) {
-					IType type1 = parameterTypes[i];
-					IType type2 = parameterizedMember.Parameters[i].Type;
+				for (var i = 0; i < parameterTypes.Count; i++) {
+					var type1 = parameterTypes[i];
+					var type2 = parameterizedMember.Parameters[i].Type;
 					if (!type1.Equals(type2)) {
 						return false;
 					}

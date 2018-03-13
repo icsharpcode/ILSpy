@@ -28,85 +28,48 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public sealed class DefaultParameter : IParameter
 	{
-		readonly IType type;
-		readonly string name;
-		readonly IReadOnlyList<IAttribute> attributes;
-		readonly bool isRef, isOut, isParams, isOptional;
-		readonly object defaultValue;
-		readonly IParameterizedMember owner;
-		
 		public DefaultParameter(IType type, string name)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.type = type;
-			this.name = name;
+			this.Type = type ?? throw new ArgumentNullException("type");
+			this.Name = name ?? throw new ArgumentNullException("name");
 		}
 		
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
 		                        bool isRef = false, bool isOut = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.type = type;
-			this.name = name;
-			this.owner = owner;
-			this.attributes = attributes;
-			this.isRef = isRef;
-			this.isOut = isOut;
-			this.isParams = isParams;
-			this.isOptional = isOptional;
-			this.defaultValue = defaultValue;
+			this.Type = type ?? throw new ArgumentNullException("type");
+			this.Name = name ?? throw new ArgumentNullException("name");
+			this.Owner = owner;
+			this.Attributes = attributes;
+			this.IsRef = isRef;
+			this.IsOut = isOut;
+			this.IsParams = isParams;
+			this.IsOptional = isOptional;
+			this.ConstantValue = defaultValue;
 		}
 		
-		SymbolKind ISymbol.SymbolKind {
-			get { return SymbolKind.Parameter; }
-		}
-		
-		public IParameterizedMember Owner {
-			get { return owner; }
-		}
-		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
-		
-		public bool IsRef {
-			get { return isRef; }
-		}
-		
-		public bool IsOut {
-			get { return isOut; }
-		}
-		
-		public bool IsParams {
-			get { return isParams; }
-		}
-		
-		public bool IsOptional {
-			get { return isOptional; }
-		}
-		
-		public string Name {
-			get { return name; }
-		}
-		
-		public IType Type {
-			get { return type; }
-		}
-		
-		bool IVariable.IsConst {
-			get { return false; }
-		}
-		
-		public object ConstantValue {
-			get { return defaultValue; }
-		}
-		
+		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
+
+		public IParameterizedMember Owner { get; }
+
+		public IReadOnlyList<IAttribute> Attributes { get; }
+
+		public bool IsRef { get; }
+
+		public bool IsOut { get; }
+
+		public bool IsParams { get; }
+
+		public bool IsOptional { get; }
+
+		public string Name { get; }
+
+		public IType Type { get; }
+
+		bool IVariable.IsConst => false;
+
+		public object ConstantValue { get; }
+
 		public override string ToString()
 		{
 			return ToString(this);
@@ -114,7 +77,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public static string ToString(IParameter parameter)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			if (parameter.IsRef)
 				b.Append("ref ");
 			if (parameter.IsOut)
@@ -136,9 +99,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ISymbolReference ToReference()
 		{
-			if (owner == null)
-				return new ParameterReference(type.ToTypeReference(), name, isRef, isOut, isParams, isOptional, defaultValue);
-			return new OwnedParameterReference(owner.ToReference(), owner.Parameters.IndexOf(this));
+			if (Owner == null)
+				return new ParameterReference(Type.ToTypeReference(), Name, IsRef, IsOut, IsParams, IsOptional, ConstantValue);
+			return new OwnedParameterReference(Owner.ToReference(), Owner.Parameters.IndexOf(this));
 		}
 	}
 	
@@ -149,15 +112,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public OwnedParameterReference(IMemberReference member, int index)
 		{
-			if (member == null)
-				throw new ArgumentNullException("member");
-			this.memberReference = member;
+			this.memberReference = member ?? throw new ArgumentNullException("member");
 			this.index = index;
 		}
 		
 		public ISymbol Resolve(ITypeResolveContext context)
 		{
-			IParameterizedMember member = memberReference.Resolve(context) as IParameterizedMember;
+			var member = memberReference.Resolve(context) as IParameterizedMember;
 			if (member != null && index >= 0 && index < member.Parameters.Count)
 				return member.Parameters[index];
 			else
@@ -174,12 +135,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public ParameterReference(ITypeReference type, string name, bool isRef, bool isOut, bool isParams, bool isOptional, object defaultValue)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.type = type;
-			this.name = name;
+			this.type = type ?? throw new ArgumentNullException("type");
+			this.name = name ?? throw new ArgumentNullException("name");
 			this.isRef = isRef;
 			this.isOut = isOut;
 			this.isParams = isParams;

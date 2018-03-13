@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		// This transform is required because ILInlining only works with stloc/ldloc
 		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
 		{
-			if (inst.Target.MatchLdLoca(out ILVariable v)
+			if (inst.Target.MatchLdLoca(out var v)
 				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
 				&& inst.UnalignedPrefix == 0
 				&& !inst.IsVolatile)
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool LdObjToLdLoc(LdObj inst, ILTransformContext context)
 		{
-			if (inst.Target.MatchLdLoca(out ILVariable v)
+			if (inst.Target.MatchLdLoca(out var v)
 				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
 				&& inst.UnalignedPrefix == 0
 				&& !inst.IsVolatile)

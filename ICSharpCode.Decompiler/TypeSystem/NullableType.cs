@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			ParameterizedType pt = type as ParameterizedType;
+			var pt = type as ParameterizedType;
 			return pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
 		
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			ParameterizedType pt = type as ParameterizedType;
+			var pt = type as ParameterizedType;
 			if (pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
 			else
@@ -66,8 +66,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (elementType == null)
 				throw new ArgumentNullException("elementType");
 			
-			IType nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
-			ITypeDefinition nullableTypeDef = nullableType.GetDefinition();
+			var nullableType = compilation.FindType(KnownTypeCode.NullableOfT);
+			var nullableTypeDef = nullableType.GetDefinition();
 			if (nullableTypeDef != null)
 				return new ParameterizedType(nullableTypeDef, new [] { elementType });
 			else

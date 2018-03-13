@@ -19,7 +19,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public override bool Equals(object obj)
 		{
-			XmlNamespace o = obj as XmlNamespace;
+			var o = obj as XmlNamespace;
 			if (o == null)
 				return false;
 			return o.Prefix.Equals(Prefix) && o.Namespace.Equals(Namespace);
@@ -27,7 +27,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public override int GetHashCode()
 		{
-			int hashCode = 0;
+			var hashCode = 0;
 			unchecked
 			{
 				if (Namespace != null)

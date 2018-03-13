@@ -18,10 +18,7 @@ namespace ICSharpCode.TreeView
 
 		public FrameworkElement Child
 		{
-			get
-			{
-				return child;
-			}
+			get => child;
 			set
 			{
 				if (child != value) {
@@ -35,10 +32,7 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
-		protected override int VisualChildrenCount
-		{
-			get { return child == null ? 0 : 1; }
-		}
+		protected override int VisualChildrenCount => child == null ? 0 : 1;
 
 		protected override Visual GetVisualChild(int index)
 		{

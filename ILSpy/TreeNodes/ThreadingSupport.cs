@@ -35,10 +35,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		Task<List<SharpTreeNode>> loadChildrenTask;
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		
-		public bool IsRunning {
-			get { return loadChildrenTask != null && !loadChildrenTask.IsCompleted; }
-		}
-		
+		public bool IsRunning => loadChildrenTask != null && !loadChildrenTask.IsCompleted;
+
 		public void Cancel()
 		{
 			cancellationTokenSource.Cancel();
@@ -53,14 +51,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			node.Children.Add(new LoadingTreeNode());
 			
-			CancellationToken ct = cancellationTokenSource.Token;
+			var ct = cancellationTokenSource.Token;
 			
 			var fetchChildrenEnumerable = fetchChildren(ct);
 			Task<List<SharpTreeNode>> thisTask = null;
 			thisTask = new Task<List<SharpTreeNode>>(
 				delegate {
-					List<SharpTreeNode> result = new List<SharpTreeNode>();
-					foreach (SharpTreeNode child in fetchChildrenEnumerable) {
+					var result = new List<SharpTreeNode>();
+					foreach (var child in fetchChildrenEnumerable) {
 						ct.ThrowIfCancellationRequested();
 						result.Add(child);
 						App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action<SharpTreeNode>(
@@ -85,7 +83,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 							}
 							if (continuation.Exception != null) { // observe exception even when task isn't current
 								if (loadChildrenTask == thisTask) {
-									foreach (Exception ex in continuation.Exception.InnerExceptions) {
+									foreach (var ex in continuation.Exception.InnerExceptions) {
 										node.Children.Add(new ErrorTreeNode(ex.ToString()));
 									}
 								}
@@ -106,7 +104,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				loadChildrenTask = this.loadChildrenTask;
 			}
 			if (loadChildrenTask != null) {
-				foreach (ILSpyTreeNode child in loadChildrenTask.Result.Cast<ILSpyTreeNode>()) {
+				foreach (var child in loadChildrenTask.Result.Cast<ILSpyTreeNode>()) {
 					child.Decompile(language, output, options);
 				}
 			}
@@ -114,10 +112,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		sealed class LoadingTreeNode : ILSpyTreeNode
 		{
-			public override object Text {
-				get { return "Loading..."; }
-			}
-			
+			public override object Text => "Loading...";
+
 			public override FilterResult Filter(FilterSettings settings)
 			{
 				return FilterResult.Match;
@@ -132,10 +128,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			readonly string text;
 			
-			public override object Text {
-				get { return text; }
-			}
-			
+			public override object Text => text;
+
 			public ErrorTreeNode(string text)
 			{
 				this.text = text;

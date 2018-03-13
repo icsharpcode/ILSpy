@@ -34,12 +34,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class SwitchDetection : IILTransform
 	{
-		SwitchAnalysis analysis = new SwitchAnalysis();
+		readonly SwitchAnalysis analysis = new SwitchAnalysis();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
-				bool blockContainerNeedsCleanup = false;
+				var blockContainerNeedsCleanup = false;
 				foreach (var block in container.Blocks) {
 					context.CancellationToken.ThrowIfCancellationRequested();
 					ProcessBlock(block, ref blockContainerNeedsCleanup);
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ProcessBlock(Block block, ref bool blockContainerNeedsCleanup)
 		{
-			bool analysisSuccess = analysis.AnalyzeBlock(block);
+			var analysisSuccess = analysis.AnalyzeBlock(block);
 			KeyValuePair<LongSet, ILInstruction> defaultSection;
 			if (analysisSuccess && UseCSharpSwitch(analysis, out defaultSection)) {
 				// complex multi-block switch that can be combined into a single SwitchInstruction
@@ -108,8 +108,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
 			sw.Sections.RemoveAll(
 				section => {
-					if (section.Body.MatchBranch(out Block target)) {
-						if (dict.TryGetValue(target, out SwitchSection primarySection)) {
+					if (section.Body.MatchBranch(out var target)) {
+						if (dict.TryGetValue(target, out var primarySection)) {
 							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
 							primarySection.HasNullLabel |= section.HasNullLabel;
 							return true; // remove this section
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static void AdjustLabels(SwitchInstruction sw)
 		{
-			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val)) {
+			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out var val)) {
 				// Move offset into labels:
 				long offset;
 				switch (bop.Operator) {
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// This should never happen, as we'd need 2^64/MaxValuesPerSection sections to hit this case...
 				return false;
 			}
-			ulong valuePerSectionLimit = MaxValuesPerSection;
+			var valuePerSectionLimit = MaxValuesPerSection;
 			if (!analysis.ContainsILSwitch) {
 				// If there's no IL switch involved, limit the number of keys per section
 				// much more drastically to avoid generating switches where an if condition

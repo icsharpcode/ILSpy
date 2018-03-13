@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (setterCall.Arguments.Count != getterCall.Arguments.Count + 1)
 				return false;
 			// Ensure that same arguments are passed to getterCall and setterCall:
-			for (int j = 0; j < getterCall.Arguments.Count; j++) {
+			for (var j = 0; j < getterCall.Arguments.Count; j++) {
 				if (!SemanticHelper.IsPure(getterCall.Arguments[j].Flags))
 					return false;
 				if (!getterCall.Arguments[j].Match(setterCall.Arguments[j]).Success)
@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var getterCall = binary.Left as CallInstruction;
 			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
 				return false;
-			IType targetType = getterCall.Method.ReturnType;
+			var targetType = getterCall.Method.ReturnType;
 			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
 			if (storeInSetter != null && storeInSetter.Variable.Type.IsSmallIntegerType()) {
@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// ldobj.Type may just be 'int' (due to ldind.i4) when we're actually operating on a 'ref MyEnum'.
 			// Try to determine the real type of the object we're modifying:
-			IType targetType = ldobj.Target.InferType();
+			var targetType = ldobj.Target.InferType();
 			if (targetType.Kind == TypeKind.Pointer || targetType.Kind == TypeKind.ByReference) {
 				targetType = ((TypeWithElementType)targetType).ElementType;
 				if (targetType.Kind == TypeKind.Unknown || targetType.GetSize() != ldobj.Type.GetSize()) {
@@ -343,7 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// With small integer types, test whether the value might be changed by
 			// truncation (based on type.GetSize()) followed by sign/zero extension (based on type.GetSign()).
 			// (it's OK to have false-positives here if we're unsure)
-			if (value.MatchLdcI4(out int val)) {
+			if (value.MatchLdcI4(out var val)) {
 				switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) {
 					case KnownTypeCode.Boolean:
 						return !(val == 0 || val == 1);
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (value is Comp) {
 				return false; // comp returns 0 or 1, which always fits
 			} else {
-				IType inferredType = value.InferType();
+				var inferredType = value.InferType();
 				if (inferredType.Kind != TypeKind.Unknown) {
 					return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
 				}

@@ -30,12 +30,12 @@ namespace ICSharpCode.ILSpy.AddIn
 			if (string.IsNullOrEmpty(commandLine))
 				return new string[0];
 			int numberOfArgs;
-			char** arr = CommandLineToArgvW(commandLine, out numberOfArgs);
+			var arr = CommandLineToArgvW(commandLine, out numberOfArgs);
 			if (arr == null)
 				throw new Win32Exception();
 			try {
-				string[] result = new string[numberOfArgs];
-				for (int i = 0; i < numberOfArgs; i++) {
+				var result = new string[numberOfArgs];
+				for (var i = 0; i < numberOfArgs; i++) {
 					result[i] = new string(arr[i]);
 				}
 				return result;
@@ -60,8 +60,8 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			if (arguments == null)
 				return null;
-			StringBuilder b = new StringBuilder();
-			for (int i = 0; i < arguments.Length; i++) {
+			var b = new StringBuilder();
+			for (var i = 0; i < arguments.Length; i++) {
 				if (i > 0)
 					b.Append(' ');
 				AppendArgument(b, arguments[i]);
@@ -79,8 +79,8 @@ namespace ICSharpCode.ILSpy.AddIn
 				b.Append(arg);
 			} else {
 				b.Append('"');
-				for (int j = 0; ; j++) {
-					int backslashCount = 0;
+				for (var j = 0; ; j++) {
+					var backslashCount = 0;
 					while (j < arg.Length && arg[j] == '\\') {
 						backslashCount++;
 						j++;
@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			if (hex == null)
 				throw new ArgumentNullException(nameof(hex));
 			var result = new byte[hex.Length / 2];
-			for (int i = 0; i < hex.Length / 2; i++) {
+			for (var i = 0; i < hex.Length / 2; i++) {
 				result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
 			}
 			return result;

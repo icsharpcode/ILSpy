@@ -54,11 +54,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (writer == null) {
 				throw new ArgumentNullException ("writer");
 			}
-			if (formattingPolicy == null) {
-				throw new ArgumentNullException ("formattingPolicy");
-			}
+
 			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
-			this.policy = formattingPolicy;
+			this.policy = formattingPolicy ?? throw new ArgumentNullException ("formattingPolicy");
 		}
 		
 		#region StartNode/EndNode
@@ -125,8 +123,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		protected virtual void WriteCommaSeparatedList(IEnumerable<AstNode> list)
 		{
-			bool isFirst = true;
-			foreach (AstNode node in list) {
+			var isFirst = true;
+			foreach (var node in list) {
 				if (isFirst) {
 					isFirst = false;
 				} else {
@@ -253,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		protected virtual void Semicolon()
 		{
-			Role role = containerStack.Peek().Role;
+			var role = containerStack.Peek().Role;
 			// get the role of the current node
 			if (!(role == ForStatement.InitializerRole || role == ForStatement.IteratorRole || role == UsingStatement.ResourceAcquisitionRole)) {
 				WriteToken(Roles.Semicolon);
@@ -281,7 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		int GetCallChainLengthLimited(MemberReferenceExpression expr)
 		{
-			int callChainLength = 0;
+			var callChainLength = 0;
 			var node = expr;
 
 			while (node.Target is InvocationExpression invocation && invocation.Target is MemberReferenceExpression mre && callChainLength < 4) {
@@ -293,7 +291,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected virtual void InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
 		{
-			int callChainLength = GetCallChainLengthLimited(expr);
+			var callChainLength = GetCallChainLengthLimited(expr);
 			if (callChainLength < 3) return;
 			if (callChainLength == 3)
 				writer.Indent();
@@ -404,7 +402,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return context.Ancestors.Any(ancestor => ancestor is QueryExpression);
 			}
 			if (identifier == "await") {
-				foreach (AstNode ancestor in context.Ancestors) {
+				foreach (var ancestor in context.Ancestors) {
 					// with lambdas/anonymous methods,
 					if (ancestor is LambdaExpression) {
 						return ((LambdaExpression)ancestor).IsAsync;
@@ -442,15 +440,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		protected virtual void WriteModifiers(IEnumerable<CSharpModifierToken> modifierTokens)
 		{
-			foreach (CSharpModifierToken modifier in modifierTokens) {
+			foreach (var modifier in modifierTokens) {
 				modifier.AcceptVisitor(this);
 			}
 		}
 		
 		protected virtual void WriteQualifiedIdentifier(IEnumerable<Identifier> identifiers)
 		{
-			bool first = true;
-			foreach (Identifier ident in identifiers) {
+			var first = true;
+			foreach (var ident in identifiers) {
 				if (first) {
 					first = false;
 				} else {
@@ -476,7 +474,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				NewLine();
 				return;
 			}
-			BlockStatement block = embeddedStatement as BlockStatement;
+			var block = embeddedStatement as BlockStatement;
 			if (block != null) {
 				WriteBlock(block, policy.StatementBraceStyle);
 				if (nlp == NewLinePlacement.SameLine) {
@@ -504,7 +502,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		protected virtual void WriteAttributes(IEnumerable<AttributeSection> attributes)
 		{
-			foreach (AttributeSection attr in attributes) {
+			foreach (var attr in attributes) {
 				attr.AcceptVisitor(this);
 			}
 		}
@@ -584,7 +582,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// for collection initializers, even if the user did not write nested brackets.
 			// The output visitor will output nested braces only if they are necessary,
 			// or if the braces tokens exist in the AST.
-			bool bracesAreOptional = arrayInitializerExpression.Elements.Count == 1
+			var bracesAreOptional = arrayInitializerExpression.Elements.Count == 1
 				&& IsObjectOrCollectionInitializer(arrayInitializerExpression.Parent)
 				&& !CanBeConfusedWithObjectInitializer(arrayInitializerExpression.Elements.Single());
 			if (bracesAreOptional && arrayInitializerExpression.LBraceToken.IsNull) {
@@ -599,7 +597,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// "int a; new List<int> { a = 1 };" is an object initalizers and invalid, but
 			// "int a; new List<int> { { a = 1 } };" is a valid collection initializer.
-			AssignmentExpression ae = expr as AssignmentExpression;
+			var ae = expr as AssignmentExpression;
 			return ae != null && ae.Operator == AssignmentOperatorType.Assign;
 		}
 		
@@ -626,7 +624,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				style = BraceStyle.EndOfLine;
 			}
 			OpenBrace(style);
-			bool isFirst = true;
+			var isFirst = true;
 			AstNode last = null;
 			foreach (AstNode node in elements) {
 				if (isFirst) {
@@ -935,7 +933,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(objectCreateExpression);
 			WriteKeyword(ObjectCreateExpression.NewKeywordRole);
 			objectCreateExpression.Type.AcceptVisitor(this);
-			bool useParenthesis = objectCreateExpression.Arguments.Any() || objectCreateExpression.Initializer.IsNull;
+			var useParenthesis = objectCreateExpression.Arguments.Any() || objectCreateExpression.Initializer.IsNull;
 			// also use parenthesis if there is an '(' token
 			if (!objectCreateExpression.LParToken.IsNull) {
 				useParenthesis = true;
@@ -1086,7 +1084,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			StartNode(unaryOperatorExpression);
-			UnaryOperatorType opType = unaryOperatorExpression.Operator;
+			var opType = unaryOperatorExpression.Operator;
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
@@ -1125,12 +1123,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			StartNode(queryExpression);
-			bool indent = queryExpression.Parent is QueryClause && !(queryExpression.Parent is QueryContinuationClause);
+			var indent = queryExpression.Parent is QueryClause && !(queryExpression.Parent is QueryContinuationClause);
 			if (indent) {
 				writer.Indent();
 				NewLine();
 			}
-			bool first = true;
+			var first = true;
 			foreach (var clause in queryExpression.Clauses) {
 				if (first) {
 					first = false;
@@ -1314,7 +1312,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteTypeParameters(delegateDeclaration.TypeParameters);
 			Space(policy.SpaceBeforeDelegateDeclarationParentheses);
 			WriteCommaSeparatedListInParenthesis(delegateDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			foreach (Constraint constraint in delegateDeclaration.Constraints) {
+			foreach (var constraint in delegateDeclaration.Constraints) {
 				constraint.AcceptVisitor(this);
 			}
 			Semicolon();
@@ -1369,12 +1367,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 				WriteCommaSeparatedList(typeDeclaration.BaseTypes);
 			}
-			foreach (Constraint constraint in typeDeclaration.Constraints) {
+			foreach (var constraint in typeDeclaration.Constraints) {
 				constraint.AcceptVisitor(this);
 			}
 			OpenBrace(braceStyle);
 			if (typeDeclaration.ClassType == ClassType.Enum) {
-				bool first = true;
+				var first = true;
 				AstNode last = null;
 				foreach (var member in typeDeclaration.Members) {
 					if (first) {
@@ -1390,10 +1388,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					OptionalComma(last.NextSibling);
 				NewLine();
 			} else {
-				bool first = true;
+				var first = true;
 				foreach (var member in typeDeclaration.Members) {
 					if (!first) {
-						for (int i = 0; i < policy.MinimumBlankLinesBetweenMembers; i++)
+						for (var i = 0; i < policy.MinimumBlankLinesBetweenMembers; i++)
 							NewLine();
 					}
 					first = false;
@@ -1643,8 +1641,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(labelStatement);
 			WriteIdentifier(labelStatement.GetChildByRole(Roles.Identifier));
 			WriteToken(Roles.Colon);
-			bool foundLabelledStatement = false;
-			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling) {
+			var foundLabelledStatement = false;
+			for (var tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling) {
 				if (tmp.Role == labelStatement.Role) {
 					foundLabelledStatement = true;
 				}
@@ -1713,7 +1711,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitSwitchSection(SwitchSection switchSection)
 		{
 			StartNode(switchSection);
-			bool first = true;
+			var first = true;
 			foreach (var label in switchSection.CaseLabels) {
 				if (!first) {
 					NewLine();
@@ -1721,7 +1719,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				label.AcceptVisitor(this);
 				first = false;
 			}
-			bool isBlock = switchSection.Statements.Count == 1 && switchSection.Statements.Single() is BlockStatement;
+			var isBlock = switchSection.Statements.Count == 1 && switchSection.Statements.Single() is BlockStatement;
 			if (policy.IndentCaseBody && !isBlock) {
 				writer.Indent();
 			}
@@ -1907,7 +1905,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(accessor);
 			WriteAttributes(accessor.Attributes);
 			WriteModifiers(accessor.ModifierTokens);
-			BraceStyle style = policy.StatementBraceStyle;
+			var style = policy.StatementBraceStyle;
 			if (accessor.Role == PropertyDeclaration.GetterRole) {
 				WriteKeyword("get", PropertyDeclaration.GetKeywordRole);
 				style = policy.PropertyGetBraceStyle;
@@ -1930,7 +1928,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(constructorDeclaration);
 			WriteAttributes(constructorDeclaration.Attributes);
 			WriteModifiers(constructorDeclaration.ModifierTokens);
-			TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
+			var type = constructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != constructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -1971,7 +1969,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			WriteToken(DestructorDeclaration.TildeRole);
-			TypeDeclaration type = destructorDeclaration.Parent as TypeDeclaration;
+			var type = destructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != destructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -2023,7 +2021,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(customEventDeclaration.NameToken);
 			OpenBrace(policy.EventBraceStyle);
 			// output add/remove in their original order
-			foreach (AstNode node in customEventDeclaration.Children) {
+			foreach (var node in customEventDeclaration.Children) {
 				if (node.Role == CustomEventDeclaration.AddAccessorRole || node.Role == CustomEventDeclaration.RemoveAccessorRole) {
 					node.AcceptVisitor(this);
 				}
@@ -2086,7 +2084,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteCommaSeparatedListInBrackets(indexerDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
 			OpenBrace(policy.PropertyBraceStyle);
 			// output get/set in their original order
-			foreach (AstNode node in indexerDeclaration.Children) {
+			foreach (var node in indexerDeclaration.Children) {
 				if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
 					node.AcceptVisitor(this);
 				}
@@ -2108,7 +2106,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteTypeParameters(methodDeclaration.TypeParameters);
 			Space(policy.SpaceBeforeMethodDeclarationParentheses);
 			WriteCommaSeparatedListInParenthesis(methodDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			foreach (Constraint constraint in methodDeclaration.Constraints) {
+			foreach (var constraint in methodDeclaration.Constraints) {
 				constraint.AcceptVisitor(this);
 			}
 			WriteMethodBody(methodDeclaration.Body, policy.MethodBraceStyle);
@@ -2187,7 +2185,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (propertyDeclaration.ExpressionBody.IsNull) {
 				OpenBrace(policy.PropertyBraceStyle);
 				// output get/set in their original order
-				foreach (AstNode node in propertyDeclaration.Children) {
+				foreach (var node in propertyDeclaration.Children) {
 					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
 						node.AcceptVisitor(this);
 					}
@@ -2234,7 +2232,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				nextSibling = nextSibling.NextSibling;
 
 			if ((node is UsingDeclaration || node is UsingAliasDeclaration) && !(nextSibling is UsingDeclaration || nextSibling is UsingAliasDeclaration)) {
-				for (int i = 0; i < policy.MinimumBlankLinesAfterUsings; i++)
+				for (var i = 0; i < policy.MinimumBlankLinesAfterUsings; i++)
 					NewLine();
 			}
 		}
@@ -2242,7 +2240,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitSyntaxTree(SyntaxTree syntaxTree)
 		{
 			// don't do node tracking as we visit all children directly
-			foreach (AstNode node in syntaxTree.Children) {
+			foreach (var node in syntaxTree.Children) {
 				node.AcceptVisitor(this);
 				MaybeNewLinesAfterUsings(node);
 			}
@@ -2280,7 +2278,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (composedType.HasNullableSpecifier) {
 				WriteToken(ComposedType.NullableRole);
 			}
-			for (int i = 0; i < composedType.PointerRank; i++) {
+			for (var i = 0; i < composedType.PointerRank; i++) {
 				WriteToken(ComposedType.PointerRole);
 			}
 			foreach (var node in composedType.ArraySpecifiers) {
@@ -2373,7 +2371,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public virtual void VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode)
 		{
-			CSharpModifierToken mod = cSharpTokenNode as CSharpModifierToken;
+			var mod = cSharpTokenNode as CSharpModifierToken;
 			if (mod != null) {
 				// ITokenWriter assumes that each node processed between a
 				// StartNode(parentNode)-EndNode(parentNode)-pair is a child of parentNode.
@@ -2441,7 +2439,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			LPar();
 			NewLine();
 			writer.Indent();
-			foreach (INode alternative in choice) {
+			foreach (var alternative in choice) {
 				VisitNodeInPattern(alternative);
 				if (alternative != choice.Last()) {
 					WriteToken(Roles.Comma);

@@ -13,14 +13,14 @@ namespace RayTracer
 			const int width = 50;
 			const int height = 50;
 
-			RayTracer rayTracer = new RayTracer(width, height, (int x, int y, Color color) => {
+			var rayTracer = new RayTracer(width, height, (int x, int y, Color color) => {
 				Console.Write("{0},{1}:{2};", x, y, color);
 			});
 			rayTracer.Render(rayTracer.DefaultScene);
 		}
 
-		private int screenWidth;
-		private int screenHeight;
+		private readonly int screenWidth;
+		private readonly int screenHeight;
 		private const int MaxDepth = 5;
 
 		public Action<int, int, Color> setPixel;
@@ -213,8 +213,8 @@ namespace RayTracer
 		public static double Mag(Vector v) { return Math.Sqrt(Dot(v, v)); }
 		public static Vector Norm(Vector v)
 		{
-			double mag = Mag(v);
-			double div = mag == 0 ? double.PositiveInfinity : 1 / mag;
+			var mag = Mag(v);
+			var div = mag == 0 ? double.PositiveInfinity : 1 / mag;
 			return Times(div, v);
 		}
 		public static Vector Cross(Vector v1, Vector v2)
@@ -301,10 +301,10 @@ namespace RayTracer
 
 		public static Camera Create(Vector pos, Vector lookAt)
 		{
-			Vector forward = Vector.Norm(Vector.Minus(lookAt, pos));
-			Vector down = new Vector(0, -1, 0);
-			Vector right = Vector.Times(1.5, Vector.Norm(Vector.Cross(forward, down)));
-			Vector up = Vector.Times(1.5, Vector.Norm(Vector.Cross(forward, right)));
+			var forward = Vector.Norm(Vector.Minus(lookAt, pos));
+			var down = new Vector(0, -1, 0);
+			var right = Vector.Times(1.5, Vector.Norm(Vector.Cross(forward, down)));
+			var up = Vector.Times(1.5, Vector.Norm(Vector.Cross(forward, right)));
 
 			return new Camera() { Pos = pos, Forward = forward, Up = up, Right = right };
 		}
@@ -330,13 +330,13 @@ namespace RayTracer
 
 		public override ISect Intersect(Ray ray)
 		{
-			Vector eo = Vector.Minus(Center, ray.Start);
-			double v = Vector.Dot(eo, ray.Dir);
+			var eo = Vector.Minus(Center, ray.Start);
+			var v = Vector.Dot(eo, ray.Dir);
 			double dist;
 			if (v < 0) {
 				dist = 0;
 			} else {
-				double disc = Math.Pow(Radius, 2) - (Vector.Dot(eo, eo) - Math.Pow(v, 2));
+				var disc = Math.Pow(Radius, 2) - (Vector.Dot(eo, eo) - Math.Pow(v, 2));
 				dist = disc < 0 ? 0 : v - Math.Sqrt(disc);
 			}
 			if (dist == 0) return null;
@@ -360,7 +360,7 @@ namespace RayTracer
 
 		public override ISect Intersect(Ray ray)
 		{
-			double denom = Vector.Dot(Norm, ray.Dir);
+			var denom = Vector.Dot(Norm, ray.Dir);
 			if (denom > 0) return null;
 			return new ISect() {
 				Thing = this,

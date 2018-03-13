@@ -32,8 +32,8 @@ namespace ICSharpCode.ILSpy
 		{
 			StreamReader reader;
 			if (stream.Length >= 2) {
-				int firstByte = stream.ReadByte();
-				int secondByte = stream.ReadByte();
+				var firstByte = stream.ReadByte();
+				var secondByte = stream.ReadByte();
 				switch ((firstByte << 8) | secondByte) {
 					case 0xfffe: // UTF-16 LE BOM / UTF-32 LE BOM
 					case 0xfeff: // UTF-16 BE BOM
@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy
 			// Now we got a StreamReader with the correct encoding
 			// Check for XML now
 			try {
-				XmlTextReader xmlReader = new XmlTextReader(reader);
+				var xmlReader = new XmlTextReader(reader);
 				xmlReader.XmlResolver = null;
 				xmlReader.MoveToContent();
 				return FileType.Xml;
@@ -73,15 +73,15 @@ namespace ICSharpCode.ILSpy
 		
 		static bool IsUTF8(Stream fs, byte firstByte, byte secondByte)
 		{
-			int max = (int)Math.Min(fs.Length, 500000); // look at max. 500 KB
+			var max = (int)Math.Min(fs.Length, 500000); // look at max. 500 KB
 			const int ASCII = 0;
 			const int Error = 1;
 			const int UTF8  = 2;
 			const int UTF8Sequence = 3;
-			int state = ASCII;
-			int sequenceLength = 0;
+			var state = ASCII;
+			var sequenceLength = 0;
 			byte b;
-			for (int i = 0; i < max; i++) {
+			for (var i = 0; i < max; i++) {
 				if (i == 0) {
 					b = firstByte;
 				} else if (i == 1) {

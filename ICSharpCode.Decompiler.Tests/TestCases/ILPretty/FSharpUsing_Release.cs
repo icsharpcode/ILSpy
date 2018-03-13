@@ -5,7 +5,7 @@ public static class FSharpUsingPatterns
 {
 	public static void sample1()
 	{
-		using (FileStream fileStream = File.Create("x.txt")) {
+		using (var fileStream = File.Create("x.txt")) {
 			fileStream.WriteByte(1);
 		}
 	}
@@ -13,7 +13,7 @@ public static class FSharpUsingPatterns
 	public static void sample2()
 	{
 		Console.WriteLine("some text");
-		using (FileStream fileStream = File.Create("x.txt")) {
+		using (var fileStream = File.Create("x.txt")) {
 			fileStream.WriteByte(2);
 			Console.WriteLine("some text");
 		}
@@ -22,7 +22,7 @@ public static class FSharpUsingPatterns
 	public static void sample3()
 	{
 		Console.WriteLine("some text");
-		using (FileStream fileStream = File.Create("x.txt")) {
+		using (var fileStream = File.Create("x.txt")) {
 			fileStream.WriteByte(3);
 		}
 		Console.WriteLine("some text");
@@ -31,24 +31,24 @@ public static class FSharpUsingPatterns
 	public static void sample4()
 	{
 		Console.WriteLine("some text");
-		int num = default(int);
-		using (FileStream fileStream = File.OpenRead("x.txt")) {
+		var num = default(int);
+		using (var fileStream = File.OpenRead("x.txt")) {
 			num = fileStream.ReadByte();
 		}
-		int num2 = num;
+		var num2 = num;
 		Console.WriteLine("read:" + num2.ToString());
 	}
 
 	public static void sample5()
 	{
 		Console.WriteLine("some text");
-		int num = default(int);
-		using (FileStream fileStream = File.OpenRead("x.txt")) {
+		var num = default(int);
+		using (var fileStream = File.OpenRead("x.txt")) {
 			num = fileStream.ReadByte();
 		}
-		int num2 = num;
-		int num3 = default(int);
-		using (FileStream fileStream = File.OpenRead("x.txt")) {
+		var num2 = num;
+		var num3 = default(int);
+		using (var fileStream = File.OpenRead("x.txt")) {
 			fileStream.ReadByte();
 			num3 = fileStream.ReadByte();
 		}

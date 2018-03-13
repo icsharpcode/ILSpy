@@ -37,10 +37,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {
-				foreach (var node in context.SelectedTreeNodes) {
-					node.Parent.Children.Remove(node);
-				}
+			if (context.SelectedTreeNodes == null) return;
+			foreach (var node in context.SelectedTreeNodes) {
+				node.Parent.Children.Remove(node);
 			}
 		}
 	}

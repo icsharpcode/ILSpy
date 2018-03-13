@@ -39,26 +39,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<Expression> FalseRole = new Role<Expression>("False", Expression.Null);
 		
 		public Expression Condition {
-			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
+			get => GetChildByRole(ConditionRole);
+			set => SetChildByRole(ConditionRole, value);
 		}
 		
-		public CSharpTokenNode QuestionMarkToken {
-			get { return GetChildByRole (QuestionMarkRole); }
-		}
-		
+		public CSharpTokenNode QuestionMarkToken => GetChildByRole (QuestionMarkRole);
+
 		public Expression TrueExpression {
-			get { return GetChildByRole(TrueRole); }
-			set { SetChildByRole(TrueRole, value); }
+			get => GetChildByRole(TrueRole);
+			set => SetChildByRole(TrueRole, value);
 		}
 		
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (ColonRole); }
-		}
-		
+		public CSharpTokenNode ColonToken => GetChildByRole (ColonRole);
+
 		public Expression FalseExpression {
-			get { return GetChildByRole(FalseRole); }
-			set { SetChildByRole(FalseRole, value); }
+			get => GetChildByRole(FalseRole);
+			set => SetChildByRole(FalseRole, value);
 		}
 		
 		public ConditionalExpression ()
@@ -89,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ConditionalExpression o = other as ConditionalExpression;
+			var o = other as ConditionalExpression;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueExpression.DoMatch(o.TrueExpression, match) && this.FalseExpression.DoMatch(o.FalseExpression, match);
 		}
 	}

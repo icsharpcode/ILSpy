@@ -38,26 +38,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole FinallyKeywordRole = new TokenRole ("finally");
 		public static readonly Role<BlockStatement> FinallyBlockRole = new Role<BlockStatement>("FinallyBlock", BlockStatement.Null);
 		
-		public CSharpTokenNode TryToken {
-			get { return GetChildByRole (TryKeywordRole); }
-		}
-		
+		public CSharpTokenNode TryToken => GetChildByRole (TryKeywordRole);
+
 		public BlockStatement TryBlock {
-			get { return GetChildByRole (TryBlockRole); }
-			set { SetChildByRole (TryBlockRole, value); }
+			get => GetChildByRole (TryBlockRole);
+			set => SetChildByRole (TryBlockRole, value);
 		}
 		
-		public AstNodeCollection<CatchClause> CatchClauses {
-			get { return GetChildrenByRole (CatchClauseRole); }
-		}
-		
-		public CSharpTokenNode FinallyToken {
-			get { return GetChildByRole (FinallyKeywordRole); }
-		}
-		
+		public AstNodeCollection<CatchClause> CatchClauses => GetChildrenByRole (CatchClauseRole);
+
+		public CSharpTokenNode FinallyToken => GetChildByRole (FinallyKeywordRole);
+
 		public BlockStatement FinallyBlock {
-			get { return GetChildByRole (FinallyBlockRole); }
-			set { SetChildByRole (FinallyBlockRole, value); }
+			get => GetChildByRole (FinallyBlockRole);
+			set => SetChildByRole (FinallyBlockRole, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -77,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TryCatchStatement o = other as TryCatchStatement;
+			var o = other as TryCatchStatement;
 			return o != null && this.TryBlock.DoMatch(o.TryBlock, match) && this.CatchClauses.DoMatch(o.CatchClauses, match) && this.FinallyBlock.DoMatch(o.FinallyBlock, match);
 		}
 	}
@@ -96,12 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullCatchClause : CatchClause
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -139,10 +129,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder(this, child);
@@ -170,27 +158,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
-		public CSharpTokenNode CatchToken {
-			get { return GetChildByRole (CatchKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
+		public CSharpTokenNode CatchToken => GetChildByRole (CatchKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole (Roles.Type, value);
 		}
 		
 		public string VariableName {
-			get { return GetChildByRole (Roles.Identifier).Name; }
+			get => GetChildByRole (Roles.Identifier).Name;
 			set {
 				if (string.IsNullOrEmpty(value))
 					SetChildByRole (Roles.Identifier, null);
@@ -200,30 +180,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public Identifier VariableNameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole(Roles.Identifier, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
-		public CSharpTokenNode WhenToken {
-			get { return GetChildByRole (WhenKeywordRole); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
+		public CSharpTokenNode WhenToken => GetChildByRole (WhenKeywordRole);
+
 		public Expression Condition {
-			get { return GetChildByRole(ConditionRole);  }
-			set { SetChildByRole(ConditionRole, value); }
+			get => GetChildByRole(ConditionRole);
+			set => SetChildByRole(ConditionRole, value);
 		}
 		
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -243,7 +215,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CatchClause o = other as CatchClause;
+			var o = other as CatchClause;
 			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.VariableName, o.VariableName) && this.Body.DoMatch(o.Body, match);
 		}
 	}

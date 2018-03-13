@@ -93,27 +93,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsExtensionMethod {
-			get { return flags[FlagExtensionMethod]; }
+			get => flags[FlagExtensionMethod];
 			set {
 				ThrowIfFrozen();
 				flags[FlagExtensionMethod] = value;
 			}
 		}
 		
-		public bool IsConstructor {
-			get { return this.SymbolKind == SymbolKind.Constructor; }
-		}
-		
-		public bool IsDestructor {
-			get { return this.SymbolKind == SymbolKind.Destructor; }
-		}
-		
-		public bool IsOperator {
-			get { return this.SymbolKind == SymbolKind.Operator; }
-		}
-		
+		public bool IsConstructor => this.SymbolKind == SymbolKind.Constructor;
+
+		public bool IsDestructor => this.SymbolKind == SymbolKind.Destructor;
+
+		public bool IsOperator => this.SymbolKind == SymbolKind.Operator;
+
 		public bool IsPartial {
-			get { return flags[FlagPartialMethod]; }
+			get => flags[FlagPartialMethod];
 			set {
 				ThrowIfFrozen();
 				flags[FlagPartialMethod] = value;
@@ -121,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public bool IsAsync {
-			get { return flags[FlagAsyncMethod]; }
+			get => flags[FlagAsyncMethod];
 			set {
 				ThrowIfFrozen();
 				flags[FlagAsyncMethod] = value;
@@ -129,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public bool HasBody {
-			get { return flags[FlagHasBody]; }
+			get => flags[FlagHasBody];
 			set {
 				ThrowIfFrozen();
 				flags[FlagHasBody] = value;
@@ -145,7 +139,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IUnresolvedMember AccessorOwner {
-			get { return accessorOwner; }
+			get => accessorOwner;
 			set {
 				ThrowIfFrozen();
 				accessorOwner = value;
@@ -154,7 +148,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			var b = new StringBuilder("[");
 			b.Append(SymbolKind.ToString());
 			b.Append(' ');
 			if (DeclaringTypeDefinition != null) {
@@ -180,14 +174,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (accessorOwner != null) {
 				var owner = accessorOwner.Resolve(context);
 				if (owner != null) {
-					IProperty p = owner as IProperty;
+					var p = owner as IProperty;
 					if (p != null) {
 						if (p.CanGet && p.Getter.Name == this.Name)
 							return p.Getter;
 						if (p.CanSet && p.Setter.Name == this.Name)
 							return p.Setter;
 					}
-					IEvent e = owner as IEvent;
+					var e = owner as IEvent;
 					if (e != null) {
 						if (e.CanAdd && e.AddAccessor.Name == this.Name)
 							return e.AddAccessor;
@@ -226,19 +220,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				ReturnType = KnownTypeReference.Void
 			};
 		}
-		
-		static readonly IUnresolvedMethod dummyConstructor = CreateDummyConstructor();
-		
+
 		/// <summary>
 		/// Returns a dummy constructor instance:
 		/// </summary>
 		/// <returns>
 		/// A public instance constructor with IsSynthetic=true and no declaring type.
 		/// </returns>
-		public static IUnresolvedMethod DummyConstructor {
-			get { return dummyConstructor; }
-		}
-		
+		public static IUnresolvedMethod DummyConstructor { get; } = CreateDummyConstructor();
+
 		static IUnresolvedMethod CreateDummyConstructor()
 		{
 			var m = new DefaultUnresolvedMethod {

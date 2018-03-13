@@ -47,13 +47,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 		
-		public CSharpTokenNode FieldDirectionToken {
-			get { return FieldDirection == FieldDirection.Ref ? GetChildByRole (RefKeywordRole) : GetChildByRole (OutKeywordRole); }
-		}
-		
+		public CSharpTokenNode FieldDirectionToken => FieldDirection == FieldDirection.Ref ? GetChildByRole (RefKeywordRole) : GetChildByRole (OutKeywordRole);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public DirectionExpression ()
@@ -83,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DirectionExpression o = other as DirectionExpression;
+			var o = other as DirectionExpression;
 			return o != null && this.FieldDirection == o.FieldDirection && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

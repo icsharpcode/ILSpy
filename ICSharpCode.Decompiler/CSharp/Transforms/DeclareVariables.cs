@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			internal InsertionPoint UpTo(int targetLevel)
 			{
-				InsertionPoint result = this;
+				var result = this;
 				while (result.level > targetLevel) {
 					result.nextNode = result.nextNode.Parent;
 					result.level -= 1;
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		public AstNode GetDeclarationPoint(ILVariable variable)
 		{
-			VariableToDeclare v = variableDict[variable];
+			var v = variableDict[variable];
 			while (v.ReplacementDueToCollision != null) {
 				v = v.ReplacementDueToCollision;
 			}
@@ -212,7 +212,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region FindInsertionPoints
-		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
+
+		readonly List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
@@ -226,7 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
-			BlockContainer scope = node.Annotation<BlockContainer>();
+			var scope = node.Annotation<BlockContainer>();
 			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction)) {
 				// track loops and function bodies as scopes, for comparison with CaptureScope.
 				scopeTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, scope));
@@ -234,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				scope = null; // don't remove a scope if we didn't add one
 			}
 			try {
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+				for (var child = node.FirstChild; child != null; child = child.NextSibling) {
 					FindInsertionPoints(child, nodeLevel + 1);
 				}
 				if (node is IdentifierExpression identExpr) {
@@ -242,7 +243,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
 						var variable = rr.Variable;
 						InsertionPoint newPoint;
-						int startIndex = scopeTracking.Count - 1;
+						var startIndex = scopeTracking.Count - 1;
 						if (variable.CaptureScope != null && startIndex > 0 && variable.CaptureScope != scopeTracking[startIndex].Scope) {
 							while (startIndex > 0 && scopeTracking[startIndex].Scope != variable.CaptureScope)
 								startIndex--;
@@ -353,8 +354,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (prev.RemovedDueToCollision)
 						continue;
 					// Go up until both nodes are on the same level:
-					InsertionPoint point1 = prev.InsertionPoint.UpTo(v.InsertionPoint.level);
-					InsertionPoint point2 = v.InsertionPoint.UpTo(prev.InsertionPoint.level);
+					var point1 = prev.InsertionPoint.UpTo(v.InsertionPoint.level);
+					var point2 = v.InsertionPoint.UpTo(prev.InsertionPoint.level);
 					Debug.Assert(point1.level == point2.level);
 					if (point1.nextNode.Parent == point2.nextNode.Parent) {
 						// We found a collision!
@@ -403,7 +404,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.RemovedDueToCollision)
 					continue;
 
-				if (IsMatchingAssignment(v, out AssignmentExpression assignment)) {
+				if (IsMatchingAssignment(v, out var assignment)) {
 					// 'int v; v = expr;' can be combined to 'int v = expr;'
 					AstType type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType()) {
@@ -414,7 +415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();
 					init.AddAnnotation(assignment.Left.GetResolveResult());
-					foreach (object annotation in assignment.Left.Annotations.Concat(assignment.Annotations)) {
+					foreach (var annotation in assignment.Left.Annotations.Concat(assignment.Annotations)) {
 						if (!(annotation is ResolveResult)) {
 							init.AddAnnotation(annotation);
 						}
@@ -445,7 +446,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				} else {
 					// Insert a separate declaration statement.
 					Expression initializer = null;
-					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
+					var type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization) {
 						initializer = new DefaultValueExpression(type.Clone());
 					}

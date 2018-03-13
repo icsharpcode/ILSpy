@@ -116,8 +116,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (fileName == null)
 				throw new ArgumentNullException("fileName");
 			
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
-				using (XmlTextReader xmlReader = new XmlTextReader(fs)) {
+			using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+				using (var xmlReader = new XmlTextReader(fs)) {
 					xmlReader.XmlResolver = null; // no DTD resolving
 					xmlReader.MoveToContent();
 					if (string.IsNullOrEmpty(xmlReader.GetAttribute("redirect"))) {
@@ -125,11 +125,11 @@ namespace ICSharpCode.Decompiler.Documentation
 						this.encoding = xmlReader.Encoding;
 						ReadXmlDoc(xmlReader);
 					} else {
-						string redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
+						var redirectionTarget = GetRedirectionTarget(fileName, xmlReader.GetAttribute("redirect"));
 						if (redirectionTarget != null) {
 							Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
-							using (FileStream redirectedFs = new FileStream(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
-								using (XmlTextReader redirectedXmlReader = new XmlTextReader(redirectedFs)) {
+							using (var redirectedFs = new FileStream(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+								using (var redirectedXmlReader = new XmlTextReader(redirectedFs)) {
 									redirectedXmlReader.XmlResolver = null; // no DTD resolving
 									redirectedXmlReader.MoveToContent();
 									this.fileName = redirectionTarget;
@@ -147,10 +147,10 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		static string GetRedirectionTarget(string xmlFileName, string target)
 		{
-			string programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+			var programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
 			programFilesDir = AppendDirectorySeparator(programFilesDir);
 			
-			string corSysDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
+			var corSysDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory();
 			corSysDir = AppendDirectorySeparator(corSysDir);
 			
 			var fileName = target.Replace ("%PROGRAMFILESDIR%", programFilesDir)
@@ -174,9 +174,9 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// </summary>
 		public static string LookupLocalizedXmlDoc(string fileName)
 		{
-			string xmlFileName = Path.ChangeExtension(fileName, ".xml");
-			string currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
-			string localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
+			var xmlFileName = Path.ChangeExtension(fileName, ".xml");
+			var currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+			var localizedXmlDocFile = GetLocalizedName(xmlFileName, currentCulture);
 			
 			Debug.WriteLine("Try find XMLDoc @" + localizedXmlDocFile);
 			if (File.Exists(localizedXmlDocFile)) {
@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				return xmlFileName;
 			}
 			if (currentCulture != "en") {
-				string englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
+				var englishXmlDocFile = GetLocalizedName(xmlFileName, "en");
 				Debug.WriteLine("Try find XMLDoc @" + englishXmlDocFile);
 				if (File.Exists(englishXmlDocFile)) {
 					return englishXmlDocFile;
@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		static string GetLocalizedName(string fileName, string language)
 		{
-			string localizedXmlDocFile = Path.GetDirectoryName(fileName);
+			var localizedXmlDocFile = Path.GetDirectoryName(fileName);
 			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, language);
 			localizedXmlDocFile = Path.Combine(localizedXmlDocFile, Path.GetFileName(fileName));
 			return localizedXmlDocFile;
@@ -210,9 +210,9 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			//lastWriteDate = File.GetLastWriteTimeUtc(fileName);
 			// Open up a second file stream for the line<->position mapping
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
-				LinePositionMapper linePosMapper = new LinePositionMapper(fs, encoding);
-				List<IndexEntry> indexList = new List<IndexEntry>();
+			using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+				var linePosMapper = new LinePositionMapper(fs, encoding);
+				var indexList = new List<IndexEntry>();
 				while (reader.Read()) {
 					if (reader.IsStartElement()) {
 						switch (reader.LocalName) {
@@ -234,8 +234,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			int currentLine = 1;
 			
 			// buffers for use with Decoder:
-			byte[] input = new byte[1];
-			char[] output = new char[1];
+			readonly byte[] input = new byte[1];
+			readonly char[] output = new char[1];
 			
 			public LinePositionMapper(FileStream fs, Encoding encoding)
 			{
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			{
 				Debug.Assert(line >= currentLine);
 				while (line > currentLine) {
-					int b = fs.ReadByte();
+					var b = fs.ReadByte();
 					if (b < 0)
 						throw new EndOfStreamException();
 					int bytesUsed, charsUsed;
@@ -274,8 +274,8 @@ namespace ICSharpCode.Decompiler.Documentation
 						break;
 					case XmlNodeType.Element:
 						if (reader.LocalName == "member") {
-							int pos = linePosMapper.GetPositionForLine(reader.LineNumber) + Math.Max(reader.LinePosition - 2, 0);
-							string memberAttr = reader.GetAttribute("name");
+							var pos = linePosMapper.GetPositionForLine(reader.LineNumber) + Math.Max(reader.LinePosition - 2, 0);
+							var memberAttr = reader.GetAttribute("name");
 							if (memberAttr != null)
 								indexList.Add(new IndexEntry(GetHashCode(memberAttr), pos));
 							reader.Skip();
@@ -294,8 +294,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		static int GetHashCode(string key)
 		{
 			unchecked {
-				int h = 0;
-				foreach (char c in key) {
+				var h = 0;
+				foreach (var c in key) {
 					h = (h << 5) - h + c;
 				}
 				return h;
@@ -316,10 +316,10 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		string GetDocumentation(string key, bool allowReload)
 		{
-			int hashcode = GetHashCode(key);
+			var hashcode = GetHashCode(key);
 			var index = this.index; // read volatile field
 			// index is sorted, so we can use binary search
-			int m = Array.BinarySearch(index, new IndexEntry(hashcode, 0));
+			var m = Array.BinarySearch(index, new IndexEntry(hashcode, 0));
 			if (m < 0)
 				return null;
 			// correct hash code found.
@@ -327,7 +327,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			while (--m >= 0 && index[m].HashCode == hashcode);
 			// m is now 1 before the first item with the correct hash
 			
-			XmlDocumentationCache cache = this.cache;
+			var cache = this.cache;
 			lock (cache) {
 				string val;
 				if (!cache.TryGet(key, out val)) {
@@ -356,8 +356,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			try {
 				// Reload the index
-				using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
-					using (XmlTextReader xmlReader = new XmlTextReader(fs)) {
+				using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+					using (var xmlReader = new XmlTextReader(fs)) {
 						xmlReader.XmlResolver = null; // no DTD resolving
 						xmlReader.MoveToContent();
 						ReadXmlDoc(xmlReader);
@@ -378,14 +378,14 @@ namespace ICSharpCode.Decompiler.Documentation
 		#region Load / Read XML
 		string LoadDocumentation(string key, int positionInFile)
 		{
-			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+			using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
 				fs.Position = positionInFile;
 				var context = new XmlParserContext(null, null, null, XmlSpace.None) { Encoding = encoding };
-				using (XmlTextReader r = new XmlTextReader(fs, XmlNodeType.Element, context)) {
+				using (var r = new XmlTextReader(fs, XmlNodeType.Element, context)) {
 					r.XmlResolver = null; // no DTD resolving
 					while (r.Read()) {
 						if (r.NodeType == XmlNodeType.Element) {
-							string memberAttr = r.GetAttribute("name");
+							var memberAttr = r.GetAttribute("name");
 							if (memberAttr == key) {
 								return r.ReadInnerXml();
 							} else {

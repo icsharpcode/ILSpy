@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
 				byteOffsetInst = conv.Argument;
 			}
-			int? elementSize = ComputeSizeOf(pointerType.ElementType);
+			var elementSize = ComputeSizeOf(pointerType.ElementType);
 			if (elementSize == 1) {
 				return byteOffsetInst;
 			} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
 				return new LdcI4(1) { ILRange = byteOffsetInst.ILRange };
-			} else if (byteOffsetInst.MatchLdcI(out long val)) {
+			} else if (byteOffsetInst.MatchLdcI(out var val)) {
 				// If the offset is a constant, it's possible that the compiler
 				// constant-folded the multiplication.
 				if (elementSize > 0 && (val % elementSize == 0) && val > 0) {

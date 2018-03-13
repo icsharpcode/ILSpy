@@ -24,9 +24,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		
 		public TypeDeclaration TypeDeclaration { get; set; }
 
-		public override XmlNodeType NodeType {
-			get { return XmlNodeType.Element; }
-		}
+		public override XmlNodeType NodeType => XmlNodeType.Element;
 
 		public long Position { get; set; }
 		
@@ -46,9 +44,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			this.Namespaces.AddRange(start.Namespaces);
 		}
 
-		public override XmlNodeType NodeType {
-			get { return XmlNodeType.EndElement; }
-		}
+		public override XmlNodeType NodeType => XmlNodeType.EndElement;
 
 		public override string ToString()
 		{

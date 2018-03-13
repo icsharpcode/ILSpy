@@ -31,16 +31,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedEventOverridesTreeNode(EventDefinition analyzedEvent)
 		{
-			if (analyzedEvent == null)
-				throw new ArgumentNullException(nameof(analyzedEvent));
-
-			this.analyzedEvent = analyzedEvent;
+			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 		}
 
-		public override object Text
-		{
-			get { return "Overridden By"; }
-		}
+		public override object Text => "Overridden By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -53,10 +47,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (!TypesHierarchyHelpers.IsBaseType(analyzedEvent.DeclaringType, type, resolveTypeArguments: false))
 				yield break;
 
-			foreach (EventDefinition eventDef in type.Events) {
+			foreach (var eventDef in type.Events) {
 				if (TypesHierarchyHelpers.IsBaseEvent(analyzedEvent, eventDef)) {
-					MethodDefinition anyAccessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
-					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
+					var anyAccessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
+					var hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
 					var node = new AnalyzedEventTreeNode(eventDef, hidesParent ? "(hides) " : "");
 					node.Language = this.Language;
 					yield return node;

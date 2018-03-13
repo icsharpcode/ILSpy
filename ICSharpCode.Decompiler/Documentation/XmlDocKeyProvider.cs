@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		#region GetKey
 		public static string GetKey(MemberReference member)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			if (member is TypeReference) {
 				b.Append("T:");
 				AppendTypeName(b, (TypeReference)member);
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				if (member is PropertyDefinition) {
 					parameters = ((PropertyDefinition)member).Parameters;
 				} else if (member is MethodReference) {
-					MethodReference mr = (MethodReference)member;
+					var mr = (MethodReference)member;
 					if (mr.HasGenericParameters) {
 						b.Append("``");
 						b.Append(mr.GenericParameters.Count);
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				}
 				if (parameters != null && parameters.Count > 0) {
 					b.Append('(');
-					for (int i = 0; i < parameters.Count; i++) {
+					for (var i = 0; i < parameters.Count; i++) {
 						if (i > 0) b.Append(',');
 						AppendTypeName(b, parameters[i].ParameterType);
 					}
@@ -93,17 +93,17 @@ namespace ICSharpCode.Decompiler.Documentation
 				return;
 			}
 			if (type is GenericInstanceType) {
-				GenericInstanceType giType = (GenericInstanceType)type;
+				var giType = (GenericInstanceType)type;
 				AppendTypeNameWithArguments(b, giType.ElementType, giType.GenericArguments);
 			} else if (type is TypeSpecification) {
 				AppendTypeName(b, ((TypeSpecification)type).ElementType);
-				ArrayType arrayType = type as ArrayType;
+				var arrayType = type as ArrayType;
 				if (arrayType != null) {
 					b.Append('[');
-					for (int i = 0; i < arrayType.Dimensions.Count; i++) {
+					for (var i = 0; i < arrayType.Dimensions.Count; i++) {
 						if (i > 0)
 							b.Append(',');
-						ArrayDimension ad = arrayType.Dimensions[i];
+						var ad = arrayType.Dimensions[i];
 						if (ad.IsSized) {
 							b.Append(ad.LowerBound);
 							b.Append(':');
@@ -112,16 +112,16 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					b.Append(']');
 				}
-				ByReferenceType refType = type as ByReferenceType;
+				var refType = type as ByReferenceType;
 				if (refType != null) {
 					b.Append('@');
 				}
-				PointerType ptrType = type as PointerType;
+				var ptrType = type as PointerType;
 				if (ptrType != null) {
 					b.Append('*');
 				}
 			} else {
-				GenericParameter gp = type as GenericParameter;
+				var gp = type as GenericParameter;
 				if (gp != null) {
 					b.Append('`');
 					if (gp.Owner.GenericParameterType == GenericParameterType.Method) {
@@ -140,22 +140,22 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		static int AppendTypeNameWithArguments(StringBuilder b, TypeReference type, IList<TypeReference> genericArguments)
 		{
-			int outerTypeParameterCount = 0;
+			var outerTypeParameterCount = 0;
 			if (type.DeclaringType != null) {
-				TypeReference declType = type.DeclaringType;
+				var declType = type.DeclaringType;
 				outerTypeParameterCount = AppendTypeNameWithArguments(b, declType, genericArguments);
 				b.Append('.');
 			} else if (!string.IsNullOrEmpty(type.Namespace)) {
 				b.Append(type.Namespace);
 				b.Append('.');
 			}
-			int localTypeParameterCount = 0;
+			var localTypeParameterCount = 0;
 			b.Append(ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out localTypeParameterCount));
 			
 			if (localTypeParameterCount > 0) {
-				int totalTypeParameterCount = outerTypeParameterCount + localTypeParameterCount;
+				var totalTypeParameterCount = outerTypeParameterCount + localTypeParameterCount;
 				b.Append('{');
-				for (int i = outerTypeParameterCount; i < totalTypeParameterCount && i < genericArguments.Count; i++) {
+				for (var i = outerTypeParameterCount; i < totalTypeParameterCount && i < genericArguments.Count; i++) {
 					if (i > outerTypeParameterCount) b.Append(',');
 					AppendTypeName(b, genericArguments[i]);
 				}
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		static MemberReference FindMember(ModuleDefinition module, string key, Func<TypeDefinition, IEnumerable<MemberReference>> memberSelector)
 		{
 			Debug.WriteLine("Looking for member " + key);
-			int parenPos = key.IndexOf('(');
+			var parenPos = key.IndexOf('(');
 			int dotPos;
 			if (parenPos > 0) {
 				dotPos = key.LastIndexOf('.', parenPos - 1, parenPos);
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				dotPos = key.LastIndexOf('.');
 			}
 			if (dotPos < 0) return null;
-			TypeDefinition type = FindType(module, key.Substring(2, dotPos - 2));
+			var type = FindType(module, key.Substring(2, dotPos - 2));
 			if (type == null)
 				return null;
 			string shortName;
@@ -210,8 +210,8 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 			Debug.WriteLine("Searching in type {0} for {1}", type.FullName, shortName);
 			MemberReference shortNameMatch = null;
-			foreach (MemberReference member in memberSelector(type)) {
-				string memberKey = GetKey(member);
+			foreach (var member in memberSelector(type)) {
+				var memberKey = GetKey(member);
 				Debug.WriteLine(memberKey);
 				if (memberKey == key)
 					return member;
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		static TypeDefinition FindType(ModuleDefinition module, string name)
 		{
-			int pos = name.LastIndexOf('.');
+			var pos = name.LastIndexOf('.');
 			string ns;
 			if (pos >= 0) {
 				ns = name.Substring(0, pos);
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				ns = string.Empty;
 			}
 			if (string.IsNullOrEmpty(name)) return null;
-			TypeDefinition type = module.GetType(ns, name);
+			var type = module.GetType(ns, name);
 			if (type == null && ns.Length > 0) {
 				// try if this is a nested type
 				type = FindType(module, ns);

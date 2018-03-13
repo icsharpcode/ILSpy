@@ -31,21 +31,17 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ConstantResolveResult : ResolveResult
 	{
-		object constantValue;
+		readonly object constantValue;
 		
 		public ConstantResolveResult(IType type, object constantValue) : base(type)
 		{
 			this.constantValue = constantValue;
 		}
 		
-		public override bool IsCompileTimeConstant {
-			get { return true; }
-		}
-		
-		public override object ConstantValue {
-			get { return constantValue; }
-		}
-		
+		public override bool IsCompileTimeConstant => true;
+
+		public override object ConstantValue => constantValue;
+
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[{0} {1} = {2}]", GetType().Name, this.Type, constantValue);

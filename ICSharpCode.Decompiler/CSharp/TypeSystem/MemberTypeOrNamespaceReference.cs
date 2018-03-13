@@ -32,89 +32,72 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public sealed class MemberTypeOrNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
-		readonly TypeOrNamespaceReference target;
-		readonly string identifier;
-		readonly IList<ITypeReference> typeArguments;
-		readonly NameLookupMode lookupMode;
-		
 		public MemberTypeOrNamespaceReference(TypeOrNamespaceReference target, string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
 		{
-			if (target == null)
-				throw new ArgumentNullException("target");
-			if (identifier == null)
-				throw new ArgumentNullException("identifier");
-			this.target = target;
-			this.identifier = identifier;
-			this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
-			this.lookupMode = lookupMode;
+			this.Target = target ?? throw new ArgumentNullException("target");
+			this.Identifier = identifier ?? throw new ArgumentNullException("identifier");
+			this.TypeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
+			this.LookupMode = lookupMode;
 		}
 		
-		public string Identifier {
-			get { return identifier; }
-		}
-		
-		public TypeOrNamespaceReference Target {
-			get { return target; }
-		}
-		
-		public IList<ITypeReference> TypeArguments {
-			get { return typeArguments; }
-		}
-		
-		public NameLookupMode LookupMode {
-			get { return lookupMode; }
-		}
-		
+		public string Identifier { get; }
+
+		public TypeOrNamespaceReference Target { get; }
+
+		public IList<ITypeReference> TypeArguments { get; }
+
+		public NameLookupMode LookupMode { get; }
+
 		/// <summary>
 		/// Adds a suffix to the identifier.
 		/// Does not modify the existing type reference, but returns a new one.
 		/// </summary>
 		public MemberTypeOrNamespaceReference AddSuffix(string suffix)
 		{
-			return new MemberTypeOrNamespaceReference(target, identifier + suffix, typeArguments, lookupMode);
+			return new MemberTypeOrNamespaceReference(Target, Identifier + suffix, TypeArguments, LookupMode);
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			ResolveResult targetRR = target.Resolve(resolver);
+			var targetRR = Target.Resolve(resolver);
 			if (targetRR.IsError)
 				return targetRR;
-			IReadOnlyList<IType> typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
-			return resolver.ResolveMemberAccess(targetRR, identifier, typeArgs, lookupMode);
+			var typeArgs = TypeArguments.Resolve(resolver.CurrentTypeResolveContext);
+			return resolver.ResolveMemberAccess(targetRR, Identifier, typeArgs, LookupMode);
 		}
 		
 		public override IType ResolveType(CSharpResolver resolver)
 		{
-			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
-			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
+			var trr = Resolve(resolver) as TypeResolveResult;
+			return trr != null ? trr.Type : new UnknownType(null, Identifier, TypeArguments.Count);
 		}
 		
 		public override string ToString()
 		{
-			if (typeArguments.Count == 0)
-				return target.ToString() + "." + identifier;
+			if (TypeArguments.Count == 0)
+				return Target.ToString() + "." + Identifier;
 			else
-				return target.ToString() + "." + identifier + "<" + string.Join(",", typeArguments) + ">";
+				return Target.ToString() + "." + Identifier + "<" + string.Join(",", TypeArguments) + ">";
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			int hashCode = 0;
+			var hashCode = 0;
 			unchecked {
-				hashCode += 1000000007 * target.GetHashCode();
-				hashCode += 1000000033 * identifier.GetHashCode();
-				hashCode += 1000000087 * typeArguments.GetHashCode();
-				hashCode += 1000000021 * (int)lookupMode;
+				hashCode += 1000000007 * Target.GetHashCode();
+				hashCode += 1000000033 * Identifier.GetHashCode();
+				hashCode += 1000000087 * TypeArguments.GetHashCode();
+				hashCode += 1000000021 * (int)LookupMode;
 			}
 			return hashCode;
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			MemberTypeOrNamespaceReference o = other as MemberTypeOrNamespaceReference;
-			return o != null && this.target == o.target
-				&& this.identifier == o.identifier && this.typeArguments == o.typeArguments
-				&& this.lookupMode == o.lookupMode;
+			var o = other as MemberTypeOrNamespaceReference;
+			return o != null && this.Target == o.Target
+				&& this.Identifier == o.Identifier && this.TypeArguments == o.TypeArguments
+				&& this.LookupMode == o.LookupMode;
 		}
 	}
 }

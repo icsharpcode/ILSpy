@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(initCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Parameter")))
 				return false;
-			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
+			var typeArg = initCall.Arguments[0] as CallInstruction;
 			if (typeArg == null || typeArg.Arguments.Count != 1)
 				return false;
 			if (!typeArg.Method.FullNameIs("System.Type", "GetTypeFromHandle"))
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.parameterMapping = new Dictionary<ILVariable, ILVariable>();
 			this.instructionsToRemove = new List<ILInstruction>();
 			this.lambdaStack = new Stack<ILFunction>();
-			for (int i = pos; i < block.Instructions.Count; i++) {
+			for (var i = pos; i < block.Instructions.Count; i++) {
 				if (MatchParameterVariableAssignment(block.Instructions[i], out var v, out var type, out var name)) {
 					parameters.Add(v, (type, name));
 					continue;
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var parameterVariablesList = new List<ILVariable>();
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return (null, SpecialType.UnknownType);
-			bool isQuotedLambda = instruction.Parent is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Quote";
+			var isQuotedLambda = instruction.Parent is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Quote";
 			var container = new BlockContainer();
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var function = new ILFunction(functionType.GetDelegateInvokeMethod()?.ReturnType, parameterList, container);
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case Block initializerBlock:
 					if (initializerBlock.Kind != BlockKind.ArrayInitializer)
 						return false;
-					int i = 0;
+					var i = 0;
 					foreach (var inst in initializerBlock.Instructions.OfType<StObj>()) {
 						if (i >= this.parameters.Count)
 							return false;
@@ -349,7 +349,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				arguments = new[] { invocation.Arguments[1] };
-			for (int i = 0; i < arguments.Count; i++) {
+			for (var i = 0; i < arguments.Count; i++) {
 				var (converted, indexType) = ConvertInstruction(arguments[i]);
 				if (converted == null)
 					return (null, SpecialType.UnknownType);
@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			arguments = arguments.Select(i => ConvertInstruction(i).Item1).ToArray();
 			if (arguments.Any(p => p == null))
 				return (null, SpecialType.UnknownType);
-			IMethod method = (IMethod)member;
+			var method = (IMethod)member;
 			if (method.FullName == "System.Reflection.MethodInfo.CreateDelegate" && method.Parameters.Count == 2) {
 				if (!MatchGetMethodFromHandle(target, out var targetMethod))
 					return (null, SpecialType.UnknownType);
@@ -621,8 +621,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
 			CallInstruction call = new Call((IMethod)member);
-			for (int i = 0; i < arguments.Count; i++) {
-				ILInstruction arg = ConvertInstruction(arguments[i]).Item1;
+			for (var i = 0; i < arguments.Count; i++) {
+				var arg = ConvertInstruction(arguments[i]).Item1;
 				if (arg == null)
 					return (null, SpecialType.UnknownType);
 				arguments[i] = arg;
@@ -662,7 +662,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
-			for (int i = 0; i < arguments.Count; i++) {
+			for (var i = 0; i < arguments.Count; i++) {
 				var arg = ConvertInstruction(arguments[i]).Item1;
 				if (arg == null)
 					return (null, SpecialType.UnknownType);
@@ -682,7 +682,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (newObj == null)
 				return (null, SpecialType.UnknownType);
 			IList<ILInstruction> arguments = null;
-			ILFunction function = lambdaStack.Peek();
+			var function = lambdaStack.Peek();
 			if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var member)) {
 				if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 					return (null, SpecialType.UnknownType);
@@ -693,7 +693,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments == null || arguments.Count == 0)
 				return (null, SpecialType.UnknownType);
 			var initializer = function.RegisterVariable(VariableKind.InitializerTarget, newObj.Method.DeclaringType);
-			for (int i = 0; i < arguments.Count; i++) {
+			for (var i = 0; i < arguments.Count; i++) {
 				ILInstruction arg;
 				if (arguments[i] is CallInstruction elementInit && elementInit.Method.FullName == "System.Linq.Expressions.Expression.ElementInit") {
 					arg = ConvertElementInit(elementInit).Item1;
@@ -763,7 +763,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			var function = lambdaStack.Peek();
 			var initializer = function.RegisterVariable(VariableKind.InitializerTarget, newObj.Method.DeclaringType);
-			for (int i = 0; i < arguments.Count; i++) {
+			for (var i = 0; i < arguments.Count; i++) {
 				ILInstruction arg;
 				if (arguments[i] is CallInstruction bind && bind.Method.FullName == "System.Linq.Expressions.Expression.Bind") {
 					arg = ConvertBind(bind, initializer).Item1;
@@ -792,7 +792,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments.Count == 0)
 				return (null, SpecialType.UnknownType);
 			var indices = new ILInstruction[arguments.Count];
-			for (int i = 0; i < arguments.Count; i++) {
+			for (var i = 0; i < arguments.Count; i++) {
 				var index = ConvertInstruction(arguments[i]).Item1;
 				if (index == null)
 					return (null, SpecialType.UnknownType);
@@ -814,8 +814,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var block = (Block)invocation.Arguments[1];
 			var function = lambdaStack.Peek();
 			var variable = function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.BlockContext.TypeSystem.Compilation, type));
-			Block initializer = new Block(BlockKind.ArrayInitializer);
-			int i = 0;
+			var initializer = new Block(BlockKind.ArrayInitializer);
+			var i = 0;
 			initializer.Instructions.Add(new StLoc(variable, new NewArr(type, new LdcI4(arguments.Count))));
 			foreach (var item in arguments) {
 				var value = ConvertInstruction(item).Item1;
@@ -908,7 +908,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out arguments)) {
 				arguments = new List<ILInstruction>();
 			} else {
-				for (int i = 0; i < arguments.Count; i++) {
+				for (var i = 0; i < arguments.Count; i++) {
 					arguments[i] = ConvertInstruction(arguments[i]).Item1;
 					if (arguments[i] == null)
 						return (null, SpecialType.UnknownType);
@@ -1122,7 +1122,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return false;
 			}
-			int i = 0;
+			var i = 0;
 			arguments = new List<ILInstruction>();
 			foreach (var item in block.Instructions.OfType<StObj>()) {
 				if (!(item.Target is LdElema ldelem && ldelem.Indices.Single().MatchLdcI4(i)))

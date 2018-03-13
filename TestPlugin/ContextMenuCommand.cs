@@ -26,10 +26,10 @@ namespace TestPlugin
 		{
 			if (context.SelectedTreeNodes == null)
 				return;
-			AssemblyTreeNode node = (AssemblyTreeNode)context.SelectedTreeNodes[0];
-			AssemblyDefinition asm = node.LoadedAssembly.GetAssemblyDefinitionOrNull();
+			var node = (AssemblyTreeNode)context.SelectedTreeNodes[0];
+			var asm = node.LoadedAssembly.GetAssemblyDefinitionOrNull();
 			if (asm != null) {
-				SaveFileDialog dlg = new SaveFileDialog();
+				var dlg = new SaveFileDialog();
 				dlg.FileName = node.LoadedAssembly.FileName;
 				dlg.Filter = "Assembly|*.dll;*.exe";
 				if (dlg.ShowDialog(MainWindow.Instance) == true) {

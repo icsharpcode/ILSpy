@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Options
 		FontFamily selectedFont;
 		
 		public FontFamily SelectedFont {
-			get { return selectedFont; }
+			get => selectedFont;
 			set {
 				if (selectedFont != value) {
 					selectedFont = value;
@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 		double selectedFontSize;
 		
 		public double SelectedFontSize {
-			get { return selectedFontSize; }
+			get => selectedFontSize;
 			set {
 				if (selectedFontSize != value) {
 					selectedFontSize = value;
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool showLineNumbers;
 		
 		public bool ShowLineNumbers {
-			get { return showLineNumbers; }
+			get => showLineNumbers;
 			set {
 				if (showLineNumbers != value) {
 					showLineNumbers = value;
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public bool ShowMetadataTokens
 		{
-			get { return showMetadataTokens; }
+			get => showMetadataTokens;
 			set {
 				if (showMetadataTokens != value) {
 					showMetadataTokens = value;
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public bool EnableWordWrap
 		{
-			get { return enableWordWrap; }
+			get => enableWordWrap;
 			set
 			{
 				if (enableWordWrap != value) {
@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool sortResults = true;
 
 		public bool SortResults {
-			get { return sortResults; }
+			get => sortResults;
 			set {
 				if (sortResults != value) {
 					sortResults = value;

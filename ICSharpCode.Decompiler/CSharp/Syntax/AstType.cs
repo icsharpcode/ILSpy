@@ -34,12 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullAstType : AstType
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -82,10 +78,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder (this, child);
@@ -118,10 +112,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 		
-		public override NodeType NodeType {
-			get { return NodeType.TypeReference; }
-		}
-		
+		public override NodeType NodeType => NodeType.TypeReference;
+
 		public new AstType Clone()
 		{
 			return (AstType)base.Clone();
@@ -132,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsVar()
 		{
-			SimpleType st = this as SimpleType;
+			var st = this as SimpleType;
 			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
 		}
 		
@@ -169,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public NameLookupMode GetNameLookupMode()
 		{
-			AstType outermostType = this;
+			var outermostType = this;
 			while (outermostType.Parent is AstType)
 				outermostType = (AstType)outermostType.Parent;
 			
@@ -246,9 +238,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static AstType Create(string dottedName)
 		{
-			string[] parts = dottedName.Split('.');
+			var parts = dottedName.Split('.');
 			AstType type = new SimpleType(parts[0]);
-			for (int i = 1; i < parts.Length; i++) {
+			for (var i = 1; i < parts.Length; i++) {
 				type = new MemberType(type, parts[i]);
 			}
 			return type;

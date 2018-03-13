@@ -23,14 +23,11 @@ namespace ICSharpCode.TreeView
 
 		public Brush TextBackground
 		{
-			get { return (Brush)GetValue(TextBackgroundProperty); }
-			set { SetValue(TextBackgroundProperty, value); }
+			get => (Brush)GetValue(TextBackgroundProperty);
+			set => SetValue(TextBackgroundProperty, value);
 		}
 
-		public SharpTreeNode Node
-		{
-			get { return DataContext as SharpTreeNode; }
-		}
+		public SharpTreeNode Node => DataContext as SharpTreeNode;
 
 		public SharpTreeViewItem ParentItem { get; private set; }
 		
@@ -39,14 +36,11 @@ namespace ICSharpCode.TreeView
 			                            new FrameworkPropertyMetadata());
 		
 		public Control CellEditor {
-			get { return (Control)GetValue(CellEditorProperty); }
-			set { SetValue(CellEditorProperty, value); }
+			get => (Control)GetValue(CellEditorProperty);
+			set => SetValue(CellEditorProperty, value);
 		}
 
-		public SharpTreeView ParentTreeView
-		{
-			get { return ParentItem.ParentTreeView; }
-		}
+		public SharpTreeView ParentTreeView => ParentItem.ParentTreeView;
 
 		internal LinesRenderer LinesRenderer { get; private set; }
 

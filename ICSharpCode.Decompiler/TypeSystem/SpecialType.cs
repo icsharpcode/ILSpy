@@ -54,14 +54,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public readonly static SpecialType UnboundTypeArgument = new SpecialType(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
 		
 		readonly TypeKind kind;
-		readonly string name;
-		readonly bool? isReferenceType;
-		
+
 		private SpecialType(TypeKind kind, string name, bool? isReferenceType)
 		{
 			this.kind = kind;
-			this.name = name;
-			this.isReferenceType = isReferenceType;
+			this.Name = name;
+			this.IsReferenceType = isReferenceType;
 		}
 		
 		public override ITypeReference ToTypeReference()
@@ -69,18 +67,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return this;
 		}
 		
-		public override string Name {
-			get { return name; }
-		}
-		
-		public override TypeKind Kind {
-			get { return kind; }
-		}
-		
-		public override bool? IsReferenceType {
-			get { return isReferenceType; }
-		}
-		
+		public override string Name { get; }
+
+		public override TypeKind Kind => kind;
+
+		public override bool? IsReferenceType { get; }
+
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)

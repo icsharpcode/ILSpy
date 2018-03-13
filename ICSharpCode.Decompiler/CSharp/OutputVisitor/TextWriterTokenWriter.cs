@@ -30,27 +30,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 	public class TextWriterTokenWriter : TokenWriter, ILocatable
 	{
 		readonly TextWriter textWriter;
-		int indentation;
 		bool needsIndent = true;
 		bool isAtStartOfLine = true;
 		int line, column;
 
-		public int Indentation {
-			get { return this.indentation; }
-			set { this.indentation = value; }
-		}
-		
-		public TextLocation Location {
-			get { return new TextLocation(line, column + (needsIndent ? indentation * IndentationString.Length : 0)); }
-		}
-		
+		public int Indentation { get; set; }
+
+		public TextLocation Location => new TextLocation(line, column + (needsIndent ? Indentation * IndentationString.Length : 0));
+
 		public string IndentationString { get; set; }
 		
 		public TextWriterTokenWriter(TextWriter textWriter)
 		{
-			if (textWriter == null)
-				throw new ArgumentNullException("textWriter");
-			this.textWriter = textWriter;
+			this.textWriter = textWriter ?? throw new ArgumentNullException("textWriter");
 			this.IndentationString = "\t";
 			this.line = 1;
 			this.column = 1;
@@ -95,10 +87,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (needsIndent) {
 				needsIndent = false;
-				for (int i = 0; i < indentation; i++) {
+				for (var i = 0; i < Indentation; i++) {
 					textWriter.Write(this.IndentationString);
 				}
-				column += indentation * IndentationString.Length;
+				column += Indentation * IndentationString.Length;
 			}
 		}
 		
@@ -113,12 +105,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void Indent()
 		{
-			indentation++;
+			Indentation++;
 		}
 		
 		public override void Unindent()
 		{
-			indentation--;
+			Indentation--;
 		}
 		
 		public override void WriteComment(CommentType commentType, string content)
@@ -170,8 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (string.IsNullOrEmpty(content))
 				return;
-			for (int i = 0; i < content.Length; i++) {
-				char ch = content[i];
+			for (var i = 0; i < content.Length; i++) {
+				var ch = content[i];
 				switch (ch) {
 					case '\r':
 						if (i + 1 < content.Length && content[i + 1] == '\n')
@@ -193,7 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				NewLine();
 			WriteIndentation();
 			textWriter.Write('#');
-			string directive = type.ToString().ToLowerInvariant();
+			var directive = type.ToString().ToLowerInvariant();
 			textWriter.Write(directive);
 			column += 1 + directive.Length;
 			if (!string.IsNullOrEmpty(argument)) {
@@ -207,7 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public static string PrintPrimitiveValue(object value)
 		{
 			TextWriter writer = new StringWriter();
-			TextWriterTokenWriter tokenWriter = new TextWriterTokenWriter(writer);
+			var tokenWriter = new TextWriterTokenWriter(writer);
 			tokenWriter.WritePrimitiveValue(value);
 			return writer.ToString();
 		}
@@ -239,23 +231,23 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			
 			if (value is string) {
-				string tmp = ConvertString(value.ToString());
+				var tmp = ConvertString(value.ToString());
 				column += tmp.Length + 2;
 				textWriter.Write('"');
 				textWriter.Write(tmp);
 				textWriter.Write('"');
 			} else if (value is char) {
-				string tmp = ConvertCharLiteral((char)value);
+				var tmp = ConvertCharLiteral((char)value);
 				column += tmp.Length + 2;
 				textWriter.Write('\'');
 				textWriter.Write(tmp);
 				textWriter.Write('\'');
 			} else if (value is decimal) {
-				string str = ((decimal)value).ToString(NumberFormatInfo.InvariantInfo) + "m";
+				var str = ((decimal)value).ToString(NumberFormatInfo.InvariantInfo) + "m";
 				column += str.Length;
 				textWriter.Write(str);
 			} else if (value is float) {
-				float f = (float)value;
+				var f = (float)value;
 				if (float.IsInfinity(f) || float.IsNaN(f)) {
 					// Strictly speaking, these aren't PrimitiveExpressions;
 					// but we still support writing these to make life easier for code generators.
@@ -285,7 +277,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				column += str.Length;
 				textWriter.Write(str);
 			} else if (value is double) {
-				double f = (double)value;
+				var f = (double)value;
 				if (double.IsInfinity(f) || double.IsNaN(f)) {
 					// Strictly speaking, these aren't PrimitiveExpressions;
 					// but we still support writing these to make life easier for code generators.
@@ -310,13 +302,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					// the special case here than to do it in all code generators)
 					textWriter.Write("-");
 				}
-				string number = f.ToString("R", NumberFormatInfo.InvariantInfo);
+				var number = f.ToString("R", NumberFormatInfo.InvariantInfo);
 				if (number.IndexOf('.') < 0 && number.IndexOf('E') < 0) {
 					number += ".0";
 				}
 				textWriter.Write(number);
 			} else if (value is IFormattable) {
-				StringBuilder b = new StringBuilder ();
+				var b = new StringBuilder ();
 //				if (primitiveExpression.LiteralFormat == LiteralFormat.HexadecimalNumber) {
 //					b.Append("0x");
 //					b.Append(((IFormattable)val).ToString("x", NumberFormatInfo.InvariantInfo));
@@ -409,9 +401,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		public static string ConvertString(string str)
 		{
-			StringBuilder sb = new StringBuilder ();
-			foreach (char ch in str) {
-				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+			var sb = new StringBuilder ();
+			foreach (var ch in str) {
+				var s = ch == '"' ? "\\\"" : ConvertChar(ch);
 				if (s != null) sb.Append(s);
 				else sb.Append(ch);
 			}

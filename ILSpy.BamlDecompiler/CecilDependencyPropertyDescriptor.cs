@@ -10,15 +10,13 @@ namespace ILSpy.BamlDecompiler
 {
 	public class CecilDependencyPropertyDescriptor : IDependencyPropertyDescriptor
 	{
-		string member;
-		TypeDefinition type;
+		readonly string member;
+		readonly TypeDefinition type;
 		
 		public CecilDependencyPropertyDescriptor(string member, TypeDefinition type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
 			this.member = member;
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException("type");
 		}
 		
 		public bool IsAttached {

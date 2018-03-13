@@ -29,9 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 		public int EndLine { get; set; }
 		public int EndColumn { get; set; }
 
-		public bool IsHidden {
-			get { return StartLine == 0xfeefee && StartLine == EndLine; }
-		}
+		public bool IsHidden => StartLine == 0xfeefee && StartLine == EndLine;
 
 		internal void SetHidden()
 		{

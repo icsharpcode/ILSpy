@@ -17,15 +17,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class ControlFlowGraph
 	{
-		readonly BlockContainer container;
-
 		/// <summary>
 		/// The container for which the ControlFlowGraph was created.
 		/// 
 		/// This may differ from the container currently holding a block,
 		/// because a transform could have moved the block since the CFG was created.
 		/// </summary>
-		public BlockContainer Container { get { return container; } }
+		public BlockContainer Container { get; }
 
 		/// <summary>
 		/// Nodes array, indexed by original block index.
@@ -62,11 +60,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		public ControlFlowGraph(BlockContainer container, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			this.container = container;
+			this.Container = container;
 			this.cfg = new ControlFlowNode[container.Blocks.Count];
 			this.nodeHasDirectExitOutOfContainer = new BitSet(cfg.Length);
-			for (int i = 0; i < cfg.Length; i++) {
-				Block block = container.Blocks[i];
+			for (var i = 0; i < cfg.Length; i++) {
+				var block = container.Blocks[i];
 				cfg[i] = new ControlFlowNode { UserIndex = i, UserData = block };
 				dict.Add(block, cfg[i]);
 			}
@@ -79,15 +77,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void CreateEdges(CancellationToken cancellationToken)
 		{
-			for (int i = 0; i < container.Blocks.Count; i++) {
+			for (var i = 0; i < Container.Blocks.Count; i++) {
 				cancellationToken.ThrowIfCancellationRequested();
-				var block = container.Blocks[i];
+				var block = Container.Blocks[i];
 				var sourceNode = cfg[i];
 				foreach (var node in block.Descendants) {
 					if (node is Branch branch) {
-						if (branch.TargetBlock.Parent == container) {
-							sourceNode.AddEdgeTo(cfg[container.Blocks.IndexOf(branch.TargetBlock)]);
-						} else if (branch.TargetBlock.IsDescendantOf(container)) {
+						if (branch.TargetBlock.Parent == Container) {
+							sourceNode.AddEdgeTo(cfg[Container.Blocks.IndexOf(branch.TargetBlock)]);
+						} else if (branch.TargetBlock.IsDescendantOf(Container)) {
 							// Internal control flow within a nested container.
 						} else {
 							// Branch out of this container into a parent container.
@@ -119,7 +117,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (leaving[node.UserIndex])
 					continue;
 				if (nodeHasDirectExitOutOfContainer[node.UserIndex]) {
-					for (ControlFlowNode p = node; p != null; p = p.ImmediateDominator) {
+					for (var p = node; p != null; p = p.ImmediateDominator) {
 						if (leaving[p.UserIndex]) {
 							// we can stop marking when we've reached an already-marked node
 							break;

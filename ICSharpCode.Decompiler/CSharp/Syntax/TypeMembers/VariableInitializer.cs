@@ -34,12 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		sealed class NullVariableInitializer : VariableInitializer
 		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-			
+			public override bool IsNull => true;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitNullNode(this);
@@ -77,10 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				this.child = child;
 			}
 			
-			public override NodeType NodeType {
-				get { return NodeType.Pattern; }
-			}
-			
+			public override NodeType NodeType => NodeType.Pattern;
+
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
 				visitor.VisitPatternPlaceholder (this, child);
@@ -108,12 +102,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 		
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		public VariableInitializer()
 		{
 		}
@@ -125,30 +115,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole (Roles.Assign); }
-		}
-		
+		public CSharpTokenNode AssignToken => GetChildByRole (Roles.Assign);
+
 		public Expression Initializer {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -168,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			VariableInitializer o = other as VariableInitializer;
+			var o = other as VariableInitializer;
 			return o != null && MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}

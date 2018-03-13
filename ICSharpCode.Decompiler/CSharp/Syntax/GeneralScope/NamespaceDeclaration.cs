@@ -36,25 +36,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
 		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", AstType.Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
-		public CSharpTokenNode NamespaceToken {
-			get { return GetChildByRole(Roles.NamespaceKeyword); }
-		}
+		public CSharpTokenNode NamespaceToken => GetChildByRole(Roles.NamespaceKeyword);
 
 		public AstType NamespaceName {
-			get { return GetChildByRole(NamespaceNameRole) ?? AstType.Null; }
-			set { SetChildByRole(NamespaceNameRole, value); }
+			get => GetChildByRole(NamespaceNameRole) ?? AstType.Null;
+			set => SetChildByRole(NamespaceNameRole, value);
 		}
 
 		public string Name {
-			get {
-				return UsingDeclaration.ConstructNamespace(NamespaceName);
-			}
+			get => UsingDeclaration.ConstructNamespace(NamespaceName);
 			set {
 				var arr = value.Split('.');
 				NamespaceName = ConstructType(arr, arr.Length - 1);
@@ -75,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public string FullName {
 			get {
-				NamespaceDeclaration parentNamespace = Parent as NamespaceDeclaration;
+				var parentNamespace = Parent as NamespaceDeclaration;
 				if (parentNamespace != null)
 					return BuildQualifiedName(parentNamespace.FullName, Name);
 				return Name;
@@ -85,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerable<string> Identifiers {
 			get {
 				var result = new Stack<string>();
-				AstType type = NamespaceName;
+				var type = NamespaceName;
 				while (type is MemberType) {
 					var mt = (MemberType)type;
 					result.Push(mt.MemberName);
@@ -97,17 +89,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
+		public CSharpTokenNode LBraceToken => GetChildByRole(Roles.LBrace);
 
-		public AstNodeCollection<AstNode> Members {
-			get { return GetChildrenByRole(MemberRole); }
-		}
+		public AstNodeCollection<AstNode> Members => GetChildrenByRole(MemberRole);
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
+		public CSharpTokenNode RBraceToken => GetChildByRole(Roles.RBrace);
 
 		public NamespaceDeclaration()
 		{
@@ -149,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NamespaceDeclaration o = other as NamespaceDeclaration;
+			var o = other as NamespaceDeclaration;
 			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);
 		}
 	}

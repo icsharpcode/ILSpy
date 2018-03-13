@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return true;
 			if (x == null || y == null || x.Count != y.Count)
 				return false;
-			for (int i = 0; i < x.Count; i++) {
+			for (var i = 0; i < x.Count; i++) {
 				var a = x[i];
 				var b = y[i];
 				if (a == null && b == null)
@@ -73,8 +73,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				// We want to consider the parameter lists "Method<T>(T a)" and "Method<S>(S b)" as equal.
 				// However, the parameter types are not considered equal, as T is a different type parameter than S.
 				// In order to compare the method signatures, we will normalize all method type parameters.
-				IType aType = a.Type.AcceptVisitor(normalizationVisitor);
-				IType bType = b.Type.AcceptVisitor(normalizationVisitor);
+				var aType = a.Type.AcceptVisitor(normalizationVisitor);
+				var bType = b.Type.AcceptVisitor(normalizationVisitor);
 				
 				if (!aType.Equals(bType))
 					return false;
@@ -84,11 +84,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public int GetHashCode(IReadOnlyList<IParameter> obj)
 		{
-			int hashCode = obj.Count;
+			var hashCode = obj.Count;
 			unchecked {
-				foreach (IParameter p in obj) {
+				foreach (var p in obj) {
 					hashCode *= 27;
-					IType type = p.Type.AcceptVisitor(normalizationVisitor);
+					var type = p.Type.AcceptVisitor(normalizationVisitor);
 					hashCode += type.GetHashCode();
 				}
 			}
@@ -104,13 +104,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public sealed class SignatureComparer : IEqualityComparer<IMember>
 	{
-		StringComparer nameComparer;
+		readonly StringComparer nameComparer;
 		
 		public SignatureComparer(StringComparer nameComparer)
 		{
-			if (nameComparer == null)
-				throw new ArgumentNullException("nameComparer");
-			this.nameComparer = nameComparer;
+			this.nameComparer = nameComparer ?? throw new ArgumentNullException("nameComparer");
 		}
 		
 		/// <summary>
@@ -124,11 +122,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return true;
 			if (x == null || y == null || x.SymbolKind != y.SymbolKind || !nameComparer.Equals(x.Name, y.Name))
 				return false;
-			IParameterizedMember px = x as IParameterizedMember;
-			IParameterizedMember py = y as IParameterizedMember;
+			var px = x as IParameterizedMember;
+			var py = y as IParameterizedMember;
 			if (px != null && py != null) {
-				IMethod mx = x as IMethod;
-				IMethod my = y as IMethod;
+				var mx = x as IMethod;
+				var my = y as IMethod;
 				if (mx != null && my != null && mx.TypeParameters.Count != my.TypeParameters.Count)
 					return false;
 				return ParameterListComparer.Instance.Equals(px.Parameters, py.Parameters);
@@ -140,12 +138,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public int GetHashCode(IMember obj)
 		{
 			unchecked {
-				int hash = (int)obj.SymbolKind * 33 + nameComparer.GetHashCode(obj.Name);
-				IParameterizedMember pm = obj as IParameterizedMember;
+				var hash = (int)obj.SymbolKind * 33 + nameComparer.GetHashCode(obj.Name);
+				var pm = obj as IParameterizedMember;
 				if (pm != null) {
 					hash *= 27;
 					hash += ParameterListComparer.Instance.GetHashCode(pm.Parameters);
-					IMethod m = pm as IMethod;
+					var m = pm as IMethod;
 					if (m != null)
 						hash += m.TypeParameters.Count;
 				}

@@ -22,9 +22,7 @@ namespace ICSharpCode.TreeView
 
 		public SharpTreeViewItem Item { get; set; }
 
-		public SharpTreeNode Node {
-			get { return Item.Node; }
-		}
+		public SharpTreeNode Node => Item.Node;
 
 		void Init()
 		{

@@ -144,11 +144,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			} else if (value is decimal) {
 				lastWritten = LastWritten.Other;
 			} else if (value is float) {
-				float f = (float)value;
+				var f = (float)value;
 				if (float.IsInfinity(f) || float.IsNaN(f)) return;
 				lastWritten = LastWritten.Other;
 			} else if (value is double) {
-				double f = (double)value;
+				var f = (double)value;
 				if (double.IsInfinity(f) || double.IsNaN(f)) return;
 				// needs space if identifier follows number;
 				// this avoids mistaking the following identifier as type suffix

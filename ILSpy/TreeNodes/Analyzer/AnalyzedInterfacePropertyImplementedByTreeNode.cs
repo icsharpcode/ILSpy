@@ -32,17 +32,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedInterfacePropertyImplementedByTreeNode(PropertyDefinition analyzedProperty)
 		{
-			if (analyzedProperty == null)
-				throw new ArgumentNullException(nameof(analyzedProperty));
-
-			this.analyzedProperty = analyzedProperty;
+			this.analyzedProperty = analyzedProperty ?? throw new ArgumentNullException(nameof(analyzedProperty));
 			this.analyzedMethod = this.analyzedProperty.GetMethod ?? this.analyzedProperty.SetMethod;
 		}
 
-		public override object Text
-		{
-			get { return "Implemented By"; }
-		}
+		public override object Text => "Implemented By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -54,12 +48,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (!type.HasInterfaces)
 				yield break;
-			TypeReference implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
+			var implementedInterfaceRef = type.Interfaces.FirstOrDefault(i => i.InterfaceType.Resolve() == analyzedMethod.DeclaringType)?.InterfaceType;
 			if (implementedInterfaceRef == null)
 				yield break;
 
-			foreach (PropertyDefinition property in type.Properties.Where(e => e.Name == analyzedProperty.Name)) {
-				MethodDefinition accessor = property.GetMethod ?? property.SetMethod;
+			foreach (var property in type.Properties.Where(e => e.Name == analyzedProperty.Name)) {
+				var accessor = property.GetMethod ?? property.SetMethod;
 				if (TypesHierarchyHelpers.MatchInterfaceMethod(accessor, analyzedMethod, implementedInterfaceRef)) {
 					var node = new AnalyzedPropertyTreeNode(property);
 					node.Language = this.Language;
@@ -68,8 +62,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				yield break;
 			}
 
-			foreach (PropertyDefinition property in type.Properties.Where(e => e.Name.EndsWith(analyzedProperty.Name))) {
-				MethodDefinition accessor = property.GetMethod ?? property.SetMethod;
+			foreach (var property in type.Properties.Where(e => e.Name.EndsWith(analyzedProperty.Name))) {
+				var accessor = property.GetMethod ?? property.SetMethod;
 				if (accessor.HasOverrides && accessor.Overrides.Any(m => m.Resolve() == analyzedMethod)) {
 					var node = new AnalyzedPropertyTreeNode(property);
 					node.Language = this.Language;

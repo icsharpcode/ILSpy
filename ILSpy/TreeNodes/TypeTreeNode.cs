@@ -31,12 +31,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public TypeTreeNode(TypeDefinition type, AssemblyTreeNode parentAssemblyNode)
 		{
-			if (parentAssemblyNode == null)
-				throw new ArgumentNullException(nameof(parentAssemblyNode));
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.TypeDefinition = type;
-			this.ParentAssemblyNode = parentAssemblyNode;
+			this.TypeDefinition = type ?? throw new ArgumentNullException(nameof(type));
+			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
 			this.LazyLoading = true;
 		}
 
@@ -65,10 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(TypeDefinition.Name)) {
-				if (settings.Language.ShowMember(TypeDefinition))
-					return FilterResult.Match;
-				else
-					return FilterResult.Hidden;
+				return settings.Language.ShowMember(TypeDefinition) ? FilterResult.Match : FilterResult.Hidden;
 			} else {
 				return FilterResult.Recurse;
 			}
@@ -80,21 +73,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			foreach (TypeDefinition nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
 			}
-			foreach (FieldDefinition field in TypeDefinition.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var field in TypeDefinition.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new FieldTreeNode(field));
 			}
 			
-			foreach (PropertyDefinition property in TypeDefinition.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var property in TypeDefinition.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (EventDefinition ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			HashSet<MethodDefinition> accessorMethods = TypeDefinition.GetAccessorMethods();
-			foreach (MethodDefinition method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			var accessorMethods = TypeDefinition.GetAccessorMethods();
+			foreach (var method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				if (!accessorMethods.Contains(method)) {
 					this.Children.Add(new MethodTreeNode(method));
 				}
@@ -112,8 +105,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(TypeDefinition type)
 		{
-			TypeIcon typeIcon = GetTypeIcon(type);
-			AccessOverlayIcon overlayIcon = GetOverlayIcon(type);
+			var typeIcon = GetTypeIcon(type);
+			var overlayIcon = GetOverlayIcon(type);
 
 			return Images.GetIcon(typeIcon, overlayIcon);
 		}

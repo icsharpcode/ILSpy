@@ -17,9 +17,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private class Impl : IBase
 		{
 			int IBase.Test {
-				get {
-					throw new NotImplementedException();
-				}
+				get => throw new NotImplementedException();
 				set {
 				}
 			}
@@ -44,12 +42,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		};
 
 		public event EventHandler CustomEvent {
-			add {
-				this.AutomaticEvent += value;
-			}
-			remove {
-				this.AutomaticEvent -= value;
-			}
+			add => this.AutomaticEvent += value;
+			remove => this.AutomaticEvent -= value;
 		}
 	}
 }

@@ -34,26 +34,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole WhileKeywordRole = new TokenRole ("while");
 		
-		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole (WhileKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode WhileToken => GetChildByRole (WhileKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		public Expression Condition {
-			get { return GetChildByRole (Roles.Condition); }
-			set { SetChildByRole (Roles.Condition, value); }
+			get => GetChildByRole (Roles.Condition);
+			set => SetChildByRole (Roles.Condition, value);
 		}
 		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get => GetChildByRole (Roles.EmbeddedStatement);
+			set => SetChildByRole (Roles.EmbeddedStatement, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -73,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			WhileStatement o = other as WhileStatement;
+			var o = other as WhileStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
 

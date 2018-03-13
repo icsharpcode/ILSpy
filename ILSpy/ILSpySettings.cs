@@ -41,12 +41,8 @@ namespace ICSharpCode.ILSpy
 			this.root = root;
 		}
 		
-		public XElement this[XName section] {
-			get {
-				return root.Element(section) ?? new XElement(section);
-			}
-		}
-		
+		public XElement this[XName section] => root.Element(section) ?? new XElement(section);
+
 		/// <summary>
 		/// Loads the settings file from disk.
 		/// </summary>
@@ -57,7 +53,7 @@ namespace ICSharpCode.ILSpy
 		{
 			using (new MutexProtector(ConfigFileMutex)) {
 				try {
-					XDocument doc = LoadWithoutCheckingCharacters(GetConfigFile());
+					var doc = LoadWithoutCheckingCharacters(GetConfigFile());
 					return new ILSpySettings(doc.Root);
 				} catch (IOException) {
 					return new ILSpySettings();
@@ -79,7 +75,7 @@ namespace ICSharpCode.ILSpy
 		{
 			Update(
 				delegate (XElement root) {
-					XElement existingElement = root.Element(section.Name);
+					var existingElement = root.Element(section.Name);
 					if (existingElement != null)
 						existingElement.ReplaceWith(section);
 					else
@@ -95,7 +91,7 @@ namespace ICSharpCode.ILSpy
 		public static void Update(Action<XElement> action)
 		{
 			using (new MutexProtector(ConfigFileMutex)) {
-				string config = GetConfigFile();
+				var config = GetConfigFile();
 				XDocument doc;
 				try {
 					doc = LoadWithoutCheckingCharacters(config);
@@ -114,7 +110,7 @@ namespace ICSharpCode.ILSpy
 		
 		static string GetConfigFile()
 		{
-			string localPath = Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location), "ILSpy.xml");
+			var localPath = Path.Combine(Path.GetDirectoryName(typeof(MainWindow).Assembly.Location), "ILSpy.xml");
 			if (File.Exists(localPath))
 				return localPath;
 			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode\\ILSpy.xml");

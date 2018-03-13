@@ -34,22 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class InvocationExpression : Expression
 	{
 		public Expression Target {
-			get { return GetChildByRole (Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
+			get => GetChildByRole (Roles.TargetExpression);
+			set => SetChildByRole(Roles.TargetExpression, value);
 		}
 		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole<Expression>(Roles.Argument);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitInvocationExpression (this);
@@ -85,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			InvocationExpression o = other as InvocationExpression;
+			var o = other as InvocationExpression;
 			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}

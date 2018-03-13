@@ -136,43 +136,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
 		}
 
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Operator; }
-		}
-		
+		public override SymbolKind SymbolKind => SymbolKind.Operator;
+
 		OperatorType operatorType;
 		
 		public OperatorType OperatorType {
-			get { return operatorType; }
+			get => operatorType;
 			set {
 				ThrowIfFrozen();
 				operatorType = value;
 			}
 		}
 		
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole (OperatorKeywordRole); }
-		}
-		
-		public CSharpTokenNode OperatorTypeToken {
-			get { return GetChildByRole (GetRole (OperatorType)); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public CSharpTokenNode OperatorToken => GetChildByRole (OperatorKeywordRole);
+
+		public CSharpTokenNode OperatorTypeToken => GetChildByRole (GetRole (OperatorType));
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		/// <summary>
@@ -180,7 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public static OperatorType? GetOperatorType(string methodName)
 		{
-			for (int i = 0; i < names.Length; ++i) {
+			for (var i = 0; i < names.Length; ++i) {
 				if (names[i][1] == methodName)
 					return (OperatorType)i;
 			}
@@ -284,19 +272,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public override string Name {
-			get { return GetName (this.OperatorType); }
-			set { throw new NotSupportedException(); }
+			get => GetName (this.OperatorType);
+			set => throw new NotSupportedException();
 		}
 		
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
-			set { throw new NotSupportedException(); }
+			get => Identifier.Null;
+			set => throw new NotSupportedException();
 		}
 		
 		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
 		{
-			OperatorDeclaration o = other as OperatorDeclaration;
+			var o = other as OperatorDeclaration;
 			return o != null && this.MatchAttributesAndModifiers (o, match) && this.OperatorType == o.OperatorType
 				&& this.ReturnType.DoMatch (o.ReturnType, match)
 				&& this.Parameters.DoMatch (o.Parameters, match) && this.Body.DoMatch (o.Body, match);

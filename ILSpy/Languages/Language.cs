@@ -69,27 +69,16 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public abstract string FileExtension { get; }
 
-		public virtual string ProjectFileExtension
-		{
-			get { return null; }
-		}
+		public virtual string ProjectFileExtension => null;
 
-		public virtual IReadOnlyList<LanguageVersion> LanguageVersions {
-			get { return EmptyList<LanguageVersion>.Instance; }
-		}
+		public virtual IReadOnlyList<LanguageVersion> LanguageVersions => EmptyList<LanguageVersion>.Instance;
 
 		public bool HasLanguageVersions => LanguageVersions.Count > 0;
 
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.
 		/// </summary>
-		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting
-		{
-			get
-			{
-				return ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
-			}
-		}
+		public virtual ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition SyntaxHighlighting => ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinitionByExtension(this.FileExtension);
 
 		public virtual void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{

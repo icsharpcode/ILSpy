@@ -41,12 +41,11 @@ namespace ICSharpCode.ILSpy.Controls
 		string sortBy;
 		
 		public string SortBy {
-			get { return sortBy; }
+			get => sortBy;
 			set {
-				if (sortBy != value) {
-					sortBy = value;
-					OnPropertyChanged(new PropertyChangedEventArgs("SortBy"));
-				}
+				if (sortBy == value) return;
+				sortBy = value;
+				OnPropertyChanged(new PropertyChangedEventArgs("SortBy"));
 			}
 		}
 		
@@ -56,8 +55,8 @@ namespace ICSharpCode.ILSpy.Controls
 			                                    new FrameworkPropertyMetadata(ColumnSortDirection.None, OnSortDirectionChanged));
 		
 		public ColumnSortDirection SortDirection {
-			get { return (ColumnSortDirection)GetValue(SortDirectionProperty); }
-			set { SetValue(SortDirectionProperty, value); }
+			get => (ColumnSortDirection)GetValue(SortDirectionProperty);
+			set => SetValue(SortDirectionProperty, value);
 		}
 		
 		public static ColumnSortDirection GetSortDirection(ListView listView)
@@ -72,9 +71,9 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		static void OnSortDirectionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			var grid = sender as ListView;
 			if (grid != null) {
-				SortableGridViewColumn col = GetCurrentSortColumn(grid);
+				var col = GetCurrentSortColumn(grid);
 				if (col != null)
 					col.SortDirection = (ColumnSortDirection)args.NewValue;
 				Sort(grid);
@@ -99,12 +98,12 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		static void OnCurrentSortColumnChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			var grid = sender as ListView;
 			if (grid != null) {
-				SortableGridViewColumn oldColumn = (SortableGridViewColumn)args.OldValue;
+				var oldColumn = (SortableGridViewColumn)args.OldValue;
 				if (oldColumn != null)
 					oldColumn.SortDirection = ColumnSortDirection.None;
-				SortableGridViewColumn newColumn = (SortableGridViewColumn)args.NewValue;
+				var newColumn = (SortableGridViewColumn)args.NewValue;
 				if (newColumn != null) {
 					newColumn.SortDirection = GetSortDirection(grid);
 				}
@@ -130,7 +129,7 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		static void OnSortModeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
 		{
-			ListView grid = sender as ListView;
+			var grid = sender as ListView;
 			if (grid != null) {
 				if ((ListViewSortMode)args.NewValue != ListViewSortMode.None)
 					grid.AddHandler(GridViewColumnHeader.ClickEvent, new RoutedEventHandler(GridViewColumnHeaderClickHandler));
@@ -141,8 +140,8 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		static void GridViewColumnHeaderClickHandler(object sender, RoutedEventArgs e)
 		{
-			ListView grid = sender as ListView;
-			GridViewColumnHeader headerClicked = e.OriginalSource as GridViewColumnHeader;
+			var grid = sender as ListView;
+			var headerClicked = e.OriginalSource as GridViewColumnHeader;
 			if (grid != null && headerClicked != null && headerClicked.Role != GridViewColumnHeaderRole.Padding) {
 				if (headerClicked.Column == GetCurrentSortColumn(grid)) {
 					if (GetSortDirection(grid) == ColumnSortDirection.Ascending)
@@ -159,14 +158,14 @@ namespace ICSharpCode.ILSpy.Controls
 		
 		static void Sort(ListView grid)
 		{
-			ColumnSortDirection currentDirection = GetSortDirection(grid);
-			SortableGridViewColumn column = GetCurrentSortColumn(grid);
+			var currentDirection = GetSortDirection(grid);
+			var column = GetCurrentSortColumn(grid);
 			if (column != null && GetSortMode(grid) == ListViewSortMode.Automatic && currentDirection != ColumnSortDirection.None) {
-				ICollectionView dataView = CollectionViewSource.GetDefaultView(grid.ItemsSource);
+				var dataView = CollectionViewSource.GetDefaultView(grid.ItemsSource);
 				
-				string sortBy = column.SortBy;
+				var sortBy = column.SortBy;
 				if (sortBy == null) {
-					Binding binding = column.DisplayMemberBinding as Binding;
+					var binding = column.DisplayMemberBinding as Binding;
 					if (binding != null && binding.Path != null) {
 						sortBy = binding.Path.Path;
 					}

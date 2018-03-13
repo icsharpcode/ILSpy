@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
-			foreach (string arg in arguments) {
+			foreach (var arg in arguments) {
 				if (arg.Length == 0)
 					continue;
 				if (arg[0] == '/') {

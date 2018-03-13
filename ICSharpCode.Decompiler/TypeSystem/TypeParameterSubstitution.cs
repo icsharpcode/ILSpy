@@ -30,10 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The identity function.
 		/// </summary>
 		public static readonly TypeParameterSubstitution Identity = new TypeParameterSubstitution(null, null);
-		
-		readonly IReadOnlyList<IType> classTypeArguments;
-		readonly IReadOnlyList<IType> methodTypeArguments;
-		
+
 		/// <summary>
 		/// Creates a new type parameter substitution.
 		/// </summary>
@@ -47,26 +44,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </param>
 		public TypeParameterSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments)
 		{
-			this.classTypeArguments = classTypeArguments;
-			this.methodTypeArguments = methodTypeArguments;
+			this.ClassTypeArguments = classTypeArguments;
+			this.MethodTypeArguments = methodTypeArguments;
 		}
 		
 		/// <summary>
 		/// Gets the list of class type arguments.
 		/// Returns <c>null</c> if this substitution keeps class type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> ClassTypeArguments {
-			get { return classTypeArguments; }
-		}
-		
+		public IReadOnlyList<IType> ClassTypeArguments { get; }
+
 		/// <summary>
 		/// Gets the list of method type arguments.
 		/// Returns <c>null</c> if this substitution keeps method type parameters unmodified.
 		/// </summary>
-		public IReadOnlyList<IType> MethodTypeArguments {
-			get { return methodTypeArguments; }
-		}
-		
+		public IReadOnlyList<IType> MethodTypeArguments { get; }
+
 		#region Compose
 		/// <summary>
 		/// Computes a single TypeParameterSubstitution so that for all types <c>t</c>:
@@ -77,20 +70,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (g == null)
 				return f;
-			if (f == null || (f.classTypeArguments == null && f.methodTypeArguments == null))
+			if (f == null || (f.ClassTypeArguments == null && f.MethodTypeArguments == null))
 				return g;
 			// The composition is a copy of 'f', with 'g' applied on the array elements.
 			// If 'f' has a null list (keeps type parameters unmodified), we have to treat it as
 			// the identity function, and thus use the list from 'g'.
-			var classTypeArguments = f.classTypeArguments != null ? GetComposedTypeArguments(f.classTypeArguments, g) : g.classTypeArguments;
-			var methodTypeArguments = f.methodTypeArguments != null ? GetComposedTypeArguments(f.methodTypeArguments, g) : g.methodTypeArguments;
+			var classTypeArguments = f.ClassTypeArguments != null ? GetComposedTypeArguments(f.ClassTypeArguments, g) : g.ClassTypeArguments;
+			var methodTypeArguments = f.MethodTypeArguments != null ? GetComposedTypeArguments(f.MethodTypeArguments, g) : g.MethodTypeArguments;
 			return new TypeParameterSubstitution(classTypeArguments, methodTypeArguments);
 		}
 		
 		static IReadOnlyList<IType> GetComposedTypeArguments(IReadOnlyList<IType> input, TypeParameterSubstitution substitution)
 		{
-			IType[] result = new IType[input.Count];
-			for (int i = 0; i < result.Length; i++) {
+			var result = new IType[input.Count];
+			for (var i = 0; i < result.Length; i++) {
 				result[i] = input[i].AcceptVisitor(substitution);
 			}
 			return result;
@@ -100,17 +93,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region Equals and GetHashCode implementation
 		public override bool Equals(object obj)
 		{
-			TypeParameterSubstitution other = obj as TypeParameterSubstitution;
+			var other = obj as TypeParameterSubstitution;
 			if (other == null)
 				return false;
-			return TypeListEquals(classTypeArguments, other.classTypeArguments)
-				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments);
+			return TypeListEquals(ClassTypeArguments, other.ClassTypeArguments)
+				&& TypeListEquals(MethodTypeArguments, other.MethodTypeArguments);
 		}
 		
 		public override int GetHashCode()
 		{
 			unchecked {
-				return 1124131 * TypeListHashCode(classTypeArguments) + 1821779 * TypeListHashCode(methodTypeArguments);
+				return 1124131 * TypeListHashCode(ClassTypeArguments) + 1821779 * TypeListHashCode(MethodTypeArguments);
 			}
 		}
 		
@@ -122,7 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return false;
 			if (a.Count != b.Count)
 				return false;
-			for (int i = 0; i < a.Count; i++) {
+			for (var i = 0; i < a.Count; i++) {
 				if (!a[i].Equals(b[i]))
 					return false;
 			}
@@ -134,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (obj == null)
 				return 0;
 			unchecked {
-				int hashCode = 1;
+				var hashCode = 1;
 				foreach (var element in obj) {
 					hashCode *= 27;
 					hashCode += element.GetHashCode();
@@ -146,15 +139,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override IType VisitTypeParameter(ITypeParameter type)
 		{
-			int index = type.Index;
-			if (classTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition) {
-				if (index >= 0 && index < classTypeArguments.Count)
-					return classTypeArguments[index];
+			var index = type.Index;
+			if (ClassTypeArguments != null && type.OwnerType == SymbolKind.TypeDefinition) {
+				if (index >= 0 && index < ClassTypeArguments.Count)
+					return ClassTypeArguments[index];
 				else
 					return SpecialType.UnknownType;
-			} else if (methodTypeArguments != null && type.OwnerType == SymbolKind.Method) {
-				if (index >= 0 && index < methodTypeArguments.Count)
-					return methodTypeArguments[index];
+			} else if (MethodTypeArguments != null && type.OwnerType == SymbolKind.Method) {
+				if (index >= 0 && index < MethodTypeArguments.Count)
+					return MethodTypeArguments[index];
 				else
 					return SpecialType.UnknownType;
 			} else {
@@ -164,25 +157,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			b.Append('[');
-			bool first = true;
-			if (classTypeArguments != null) {
-				for (int i = 0; i < classTypeArguments.Count; i++) {
+			var first = true;
+			if (ClassTypeArguments != null) {
+				for (var i = 0; i < ClassTypeArguments.Count; i++) {
 					if (first) first = false; else b.Append(", ");
 					b.Append('`');
 					b.Append(i);
 					b.Append(" -> ");
-					b.Append(classTypeArguments[i].ReflectionName);
+					b.Append(ClassTypeArguments[i].ReflectionName);
 				}
 			}
-			if (methodTypeArguments != null) {
-				for (int i = 0; i < methodTypeArguments.Count; i++) {
+			if (MethodTypeArguments != null) {
+				for (var i = 0; i < MethodTypeArguments.Count; i++) {
 					if (first) first = false; else b.Append(", ");
 					b.Append("``");
 					b.Append(i);
 					b.Append(" -> ");
-					b.Append(methodTypeArguments[i].ReflectionName);
+					b.Append(MethodTypeArguments[i].ReflectionName);
 				}
 			}
 			b.Append(']');

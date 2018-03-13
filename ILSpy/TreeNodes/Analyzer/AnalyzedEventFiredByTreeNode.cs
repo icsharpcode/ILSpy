@@ -36,19 +36,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedEventFiredByTreeNode(EventDefinition analyzedEvent)
 		{
-			if (analyzedEvent == null)
-				throw new ArgumentNullException(nameof(analyzedEvent));
-
-			this.analyzedEvent = analyzedEvent;
+			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 
 			this.eventBackingField = GetBackingField(analyzedEvent);
 			this.eventFiringMethod = analyzedEvent.EventType.Resolve().Methods.First(md => md.Name == "Invoke");
 		}
 
-		public override object Text
-		{
-			get { return "Raised By"; }
-		}
+		public override object Text => "Raised By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -67,21 +61,21 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			// If the method accesses the event's backing field, and calls invoke on a delegate 
 			// with the same signature, then it is (most likely) raise the given event.
 
-			foreach (MethodDefinition method in type.Methods) {
-				bool readBackingField = false;
-				bool found = false;
+			foreach (var method in type.Methods) {
+				var readBackingField = false;
+				var found = false;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					Code code = instr.OpCode.Code;
+				foreach (var instr in method.Body.Instructions) {
+					var code = instr.OpCode.Code;
 					if (code == Code.Ldfld || code == Code.Ldflda) {
-						FieldReference fr = instr.Operand as FieldReference;
+						var fr = instr.Operand as FieldReference;
 						if (fr != null && fr.Name == eventBackingField.Name && fr == eventBackingField) {
 							readBackingField = true;
 						}
 					}
 					if (readBackingField && (code == Code.Callvirt || code == Code.Call)) {
-						MethodReference mr = instr.Operand as MethodReference;
+						var mr = instr.Operand as MethodReference;
 						if (mr != null && mr.Name == eventFiringMethod.Name && mr.Resolve() == eventFiringMethod) {
 							found = true;
 							break;
@@ -92,7 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				method.Body = null;
 
 				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
+					var codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
 					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
 						var node = new AnalyzedMethodTreeNode(codeLocation);
 						node.Language = this.Language;

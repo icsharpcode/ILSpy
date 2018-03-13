@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// should only be considered as condition block, if there are no other blocks.
 			foreach (var block in loop.Blocks.Reverse()) {
 				// first we match the end of the block:
-				if (MatchDoWhileConditionBlock(loop, block, out bool swap, out bool unwrapCondtionBlock, out Block conditionBlock)) {
+				if (MatchDoWhileConditionBlock(loop, block, out var swap, out var unwrapCondtionBlock, out var conditionBlock)) {
 					// now collect all instructions that are usable as loop conditions
 					var conditions = CollectConditions(loop, conditionBlock, swap);
 					// split only if the block is either the entry-point or contains other instructions as well.
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static List<IfInstruction> CollectConditions(BlockContainer loop, Block block, bool swap)
 		{
 			var list = new List<IfInstruction>();
-			int i = block.Instructions.Count - 2;
+			var i = block.Instructions.Count - 2;
 			while (i >= 0 && block.Instructions[i] is IfInstruction ifInst) {
 				if (!ifInst.FalseInst.MatchNop())
 					break;
@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var conditions = new List<ILInstruction>();
 				SplitConditions(whileCondition.Condition, conditions);
 				IfInstruction forCondition = null;
-				int numberOfConditions = 0;
+				var numberOfConditions = 0;
 				foreach (var condition in conditions) {
 					// the increment variable must be used in the condition
 					if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
@@ -393,13 +393,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
 				ExpressionTransforms.RunOnSingleStatment(forCondition, context);
-				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
+				for (var i = conditions.Count - 1; i >= numberOfConditions; i--) {
 					IfInstruction inst;
 					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
 				// create a new increment block and add it at the end:
-				int secondToLastIndex = secondToLast.ChildIndex;
+				var secondToLastIndex = secondToLast.ChildIndex;
 				var newIncremenBlock = new Block();
 				loop.Blocks.Add(newIncremenBlock);
 				// move the increment instruction:

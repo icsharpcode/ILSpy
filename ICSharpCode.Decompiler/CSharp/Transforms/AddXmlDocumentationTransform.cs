@@ -54,15 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (mr == null)
 						continue;
-					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+					var doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
 					if (doc != null) {
 						InsertXmlDocumentation(entity, new StringReader(doc));
 					}
 				}
 			} catch (XmlException ex) {
-				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
-				for (int i = 0; i < msg.Length; i++)
+				for (var i = 0; i < msg.Length; i++)
 					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
 			}
 		}
@@ -76,23 +76,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (firstLine == null)
 					return;
 			} while (string.IsNullOrWhiteSpace(firstLine));
-			string indentation = firstLine.Substring(0, firstLine.Length - firstLine.TrimStart().Length);
-			string line = firstLine;
-			int skippedWhitespaceLines = 0;
+			var indentation = firstLine.Substring(0, firstLine.Length - firstLine.TrimStart().Length);
+			var line = firstLine;
+			var skippedWhitespaceLines = 0;
 			// Copy all lines from input to output, except for empty lines at the end.
 			while (line != null) {
 				if (string.IsNullOrWhiteSpace(line)) {
 					skippedWhitespaceLines++;
 				} else {
 					while (skippedWhitespaceLines > 0) {
-						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
+						var emptyLine = new Comment(string.Empty, CommentType.Documentation);
 						emptyLine.AddAnnotation(node.GetResolveResult());
 						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);
 						skippedWhitespaceLines--;
 					}
 					if (line.StartsWith(indentation, StringComparison.Ordinal))
 						line = line.Substring(indentation.Length);
-					Comment comment = new Comment(" " + line, CommentType.Documentation);
+					var comment = new Comment(" " + line, CommentType.Documentation);
 					comment.AddAnnotation(node.GetResolveResult());
 					node.Parent.InsertChildBefore(node, comment, Roles.Comment);
 				}

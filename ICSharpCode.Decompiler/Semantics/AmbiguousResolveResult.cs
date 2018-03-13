@@ -29,9 +29,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 		}
 		
-		public override bool IsError {
-			get { return true; }
-		}
+		public override bool IsError => true;
 	}
 	
 	/// <summary>
@@ -43,8 +41,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 		}
 		
-		public override bool IsError {
-			get { return true; }
-		}
+		public override bool IsError => true;
 	}
 }

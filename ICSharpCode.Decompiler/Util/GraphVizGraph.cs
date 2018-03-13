@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	sealed class GraphVizGraph
 	{
-		List<GraphVizNode> nodes = new List<GraphVizNode>();
-		List<GraphVizEdge> edges = new List<GraphVizEdge>();
+		readonly List<GraphVizNode> nodes = new List<GraphVizNode>();
+		readonly List<GraphVizEdge> edges = new List<GraphVizEdge>();
 
 		public string rankdir;
 		public string Title;
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Save(string fileName)
 		{
-			using (StreamWriter writer = new StreamWriter(fileName))
+			using (var writer = new StreamWriter(fileName))
 				Save(writer);
 		}
 
@@ -63,9 +63,9 @@ namespace ICSharpCode.Decompiler.Util
 			if (name == null)
 				name = Title;
 			if (name != null)
-				foreach (char c in Path.GetInvalidFileNameChars())
+				foreach (var c in Path.GetInvalidFileNameChars())
 					name = name.Replace(c, '-');
-			string fileName = name != null ? Path.Combine(Path.GetTempPath(), name) : Path.GetTempFileName();
+			var fileName = name != null ? Path.Combine(Path.GetTempPath(), name) : Path.GetTempFileName();
 			Save(fileName + ".gv");
 			Process.Start("dot", "\"" + fileName + ".gv\" -Tpng -o \"" + fileName + ".png\"").WaitForExit();
 			Process.Start(fileName + ".png");
@@ -118,10 +118,10 @@ namespace ICSharpCode.Decompiler.Util
 			writer.WriteLine("digraph G {");
 			writer.WriteLine("node [fontsize = 16];");
 			WriteGraphAttribute(writer, "rankdir", rankdir);
-			foreach (GraphVizNode node in nodes) {
+			foreach (var node in nodes) {
 				node.Save(writer);
 			}
-			foreach (GraphVizEdge edge in edges) {
+			foreach (var edge in edges) {
 				edge.Save(writer);
 			}
 			writer.WriteLine("}");
@@ -146,12 +146,8 @@ namespace ICSharpCode.Decompiler.Util
 
 		public GraphVizEdge(string source, string target)
 		{
-			if (source == null)
-				throw new ArgumentNullException("source");
-			if (target == null)
-				throw new ArgumentNullException("target");
-			this.Source = source;
-			this.Target = target;
+			this.Source = source ?? throw new ArgumentNullException("source");
+			this.Target = target ?? throw new ArgumentNullException("target");
 		}
 
 		public GraphVizEdge(int source, int target)
@@ -163,7 +159,7 @@ namespace ICSharpCode.Decompiler.Util
 		public void Save(TextWriter writer)
 		{
 			writer.Write("{0} -> {1} [", Source, Target);
-			bool isFirst = true;
+			var isFirst = true;
 			GraphVizGraph.WriteAttribute(writer, "label", label, ref isFirst);
 			GraphVizGraph.WriteAttribute(writer, "style", style, ref isFirst);
 			GraphVizGraph.WriteAttribute(writer, "fontsize", fontsize, ref isFirst);
@@ -194,9 +190,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public GraphVizNode(string id)
 		{
-			if (id == null)
-				throw new ArgumentNullException("id");
-			this.ID = id;
+			this.ID = id ?? throw new ArgumentNullException("id");
 		}
 
 		public GraphVizNode(int id)
@@ -208,7 +202,7 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			writer.Write(ID);
 			writer.Write(" [");
-			bool isFirst = true;
+			var isFirst = true;
 			GraphVizGraph.WriteAttribute(writer, "label", label, ref isFirst);
 			GraphVizGraph.WriteAttribute(writer, "labelloc", labelloc, ref isFirst);
 			GraphVizGraph.WriteAttribute(writer, "fontsize", fontsize, ref isFirst);

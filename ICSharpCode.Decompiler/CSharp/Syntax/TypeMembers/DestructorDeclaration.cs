@@ -32,24 +32,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole TildeRole = new TokenRole ("~");
 		
-		public CSharpTokenNode TildeToken {
-			get { return GetChildByRole (TildeRole); }
-		}
-		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Destructor; }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
+		public CSharpTokenNode TildeToken => GetChildByRole (TildeRole);
+
+		public override SymbolKind SymbolKind => SymbolKind.Destructor;
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -69,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DestructorDeclaration o = other as DestructorDeclaration;
+			var o = other as DestructorDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
 		}
 	}

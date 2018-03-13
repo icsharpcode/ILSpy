@@ -48,8 +48,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public static bool InlineAllInBlock(Block block, ILTransformContext context)
 		{
-			bool modified = false;
-			int i = 0;
+			var modified = false;
+			var i = 0;
 			while (i < block.Instructions.Count) {
 				if (InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block), context: context)) {
 					modified = true;
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= block.Instructions.Count)
 				return 0;
-			int count = 0;
+			var count = 0;
 			while (--pos >= 0) {
 				if (InlineOneIfPossible(block, pos, aggressive, context))
 					count++;
@@ -101,10 +101,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool InlineOneIfPossible(Block block, int pos, bool aggressive, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
-			StLoc stloc = block.Instructions[pos] as StLoc;
+			var stloc = block.Instructions[pos] as StLoc;
 			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
 				return false;
-			ILVariable v = stloc.Variable;
+			var v = stloc.Variable;
 			// ensure the variable is accessed only a single time
 			if (v.StoreCount != 1)
 				return false;
@@ -125,9 +125,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public static bool InlineOne(StLoc stloc, bool aggressive, ILTransformContext context)
 		{
-			ILVariable v = stloc.Variable;
-			Block block = (Block)stloc.Parent;
-			int pos = stloc.ChildIndex;
+			var v = stloc.Variable;
+			var block = (Block)stloc.Parent;
+			var pos = stloc.ChildIndex;
 			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), aggressive, context)) {
 				// Assign the ranges of the stloc instruction:
 				stloc.Value.AddILRange(stloc.ILRange);
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.LdObj:
 					// ldobj typically refers to a storage location,
 					// but readonly fields are an exception.
-					IField f = (((LdObj)inst).Target as IInstructionWithFieldOperand)?.Field;
+					var f = (((LdObj)inst).Target as IInstructionWithFieldOperand)?.Field;
 					return !(f != null && f.IsReadOnly);
 				case OpCode.StObj:
 					// stobj is the same as ldobj.
@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				
 				// Recursively try to find the load instruction
-				bool? r = FindLoadInNext(child, v, expressionBeingMoved, out loadInst);
+				var r = FindLoadInNext(child, v, expressionBeingMoved, out loadInst);
 				if (r != null)
 					return r;
 			}
@@ -408,13 +408,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool CanUninline(ILInstruction arg, ILInstruction stmt)
 		{
 			Debug.Assert(arg.IsDescendantOf(stmt));
-			for (ILInstruction inst = arg; inst != stmt; inst = inst.Parent) {
+			for (var inst = arg; inst != stmt; inst = inst.Parent) {
 				if (!inst.SlotInfo.CanInlineInto)
 					return false;
 				// Check whether re-ordering with predecessors is valid:
-				int childIndex = inst.ChildIndex;
-				for (int i = 0; i < childIndex; ++i) {
-					ILInstruction predecessor = inst.Parent.Children[i];
+				var childIndex = inst.ChildIndex;
+				for (var i = 0; i < childIndex; ++i) {
+					var predecessor = inst.Parent.Children[i];
 					if (!SemanticHelper.MayReorder(arg, predecessor))
 						return false;
 				}

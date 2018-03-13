@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			if (!context.Settings.AnonymousMethods)
 				return;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+			for (var i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (block.Instructions[i] is IfInstruction inst) {
 					if (CachedDelegateInitializationWithField(inst)) {
 						block.Instructions.RemoveAt(i);
@@ -60,13 +60,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool CachedDelegateInitializationWithField(IfInstruction inst)
 		{
 
-			Block trueInst = inst.TrueInst as Block;
+			var trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
 			var storeInst = trueInst.Instructions[0];
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdsFld(out IField field) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out var left, out var right) || !left.MatchLdsFld(out var field) || !right.MatchLdNull())
 				return false;
-			if (!storeInst.MatchStsFld(out IField field2, out ILInstruction value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			if (!storeInst.MatchStsFld(out var field2, out var value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
@@ -90,13 +90,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			var trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable v) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out var left, out var right) || !left.MatchLdLoc(out var v) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last();
-			if (!storeInst.MatchStLoc(v, out ILInstruction value))
+			if (!storeInst.MatchStLoc(v, out var value))
 				return false;
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
@@ -130,10 +130,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynInStaticWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			var trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out var left, out var right) || !left.MatchLdLoc(out var s) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last() as StLoc;
 			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
@@ -162,10 +162,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
 		{
-			Block trueInst = inst.TrueInst as Block;
+			var trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out var left, out var right) || !left.MatchLdLoc(out var s) || !right.MatchLdNull())
 				return false;
 			var storeInst = trueInst.Instructions.Last() as StLoc;
 			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;

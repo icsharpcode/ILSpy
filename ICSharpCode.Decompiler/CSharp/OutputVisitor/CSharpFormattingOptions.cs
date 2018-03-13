@@ -300,15 +300,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		bool allowOneLinedArrayInitialziers = true;
-		public bool AllowOneLinedArrayInitialziers {
-			get {
-				return allowOneLinedArrayInitialziers;
-			}
-			set {
-				allowOneLinedArrayInitialziers = value;
-			}
-		}
+		public bool AllowOneLinedArrayInitialziers { get; set; } = true;
+
 		#endregion
 
 		#region NewLines
@@ -337,15 +330,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			set;
 		}
 
-		NewLinePlacement embeddedStatementPlacement = NewLinePlacement.NewLine;
-		public NewLinePlacement EmbeddedStatementPlacement {
-			get {
-				return embeddedStatementPlacement;
-			}
-			set {
-				embeddedStatementPlacement = value;
-			}
-		}
+		public NewLinePlacement EmbeddedStatementPlacement { get; set; } = NewLinePlacement.NewLine;
+
 		#endregion
 		
 		#region Spaces

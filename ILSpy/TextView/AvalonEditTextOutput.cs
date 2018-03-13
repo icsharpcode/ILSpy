@@ -82,10 +82,10 @@ namespace ICSharpCode.ILSpy.TextView
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 		
 		/// <summary>List of all references that were written to the output</summary>
-		TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
+		readonly TextSegmentCollection<ReferenceSegment> references = new TextSegmentCollection<ReferenceSegment>();
 		
 		/// <summary>Stack of the fold markers that are open but not closed yet</summary>
-		Stack<NewFolding> openFoldings = new Stack<NewFolding>();
+		readonly Stack<NewFolding> openFoldings = new Stack<NewFolding>();
 		
 		/// <summary>List of all foldings that were written to the output</summary>
 		internal readonly List<NewFolding> Foldings = new List<NewFolding>();
@@ -104,10 +104,8 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>
 		/// Gets the list of references (hyperlinks).
 		/// </summary>
-		internal TextSegmentCollection<ReferenceSegment> References {
-			get { return references; }
-		}
-		
+		internal TextSegmentCollection<ReferenceSegment> References => references;
+
 		public void AddVisualLineElementGenerator(VisualLineElementGenerator elementGenerator)
 		{
 			elementGenerators.Add(elementGenerator);
@@ -120,16 +118,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public int LengthLimit = int.MaxValue;
 		
-		public int TextLength {
-			get { return b.Length; }
-		}
-		
-		public TextLocation Location {
-			get {
-				return new TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
-			}
-		}
-		
+		public int TextLength => b.Length;
+
+		public TextLocation Location => new TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
+
 		#region Text Document
 		TextDocument textDocument;
 		
@@ -177,7 +169,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Debug.Assert(textDocument == null);
 			if (needsIndent) {
 				needsIndent = false;
-				for (int i = 0; i < indent; i++) {
+				for (var i = 0; i < indent; i++) {
 					b.Append(IndentationString);
 				}
 			}
@@ -210,9 +202,9 @@ namespace ICSharpCode.ILSpy.TextView
 		public void WriteDefinition(string text, object definition, bool isLocal = true)
 		{
 			WriteIndent();
-			int start = this.TextLength;
+			var start = this.TextLength;
 			b.Append(text);
-			int end = this.TextLength;
+			var end = this.TextLength;
 			this.DefinitionLookup.AddDefinition(definition, this.TextLength);
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = definition, IsLocal = isLocal, IsLocalTarget = true });
 		}
@@ -220,9 +212,9 @@ namespace ICSharpCode.ILSpy.TextView
 		public void WriteReference(string text, object reference, bool isLocal = false)
 		{
 			WriteIndent();
-			int start = this.TextLength;
+			var start = this.TextLength;
 			b.Append(text);
-			int end = this.TextLength;
+			var end = this.TextLength;
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = isLocal });
 		}
 		
@@ -239,7 +231,7 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		public void MarkFoldEnd()
 		{
-			NewFolding f = openFoldings.Pop();
+			var f = openFoldings.Pop();
 			f.EndOffset = this.TextLength;
 			this.Foldings.Add(f);
 		}

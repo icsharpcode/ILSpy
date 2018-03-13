@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	
 	public struct GenericValueType<T>
 	{
-		T data;
+		readonly T data;
 		int num;
 		
 		public GenericValueType(T data)
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static void Main()
 		{
-			MutValueType m = new MutValueType();
+			var m = new MutValueType();
 			RefParameter(ref m);
 			ValueParameter(m);
 			Field();
@@ -92,11 +92,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			MutableField.Increment();
 			// Ensure that 'v' isn't incorrectly removed
 			// as a compiler-generated temporary
-			MutValueType v = MutableField;
+			var v = MutableField;
 			v.Increment();
 			Console.WriteLine("Final value in MutableField: " + MutableField.val);
 			// Read-only field copies cannot be inlined for static methods:
-			MutValueType localCopy = ReadonlyField;
+			var localCopy = ReadonlyField;
 			RefParameter(ref localCopy);
 		}
 		
@@ -106,11 +106,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			object o = new MutValueType { val = 300 };
 			((MutValueType)o).Increment();
 			((MutValueType)o).Increment();
-			MutValueType unboxed1 = (MutValueType)o;
+			var unboxed1 = (MutValueType)o;
 			unboxed1.Increment();
 			unboxed1.Increment();
 			((MutValueType)o).Increment();
-			MutValueType unboxed2 = (MutValueType)o;
+			var unboxed2 = (MutValueType)o;
 			unboxed2.val = 100;
 			((MutValueType)o).Dispose();
 		}
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void BoxToStringCalls()
 		{
 			Console.WriteLine("BoxToStringCalls:");
-			MutValueType m = new MutValueType { val = 400 };
+			var m = new MutValueType { val = 400 };
 			Console.WriteLine(m.ToString());
 			Console.WriteLine(((object)m).ToString());
 			Console.WriteLine(m.ToString());
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try {
 				y.Increment();
 			} finally {
-				MutValueType x = y;
+				var x = y;
 				x.Dispose();
 			}
 		}

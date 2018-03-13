@@ -116,13 +116,7 @@ namespace AppliedToProperty
 	public class TestClass
 	{
 		[Obsolete("reason")]
-		public int Property
-		{
-			get
-			{
-				return 0;
-			}
-		}
+		public int Property => 0;
 	}
 }
 //$$ AppliedToPropertyGet
@@ -172,13 +166,7 @@ namespace AppliedToIndexer
 	public class TestClass
 	{
 		[Obsolete("reason")]
-		public int this[int i]
-		{
-			get
-			{
-				return 0;
-			}
-		}
+		public int this[int i] => 0;
 	}
 }
 //$$ AppliedToDelegate
@@ -240,10 +228,7 @@ namespace NamedInitializerPropertyString
 	{
 		public string Prop
 		{
-			get
-			{
-				return "";
-			}
+			get => "";
 			set
 			{
 			}
@@ -262,10 +247,7 @@ namespace NamedInitializerPropertyType
 	{
 		public Type Prop
 		{
-			get
-			{
-				return null;
-			}
+			get => null;
 			set
 			{
 			}
@@ -284,10 +266,7 @@ namespace NamedInitializerPropertyEnum
 	{
 		public AttributeTargets Prop
 		{
-			get
-			{
-				return AttributeTargets.All;
-			}
+			get => AttributeTargets.All;
 			set
 			{
 			}
@@ -431,13 +410,7 @@ namespace TargetPropertyIndexParamOnlyGet
 	}
 	public class MyClass
 	{
-		public int this[[MyAttribute] string s]
-		{
-			get
-			{
-				return 3;
-			}
-		}
+		public int this[[MyAttribute] string s] => 3;
 	}
 }
 //$$ TargetPropertyIndexSetReturn

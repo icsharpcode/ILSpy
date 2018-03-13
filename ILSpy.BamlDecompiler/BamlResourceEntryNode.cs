@@ -32,7 +32,7 @@ namespace ILSpy.BamlDecompiler
 			textView.RunWithCancellation(
 				token => Task.Factory.StartNew(
 					() => {
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
+						var output = new AvalonEditTextOutput();
 						try {
 							if (LoadBaml(output, token))
 								highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
@@ -50,7 +50,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
 			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.GetAssemblyDefinitionAsync().Result, Data, cancellationToken);
+			var xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.GetAssemblyDefinitionAsync().Result, Data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}
@@ -59,7 +59,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			XDocument xamlDocument;
-			using (XmlBamlReader reader = new XmlBamlReader(stream, new CecilTypeResolver(resolver, asm))) {
+			using (var reader = new XmlBamlReader(stream, new CecilTypeResolver(resolver, asm))) {
 				xamlDocument = XDocument.Load(reader);
 				ConvertConnectionIds(xamlDocument, asm, cancellationToken);
 				ConvertToEmptyElements(xamlDocument.Root);
@@ -72,7 +72,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var attr = xamlDocument.Root.Attribute(XName.Get("Class", XmlBamlReader.XWPFNamespace));
 			if (attr != null) {
-				string fullTypeName = attr.Value;
+				var fullTypeName = attr.Value;
 				var mappings = new ConnectMethodDecompiler(asm).DecompileEventMappings(fullTypeName, cancellationToken);
 				RemoveConnectionIds(xamlDocument.Root, mappings);
 			}
@@ -110,11 +110,11 @@ namespace ILSpy.BamlDecompiler
 			
 			foreach (var element in xamlDocument.Root.DescendantsAndSelf()) {
 				if (element.Name.NamespaceName != XmlBamlReader.DefaultWPFNamespace && !additionalXmlns.Any(ka => ka.Value == element.Name.NamespaceName)) {
-					string newPrefix = new string(element.Name.LocalName.Where(c => char.IsUpper(c)).ToArray()).ToLowerInvariant();
-					int current = additionalXmlns.Count(ka => ka.Name.Namespace == XNamespace.Xmlns && ka.Name.LocalName.TrimEnd(ch => char.IsNumber(ch)) == newPrefix);
+					var newPrefix = new string(element.Name.LocalName.Where(c => char.IsUpper(c)).ToArray()).ToLowerInvariant();
+					var current = additionalXmlns.Count(ka => ka.Name.Namespace == XNamespace.Xmlns && ka.Name.LocalName.TrimEnd(ch => char.IsNumber(ch)) == newPrefix);
 					if (current > 0)
 						newPrefix += (current + 1).ToString();
-					XName defaultXmlns = XName.Get(newPrefix, XNamespace.Xmlns.NamespaceName);
+					var defaultXmlns = XName.Get(newPrefix, XNamespace.Xmlns.NamespaceName);
 					if (element.Name.NamespaceName != XmlBamlReader.DefaultWPFNamespace)
 						additionalXmlns.Add(new XAttribute(defaultXmlns, element.Name.NamespaceName));
 				}
@@ -147,7 +147,7 @@ namespace ILSpy.BamlDecompiler
 				int id, index;
 				if (int.TryParse(attr.Value, out id) && (index = eventMappings.FindIndex(item => item.key.Contains(id))) > -1) {
 					foreach (var entry in eventMappings[index].value) {
-						string xmlns = ""; // TODO : implement xmlns resolver!
+						var xmlns = ""; // TODO : implement xmlns resolver!
 						addableAttrs.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
 					}
 					removableAttrs.Add(attr);

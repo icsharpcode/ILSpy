@@ -39,8 +39,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void InterestingConstants()
 		{
-			long val1 = 2147483648L;
-			uint val2 = 2147483648u;
+			var val1 = 2147483648L;
+			var val2 = 2147483648u;
 			Console.WriteLine("InterestingConstants:");
 			Print(val1);
 			Print(2147483648L);

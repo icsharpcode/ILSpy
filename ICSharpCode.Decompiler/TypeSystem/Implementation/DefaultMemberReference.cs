@@ -34,33 +34,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public sealed class DefaultMemberReference : IMemberReference, ISupportsInterning
 	{
 		readonly SymbolKind symbolKind;
-		readonly ITypeReference typeReference;
 		readonly string name;
 		readonly int typeParameterCount;
 		readonly IList<ITypeReference> parameterTypes;
 		
 		public DefaultMemberReference(SymbolKind symbolKind, ITypeReference typeReference, string name, int typeParameterCount = 0, IList<ITypeReference> parameterTypes = null)
 		{
-			if (typeReference == null)
-				throw new ArgumentNullException("typeReference");
-			if (name == null)
-				throw new ArgumentNullException("name");
 			if (typeParameterCount != 0 && symbolKind != SymbolKind.Method)
 				throw new ArgumentException("Type parameter count > 0 is only supported for methods.");
 			this.symbolKind = symbolKind;
-			this.typeReference = typeReference;
-			this.name = name;
+			this.DeclaringTypeReference = typeReference ?? throw new ArgumentNullException("typeReference");
+			this.name = name ?? throw new ArgumentNullException("name");
 			this.typeParameterCount = typeParameterCount;
 			this.parameterTypes = parameterTypes ?? EmptyList<ITypeReference>.Instance;
 		}
 		
-		public ITypeReference DeclaringTypeReference {
-			get { return typeReference; }
-		}
-		
+		public ITypeReference DeclaringTypeReference { get; }
+
 		public IMember Resolve(ITypeResolveContext context)
 		{
-			IType type = typeReference.Resolve(context);
+			var type = DeclaringTypeReference.Resolve(context);
 			IEnumerable<IMember> members;
 			if (symbolKind == SymbolKind.Accessor) {
 				members = type.GetAccessors(
@@ -77,16 +70,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					GetMemberOptions.IgnoreInheritedMembers);
 			}
 			var resolvedParameterTypes = parameterTypes.Resolve(context);
-			foreach (IMember member in members) {
-				IParameterizedMember parameterizedMember = member as IParameterizedMember;
+			foreach (var member in members) {
+				var parameterizedMember = member as IParameterizedMember;
 				if (parameterizedMember == null) {
 					if (parameterTypes.Count == 0)
 						return member;
 				} else if (parameterTypes.Count == parameterizedMember.Parameters.Count) {
-					bool signatureMatches = true;
-					for (int i = 0; i < parameterTypes.Count; i++) {
-						IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(resolvedParameterTypes[i]);
-						IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(parameterizedMember.Parameters[i].Type);
+					var signatureMatches = true;
+					for (var i = 0; i < parameterTypes.Count; i++) {
+						var type1 = DummyTypeParameter.NormalizeAllTypeParameters(resolvedParameterTypes[i]);
+						var type2 = DummyTypeParameter.NormalizeAllTypeParameters(parameterizedMember.Parameters[i].Type);
 						if (!type1.Equals(type2)) {
 							signatureMatches = false;
 							break;
@@ -106,13 +99,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return (int)symbolKind ^ typeReference.GetHashCode() ^ name.GetHashCode() ^ parameterTypes.GetHashCode();
+			return (int)symbolKind ^ DeclaringTypeReference.GetHashCode() ^ name.GetHashCode() ^ parameterTypes.GetHashCode();
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultMemberReference o = other as DefaultMemberReference;
-			return o != null && symbolKind == o.symbolKind && typeReference == o.typeReference && name == o.name && parameterTypes == o.parameterTypes;
+			var o = other as DefaultMemberReference;
+			return o != null && symbolKind == o.symbolKind && DeclaringTypeReference == o.DeclaringTypeReference && name == o.name && parameterTypes == o.parameterTypes;
 		}
 	}
 }

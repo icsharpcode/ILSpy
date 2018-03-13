@@ -29,19 +29,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier");
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
 		
-		public override NodeType NodeType {
-			get { return NodeType.Member; }
-		}
-		
+		public override NodeType NodeType => NodeType.Member;
+
 		public abstract SymbolKind SymbolKind { get; }
 		
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole (AttributeRole); }
-		}
-		
+		public AstNodeCollection<AttributeSection> Attributes => base.GetChildrenByRole (AttributeRole);
+
 		public Modifiers Modifiers {
-			get { return GetModifiers(this); }
-			set { SetModifiers(this, value); }
+			get => GetModifiers(this);
+			set => SetModifiers(this, value);
 		}
 		
 		public bool HasModifier (Modifiers mod)
@@ -49,37 +45,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (Modifiers & mod) == mod;
 		}
 		
-		public IEnumerable<CSharpModifierToken> ModifierTokens {
-			get { return GetChildrenByRole (ModifierRole); }
-		}
-		
+		public IEnumerable<CSharpModifierToken> ModifierTokens => GetChildrenByRole (ModifierRole);
+
 		public virtual string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
 		}
 		
 		public virtual Identifier NameToken {
-			get { return GetChildByRole (Roles.Identifier); }
-			set { SetChildByRole (Roles.Identifier, value); }
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
 		public virtual AstType ReturnType {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole(Roles.Type, value);
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
 
 		internal static Modifiers GetModifiers(AstNode node)
 		{
 			Modifiers m = 0;
-			foreach (CSharpModifierToken t in node.GetChildrenByRole (ModifierRole)) {
+			foreach (var t in node.GetChildrenByRole (ModifierRole)) {
 				m |= t.Modifier;
 			}
 			return m;
@@ -87,9 +75,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		internal static void SetModifiers(AstNode node, Modifiers newValue)
 		{
-			Modifiers oldValue = GetModifiers(node);
+			var oldValue = GetModifiers(node);
 			AstNode insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
-			foreach (Modifiers m in CSharpModifierToken.AllModifiers) {
+			foreach (var m in CSharpModifierToken.AllModifiers) {
 				if ((m & newValue) != 0) {
 					if ((m & oldValue) == 0) {
 						// Modifier was added

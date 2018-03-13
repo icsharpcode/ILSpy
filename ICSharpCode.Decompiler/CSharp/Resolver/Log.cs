@@ -58,12 +58,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		internal static void WriteCollection<T>(string text, IEnumerable<T> lines)
 		{
 			#if DEBUG
-			T[] arr = lines.ToArray();
+			var arr = lines.ToArray();
 			if (arr.Length == 0) {
 				Debug.WriteLine(text + "<empty collection>");
 			} else {
 				Debug.WriteLine(text + (arr[0] != null ? arr[0].ToString() : "<null>"));
-				for (int i = 1; i < arr.Length; i++) {
+				for (var i = 1; i < arr.Length; i++) {
 					Debug.WriteLine(new string(' ', text.Length) + (arr[i] != null ? arr[i].ToString() : "<null>"));
 				}
 			}

@@ -376,12 +376,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchOnStringInForLoop()
 		{
-			List<SetProperty> list = new List<SetProperty>();
-			List<SetProperty> list2 = new List<SetProperty>();
-			SetProperty[] properties = Switch.GetProperties();
-			for (int i = 0; i < properties.Length; i++) {
+			var list = new List<SetProperty>();
+			var list2 = new List<SetProperty>();
+			var properties = Switch.GetProperties();
+			for (var i = 0; i < properties.Length; i++) {
 				Console.WriteLine("In for-loop");
-				SetProperty setProperty = properties[i];
+				var setProperty = properties[i];
 				switch (setProperty.Property.Name) {
 					case "Name1":
 						setProperty.Set = 1;

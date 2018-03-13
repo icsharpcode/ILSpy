@@ -26,33 +26,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		protected TypeWithElementType(IType elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException("elementType");
-			this.elementType = elementType;
+			this.elementType = elementType ?? throw new ArgumentNullException("elementType");
 		}
 		
-		public override string Name {
-			get { return elementType.Name + NameSuffix; }
-		}
-		
-		public override string Namespace {
-			get { return elementType.Namespace; }
-		}
-		
-		public override string FullName {
-			get { return elementType.FullName + NameSuffix; }
-		}
-		
-		public override string ReflectionName {
-			get { return elementType.ReflectionName + NameSuffix; }
-		}
-		
+		public override string Name => elementType.Name + NameSuffix;
+
+		public override string Namespace => elementType.Namespace;
+
+		public override string FullName => elementType.FullName + NameSuffix;
+
+		public override string ReflectionName => elementType.ReflectionName + NameSuffix;
+
 		public abstract string NameSuffix { get; }
 		
-		public IType ElementType {
-			get { return elementType; }
-		}
-		
+		public IType ElementType => elementType;
+
 		// Force concrete implementations to override VisitChildren - the base implementation
 		// in AbstractType assumes there are no children, but we know there is (at least) 1.
 		public abstract override IType VisitChildren(TypeVisitor visitor);

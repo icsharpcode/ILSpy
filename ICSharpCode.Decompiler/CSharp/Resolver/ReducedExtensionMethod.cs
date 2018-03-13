@@ -38,11 +38,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public class ReducedExtensionMethod : IMethod
 	{
-		readonly IMethod baseMethod;
-
 		public ReducedExtensionMethod(IMethod baseMethod)
 		{
-			this.baseMethod = baseMethod;
+			this.ReducedFrom = baseMethod;
 		}
 
 		public override bool Equals(object obj)
@@ -50,13 +48,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			var other = obj as ReducedExtensionMethod;
 			if (other == null)
 				return false;
-			return baseMethod.Equals(other.baseMethod);
+			return ReducedFrom.Equals(other.ReducedFrom);
 		}
 		
 		public override int GetHashCode()
 		{
 			unchecked {
-				return baseMethod.GetHashCode() + 1;
+				return ReducedFrom.GetHashCode() + 1;
 			}
 		}
 
@@ -87,16 +85,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return Resolve(context);
 			}
 
-			public ITypeReference DeclaringTypeReference {
-				get {
-					return baseMethod.ToReference ().DeclaringTypeReference;
-				}
-			}
+			public ITypeReference DeclaringTypeReference => baseMethod.ToReference ().DeclaringTypeReference;
 		}
 		
 		public IMemberReference ToReference()
 		{
-			return new ReducedExtensionMethodMemberReference (baseMethod);
+			return new ReducedExtensionMethodMemberReference (ReducedFrom);
 		}
 		
 		ISymbolReference ISymbol.ToReference()
@@ -104,63 +98,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return ToReference();
 		}
 
-		public IMember MemberDefinition {
-			get {
-				return baseMethod.MemberDefinition;
-			}
-		}
+		public IMember MemberDefinition => ReducedFrom.MemberDefinition;
 
-		public IUnresolvedMember UnresolvedMember {
-			get {
-				return baseMethod.UnresolvedMember;
-			}
-		}
+		public IUnresolvedMember UnresolvedMember => ReducedFrom.UnresolvedMember;
 
-		public IType ReturnType {
-			get {
-				return baseMethod.ReturnType;
-			}
-		}
+		public IType ReturnType => ReducedFrom.ReturnType;
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
-			get {
-				return baseMethod.ImplementedInterfaceMembers;
-			}
-		}
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers => ReducedFrom.ImplementedInterfaceMembers;
 
-		public bool IsExplicitInterfaceImplementation {
-			get {
-				return baseMethod.IsExplicitInterfaceImplementation;
-			}
-		}
+		public bool IsExplicitInterfaceImplementation => ReducedFrom.IsExplicitInterfaceImplementation;
 
-		public bool IsVirtual {
-			get {
-				return baseMethod.IsVirtual;
-			}
-		}
+		public bool IsVirtual => ReducedFrom.IsVirtual;
 
-		public bool IsOverride {
-			get {
-				return baseMethod.IsOverride;
-			}
-		}
+		public bool IsOverride => ReducedFrom.IsOverride;
 
-		public bool IsOverridable {
-			get {
-				return baseMethod.IsOverridable;
-			}
-		}
+		public bool IsOverridable => ReducedFrom.IsOverridable;
 
-		public TypeParameterSubstitution Substitution {
-			get {
-				return baseMethod.Substitution;
-			}
-		}
+		public TypeParameterSubstitution Substitution => ReducedFrom.Substitution;
 
 		public IMethod Specialize(TypeParameterSubstitution substitution)
 		{
-			return new ReducedExtensionMethod((IMethod)baseMethod.Specialize(substitution));
+			return new ReducedExtensionMethod((IMethod)ReducedFrom.Specialize(substitution));
 		}
 		
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
@@ -172,89 +130,34 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region IMethod implementation
 
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get {
-				return baseMethod.Parts;
-			}
-		}
+		public IReadOnlyList<IUnresolvedMethod> Parts => ReducedFrom.Parts;
 
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get {
-				return baseMethod.ReturnTypeAttributes;
-			}
-		}
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes => ReducedFrom.ReturnTypeAttributes;
 
-		public IReadOnlyList<ITypeParameter> TypeParameters {
-			get {
-				return baseMethod.TypeParameters;
-			}
-		}
+		public IReadOnlyList<ITypeParameter> TypeParameters => ReducedFrom.TypeParameters;
 
-		public bool IsExtensionMethod {
-			get {
-				return true;
-			}
-		}
+		public bool IsExtensionMethod => true;
 
-		public bool IsConstructor {
-			get {
-				return baseMethod.IsConstructor;
-			}
-		}
+		public bool IsConstructor => ReducedFrom.IsConstructor;
 
-		public bool IsDestructor {
-			get {
-				return baseMethod.IsDestructor;
-			}
-		}
+		public bool IsDestructor => ReducedFrom.IsDestructor;
 
-		public bool IsOperator {
-			get {
-				return baseMethod.IsOperator;
-			}
-		}
+		public bool IsOperator => ReducedFrom.IsOperator;
 
-		public bool IsPartial {
-			get {
-				return baseMethod.IsPartial;
-			}
-		}
+		public bool IsPartial => ReducedFrom.IsPartial;
 
-		public bool IsAsync {
-			get {
-				return baseMethod.IsAsync;
-			}
-		}
+		public bool IsAsync => ReducedFrom.IsAsync;
 
-		public bool HasBody {
-			get {
-				return baseMethod.HasBody;
-			}
-		}
+		public bool HasBody => ReducedFrom.HasBody;
 
-		public bool IsAccessor {
-			get {
-				return baseMethod.IsAccessor;
-			}
-		}
+		public bool IsAccessor => ReducedFrom.IsAccessor;
 
-		public IMember AccessorOwner {
-			get {
-				return baseMethod.AccessorOwner;
-			}
-		}
+		public IMember AccessorOwner => ReducedFrom.AccessorOwner;
 
-		public IMethod ReducedFrom {
-			get {
-				return baseMethod;
-			}
-		}
+		public IMethod ReducedFrom { get; }
 
-		public IReadOnlyList<IType> TypeArguments {
-			get {
-				return baseMethod.TypeArguments;
-			}
-		}
+		public IReadOnlyList<IType> TypeArguments => ReducedFrom.TypeArguments;
+
 		#endregion
 
 		#region IParameterizedMember implementation
@@ -262,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public IReadOnlyList<IParameter> Parameters {
 			get {
 				if (parameters == null)
-					parameters = new List<IParameter> (baseMethod.Parameters.Skip (1));
+					parameters = new List<IParameter> (ReducedFrom.Parameters.Skip (1));
 				return parameters;
 			}
 		}
@@ -271,149 +174,61 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region IEntity implementation
 
-		public SymbolKind SymbolKind {
-			get {
-				return baseMethod.SymbolKind;
-			}
-		}
-		
-		public ITypeDefinition DeclaringTypeDefinition {
-			get {
-				return baseMethod.DeclaringTypeDefinition;
-			}
-		}
+		public SymbolKind SymbolKind => ReducedFrom.SymbolKind;
 
-		public IType DeclaringType {
-			get {
-				return baseMethod.DeclaringType;
-			}
-		}
+		public ITypeDefinition DeclaringTypeDefinition => ReducedFrom.DeclaringTypeDefinition;
 
-		public IAssembly ParentAssembly {
-			get {
-				return baseMethod.ParentAssembly;
-			}
-		}
+		public IType DeclaringType => ReducedFrom.DeclaringType;
 
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				return baseMethod.Attributes;
-			}
-		}
+		public IAssembly ParentAssembly => ReducedFrom.ParentAssembly;
 
-		public bool IsStatic {
-			get {
-				return false;
-			}
-		}
+		public IReadOnlyList<IAttribute> Attributes => ReducedFrom.Attributes;
 
-		public bool IsAbstract {
-			get {
-				return baseMethod.IsAbstract;
-			}
-		}
+		public bool IsStatic => false;
 
-		public bool IsSealed {
-			get {
-				return baseMethod.IsSealed;
-			}
-		}
+		public bool IsAbstract => ReducedFrom.IsAbstract;
 
-		public bool IsShadowing {
-			get {
-				return baseMethod.IsShadowing;
-			}
-		}
+		public bool IsSealed => ReducedFrom.IsSealed;
 
-		public bool IsSynthetic {
-			get {
-				return baseMethod.IsSynthetic;
-			}
-		}
+		public bool IsShadowing => ReducedFrom.IsShadowing;
+
+		public bool IsSynthetic => ReducedFrom.IsSynthetic;
 
 		#endregion
 
 		#region IHasAccessibility implementation
 
-		public Accessibility Accessibility {
-			get {
-				return baseMethod.Accessibility;
-			}
-		}
+		public Accessibility Accessibility => ReducedFrom.Accessibility;
 
-		public bool IsPrivate {
-			get {
-				return baseMethod.IsPrivate;
-			}
-		}
+		public bool IsPrivate => ReducedFrom.IsPrivate;
 
-		public bool IsPublic {
-			get {
-				return baseMethod.IsPublic;
-			}
-		}
+		public bool IsPublic => ReducedFrom.IsPublic;
 
-		public bool IsProtected {
-			get {
-				return baseMethod.IsProtected;
-			}
-		}
+		public bool IsProtected => ReducedFrom.IsProtected;
 
-		public bool IsInternal {
-			get {
-				return baseMethod.IsInternal;
-			}
-		}
+		public bool IsInternal => ReducedFrom.IsInternal;
 
-		public bool IsProtectedOrInternal {
-			get {
-				return baseMethod.IsProtectedOrInternal;
-			}
-		}
+		public bool IsProtectedOrInternal => ReducedFrom.IsProtectedOrInternal;
 
-		public bool IsProtectedAndInternal {
-			get {
-				return baseMethod.IsProtectedAndInternal;
-			}
-		}
+		public bool IsProtectedAndInternal => ReducedFrom.IsProtectedAndInternal;
 
 		#endregion
 
 		#region INamedElement implementation
 
-		public string FullName {
-			get {
-				return baseMethod.FullName;
-			}
-		}
+		public string FullName => ReducedFrom.FullName;
 
-		public string Name {
-			get {
-				return baseMethod.Name;
-			}
-		}
+		public string Name => ReducedFrom.Name;
 
-		public string ReflectionName {
-			get {
-				return baseMethod.ReflectionName;
-			}
-		}
+		public string ReflectionName => ReducedFrom.ReflectionName;
 
-		public string Namespace {
-			get {
-				return baseMethod.Namespace;
-			}
-		}
+		public string Namespace => ReducedFrom.Namespace;
 
 		#endregion
 
 		#region ICompilationProvider implementation
 
-		public ICompilation Compilation {
-			get {
-				return baseMethod.Compilation;
-			}
-		}
+		public ICompilation Compilation => ReducedFrom.Compilation;
 
 		#endregion
 	}

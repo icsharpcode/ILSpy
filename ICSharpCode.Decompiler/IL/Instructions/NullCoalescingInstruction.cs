@@ -70,17 +70,9 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(ResultType == UnderlyingResultType || Kind == NullCoalescingKind.Nullable);
 		}
 
-		public override StackType ResultType {
-			get {
-				return fallbackInst.ResultType;
-			}
-		}
+		public override StackType ResultType => fallbackInst.ResultType;
 
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
 
 		protected override InstructionFlags ComputeFlags()
 		{

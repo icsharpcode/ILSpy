@@ -28,10 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		static readonly Lazy<MinimalCorlib> instance = new Lazy<MinimalCorlib>(() => new MinimalCorlib());
 		
-		public static MinimalCorlib Instance {
-			get { return instance.Value; }
-		}
-		
+		public static MinimalCorlib Instance => instance.Value;
+
 		public ICompilation CreateCompilation()
 		{
 			return new SimpleCompilation(new DefaultSolutionSnapshot(), this);
@@ -40,17 +38,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		private MinimalCorlib() : base("corlib")
 		{
 			var types = new DefaultUnresolvedTypeDefinition[KnownTypeReference.KnownTypeCodeCount];
-			for (int i = 0; i < types.Length; i++) {
+			for (var i = 0; i < types.Length; i++) {
 				var typeRef = KnownTypeReference.Get((KnownTypeCode)i);
 				if (typeRef != null) {
 					types[i] = new DefaultUnresolvedTypeDefinition(typeRef.Namespace, typeRef.Name);
-					for (int j = 0; j < typeRef.TypeParameterCount; j++) {
+					for (var j = 0; j < typeRef.TypeParameterCount; j++) {
 						types[i].TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.TypeDefinition, j));
 					}
 					AddTypeDefinition(types[i]);
 				}
 			}
-			for (int i = 0; i < types.Length; i++) {
+			for (var i = 0; i < types.Length; i++) {
 				var typeRef = KnownTypeReference.Get((KnownTypeCode)i);
 				if (typeRef != null && typeRef.baseType != KnownTypeCode.None) {
 					types[i].BaseTypes.Add(types[(int)typeRef.baseType]);

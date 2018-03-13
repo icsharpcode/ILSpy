@@ -38,12 +38,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets a variable given its <c>IndexInFunction</c>.
 		/// </summary>
-		public ILVariable this[int index] {
-			get {
-				return list[index];
-			}
-		}
-		
+		public ILVariable this[int index] => list[index];
+
 		public bool Add(ILVariable item)
 		{
 			if (item.Function != null) {
@@ -100,9 +96,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public void RemoveDead()
 		{
-			for (int i = 0; i < list.Count;) {
+			for (var i = 0; i < list.Count;) {
 				var v = list[i];
-				int deadStoreCount = v.HasInitialValue ? 1 : 0;
+				var deadStoreCount = v.HasInitialValue ? 1 : 0;
 				if (v.StoreCount == deadStoreCount && v.LoadCount == 0 && v.AddressCount == 0) {
 					RemoveAt(i);
 				} else {
@@ -111,19 +107,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public int Count {
-			get { return list.Count; }
-		}
-		
+		public int Count => list.Count;
+
 		public void CopyTo(ILVariable[] array, int arrayIndex)
 		{
 			list.CopyTo(array, arrayIndex);
 		}
 		
-		bool ICollection<ILVariable>.IsReadOnly {
-			get { return false; }
-		}
-		
+		bool ICollection<ILVariable>.IsReadOnly => false;
+
 		public List<ILVariable>.Enumerator GetEnumerator()
 		{
 			return list.GetEnumerator();

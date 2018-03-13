@@ -65,10 +65,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = name;
 		}
 		
-		public bool IsIndexer {
-			get { return this.SymbolKind == SymbolKind.Indexer; }
-		}
-		
+		public bool IsIndexer => this.SymbolKind == SymbolKind.Indexer;
+
 		public IList<IUnresolvedParameter> Parameters {
 			get {
 				if (parameters == null)
@@ -77,16 +75,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public bool CanGet {
-			get { return getter != null; }
-		}
-		
-		public bool CanSet {
-			get { return setter != null; }
-		}
-		
+		public bool CanGet => getter != null;
+
+		public bool CanSet => setter != null;
+
 		public IUnresolvedMethod Getter {
-			get { return getter; }
+			get => getter;
 			set {
 				ThrowIfFrozen();
 				getter = value;
@@ -94,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IUnresolvedMethod Setter {
-			get { return setter; }
+			get => setter;
 			set {
 				ThrowIfFrozen();
 				setter = value;

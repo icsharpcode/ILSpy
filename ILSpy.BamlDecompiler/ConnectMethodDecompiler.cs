@@ -29,7 +29,7 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	sealed class ConnectMethodDecompiler
 	{
-		AssemblyDefinition assembly;
+		readonly AssemblyDefinition assembly;
 		
 		public ConnectMethodDecompiler(AssemblyDefinition assembly)
 		{
@@ -39,7 +39,7 @@ namespace ILSpy.BamlDecompiler
 		public List<(LongSet, EventRegistration[])> DecompileEventMappings(string fullTypeName, CancellationToken cancellationToken)
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
-			TypeDefinition type = this.assembly.MainModule.GetType(fullTypeName);
+			var type = this.assembly.MainModule.GetType(fullTypeName);
 			
 			if (type == null)
 				return result;
@@ -111,7 +111,7 @@ namespace ILSpy.BamlDecompiler
 		
 		void FindEvents(ILInstruction inst, List<EventRegistration> events)
 		{
-			CallInstruction call = inst as CallInstruction;
+			var call = inst as CallInstruction;
 			if (call == null || call.OpCode == OpCode.NewObj)
 				return;
 			

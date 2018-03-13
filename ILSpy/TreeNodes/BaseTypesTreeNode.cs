@@ -37,15 +37,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Text
-		{
-			get { return "Base Types"; }
-		}
+		public override object Text => "Base Types";
 
-		public override object Icon
-		{
-			get { return Images.SuperTypes; }
-		}
+		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
 		{

@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			ComposedType ct = other as ComposedType;
+			var ct = other as ComposedType;
 			AstType o;
 			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any()) {
 				// Special case: ILSpy sometimes produces a ComposedType but then removed all array specifiers
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	
 	sealed class LdTokenPattern : Pattern
 	{
-		AnyNode childNode;
+		readonly AnyNode childNode;
 		
 		public LdTokenPattern(string groupName)
 		{
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
+			var ie = other as InvocationExpression;
 			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1) {
 				return childNode.DoMatch(ie.Arguments.Single(), match);
 			}
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	sealed class TypeOfPattern : Pattern
 	{
-		INode childNode;
+		readonly INode childNode;
 		
 		public TypeOfPattern(string groupName)
 		{

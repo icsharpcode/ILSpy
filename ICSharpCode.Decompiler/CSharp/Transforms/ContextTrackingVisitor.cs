@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			ITypeDefinition oldType = currentTypeDefinition;
+			var oldType = currentTypeDefinition;
 			try {
 				currentTypeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
 				return base.VisitTypeDeclaration(typeDeclaration);

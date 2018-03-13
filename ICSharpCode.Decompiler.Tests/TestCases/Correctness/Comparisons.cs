@@ -54,8 +54,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void TestFloatOp(string name, Func<float, float, bool> f)
 		{
 			float[] vals = { -1, 0, 3, float.PositiveInfinity, float.NaN };
-			for (int i = 0; i < vals.Length; i++) {
-				for (int j = 0; j < vals.Length; j++) {
+			for (var i = 0; i < vals.Length; i++) {
+				for (var j = 0; j < vals.Length; j++) {
 					Console.WriteLine("Float: {0} {1} {2:r} = {3}",
 						vals[i].ToString("r", CultureInfo.InvariantCulture),
 						name,

@@ -68,10 +68,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal const ushort FlagHasBody = 0x4000;
 		internal const ushort FlagAsyncMethod = 0x8000;
 		
-		public bool IsFrozen {
-			get { return flags[FlagFrozen]; }
-		}
-		
+		public bool IsFrozen => flags[FlagFrozen];
+
 		public void Freeze()
 		{
 			if (!flags[FlagFrozen]) {
@@ -121,7 +119,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public SymbolKind SymbolKind {
-			get { return symbolKind; }
+			get => symbolKind;
 			set {
 				ThrowIfFrozen();
 				symbolKind = value;
@@ -129,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IUnresolvedTypeDefinition DeclaringTypeDefinition {
-			get { return declaringTypeDefinition; }
+			get => declaringTypeDefinition;
 			set {
 				ThrowIfFrozen();
 				declaringTypeDefinition = value;
@@ -145,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public string Name {
-			get { return name; }
+			get => name;
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -172,9 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 					return string.Empty;
 			}
-			set {
-				throw new NotSupportedException();
-			}
+			set => throw new NotSupportedException();
 		}
 		
 		public virtual string ReflectionName {
@@ -187,7 +183,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public Accessibility Accessibility {
-			get { return accessibility; }
+			get => accessibility;
 			set {
 				ThrowIfFrozen();
 				accessibility = value;
@@ -195,7 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsStatic {
-			get { return flags[FlagStatic]; }
+			get => flags[FlagStatic];
 			set {
 				ThrowIfFrozen();
 				flags[FlagStatic] = value;
@@ -203,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsAbstract {
-			get { return flags[FlagAbstract]; }
+			get => flags[FlagAbstract];
 			set {
 				ThrowIfFrozen();
 				flags[FlagAbstract] = value;
@@ -211,7 +207,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsSealed {
-			get { return flags[FlagSealed]; }
+			get => flags[FlagSealed];
 			set {
 				ThrowIfFrozen();
 				flags[FlagSealed] = value;
@@ -219,7 +215,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsShadowing {
-			get { return flags[FlagShadowing]; }
+			get => flags[FlagShadowing];
 			set {
 				ThrowIfFrozen();
 				flags[FlagShadowing] = value;
@@ -227,40 +223,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsSynthetic {
-			get { return flags[FlagSynthetic]; }
+			get => flags[FlagSynthetic];
 			set {
 				ThrowIfFrozen();
 				flags[FlagSynthetic] = value;
 			}
 		}
 		
-		bool IHasAccessibility.IsPrivate {
-			get { return accessibility == Accessibility.Private; }
-		}
-		
-		bool IHasAccessibility.IsPublic {
-			get { return accessibility == Accessibility.Public; }
-		}
-		
-		bool IHasAccessibility.IsProtected {
-			get { return accessibility == Accessibility.Protected; }
-		}
-		
-		bool IHasAccessibility.IsInternal {
-			get { return accessibility == Accessibility.Internal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedOrInternal {
-			get { return accessibility == Accessibility.ProtectedOrInternal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedAndInternal {
-			get { return accessibility == Accessibility.ProtectedAndInternal; }
-		}
-		
+		bool IHasAccessibility.IsPrivate => accessibility == Accessibility.Private;
+
+		bool IHasAccessibility.IsPublic => accessibility == Accessibility.Public;
+
+		bool IHasAccessibility.IsProtected => accessibility == Accessibility.Protected;
+
+		bool IHasAccessibility.IsInternal => accessibility == Accessibility.Internal;
+
+		bool IHasAccessibility.IsProtectedOrInternal => accessibility == Accessibility.ProtectedOrInternal;
+
+		bool IHasAccessibility.IsProtectedAndInternal => accessibility == Accessibility.ProtectedAndInternal;
+
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			var b = new StringBuilder("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			if (this.DeclaringTypeDefinition != null) {

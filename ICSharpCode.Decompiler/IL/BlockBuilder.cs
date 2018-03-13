@@ -51,11 +51,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		List<TryInstruction> tryInstructionList = new List<TryInstruction>();
-		Dictionary<int, BlockContainer> handlerContainers = new Dictionary<int, BlockContainer>();
+		readonly Dictionary<int, BlockContainer> handlerContainers = new Dictionary<int, BlockContainer>();
 		
 		void CreateContainerStructure()
 		{
-			List<TryCatch> tryCatchList = new List<TryCatch>();
+			var tryCatchList = new List<TryCatch>();
 			foreach (var eh in body.ExceptionHandlers) {
 				var tryRange = new Interval(eh.TryStart.Offset, eh.TryEnd != null ? eh.TryEnd.Offset : body.CodeSize);
 				var handlerBlock = new BlockContainer();
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		BlockContainer currentContainer;
 		Block currentBlock;
-		Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
+		readonly Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 		
 		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in instructions) {
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = inst.ILRange.Start;
+				var start = inst.ILRange.Start;
 				if (currentBlock == null || (incomingBranches[start] && !IsStackAdjustment(inst))) {
 					// Finish up the previous block
 					FinalizeCurrentBlock(start, fallthrough: true);

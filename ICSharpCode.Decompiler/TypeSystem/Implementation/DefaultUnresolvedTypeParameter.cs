@@ -29,12 +29,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public class DefaultUnresolvedTypeParameter : IUnresolvedTypeParameter, IFreezable
 	{
-		readonly int index;
 		IList<IUnresolvedAttribute> attributes;
 		IList<ITypeReference> constraints;
 		string name;
-		
-		SymbolKind ownerType;
+
 		VarianceModifier variance;
 		BitVector16 flags;
 		const ushort FlagFrozen                       = 0x0001;
@@ -58,45 +56,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public DefaultUnresolvedTypeParameter(SymbolKind ownerType, int index, string name = null)
 		{
-			this.ownerType = ownerType;
-			this.index = index;
+			this.OwnerType = ownerType;
+			this.Index = index;
 			this.name = name ?? ((ownerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 		}
 		
-		public SymbolKind OwnerType {
-			get { return ownerType; }
-		}
-		
-		public int Index {
-			get { return index; }
-		}
-		
-		public bool IsFrozen {
-			get { return flags[FlagFrozen]; }
-		}
-		
+		public SymbolKind OwnerType { get; }
+
+		public int Index { get; }
+
+		public bool IsFrozen => flags[FlagFrozen];
+
 		public string Name {
-			get { return name; }
+			get => name;
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				name = value;
 			}
 		}
 		
-		string INamedElement.FullName {
-			get { return name; }
-		}
-		
-		string INamedElement.Namespace {
-			get { return string.Empty; }
-		}
-		
+		string INamedElement.FullName => name;
+
+		string INamedElement.Namespace => string.Empty;
+
 		string INamedElement.ReflectionName {
 			get {
-				if (ownerType == SymbolKind.Method)
-					return "``" + index.ToString(CultureInfo.InvariantCulture);
+				if (OwnerType == SymbolKind.Method)
+					return "``" + Index.ToString(CultureInfo.InvariantCulture);
 				else
-					return "`" + index.ToString(CultureInfo.InvariantCulture);
+					return "`" + Index.ToString(CultureInfo.InvariantCulture);
 			}
 		}
 		
@@ -117,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public VarianceModifier Variance {
-			get { return variance; }
+			get => variance;
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				variance = value;
@@ -125,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool HasDefaultConstructorConstraint {
-			get { return flags[FlagDefaultConstructorConstraint]; }
+			get => flags[FlagDefaultConstructorConstraint];
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				flags[FlagDefaultConstructorConstraint] = value;
@@ -133,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool HasReferenceTypeConstraint {
-			get { return flags[FlagReferenceTypeConstraint]; }
+			get => flags[FlagReferenceTypeConstraint];
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				flags[FlagReferenceTypeConstraint] = value;
@@ -141,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool HasValueTypeConstraint {
-			get { return flags[FlagValueTypeConstraint]; }
+			get => flags[FlagValueTypeConstraint];
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				flags[FlagValueTypeConstraint] = value;
@@ -175,7 +163,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (owner == null)
 				throw new InvalidOperationException("Could not determine the type parameter's owner.");
 			return new DefaultTypeParameter(
-				owner, index, name, variance,
+				owner, Index, name, variance,
 				this.Attributes.CreateResolvedAttributes(context),
 				this.HasValueTypeConstraint, this.HasReferenceTypeConstraint, this.HasDefaultConstructorConstraint, this.Constraints.Resolve(context)
 			);

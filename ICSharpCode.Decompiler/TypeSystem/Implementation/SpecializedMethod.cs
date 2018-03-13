@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// The method is generic, so we need to specialize the type parameters
 				// (for specializing the constraints, and also to set the correct Owner)
 				specializedTypeParameters = new ITypeParameter[methodDefinition.TypeParameters.Count];
-				for (int i = 0; i < specializedTypeParameters.Length; i++) {
+				for (var i = 0; i < specializedTypeParameters.Length; i++) {
 					specializedTypeParameters[i] = new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
 				}
 				if (!isParameterized) {
@@ -74,59 +74,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IReadOnlyList<IType> TypeArguments {
-			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
-		}
-		
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return methodDefinition.Parts; }
-		}
-		
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return methodDefinition.ReturnTypeAttributes; }
-		}
-		
-		public IReadOnlyList<ITypeParameter> TypeParameters {
-			get {
-				return specializedTypeParameters ?? methodDefinition.TypeParameters;
-			}
-		}
-		
-		public bool IsExtensionMethod {
-			get { return methodDefinition.IsExtensionMethod; }
-		}
-		
-		public bool IsConstructor {
-			get { return methodDefinition.IsConstructor; }
-		}
-		
-		public bool IsDestructor {
-			get { return methodDefinition.IsDestructor; }
-		}
-		
-		public bool IsOperator {
-			get { return methodDefinition.IsOperator; }
-		}
-		
-		public bool IsPartial {
-			get { return methodDefinition.IsPartial; }
-		}
-		
-		public bool IsAsync {
-			get { return methodDefinition.IsAsync; }
-		}
-		
-		public bool HasBody {
-			get { return methodDefinition.HasBody; }
-		}
-		
-		public bool IsAccessor {
-			get { return methodDefinition.IsAccessor; }
-		}
+		public IReadOnlyList<IType> TypeArguments => this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance;
 
-		public IMethod ReducedFrom {
-			get { return null; }
-		}
+		public IReadOnlyList<IUnresolvedMethod> Parts => methodDefinition.Parts;
+
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes => methodDefinition.ReturnTypeAttributes;
+
+		public IReadOnlyList<ITypeParameter> TypeParameters => specializedTypeParameters ?? methodDefinition.TypeParameters;
+
+		public bool IsExtensionMethod => methodDefinition.IsExtensionMethod;
+
+		public bool IsConstructor => methodDefinition.IsConstructor;
+
+		public bool IsDestructor => methodDefinition.IsDestructor;
+
+		public bool IsOperator => methodDefinition.IsOperator;
+
+		public bool IsPartial => methodDefinition.IsPartial;
+
+		public bool IsAsync => methodDefinition.IsAsync;
+
+		public bool HasBody => methodDefinition.HasBody;
+
+		public bool IsAccessor => methodDefinition.IsAccessor;
+
+		public IMethod ReducedFrom => null;
 
 		IMember accessorOwner;
 		
@@ -143,9 +115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return LazyInit.GetOrSet(ref accessorOwner, result);
 				}
 			}
-			internal set {
-				accessorOwner = value;
-			}
+			internal set => accessorOwner = value;
 		}
 
 		public override IMemberReference ToReference()
@@ -173,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override bool Equals(object obj)
 		{
-			SpecializedMethod other = obj as SpecializedMethod;
+			var other = obj as SpecializedMethod;
 			if (other == null)
 				return false;
 			return this.baseMember.Equals(other.baseMember) && this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters);
@@ -198,7 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			var b = new StringBuilder("[");
 			b.Append(GetType().Name);
 			b.Append(' ');
 			b.Append(this.DeclaringType.ReflectionName);
@@ -206,7 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(this.Name);
 			if (this.TypeArguments.Count > 0) {
 				b.Append('[');
-				for (int i = 0; i < this.TypeArguments.Count; i++) {
+				for (var i = 0; i < this.TypeArguments.Count; i++) {
 					if (i > 0) b.Append(", ");
 					b.Append(this.TypeArguments[i].ReflectionName);
 				}
@@ -216,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
+			for (var i = 0; i < this.Parameters.Count; i++) {
 				if (i > 0) b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}
@@ -249,22 +219,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool Equals(IType other)
 			{
 				// Compare the owner, not the substitution, because the substitution may contain this specialized type parameter recursively
-				SpecializedTypeParameter o = other as SpecializedTypeParameter;
+				var o = other as SpecializedTypeParameter;
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 			
-			public override bool HasValueTypeConstraint {
-				get { return baseTp.HasValueTypeConstraint; }
-			}
-			
-			public override bool HasReferenceTypeConstraint {
-				get { return baseTp.HasReferenceTypeConstraint; }
-			}
-			
-			public override bool HasDefaultConstructorConstraint {
-				get { return baseTp.HasDefaultConstructorConstraint; }
-			}
-			
+			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
+
+			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
+
+			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
+
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

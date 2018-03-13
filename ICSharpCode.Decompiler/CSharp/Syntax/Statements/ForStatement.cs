@@ -36,39 +36,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<Statement> InitializerRole = new Role<Statement>("Initializer", Statement.Null);
 		public readonly static Role<Statement> IteratorRole = new Role<Statement>("Iterator", Statement.Null);
 		
-		public CSharpTokenNode ForToken {
-			get { return GetChildByRole (ForKeywordRole); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
+		public CSharpTokenNode ForToken => GetChildByRole (ForKeywordRole);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
 		/// <summary>
 		/// Gets the list of initializer statements.
 		/// Note: this contains multiple statements for "for (a = 2, b = 1; a > b; a--)", but contains
 		/// only a single statement for "for (int a = 2, b = 1; a > b; a--)" (a single VariableDeclarationStatement with two variables)
 		/// </summary>
-		public AstNodeCollection<Statement> Initializers {
-			get { return GetChildrenByRole (InitializerRole); }
-		}
-		
+		public AstNodeCollection<Statement> Initializers => GetChildrenByRole (InitializerRole);
+
 		public Expression Condition {
-			get { return GetChildByRole (Roles.Condition); }
-			set { SetChildByRole (Roles.Condition, value); }
+			get => GetChildByRole (Roles.Condition);
+			set => SetChildByRole (Roles.Condition, value);
 		}
 		
-		public AstNodeCollection<Statement> Iterators {
-			get { return GetChildrenByRole (IteratorRole); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
+		public AstNodeCollection<Statement> Iterators => GetChildrenByRole (IteratorRole);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
 		public Statement EmbeddedStatement {
-			get { return GetChildByRole (Roles.EmbeddedStatement); }
-			set { SetChildByRole (Roles.EmbeddedStatement, value); }
+			get => GetChildByRole (Roles.EmbeddedStatement);
+			set => SetChildByRole (Roles.EmbeddedStatement, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -88,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			ForStatement o = other as ForStatement;
+			var o = other as ForStatement;
 			return o != null && this.Initializers.DoMatch(o.Initializers, match) && this.Condition.DoMatch(o.Condition, match)
 				&& this.Iterators.DoMatch(o.Iterators, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}

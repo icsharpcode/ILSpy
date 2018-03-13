@@ -38,12 +38,8 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		public ReferenceElementGenerator(Action<ReferenceSegment> referenceClicked, Predicate<ReferenceSegment> isLink)
 		{
-			if (referenceClicked == null)
-				throw new ArgumentNullException(nameof(referenceClicked));
-			if (isLink == null)
-				throw new ArgumentNullException(nameof(isLink));
-			this.referenceClicked = referenceClicked;
-			this.isLink = isLink;
+			this.referenceClicked = referenceClicked ?? throw new ArgumentNullException(nameof(referenceClicked));
+			this.isLink = isLink ?? throw new ArgumentNullException(nameof(isLink));
 		}
 		
 		public override int GetFirstInterestedOffset(int startOffset)
@@ -64,7 +60,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (!isLink(segment))
 					continue;
 				// ensure that hyperlinks don't span several lines (VisualLineElements can't contain line breaks)
-				int endOffset = Math.Min(segment.EndOffset, CurrentContext.VisualLine.LastDocumentLine.EndOffset);
+				var endOffset = Math.Min(segment.EndOffset, CurrentContext.VisualLine.LastDocumentLine.EndOffset);
 				// don't create hyperlinks with length 0
 				if (offset < endOffset) {
 					return new VisualLineReferenceText(CurrentContext.VisualLine, endOffset - offset, this, segment);

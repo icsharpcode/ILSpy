@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
 		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
 
-		bool canIntroduceExitForReturn;
+		readonly bool canIntroduceExitForReturn;
 
 		public DetectExitPoints(bool canIntroduceExitForReturn)
 		{
@@ -66,9 +66,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static ILInstruction GetExit(ILInstruction inst)
 		{
-			SlotInfo slot = inst.SlotInfo;
+			var slot = inst.SlotInfo;
 			if (slot == Block.InstructionSlot) {
-				Block block = (Block)inst.Parent;
+				var block = (Block)inst.Parent;
 				return block.Instructions.ElementAtOrDefault(inst.ChildIndex + 1) ?? ExitNotYetDetermined;
 			} else if (slot == TryInstruction.TryBlockSlot
 				|| slot == TryCatchHandler.BodySlot
@@ -90,12 +90,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			switch (exit1.OpCode) {
 				case OpCode.Branch:
-					Branch br1 = (Branch)exit1;
-					Branch br2 = (Branch)exit2;
+					var br1 = (Branch)exit1;
+					var br2 = (Branch)exit2;
 					return br1.TargetBlock == br2.TargetBlock;
 				case OpCode.Leave:
-					Leave leave1 = (Leave)exit1;
-					Leave leave2 = (Leave)exit2;
+					var leave1 = (Leave)exit1;
+					var leave2 = (Leave)exit2;
 					return leave1.TargetContainer == leave2.TargetContainer && leave1.Value.MatchNop() && leave2.Value.MatchNop();
 				default:
 					return false;
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// only returns ExitNotYetDetermined if there's a block)
 				while (inst.Parent.OpCode != OpCode.Block)
 					inst = inst.Parent;
-				Block block = (Block)inst.Parent;
+				var block = (Block)inst.Parent;
 				block.Instructions.Add(currentExit);
 			} else {
 				Debug.Assert(thisExit == currentExit);
@@ -168,9 +168,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static ILInstruction ChooseExit(List<ILInstruction> potentialExits)
 		{
-			ILInstruction first = potentialExits[0];
+			var first = potentialExits[0];
 			if (first is Leave l && l.IsLeavingFunction) {
-				for (int i = 1; i < potentialExits.Count; i++) {
+				for (var i = 1; i < potentialExits.Count; i++) {
 					var exit = potentialExits[i];
 					if (!(exit is Leave l2 && l2.IsLeavingFunction))
 						return exit;
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			// Don't use foreach loop, because the children might add to the block
-			for (int i = 0; i < block.Instructions.Count; i++) {
+			for (var i = 0; i < block.Instructions.Count; i++) {
 				block.Instructions[i].AcceptVisitor(this);
 			}
 		}

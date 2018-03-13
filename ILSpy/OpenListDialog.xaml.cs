@@ -59,19 +59,13 @@ namespace ICSharpCode.ILSpy
 			this.DialogResult = true;
 		}
 
-		public string SelectedListName
-		{
-			get
-			{
-				return listView.SelectedItem.ToString();
-			}
-		}
+		public string SelectedListName => listView.SelectedItem.ToString();
 
 		private void CreateDefaultAssemblyLists()
 		{
 			if (!manager.AssemblyLists.Contains(DotNet4List))
 			{
-				AssemblyList dotnet4 = new AssemblyList(DotNet4List);
+				var dotnet4 = new AssemblyList(DotNet4List);
 				AddToList(dotnet4, "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet4, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet4, "System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -93,7 +87,7 @@ namespace ICSharpCode.ILSpy
 
 			if (!manager.AssemblyLists.Contains(DotNet35List))
 			{
-				AssemblyList dotnet35 = new AssemblyList(DotNet35List);
+				var dotnet35 = new AssemblyList(DotNet35List);
 				AddToList(dotnet35, "mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet35, "System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(dotnet35, "System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
@@ -113,7 +107,7 @@ namespace ICSharpCode.ILSpy
 
 			if (!manager.AssemblyLists.Contains(ASPDotNetMVC3List))
 			{
-				AssemblyList mvc = new AssemblyList(ASPDotNetMVC3List);
+				var mvc = new AssemblyList(ASPDotNetMVC3List);
 				AddToList(mvc, "mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(mvc, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 				AddToList(mvc, "System.ComponentModel.DataAnnotations, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35");
@@ -148,15 +142,15 @@ namespace ICSharpCode.ILSpy
 
 		private void AddToList(AssemblyList list, string FullName)
 		{
-			AssemblyNameReference reference = AssemblyNameReference.Parse(FullName);
-			string file = GacInterop.FindAssemblyInNetGac(reference);
+			var reference = AssemblyNameReference.Parse(FullName);
+			var file = GacInterop.FindAssemblyInNetGac(reference);
 			if (file != null)
 				list.OpenAssembly(file);
 		}
 
 		private void CreateButton_Click(object sender, RoutedEventArgs e)
 		{
-			CreateListDialog dlg = new CreateListDialog();
+			var dlg = new CreateListDialog();
 			dlg.Owner = this;
 			dlg.Closing += (s, args) =>
 			{

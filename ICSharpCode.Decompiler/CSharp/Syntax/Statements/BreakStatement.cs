@@ -34,13 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole BreakKeywordRole = new TokenRole ("break");
 		
-		public CSharpTokenNode BreakToken {
-			get { return GetChildByRole (BreakKeywordRole); }
-		}
-		
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
+		public CSharpTokenNode BreakToken => GetChildByRole (BreakKeywordRole);
+
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
 
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
@@ -59,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			BreakStatement o = other as BreakStatement;
+			var o = other as BreakStatement;
 			return o != null;
 		}
 	}

@@ -27,20 +27,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.ByReference; }
-		}
-		
-		public override string NameSuffix {
-			get {
-				return "&";
-			}
-		}
-		
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
-		
+		public override TypeKind Kind => TypeKind.ByReference;
+
+		public override string NameSuffix => "&";
+
+		public override bool? IsReferenceType => null;
+
 		public override int GetHashCode()
 		{
 			return elementType.GetHashCode() ^ 91725813;
@@ -48,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override bool Equals(IType other)
 		{
-			ByReferenceType a = other as ByReferenceType;
+			var a = other as ByReferenceType;
 			return a != null && elementType.Equals(a.elementType);
 		}
 		
@@ -59,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
-			IType e = elementType.AcceptVisitor(visitor);
+			var e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
 			else
@@ -75,38 +67,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class ByReferenceTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-		
 		public ByReferenceTypeReference(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException("elementType");
-			this.elementType = elementType;
+			this.ElementType = elementType ?? throw new ArgumentNullException("elementType");
 		}
 		
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
-		
+		public ITypeReference ElementType { get; }
+
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return new ByReferenceType(elementType.Resolve(context));
+			return new ByReferenceType(ElementType.Resolve(context));
 		}
 		
 		public override string ToString()
 		{
-			return elementType.ToString() + "&";
+			return ElementType.ToString() + "&";
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ 91725814;
+			return ElementType.GetHashCode() ^ 91725814;
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			ByReferenceTypeReference brt = other as ByReferenceTypeReference;
-			return brt != null && this.elementType == brt.elementType;
+			var brt = other as ByReferenceTypeReference;
+			return brt != null && this.ElementType == brt.ElementType;
 		}
 	}
 }

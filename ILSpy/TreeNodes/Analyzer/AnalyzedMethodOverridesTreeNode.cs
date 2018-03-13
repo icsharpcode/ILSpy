@@ -34,16 +34,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodOverridesTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 		}
 
-		public override object Text
-		{
-			get { return "Overridden By"; }
-		}
+		public override object Text => "Overridden By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -58,9 +52,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				if (!TypesHierarchyHelpers.IsBaseType(analyzedMethod.DeclaringType, type, resolveTypeArguments: false))
 					yield break;
 
-				foreach (MethodDefinition method in type.Methods) {
+				foreach (var method in type.Methods) {
 					if (TypesHierarchyHelpers.IsBaseMethod(analyzedMethod, method)) {
-						bool hidesParent = !method.IsVirtual ^ method.IsNewSlot;
+						var hidesParent = !method.IsVirtual ^ method.IsNewSlot;
 						newNode = new AnalyzedMethodTreeNode(method, hidesParent ? "(hides) " : "");
 					}
 				}

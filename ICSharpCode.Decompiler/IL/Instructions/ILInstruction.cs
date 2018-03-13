@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public bool IsDescendantOf(ILInstruction possibleAncestor)
 		{
-			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent) {
+			for (var ancestor = this; ancestor != null; ancestor = ancestor.Parent) {
 				if (ancestor == possibleAncestor)
 					return true;
 			}
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected void MakeDirty()
 		{
-			for (ILInstruction inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
+			for (var inst = this; inst != null && !inst.IsDirty; inst = inst.Parent)
 				inst.IsDirty = true;
 		}
 		
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public void ResetDirty()
 		{
-			foreach (ILInstruction inst in Descendants)
+			foreach (var inst in Descendants)
 				inst.IsDirty = false;
 		}
 		
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected void InvalidateFlags()
 		{
-			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.parent)
+			for (var inst = this; inst != null && inst.flags != invalidFlags; inst = inst.Parent)
 				inst.flags = invalidFlags;
 		}
 		
@@ -267,12 +267,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// The ChildrenCollection does not actually store the list of children,
 		/// it merely allows accessing the children stored in the various slots.
 		/// </remarks>
-		public ChildrenCollection Children {
-			get {
-				return new ChildrenCollection(this);
-			}
-		}
-		
+		public ChildrenCollection Children => new ChildrenCollection(this);
+
 		protected abstract int GetChildCount();
 		protected abstract ILInstruction GetChild(int index);
 		protected abstract void SetChild(int index, ILInstruction value);
@@ -289,13 +285,11 @@ namespace ICSharpCode.Decompiler.IL
 				this.inst = inst;
 			}
 			
-			public int Count {
-				get { return inst.GetChildCount(); }
-			}
-			
+			public int Count => inst.GetChildCount();
+
 			public ILInstruction this[int index] {
-				get { return inst.GetChild(index); }
-				set { inst.SetChild(index, value); }
+				get => inst.GetChild(index);
+				set => inst.SetChild(index, value);
 			}
 			
 			public ChildrenEnumerator GetEnumerator()
@@ -361,11 +355,7 @@ namespace ICSharpCode.Decompiler.IL
 				#endif
 			}
 			
-			public ILInstruction Current {
-				get {
-					return inst.GetChild(pos);
-				}
-			}
+			public ILInstruction Current => inst.GetChild(pos);
 
 			public bool MoveNext()
 			{
@@ -382,10 +372,8 @@ namespace ICSharpCode.Decompiler.IL
 				#endif
 			}
 			
-			object System.Collections.IEnumerator.Current {
-				get { return this.Current; }
-			}
-			
+			object System.Collections.IEnumerator.Current => this.Current;
+
 			void System.Collections.IEnumerator.Reset()
 			{
 				pos = -1;
@@ -416,10 +404,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public void ReplaceWith(ILInstruction replacement)
 		{
-			Debug.Assert(parent.GetChild(ChildIndex) == this);
+			Debug.Assert(Parent.GetChild(ChildIndex) == this);
 			if (replacement == this)
 				return;
-			parent.SetChild(ChildIndex, replacement);
+			Parent.SetChild(ChildIndex, replacement);
 		}
 		
 		/// <summary>
@@ -440,8 +428,8 @@ namespace ICSharpCode.Decompiler.IL
 				// but that makes it difficult to reason about the behavior in the cases
 				// where Parent/ChildIndex is not accurate (stale positions), especially
 				// if the ILAst is modified during enumeration.
-				Stack<ChildrenEnumerator> stack = new Stack<ChildrenEnumerator>();
-				ChildrenEnumerator enumerator = new ChildrenEnumerator(this);
+				var stack = new Stack<ChildrenEnumerator>();
+				var enumerator = new ChildrenEnumerator(this);
 				try {
 					while (true) {
 						while (enumerator.MoveNext()) {
@@ -472,7 +460,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IEnumerable<ILInstruction> Ancestors {
 			get {
-				for (ILInstruction node = this; node != null; node = node.Parent) {
+				for (var node = this; node != null; node = node.Parent) {
 					yield return node;
 				}
 			}
@@ -509,10 +497,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// of the ILAst; it does not make use of the <c>Parent</c> field so the considerations
 		/// about orphaned nodes and stale positions don't apply.
 		/// </remarks>
-		protected internal bool IsConnected {
-			get { return refCount > 0; }
-		}
-		
+		protected internal bool IsConnected => refCount > 0;
+
 		/// <summary>
 		/// Called after the ILInstruction was connected to the root node of the ILAst.
 		/// </summary>
@@ -530,9 +516,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var child in Children)
 				child.ReleaseRef();
 		}
-		
-		ILInstruction parent;
-		
+
 		/// <summary>
 		/// Gets the parent of this ILInstruction.
 		/// </summary>
@@ -557,10 +541,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Note that is it is possible (though unusual) for a stale position to reference an orphaned node.
 		/// </remarks>
-		public ILInstruction Parent {
-			get { return parent; }
-		}
-		
+		public ILInstruction Parent { get; private set; }
+
 		/// <summary>
 		/// Gets the index of this node in the <c>Parent.Children</c> collection.
 		/// </summary>
@@ -582,8 +564,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public SlotInfo SlotInfo {
 			get {
-				Debug.Assert(parent.GetChild(this.ChildIndex) == this);
-				return parent.GetChildSlot(this.ChildIndex);
+				Debug.Assert(Parent.GetChild(this.ChildIndex) == this);
+				return Parent.GetChildSlot(this.ChildIndex);
 			}
 		}
 		
@@ -595,13 +577,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="index">Index of the field in the Children collection</param>
 		protected internal void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue, int index)
 		{
-			ILInstruction oldValue = childPointer;
+			var oldValue = childPointer;
 			Debug.Assert(oldValue == GetChild(index));
 			if (oldValue == newValue)
 				return;
 			childPointer = newValue;
 			if (newValue != null) {
-				newValue.parent = this;
+				newValue.Parent = this;
 				newValue.ChildIndex = index;
 			}
 			InvalidateFlags();
@@ -626,7 +608,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(!this.IsDescendantOf(newChild), "ILAst must form a tree");
 			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
 			// make sure to read the remarks on the ReplaceWith() method.
-			newChild.parent = this;
+			newChild.Parent = this;
 			if (refCount > 0)
 				newChild.AddRef();
 		}
@@ -667,10 +649,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		protected ILInstruction ShallowClone()
 		{
-			ILInstruction inst = (ILInstruction)MemberwiseClone();
+			var inst = (ILInstruction)MemberwiseClone();
 			// reset refCount and parent so that the cloned instruction starts as disconnected
 			inst.refCount = 0;
-			inst.parent = null;
+			inst.Parent = null;
 			inst.flags = invalidFlags;
 			#if DEBUG
 			inst.activeEnumerators = 0;
@@ -690,7 +672,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </returns>
 		public Match Match(ILInstruction node)
 		{
-			Match match = new Match();
+			var match = new Match();
 			match.Success = PerformMatch(node, ref match);
 			return match;
 		}

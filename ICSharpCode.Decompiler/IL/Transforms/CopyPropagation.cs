@@ -36,14 +36,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static void Propagate(StLoc store, ILTransformContext context)
 		{
 			Debug.Assert(store.Variable.IsSingleDefinition);
-			Block block = (Block)store.Parent;
-			int i = store.ChildIndex;
+			var block = (Block)store.Parent;
+			var i = store.ChildIndex;
 			DoPropagate(store.Variable, store.Value, block, ref i, context);
 		}
 
 		public void Run(Block block, BlockTransformContext context)
 		{
-			for (int i = 0; i < block.Instructions.Count; i++) {
+			for (var i = 0; i < block.Instructions.Count; i++) {
 				ILVariable v;
 				ILInstruction copiedExpr;
 				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
@@ -106,8 +106,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			context.Step($"Copy propagate {v.Name}", copiedExpr);
 			// un-inline the arguments of the ldArg instruction
-			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
-			for (int j = 0; j < uninlinedArgs.Length; j++) {
+			var uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
+			for (var j = 0; j < uninlinedArgs.Length; j++) {
 				var arg = copiedExpr.Children[j];
 				var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
@@ -119,13 +119,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// perform copy propagation:
 			foreach (var expr in v.LoadInstructions.ToArray()) {
 				var clone = copiedExpr.Clone();
-				for (int j = 0; j < uninlinedArgs.Length; j++) {
+				for (var j = 0; j < uninlinedArgs.Length; j++) {
 					clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
 				}
 				expr.ReplaceWith(clone);
 			}
 			block.Instructions.RemoveAt(i);
-			int c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
+			var c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
 			i -= c + 1;
 		}
 	}

@@ -13,12 +13,10 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class DebugSteps : UserControl, IPane
 	{
-		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+		public static ILAstWritingOptions Options { get; } = new ILAstWritingOptions {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true
 		};
-
-		public static ILAstWritingOptions Options => writingOptions;
 
 #if DEBUG
 		ILAstLanguage language;
@@ -31,7 +29,7 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
-			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
+			Options.PropertyChanged += WritingOptions_PropertyChanged;
 
 			if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l) {
 				l.StepperUpdated += ILAstStepperUpdated;
@@ -91,7 +89,7 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged -= SelectionChanged;
-			writingOptions.PropertyChanged -= WritingOptions_PropertyChanged;
+			Options.PropertyChanged -= WritingOptions_PropertyChanged;
 			if (language != null) {
 				language.StepperUpdated -= ILAstStepperUpdated;
 			}
@@ -100,21 +98,21 @@ namespace ICSharpCode.ILSpy
 
 		private void ShowStateAfter_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			var n = (Stepper.Node)tree.SelectedItem;
 			if (n == null) return;
 			DecompileAsync(n.EndStep);
 		}
 
 		private void ShowStateBefore_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			var n = (Stepper.Node)tree.SelectedItem;
 			if (n == null) return;
 			DecompileAsync(n.BeginStep);
 		}
 
 		private void DebugStep_Click(object sender, RoutedEventArgs e)
 		{
-			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			var n = (Stepper.Node)tree.SelectedItem;
 			if (n == null) return;
 			DecompileAsync(n.BeginStep, true);
 		}

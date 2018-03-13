@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		class ListOfLists<T> : IList<T>, IReadOnlyList<T>
 		{
-			List<IReadOnlyList<T>> lists =new List<IReadOnlyList<T>> ();
+			readonly List<IReadOnlyList<T>> lists =new List<IReadOnlyList<T>> ();
 
 			public void AddList(IReadOnlyList<T> list)
 			{
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			#region IEnumerable implementation
 			public IEnumerator<T> GetEnumerator ()
 			{
-				for (int i = 0; i < this.Count; i++) {
+				for (var i = 0; i < this.Count; i++) {
 					yield return this[i];
 				}
 			}
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public bool Contains (T item)
 			{
 				var comparer = EqualityComparer<T>.Default;
-				for (int i = 0; i < this.Count; i++) {
+				for (var i = 0; i < this.Count; i++) {
 					if (comparer.Equals(this[i], item))
 						return true;
 				}
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			public void CopyTo (T[] array, int arrayIndex)
 			{
-				for (int i = 0; i < Count; i++) {
+				for (var i = 0; i < Count; i++) {
 					array[arrayIndex + i] = this[i];
 				}
 			}
@@ -109,18 +109,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
-			public bool IsReadOnly {
-				get {
-					return true;
-				}
-			}
+			public bool IsReadOnly => true;
+
 			#endregion
 
 			#region IList implementation
 			public int IndexOf (T item)
 			{
 				var comparer = EqualityComparer<T>.Default;
-				for (int i = 0; i < this.Count; i++) {
+				for (var i = 0; i < this.Count; i++) {
 					if (comparer.Equals(this[i], item))
 						return i;
 				}
@@ -146,21 +143,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 					throw new IndexOutOfRangeException ();
 				}
-				set {
-					throw new NotSupportedException();
-				}
+				set => throw new NotSupportedException();
 			}
 			#endregion
 		}
 
 		public static DefaultResolvedMethod CreateFromMultipleParts(IUnresolvedMethod[] parts, ITypeResolveContext[] contexts, bool isExtensionMethod)
 		{
-			DefaultResolvedMethod method = new DefaultResolvedMethod(parts[0], contexts[0], isExtensionMethod);
+			var method = new DefaultResolvedMethod(parts[0], contexts[0], isExtensionMethod);
 			method.parts = parts;
 			if (parts.Length > 1) {
 				var attrs = new ListOfLists <IAttribute>();
 				attrs.AddList (method.Attributes);
-				for (int i = 1; i < parts.Length; i++) {
+				for (var i = 1; i < parts.Length; i++) {
 					attrs.AddList (parts[i].Attributes.CreateResolvedAttributes(contexts[i]));
 				}
 				method.Attributes = attrs;
@@ -172,51 +167,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IAttribute> ReturnTypeAttributes { get; private set; }
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; private set; }
 
-		public IReadOnlyList<IType> TypeArguments {
-			get {
-				return TypeParameters;
-			}
-		}
+		public IReadOnlyList<IType> TypeArguments => TypeParameters;
 
 		public bool IsExtensionMethod { get; private set; }
 		
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get {
-				return parts ?? new IUnresolvedMethod[] { (IUnresolvedMethod)unresolved };
-			}
-		}
-		
-		public bool IsConstructor {
-			get { return ((IUnresolvedMethod)unresolved).IsConstructor; }
-		}
-		
-		public bool IsDestructor {
-			get { return ((IUnresolvedMethod)unresolved).IsDestructor; }
-		}
-		
-		public bool IsOperator {
-			get { return ((IUnresolvedMethod)unresolved).IsOperator; }
-		}
-		
-		public bool IsPartial {
-			get { return ((IUnresolvedMethod)unresolved).IsPartial; }
-		}
+		public IReadOnlyList<IUnresolvedMethod> Parts => parts ?? new IUnresolvedMethod[] { (IUnresolvedMethod)unresolved };
 
-		public bool IsAsync {
-			get { return ((IUnresolvedMethod)unresolved).IsAsync; }
-		}
+		public bool IsConstructor => ((IUnresolvedMethod)unresolved).IsConstructor;
 
-		public bool HasBody {
-			get { return ((IUnresolvedMethod)unresolved).HasBody; }
-		}
-		
-		public bool IsAccessor {
-			get { return ((IUnresolvedMethod)unresolved).AccessorOwner != null; }
-		}
+		public bool IsDestructor => ((IUnresolvedMethod)unresolved).IsDestructor;
 
-		IMethod IMethod.ReducedFrom {
-			get { return null; }
-		}
+		public bool IsOperator => ((IUnresolvedMethod)unresolved).IsOperator;
+
+		public bool IsPartial => ((IUnresolvedMethod)unresolved).IsPartial;
+
+		public bool IsAsync => ((IUnresolvedMethod)unresolved).IsAsync;
+
+		public bool HasBody => ((IUnresolvedMethod)unresolved).HasBody;
+
+		public bool IsAccessor => ((IUnresolvedMethod)unresolved).AccessorOwner != null;
+
+		IMethod IMethod.ReducedFrom => null;
 
 		public virtual IMember AccessorOwner {
 			get {
@@ -263,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			StringBuilder b = new StringBuilder("[");
+			var b = new StringBuilder("[");
 			b.Append(this.SymbolKind);
 			b.Append(' ');
 			if (this.DeclaringType != null) {
@@ -276,7 +247,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Append(this.TypeParameters.Count);
 			}
 			b.Append('(');
-			for (int i = 0; i < this.Parameters.Count; i++) {
+			for (var i = 0; i < this.Parameters.Count; i++) {
 				if (i > 0) b.Append(", ");
 				b.Append(this.Parameters[i].ToString());
 			}

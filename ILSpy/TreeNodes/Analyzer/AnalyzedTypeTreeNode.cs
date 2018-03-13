@@ -27,24 +27,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
-				throw new ArgumentNullException(nameof(analyzedType));
-			this.analyzedType = analyzedType;
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return TypeTreeNode.GetIcon(analyzedType); }
-		}
+		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
 
-		public override object Text
-		{
-			get
-			{
-				return Language.TypeToString(analyzedType, true);
-			}
-		}
+		public override object Text => Language.TypeToString(analyzedType, true);
 
 		protected override void LoadChildren()
 		{
@@ -64,8 +53,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedTypeExtensionMethodsTreeNode(analyzedType));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedType; }
-		}
+		public override MemberReference Member => analyzedType;
 	}
 }

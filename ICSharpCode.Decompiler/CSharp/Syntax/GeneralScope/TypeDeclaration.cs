@@ -41,14 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class TypeDeclaration : EntityDeclaration
 	{
-		public override NodeType NodeType {
-			get { return NodeType.TypeDeclaration; }
-		}
-		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.TypeDefinition; }
-		}
-		
+		public override NodeType NodeType => NodeType.TypeDeclaration;
+
+		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
+
 		ClassType classType;
 
 		public CSharpTokenNode TypeKeyword {
@@ -69,53 +65,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public ClassType ClassType {
-			get { return classType; }
+			get => classType;
 			set {
 				ThrowIfFrozen();
 				classType = value;
 			}
 		}
 
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole (Roles.LChevron); }
-		}
+		public CSharpTokenNode LChevronToken => GetChildByRole (Roles.LChevron);
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole (Roles.TypeParameter); }
-		}
+		public AstNodeCollection<TypeParameterDeclaration> TypeParameters => GetChildrenByRole (Roles.TypeParameter);
 
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole (Roles.RChevron); }
-		}
+		public CSharpTokenNode RChevronToken => GetChildByRole (Roles.RChevron);
 
 
+		public CSharpTokenNode ColonToken => GetChildByRole(Roles.Colon);
 
-		public CSharpTokenNode ColonToken {
-			get {
-				return GetChildByRole(Roles.Colon);
-			}
-		}
-		
-		public AstNodeCollection<AstType> BaseTypes {
-			get { return GetChildrenByRole(Roles.BaseType); }
-		}
-		
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
-		
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole (Roles.LBrace); }
-		}
+		public AstNodeCollection<AstType> BaseTypes => GetChildrenByRole(Roles.BaseType);
 
-		public AstNodeCollection<EntityDeclaration> Members {
-			get { return GetChildrenByRole (Roles.TypeMemberRole); }
-		}
-		
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole (Roles.RBrace); }
-		}
-		
+		public AstNodeCollection<Constraint> Constraints => GetChildrenByRole(Roles.Constraint);
+
+		public CSharpTokenNode LBraceToken => GetChildByRole (Roles.LBrace);
+
+		public AstNodeCollection<EntityDeclaration> Members => GetChildrenByRole (Roles.TypeMemberRole);
+
+		public CSharpTokenNode RBraceToken => GetChildByRole (Roles.RBrace);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitTypeDeclaration (this);
@@ -133,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			TypeDeclaration o = other as TypeDeclaration;
+			var o = other as TypeDeclaration;
 			return o != null && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
 				&& this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)

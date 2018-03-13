@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public class UsingScope : AbstractFreezable
 	{
-		readonly UsingScope parent;
 		DomRegion region;
-		string shortName = "";
 		IList<TypeOrNamespaceReference> usings;
 		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
 		IList<string> externAliases;
@@ -47,8 +45,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			// In current model (no child scopes), it makes sense to freeze the parent as well
 			// to ensure the whole lookup chain is immutable.
-			if (parent != null)
-				parent.Freeze();
+			if (Parent != null)
+				Parent.Freeze();
 			
 			base.FreezeInternal();
 		}
@@ -67,38 +65,28 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// <param name="shortName">The short namespace name.</param>
 		public UsingScope(UsingScope parent, string shortName)
 		{
-			if (parent == null)
-				throw new ArgumentNullException("parent");
-			if (shortName == null)
-				throw new ArgumentNullException("shortName");
-			this.parent = parent;
-			this.shortName = shortName;
+			this.Parent = parent ?? throw new ArgumentNullException("parent");
+			this.ShortNamespaceName = shortName ?? throw new ArgumentNullException("shortName");
 		}
 		
-		public UsingScope Parent {
-			get { return parent; }
-		}
-		
+		public UsingScope Parent { get; }
+
 		public DomRegion Region {
-			get { return region; }
+			get => region;
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				region = value;
 			}
 		}
 		
-		public string ShortNamespaceName {
-			get {
-				return shortName;
-			}
-		}
-		
+		public string ShortNamespaceName { get; } = "";
+
 		public string NamespaceName {
 			get {
-				if (parent != null)
-					return NamespaceDeclaration.BuildQualifiedName(parent.NamespaceName, shortName);
+				if (Parent != null)
+					return NamespaceDeclaration.BuildQualifiedName(Parent.NamespaceName, ShortNamespaceName);
 				else
-					return shortName;
+					return ShortNamespaceName;
 			}
 //			set {
 //				if (value == null)
@@ -160,10 +148,10 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		/// </summary>
 		public ResolvedUsingScope Resolve(ICompilation compilation)
 		{
-			CacheManager cache = compilation.CacheManager;
-			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
+			var cache = compilation.CacheManager;
+			var resolved = cache.GetShared(this) as ResolvedUsingScope;
 			if (resolved == null) {
-				var csContext = new CSharpTypeResolveContext(compilation.MainAssembly, parent != null ? parent.Resolve(compilation) : null);
+				var csContext = new CSharpTypeResolveContext(compilation.MainAssembly, Parent != null ? Parent.Resolve(compilation) : null);
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}
 			return resolved;

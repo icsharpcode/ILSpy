@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		///   and <c>SymbolKind.None</c> for everything else.
 		/// </summary>
 		public SymbolKind SymbolKind {
-			get { return symbolKind; }
+			get => symbolKind;
 			set {
 				ThrowIfFrozen();
 				symbolKind = value;
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This property is only used when SymbolKind==Operator.
 		/// </summary>
 		public OperatorType OperatorType {
-			get { return operatorType; }
+			get => operatorType;
 			set {
 				ThrowIfFrozen();
 				operatorType = value;
@@ -64,23 +64,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets whether a parameter list was provided.
 		/// </summary>
 		public bool HasParameterList {
-			get { return hasParameterList; }
+			get => hasParameterList;
 			set {
 				ThrowIfFrozen();
 				hasParameterList = value;
 			}
 		}
 		
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
-		
+		public override NodeType NodeType => NodeType.Unknown;
+
 		/// <summary>
 		/// Gets/Sets the declaring type.
 		/// </summary>
 		public AstType DeclaringType {
-			get { return GetChildByRole(DeclaringTypeRole); }
-			set { SetChildByRole(DeclaringTypeRole, value); }
+			get => GetChildByRole(DeclaringTypeRole);
+			set => SetChildByRole(DeclaringTypeRole, value);
 		}
 		
 		/// <summary>
@@ -88,8 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This property is only used when SymbolKind==None.
 		/// </summary>
 		public string MemberName {
-			get { return GetChildByRole(Roles.Identifier).Name; }
-			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
+			get => GetChildByRole(Roles.Identifier).Name;
+			set => SetChildByRole(Roles.Identifier, Identifier.Create(value));
 		}
 		
 		/// <summary>
@@ -97,21 +95,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
 		/// </summary>
 		public AstType ConversionOperatorReturnType {
-			get { return GetChildByRole(ConversionOperatorReturnTypeRole); }
-			set { SetChildByRole(ConversionOperatorReturnTypeRole, value); }
+			get => GetChildByRole(ConversionOperatorReturnTypeRole);
+			set => SetChildByRole(ConversionOperatorReturnTypeRole, value);
 		}
 		
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole (Roles.TypeArgument);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DocumentationReference o = other as DocumentationReference;
+			var o = other as DocumentationReference;
 			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
 				return false;
 			if (this.SymbolKind == SymbolKind.Operator) {

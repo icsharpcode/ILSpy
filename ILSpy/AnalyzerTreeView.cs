@@ -58,10 +58,10 @@ namespace ICSharpCode.ILSpy
 			if (e.Action == NotifyCollectionChangedAction.Reset) {
 				this.Root.Children.Clear();
 			} else {
-				List<LoadedAssembly> removedAssemblies = new List<LoadedAssembly>();
+				var removedAssemblies = new List<LoadedAssembly>();
 				if (e.OldItems != null)
 					removedAssemblies.AddRange(e.OldItems.Cast<LoadedAssembly>());
-				List<LoadedAssembly> addedAssemblies = new List<LoadedAssembly>();
+				var addedAssemblies = new List<LoadedAssembly>();
 				if (e.NewItems != null)
 					addedAssemblies.AddRange(e.NewItems.Cast<LoadedAssembly>());
 				((AnalyzerRootNode)this.Root).HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy
 			{
 				this.Children.RemoveAll(
 					delegate(SharpTreeNode n) {
-						AnalyzerTreeNode an = n as AnalyzerTreeNode;
+						var an = n as AnalyzerTreeNode;
 						return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
 					});
 				return true;

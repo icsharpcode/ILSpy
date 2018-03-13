@@ -33,24 +33,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null) {
-				return CreateNode(er.Name, er.GetResourceStream());
-			}
-			return null;
+			var er = resource as EmbeddedResource;
+			return er != null ? CreateNode(er.Name, er.GetResourceStream()) : null;
 		}
 
 		public ILSpyTreeNode CreateNode(string key, object data)
 		{
 			if (data is System.Drawing.Image)
 			{
-				MemoryStream s = new MemoryStream();
+				var s = new MemoryStream();
 				((System.Drawing.Image)data).Save(s, System.Drawing.Imaging.ImageFormat.Bmp);
 				return new ImageResourceEntryNode(key, s);
 			}
 			if (!(data is Stream))
 			    return null;
-			foreach (string fileExt in imageFileExtensions) {
+			foreach (var fileExt in imageFileExtensions) {
 				if (key.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase))
 					return new ImageResourceEntryNode(key, (Stream)data);
 			}
@@ -65,17 +62,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 		}
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		public override bool View(DecompilerTextView textView)
 		{
 			try {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				var output = new AvalonEditTextOutput();
 				Data.Position = 0;
-				BitmapImage image = new BitmapImage();
+				var image = new BitmapImage();
 				image.BeginInit();
 				image.StreamSource = Data;
 				image.EndInit();

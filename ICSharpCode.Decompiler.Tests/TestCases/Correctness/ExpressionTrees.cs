@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Test()
 		{
-			int i = 0;
+			var i = 0;
 			Expression<Func<int>> expression = () => i;
 			i = 1;
 			Console.WriteLine(expression.Compile()());
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static Expression<Func<int, int>> GetExpression(Expression factor)
 		{
-			ParameterExpression parameterExpression = Expression.Parameter(typeof(int), "x");
+			var parameterExpression = Expression.Parameter(typeof(int), "x");
 			return Expression.Lambda<Func<int, int>>(Expression.Multiply(parameterExpression, factor), parameterExpression);
 		}
 	}

@@ -8,10 +8,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	class RefLocalsAndReturns
 	{
-		static int[] numbers = { 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023 };
-		static string[] strings = { "Hello", "World" };
+		static readonly int[] numbers = { 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023 };
+		static readonly string[] strings = { "Hello", "World" };
 		static string NullString = "";
-		static int DefaultInt = 0;
+		static readonly int DefaultInt = 0;
 
 		public delegate ref TReturn RefFunc<T1, TReturn>(T1 param1);
 
@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static ref int FindNumber(int target)
 		{
-			for (int ctr = 0; ctr < numbers.Length; ctr++) {
+			for (var ctr = 0; ctr < numbers.Length; ctr++) {
 				if (numbers[ctr] >= target)
 					return ref numbers[ctr];
 			}

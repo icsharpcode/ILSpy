@@ -40,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Token = token;
 			this.Length = token.Length;
 
-			bool found = false;
-			for (int i = 0; i < Tokens.Count; i++) {
+			var found = false;
+			for (var i = 0; i < Tokens.Count; i++) {
 				var existingToken = Tokens [i];
 				if (existingToken == token) {
 					TokenIndex = (uint)i;

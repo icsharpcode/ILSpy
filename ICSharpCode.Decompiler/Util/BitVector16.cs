@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Util
 		ushort data;
 		
 		public bool this[ushort mask] {
-			get { return (data & mask) != 0; }
+			get => (data & mask) != 0;
 			set {
 				if (value)
 					data |= mask;
@@ -40,8 +40,8 @@ namespace ICSharpCode.Decompiler.Util
 		}
 		
 		public ushort Data {
-			get { return data; }
-			set { data = value; }
+			get => data;
+			set => data = value;
 		}
 		
 		#region Equals and GetHashCode implementation

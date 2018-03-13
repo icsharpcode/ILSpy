@@ -38,8 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ITypeResolveContext context;
 		readonly byte[] blob;
 		readonly IList<ITypeReference> ctorParameterTypes;
-		readonly IType attributeType;
-		
+
 		IMethod constructor;
 		volatile bool constructorResolved;
 
@@ -51,20 +50,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.context = context;
 			this.blob = unresolved.blob;
 			this.ctorParameterTypes = unresolved.ctorParameterTypes;
-			this.attributeType = unresolved.attributeType.Resolve(context);
+			this.AttributeType = unresolved.attributeType.Resolve(context);
 		}
 		
 		public CecilResolvedAttribute(ITypeResolveContext context, IType attributeType)
 		{
 			this.context = context;
-			this.attributeType = attributeType;
+			this.AttributeType = attributeType;
 			this.ctorParameterTypes = EmptyList<ITypeReference>.Instance;
 		}
 		
-		public IType AttributeType {
-			get { return attributeType; }
-		}
-		
+		public IType AttributeType { get; }
+
 		public IMethod Constructor {
 			get {
 				if (!constructorResolved) {
@@ -78,9 +75,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IMethod ResolveConstructor()
 		{
 			var parameterTypes = ctorParameterTypes.Resolve(context);
-			foreach (var ctor in attributeType.GetConstructors(m => m.Parameters.Count == parameterTypes.Count)) {
-				bool ok = true;
-				for (int i = 0; i < parameterTypes.Count; i++) {
+			foreach (var ctor in AttributeType.GetConstructors(m => m.Parameters.Count == parameterTypes.Count)) {
+				var ok = true;
+				for (var i = 0; i < parameterTypes.Count; i++) {
 					if (!ctor.Parameters[i].Type.Equals(parameterTypes[i])) {
 						ok = false;
 						break;
@@ -116,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return "[" + attributeType.ToString() + "(...)]";
+			return "[" + AttributeType.ToString() + "(...)]";
 		}
 		
 		void DecodeBlob()
@@ -132,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (blob == null)
 				return;
-			BlobReader reader = new BlobReader(blob, context.CurrentAssembly);
+			var reader = new BlobReader(blob, context.CurrentAssembly);
 			if (reader.ReadUInt16() != 0x0001) {
 				Debug.WriteLine("Unknown blob prolog");
 				return;
@@ -158,9 +155,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			try {
-				ushort numNamed = reader.ReadUInt16();
-				for (int i = 0; i < numNamed; i++) {
-					var namedArg = reader.ReadNamedArg(attributeType);
+				var numNamed = reader.ReadUInt16();
+				for (var i = 0; i < numNamed; i++) {
+					var namedArg = reader.ReadNamedArg(AttributeType);
 					if (namedArg.Key != null)
 						namedArguments.Add(namedArg);
 				}

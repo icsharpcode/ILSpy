@@ -6,20 +6,17 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	internal class PropertyDeclaration
 	{
-		private TypeDeclaration declaringType;
-		private string name;
-
 		// Methods
 		public PropertyDeclaration(string name)
 		{
-			this.name = name;
-			this.declaringType = null;
+			this.Name = name;
+			this.DeclaringType = null;
 		}
 
 		public PropertyDeclaration(string name, TypeDeclaration declaringType)
 		{
-			this.name = name;
-			this.declaringType = declaringType;
+			this.Name = name;
+			this.DeclaringType = declaringType;
 		}
 
 		public override string ToString()
@@ -36,20 +33,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		}
 
 		// Properties
-		public TypeDeclaration DeclaringType
-		{
-			get
-			{
-				return this.declaringType;
-			}
-		}
+		public TypeDeclaration DeclaringType { get; }
 
-		public string Name
-		{
-			get
-			{
-				return this.name;
-			}
-		}
+		public string Name { get; }
 	}
 }

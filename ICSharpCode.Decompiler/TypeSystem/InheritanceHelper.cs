@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else {
 				allBaseTypes = member.DeclaringTypeDefinition.GetNonInterfaceBaseTypes();
 			}
-			foreach (IType baseType in allBaseTypes.Reverse()) {
+			foreach (var baseType in allBaseTypes.Reverse()) {
 				if (baseType == member.DeclaringTypeDefinition)
 					continue;
 
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				} else {
 					baseMembers = baseType.GetMembers(m => m.Name == member.Name && !m.IsExplicitInterfaceImplementation, GetMemberOptions.IgnoreInheritedMembers);
 				}
-				foreach (IMember baseMember in baseMembers) {
+				foreach (var baseMember in baseMembers) {
 					if (baseMember.IsPrivate) {
 						// skip private base members; 
 						continue;
@@ -109,10 +109,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
 			
 			baseMember = baseMember.MemberDefinition;
-			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
-			IMethod method = baseMember as IMethod;
+			var includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
+			var method = baseMember as IMethod;
 			if (method != null) {
-				foreach (IMethod derivedMethod in derivedType.Methods) {
+				foreach (var derivedMethod in derivedType.Methods) {
 					if (derivedMethod.Name == method.Name && derivedMethod.Parameters.Count == method.Parameters.Count) {
 						if (derivedMethod.TypeParameters.Count == method.TypeParameters.Count) {
 							// The method could override the base method:
@@ -122,9 +122,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			IProperty property = baseMember as IProperty;
+			var property = baseMember as IProperty;
 			if (property != null) {
-				foreach (IProperty derivedProperty in derivedType.Properties) {
+				foreach (var derivedProperty in derivedType.Properties) {
 					if (derivedProperty.Name == property.Name && derivedProperty.Parameters.Count == property.Parameters.Count) {
 						// The property could override the base property:
 						if (GetBaseMembers(derivedProperty, includeInterfaces).Any(m => m.MemberDefinition == baseMember))
@@ -133,13 +133,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			if (baseMember is IEvent) {
-				foreach (IEvent derivedEvent in derivedType.Events) {
+				foreach (var derivedEvent in derivedType.Events) {
 					if (derivedEvent.Name == baseMember.Name)
 						return derivedEvent;
 				}
 			}
 			if (baseMember is IField) {
-				foreach (IField derivedField in derivedType.Fields) {
+				foreach (var derivedField in derivedType.Fields) {
 					if (derivedField.Name == baseMember.Name)
 						return derivedField;
 				}

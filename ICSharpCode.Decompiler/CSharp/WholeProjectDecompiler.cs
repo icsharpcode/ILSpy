@@ -43,14 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		DecompilerSettings settings = new DecompilerSettings();
 
 		public DecompilerSettings Settings {
-			get {
-				return settings;
-			}
-			set {
-				if (value == null)
-					throw new ArgumentNullException();
-				settings = value;
-			}
+			get => settings;
+			set => settings = value ?? throw new ArgumentNullException();
 		}
 
 		/// <summary>
@@ -63,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		#endregion
 
 		// per-run members
-		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
+		readonly HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
 
 		/// <summary>
 		/// The target directory that the decompiled files are written to.
@@ -76,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Assembly.Name.Name) + ".csproj");
+			var projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Assembly.Name.Name) + ".csproj");
 			using (var writer = new StreamWriter(projectFileName)) {
 				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 			}
@@ -104,9 +98,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-			string platformName = GetPlatformName(module);
-			Guid guid = this.ProjectGuid ?? Guid.NewGuid();
-			using (XmlTextWriter w = new XmlTextWriter(writer)) {
+			var platformName = GetPlatformName(module);
+			var guid = this.ProjectGuid ?? Guid.NewGuid();
+			using (var w = new XmlTextWriter(writer)) {
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
 				w.WriteStartElement("Project", ns);
@@ -139,13 +133,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				w.WriteElementString("AssemblyName", module.Assembly.Name.Name);
-				bool useTargetFrameworkAttribute = false;
-				LanguageTargets languageTargets = LanguageTargets.None;
+				var useTargetFrameworkAttribute = false;
+				var languageTargets = LanguageTargets.None;
 				var targetFrameworkAttribute = module.Assembly.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute");
 				if (targetFrameworkAttribute != null && targetFrameworkAttribute.ConstructorArguments.Any()) {
-					string frameworkName = (string)targetFrameworkAttribute.ConstructorArguments[0].Value;
-					string[] frameworkParts = frameworkName.Split(',');
-					string frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
+					var frameworkName = (string)targetFrameworkAttribute.ConstructorArguments[0].Value;
+					var frameworkParts = frameworkName.Split(',');
+					var frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkIdentifier != null) {
 						w.WriteElementString("TargetFrameworkIdentifier", frameworkIdentifier);
 						switch (frameworkIdentifier) {
@@ -154,12 +148,12 @@ namespace ICSharpCode.Decompiler.CSharp
 								break;
 						}
 					}
-					string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase));
+					var frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkVersion != null) {
 						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
 						useTargetFrameworkAttribute = true;
 					}
-					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
+					var frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkProfile != null)
 						w.WriteElementString("TargetFrameworkProfile", frameworkProfile.Substring("Profile=".Length));
 				}
@@ -208,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 
 				w.WriteStartElement("ItemGroup"); // References
-				foreach (AssemblyNameReference r in module.AssemblyReferences) {
+				foreach (var r in module.AssemblyReferences) {
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
@@ -223,9 +217,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				w.WriteEndElement(); // </ItemGroup> (References)
 
-				foreach (IGrouping<string, string> gr in (from f in files group f.Item2 by f.Item1 into g orderby g.Key select g)) {
+				foreach (var gr in (from f in files group f.Item2 by f.Item1 into g orderby g.Key select g)) {
 					w.WriteStartElement("ItemGroup");
-					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
+					foreach (var file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
 						w.WriteStartElement(gr.Key);
 						w.WriteAttributeString("Include", file);
 						w.WriteEndElement();
@@ -278,13 +272,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			var decompiler = CreateDecompiler(ts);
 			decompiler.CancellationToken = cancellationToken;
 			decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
-			SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
+			var syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 			const string prop = "Properties";
 			if (directories.Add(prop))
 				Directory.CreateDirectory(Path.Combine(targetDirectory, prop));
-			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
+			var assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
+			using (var w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 			}
 			return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
@@ -294,17 +288,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var files = module.Types.Where(IncludeTypeWhenDecompilingProject).GroupBy(
 				delegate (TypeDefinition type) {
-					string file = CleanUpFileName(type.Name) + ".cs";
+					var file = CleanUpFileName(type.Name) + ".cs";
 					if (string.IsNullOrEmpty(type.Namespace)) {
 						return file;
 					} else {
-						string dir = CleanUpFileName(type.Namespace);
+						var dir = CleanUpFileName(type.Namespace);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
+			var ts = new DecompilerTypeSystem(module);
 			Parallel.ForEach(
 				files,
 				new ParallelOptions {
@@ -312,8 +306,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken = cancellationToken
 				},
 				delegate (IGrouping<string, TypeDefinition> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
-						CSharpDecompiler decompiler = CreateDecompiler(ts);
+					using (var w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
+						var decompiler = CreateDecompiler(ts);
 						decompiler.CancellationToken = cancellationToken;
 						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
@@ -326,31 +320,31 @@ namespace ICSharpCode.Decompiler.CSharp
 		#region WriteResourceFilesInProject
 		protected virtual IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(ModuleDefinition module)
 		{
-			foreach (EmbeddedResource r in module.Resources.OfType<EmbeddedResource>()) {
-				Stream stream = r.GetResourceStream();
+			foreach (var r in module.Resources.OfType<EmbeddedResource>()) {
+				var stream = r.GetResourceStream();
 				stream.Position = 0;
 
 				IEnumerable<DictionaryEntry> entries;
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
 					if (GetEntries(stream, out entries) && entries.All(e => e.Value is Stream)) {
 						foreach (var pair in entries) {
-							string fileName = Path.Combine(((string)pair.Key).Split('/').Select(p => CleanUpFileName(p)).ToArray());
-							string dirName = Path.GetDirectoryName(fileName);
+							var fileName = Path.Combine(((string)pair.Key).Split('/').Select(p => CleanUpFileName(p)).ToArray());
+							var dirName = Path.GetDirectoryName(fileName);
 							if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName)) {
 								Directory.CreateDirectory(Path.Combine(targetDirectory, dirName));
 							}
-							Stream entryStream = (Stream)pair.Value;
+							var entryStream = (Stream)pair.Value;
 							entryStream.Position = 0;
 							WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)pair.Key, entryStream);
 						}
 					} else {
 						stream.Position = 0;
-						string fileName = GetFileNameForResource(Path.ChangeExtension(r.Name, ".resource"));
+						var fileName = GetFileNameForResource(Path.ChangeExtension(r.Name, ".resource"));
 						WriteResourceToFile(fileName, r.Name, stream);
 					}
 				} else {
-					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
+					var fileName = GetFileNameForResource(r.Name);
+					using (var fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
 						stream.Position = 0;
 						stream.CopyTo(fs);
 					}
@@ -361,7 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected virtual IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
-			using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write)) {
+			using (var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write)) {
 				entryStream.CopyTo(fs);
 			}
 			yield return Tuple.Create("EmbeddedResource", fileName);
@@ -369,12 +363,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		string GetFileNameForResource(string fullName)
 		{
-			string[] splitName = fullName.Split('.');
-			string fileName = CleanUpFileName(fullName);
-			for (int i = splitName.Length - 1; i > 0; i--) {
-				string ns = string.Join(".", splitName, 0, i);
+			var splitName = fullName.Split('.');
+			var fileName = CleanUpFileName(fullName);
+			for (var i = splitName.Length - 1; i > 0; i--) {
+				var ns = string.Join(".", splitName, 0, i);
 				if (directories.Contains(ns)) {
-					string name = string.Join(".", splitName, i, splitName.Length - i);
+					var name = string.Join(".", splitName, i, splitName.Length - i);
 					fileName = Path.Combine(ns, CleanUpFileName(name));
 					break;
 				}
@@ -399,14 +393,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public static string CleanUpFileName(string text)
 		{
-			int pos = text.IndexOf(':');
+			var pos = text.IndexOf(':');
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			pos = text.IndexOf('`');
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
-			foreach (char c in Path.GetInvalidFileNameChars())
+			foreach (var c in Path.GetInvalidFileNameChars())
 				text = text.Replace(c, '-');
 			return text;
 		}

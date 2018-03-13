@@ -37,20 +37,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			threading = new ThreadingSupport();
 		}
 
-		public override bool ShowExpander
-		{
-			get { return !type.IsSealed && base.ShowExpander; }
-		}
+		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;
 
-		public override object Text
-		{
-			get { return this.Language.TypeToString(type, true) + type.MetadataToken.ToSuffixString(); }
-		}
+		public override object Text => this.Language.TypeToString(type, true) + type.MetadataToken.ToSuffixString();
 
-		public override object Icon
-		{
-			get { return TypeTreeNode.GetIcon(type); }
-		}
+		public override object Icon => TypeTreeNode.GetIcon(type);
 
 		public override FilterResult Filter(FilterSettings settings)
 		{

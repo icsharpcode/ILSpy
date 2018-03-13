@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (!context.Settings.AwaitInCatchFinally)
 				return;
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			var changedContainers = new HashSet<BlockContainer>();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray()) {
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			transformableCatchBlocks = new List<(int Id, TryCatchHandler Handler, Block RealCatchBlockEntryPoint, Block NextBlock, IfInstruction JumpTableEntry, StLoc ObjectVariableStore)>();
 			catchHandlerIdentifier = null;
 			foreach (var handler in handlers) {
-				if (!MatchAwaitCatchHandler((BlockContainer)handler.Body, out int id, out var identifierVariable, out var realEntryPoint, out var nextBlock, out var jumpTableEntry, out var objectVariableStore))
+				if (!MatchAwaitCatchHandler((BlockContainer)handler.Body, out var id, out var identifierVariable, out var realEntryPoint, out var nextBlock, out var jumpTableEntry, out var objectVariableStore))
 					continue;
 				if (id < 1 || (catchHandlerIdentifier != null && identifierVariable != catchHandlerIdentifier))
 					continue;
@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			do {
 				if (!(jumpTableEntryBlock.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
 					return false;
-				ILInstruction lastInst = jumpTableEntryBlock.Instructions.Last();
+				var lastInst = jumpTableEntryBlock.Instructions.Last();
 				if (ifInst.Condition.MatchCompEquals(out var left, out var right)) {
 					if (!ifInst.TrueInst.MatchBranch(out realEntryPoint))
 						return false;
@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		public static void Run(ILFunction function, ILTransformContext context)
 		{
-			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
+			var changedContainers = new HashSet<BlockContainer>();
 
 			// analyze all try-catch statements in the function
 			foreach (var tryCatch in function.Descendants.OfType<TryCatch>().ToArray()) {
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 				if (afterFinally.Instructions.Count < 2)
 					continue;
-				int offset = 0;
+				var offset = 0;
 				if (afterFinally.Instructions[0].MatchLdLoc(out var identifierVariable)) {
 					if (identifierVariable.LoadCount != 1 || identifierVariable.StoreCount != 1)
 						continue;
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			afterFinally = null;
 			endOfFinally = (Block)tempStore.Parent;
 			blocksToRemove = new List<Block>();
-			int count = endOfFinally.Instructions.Count;
+			var count = endOfFinally.Instructions.Count;
 			if (tempStore.ChildIndex != count - 3)
 				return false;
 			if (!(endOfFinally.Instructions[count - 2] is IfInstruction ifInst))

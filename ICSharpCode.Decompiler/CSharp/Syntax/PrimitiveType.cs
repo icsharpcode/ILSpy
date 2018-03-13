@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		string keyword = string.Empty;
 		
 		public string Keyword {
-			get { return keyword; }
+			get => keyword;
 			set { 
 				if (value == null)
 					throw new ArgumentNullException();
@@ -47,10 +47,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		public KnownTypeCode KnownTypeCode {
-			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
-		}
-		
+		public KnownTypeCode KnownTypeCode => GetTypeCodeForPrimitiveType(this.Keyword);
+
 		public PrimitiveType()
 		{
 		}
@@ -66,24 +64,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.location = location;
 		}
 		
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
-		
+		public override TextLocation StartLocation => location;
+
 		internal void SetStartLocation(TextLocation value)
 		{
 			ThrowIfFrozen();
 			this.location = value;
 		}
 		
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation (location.Line, location.Column + keyword.Length);
-			}
-		}
-		
+		public override TextLocation EndLocation => new TextLocation (location.Line, location.Column + keyword.Length);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitPrimitiveType (this);
@@ -101,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			PrimitiveType o = other as PrimitiveType;
+			var o = other as PrimitiveType;
 			return o != null && MatchString(this.Keyword, o.Keyword);
 		}
 
@@ -112,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
 		{
-			KnownTypeCode typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
+			var typeCode = GetTypeCodeForPrimitiveType(this.Keyword);
 			if (typeCode == KnownTypeCode.None) {
 				if (this.Keyword == "__arglist")
 					return SpecialType.ArgList;

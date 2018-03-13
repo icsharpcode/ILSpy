@@ -35,11 +35,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void VarArgs(int normalArg, __arglist)
 		{
-			ArgIterator argIterator = new ArgIterator(__arglist);
+			var argIterator = new ArgIterator(__arglist);
 			Console.WriteLine("Called with {0} arguments", argIterator.GetRemainingCount());
-			int pos = 0;
+			var pos = 0;
 			while (argIterator.GetRemainingCount() > 0) {
-				TypedReference tr = argIterator.GetNextArg();
+				var tr = argIterator.GetNextArg();
 				object val;
 				try {
 					val = __refvalue(tr, object);
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void MakeTypedRef(object o)
 		{
-			TypedReference tr = __makeref(o);
+			var tr = __makeref(o);
 			UndocumentedExpressions.AcceptTypedRef(tr);
 		}
 

@@ -412,45 +412,33 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static readonly KnownTypeReference ICriticalNotifyCompletion = Get(KnownTypeCode.ICriticalNotifyCompletion);
 
-		readonly KnownTypeCode knownTypeCode;
-		readonly string namespaceName;
-		readonly string name;
-		readonly int typeParameterCount;
 		internal readonly KnownTypeCode baseType;
 		
 		private KnownTypeReference(KnownTypeCode knownTypeCode, string namespaceName, string name, int typeParameterCount = 0, KnownTypeCode baseType = KnownTypeCode.Object)
 		{
-			this.knownTypeCode = knownTypeCode;
-			this.namespaceName = namespaceName;
-			this.name = name;
-			this.typeParameterCount = typeParameterCount;
+			this.KnownTypeCode = knownTypeCode;
+			this.Namespace = namespaceName;
+			this.Name = name;
+			this.TypeParameterCount = typeParameterCount;
 			this.baseType = baseType;
 		}
 		
-		public KnownTypeCode KnownTypeCode {
-			get { return knownTypeCode; }
-		}
-		
-		public string Namespace {
-			get { return namespaceName; }
-		}
-		
-		public string Name {
-			get { return name; }
-		}
-		
-		public int TypeParameterCount {
-			get { return typeParameterCount; }
-		}
-		
+		public KnownTypeCode KnownTypeCode { get; }
+
+		public string Namespace { get; }
+
+		public string Name { get; }
+
+		public int TypeParameterCount { get; }
+
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return context.Compilation.FindType(knownTypeCode);
+			return context.Compilation.FindType(KnownTypeCode);
 		}
 		
 		public override string ToString()
 		{
-			return GetCSharpNameByTypeCode(knownTypeCode) ?? (this.Namespace + "." + this.Name);
+			return GetCSharpNameByTypeCode(KnownTypeCode) ?? (this.Namespace + "." + this.Name);
 		}
 		
 		/// <summary>

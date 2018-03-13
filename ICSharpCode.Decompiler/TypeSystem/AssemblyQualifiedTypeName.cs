@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override int GetHashCode()
 		{
-			int hashCode = 0;
+			var hashCode = 0;
 			unchecked {
 				if (AssemblyName != null)
 					hashCode += 1000000007 * AssemblyName.GetHashCode();

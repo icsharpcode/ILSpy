@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			var nodes = new List<ControlFlowNode>();
 			entryPoint.TraversePostOrder(n => n.Successors, nodes.Add);
 			Debug.Assert(nodes.Last() == entryPoint);
-			for (int i = 0; i < nodes.Count; i++) {
+			for (var i = 0; i < nodes.Count; i++) {
 				nodes[i].PostOrderNumber = i;
 			}
 			
@@ -62,8 +62,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				cancellationToken.ThrowIfCancellationRequested();
 				
 				// For all nodes b except the entry point (in reverse post-order)
-				for (int i = nodes.Count - 2; i >= 0; i--) {
-					ControlFlowNode b = nodes[i];
+				for (var i = nodes.Count - 2; i >= 0; i--) {
+					var b = nodes[i];
 					// Compute new immediate dominator:
 					ControlFlowNode newIdom = null;
 					foreach (var p in b.Predecessors) {
@@ -84,12 +84,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				}
 			} while(changed);
 			// Create dominator tree for all reachable nodes:
-			foreach (ControlFlowNode node in nodes) {
+			foreach (var node in nodes) {
 				if (node.ImmediateDominator != null)
 					node.DominatorTreeChildren = new List<ControlFlowNode>();
 			}
 			entryPoint.ImmediateDominator = null;
-			foreach (ControlFlowNode node in nodes) {
+			foreach (var node in nodes) {
 				// Create list of children in dominator tree
 				if (node.ImmediateDominator != null)
 					node.ImmediateDominator.DominatorTreeChildren.Add(node);
@@ -129,11 +129,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public static BitSet MarkNodesWithReachableExits(ControlFlowNode[] cfg)
 		{
 			#if DEBUG
-			for (int i = 0; i < cfg.Length; i++) {
+			for (var i = 0; i < cfg.Length; i++) {
 				Debug.Assert(cfg[i].UserIndex == i);
 			}
 			#endif
-			BitSet nonEmpty = new BitSet(cfg.Length);
+			var nonEmpty = new BitSet(cfg.Length);
 			foreach (var j in cfg) {
 				// If j is a join-point (more than one incoming edge):
 				// `j.IsReachable && j.ImmediateDominator == null` is the root node, which counts as an extra incoming edge

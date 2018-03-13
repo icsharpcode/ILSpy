@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
 		public bool AnonymousMethods {
-			get { return anonymousMethods; }
+			get => anonymousMethods;
 			set {
 				if (anonymousMethods != value) {
 					anonymousMethods = value;
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile anonymous types.
 		/// </summary>
 		public bool AnonymousTypes {
-			get { return anonymousTypes; }
+			get => anonymousTypes;
 			set {
 				if (anonymousTypes != value) {
 					anonymousTypes = value;
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile expression trees.
 		/// </summary>
 		public bool ExpressionTrees {
-			get { return expressionTrees; }
+			get => expressionTrees;
 			set {
 				if (expressionTrees != value) {
 					expressionTrees = value;
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile enumerators.
 		/// </summary>
 		public bool YieldReturn {
-			get { return yieldReturn; }
+			get => yieldReturn;
 			set {
 				if (yieldReturn != value) {
 					yieldReturn = value;
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile async methods.
 		/// </summary>
 		public bool AsyncAwait {
-			get { return asyncAwait; }
+			get => asyncAwait;
 			set {
 				if (asyncAwait != value) {
 					asyncAwait = value;
@@ -163,7 +163,7 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
 		/// </summary>
 		public bool AwaitInCatchFinally {
-			get { return awaitInCatchFinally; }
+			get => awaitInCatchFinally;
 			set {
 				if (awaitInCatchFinally != value) {
 					awaitInCatchFinally = value;
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
 		/// </summary>
 		public bool FixedBuffers {
-			get { return fixedBuffers; }
+			get => fixedBuffers;
 			set {
 				if (fixedBuffers != value) {
 					fixedBuffers = value;
@@ -193,7 +193,7 @@ namespace ICSharpCode.Decompiler
 		/// Use lifted operators for nullables.
 		/// </summary>
 		public bool LiftNullables {
-			get { return liftNullables; }
+			get => liftNullables;
 			set {
 				if (liftNullables != value) {
 					liftNullables = value;
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile C# 6 ?. and ?[] operators.
 		/// </summary>
 		public bool NullPropagation {
-			get { return nullPropagation; }
+			get => nullPropagation;
 			set {
 				if (nullPropagation != value) {
 					nullPropagation = value;
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile automatic properties
 		/// </summary>
 		public bool AutomaticProperties {
-			get { return automaticProperties; }
+			get => automaticProperties;
 			set {
 				if (automaticProperties != value) {
 					automaticProperties = value;
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile automatic events
 		/// </summary>
 		public bool AutomaticEvents {
-			get { return automaticEvents; }
+			get => automaticEvents;
 			set {
 				if (automaticEvents != value) {
 					automaticEvents = value;
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile using statements.
 		/// </summary>
 		public bool UsingStatement {
-			get { return usingStatement; }
+			get => usingStatement;
 			set {
 				if (usingStatement != value) {
 					usingStatement = value;
@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use braces for single-statement-blocks. 
 		/// </summary>
 		public bool AlwaysUseBraces {
-			get { return alwaysUseBraces; }
+			get => alwaysUseBraces;
 			set {
 				if (alwaysUseBraces != value) {
 					alwaysUseBraces = value;
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile foreach statements.
 		/// </summary>
 		public bool ForEachStatement {
-			get { return forEachStatement; }
+			get => forEachStatement;
 			set {
 				if (forEachStatement != value) {
 					forEachStatement = value;
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile lock statements.
 		/// </summary>
 		public bool LockStatement {
-			get { return lockStatement; }
+			get => lockStatement;
 			set {
 				if (lockStatement != value) {
 					lockStatement = value;
@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler
 		bool switchStatementOnString = true;
 
 		public bool SwitchStatementOnString {
-			get { return switchStatementOnString; }
+			get => switchStatementOnString;
 			set {
 				if (switchStatementOnString != value) {
 					switchStatementOnString = value;
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler
 		bool usingDeclarations = true;
 
 		public bool UsingDeclarations {
-			get { return usingDeclarations; }
+			get => usingDeclarations;
 			set {
 				if (usingDeclarations != value) {
 					usingDeclarations = value;
@@ -334,7 +334,7 @@ namespace ICSharpCode.Decompiler
 		bool queryExpressions = true;
 
 		public bool QueryExpressions {
-			get { return queryExpressions; }
+			get => queryExpressions;
 			set {
 				if (queryExpressions != value) {
 					queryExpressions = value;
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>EventHandler h = new EventHandler(this.OnClick);</c>
 		/// </summary>
 		public bool UseImplicitMethodGroupConversion {
-			get { return useImplicitMethodGroupConversion; }
+			get => useImplicitMethodGroupConversion;
 			set {
 				if (useImplicitMethodGroupConversion != value) {
 					useImplicitMethodGroupConversion = value;
@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler
 		bool fullyQualifyAmbiguousTypeNames = true;
 
 		public bool FullyQualifyAmbiguousTypeNames {
-			get { return fullyQualifyAmbiguousTypeNames; }
+			get => fullyQualifyAmbiguousTypeNames;
 			set {
 				if (fullyQualifyAmbiguousTypeNames != value) {
 					fullyQualifyAmbiguousTypeNames = value;
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
 		public bool UseDebugSymbols {
-			get { return useDebugSymbols; }
+			get => useDebugSymbols;
 			set {
 				if (useDebugSymbols != value) {
 					useDebugSymbols = value;
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public bool ArrayInitializers
 		{
-			get { return arrayInitializers; }
+			get => arrayInitializers;
 			set
 			{
 				if (arrayInitializers != value)
@@ -412,7 +412,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 3.0 object/collection initializers.
 		/// </summary>
 		public bool ObjectOrCollectionInitializers {
-			get { return objectCollectionInitializers; }
+			get => objectCollectionInitializers;
 			set {
 				if (objectCollectionInitializers != value) {
 					objectCollectionInitializers = value;
@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
 		/// </summary>
 		public bool DictionaryInitializers {
-			get { return dictionaryInitializers; }
+			get => dictionaryInitializers;
 			set {
 				if (dictionaryInitializers != value) {
 					dictionaryInitializers = value;
@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use C# 6.0 string interpolation
 		/// </summary>
 		public bool StringInterpolation {
-			get { return stringInterpolation; }
+			get => stringInterpolation;
 			set {
 				if (stringInterpolation != value) {
 					stringInterpolation = value;
@@ -458,7 +458,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
 		public bool ShowXmlDocumentation {
-			get { return showXmlDocumentation; }
+			get => showXmlDocumentation;
 			set {
 				if (showXmlDocumentation != value) {
 					showXmlDocumentation = value;
@@ -470,7 +470,7 @@ namespace ICSharpCode.Decompiler
 		bool foldBraces = false;
 
 		public bool FoldBraces {
-			get { return foldBraces; }
+			get => foldBraces;
 			set {
 				if (foldBraces != value) {
 					foldBraces = value;
@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler
 		bool expandMemberDefinitions = false;
 
 		public bool ExpandMemberDefinitions {
-			get { return expandMemberDefinitions; }
+			get => expandMemberDefinitions;
 			set {
 				if (expandMemberDefinitions != value) {
 					expandMemberDefinitions = value;
@@ -497,7 +497,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether member bodies should be decompiled.
 		/// </summary>
 		public bool DecompileMemberBodies {
-			get { return decompileMemberBodies; }
+			get => decompileMemberBodies;
 			set {
 				if (decompileMemberBodies != value) {
 					decompileMemberBodies = value;
@@ -512,7 +512,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
 		/// </summary>
 		public bool UseExpressionBodyForCalculatedGetterOnlyProperties {
-			get { return useExpressionBodyForCalculatedGetterOnlyProperties; }
+			get => useExpressionBodyForCalculatedGetterOnlyProperties;
 			set {
 				if (useExpressionBodyForCalculatedGetterOnlyProperties != value) {
 					useExpressionBodyForCalculatedGetterOnlyProperties = value;
@@ -527,7 +527,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether out variable declarations should be used when possible.
 		/// </summary>
 		public bool OutVariables {
-			get { return outVariables; }
+			get => outVariables;
 			set {
 				if (outVariables != value) {
 					outVariables = value;
@@ -543,7 +543,7 @@ namespace ICSharpCode.Decompiler
 		/// Only has an effect if <see cref="OutVariables"/> is enabled.
 		/// </summary>
 		public bool Discards {
-			get { return discards; }
+			get => discards;
 			set {
 				if (discards != value) {
 					discards = value;
@@ -558,7 +558,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether IsByRefLikeAttribute and IsReadOnlyAttribute should be replaced with 'ref' and 'readonly' modifiers on structs.
 		/// </summary>
 		public bool IntroduceRefAndReadonlyModifiersOnStructs {
-			get { return introduceRefAndReadonlyModifiersOnStructs; }
+			get => introduceRefAndReadonlyModifiersOnStructs;
 			set {
 				if (introduceRefAndReadonlyModifiersOnStructs != value) {
 					introduceRefAndReadonlyModifiersOnStructs = value;
@@ -574,7 +574,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use increment and decrement operators
 		/// </summary>
 		public bool IntroduceIncrementAndDecrement {
-			get { return introduceIncrementAndDecrement; }
+			get => introduceIncrementAndDecrement;
 			set {
 				if (introduceIncrementAndDecrement != value) {
 					introduceIncrementAndDecrement = value;
@@ -589,7 +589,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use assignment expressions such as in while ((count = Do()) != 0) ;
 		/// </summary>
 		public bool MakeAssignmentExpressions {
-			get { return makeAssignmentExpressions; }
+			get => makeAssignmentExpressions;
 			set {
 				if (makeAssignmentExpressions != value) {
 					makeAssignmentExpressions = value;
@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to always generate exception variables in catch blocks
 		/// </summary>
 		public bool AlwaysGenerateExceptionVariableForCatchBlocks {
-			get { return alwaysGenerateExceptionVariableForCatchBlocks; }
+			get => alwaysGenerateExceptionVariableForCatchBlocks;
 			set {
 				if (alwaysGenerateExceptionVariableForCatchBlocks != value) {
 					alwaysGenerateExceptionVariableForCatchBlocks = value;
@@ -616,7 +616,7 @@ namespace ICSharpCode.Decompiler
 		bool showDebugInfo;
 
 		public bool ShowDebugInfo {
-			get { return showDebugInfo; }
+			get => showDebugInfo;
 			set {
 				if (showDebugInfo != value) {
 					showDebugInfo = value;
@@ -631,7 +631,7 @@ namespace ICSharpCode.Decompiler
 		bool removeDeadCode = false;
 
 		public bool RemoveDeadCode {
-			get { return removeDeadCode; }
+			get => removeDeadCode;
 			set {
 				if (removeDeadCode != value) {
 					removeDeadCode = value;
@@ -646,7 +646,7 @@ namespace ICSharpCode.Decompiler
 		bool loadInMemory = false;
 
 		public bool LoadInMemory {
-			get { return loadInMemory; }
+			get => loadInMemory;
 			set {
 				if (loadInMemory != value) {
 					loadInMemory = value;
@@ -658,7 +658,7 @@ namespace ICSharpCode.Decompiler
 		bool throwOnAssemblyResolveErrors = true;
 
 		public bool ThrowOnAssemblyResolveErrors {
-			get { return throwOnAssemblyResolveErrors; }
+			get => throwOnAssemblyResolveErrors;
 			set {
 				if (throwOnAssemblyResolveErrors != value) {
 					throwOnAssemblyResolveErrors = value;
@@ -701,7 +701,7 @@ namespace ICSharpCode.Decompiler
 
 		public DecompilerSettings Clone()
 		{
-			DecompilerSettings settings = (DecompilerSettings)MemberwiseClone();
+			var settings = (DecompilerSettings)MemberwiseClone();
 			if (csharpFormattingOptions != null)
 				settings.csharpFormattingOptions = csharpFormattingOptions.Clone();
 			settings.PropertyChanged = null;

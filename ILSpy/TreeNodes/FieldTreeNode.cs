@@ -32,20 +32,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public FieldTreeNode(FieldDefinition field)
 		{
-			if (field == null)
-				throw new ArgumentNullException(nameof(field));
-			this.FieldDefinition = field;
+			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text
-		{
-			get {
-				return HighlightSearchMatch(
-					FieldDefinition.Name,
-					" : " + this.Language.TypeToString(FieldDefinition.FieldType, false, FieldDefinition) + FieldDefinition.MetadataToken.ToSuffixString()
-				);
-			}
-		}
+		public override object Text => HighlightSearchMatch(
+			FieldDefinition.Name,
+			" : " + this.Language.TypeToString(FieldDefinition.FieldType, false, FieldDefinition) + FieldDefinition.MetadataToken.ToSuffixString()
+		);
 
 		public override object Icon => GetIcon(FieldDefinition);
 
@@ -71,7 +64,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (fieldType.Name == "Decimal" && fieldType.Namespace == "System") {
 				if (field.HasCustomAttributes) {
 					var attrs = field.CustomAttributes;
-					for (int i = 0; i < attrs.Count; i++) {
+					for (var i = 0; i < attrs.Count; i++) {
 						var attrType = attrs[i].AttributeType;
 						if (attrType.Name == "DecimalConstantAttribute" && attrType.Namespace == "System.Runtime.CompilerServices")
 							return true;
@@ -118,11 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileField(FieldDefinition, output, options);
 		}
 		
-		public override bool IsPublicAPI {
-			get {
-				return FieldDefinition.IsPublic || FieldDefinition.IsFamily || FieldDefinition.IsFamilyOrAssembly;
-			}
-		}
+		public override bool IsPublicAPI => FieldDefinition.IsPublic || FieldDefinition.IsFamily || FieldDefinition.IsFamilyOrAssembly;
 
 		MemberReference IMemberTreeNode.Member => FieldDefinition;
 	}

@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (HasParameterList) {
 				if (this.Parameters.Count != parameterTypes.Length)
 					return Conversion.None;
-				for (int i = 0; i < parameterTypes.Length; ++i) {
+				for (var i = 0; i < parameterTypes.Length; ++i) {
 					if (!parameterTypes[i].Equals(this.Parameters[i].Type)) {
 						if (IsImplicitlyTyped) {
 							// it's possible that different parameter types also lead to a valid conversion

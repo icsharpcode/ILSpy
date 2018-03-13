@@ -41,16 +41,12 @@ namespace ICSharpCode.ILSpy.Options
 		
 		static DecompilerSettings currentDecompilerSettings;
 		
-		public static DecompilerSettings CurrentDecompilerSettings {
-			get {
-				return currentDecompilerSettings ?? (currentDecompilerSettings = LoadDecompilerSettings(ILSpySettings.Load()));
-			}
-		}
-		
+		public static DecompilerSettings CurrentDecompilerSettings => currentDecompilerSettings ?? (currentDecompilerSettings = LoadDecompilerSettings(ILSpySettings.Load()));
+
 		public static DecompilerSettings LoadDecompilerSettings(ILSpySettings settings)
 		{
-			XElement e = settings["DecompilerSettings"];
-			DecompilerSettings s = new DecompilerSettings();
+			var e = settings["DecompilerSettings"];
+			var s = new DecompilerSettings();
 			s.ShowDebugInfo = (bool?)e.Attribute("showDebugInfo") ?? s.ShowDebugInfo;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
 			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
@@ -64,8 +60,8 @@ namespace ICSharpCode.ILSpy.Options
 		
 		public void Save(XElement root)
 		{
-			DecompilerSettings s = (DecompilerSettings)this.DataContext;
-			XElement section = new XElement("DecompilerSettings");
+			var s = (DecompilerSettings)this.DataContext;
+			var section = new XElement("DecompilerSettings");
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);
 			section.SetAttributeValue("showDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
@@ -76,7 +72,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("fullyQualifyAmbiguousTypeNames", s.FullyQualifyAmbiguousTypeNames);
 			section.SetAttributeValue("alwaysUseBraces", s.AlwaysUseBraces);
 
-			XElement existingElement = root.Element("DecompilerSettings");
+			var existingElement = root.Element("DecompilerSettings");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
 			else
@@ -94,7 +90,7 @@ namespace ICSharpCode.ILSpy.Options
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
 		public bool ShowXmlDocumentation {
-			get { return showXmlDocumentation; }
+			get => showXmlDocumentation;
 			set {
 				if (showXmlDocumentation != value) {
 					showXmlDocumentation = value;
@@ -106,7 +102,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool foldBraces = false;
 
 		public bool FoldBraces {
-			get { return foldBraces; }
+			get => foldBraces;
 			set {
 				if (foldBraces != value) {
 					foldBraces = value;
@@ -118,7 +114,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool expandMemberDefinitions = false;
 
 		public bool ExpandMemberDefinitions {
-			get { return expandMemberDefinitions; }
+			get => expandMemberDefinitions;
 			set {
 				if (expandMemberDefinitions != value) {
 					expandMemberDefinitions = value;
@@ -133,7 +129,7 @@ namespace ICSharpCode.ILSpy.Options
 		/// Gets/Sets whether member bodies should be decompiled.
 		/// </summary>
 		public bool DecompileMemberBodies {
-			get { return decompileMemberBodies; }
+			get => decompileMemberBodies;
 			set {
 				if (decompileMemberBodies != value) {
 					decompileMemberBodies = value;
@@ -145,7 +141,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool fullyQualifyAmbiguousTypeNames = true;
 
 		public bool FullyQualifyAmbiguousTypeNames {
-			get { return fullyQualifyAmbiguousTypeNames; }
+			get => fullyQualifyAmbiguousTypeNames;
 			set {
 				if (fullyQualifyAmbiguousTypeNames != value) {
 					fullyQualifyAmbiguousTypeNames = value;
@@ -160,7 +156,7 @@ namespace ICSharpCode.ILSpy.Options
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
 		public bool UseDebugSymbols {
-			get { return useDebugSymbols; }
+			get => useDebugSymbols;
 			set {
 				if (useDebugSymbols != value) {
 					useDebugSymbols = value;
@@ -172,7 +168,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool usingDeclarations = true;
 
 		public bool UsingDeclarations {
-			get { return usingDeclarations; }
+			get => usingDeclarations;
 			set {
 				if (usingDeclarations != value) {
 					usingDeclarations = value;
@@ -184,7 +180,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool showDebugInfo;
 
 		public bool ShowDebugInfo {
-			get { return showDebugInfo; }
+			get => showDebugInfo;
 			set {
 				if (showDebugInfo != value) {
 					showDebugInfo = value;
@@ -196,7 +192,7 @@ namespace ICSharpCode.ILSpy.Options
 		bool removeDeadCode = false;
 
 		public bool RemoveDeadCode {
-			get { return removeDeadCode; }
+			get => removeDeadCode;
 			set {
 				if (removeDeadCode != value) {
 					removeDeadCode = value;
@@ -211,7 +207,7 @@ namespace ICSharpCode.ILSpy.Options
 		/// Gets/Sets whether to use braces for single-statement-blocks. 
 		/// </summary>
 		public bool AlwaysUseBraces {
-			get { return alwaysUseBraces; }
+			get => alwaysUseBraces;
 			set {
 				if (alwaysUseBraces != value) {
 					alwaysUseBraces = value;

@@ -13,11 +13,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				get;
 				set;
 			}
-			public MyClass this[int index] {
-				get {
-					return null;
-				}
-			}
+			public MyClass this[int index] => null;
+
 			public MyClass Method(int arg)
 			{
 				return null;
@@ -34,11 +31,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public MyClass Field;
 			public MyStruct? Property1 => null;
 			public MyStruct Property2 => default(MyStruct);
-			public MyStruct? this[int index] {
-				get {
-					return null;
-				}
-			}
+			public MyStruct? this[int index] => null;
+
 			public MyStruct? Method1(int arg)
 			{
 				return null;

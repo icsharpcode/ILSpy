@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
-			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
+			var needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
 			Debug.Assert(!(needsSign && inputSign == Sign.None));
 			this.InputType = inputType;
 			this.InputSign = needsSign ? inputSign : Sign.None;
@@ -295,13 +295,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override StackType ResultType {
-			get => IsLifted ? StackType.O : TargetType.GetStackType();
-		}
+		public override StackType ResultType => IsLifted ? StackType.O : TargetType.GetStackType();
 
-		public StackType UnderlyingResultType {
-			get => TargetType.GetStackType();
-		}
+		public StackType UnderlyingResultType => TargetType.GetStackType();
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{

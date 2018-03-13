@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Tests
 		
 		void RunWithOutput(string dir, string fileToRoundtrip)
 		{
-			string inputDir = Path.Combine(TestDir, dir);
+			var inputDir = Path.Combine(TestDir, dir);
 			RunInternal(dir, fileToRoundtrip,
 				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
 		}
@@ -122,9 +122,9 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
 				              $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
 			}
-			string inputDir = Path.Combine(TestDir, dir);
-			string decompiledDir = inputDir + "-decompiled";
-			string outputDir = inputDir + "-output";
+			var inputDir = Path.Combine(TestDir, dir);
+			var decompiledDir = inputDir + "-decompiled";
+			var outputDir = inputDir + "-output";
 			if (inputDir.EndsWith("TestCases")) {
 				// make sure output dir names are unique so that we don't get trouble due to parallel test execution
 				decompiledDir += Path.GetFileNameWithoutExtension(fileToRoundtrip);
@@ -133,16 +133,16 @@ namespace ICSharpCode.Decompiler.Tests
 			ClearDirectory(decompiledDir);
 			ClearDirectory(outputDir);
 			string projectFile = null;
-			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories)) {
+			foreach (var file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories)) {
 				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) {
 					Assert.Fail($"Unexpected file name: {file}");
 				}
-				string relFile = file.Substring(inputDir.Length + 1);
+				var relFile = file.Substring(inputDir.Length + 1);
 				Directory.CreateDirectory(Path.Combine(outputDir, Path.GetDirectoryName(relFile)));
 				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
-					Stopwatch w = Stopwatch.StartNew();
-					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
+					var w = Stopwatch.StartNew();
+					var resolver = new DefaultAssemblyResolver();
 					resolver.AddSearchDirectory(inputDir);
 					resolver.RemoveSearchDirectory(".");
 					var module = ModuleDefinition.ReadModule(file, new ReaderParameters {
@@ -168,8 +168,8 @@ namespace ICSharpCode.Decompiler.Tests
 		static void ClearDirectory(string dir)
 		{
 			Directory.CreateDirectory(dir);
-			foreach (string subdir in Directory.EnumerateDirectories(dir)) {
-				for (int attempt = 0; ; attempt++) {
+			foreach (var subdir in Directory.EnumerateDirectories(dir)) {
+				for (var attempt = 0; ; attempt++) {
 					try {
 						Directory.Delete(subdir, true);
 						break;
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 				}
 			}
-			foreach (string file in Directory.EnumerateFiles(dir)) {
+			foreach (var file in Directory.EnumerateFiles(dir)) {
 				File.Delete(file);
 			}
 		}
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		static string FindMSBuild()
 		{
-			string vsPath = FindVS2017();
+			var vsPath = FindVS2017();
 			if (vsPath == null)
 				throw new InvalidOperationException("Could not find VS2017");
 			return Path.Combine(vsPath, @"MSBuild\15.0\bin\MSBuild.exe");
@@ -214,14 +214,14 @@ namespace ICSharpCode.Decompiler.Tests
 			info.EnvironmentVariables.Remove("Platform");
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 			using (var p = Process.Start(info)) {
-				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
-				string suffix = $" [{projectFile}]";
+				var errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
+				var suffix = $" [{projectFile}]";
 				string line;
 				while ((line = p.StandardOutput.ReadLine()) != null) {
 					if (line.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
 						line = line.Substring(0, line.Length - suffix.Length);
 					}
-					Match m = errorRegex.Match(line);
+					var m = errorRegex.Match(line);
 					if (m.Success) {
 						// Make path absolute so that it gets hyperlinked
 						line = Path.GetDirectoryName(projectFile) + Path.DirectorySeparatorChar + line;

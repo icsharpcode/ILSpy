@@ -53,56 +53,38 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	
 	public class Comment : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
-		
+		public override NodeType NodeType => NodeType.Whitespace;
+
 		CommentType commentType;
 		
 		public CommentType CommentType {
-			get { return commentType; }
+			get => commentType;
 			set { ThrowIfFrozen(); commentType = value; }
 		}
 		
 		/// <summary>
 		/// Returns true if the <see cref="CommentType"/> is Documentation or MultiLineDocumentation.
 		/// </summary>
-		public bool IsDocumentation {
-			get {
-				return commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
-			}
-		}
-		
+		public bool IsDocumentation => commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
+
 		bool startsLine;
 		
 		public bool StartsLine {
-			get { return startsLine; }
+			get => startsLine;
 			set { ThrowIfFrozen(); startsLine = value; }
 		}
 		
 		string content;
 		
 		public string Content {
-			get { return content; }
+			get => content;
 			set { ThrowIfFrozen(); content = value; }
 		}
-		
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get { 
-				return startLocation;
-			}
-		}
-		
-		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
-		
+
+		public override TextLocation StartLocation { get; }
+
+		public override TextLocation EndLocation { get; }
+
 		public Comment (string content, CommentType type = CommentType.SingleLine)
 		{
 			this.CommentType = type;
@@ -112,8 +94,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Comment (CommentType commentType, TextLocation startLocation, TextLocation endLocation)
 		{
 			this.CommentType = commentType;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
+			this.StartLocation = startLocation;
+			this.EndLocation = endLocation;
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -133,7 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			Comment o = other as Comment;
+			var o = other as Comment;
 			return o != null && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
 		}
 	}

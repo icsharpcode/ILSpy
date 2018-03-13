@@ -35,21 +35,14 @@ namespace ICSharpCode.ILSpy
 	public sealed class LoadedAssembly
 	{
 		readonly Task<ModuleDefinition> assemblyTask;
-		readonly AssemblyList assemblyList;
-		readonly string fileName;
-		readonly string shortName;
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
-			if (assemblyList == null)
-				throw new ArgumentNullException(nameof(assemblyList));
-			if (fileName == null)
-				throw new ArgumentNullException(nameof(fileName));
-			this.assemblyList = assemblyList;
-			this.fileName = fileName;
+			this.AssemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
+			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			
 			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
-			this.shortName = Path.GetFileNameWithoutExtension(fileName);
+			this.ShortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
 		/// <summary>
@@ -109,16 +102,16 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public AssemblyList AssemblyList => assemblyList;
+		public AssemblyList AssemblyList { get; }
 
-		public string FileName => fileName;
+		public string FileName { get; }
 
-		public string ShortName => shortName;
+		public string ShortName { get; }
 
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					string version = GetAssemblyDefinitionOrNull()?.Name.Version.ToString();
+					var version = GetAssemblyDefinitionOrNull()?.Name.Version.ToString();
 					if (version == null)
 						return ShortName;
 					return String.Format("{0} ({1})", ShortName, version);
@@ -140,7 +133,7 @@ namespace ICSharpCode.ILSpy
 			ModuleDefinition module;
 
 			// runs on background thread
-			ReaderParameters p = new ReaderParameters();
+			var p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
 			p.InMemory = true;
 
@@ -152,7 +145,7 @@ namespace ICSharpCode.ILSpy
 			else
 			{
 				// Read the module from disk (by default)
-				module = ModuleDefinition.ReadModule(fileName, p);
+				module = ModuleDefinition.ReadModule(FileName, p);
 			}
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
@@ -174,7 +167,7 @@ namespace ICSharpCode.ILSpy
 			}
 
 			// search for pdb in same directory as dll
-			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
+			var pdbName = Path.Combine(Path.GetDirectoryName(FileName), Path.GetFileNameWithoutExtension(FileName) + ".pdb");
 			if (File.Exists(pdbName)) {
 				using (Stream s = File.OpenRead(pdbName)) {
 					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
@@ -243,9 +236,9 @@ namespace ICSharpCode.ILSpy
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 			if (name.IsWindowsRuntime) {
-				return assemblyList.assemblyLookupCache.GetOrAdd((name.Name, true), key => LookupReferencedAssemblyInternal(name, true));
+				return AssemblyList.assemblyLookupCache.GetOrAdd((name.Name, true), key => LookupReferencedAssemblyInternal(name, true));
 			} else {
-				return assemblyList.assemblyLookupCache.GetOrAdd((name.FullName, false), key => LookupReferencedAssemblyInternal(name, false));
+				return AssemblyList.assemblyLookupCache.GetOrAdd((name.FullName, false), key => LookupReferencedAssemblyInternal(name, false));
 			}
 		}
 
@@ -257,7 +250,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
+		static readonly Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 
 		LoadedAssembly LookupReferencedAssemblyInternal(AssemblyNameReference fullName, bool isWinRT)
 		{
@@ -266,7 +259,7 @@ namespace ICSharpCode.ILSpy
 			string file;
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
-				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+				foreach (var loaded in AssemblyList.GetAssemblies()) {
 					var asmDef = loaded.GetAssemblyDefinitionOrNull();
 					if (asmDef != null && GetName(fullName).Equals(GetName(asmDef.Name), StringComparison.OrdinalIgnoreCase)) {
 						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Info, "Success - Found in Assembly List");
@@ -281,7 +274,7 @@ namespace ICSharpCode.ILSpy
 					file = resolver.FindAssemblyFile(fullName);
 				}
 
-				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+				foreach (var loaded in AssemblyList.GetAssemblies()) {
 					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {
 						return loaded;
 					}
@@ -295,7 +288,7 @@ namespace ICSharpCode.ILSpy
 
 				if (file != null) {
 					LoadedAssemblyReferencesInfo.AddMessage(fullName.ToString(), MessageKind.Info, "Success - Loading from: " + file);
-					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
+					asm = new LoadedAssembly(AssemblyList, file) { IsAutoLoaded = true };
 				} else {
 					LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Error, "Could not find reference: " + fullName);
 					return null;
@@ -303,8 +296,8 @@ namespace ICSharpCode.ILSpy
 				loadingAssemblies.Add(file, asm);
 			}
 			App.Current.Dispatcher.BeginInvoke((Action)delegate() {
-				lock (assemblyList.assemblies) {
-					assemblyList.assemblies.Add(asm);
+				lock (AssemblyList.assemblies) {
+					AssemblyList.assemblies.Add(asm);
 				}
 				lock (loadingAssemblies) {
 					loadingAssemblies.Remove(file);

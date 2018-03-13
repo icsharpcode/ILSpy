@@ -28,25 +28,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodTreeNode(MethodDefinition analyzedMethod, string prefix = "")
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return MethodTreeNode.GetIcon(analyzedMethod); }
-		}
+		public override object Icon => MethodTreeNode.GetIcon(analyzedMethod);
 
-		public override object Text
-		{
-			get
-			{
-				return prefix + Language.TypeToString(analyzedMethod.DeclaringType, true) + "." + MethodTreeNode.GetText(analyzedMethod, Language);
-			}
-		}
+		public override object Text => prefix + Language.TypeToString(analyzedMethod.DeclaringType, true) + "." + MethodTreeNode.GetText(analyzedMethod, Language);
 
 		protected override void LoadChildren()
 		{
@@ -65,8 +54,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedInterfaceMethodImplementedByTreeNode(analyzedMethod));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedMethod; }
-		}
+		public override MemberReference Member => analyzedMethod;
 	}
 }

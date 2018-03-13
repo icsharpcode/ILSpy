@@ -27,20 +27,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.Pointer; }
-		}
-		
-		public override string NameSuffix {
-			get {
-				return "*";
-			}
-		}
-		
-		public override bool? IsReferenceType {
-			get { return null; }
-		}
-		
+		public override TypeKind Kind => TypeKind.Pointer;
+
+		public override string NameSuffix => "*";
+
+		public override bool? IsReferenceType => null;
+
 		public override int GetHashCode()
 		{
 			return elementType.GetHashCode() ^ 91725811;
@@ -48,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override bool Equals(IType other)
 		{
-			PointerType a = other as PointerType;
+			var a = other as PointerType;
 			return a != null && elementType.Equals(a.elementType);
 		}
 		
@@ -59,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
-			IType e = elementType.AcceptVisitor(visitor);
+			var e = elementType.AcceptVisitor(visitor);
 			if (e == elementType)
 				return this;
 			else
@@ -75,38 +67,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class PointerTypeReference : ITypeReference, ISupportsInterning
 	{
-		readonly ITypeReference elementType;
-		
 		public PointerTypeReference(ITypeReference elementType)
 		{
-			if (elementType == null)
-				throw new ArgumentNullException("elementType");
-			this.elementType = elementType;
+			this.ElementType = elementType ?? throw new ArgumentNullException("elementType");
 		}
 		
-		public ITypeReference ElementType {
-			get { return elementType; }
-		}
-		
+		public ITypeReference ElementType { get; }
+
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return new PointerType(elementType.Resolve(context));
+			return new PointerType(ElementType.Resolve(context));
 		}
 		
 		public override string ToString()
 		{
-			return elementType.ToString() + "*";
+			return ElementType.ToString() + "*";
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return elementType.GetHashCode() ^ 91725812;
+			return ElementType.GetHashCode() ^ 91725812;
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			PointerTypeReference o = other as PointerTypeReference;
-			return o != null && this.elementType == o.elementType;
+			var o = other as PointerTypeReference;
+			return o != null && this.ElementType == o.ElementType;
 		}
 	}
 }

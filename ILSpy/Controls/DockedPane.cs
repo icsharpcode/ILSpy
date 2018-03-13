@@ -34,22 +34,22 @@ namespace ICSharpCode.ILSpy.Controls
 			DependencyProperty.Register("Title", typeof(string), typeof(DockedPane));
 		
 		public string Title {
-			get { return (string)GetValue(TitleProperty); }
-			set { SetValue(TitleProperty, value); }
+			get => (string)GetValue(TitleProperty);
+			set => SetValue(TitleProperty, value);
 		}
 		
 		public static readonly DependencyProperty ContentProperty =
 			DependencyProperty.Register("Content", typeof(object), typeof(DockedPane));
 		
 		public object Content {
-			get { return GetValue(ContentProperty); }
-			set { SetValue(ContentProperty, value); }
+			get => GetValue(ContentProperty);
+			set => SetValue(ContentProperty, value);
 		}
 		
 		public override void OnApplyTemplate()
 		{
 			base.OnApplyTemplate();
-			Button closeButton = (Button)this.Template.FindName("PART_Close", this);
+			var closeButton = (Button)this.Template.FindName("PART_Close", this);
 			if (closeButton != null) {
 				closeButton.Click += closeButton_Click;
 			}

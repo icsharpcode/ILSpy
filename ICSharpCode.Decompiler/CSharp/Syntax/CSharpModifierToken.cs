@@ -35,18 +35,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Modifiers modifier;
 		
 		public Modifiers Modifier {
-			get { return modifier; }
+			get => modifier;
 			set { 
 				ThrowIfFrozen();
 				this.modifier = value; 
 			}
 		}
 
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation (StartLocation.Line, StartLocation.Column + GetModifierLength (Modifier));
-			}
-		}
+		public override TextLocation EndLocation => new TextLocation (StartLocation.Line, StartLocation.Column + GetModifierLength (Modifier));
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
@@ -55,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			CSharpModifierToken o = other as CSharpModifierToken;
+			var o = other as CSharpModifierToken;
 			return o != null && this.modifier == o.modifier;
 		}
 		

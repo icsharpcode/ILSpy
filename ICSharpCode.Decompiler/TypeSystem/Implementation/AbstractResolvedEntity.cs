@@ -31,58 +31,44 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		protected AbstractResolvedEntity(IUnresolvedEntity unresolved, ITypeResolveContext parentContext)
 		{
-			if (unresolved == null)
-				throw new ArgumentNullException("unresolved");
-			if (parentContext == null)
-				throw new ArgumentNullException("parentContext");
-			this.unresolved = unresolved;
-			this.parentContext = parentContext;
+			this.unresolved = unresolved ?? throw new ArgumentNullException("unresolved");
+			this.parentContext = parentContext ?? throw new ArgumentNullException("parentContext");
 			this.Attributes = unresolved.Attributes.CreateResolvedAttributes(parentContext);
 		}
 		
-		public SymbolKind SymbolKind {
-			get { return unresolved.SymbolKind; }
-		}
-		
-		public ITypeDefinition DeclaringTypeDefinition {
-			get { return parentContext.CurrentTypeDefinition; }
-		}
-		
-		public virtual IType DeclaringType {
-			get { return parentContext.CurrentTypeDefinition; }
-		}
-		
-		public IAssembly ParentAssembly {
-			get { return parentContext.CurrentAssembly; }
-		}
-		
+		public SymbolKind SymbolKind => unresolved.SymbolKind;
+
+		public ITypeDefinition DeclaringTypeDefinition => parentContext.CurrentTypeDefinition;
+
+		public virtual IType DeclaringType => parentContext.CurrentTypeDefinition;
+
+		public IAssembly ParentAssembly => parentContext.CurrentAssembly;
+
 		public IReadOnlyList<IAttribute> Attributes { get; protected set; }
 
 		public abstract ISymbolReference ToReference();
 		
-		public bool IsStatic { get { return unresolved.IsStatic; } }
-		public bool IsAbstract { get { return unresolved.IsAbstract; } }
-		public bool IsSealed { get { return unresolved.IsSealed; } }
-		public bool IsShadowing { get { return unresolved.IsShadowing; } }
-		public bool IsSynthetic { get { return unresolved.IsSynthetic; } }
-		
-		public ICompilation Compilation {
-			get { return parentContext.Compilation; }
-		}
-		
-		public string FullName { get { return unresolved.FullName; } }
-		public string Name { get { return unresolved.Name; } }
-		public string ReflectionName { get { return unresolved.ReflectionName; } }
-		public string Namespace { get { return unresolved.Namespace; } }
-		
-		public virtual Accessibility Accessibility { get { return unresolved.Accessibility; } }
-		public bool IsPrivate { get { return Accessibility == Accessibility.Private; } }
-		public bool IsPublic { get { return Accessibility == Accessibility.Public; } }
-		public bool IsProtected { get { return Accessibility == Accessibility.Protected; } }
-		public bool IsInternal { get { return Accessibility == Accessibility.Internal; } }
-		public bool IsProtectedOrInternal { get { return Accessibility == Accessibility.ProtectedOrInternal; } }
-		public bool IsProtectedAndInternal { get { return Accessibility == Accessibility.ProtectedAndInternal; } }
-		
+		public bool IsStatic => unresolved.IsStatic;
+		public bool IsAbstract => unresolved.IsAbstract;
+		public bool IsSealed => unresolved.IsSealed;
+		public bool IsShadowing => unresolved.IsShadowing;
+		public bool IsSynthetic => unresolved.IsSynthetic;
+
+		public ICompilation Compilation => parentContext.Compilation;
+
+		public string FullName => unresolved.FullName;
+		public string Name => unresolved.Name;
+		public string ReflectionName => unresolved.ReflectionName;
+		public string Namespace => unresolved.Namespace;
+
+		public virtual Accessibility Accessibility => unresolved.Accessibility;
+		public bool IsPrivate => Accessibility == Accessibility.Private;
+		public bool IsPublic => Accessibility == Accessibility.Public;
+		public bool IsProtected => Accessibility == Accessibility.Protected;
+		public bool IsInternal => Accessibility == Accessibility.Internal;
+		public bool IsProtectedOrInternal => Accessibility == Accessibility.ProtectedOrInternal;
+		public bool IsProtectedAndInternal => Accessibility == Accessibility.ProtectedAndInternal;
+
 		public override string ToString()
 		{
 			return "[" + this.SymbolKind.ToString() + " " + this.ReflectionName + "]";

@@ -30,16 +30,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeExposedByTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
-				throw new ArgumentNullException(nameof(analyzedType));
-
-			this.analyzedType = analyzedType;
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 		}
 
-		public override object Text
-		{
-			get { return "Exposed By"; }
-		}
+		public override object Text => "Exposed By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -55,31 +49,25 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (!this.Language.ShowMember(type))
 				yield break;
 
-			foreach (FieldDefinition field in type.Fields) {
-				if (TypeIsExposedBy(field)) {
-					var node = new AnalyzedFieldTreeNode(field);
-					node.Language = this.Language;
+			foreach (var field in type.Fields.Where(TypeIsExposedBy)) {
+					var node = new AnalyzedFieldTreeNode(field) {Language = this.Language};
 					yield return node;
-				}
 			}
 
-			foreach (PropertyDefinition property in type.Properties) {
-				if (TypeIsExposedBy(property)) {
+			foreach (var property in type.Properties.Where(TypeIsExposedBy)) {
 					var node = new AnalyzedPropertyTreeNode(property);
 					node.Language = this.Language;
 					yield return node;
-				}
 			}
 
-			foreach (EventDefinition eventDef in type.Events) {
-				if (TypeIsExposedBy(eventDef)) {
-					var node = new AnalyzedEventTreeNode(eventDef);
-					node.Language = this.Language;
-					yield return node;
-				}
+			foreach (var eventDef in type.Events.Where(TypeIsExposedBy)) {
+
+				var node = new AnalyzedEventTreeNode(eventDef) {Language = this.Language};
+				yield return node;
+				 
 			}
 
-			foreach (MethodDefinition method in type.Methods) {
+			foreach (var method in type.Methods) {
 				if (TypeIsExposedBy(method)) {
 					var node = new AnalyzedMethodTreeNode(method);
 					node.Language = this.Language;
@@ -153,15 +141,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private static bool IsPrivate(PropertyDefinition property)
 		{
-			bool isGetterPublic = (property.GetMethod != null && !property.GetMethod.IsPrivate);
-			bool isSetterPublic = (property.SetMethod != null && !property.SetMethod.IsPrivate);
+			var isGetterPublic = (property.GetMethod != null && !property.GetMethod.IsPrivate);
+			var isSetterPublic = (property.SetMethod != null && !property.SetMethod.IsPrivate);
 			return !(isGetterPublic || isSetterPublic);
 		}
 
 		private static bool IsPrivate(EventDefinition eventDef)
 		{
-			bool isAdderPublic = (eventDef.AddMethod != null && !eventDef.AddMethod.IsPrivate);
-			bool isRemoverPublic = (eventDef.RemoveMethod != null && !eventDef.RemoveMethod.IsPrivate);
+			var isAdderPublic = (eventDef.AddMethod != null && !eventDef.AddMethod.IsPrivate);
+			var isRemoverPublic = (eventDef.RemoveMethod != null && !eventDef.RemoveMethod.IsPrivate);
 			return !(isAdderPublic || isRemoverPublic);
 		}
 

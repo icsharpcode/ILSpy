@@ -42,23 +42,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public Modifiers Modifiers {
-			get { return EntityDeclaration.GetModifiers(this); }
-			set { EntityDeclaration.SetModifiers(this, value); }
+			get => EntityDeclaration.GetModifiers(this);
+			set => EntityDeclaration.SetModifiers(this, value);
 		}
 		
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole (Roles.Type, value);
 		}
 		
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole (Roles.Variable); }
-		}
-		
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole (Roles.Semicolon); }
-		}
-		
+		public AstNodeCollection<VariableInitializer> Variables => GetChildrenByRole (Roles.Variable);
+
+		public CSharpTokenNode SemicolonToken => GetChildByRole (Roles.Semicolon);
+
 		public VariableInitializer GetVariable (string name)
 		{
 			return Variables.FirstOrNullObject (vi => vi.Name == name);
@@ -81,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			VariableDeclarationStatement o = other as VariableDeclarationStatement;
+			var o = other as VariableDeclarationStatement;
 			return o != null && this.Modifiers == o.Modifiers && this.Type.DoMatch(o.Type, match) && this.Variables.DoMatch(o.Variables, match);
 		}
 	}

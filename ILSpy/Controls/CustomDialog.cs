@@ -27,18 +27,12 @@ namespace ICSharpCode.ILSpy.Controls
 		System.Windows.Forms.Label label;
 		System.Windows.Forms.Panel panel;
 		int acceptButton;
-		int cancelButton;
-		int result = -1;
+		readonly int cancelButton;
 
 		/// <summary>
 		/// Gets the index of the button pressed.
 		/// </summary>
-		public int Result
-		{
-			get {
-				return result;
-			}
-		}
+		public int Result { get; private set; } = -1;
 
 		public CustomDialog(string caption, string message, int acceptButton, int cancelButton, string[] buttonLabels)
 		{
@@ -50,21 +44,21 @@ namespace ICSharpCode.ILSpy.Controls
 			this.cancelButton = cancelButton;
 			this.Text = caption;
 
-			using (Graphics g = this.CreateGraphics()) {
-				Rectangle screen = Screen.PrimaryScreen.WorkingArea;
-				SizeF size = g.MeasureString(message, label.Font, screen.Width - 20);
-				Size clientSize = size.ToSize();
-				Button[] buttons = new Button[buttonLabels.Length];
-				int[] positions = new int[buttonLabels.Length];
-				int pos = 0;
-				for (int i = 0; i < buttons.Length; i++) {
-					Button newButton = new Button();
+			using (var g = this.CreateGraphics()) {
+				var screen = Screen.PrimaryScreen.WorkingArea;
+				var size = g.MeasureString(message, label.Font, screen.Width - 20);
+				var clientSize = size.ToSize();
+				var buttons = new Button[buttonLabels.Length];
+				var positions = new int[buttonLabels.Length];
+				var pos = 0;
+				for (var i = 0; i < buttons.Length; i++) {
+					var newButton = new Button();
 					newButton.FlatStyle = FlatStyle.System;
 					newButton.Tag = i;
-					string buttonLabel = buttonLabels[i];
+					var buttonLabel = buttonLabels[i];
 					newButton.Text = buttonLabel;
 					newButton.Click += new EventHandler(ButtonClick);
-					SizeF buttonSize = g.MeasureString(buttonLabel, newButton.Font);
+					var buttonSize = g.MeasureString(buttonLabel, newButton.Font);
 					newButton.Width = Math.Max(newButton.Width, ((int)Math.Ceiling(buttonSize.Width / 8.0) + 1) * 8);
 					positions[i] = pos;
 					buttons[i] = newButton;
@@ -85,8 +79,8 @@ namespace ICSharpCode.ILSpy.Controls
 				}
 				clientSize.Height += panel.Height + 6;
 				this.ClientSize = clientSize;
-				int start = (clientSize.Width - pos) / 2;
-				for (int i = 0; i < buttons.Length; i++) {
+				var start = (clientSize.Width - pos) / 2;
+				for (var i = 0; i < buttons.Length; i++) {
 					buttons[i].Location = new Point(start + positions[i], 4);
 				}
 				panel.Controls.AddRange(buttons);
@@ -105,7 +99,7 @@ namespace ICSharpCode.ILSpy.Controls
 
 		void ButtonClick(object sender, EventArgs e)
 		{
-			result = (int)((Control)sender).Tag;
+			Result = (int)((Control)sender).Tag;
 			this.Close();
 		}
 

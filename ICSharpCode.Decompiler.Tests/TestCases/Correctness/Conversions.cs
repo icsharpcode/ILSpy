@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TypeCode.Decimal
 		};
 		
-		static object[] inputValues = {
+		static readonly object[] inputValues = {
 			'\0',
 			'a',
 			'\uFFFE',
@@ -114,12 +114,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		static void RunTest(bool checkForOverflow)
 		{
-			string mode = checkForOverflow ? "checked" : "unchecked";
-			foreach (object input in inputValues) {
-				string inputType = input.GetType().Name;
+			var mode = checkForOverflow ? "checked" : "unchecked";
+			foreach (var input in inputValues) {
+				var inputType = input.GetType().Name;
 				foreach (var targetType in targetTypes) {
 					try {
-						object result = CSharpPrimitiveCast.Cast(targetType, input, checkForOverflow);
+						var result = CSharpPrimitiveCast.Cast(targetType, input, checkForOverflow);
 						Console.WriteLine("{0} ({1})({2}){3} = ({4}){5}", mode, targetType, inputType, input,
 						                  result.GetType().Name, result);
 					} catch (Exception ex) {
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		static string ReadZeroTerminatedString (int length)
 		{
-			int read = 0;
+			var read = 0;
 			var buffer = new char [length];
 			var bytes = ReadBytes (length);
 			while (read < length) {

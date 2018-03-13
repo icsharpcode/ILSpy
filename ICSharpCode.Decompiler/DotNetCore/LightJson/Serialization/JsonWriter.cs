@@ -154,7 +154,7 @@ namespace LightJson.Serialization
 		{
 			this.Write("\"");
 
-			for (int i = 0; i < text.Length; i += 1) {
+			for (var i = 0; i < text.Length; i += 1) {
 				var currentChar = text[i];
 
 				// Encoding special characters.

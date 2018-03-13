@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Options
 		/// </summary>
 		public bool AllowMultipleInstances
 		{
-			get { return allowMultipleInstances; }
+			get => allowMultipleInstances;
 			set {
 				if (allowMultipleInstances != value) {
 					allowMultipleInstances = value;

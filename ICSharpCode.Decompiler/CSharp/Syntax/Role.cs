@@ -30,20 +30,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		static readonly Role[] roles = new Role[1 << RoleIndexBits];
 		static int nextRoleIndex = 0;
-		
-		readonly uint index;
-		
-		public uint Index {
-			get { return index; }
-		}
-		
+
+		public uint Index { get; }
+
 		// don't allow NRefactory consumers to derive from Role
 		internal Role()
 		{
-			this.index = (uint)Interlocked.Increment(ref nextRoleIndex);
-			if (this.index >= roles.Length)
+			this.Index = (uint)Interlocked.Increment(ref nextRoleIndex);
+			if (this.Index >= roles.Length)
 				throw new InvalidOperationException("Too many roles");
-			roles[this.index] = this;
+			roles[this.Index] = this;
 		}
 		
 		/// <summary>
@@ -67,8 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class Role<T> : Role where T : class
 	{
 		readonly string name; // helps with debugging the AST
-		readonly T nullObject;
-		
+
 		/// <summary>
 		/// Gets the null object used when there's no node with this role.
 		/// Not every role has a null object; this property returns null for roles without a null object.
@@ -77,10 +72,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
 		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
-		public T NullObject {
-			get { return nullObject; }
-		}
-		
+		public T NullObject { get; }
+
 		public override bool IsValid(object node)
 		{
 			return node is T;
@@ -88,19 +81,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		public Role(string name)
 		{
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.name = name;
+			this.name = name ?? throw new ArgumentNullException("name");
 		}
 		
 		public Role(string name, T nullObject)
 		{
-			if (name == null)
-				throw new ArgumentNullException("name");
-			if (nullObject == null)
-				throw new ArgumentNullException ("nullObject");
-			this.nullObject = nullObject;
-			this.name = name;
+			this.NullObject = nullObject ?? throw new ArgumentNullException ("nullObject");
+			this.name = name ?? throw new ArgumentNullException("name");
 		}
 		
 		public override string ToString()

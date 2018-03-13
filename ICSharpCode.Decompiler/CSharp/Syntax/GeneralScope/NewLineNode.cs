@@ -10,11 +10,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class NewLineNode : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
+		public override NodeType NodeType => NodeType.Whitespace;
 
 		const uint newLineMask = 0xfu << AstNodeFlagsUsedBits;
 		static readonly UnicodeNewline[] newLineTypes = {
@@ -30,12 +26,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		};
 		
 		public UnicodeNewline NewLineType {
-			get {
-				return newLineTypes[(flags & newLineMask) >> AstNodeFlagsUsedBits];
-			}
+			get => newLineTypes[(flags & newLineMask) >> AstNodeFlagsUsedBits];
 			set {
 				ThrowIfFrozen();
-				int pos = Array.IndexOf(newLineTypes, value);
+				var pos = Array.IndexOf(newLineTypes, value);
 				if (pos < 0)
 					pos = 0;
 				flags &= ~newLineMask; // clear old newline type
@@ -44,17 +38,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get { 
-				return startLocation;
-			}
-		}
-		
-		public override TextLocation EndLocation {
-			get {
-				return new TextLocation (startLocation.Line + 1, 1);
-			}
-		}
+		public override TextLocation StartLocation => startLocation;
+
+		public override TextLocation EndLocation => new TextLocation (startLocation.Line + 1, 1);
 
 		public NewLineNode() : this (TextLocation.Empty)
 		{

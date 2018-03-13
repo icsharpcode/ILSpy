@@ -45,25 +45,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public class Error
 	{
-		readonly ErrorType errorType;
-		readonly string message;
-		readonly DomRegion region;
-		
 		/// <summary>
 		/// The type of the error.
 		/// </summary>
-		public ErrorType ErrorType { get { return errorType; } }
-		
+		public ErrorType ErrorType { get; }
+
 		/// <summary>
 		/// The error description.
 		/// </summary>
-		public string Message { get { return message; } }
-		
+		public string Message { get; }
+
 		/// <summary>
 		/// The region of the error.
 		/// </summary>
-		public DomRegion Region { get { return region; } }
-		
+		public DomRegion Region { get; }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Error"/> class.
 		/// </summary>
@@ -78,9 +74,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </param>
 		public Error (ErrorType errorType, string message, DomRegion region)
 		{
-			this.errorType = errorType;
-			this.message = message;
-			this.region = region;
+			this.ErrorType = errorType;
+			this.Message = message;
+			this.Region = region;
 		}
 		
 		/// <summary>
@@ -97,9 +93,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </param>
 		public Error (ErrorType errorType, string message, TextLocation location)
 		{
-			this.errorType = errorType;
-			this.message = message;
-			this.region = new DomRegion (location, location);
+			this.ErrorType = errorType;
+			this.Message = message;
+			this.Region = new DomRegion (location, location);
 		}
 		
 		/// <summary>
@@ -132,9 +128,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </param>
 		public Error (ErrorType errorType, string message)
 		{
-			this.errorType = errorType;
-			this.message = message;
-			this.region = DomRegion.Empty;
+			this.ErrorType = errorType;
+			this.Message = message;
+			this.Region = DomRegion.Empty;
 		}
 	}
 }

@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
 		{
-			ILInstruction condition = ifInst.Condition;
+			var condition = ifInst.Condition;
 			while (condition.MatchLogicNot(out var arg)) {
 				condition = arg;
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILInstruction LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
 		{
 			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
-			bool hasValueTestNegated = false;
+			var hasValueTestNegated = false;
 			while (hasValueTest.MatchLogicNot(out var arg)) {
 				hasValueTest = arg;
 				hasValueTestNegated = !hasValueTestNegated;
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			bool isNullCoalescingWithNonNullableFallback = false;
+			var isNullCoalescingWithNonNullableFallback = false;
 			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift)) {
 				isNullCoalescingWithNonNullableFallback = true;
 				utype = context.TypeSystem.Compilation.FindType(trueInst.ResultType.ToKnownTypeCode());
@@ -654,8 +654,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (MatchGetValueOrDefault(inst, out ILVariable inputVar)) {
 				// n.GetValueOrDefault() lifted => n.
-				BitSet foundIndices = new BitSet(nullableVars.Count);
-				for (int i = 0; i < nullableVars.Count; i++) {
+				var foundIndices = new BitSet(nullableVars.Count);
+				for (var i = 0; i < nullableVars.Count; i++) {
 					if (nullableVars[i] == inputVar) {
 						foundIndices[i] = true;
 					}
@@ -892,7 +892,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool MatchNull(ILInstruction inst, out IType underlyingType)
 		{
 			underlyingType = null;
-			if (inst.MatchDefaultValue(out IType type)) {
+			if (inst.MatchDefaultValue(out var type)) {
 				underlyingType = NullableType.GetUnderlyingType(type);
 				return NullableType.IsNullable(type);
 			}

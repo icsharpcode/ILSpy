@@ -32,10 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 		}
 		
-		public override TypeKind Kind {
-			get { return TypeKind.Void; }
-		}
-		
+		public override TypeKind Kind => TypeKind.Void;
+
 		public override IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMethod>.Instance;

@@ -33,28 +33,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class Attribute : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
+		public override NodeType NodeType => NodeType.Unknown;
 
 		public AstType Type {
-			get { return GetChildByRole (Roles.Type); }
-			set { SetChildByRole (Roles.Type, value); }
+			get => GetChildByRole (Roles.Type);
+			set => SetChildByRole (Roles.Type, value);
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return base.GetChildrenByRole (Roles.Argument); }
-		}
+		public AstNodeCollection<Expression> Arguments => base.GetChildrenByRole (Roles.Argument);
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
 
 		// HasArgumentList == false: [Empty]
 		public bool HasArgumentList {
@@ -79,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
 		{
-			Attribute o = other as Attribute;
+			var o = other as Attribute;
 			return o != null && this.Type.DoMatch (o.Type, match) && this.Arguments.DoMatch (o.Arguments, match);
 		}
 

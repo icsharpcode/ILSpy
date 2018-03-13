@@ -32,26 +32,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class FieldDeclaration : EntityDeclaration
 	{
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Field; }
-		}
-		
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole (Roles.Variable); }
-		}
-		
+		public override SymbolKind SymbolKind => SymbolKind.Field;
+
+		public AstNodeCollection<VariableInitializer> Variables => GetChildrenByRole (Roles.Variable);
+
 		// Hide .Name and .NameToken from users; the actual field names
 		// are stored in the VariableInitializer.
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override string Name {
-			get { return string.Empty; }
-			set { throw new NotSupportedException(); }
+			get => string.Empty;
+			set => throw new NotSupportedException();
 		}
 		
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
-			set { throw new NotSupportedException(); }
+			get => Identifier.Null;
+			set => throw new NotSupportedException();
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -71,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			FieldDeclaration o = other as FieldDeclaration;
+			var o = other as FieldDeclaration;
 			return o != null && this.MatchAttributesAndModifiers(o, match)
 				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
 		}

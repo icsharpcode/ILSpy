@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public BlockStatement ConvertAsBlock(ILInstruction inst)
 		{
-			Statement stmt = Convert(inst);
+			var stmt = Convert(inst);
 			return stmt as BlockStatement ?? new BlockStatement { stmt };
 		}
 
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			// Pick the section with the most labels as default section.
-			IL.SwitchSection defaultSection = inst.Sections.First();
+			var defaultSection = inst.Sections.First();
 			foreach (var section in inst.Sections) {
 				if (section.Labels.Count() > defaultSection.Labels.Count()) {
 					defaultSection = section;
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var stmt = new SwitchStatement() { Expression = value };
-			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new Dictionary<IL.SwitchSection, Syntax.SwitchSection>();
+			var translationDictionary = new Dictionary<IL.SwitchSection, Syntax.SwitchSection>();
 			// initialize C# switch sections.
 			foreach (var section in inst.Sections) {
 				// This is used in the block-label mapping.
@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					Debug.Assert(block.FinalInstruction.OpCode == OpCode.Nop);
 				}
-				if (endContainerLabels.TryGetValue(switchContainer, out string label)) {
+				if (endContainerLabels.TryGetValue(switchContainer, out var label)) {
 					lastSectionStatements.Add(new LabelStatement { Label = label });
 					lastSectionStatements.Add(new BreakStatement());
 				}
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			astSection.Statements.Add(body);
 			if (!bodyInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
 				// we need to insert 'break;'
-				BlockStatement block = body as BlockStatement;
+				var block = body as BlockStatement;
 				if (block != null) {
 					block.Add(new BreakStatement());
 				} else {
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (currentFunction.IsIterator)
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
-					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
+					var targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
 					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 				} else
 					return new ReturnStatement();
@@ -493,10 +493,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
-			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+			var foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 	
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
-			Statement firstStatement = foreachBody.Statements.First();
+			var firstStatement = foreachBody.Statements.First();
 			if (firstStatement is LabelStatement) {
 				// skip the entry-point label, if any
 				firstStatement = firstStatement.GetNextStatement();
@@ -718,7 +718,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitBlock(Block block)
 		{
 			// Block without container
-			BlockStatement blockStatement = new BlockStatement();
+			var blockStatement = new BlockStatement();
 			foreach (var inst in block.Instructions) {
 				blockStatement.Add(Convert(inst));
 			}
@@ -827,7 +827,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					};
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt4)
 						continueStmt4.Remove();
-					for (int i = 0; i < continueTarget.Instructions.Count - 1; i++) {
+					for (var i = 0; i < continueTarget.Instructions.Count - 1; i++) {
 						forStmt.Iterators.Add(Convert(continueTarget.Instructions[i]));
 					}
 					if (continueTarget.IncomingEdgeCount > continueCount)
@@ -883,10 +883,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (!leave.Value.MatchNop())
 				return false;
-			Block block = (Block)leave.Parent;
+			var block = (Block)leave.Parent;
 			if (leave.ChildIndex != block.Instructions.Count - 1 || block.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			BlockContainer container = (BlockContainer)block.Parent;
+			var container = (BlockContainer)block.Parent;
 			return block.ChildIndex == container.Blocks.Count - 1
 				&& container == leave.TargetContainer;
 		}

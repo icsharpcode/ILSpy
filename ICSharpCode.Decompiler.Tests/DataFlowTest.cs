@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests
 	{
 		class RDTest : ReachingDefinitionsVisitor
 		{
-			ILVariable v;
+			readonly ILVariable v;
 
 			public RDTest(ILFunction f, ILVariable v) : base(f, _ => true, CancellationToken.None)
 			{
@@ -54,8 +54,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void TryFinallyWithAssignmentInFinally()
 		{
-			ILVariable v = new ILVariable(VariableKind.Local, SpecialType.UnknownType, 0);
-			ILFunction f = new ILFunction((IMethod)null, null, new TryFinally(
+			var v = new ILVariable(VariableKind.Local, SpecialType.UnknownType, 0);
+			var f = new ILFunction((IMethod)null, null, new TryFinally(
 				new Nop(),
 				new StLoc(v, new LdcI4(0))
 			));

@@ -33,9 +33,7 @@ namespace ICSharpCode.TreeView
 
 		private SharpTreeViewTextSearch(SharpTreeView treeView)
 		{
-			if (treeView == null)
-				throw new ArgumentNullException(nameof(treeView));
-			this.treeView = treeView;
+			this.treeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
 			inputStack = new Stack<string>(8);
 			ClearState();
 		}
@@ -61,9 +59,9 @@ namespace ICSharpCode.TreeView
 
 		public bool Search(string nextChar)
 		{
-			int startIndex = isActive ? lastMatchIndex : Math.Max(0, treeView.SelectedIndex);
-			bool lookBackwards = inputStack.Count > 0 && string.Compare(inputStack.Peek(), nextChar, StringComparison.OrdinalIgnoreCase) == 0;
-			int nextMatchIndex = IndexOfMatch(matchPrefix + nextChar, startIndex, lookBackwards, out bool wasNewCharUsed);
+			var startIndex = isActive ? lastMatchIndex : Math.Max(0, treeView.SelectedIndex);
+			var lookBackwards = inputStack.Count > 0 && string.Compare(inputStack.Peek(), nextChar, StringComparison.OrdinalIgnoreCase) == 0;
+			var nextMatchIndex = IndexOfMatch(matchPrefix + nextChar, startIndex, lookBackwards, out var wasNewCharUsed);
 			if (nextMatchIndex != -1) {
 				if (!isActive || nextMatchIndex != startIndex) {
 					treeView.SelectedItem = treeView.Items[nextMatchIndex];
@@ -87,15 +85,15 @@ namespace ICSharpCode.TreeView
 			charWasUsed = false;
 			if (treeView.Items.Count == 0 || string.IsNullOrEmpty(needle))
 				return -1;
-			int index = -1;
-			int fallbackIndex = -1;
-			bool fallbackMatch = false;
-			int i = startIndex;
+			var index = -1;
+			var fallbackIndex = -1;
+			var fallbackMatch = false;
+			var i = startIndex;
 			var comparisonType = treeView.IsTextSearchCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 			do {
 				var item = (SharpTreeNode)treeView.Items[i];
 				if (item != null && item.Text != null) {
-					string text = item.Text.ToString();
+					var text = item.Text.ToString();
 					if (text.StartsWith(needle, comparisonType)) {
 						charWasUsed = true;
 						index = i;

@@ -37,8 +37,8 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class OpenFromGacDialog : Window
 	{
-		ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
-		ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> gacEntries = new ObservableCollection<GacEntry>();
+		readonly ObservableCollection<GacEntry> filteredEntries = new ObservableCollection<GacEntry>();
 		Predicate<GacEntry> filterMethod = _ => true;
 		volatile bool cancelFetchThread;
 
@@ -62,30 +62,21 @@ namespace ICSharpCode.ILSpy
 		sealed class GacEntry
 		{
 			readonly AssemblyNameReference r;
-			readonly string fileName;
 			string formattedVersion;
 
 			public GacEntry(AssemblyNameReference r, string fileName)
 			{
 				this.r = r;
-				this.fileName = fileName;
+				this.FileName = fileName;
 			}
 
-			public string FullName {
-				get { return r.FullName; }
-			}
+			public string FullName => r.FullName;
 
-			public string ShortName {
-				get { return r.Name; }
-			}
+			public string ShortName => r.Name;
 
-			public string FileName {
-				get { return fileName; }
-			}
+			public string FileName { get; }
 
-			public Version Version {
-				get { return r.Version; }
-			}
+			public Version Version => r.Version;
 
 			public string FormattedVersion {
 				get {
@@ -95,14 +86,12 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 
-			public string Culture {
-				get { return r.Culture; }
-			}
+			public string Culture => r.Culture;
 
 			public string PublicKeyToken {
 				get {
-					StringBuilder s = new StringBuilder();
-					foreach (byte b in r.PublicKeyToken)
+					var s = new StringBuilder();
+					foreach (var b in r.PublicKeyToken)
 						s.Append(b.ToString("x2"));
 					return s.ToString();
 				}
@@ -116,7 +105,7 @@ namespace ICSharpCode.ILSpy
 
 		void FetchGacContents()
 		{
-			HashSet<string> fullNames = new HashSet<string>();
+			var fullNames = new HashSet<string>();
 			UpdateProgressBar(pg => { pg.Visibility = System.Windows.Visibility.Visible; pg.IsIndeterminate = true; });
 			var list = GacInterop.GetGacAssemblyFullNames().TakeWhile(_ => !cancelFetchThread).ToList();
 			UpdateProgressBar(pg => { pg.IsIndeterminate = false; pg.Maximum = list.Count; });
@@ -149,7 +138,7 @@ namespace ICSharpCode.ILSpy
 
 		void FilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
 		{
-			string filterString = filterTextBox.Text.Trim();
+			var filterString = filterTextBox.Text.Trim();
 			if (filterString.Length == 0)
 				filterMethod = _ => true;
 			else {

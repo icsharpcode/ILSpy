@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<int> YieldReturnInLoop()
 		{
-			for (int i = 0; i < 100; i++) {
+			for (var i = 0; i < 100; i++) {
 				yield return i;
 			}
 		}
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static IEnumerable<string> YieldReturnWithTwoNonNestedFinallyBlocks(IEnumerable<string> input)
 		{
 			// outer try-finally block
-			foreach (string line in input) {
+			foreach (var line in input) {
 				// nested try-finally block
 				try {
 					yield return line;
@@ -188,28 +188,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			yield return "E";
 			yield return "F";
 			// outer try-finally block
-			foreach (string line in input)
+			foreach (var line in input)
 				yield return line.ToUpper();
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods1(IEnumerable<string> input)
 		{
-			foreach (string line in input) {
+			foreach (var line in input) {
 				yield return () => line;
 			}
 		}
 
 		public static IEnumerable<Func<string>> YieldReturnWithAnonymousMethods2(IEnumerable<string> input)
 		{
-			foreach (string line in input) {
-				string copy = line;
+			foreach (var line in input) {
+				var copy = line;
 				yield return () => copy;
 			}
 		}
 
 		public static IEnumerable<int> GetEvenNumbers(int n)
 		{
-			for (int i = 0; i < n; i++) {
+			for (var i = 0; i < n; i++) {
 				if (i % 2 == 0)
 					yield return i;
 			}
@@ -434,7 +434,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			try {
 				yield return 2;
 			} finally {
-				T b = a;
+				var b = a;
 				b.Dispose();
 				b.Dispose();
 			}
@@ -443,8 +443,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
-			T val = new T();
-			for (int i = 0; i < 3; i++) {
+			var val = new T();
+			for (var i = 0; i < 3; i++) {
 				yield return val;
 			}
 		}

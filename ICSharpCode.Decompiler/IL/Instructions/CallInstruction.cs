@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IParameter GetParameter(int argumentIndex)
 		{
-			int firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
+			var firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
 			if (argumentIndex < firstParamIndex) {
 				return null; // asking for 'this' parameter
 			}
@@ -111,13 +111,13 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
+			var firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1) {
 				Debug.Assert(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType),
 					$"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
-			for (int i = 0; i < Method.Parameters.Count; ++i) {
+			for (var i = 0; i < Method.Parameters.Count; ++i) {
 				Debug.Assert(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType(),
 					$"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
-			for (int i = 0; i < Arguments.Count; i++) {
+			for (var i = 0; i < Arguments.Count; i++) {
 				if (i > 0)
 					output.Write(", ");
 				Arguments[i].WriteTo(output, options);
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected internal sealed override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			CallInstruction o = other as CallInstruction;
+			var o = other as CallInstruction;
 			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
 				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);

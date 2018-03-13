@@ -27,10 +27,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// The variable to be used as the argument of the switch instruction.
 		/// </summary>
-		public ILVariable SwitchVariable
-		{
-			get { return switchVar; }
-		}
+		public ILVariable SwitchVariable => switchVar;
 
 		/// <summary>
 		/// Whether at least one the analyzed blocks contained an IL switch constructors.
@@ -137,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			var remainingValues = inputValues.ExceptWith(trueValues);
-			ILInstruction falseInst = block.Instructions.Last();
+			var falseInst = block.Instructions.Last();
 			Block falseBlock;
 			if (falseInst.MatchBranch(out falseBlock) && AnalyzeBlock(falseBlock, remainingValues)) {
 				// OK, false block was further analyzed.
@@ -158,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			} else if (inst.Value is BinaryNumericInstruction bop) {
 				if (bop.CheckForOverflow)
 					return false;
-				if (MatchSwitchVar(bop.Left) && bop.Right.MatchLdcI(out long val)) {
+				if (MatchSwitchVar(bop.Left) && bop.Right.MatchLdcI(out var val)) {
 					switch (bop.Operator) {
 						case BinaryNumericOperator.Add:
 							offset = unchecked(-val);
@@ -197,8 +194,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (values.IsEmpty) {
 				return;
 			}
-			if (inst.MatchBranch(out Block targetBlock)) {
-				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out int index)) {
+			if (inst.MatchBranch(out var targetBlock)) {
+				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out var index)) {
 					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
 						Sections[index].Key.UnionWith(values),
 						inst
@@ -207,8 +204,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					targetBlockToSectionIndex.Add(targetBlock, Sections.Count);
 					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
 				}
-			} else if (inst.MatchLeave(out BlockContainer targetContainer)) {
-				if (targetContainerToSectionIndex.TryGetValue(targetContainer, out int index)) {
+			} else if (inst.MatchLeave(out var targetContainer)) {
+				if (targetContainerToSectionIndex.TryGetValue(targetContainer, out var index)) {
 					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
 						Sections[index].Key.UnionWith(values),
 						inst
@@ -236,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private bool AnalyzeCondition(ILInstruction condition, out LongSet trueValues)
 		{
-			if (condition is Comp comp && MatchSwitchVar(comp.Left) && comp.Right.MatchLdcI(out long val)) {
+			if (condition is Comp comp && MatchSwitchVar(comp.Left) && comp.Right.MatchLdcI(out var val)) {
 				// if (comp(V OP val))
 				trueValues = MakeSetWhereComparisonIsTrue(comp.Kind, val, comp.Sign);
 				return true;
@@ -244,9 +241,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// if (ldloc V) --> branch for all values except 0
 				trueValues = new LongSet(0).Invert();
 				return true;
-			} else if (condition.MatchLogicNot(out ILInstruction arg)) {
+			} else if (condition.MatchLogicNot(out var arg)) {
 				// if (logic.not(X)) --> branch for all values where if (X) does not branch
-				bool res = AnalyzeCondition(arg, out LongSet falseValues);
+				var res = AnalyzeCondition(arg, out var falseValues);
 				trueValues = falseValues.Invert();
 				return res;
 			} else {

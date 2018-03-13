@@ -36,11 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsLifted { get; }
 		public StackType UnderlyingResultType { get; }
 
-		public override StackType ResultType {
-			get {
-				return Argument.ResultType;
-			}
-		}
+		public override StackType ResultType => Argument.ResultType;
 
 		internal override void CheckInvariant(ILPhase phase)
 		{

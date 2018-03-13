@@ -11,8 +11,8 @@ namespace ICSharpCode.ILSpy
 {
 	public class LATextReader : TextReader
 	{
-		List<int> buffer;
-		TextReader reader;
+		readonly List<int> buffer;
+		readonly TextReader reader;
 
 		public LATextReader(TextReader reader)
 		{
@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy
 
 		public override int Read()
 		{
-			int c = Peek();
+			var c = Peek();
 			buffer.RemoveAt(0);
 			return c;
 		}
@@ -71,17 +71,11 @@ namespace ICSharpCode.ILSpy
 		internal readonly string val;
 		internal Literal next;
 
-		public LiteralFormat LiteralFormat {
-			get { return literalFormat; }
-		}
+		public LiteralFormat LiteralFormat => literalFormat;
 
-		public object LiteralValue {
-			get { return literalValue; }
-		}
+		public object LiteralValue => literalValue;
 
-		public string Value {
-			get { return val; }
-		}
+		public string Value => val;
 
 		public Literal(string val, object literalValue, LiteralFormat literalFormat)
 		{
@@ -94,8 +88,6 @@ namespace ICSharpCode.ILSpy
 	internal abstract class AbstractLexer
 	{
 		LATextReader reader;
-		int col = 1;
-		int line = 1;
 
 		protected Literal lastToken = null;
 		protected Literal curToken = null;
@@ -106,31 +98,24 @@ namespace ICSharpCode.ILSpy
 		// used for the original value of strings (with escape sequences).
 		protected StringBuilder originalValue = new StringBuilder();
 		
-		protected int Line {
-			get {
-				return line;
-			}
-		}
-		protected int Col {
-			get {
-				return col;
-			}
-		}
+		protected int Line { get; private set; } = 1;
+
+		protected int Col { get; private set; } = 1;
 
 		protected bool recordRead = false;
 		protected StringBuilder recordedText = new StringBuilder();
 
 		protected int ReaderRead()
 		{
-			int val = reader.Read();
+			var val = reader.Read();
 			if (recordRead && val >= 0)
 				recordedText.Append((char)val);
 			if ((val == '\r' && reader.Peek() != '\n') || val == '\n') {
-				++line;
-				col = 1;
+				++Line;
+				Col = 1;
 				LineBreak();
 			} else if (val >= 0) {
-				col++;
+				Col++;
 			}
 			return val;
 		}
@@ -147,17 +132,17 @@ namespace ICSharpCode.ILSpy
 
 		protected void ReaderSkip(int steps)
 		{
-			for (int i = 0; i < steps; i++) {
+			for (var i = 0; i < steps; i++) {
 				ReaderRead();
 			}
 		}
 
 		protected string ReaderPeekString(int length)
 		{
-			StringBuilder builder = new StringBuilder();
+			var builder = new StringBuilder();
 
-			for (int i = 0; i < length; i++) {
-				int peek = ReaderPeek(i);
+			for (var i = 0; i < length; i++) {
+				var peek = ReaderPeek(i);
 				if (peek != -1)
 					builder.Append((char)peek);
 			}
@@ -168,20 +153,12 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// The current Token. <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
 		/// </summary>
-		public Literal Token {
-			get {
-				return lastToken;
-			}
-		}
+		public Literal Token => lastToken;
 
 		/// <summary>
 		/// The next Token (The <see cref="Token"/> after <see cref="NextToken"/> call) . <seealso cref="ICSharpCode.NRefactory.Parser.Token"/>
 		/// </summary>
-		public Literal LookAhead {
-			get {
-				return curToken;
-			}
-		}
+		public Literal LookAhead => curToken;
 
 		/// <summary>
 		/// Constructor for the abstract lexer class.
@@ -305,8 +282,8 @@ namespace ICSharpCode.ILSpy
 					nextChar = '\n';
 				}
 				if (nextChar == '\n') {
-					++line;
-					col = 1;
+					++Line;
+					Col = 1;
 					break;
 				}
 			}
@@ -317,7 +294,7 @@ namespace ICSharpCode.ILSpy
 			sb.Length = 0;
 			int nextChar;
 			while ((nextChar = reader.Read()) != -1) {
-				char ch = (char)nextChar;
+				var ch = (char)nextChar;
 
 				if (nextChar == '\r') {
 					if (reader.Peek() == '\n')
@@ -326,8 +303,8 @@ namespace ICSharpCode.ILSpy
 				}
 				// Return read string, if EOL is reached
 				if (nextChar == '\n') {
-					++line;
-					col = 1;
+					++Line;
+					Col = 1;
 					return sb.ToString();
 				}
 
@@ -335,8 +312,8 @@ namespace ICSharpCode.ILSpy
 			}
 
 			// Got EOF before EOL
-			string retStr = sb.ToString();
-			col += retStr.Length;
+			var retStr = sb.ToString();
+			Col += retStr.Length;
 			return retStr;
 		}
 	}
@@ -351,7 +328,7 @@ namespace ICSharpCode.ILSpy
 		{
 			char ch;
 			while (true) {
-				int nextChar = ReaderRead();
+				var nextChar = ReaderRead();
 				if (nextChar == -1)
 					break;
 
@@ -372,19 +349,19 @@ namespace ICSharpCode.ILSpy
 						token = ReadChar();
 						break;
 					case '@':
-						int next = ReaderRead();
+						var next = ReaderRead();
 						if (next == -1) {
 							Error(Line, Col, String.Format("EOF after @"));
 							continue;
 						} else {
-							int x = Col - 1;
-							int y = Line;
+							var x = Col - 1;
+							var y = Line;
 							ch = (char)next;
 							if (ch == '"') {
 								token = ReadVerbatimString();
 							} else if (Char.IsLetterOrDigit(ch) || ch == '_') {
 								bool canBeKeyword;
-								string s = ReadIdent(ch, out canBeKeyword);
+								var s = ReadIdent(ch, out canBeKeyword);
 								return new Literal(null, null, LiteralFormat.None);
 							} else {
 								HandleLineEnd(ch);
@@ -396,10 +373,10 @@ namespace ICSharpCode.ILSpy
 					default: // non-ws chars are handled here
 						ch = (char)nextChar;
 						if (Char.IsLetter(ch) || ch == '_' || ch == '\\') {
-							int x = Col - 1; // Col was incremented above, but we want the start of the identifier
-							int y = Line;
+							var x = Col - 1; // Col was incremented above, but we want the start of the identifier
+							var y = Line;
 							bool canBeKeyword;
-							string s = ReadIdent(ch, out canBeKeyword);
+							var s = ReadIdent(ch, out canBeKeyword);
 							return new Literal(null, null, LiteralFormat.None);
 						} else if (Char.IsDigit(ch)) {
 							token = ReadDigit(ch, Col - 1);
@@ -419,12 +396,12 @@ namespace ICSharpCode.ILSpy
 		// The C# compiler has a fixed size length therefore we'll use a fixed size char array for identifiers
 		// it's also faster than using a string builder.
 		const int MAX_IDENTIFIER_LENGTH = 512;
-		char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
+		readonly char[] identBuffer = new char[MAX_IDENTIFIER_LENGTH];
 
 		string ReadIdent(char ch, out bool canBeKeyword)
 		{
 			int peek;
-			int curPos = 0;
+			var curPos = 0;
 			canBeKeyword = true;
 			while (true) {
 				if (ch == '\\') {
@@ -439,7 +416,7 @@ namespace ICSharpCode.ILSpy
 						if (!char.IsLetterOrDigit(surrogatePair, 0)) {
 							Error(Line, Col, "Unicode escape sequences in identifiers cannot be used to represent characters that are invalid in identifiers");
 						}
-						for (int i = 0; i < surrogatePair.Length - 1; i++) {
+						for (var i = 0; i < surrogatePair.Length - 1; i++) {
 							if (curPos < MAX_IDENTIFIER_LENGTH) {
 								identBuffer[curPos++] = surrogatePair[i];
 							}
@@ -476,20 +453,20 @@ namespace ICSharpCode.ILSpy
 		Literal ReadDigit(char ch, int x)
 		{
 			unchecked { // prevent exception when ReaderPeek() = -1 is cast to char
-				int y = Line;
+				var y = Line;
 				sb.Length = 0;
 				sb.Append(ch);
 				string prefix = null;
 				string suffix = null;
 
-				bool ishex = false;
-				bool isunsigned = false;
-				bool islong = false;
-				bool isfloat = false;
-				bool isdouble = false;
-				bool isdecimal = false;
+				var ishex = false;
+				var isunsigned = false;
+				var islong = false;
+				var isfloat = false;
+				var isdouble = false;
+				var isdecimal = false;
 
-				char peek = (char)ReaderPeek();
+				var peek = (char)ReaderPeek();
 
 				if (ch == '.') {
 					isdouble = true;
@@ -587,8 +564,8 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				string digit = sb.ToString();
-				string stringValue = prefix + digit + suffix;
+				var digit = sb.ToString();
+				var stringValue = prefix + digit + suffix;
 
 				if (isfloat) {
 					float num;
@@ -643,7 +620,7 @@ namespace ICSharpCode.ILSpy
 
 				Literal token;
 
-				LiteralFormat literalFormat = ishex ? LiteralFormat.HexadecimalNumber : LiteralFormat.DecimalNumber;
+				var literalFormat = ishex ? LiteralFormat.HexadecimalNumber : LiteralFormat.DecimalNumber;
 				if (islong) {
 					if (isunsigned) {
 						ulong num;
@@ -688,16 +665,16 @@ namespace ICSharpCode.ILSpy
 
 		Literal ReadString()
 		{
-			int x = Col - 1;
-			int y = Line;
+			var x = Col - 1;
+			var y = Line;
 
 			sb.Length = 0;
 			originalValue.Length = 0;
 			originalValue.Append('"');
-			bool doneNormally = false;
+			var doneNormally = false;
 			int nextChar;
 			while ((nextChar = ReaderRead()) != -1) {
-				char ch = (char)nextChar;
+				var ch = (char)nextChar;
 
 				if (ch == '"') {
 					doneNormally = true;
@@ -738,7 +715,7 @@ namespace ICSharpCode.ILSpy
 			originalValue.Append("@\"");
 			int nextChar;
 			while ((nextChar = ReaderRead()) != -1) {
-				char ch = (char)nextChar;
+				var ch = (char)nextChar;
 
 				if (ch == '"') {
 					if (ReaderPeek() != '"') {
@@ -780,15 +757,15 @@ namespace ICSharpCode.ILSpy
 		{
 			surrogatePair = null;
 
-			int nextChar = ReaderRead();
+			var nextChar = ReaderRead();
 			if (nextChar == -1) {
 				Error(Line, Col, "End of file reached inside escape sequence");
 				ch = '\0';
 				return String.Empty;
 			}
 			int number;
-			char c = (char)nextChar;
-			int curPos = 1;
+			var c = (char)nextChar;
+			var curPos = 1;
 			escapeSequenceBuffer[0] = c;
 			switch (c) {
 				case '\'':
@@ -834,10 +811,10 @@ namespace ICSharpCode.ILSpy
 					if (number < 0) {
 						Error(Line, Col - 1, String.Format("Invalid char in literal : {0}", c));
 					}
-					for (int i = 0; i < 3; ++i) {
+					for (var i = 0; i < 3; ++i) {
 						if (IsHex((char)ReaderPeek())) {
 							c = (char)ReaderRead();
-							int idx = GetHexNumber(c);
+							var idx = GetHexNumber(c);
 							escapeSequenceBuffer[curPos++] = c;
 							number = 16 * number + idx;
 						} else {
@@ -849,10 +826,10 @@ namespace ICSharpCode.ILSpy
 				case 'U':
 					// 32 bit unicode character
 					number = 0;
-					for (int i = 0; i < 8; ++i) {
+					for (var i = 0; i < 8; ++i) {
 						if (IsHex((char)ReaderPeek())) {
 							c = (char)ReaderRead();
-							int idx = GetHexNumber(c);
+							var idx = GetHexNumber(c);
 							escapeSequenceBuffer[curPos++] = c;
 							number = 16 * number + idx;
 						} else {
@@ -877,15 +854,15 @@ namespace ICSharpCode.ILSpy
 
 		Literal ReadChar()
 		{
-			int x = Col - 1;
-			int y = Line;
-			int nextChar = ReaderRead();
+			var x = Col - 1;
+			var y = Line;
+			var nextChar = ReaderRead();
 			if (nextChar == -1 || HandleLineEnd((char)nextChar)) {
 				return null;
 			}
-			char ch = (char)nextChar;
-			char chValue = ch;
-			string escapeSequence = String.Empty;
+			var ch = (char)nextChar;
+			var chValue = ch;
+			var escapeSequence = String.Empty;
 			if (ch == '\\') {
 				string surrogatePair;
 				escapeSequence = ReadEscapeSequence(out chValue, out surrogatePair);

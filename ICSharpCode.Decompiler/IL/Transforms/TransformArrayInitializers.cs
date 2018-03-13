@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILInstruction inst = body.Instructions[pos];
+			var inst = body.Instructions[pos];
 			ILVariable v;
 			ILInstruction newarrExpr;
 			IType elementType;
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						ILInlining.InlineIfPossible(body, pos, context);
 						return true;
 					}
-					if (HandleJaggedArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out ILVariable finalStore, out values, out instructionsToRemove)) {
+					if (HandleJaggedArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out var finalStore, out values, out instructionsToRemove)) {
 						context.Step("HandleJaggedArrayInitializer", inst);
 						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		ILInstruction GetNullExpression(IType elementType)
 		{
-			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
+			var typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return new DefaultValue(elementType);
 			switch (typeDef.KnownTypeCode) {
@@ -170,12 +170,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructionsToRemove = 0;
 			values = null;
 			values = new ILInstruction[length];
-			int index = 0;
-			int elementCount = 0;
-			for (int i = pos; i < block.Instructions.Count; i++) {
+			var index = 0;
+			var elementCount = 0;
+			for (var i = pos; i < block.Instructions.Count; i++) {
 				if (index >= length)
 					break;
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
+				if (!block.Instructions[i].MatchStObj(out var target, out var value, out var type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
 				var ldelem = target as LdElema;
 				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out index))
@@ -198,9 +198,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			
 			ILInstruction initializer;
 			IType type;
-			for (int i = 0; i < length; i++) {
+			for (var i = 0; i < length; i++) {
 				// 1. Instruction: (optional) temporary copy of store
-				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out ILVariable temp, out ILInstruction storeLoad) && storeLoad.MatchLdLoc(store);
+				var hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out var temp, out var storeLoad) && storeLoad.MatchLdLoc(store);
 				if (hasTemporaryCopy) {
 					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out type))
 						return false;
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				}
 				values[i] = initializer;
-				int inc = hasTemporaryCopy ? 3 : 2;
+				var inc = hasTemporaryCopy ? 3 : 2;
 				pos += inc;
 				instructionsToRemove += inc;
 			}
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction newarrExpr;
 			IType arrayType;
 			int[] length;
-			ILInstruction instr = body.Instructions[pos];
+			var instr = body.Instructions[pos];
 			if (instr.MatchStLoc(out v, out newarrExpr) && MatchNewArr(newarrExpr, out arrayType, out length)) {
 				ILInstruction[] values;
 				int initArrayPos;
@@ -269,12 +269,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var block = new Block(BlockKind.ArrayInitializer);
 			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-			int step = arrayLength.Length + 1;
-			for (int i = 0; i < values.Length / step; i++) {
+			var step = arrayLength.Length + 1;
+			for (var i = 0; i < values.Length / step; i++) {
 				// values array is filled backwards
 				var value = values[step * i];
 				var indices = new List<ILInstruction>();
-				for (int j = step - 1; j >= 1; j--) {
+				for (var j = step - 1; j >= 1; j--) {
 					indices.Add(values[step * i + j]);
 				}
 				block.Instructions.Add(StElem(new LdLoc(v), indices.ToArray(), value, elementType));
@@ -285,8 +285,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static bool CompareTypes(IType a, IType b)
 		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			var type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
+			var type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
 			return type1.Equals(type2);
 		}
 		
@@ -294,7 +294,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (otherParameters.Count != parameters.Count)
 				return false;
-			for (int i = 0; i < otherParameters.Count; i++) {
+			for (var i = 0; i < otherParameters.Count; i++) {
 				if (!CompareTypes(otherParameters[i].Type, parameters[i].Type))
 					return false;
 			}
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		internal static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
 		{
-			NewArr newArr = instruction as NewArr;
+			var newArr = instruction as NewArr;
 			length = null;
 			arrayType = null;
 			if (newArr == null)
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			arrayType = newArr.Type;
 			var args = newArr.Indices;
 			length = new int[args.Count];
-			for (int i = 0; i < args.Count; i++) {
+			for (var i = 0; i < args.Count; i++) {
 				int value;
 				if (!args[i].MatchLdcI4(out value) || value <= 0) return false;
 				length[i] = value;
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			method = null;
 			array = null;
 			field = null;
-			Call call = instruction as Call;
+			var call = instruction as Call;
 			if (call == null || call.Arguments.Count != 2)
 				return false;
 			method = call.Method;
@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool DecodeArrayInitializer(IType type, ILVariable array, byte[] initialValue, int[] arrayLength, List<ILInstruction> output)
 		{
-			TypeCode typeCode = ReflectionHelper.GetTypeCode(type);
+			var typeCode = ReflectionHelper.GetTypeCode(type);
 			switch (typeCode) {
 				case TypeCode.Boolean:
 				case TypeCode.Byte:
@@ -401,15 +401,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool DecodeArrayInitializer(byte[] initialValue, ILVariable array, int[] arrayLength, List<ILInstruction> output, TypeCode elementType, IType type, Func<byte[], int, ILInstruction> decoder)
 		{
-			int elementSize = ElementSizeOf(elementType);
+			var elementSize = ElementSizeOf(elementType);
 			var totalLength = arrayLength.Aggregate(1, (t, l) => t * l);
 			if (initialValue.Length < (totalLength * elementSize))
 				return false;
 
-			for (int i = 0; i < totalLength; i++) {
+			for (var i = 0; i < totalLength; i++) {
 				output.Add(decoder(initialValue, i * elementSize));
-				int next = i;
-				for (int j = arrayLength.Length - 1; j >= 0; j--) {
+				var next = i;
+				for (var j = arrayLength.Length - 1; j >= 0; j--) {
 					output.Add(new LdcI4(next % arrayLength[j]));
 					next = next / arrayLength[j];
 				}

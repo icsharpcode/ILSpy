@@ -34,48 +34,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class MemberReferenceExpression : Expression
 	{
 		public Expression Target {
-			get {
-				return GetChildByRole(Roles.TargetExpression);
-			}
-			set {
-				SetChildByRole(Roles.TargetExpression, value);
-			}
+			get => GetChildByRole(Roles.TargetExpression);
+			set => SetChildByRole(Roles.TargetExpression, value);
 		}
 
-		public CSharpTokenNode DotToken {
-			get { return GetChildByRole (Roles.Dot); }
-		}
-		
+		public CSharpTokenNode DotToken => GetChildByRole (Roles.Dot);
+
 		public string MemberName {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole (Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier MemberNameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole (Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole (Roles.Identifier, value);
 		}
 		
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole (Roles.LChevron); }
-		}
-		
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole (Roles.TypeArgument); }
-		}
-		
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole (Roles.RChevron); }
-		}
-		
+		public CSharpTokenNode LChevronToken => GetChildByRole (Roles.LChevron);
+
+		public AstNodeCollection<AstType> TypeArguments => GetChildrenByRole (Roles.TypeArgument);
+
+		public CSharpTokenNode RChevronToken => GetChildByRole (Roles.RChevron);
+
 		public MemberReferenceExpression ()
 		{
 		}
@@ -112,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MemberReferenceExpression o = other as MemberReferenceExpression;
+			var o = other as MemberReferenceExpression;
 			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}

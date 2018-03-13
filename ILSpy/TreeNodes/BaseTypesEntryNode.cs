@@ -32,23 +32,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public BaseTypesEntryNode(TypeReference tr, bool isInterface)
 		{
-			if (tr == null)
-				throw new ArgumentNullException(nameof(tr));
-			this.tr = tr;
+			this.tr = tr ?? throw new ArgumentNullException(nameof(tr));
 			this.def = tr.Resolve();
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
 		}
 
-		public override bool ShowExpander
-		{
-			get { return def != null && (def.BaseType != null || def.HasInterfaces); }
-		}
+		public override bool ShowExpander => def != null && (def.BaseType != null || def.HasInterfaces);
 
-		public override object Text
-		{
-			get { return this.Language.TypeToString(tr, true) + tr.MetadataToken.ToSuffixString(); }
-		}
+		public override object Text => this.Language.TypeToString(tr, true) + tr.MetadataToken.ToSuffixString();
 
 		public override object Icon
 		{
@@ -96,9 +88,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(tr, true));
 		}
 
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return tr; }
-		}
+		MemberReference IMemberTreeNode.Member => tr;
 	}
 }

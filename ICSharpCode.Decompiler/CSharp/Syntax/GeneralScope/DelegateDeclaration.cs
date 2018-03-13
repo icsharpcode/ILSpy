@@ -33,38 +33,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public class DelegateDeclaration : EntityDeclaration
 	{
-		public override NodeType NodeType {
-			get { return NodeType.TypeDeclaration; }
-		}
-		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.TypeDefinition; }
-		}
-		
-		public CSharpTokenNode DelegateToken {
-			get { return GetChildByRole(Roles.DelegateKeyword); }
-		}
+		public override NodeType NodeType => NodeType.TypeDeclaration;
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole (Roles.TypeParameter); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole (Roles.Constraint); }
-		}
-		
+		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
+
+		public CSharpTokenNode DelegateToken => GetChildByRole(Roles.DelegateKeyword);
+
+		public AstNodeCollection<TypeParameterDeclaration> TypeParameters => GetChildrenByRole (Roles.TypeParameter);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
+		public AstNodeCollection<Constraint> Constraints => GetChildrenByRole (Roles.Constraint);
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitDelegateDeclaration (this);
@@ -82,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			DelegateDeclaration o = other as DelegateDeclaration;
+			var o = other as DelegateDeclaration;
 			return o != null && MatchString(this.Name, o.Name) 
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.TypeParameters.DoMatch(o.TypeParameters, match) && this.Parameters.DoMatch(o.Parameters, match)

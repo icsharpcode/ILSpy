@@ -37,30 +37,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.module = module;
 		}
 		
-		public override object Text {
-			get { return "Resources"; }
-		}
-		
-		public override object Icon {
-			get { return Images.FolderClosed; }
-		}
+		public override object Text => "Resources";
 
-		public override object ExpandedIcon {
-			get { return Images.FolderOpen; }
-		}
-		
+		public override object Icon => Images.FolderClosed;
+
+		public override object ExpandedIcon => Images.FolderOpen;
+
 		protected override void LoadChildren()
 		{
-			foreach (Resource r in module.Resources.OrderBy(m => m.Name))
+			foreach (var r in module.Resources.OrderBy(m => m.Name))
 				this.Children.Add(ResourceTreeNode.Create(r));
 		}
 		
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (string.IsNullOrEmpty(settings.SearchTerm))
-				return FilterResult.MatchAndRecurse;
-			else
-				return FilterResult.Recurse;
+			return string.IsNullOrEmpty(settings.SearchTerm) ? FilterResult.MatchAndRecurse : FilterResult.Recurse;
 		}
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

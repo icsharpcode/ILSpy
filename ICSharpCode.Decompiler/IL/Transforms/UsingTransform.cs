@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.UsingStatement) return;
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+			for (var i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (!TransformUsing(block, i) && !TransformUsingVB(block, i))
 					continue;
 				// This happens in some cases:
@@ -168,11 +168,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var entryPoint = container.EntryPoint;
 			if (entryPoint.Instructions.Count < 2 || entryPoint.Instructions.Count > 3 || entryPoint.IncomingEdgeCount != 1)
 				return false;
-			int leaveIndex = entryPoint.Instructions.Count == 2 ? 1 : 2;
-			int checkIndex = entryPoint.Instructions.Count == 2 ? 0 : 1;
-			int castIndex = entryPoint.Instructions.Count == 3 ? 0 : -1;
+			var leaveIndex = entryPoint.Instructions.Count == 2 ? 1 : 2;
+			var checkIndex = entryPoint.Instructions.Count == 2 ? 0 : 1;
+			var castIndex = entryPoint.Instructions.Count == 3 ? 0 : -1;
 			var checkInst = entryPoint.Instructions[checkIndex];
-			bool isReference = objVar.Type.IsReferenceType != false;
+			var isReference = objVar.Type.IsReferenceType != false;
 			if (castIndex > -1) {
 				if (!entryPoint.Instructions[castIndex].MatchStLoc(out var tempVar, out var isinst))
 					return false;
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!tempVar.IsSingleDefinition)
 					return false;
 				isReference = true;
-				if (!MatchDisposeCheck(tempVar, checkInst, isReference, usingNull, out int numObjVarLoadsInCheck))
+				if (!MatchDisposeCheck(tempVar, checkInst, isReference, usingNull, out var numObjVarLoadsInCheck))
 					return false;
 				if (tempVar.LoadCount != numObjVarLoadsInCheck)
 					return false;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			} else {
 				ILInstruction target;
-				bool boxedValue = false;
+				var boxedValue = false;
 				if (isReference && checkInst is NullableRewrap rewrap) {
 					// the null check of reference types might have been transformed into "objVar?.Dispose();"
 					if (!(rewrap.Argument is CallVirt cv))

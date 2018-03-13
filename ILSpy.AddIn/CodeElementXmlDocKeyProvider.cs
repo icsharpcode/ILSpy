@@ -19,7 +19,7 @@ namespace ICSharpCode.ILSpy.AddIn
 		#region GetKey
 		public static string GetKey(EnvDTE.CodeElement member)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			if ((member.Kind == EnvDTE.vsCMElement.vsCMElementDelegate) ||
 				(member.Kind == EnvDTE.vsCMElement.vsCMElementEnum) ||
 				(member.Kind == EnvDTE.vsCMElement.vsCMElementInterface) ||
@@ -42,13 +42,13 @@ namespace ICSharpCode.ILSpy.AddIn
 				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction)
 					b.Append("M:");
 
-				int nameIndex = member.FullName.LastIndexOf(member.Name);
-				string typeName = member.FullName.Substring(0, nameIndex - 1);
-				string memberName = member.FullName.Substring(nameIndex);
+				var nameIndex = member.FullName.LastIndexOf(member.Name);
+				var typeName = member.FullName.Substring(0, nameIndex - 1);
+				var memberName = member.FullName.Substring(nameIndex);
 
 				// Name substitutions for special cases.
 				if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction) {
-					EnvDTE80.CodeFunction2 mr = (EnvDTE80.CodeFunction2)member;
+					var mr = (EnvDTE80.CodeFunction2)member;
 					if (mr.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionConstructor) {
 						memberName = memberName.Replace(member.Name, "#ctor");
 					}
@@ -64,10 +64,10 @@ namespace ICSharpCode.ILSpy.AddIn
 						}
 						else {
 							// NRefactory has a handy mapping we can make use of, just need to extract the operator symbol first.
-							string[] memberNameWords = member.Name.Split(' ');
+							var memberNameWords = member.Name.Split(' ');
 							if (memberNameWords.Length >= 2) {
-								string operatorSymbol = memberNameWords[1];
-								string operatorName = OperatorDeclaration.GetName(OperatorDeclaration.GetOperatorType(operatorSymbol));
+								var operatorSymbol = memberNameWords[1];
+								var operatorName = OperatorDeclaration.GetName(OperatorDeclaration.GetOperatorType(operatorSymbol));
 								if (operatorName != null) {
 									memberName = memberName.Replace(member.Name, operatorName);
 								}
@@ -81,16 +81,16 @@ namespace ICSharpCode.ILSpy.AddIn
 					}
 				}
 
-				string[] genericTypeParameters = AppendTypeName(b, typeName, true, false);
+				var genericTypeParameters = AppendTypeName(b, typeName, true, false);
 				b.Append('.');
-				string[] genericMethodParameters = AppendTypeName(b, memberName.Replace('.', '#'), true, true);
+				var genericMethodParameters = AppendTypeName(b, memberName.Replace('.', '#'), true, true);
 				EnvDTE.CodeElements parameters;
 				EnvDTE.CodeTypeRef explicitReturnType = null;
 				if (member.Kind == EnvDTE.vsCMElement.vsCMElementProperty) {
 					parameters = ((EnvDTE.CodeProperty)member).Getter.Parameters;
 				}
 				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction) {
-					EnvDTE80.CodeFunction2 mr = (EnvDTE80.CodeFunction2)member;
+					var mr = (EnvDTE80.CodeFunction2)member;
 					parameters = mr.Parameters;
 					if (memberName == "op_Implicit" || memberName == "op_Explicit") {
 						explicitReturnType = mr.Type;
@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 				if (parameters != null && parameters.Count > 0) {
 					b.Append('(');
-					int i = 0;
+					var i = 0;
 					foreach (EnvDTE80.CodeParameter2 parameter in parameters) {
 						if (i > 0) b.Append(',');
 						AppendParameterTypeName(b, parameter, genericTypeParameters, genericMethodParameters);
@@ -119,12 +119,12 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		static string[] AppendTypeName(StringBuilder b, string typeName, bool appendGenericParameterCount, bool isMethod)
 		{
-			List<string> allGenericParameters = new List<string>();
-			StringBuilder genericParameterName = new StringBuilder();
+			var allGenericParameters = new List<string>();
+			var genericParameterName = new StringBuilder();
 
-			bool inGenericParameters = false;
-			int genericParameterCount = 0;
-			foreach (char ch in typeName) {
+			var inGenericParameters = false;
+			var genericParameterCount = 0;
+			foreach (var ch in typeName) {
 				if (inGenericParameters) {
 					switch (ch) {
 						case ',':
@@ -175,12 +175,12 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private static void AppendParameterTypeName(StringBuilder b, EnvDTE80.CodeParameter2 parameter, string[] genericTypeParameters, string[] genericMethodParameters)
 		{
-			EnvDTE80.CodeTypeRef2 parameterTypeRef = (EnvDTE80.CodeTypeRef2)parameter.Type;
-			string parameterTypeString = parameterTypeRef.AsFullName;
+			var parameterTypeRef = (EnvDTE80.CodeTypeRef2)parameter.Type;
+			var parameterTypeString = parameterTypeRef.AsFullName;
 
-			int substringStart = 0;
-			for (int i = 0; i < parameterTypeString.Length; ++i) {
-				char ch = parameterTypeString[i];
+			var substringStart = 0;
+			for (var i = 0; i < parameterTypeString.Length; ++i) {
+				var ch = parameterTypeString[i];
 				switch (ch) {
 					case '<':
 						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
@@ -198,7 +198,7 @@ namespace ICSharpCode.ILSpy.AddIn
 						b.Append('[');
 
 						// Skip ahead to the closing bracket, counting commas to determine array rank.
-						int rank = 1;
+						var rank = 1;
 						do {
 							++i;
 							ch = parameterTypeString[i];
@@ -211,7 +211,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 						// For multi-dimensional arrays, add "0:" default array bounds. Note that non-standard bounds are not possible via C# declaration.
 						if (rank > 1) {
-							for (int r = 0; r < rank; ++r) {
+							for (var r = 0; r < rank; ++r) {
 								if (r != 0) {
 									b.Append(',');
 								}
@@ -249,9 +249,9 @@ namespace ICSharpCode.ILSpy.AddIn
 		private static void AppendParameterTypeSubstring(StringBuilder b, string parameterTypeString, int substringStart, int substringStop, string[] genericTypeParameters, string[] genericMethodParameters)
 		{
 			if (substringStart < substringStop) {
-				string substring = parameterTypeString.Substring(substringStart, substringStop - substringStart);
-				int indexOfGenericTypeParameter = Array.IndexOf(genericTypeParameters, substring);
-				int indexOfGenericMethodParameter = Array.IndexOf(genericMethodParameters, substring);
+				var substring = parameterTypeString.Substring(substringStart, substringStop - substringStart);
+				var indexOfGenericTypeParameter = Array.IndexOf(genericTypeParameters, substring);
+				var indexOfGenericMethodParameter = Array.IndexOf(genericMethodParameters, substring);
 				if (indexOfGenericTypeParameter >= 0) {
 					b.Append("`");
 					b.Append(indexOfGenericTypeParameter);

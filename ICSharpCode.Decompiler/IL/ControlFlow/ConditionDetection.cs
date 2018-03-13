@@ -64,11 +64,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (guaranteed by combination of BlockContainer and Block invariants)
 			Debug.Assert(block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable));
 
-			ILInstruction exitInst = block.Instructions.Last();
+			var exitInst = block.Instructions.Last();
 			
 			// Previous-to-last instruction might have conditional control flow,
 			// usually an IfInstruction with a branch:
-			IfInstruction ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
+			var ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
 			if (ifInst != null && ifInst.FalseInst.OpCode == OpCode.Nop) {
 				HandleIfInstruction(cfgNode, block, ifInst, ref exitInst);
 			}
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.RemoveAt(0);
 						// Update targetBlock label now that we've removed the first instruction
 						if (targetBlock.Instructions.FirstOrDefault()?.ILRange.IsEmpty == false) {
-							int offset = targetBlock.Instructions[0].ILRange.Start;
+							var offset = targetBlock.Instructions[0].ILRange.Start;
 							targetBlock.ILRange = new Interval(offset, offset);
 						}
 						continue; // try to find more nested conditions
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Remove();
 					}
 					exitInst = block.Instructions[block.Instructions.Count - 1] = falseExitInst;
-					Block trueBlock = ifInst.TrueInst as Block;
+					var trueBlock = ifInst.TrueInst as Block;
 					if (trueBlock != null) {
 						Debug.Assert(trueExitInst == trueBlock.Instructions.Last());
 						trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 
 				// After swapping, it's possible that we can introduce a short-circuit operator:
-				Block trueBlock = ifInst.TrueInst as Block;
+				var trueBlock = ifInst.TrueInst as Block;
 				ILInstruction nestedCondition, nestedTrueInst;
 				if (trueBlock != null && trueBlock.Instructions.Count == 1
 					&& trueBlock.FinalInstruction is Nop
@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private ILInstruction UnpackBlockContainingOnlyBranch(ILInstruction inst)
 		{
-			Block block = inst as Block;
+			var block = inst as Block;
 			if (block != null && block.Instructions.Count == 1 && block.FinalInstruction is Nop && IsBranchOrLeave(block.Instructions[0]))
 				return block.Instructions.Single();
 			else
@@ -285,7 +285,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		bool IsUsableBranchToChild(ControlFlowNode cfgNode, ILInstruction potentialBranchInstruction)
 		{
-			Branch br = potentialBranchInstruction as Branch;
+			var br = potentialBranchInstruction as Branch;
 			if (br == null)
 				return false;
 			var targetBlock = br.TargetBlock;

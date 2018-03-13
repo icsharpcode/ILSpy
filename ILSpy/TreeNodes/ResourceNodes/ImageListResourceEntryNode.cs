@@ -56,19 +56,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.data.ImageStream = data;
 		}
 
-		public override object Text
-		{
-			get { return key; }
-		}
+		public override object Text => key;
 
-		public override object Icon
-		{
-			get { return Images.ResourceImage; }
-		}
+		public override object Icon => Images.ResourceImage;
 
 		protected override void LoadChildren()
 		{
-			int i = 0;
+			var i = 0;
 			foreach (Image image in this.data.Images) {
 				var node = ResourceEntryNode.Create("Image" + i.ToString(), image);
 				if (node != null)

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.LockStatement) return;
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+			for (var i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (!TransformLockRoslyn(block, i))
 					if (!TransformLockV4(block, i))
 						if (!TransformLockV2(block, i))
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!flagStore.Variable.Type.IsKnownType(KnownTypeCode.Boolean) || !flagStore.Value.MatchLdcI4(0))
 				return false;
-			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out StLoc objectStore))
+			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out var objectStore))
 				return false;
 			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
 				return false;

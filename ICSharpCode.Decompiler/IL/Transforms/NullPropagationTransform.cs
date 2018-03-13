@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILInstruction TryNullPropagation(ILVariable testedVar, ILInstruction nonNullInst, ILInstruction nullInst,
 			Mode mode, Interval ilRange)
 		{
-			bool removedRewrapOrNullableCtor = false;
+			var removedRewrapOrNullableCtor = false;
 			if (NullableLiftingTransform.MatchNullableCtor(nonNullInst, out _, out var arg)) {
 				nonNullInst = arg;
 				removedRewrapOrNullableCtor = true;
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!IsValidAccessChain(testedVar, mode, nonNullInst, out var varLoad))
 				return null;
 			// note: InferType will be accurate in this case because the access chain consists of calls and field accesses
-			IType returnType = nonNullInst.InferType();
+			var returnType = nonNullInst.InferType();
 			if (nullInst.MatchLdNull()) {
 				context.Step($"Null propagation (mode={mode}, output=reference type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : null
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, out ILInstruction finalLoad)
 		{
 			finalLoad = null;
-			int chainLength = 0;
+			var chainLength = 0;
 			while (true) {
 				if (IsValidEndOfChain()) {
 					// valid end of chain
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
-					for (int i = 1; i < call.Arguments.Count; ++i) {
+					for (var i = 1; i < call.Arguments.Count; ++i) {
 						if (call.Arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
 							return false;
 						}

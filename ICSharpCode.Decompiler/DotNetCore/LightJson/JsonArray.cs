@@ -15,7 +15,7 @@ namespace LightJson
 	[DebuggerTypeProxy(typeof(JsonArrayDebugView))]
 	internal sealed class JsonArray : IEnumerable<JsonValue>
 	{
-		private IList<JsonValue> items;
+		private readonly IList<JsonValue> items;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JsonArray"/> class.
@@ -45,11 +45,7 @@ namespace LightJson
 		/// Gets the number of values in this collection.
 		/// </summary>
 		/// <value>The number of values in this collection.</value>
-		public int Count {
-			get {
-				return this.items.Count;
-			}
-		}
+		public int Count => this.items.Count;
 
 		/// <summary>
 		/// Gets or sets the value at the given index.
@@ -67,9 +63,7 @@ namespace LightJson
 				}
 			}
 
-			set {
-				this.items[index] = value;
-			}
+			set => this.items[index] = value;
 		}
 
 		/// <summary>
@@ -157,7 +151,7 @@ namespace LightJson
 		[ExcludeFromCodeCoverage]
 		private class JsonArrayDebugView
 		{
-			private JsonArray jsonArray;
+			private readonly JsonArray jsonArray;
 
 			public JsonArrayDebugView(JsonArray jsonArray)
 			{
@@ -169,7 +163,7 @@ namespace LightJson
 				get {
 					var items = new JsonValue[this.jsonArray.Count];
 
-					for (int i = 0; i < this.jsonArray.Count; i += 1) {
+					for (var i = 0; i < this.jsonArray.Count; i += 1) {
 						items[i] = this.jsonArray[i];
 					}
 

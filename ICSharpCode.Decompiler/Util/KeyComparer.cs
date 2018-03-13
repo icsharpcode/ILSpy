@@ -52,15 +52,9 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public KeyComparer(Func<TElement, TKey> keySelector, IComparer<TKey> keyComparer, IEqualityComparer<TKey> keyEqualityComparer)
 		{
-			if (keySelector == null)
-				throw new ArgumentNullException("keySelector");
-			if (keyComparer == null)
-				throw new ArgumentNullException("keyComparer");
-			if (keyEqualityComparer == null)
-				throw new ArgumentNullException("keyEqualityComparer");
-			this.keySelector = keySelector;
-			this.keyComparer = keyComparer;
-			this.keyEqualityComparer = keyEqualityComparer;
+			this.keySelector = keySelector ?? throw new ArgumentNullException("keySelector");
+			this.keyComparer = keyComparer ?? throw new ArgumentNullException("keyComparer");
+			this.keyEqualityComparer = keyEqualityComparer ?? throw new ArgumentNullException("keyEqualityComparer");
 		}
 		
 		public int Compare(TElement x, TElement y)

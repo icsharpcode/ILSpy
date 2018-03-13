@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(Block block, BlockTransformContext context)
 		{
 			var ctx = new StatementTransformContext(context);
-			int pos = 0;
+			var pos = 0;
 			ctx.rerunPosition = block.Instructions.Count - 1;
 			while (pos >= 0) {
 				if (ctx.rerunPosition != null) {
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					transform.Run(block, pos, ctx);
 #if DEBUG
 					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
-					for (int i = 0; i < pos; ++i) {
+					for (var i = 0; i < pos; ++i) {
 						if (block.Instructions[i].IsDirty) {
 							Debug.Fail($"{transform.GetType().Name} modified an instruction before pos");
 						}

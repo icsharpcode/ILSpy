@@ -169,7 +169,7 @@ namespace ICSharpCode.ILSpy
 		
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(treeView);
+			var context = TextViewContext.Create(treeView);
 			if (context.SelectedTreeNodes.Length == 0) {
 				e.Handled = true; // don't show the menu
 				return;
@@ -184,7 +184,7 @@ namespace ICSharpCode.ILSpy
 		
 		void textView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(textView: textView);
+			var context = TextViewContext.Create(textView: textView);
 			ContextMenu menu;
 			if (ShowContextMenu(context, out menu))
 				textView.ContextMenu = menu;
@@ -195,7 +195,7 @@ namespace ICSharpCode.ILSpy
 
 		void listBox_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
-			TextViewContext context = TextViewContext.Create(listBox: listBox);
+			var context = TextViewContext.Create(listBox: listBox);
 			ContextMenu menu;
 			if (ShowContextMenu(context, out menu))
 				listBox.ContextMenu = menu;
@@ -208,15 +208,15 @@ namespace ICSharpCode.ILSpy
 		{
 			menu = new ContextMenu();
 			foreach (var category in entries.OrderBy(c => c.Metadata.Order).GroupBy(c => c.Metadata.Category)) {
-				bool needSeparatorForCategory = menu.Items.Count > 0;
+				var needSeparatorForCategory = menu.Items.Count > 0;
 				foreach (var entryPair in category) {
-					IContextMenuEntry entry = entryPair.Value;
+					var entry = entryPair.Value;
 					if (entry.IsVisible(context)) {
 						if (needSeparatorForCategory) {
 							menu.Items.Add(new Separator());
 							needSeparatorForCategory = false;
 						}
-						MenuItem menuItem = new MenuItem();
+						var menuItem = new MenuItem();
 						menuItem.Header = entryPair.Metadata.Header;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
 							menuItem.Icon = new Image {

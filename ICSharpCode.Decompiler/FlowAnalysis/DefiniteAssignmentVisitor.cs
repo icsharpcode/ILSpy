@@ -99,9 +99,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.ClearAll();
 			}
 
-			public bool IsBottom {
-				get { return !bits.Any(); }
-			}
+			public bool IsBottom => !bits.Any();
 
 			public void MarkVariableInitialized(int variableIndex)
 			{
@@ -205,7 +203,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		void HandleCall(CallInstruction call)
 		{
-			bool hasOutArgs = false;
+			var hasOutArgs = false;
 			foreach (var arg in call.Arguments) {
 				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
 					// Visiting ldloca would require the variable to be initialized,

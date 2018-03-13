@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void VisitBlock(ControlFlowNode cfgNode, BlockTransformContext context)
 		{
-			Block block = (Block)cfgNode.UserData;
+			var block = (Block)cfgNode.UserData;
 			context.StepStartGroup(block.Label, block);
 
 			context.ControlFlowNode = cfgNode;

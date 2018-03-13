@@ -46,12 +46,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.Name = name;
 		}
 		
-		public bool IsConst {
-			get { return constantValue != null && !IsFixed; }
-		}
-		
+		public bool IsConst => constantValue != null && !IsFixed;
+
 		public bool IsReadOnly {
-			get { return flags[FlagFieldIsReadOnly]; }
+			get => flags[FlagFieldIsReadOnly];
 			set {
 				ThrowIfFrozen();
 				flags[FlagFieldIsReadOnly] = value;
@@ -59,7 +57,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsVolatile {
-			get { return flags[FlagFieldIsVolatile]; }
+			get => flags[FlagFieldIsVolatile];
 			set {
 				ThrowIfFrozen();
 				flags[FlagFieldIsVolatile] = value;
@@ -67,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public bool IsFixed {
-			get { return flags[FlagFieldIsFixedSize]; }
+			get => flags[FlagFieldIsFixedSize];
 			set {
 				ThrowIfFrozen();
 				flags[FlagFieldIsFixedSize] = value;
@@ -75,7 +73,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IConstantValue ConstantValue {
-			get { return constantValue; }
+			get => constantValue;
 			set {
 				ThrowIfFrozen();
 				constantValue = value;

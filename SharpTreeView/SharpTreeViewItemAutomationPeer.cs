@@ -16,12 +16,13 @@ namespace ICSharpCode.TreeView
 			: base(owner)
 		{
 			SharpTreeViewItem.DataContextChanged += OnDataContextChanged;
-			SharpTreeNode node = SharpTreeViewItem.DataContext as SharpTreeNode;
+			var node = SharpTreeViewItem.DataContext as SharpTreeNode;
 			if (node == null) return;
 			
 			node.PropertyChanged += OnPropertyChanged;
 		}
-		private SharpTreeViewItem  SharpTreeViewItem { get { return (SharpTreeViewItem)base.Owner; } }
+		private SharpTreeViewItem  SharpTreeViewItem => (SharpTreeViewItem)base.Owner;
+
 		protected override AutomationControlType GetAutomationControlTypeCore()
 		{
 			return AutomationControlType.TreeItem;
@@ -44,7 +45,7 @@ namespace ICSharpCode.TreeView
 
 		public ExpandCollapseState ExpandCollapseState {
 			get {
-				SharpTreeNode node = SharpTreeViewItem.DataContext as SharpTreeNode;
+				var node = SharpTreeViewItem.DataContext as SharpTreeNode;
 				if (node == null || !node.ShowExpander)
 					return ExpandCollapseState.LeafNode;
 				return node.IsExpanded ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed;
@@ -54,10 +55,10 @@ namespace ICSharpCode.TreeView
 		private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName != "IsExpanded") return;
-			SharpTreeNode node =  sender as SharpTreeNode;
+			var node =  sender as SharpTreeNode;
 			if (node == null ||  node.Children.Count == 0) return;
-			bool newValue = node.IsExpanded;
-			bool oldValue = !newValue;
+			var newValue = node.IsExpanded;
+			var oldValue = !newValue;
 			RaisePropertyChangedEvent(
 				ExpandCollapsePatternIdentifiers.ExpandCollapseStateProperty,
 				oldValue ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed,
@@ -66,10 +67,10 @@ namespace ICSharpCode.TreeView
 		
 		private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 		{
-			SharpTreeNode oldNode = e.OldValue as SharpTreeNode;
+			var oldNode = e.OldValue as SharpTreeNode;
 			if (oldNode != null)
 				oldNode.PropertyChanged -= OnPropertyChanged;
-			SharpTreeNode newNode = e.NewValue as SharpTreeNode;
+			var newNode = e.NewValue as SharpTreeNode;
 			if (newNode != null)
 				newNode.PropertyChanged += OnPropertyChanged;
 		}

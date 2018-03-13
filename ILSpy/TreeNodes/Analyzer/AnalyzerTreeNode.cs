@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public Language Language
 		{
-			get { return language; }
+			get => language;
 			set
 			{
 				if (language != value) {
@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems != null) {
-				foreach (AnalyzerTreeNode a in e.NewItems.OfType<AnalyzerTreeNode>())
+				foreach (var a in e.NewItems.OfType<AnalyzerTreeNode>())
 					a.Language = this.Language;
 			}
 			base.OnChildrenChanged(e);

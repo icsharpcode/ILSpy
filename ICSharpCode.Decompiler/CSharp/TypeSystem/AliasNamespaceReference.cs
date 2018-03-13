@@ -33,22 +33,16 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	[Serializable]
 	public sealed class AliasNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
-		readonly string identifier;
-		
 		public AliasNamespaceReference(string identifier)
 		{
-			if (identifier == null)
-				throw new ArgumentNullException("identifier");
-			this.identifier = identifier;
+			this.Identifier = identifier ?? throw new ArgumentNullException("identifier");
 		}
 		
-		public string Identifier {
-			get { return identifier; }
-		}
-		
+		public string Identifier { get; }
+
 		public override ResolveResult Resolve(CSharpResolver resolver)
 		{
-			return resolver.ResolveAlias(identifier);
+			return resolver.ResolveAlias(Identifier);
 		}
 		
 		public override IType ResolveType(CSharpResolver resolver)
@@ -59,18 +53,18 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public override string ToString()
 		{
-			return identifier + "::";
+			return Identifier + "::";
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return identifier.GetHashCode();
+			return Identifier.GetHashCode();
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			AliasNamespaceReference anr = other as AliasNamespaceReference;
-			return anr != null && this.identifier == anr.identifier;
+			var anr = other as AliasNamespaceReference;
+			return anr != null && this.Identifier == anr.Identifier;
 		}
 	}
 }

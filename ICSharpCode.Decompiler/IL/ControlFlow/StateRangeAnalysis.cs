@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				evalContext.AddStateVariable(cachedStateVar);
 		}
 
-		public IEnumerable<ILVariable> CachedStateVars { get => evalContext.StateVariables; }
+		public IEnumerable<ILVariable> CachedStateVars => evalContext.StateVariables;
 
 		/// <summary>
 		/// Creates a new StateRangeAnalysis with the same settings, including any cached state vars
@@ -137,10 +137,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					var afterFinally = AssignStateRanges(tryFinally.FinallyBlock, stateRange);
 					return afterTry.IntersectWith(afterFinally);
 				case SwitchInstruction switchInst:
-					SymbolicValue val = evalContext.Eval(switchInst.Value);
+					var val = evalContext.Eval(switchInst.Value);
 					if (val.Type != SymbolicValueType.State)
 						goto default;
-					List<LongInterval> exitIntervals = new List<LongInterval>();
+					var exitIntervals = new List<LongInterval>();
 					foreach (var section in switchInst.Sections) {
 						// switch (state + Constant)
 						// matches 'case VALUE:'
@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (val.Type != SymbolicValueType.StateInSet) {
 						goto default;
 					}
-					LongSet trueRanges = val.ValueSet;
+					var trueRanges = val.ValueSet;
 					var afterTrue = AssignStateRanges(ifInst.TrueInst, stateRange.IntersectWith(trueRanges));
 					var afterFalse = AssignStateRanges(ifInst.FalseInst, stateRange.ExceptWith(trueRanges));
 					return afterTrue.UnionWith(afterFalse);

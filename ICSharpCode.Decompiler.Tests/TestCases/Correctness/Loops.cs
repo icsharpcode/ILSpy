@@ -28,11 +28,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			bool next = true;
 
-			public T Current {
-				get {
-					return default(T);
-				}
-			}
+			public T Current => default(T);
 
 			public void Dispose()
 			{
@@ -95,11 +91,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void DoubleForEachWithSameVariable(IEnumerable<string> enumerable)
 		{
 			Console.WriteLine("DoubleForEachWithSameVariable:");
-			foreach (string current in enumerable) {
+			foreach (var current in enumerable) {
 				Console.WriteLine(current.ToLower());
 			}
 			Console.WriteLine("after first loop");
-			foreach (string current in enumerable) {
+			foreach (var current in enumerable) {
 				Console.WriteLine(current.ToUpper());
 			}
 			Console.WriteLine("after second loop");
@@ -109,7 +105,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("ForeachWithNameCollision:");
 			int current;
-			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
+			using (var enumerator = inputs.GetEnumerator()) {
 				while (enumerator.MoveNext()) {
 					current = enumerator.Current;
 					Console.WriteLine(current);
@@ -122,8 +118,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
 		{
 			Console.WriteLine("ForeachExceptForContinuedUse");
-			int num = 0;
-			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
+			var num = 0;
+			using (var enumerator = inputs.GetEnumerator()) {
 				while (enumerator.MoveNext()) {
 					num = enumerator.Current;
 					Console.WriteLine(num);
@@ -135,15 +131,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void NonGenericForeachWithReturnFallbackTest(IEnumerable e)
 		{
 			Console.WriteLine("NonGenericForeachWithReturnFallback:");
-			IEnumerator enumerator = e.GetEnumerator();
+			var enumerator = e.GetEnumerator();
 			try {
 				Console.WriteLine("MoveNext");
 				if (enumerator.MoveNext()) {
-					object current = enumerator.Current;
+					var current = enumerator.Current;
 					Console.WriteLine("current: " + current);
 				}
 			} finally {
-				IDisposable disposable = enumerator as IDisposable;
+				var disposable = enumerator as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
@@ -188,8 +184,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static T FirstOrDefault<T>(IEnumerable<T> items)
 		{
-			T result = default(T);
-			foreach (T item in items) {
+			var result = default(T);
+			foreach (var item in items) {
 				result = item;
 				break;
 			}
@@ -199,8 +195,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static T NoForeachDueToMultipleCurrentAccess<T>(IEnumerable<T> items)
 		{
 			Console.WriteLine("NoForeachDueToMultipleCurrentAccess:");
-			T result = default(T);
-			using (IEnumerator<T> enumerator = items.GetEnumerator()) {
+			var result = default(T);
+			using (var enumerator = items.GetEnumerator()) {
 				while (enumerator.MoveNext()) {
 					result = enumerator.Current;
 					Console.WriteLine("result: " + result);
@@ -212,9 +208,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static T NoForeachCallWithSideEffect<T>(CustomClassEnumeratorWithIDisposable<T> items)
 		{
 			Console.WriteLine("NoForeachCallWithSideEffect:");
-			using (CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator()) {
+			using (var enumerator = items.GetEnumerator()) {
 				while (enumerator.MoveNext()) {
-					T result = enumerator.Current;
+					var result = enumerator.Current;
 				}
 				return CallWithSideEffect<T>();
 			}

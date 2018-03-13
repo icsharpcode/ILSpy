@@ -30,32 +30,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public class ResourceEntryNode : ILSpyTreeNode
 	{
 		private readonly string key;
-		private readonly Stream data;
 
-		public override object Text
-		{
-			get { return this.key; }
-		}
+		public override object Text => this.key;
 
-		public override object Icon
-		{
-			get { return Images.Resource; }
-		}
+		public override object Icon => Images.Resource;
 
-		protected Stream Data
-		{
-			get { return data; }
-		}
+		protected Stream Data { get; }
 
 
 		public ResourceEntryNode(string key, Stream data)
 		{
-			if (key == null)
-				throw new ArgumentNullException(nameof(key));
-			if (data == null)
-				throw new ArgumentNullException(nameof(data));
-			this.key = key;
-			this.data = data;
+			this.key = key ?? throw new ArgumentNullException(nameof(key));
+			this.Data = data ?? throw new ArgumentNullException(nameof(data));
 		}
 
 		public static ILSpyTreeNode Create(string key, object data)
@@ -75,17 +61,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
+			language.WriteCommentLine(output, string.Format("{0} = {1}", key, Data));
 		}
 
 		public override bool Save(DecompilerTextView textView)
 		{
-			SaveFileDialog dlg = new SaveFileDialog();
+			var dlg = new SaveFileDialog();
 			dlg.FileName = Path.GetFileName(DecompilerTextView.CleanUpName(key));
 			if (dlg.ShowDialog() == true) {
-				data.Position = 0;
+				Data.Position = 0;
 				using (var fs = dlg.OpenFile()) {
-					data.CopyTo(fs);
+					Data.CopyTo(fs);
 				}
 			}
 			return true;

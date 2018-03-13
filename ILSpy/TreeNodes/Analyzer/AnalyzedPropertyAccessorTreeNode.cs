@@ -30,9 +30,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.name = name;
 		}
 
-		public override object Text
-		{
-			get { return name ?? base.Text; }
-		}
+		public override object Text => name ?? base.Text;
 	}
 }

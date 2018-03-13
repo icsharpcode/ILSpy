@@ -11,41 +11,41 @@ namespace ICSharpCode.ILSpy
 {
 	class CSharpHighlightingTokenWriter : DecoratingTokenWriter
 	{
-		ISmartTextOutput textOutput;
+		readonly ISmartTextOutput textOutput;
 
-		HighlightingColor visibilityKeywordsColor;
-		HighlightingColor namespaceKeywordsColor;
-		HighlightingColor structureKeywordsColor;
-		HighlightingColor gotoKeywordsColor;
-		HighlightingColor queryKeywordsColor;
-		HighlightingColor exceptionKeywordsColor;
-		HighlightingColor checkedKeywordColor;
-		HighlightingColor unsafeKeywordsColor;
-		HighlightingColor valueTypeKeywordsColor;
-		HighlightingColor referenceTypeKeywordsColor;
-		HighlightingColor operatorKeywordsColor;
-		HighlightingColor parameterModifierColor;
-		HighlightingColor modifiersColor;
-		HighlightingColor accessorKeywordsColor;
-		HighlightingColor attributeKeywordsColor;
+		readonly HighlightingColor visibilityKeywordsColor;
+		readonly HighlightingColor namespaceKeywordsColor;
+		readonly HighlightingColor structureKeywordsColor;
+		readonly HighlightingColor gotoKeywordsColor;
+		readonly HighlightingColor queryKeywordsColor;
+		readonly HighlightingColor exceptionKeywordsColor;
+		readonly HighlightingColor checkedKeywordColor;
+		readonly HighlightingColor unsafeKeywordsColor;
+		readonly HighlightingColor valueTypeKeywordsColor;
+		readonly HighlightingColor referenceTypeKeywordsColor;
+		readonly HighlightingColor operatorKeywordsColor;
+		readonly HighlightingColor parameterModifierColor;
+		readonly HighlightingColor modifiersColor;
+		readonly HighlightingColor accessorKeywordsColor;
+		readonly HighlightingColor attributeKeywordsColor;
 
-		HighlightingColor referenceTypeColor;
-		HighlightingColor valueTypeColor;
-		HighlightingColor interfaceTypeColor;
-		HighlightingColor enumerationTypeColor;
+		readonly HighlightingColor referenceTypeColor;
+		readonly HighlightingColor valueTypeColor;
+		readonly HighlightingColor interfaceTypeColor;
+		readonly HighlightingColor enumerationTypeColor;
 		HighlightingColor typeParameterTypeColor;
-		HighlightingColor delegateTypeColor;
+		readonly HighlightingColor delegateTypeColor;
 
-		HighlightingColor methodCallColor;
-		HighlightingColor methodDeclarationColor;
+		readonly HighlightingColor methodCallColor;
+		readonly HighlightingColor methodDeclarationColor;
 
-		HighlightingColor fieldDeclarationColor;
-		HighlightingColor fieldAccessColor;
+		readonly HighlightingColor fieldDeclarationColor;
+		readonly HighlightingColor fieldAccessColor;
 
-		HighlightingColor valueKeywordColor;
-		HighlightingColor thisKeywordColor;
-		HighlightingColor trueKeywordColor;
-		HighlightingColor typeKeywordsColor;
+		readonly HighlightingColor valueKeywordColor;
+		readonly HighlightingColor thisKeywordColor;
+		readonly HighlightingColor trueKeywordColor;
+		readonly HighlightingColor typeKeywordsColor;
 
 		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput) : base(decoratedWriter)
 		{
@@ -401,7 +401,7 @@ namespace ICSharpCode.ILSpy
 
 		ISymbol GetCurrentMemberReference()
 		{
-			AstNode node = nodeStack.Peek();
+			var node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
 				symbol = node.Parent.GetSymbol();
@@ -417,7 +417,7 @@ namespace ICSharpCode.ILSpy
 			return symbol;
 		}
 
-		Stack<AstNode> nodeStack = new Stack<AstNode>();
+		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 
 		public override void StartNode(AstNode node)
 		{

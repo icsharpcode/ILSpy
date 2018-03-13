@@ -28,30 +28,16 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedEventTreeNode(EventDefinition analyzedEvent, string prefix = "")
 		{
-			if (analyzedEvent == null)
-				throw new ArgumentNullException(nameof(analyzedEvent));
-			this.analyzedEvent = analyzedEvent;
+			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override MemberReference Member {
-			get { return analyzedEvent; }
-		}
+		public override MemberReference Member => analyzedEvent;
 
-		public override object Icon
-		{
-			get { return EventTreeNode.GetIcon(analyzedEvent); }
-		}
+		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 
-		public override object Text
-		{
-			get
-			{
-				// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-				return prefix + Language.TypeToString(analyzedEvent.DeclaringType, true) + "." + EventTreeNode.GetText(analyzedEvent, Language);
-			}
-		}
+		public override object Text => prefix + Language.TypeToString(analyzedEvent.DeclaringType, true) + "." + EventTreeNode.GetText(analyzedEvent, Language);
 
 		protected override void LoadChildren()
 		{

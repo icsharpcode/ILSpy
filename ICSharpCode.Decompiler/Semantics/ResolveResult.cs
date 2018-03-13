@@ -28,36 +28,24 @@ namespace ICSharpCode.Decompiler.Semantics
 	/// </summary>
 	public class ResolveResult
 	{
-		readonly IType type;
-		
 		public ResolveResult(IType type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.Type = type ?? throw new ArgumentNullException("type");
 		}
 		
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",
 		                                                 Justification = "Unrelated to object.GetType()")]
-		public IType Type {
-			get { return type; }
-		}
-		
-		public virtual bool IsCompileTimeConstant {
-			get { return false; }
-		}
-		
-		public virtual object ConstantValue {
-			get { return null; }
-		}
-		
-		public virtual bool IsError {
-			get { return false; }
-		}
-		
+		public IType Type { get; }
+
+		public virtual bool IsCompileTimeConstant => false;
+
+		public virtual object ConstantValue => null;
+
+		public virtual bool IsError => false;
+
 		public override string ToString()
 		{
-			return "[" + GetType().Name + " " + type + "]";
+			return "[" + GetType().Name + " " + Type + "]";
 		}
 		
 		public virtual IEnumerable<ResolveResult> GetChildResults()

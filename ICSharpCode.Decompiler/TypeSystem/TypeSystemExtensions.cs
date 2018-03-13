@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			BaseTypeCollector collector = new BaseTypeCollector();
+			var collector = new BaseTypeCollector();
 			collector.CollectBaseTypes(type);
 			return collector;
 		}
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			BaseTypeCollector collector = new BaseTypeCollector();
+			var collector = new BaseTypeCollector();
 			collector.SkipImplementedInterfaces = true;
 			collector.CollectBaseTypes(type);
 			return collector;
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				isOpen = true;
 				// If both classes and methods, or different classes (nested types)
 				// are involved, find the most specific one
-				int newNestingLevel = GetNestingLevel(type.Owner);
+				var newNestingLevel = GetNestingLevel(type.Owner);
 				if (newNestingLevel > typeParameterOwnerNestingLevel) {
 					typeParameterOwner = type.Owner;
 					typeParameterOwnerNestingLevel = newNestingLevel;
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			
 			static int GetNestingLevel(IEntity entity)
 			{
-				int level = 0;
+				var level = 0;
 				while (entity != null) {
 					level++;
 					entity = entity.DeclaringTypeDefinition;
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			TypeClassificationVisitor v = new TypeClassificationVisitor();
+			var v = new TypeClassificationVisitor();
 			type.AcceptVisitor(v);
 			return v.isOpen;
 		}
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			TypeClassificationVisitor v = new TypeClassificationVisitor();
+			var v = new TypeClassificationVisitor();
 			type.AcceptVisitor(v);
 			return v.typeParameterOwner;
 		}
@@ -221,15 +221,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case SymbolKind.TypeParameter:
 					return (ITypeParameter)Import(compilation, (IType)symbol);
 				case SymbolKind.Variable:
-					IVariable v = (IVariable)symbol;
+					var v = (IVariable)symbol;
 					return new DefaultVariable(
 						Import(compilation, v.Type),
 						v.Name, v.IsConst, v.ConstantValue
 					);
 				case SymbolKind.Parameter:
-					IParameter p = (IParameter)symbol;
+					var p = (IParameter)symbol;
 					if (p.Owner != null) {
-						int index = p.Owner.Parameters.IndexOf(p);
+						var index = p.Owner.Parameters.IndexOf(p);
 						var owner = (IParameterizedMember)Import(compilation, p.Owner);
 						if (owner == null || index < 0 || index >= owner.Parameters.Count)
 							return null;
@@ -262,8 +262,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var compilationProvider = type as ICompilationProvider;
 			if (compilationProvider != null && compilationProvider.Compilation == compilation)
 				return type;
-			IEntity typeParameterOwner = GetTypeParameterOwner(type);
-			IEntity importedTypeParameterOwner = compilation.Import(typeParameterOwner);
+			var typeParameterOwner = GetTypeParameterOwner(type);
+			var importedTypeParameterOwner = compilation.Import(typeParameterOwner);
 			if (importedTypeParameterOwner != null) {
 				return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(importedTypeParameterOwner));
 			} else {
@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				// root namespace
 				return compilation.GetNamespaceForExternAlias(ns.ExternAlias);
 			} else {
-				INamespace parent = Import(compilation, ns.ParentNamespace);
+				var parent = Import(compilation, ns.ParentNamespace);
 				if (parent != null)
 					return parent.GetChildNamespace(ns.Name);
 				else
@@ -550,8 +550,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
-			foreach (IAssembly asm in compilation.Assemblies) {
-				ITypeDefinition def = asm.GetTypeDefinition(fullTypeName);
+			foreach (var asm in compilation.Assemblies) {
+				var def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)
 					return def;
 			}
@@ -566,13 +566,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (assembly == null)
 				throw new ArgumentNullException("assembly");
-			TopLevelTypeName topLevelTypeName = fullTypeName.TopLevelTypeName;
-			ITypeDefinition typeDef = assembly.GetTypeDefinition(topLevelTypeName);
+			var topLevelTypeName = fullTypeName.TopLevelTypeName;
+			var typeDef = assembly.GetTypeDefinition(topLevelTypeName);
 			if (typeDef == null)
 				return null;
-			int typeParameterCount = topLevelTypeName.TypeParameterCount;
-			for (int i = 0; i < fullTypeName.NestingLevel; i++) {
-				string name = fullTypeName.GetNestedTypeName(i);
+			var typeParameterCount = topLevelTypeName.TypeParameterCount;
+			for (var i = 0; i < fullTypeName.NestingLevel; i++) {
+				var name = fullTypeName.GetNestedTypeName(i);
 				typeParameterCount += fullTypeName.GetNestedTypeAdditionalTypeParameterCount(i);
 				typeDef = FindNestedType(typeDef, name, typeParameterCount);
 				if (typeDef == null)
@@ -691,7 +691,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (entity == null)
 				throw new ArgumentNullException("entity");
 			return GetAttributes(entity, attrType => {
-			                     	ITypeDefinition typeDef = attrType.GetDefinition();
+			                     	var typeDef = attrType.GetDefinition();
 			                     	return typeDef != null && typeDef.FullTypeName == attributeType;
 			                     }, inherit);
 		}
@@ -725,10 +725,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				yield break;
 			}
-			ITypeDefinition typeDef = entity as ITypeDefinition;
+			var typeDef = entity as ITypeDefinition;
 			if (typeDef != null) {
 				foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse()) {
-					ITypeDefinition baseTypeDef = baseType.GetDefinition();
+					var baseTypeDef = baseType.GetDefinition();
 					if (baseTypeDef == null)
 						continue;
 					foreach (var attr in baseTypeDef.Attributes) {
@@ -738,9 +738,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				yield break;
 			}
-			IMember member = entity as IMember;
+			var member = entity as IMember;
 			if (member != null) {
-				HashSet<IMember> visitedMembers = new HashSet<IMember>();
+				var visitedMembers = new HashSet<IMember>();
 				do {
 					member = member.MemberDefinition; // it's sufficient to look at the definitions
 					if (!visitedMembers.Add(member)) {
@@ -790,13 +790,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static IType GetElementTypeFromIEnumerable(this IType collectionType, ICompilation compilation, bool allowIEnumerator, out bool? isGeneric)
 		{
-			bool foundNonGenericIEnumerable = false;
-			foreach (IType baseType in collectionType.GetAllBaseTypes()) {
-				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+			var foundNonGenericIEnumerable = false;
+			foreach (var baseType in collectionType.GetAllBaseTypes()) {
+				var baseTypeDef = baseType.GetDefinition();
 				if (baseTypeDef != null) {
-					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
+					var typeCode = baseTypeDef.KnownTypeCode;
 					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT)) {
-						ParameterizedType pt = baseType as ParameterizedType;
+						var pt = baseType as ParameterizedType;
 						if (pt != null) {
 							isGeneric = true;
 							return pt.GetTypeArgument(0);

@@ -44,15 +44,9 @@ namespace ICSharpCode.Decompiler
 		
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			if (settings == null)
-				throw new ArgumentNullException(nameof(settings));
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.output = output;
-			this.settings = settings;
-			this.typeSystem = typeSystem;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
+			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 		}
 		
 		public override void WriteIdentifier(Identifier identifier)
@@ -63,7 +57,7 @@ namespace ICSharpCode.Decompiler
 			
 			var definition = GetCurrentDefinition();
 			if (definition != null) {
-				MemberReference cecil = SymbolToCecil(definition);
+				var cecil = SymbolToCecil(definition);
 				if (cecil != null) {
 					output.WriteDefinition(identifier.Name, cecil, false);
 					return;
@@ -72,7 +66,7 @@ namespace ICSharpCode.Decompiler
 			
 			var member = GetCurrentMemberReference();
 			if (member != null) {
-				MemberReference cecil = SymbolToCecil(member);
+				var cecil = SymbolToCecil(member);
 				if (cecil != null) {
 					output.WriteReference(identifier.Name, cecil);
 					return;
@@ -112,7 +106,7 @@ namespace ICSharpCode.Decompiler
 
 		ISymbol GetCurrentMemberReference()
 		{
-			AstNode node = nodeStack.Peek();
+			var node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
 				symbol = node.Parent.GetSymbol();
@@ -143,8 +137,8 @@ namespace ICSharpCode.Decompiler
 
 		object GetCurrentLocalReference()
 		{
-			AstNode node = nodeStack.Peek();
-			ILVariable variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+			var node = nodeStack.Peek();
+			var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
 			if (variable != null)
 				return variable;
 
@@ -161,7 +155,7 @@ namespace ICSharpCode.Decompiler
 
 		object GetCurrentLocalDefinition()
 		{
-			AstNode node = nodeStack.Peek();
+			var node = nodeStack.Peek();
 			if (node is Identifier && node.Parent != null)
 				node = node.Parent;
 
@@ -283,7 +277,7 @@ namespace ICSharpCode.Decompiler
 					output.Write("*/");
 					break;
 				case CommentType.Documentation:
-					bool isLastLine = !(nodeStack.Peek().NextSibling is Comment);
+					var isLastLine = !(nodeStack.Peek().NextSibling is Comment);
 					if (!inDocumentationComment && !isLastLine) {
 						inDocumentationComment = true;
 						output.MarkFoldStart("///" + content, true);

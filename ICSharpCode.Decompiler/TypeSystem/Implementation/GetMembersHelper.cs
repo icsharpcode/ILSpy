@@ -51,14 +51,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
-			ITypeDefinition outerTypeDef = outerType.GetDefinition();
+			var outerTypeDef = outerType.GetDefinition();
 			if (outerTypeDef == null)
 				yield break;
 			
-			int outerTypeParameterCount = outerTypeDef.TypeParameterCount;
-			ParameterizedType pt = outerType as ParameterizedType;
-			foreach (ITypeDefinition nestedType in outerTypeDef.NestedTypes) {
-				int totalTypeParameterCount = nestedType.TypeParameterCount;
+			var outerTypeParameterCount = outerTypeDef.TypeParameterCount;
+			var pt = outerType as ParameterizedType;
+			foreach (var nestedType in outerTypeDef.NestedTypes) {
+				var totalTypeParameterCount = nestedType.TypeParameterCount;
 				if (nestedTypeArguments != null) {
 					if (totalTypeParameterCount - outerTypeParameterCount != nestedTypeArguments.Count)
 						continue;
@@ -70,11 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					yield return nestedType;
 				} else {
 					// We need to parameterize the nested type
-					IType[] newTypeArguments = new IType[totalTypeParameterCount];
-					for (int i = 0; i < outerTypeParameterCount; i++) {
+					var newTypeArguments = new IType[totalTypeParameterCount];
+					for (var i = 0; i < outerTypeParameterCount; i++) {
 						newTypeArguments[i] = pt != null ? pt.GetTypeArgument(i) : outerTypeDef.TypeParameters[i];
 					}
-					for (int i = outerTypeParameterCount; i < totalTypeParameterCount; i++) {
+					for (var i = outerTypeParameterCount; i < totalTypeParameterCount; i++) {
 						if (nestedTypeArguments != null)
 							newTypeArguments[i] = nestedTypeArguments[i - outerTypeParameterCount];
 						else
@@ -114,14 +114,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType> methodTypeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
-			IEnumerable<IMethod> declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
+			var declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
 			
-			ParameterizedType pt = baseType as ParameterizedType;
+			var pt = baseType as ParameterizedType;
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == 0
 			    && (pt != null || (methodTypeArguments != null && methodTypeArguments.Count > 0)))
 			{
 				TypeParameterSubstitution substitution = null;
-				foreach (IMethod m in declaredMethods) {
+				foreach (var m in declaredMethods) {
 					if (methodTypeArguments != null && methodTypeArguments.Count > 0) {
 						if (m.TypeParameters.Count != methodTypeArguments.Count)
 							continue;
@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					yield return new SpecializedMethod(m, substitution);
 				}
 			} else {
-				foreach (IMethod m in declaredMethods) {
+				foreach (var m in declaredMethods) {
 					yield return m;
 				}
 			}
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return declaredMembers;
 			}
 			
-			ParameterizedType pt = baseType as ParameterizedType;
+			var pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
 				return declaredMembers.Select(m => new SpecializedMethod(m, substitution) { DeclaringType = pt });
@@ -201,12 +201,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static IEnumerable<IProperty> GetPropertiesImpl(IType baseType, Predicate<IUnresolvedProperty> filter, GetMemberOptions options)
 		{
-			IEnumerable<IProperty> declaredProperties = baseType.GetProperties(filter, options | declaredMembers);
+			var declaredProperties = baseType.GetProperties(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
 				return declaredProperties;
 			}
 			
-			ParameterizedType pt = baseType as ParameterizedType;
+			var pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
 				return declaredProperties.Select(m => new SpecializedProperty(m, substitution) { DeclaringType = pt });
@@ -228,12 +228,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IUnresolvedField> filter, GetMemberOptions options)
 		{
-			IEnumerable<IField> declaredFields = baseType.GetFields(filter, options | declaredMembers);
+			var declaredFields = baseType.GetFields(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
 				return declaredFields;
 			}
 			
-			ParameterizedType pt = baseType as ParameterizedType;
+			var pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
 				return declaredFields.Select(m => new SpecializedField(m, substitution) { DeclaringType = pt });
@@ -255,12 +255,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		static IEnumerable<IEvent> GetEventsImpl(IType baseType, Predicate<IUnresolvedEvent> filter, GetMemberOptions options)
 		{
-			IEnumerable<IEvent> declaredEvents = baseType.GetEvents(filter, options | declaredMembers);
+			var declaredEvents = baseType.GetEvents(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
 				return declaredEvents;
 			}
 			
-			ParameterizedType pt = baseType as ParameterizedType;
+			var pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
 				return declaredEvents.Select(m => new SpecializedEvent(m, substitution) { DeclaringType = pt });

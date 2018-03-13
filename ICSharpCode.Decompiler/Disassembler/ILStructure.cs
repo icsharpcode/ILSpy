@@ -86,8 +86,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			: this(ILStructureType.Root, 0, body.CodeSize)
 		{
 			// Build the tree of exception structures:
-			for (int i = 0; i < body.ExceptionHandlers.Count; i++) {
-				ExceptionHandler eh = body.ExceptionHandlers[i];
+			for (var i = 0; i < body.ExceptionHandlers.Count; i++) {
+				var eh = body.ExceptionHandlers[i];
 				if (!body.ExceptionHandlers.Take(i).Any(oldEh => oldEh.TryStart == eh.TryStart && oldEh.TryEnd == eh.TryEnd))
 					AddNestedStructure(new ILStructure(ILStructureType.Try, eh.TryStart.Offset, eh.TryEnd.Offset, eh));
 				if (eh.HandlerType == ExceptionHandlerType.Filter)
@@ -95,22 +95,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 				AddNestedStructure(new ILStructure(ILStructureType.Handler, eh.HandlerStart.Offset, eh.HandlerEnd == null ? body.CodeSize : eh.HandlerEnd.Offset, eh));
 			}
 			// Very simple loop detection: look for backward branches
-			List<KeyValuePair<Instruction, Instruction>> allBranches = FindAllBranches(body);
+			var allBranches = FindAllBranches(body);
 			// We go through the branches in reverse so that we find the biggest possible loop boundary first (think loops with "continue;")
-			for (int i = allBranches.Count - 1; i >= 0; i--) {
-				int loopEnd = allBranches[i].Key.GetEndOffset();
-				int loopStart = allBranches[i].Value.Offset;
+			for (var i = allBranches.Count - 1; i >= 0; i--) {
+				var loopEnd = allBranches[i].Key.GetEndOffset();
+				var loopStart = allBranches[i].Value.Offset;
 				if (loopStart < loopEnd) {
 					// We found a backward branch. This is a potential loop.
 					// Check that is has only one entry point:
 					Instruction entryPoint = null;
 
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
-					Instruction prev = allBranches[i].Value.Previous;
+					var prev = allBranches[i].Value.Previous;
 					if (prev != null && !prev.OpCode.IsUnconditionalBranch())
 						entryPoint = allBranches[i].Value;
 					
-					bool multipleEntryPoints = false;
+					var multipleEntryPoints = false;
 					foreach (var pair in allBranches) {
 						if (pair.Key.Offset < loopStart || pair.Key.Offset >= loopEnd) {
 							if (loopStart <= pair.Value.Offset && pair.Value.Offset < loopEnd) {
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			// use <= for end-offset comparisons because both end and EndOffset are exclusive
 			Debug.Assert(StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= EndOffset);
-			foreach (ILStructure child in this.Children) {
+			foreach (var child in this.Children) {
 				if (child.StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= child.EndOffset) {
 					return child.AddNestedStructure(newStructure);
 				} else if (!(child.EndOffset <= newStructure.StartOffset || newStructure.EndOffset <= child.StartOffset)) {
@@ -168,8 +168,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			// Move existing structures into the new structure:
-			for (int i = 0; i < this.Children.Count; i++) {
-				ILStructure child = this.Children[i];
+			for (var i = 0; i < this.Children.Count; i++) {
+				var child = this.Children[i];
 				if (newStructure.StartOffset <= child.StartOffset && child.EndOffset <= newStructure.EndOffset) {
 					this.Children.RemoveAt(i--);
 					newStructure.Children.Add(child);
@@ -188,14 +188,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 		List<KeyValuePair<Instruction, Instruction>> FindAllBranches(MethodBody body)
 		{
 			var result = new List<KeyValuePair<Instruction, Instruction>>();
-			foreach (Instruction inst in body.Instructions) {
+			foreach (var inst in body.Instructions) {
 				switch (inst.OpCode.OperandType) {
 					case OperandType.InlineBrTarget:
 					case OperandType.ShortInlineBrTarget:
 						result.Add(new KeyValuePair<Instruction, Instruction>(inst, (Instruction)inst.Operand));
 						break;
 					case OperandType.InlineSwitch:
-						foreach (Instruction target in (Instruction[])inst.Operand)
+						foreach (var target in (Instruction[])inst.Operand)
 							result.Add(new KeyValuePair<Instruction, Instruction>(inst, target));
 						break;
 				}
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void SortChildren()
 		{
 			Children.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
-			foreach (ILStructure child in Children)
+			foreach (var child in Children)
 				child.SortChildren();
 		}
 
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public ILStructure GetInnermost(int offset)
 		{
 			Debug.Assert(StartOffset <= offset && offset < EndOffset);
-			foreach (ILStructure child in this.Children) {
+			foreach (var child in this.Children) {
 				if (child.StartOffset <= offset && offset < child.EndOffset)
 					return child.GetInnermost(offset);
 			}

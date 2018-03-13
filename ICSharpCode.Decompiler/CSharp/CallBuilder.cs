@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			int firstParamIndex = (method.IsStatic || callOpCode == OpCode.NewObj) ? 0 : 1;
+			var firstParamIndex = (method.IsStatic || callOpCode == OpCode.NewObj) ? 0 : 1;
 
 			// Translate arguments to the expected parameter types
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
 			Debug.Assert(callArguments.Count == firstParamIndex + method.Parameters.Count);
 			var expectedParameters = method.Parameters.ToList();
-			bool isExpandedForm = false;
-			for (int i = 0; i < method.Parameters.Count; i++) {
+			var isExpandedForm = false;
+			for (var i = 0; i < method.Parameters.Count; i++) {
 				var parameter = expectedParameters[i];
 				var arg = expressionBuilder.Translate(callArguments[firstParamIndex + i], parameter.Type);
 				if (parameter.IsParams && i + 1 == method.Parameters.Count) {
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (length > 0) {
 							var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
 							var elementType = ((ArrayType)acrr.Type).ElementType;
-							for (int j = 0; j < length; j++) {
+							for (var j = 0; j < length; j++) {
 								expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
 								if (j < arrayElements.Length)
 									expandedArguments.Add(new TranslatedExpression(arrayElements[j]));
@@ -140,10 +140,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			if (method is VarArgInstanceMethod) {
-				int regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
+				var regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
 				var argListArg = new UndocumentedExpression();
 				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
-				int paramIndex = regularParameterCount;
+				var paramIndex = regularParameterCount;
 				var builder = expressionBuilder;
 				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.ConvertTo(expectedParameters[paramIndex++].Type, builder).Expression));
 				var argListRR = new ResolveResult(SpecialType.ArgList);
@@ -160,11 +160,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (callOpCode == OpCode.NewObj) {
 				if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType()) {
 					var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
-					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
+					var atce = new AnonymousTypeCreateExpression();
 					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, expectedParameters)) {
 						atce.Initializers.AddRange(argumentExpressions);
 					} else {
-						for (int i = 0; i < argumentExpressions.Length; i++) {
+						for (var i = 0; i < argumentExpressions.Length; i++) {
 							atce.Initializers.Add(
 								new NamedExpression {
 									Name = expectedParameters[i].Name,
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 
 					if (IsUnambiguousCall(expectedTargetDetails, method, target, Empty<IType>.Array, arguments) != OverloadResolutionErrors.None) {
-						for (int i = 0; i < arguments.Count; i++) {
+						for (var i = 0; i < arguments.Count; i++) {
 							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
 								if (arguments[i].Expression is LambdaExpression lambda) {
 									ModifyReturnTypeOfLambda(lambda);
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(rr);
 				}
 			} else {
-				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
+				var allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList());
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
@@ -202,10 +202,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else if (method.IsOperator && method.Name == "op_Implicit" && arguments.Count == 1) {
 					return HandleImplicitConversion(method, arguments[0]);
 				} else {
-					bool requireTypeArguments = false;
-					bool targetCasted = false;
-					bool argumentsCasted = false;
-					IType[] typeArguments = Empty<IType>.Array;
+					var requireTypeArguments = false;
+					var targetCasted = false;
+					var argumentsCasted = false;
+					var typeArguments = Empty<IType>.Array;
 
 					OverloadResolutionErrors errors;
 					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, target, typeArguments, arguments)) != OverloadResolutionErrors.None) {
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							default:
 								if (!argumentsCasted) {
 									argumentsCasted = true;
-									for (int i = 0; i < arguments.Count; i++) {
+									for (var i = 0; i < arguments.Count; i++) {
 										if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
 											if (arguments[i].Expression is LambdaExpression lambda) {
 												ModifyReturnTypeOfLambda(lambda);
@@ -242,8 +242,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					}
 
-					Expression targetExpr = target.Expression;
-					string methodName = method.Name;
+					var targetExpr = target.Expression;
+					var methodName = method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 					if (method.IsExplicitInterfaceImplementation && targetExpr is ThisReferenceExpression) {
 						targetExpr = new CastExpression(expressionBuilder.ConvertType(method.ImplementedInterfaceMembers[0].DeclaringType), targetExpr);
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		private ExpressionWithResolveResult HandleImplicitConversion(IMethod method, TranslatedExpression argument)
 		{
 			var conversions = CSharpConversions.Get(expressionBuilder.compilation);
-			IType targetType = method.ReturnType;
+			var targetType = method.ReturnType;
 			var conv = conversions.ImplicitConversion(argument.Type, targetType);
 			if (!(conv.IsUserDefined && conv.Method.Equals(method))) {
 				// implicit conversion to targetType isn't directly possible, so first insert a cast to the argument type
@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
 			if (expectedTargetDetails.CallOpCode == OpCode.NewObj) {
-				foreach (IMethod ctor in method.DeclaringType.GetConstructors()) {
+				foreach (var ctor in method.DeclaringType.GetConstructors()) {
 					if (lookup.IsAccessible(ctor, allowProtectedAccess: resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition)) {
 						or.AddCandidate(ctor);
 					}
@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool CanInferAnonymousTypePropertyNamesFromArguments(IList<Expression> args, IList<IParameter> parameters)
 		{
-			for (int i = 0; i < args.Count; i++) {
+			for (var i = 0; i < args.Count; i++) {
 				string inferredName;
 				if (args[i] is IdentifierExpression)
 					inferredName = ((IdentifierExpression)args[i]).Identifier;
@@ -422,7 +422,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
 		{
-			ILInstruction func = inst.Arguments[1];
+			var func = inst.Arguments[1];
 			IMethod method;
 			switch (func.OpCode) {
 				case OpCode.LdFtn:
@@ -448,7 +448,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
 			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 
-			bool needsCast = true;
+			var needsCast = true;
 			if (result is MethodGroupResolveResult mgrr) {
 				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
 				var expectedTargetDetails = new ExpectedTargetDetails {

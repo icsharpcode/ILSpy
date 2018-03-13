@@ -44,24 +44,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		void CombineQueries(AstNode node)
 		{
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+			for (var child = node.FirstChild; child != null; child = child.NextSibling) {
 				CombineQueries(child);
 			}
-			QueryExpression query = node as QueryExpression;
+			var query = node as QueryExpression;
 			if (query != null) {
-				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
-				QueryExpression innerQuery = fromClause.Expression as QueryExpression;
+				var fromClause = (QueryFromClause)query.Clauses.First();
+				var innerQuery = fromClause.Expression as QueryExpression;
 				if (innerQuery != null) {
 					if (TryRemoveTransparentIdentifier(query, fromClause, innerQuery)) {
 						RemoveTransparentIdentifierReferences(query);
 					} else {
-						QueryContinuationClause continuation = new QueryContinuationClause();
+						var continuation = new QueryContinuationClause();
 						continuation.PrecedingQuery = innerQuery.Detach();
 						continuation.Identifier = fromClause.Identifier;
 						fromClause.ReplaceWith(continuation);
 					}
 				} else {
-					Match m = castPattern.Match(fromClause.Expression);
+					var m = castPattern.Match(fromClause.Expression);
 					if (m.Success) {
 						fromClause.Type = m.Get<AstType>("targetType").Single().Detach();
 						fromClause.Expression = m.Get<Expression>("inExpr").Single().Detach();
@@ -101,16 +101,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!IsTransparentIdentifier(fromClause.Identifier))
 				return false;
-			Match match = selectTransparentIdentifierPattern.Match(innerQuery.Clauses.Last());
+			var match = selectTransparentIdentifierPattern.Match(innerQuery.Clauses.Last());
 			if (!match.Success)
 				return false;
-			QuerySelectClause selectClause = (QuerySelectClause)innerQuery.Clauses.Last();
-			NamedExpression nae1 = match.Get<NamedExpression>("nae1").SingleOrDefault();
-			NamedExpression nae2 = match.Get<NamedExpression>("nae2").SingleOrDefault();
+			var selectClause = (QuerySelectClause)innerQuery.Clauses.Last();
+			var nae1 = match.Get<NamedExpression>("nae1").SingleOrDefault();
+			var nae2 = match.Get<NamedExpression>("nae2").SingleOrDefault();
 			if (nae1 != null && nae1.Name != ((IdentifierExpression)nae1.Expression).Identifier)
 				return false;
-			Expression nae2Expr = match.Get<Expression>("nae2Expr").Single();
-			IdentifierExpression nae2IdentExpr = nae2Expr as IdentifierExpression;
+			var nae2Expr = match.Get<Expression>("nae2Expr").Single();
+			var nae2IdentExpr = nae2Expr as IdentifierExpression;
 			if (nae2IdentExpr != null && (nae2 == null || nae2.Name == nae2IdentExpr.Identifier)) {
 				// from * in (from x in ... select new { x = x, y = y }) ...
 				// =>
@@ -152,14 +152,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		void RemoveTransparentIdentifierReferences(AstNode node)
 		{
-			foreach (AstNode child in node.Children) {
+			foreach (var child in node.Children) {
 				RemoveTransparentIdentifierReferences(child);
 			}
-			MemberReferenceExpression mre = node as MemberReferenceExpression;
+			var mre = node as MemberReferenceExpression;
 			if (mre != null) {
-				IdentifierExpression ident = mre.Target as IdentifierExpression;
+				var ident = mre.Target as IdentifierExpression;
 				if (ident != null && IsTransparentIdentifier(ident.Identifier)) {
-					IdentifierExpression newIdent = new IdentifierExpression(mre.MemberName);
+					var newIdent = new IdentifierExpression(mre.MemberName);
 					mre.TypeArguments.MoveTo(newIdent.TypeArguments);
 					newIdent.CopyAnnotationsFrom(mre);
 					newIdent.RemoveAnnotations<PropertyDeclaration>(); // remove the reference to the property of the anonymous type

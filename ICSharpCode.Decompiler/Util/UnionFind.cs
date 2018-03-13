@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public class UnionFind<T>
 	{
-		Dictionary<T, Node> mapping;
+		readonly Dictionary<T, Node> mapping;
 
 		class Node
 		{

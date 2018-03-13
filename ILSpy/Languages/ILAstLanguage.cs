@@ -46,31 +46,25 @@ namespace ICSharpCode.ILSpy
 
 		public Stepper Stepper { get; set; } = new Stepper();
 
-		readonly string name;
-		
 		protected ILAstLanguage(string name)
 		{
-			this.name = name;
+			this.Name = name;
 		}
 		
-		public override string Name { get { return name; } }
+		public override string Name { get; }
 
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
-			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
+			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			yield return new BlockIL(decompiler.ILTransforms.ToList());
 		}
 		
-		public override string FileExtension {
-			get {
-				return ".il";
-			}
-		}
+		public override string FileExtension => ".il";
 
 		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
-			PlainTextOutput output = new PlainTextOutput();
+			var output = new PlainTextOutput();
 			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
@@ -93,7 +87,7 @@ namespace ICSharpCode.ILSpy
 				if (!method.HasBody)
 					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
-				ILReader reader = new ILReader(typeSystem);
+				var reader = new ILReader(typeSystem);
 				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
 			}
 		}
@@ -116,10 +110,10 @@ namespace ICSharpCode.ILSpy
 				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.Resolve(method)));
 				var reader = new ILReader(specializingTypeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
-				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
+				var il = reader.ReadIL(method.Body, options.CancellationToken);
 				var namespaces = new HashSet<string>();
 				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
-				ILTransformContext context = decompiler.CreateILTransformContext(il);
+				var context = decompiler.CreateILTransformContext(il);
 				context.Stepper.StepLimit = options.StepLimit;
 				context.Stepper.IsDebug = options.IsDebug;
 				try {

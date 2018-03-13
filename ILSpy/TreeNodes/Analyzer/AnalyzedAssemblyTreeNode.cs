@@ -27,33 +27,19 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedAssemblyTreeNode(ModuleDefinition analyzedAssembly)
 		{
-			if (analyzedAssembly == null)
-				throw new ArgumentNullException(nameof(analyzedAssembly));
-			this.analyzedAssembly = analyzedAssembly;
+			this.analyzedAssembly = analyzedAssembly ?? throw new ArgumentNullException(nameof(analyzedAssembly));
 			//this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return Images.Assembly; }
-		}
+		public override object Icon => Images.Assembly;
 
-		public override object Text
-		{
-			get
-			{
-				return analyzedAssembly.Name;
-			}
-		}
+		public override object Text => analyzedAssembly.Name;
 
 		protected override void LoadChildren()
 		{
 			//this.Children.Add(new AnalyzedAssemblyReferencedByTreeNode(analyzedAssembly));
 		}
 
-		public override MemberReference Member
-		{
-			get { return null; }
-		}
+		public override MemberReference Member => null;
 	}
 }

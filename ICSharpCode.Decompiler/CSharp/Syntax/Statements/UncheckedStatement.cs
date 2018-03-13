@@ -34,13 +34,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UncheckedKeywordRole = new TokenRole ("unchecked");
 		
-		public CSharpTokenNode UncheckedToken {
-			get { return GetChildByRole (UncheckedKeywordRole); }
-		}
-		
+		public CSharpTokenNode UncheckedToken => GetChildByRole (UncheckedKeywordRole);
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		public UncheckedStatement ()
@@ -69,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			UncheckedStatement o = other as UncheckedStatement;
+			var o = other as UncheckedStatement;
 			return o != null && this.Body.DoMatch(o.Body, match);
 		}
 	}

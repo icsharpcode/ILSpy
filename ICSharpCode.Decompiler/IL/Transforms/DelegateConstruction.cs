@@ -39,17 +39,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			var translatedDisplayClasses = new HashSet<ITypeDefinition>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				for (var i = block.Instructions.Count - 1; i >= 0; i--) {
 					context.CancellationToken.ThrowIfCancellationRequested();
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
-						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
+						var f = TransformDelegateConstruction(call, out var target);
 						if (f != null) {
 							call.ReplaceWith(f);
 							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
 								targetsToReplace.Add((IInstructionWithVariableOperand)target);
 						}
 					}
-					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
+					if (block.Instructions[i].MatchStLoc(out var targetVariable, out var value)) {
 						var newObj = value as NewObj;
 						// TODO : it is probably not a good idea to remove *all* display-classes
 						// is there a way to minimize the false-positives?
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.CheckInvariant(ILPhase.Normal);
 
 				var contextPrefix = targetMethod.Name;
-				foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
+				foreach (var v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
 					v.Name = contextPrefix + v.Name;
 				}
 
@@ -214,8 +214,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		class TransformDisplayClassUsages : ILVisitor
 		{
-			ILFunction currentFunction;
-			BlockContainer captureScope;
+			readonly ILFunction currentFunction;
+			readonly BlockContainer captureScope;
 			readonly IInstructionWithVariableOperand targetLoad;
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;
@@ -264,11 +264,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStObj(StObj inst)
 			{
 				base.VisitStObj(inst);
-				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out var target, out var field) || !MatchesTargetOrCopyLoad(target))
 					return;
 				field = (IField)field.MemberDefinition;
 				ILInstruction value;
-				if (initValues.TryGetValue(field, out DisplayClassVariable info)) {
+				if (initValues.TryGetValue(field, out var info)) {
 					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
 				} else {
 					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
@@ -290,9 +290,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitLdObj(LdObj inst)
 			{
 				base.VisitLdObj(inst);
-				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field))
+				if (!inst.Target.MatchLdFlda(out var target, out var field))
 					return;
-				if (!initValues.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))
+				if (!initValues.TryGetValue((IField)field.MemberDefinition, out var info))
 					return;
 				inst.ReplaceWith(info.value.Clone());
 			}
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!MatchesTargetOrCopyLoad(inst.Target))
 					return;
 				var field = (IField)inst.Field.MemberDefinition;
-				if (!initValues.TryGetValue(field, out DisplayClassVariable info)) {
+				if (!initValues.TryGetValue(field, out var info)) {
 					if (!translatedDisplayClasses.Contains(field.DeclaringTypeDefinition))
 						return;
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);

@@ -30,47 +30,35 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class MethodDeclaration : EntityDeclaration
 	{
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Method; }
-		}
-		
+		public override SymbolKind SymbolKind => SymbolKind.Method;
+
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		public AstType PrivateImplementationType {
-			get { return GetChildByRole (PrivateImplementationTypeRole); }
-			set { SetChildByRole (PrivateImplementationTypeRole, value); }
+			get => GetChildByRole (PrivateImplementationTypeRole);
+			set => SetChildByRole (PrivateImplementationTypeRole, value);
 		}
 		
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole (Roles.TypeParameter); }
-		}
-		
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole (Roles.LPar); }
-		}
-		
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole (Roles.Parameter); }
-		}
-		
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole (Roles.RPar); }
-		}
-		
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole (Roles.Constraint); }
-		}
-		
+		public AstNodeCollection<TypeParameterDeclaration> TypeParameters => GetChildrenByRole (Roles.TypeParameter);
+
+		public CSharpTokenNode LParToken => GetChildByRole (Roles.LPar);
+
+		public AstNodeCollection<ParameterDeclaration> Parameters => GetChildrenByRole (Roles.Parameter);
+
+		public CSharpTokenNode RParToken => GetChildByRole (Roles.RPar);
+
+		public AstNodeCollection<Constraint> Constraints => GetChildrenByRole (Roles.Constraint);
+
 		public BlockStatement Body {
-			get { return GetChildByRole (Roles.Body); }
-			set { SetChildByRole (Roles.Body, value); }
+			get => GetChildByRole (Roles.Body);
+			set => SetChildByRole (Roles.Body, value);
 		}
 		
 		public bool IsExtensionMethod {
 			get {
-				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole (Roles.Parameter);
+				var pd = (ParameterDeclaration)GetChildByRole (Roles.Parameter);
 				return pd != null && pd.ParameterModifier == ParameterModifier.This;
 			}
 		}
@@ -92,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			MethodDeclaration o = other as MethodDeclaration;
+			var o = other as MethodDeclaration;
 			return o != null && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)

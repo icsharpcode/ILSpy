@@ -53,10 +53,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Gets whether this node is reachable. Requires that dominance is computed!
 		/// </summary>
-		public bool IsReachable {
-			get { return DominatorTreeChildren != null; }
-		}
-		
+		public bool IsReachable => DominatorTreeChildren != null;
+
 		/// <summary>
 		/// Gets the immediate dominator (the parent in the dominator tree).
 		/// Null if dominance has not been calculated; or if the node is unreachable.
@@ -91,7 +89,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				return;
 			Visited = true;
 			visitAction(this);
-			foreach (ControlFlowNode t in children(this))
+			foreach (var t in children(this))
 				t.TraversePreOrder(children, visitAction);
 		}
 		
@@ -100,7 +98,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			if (Visited)
 				return;
 			Visited = true;
-			foreach (ControlFlowNode t in children(this))
+			foreach (var t in children(this))
 				t.TraversePostOrder(children, visitAction);
 			visitAction(this);
 		}
@@ -111,7 +109,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public bool Dominates(ControlFlowNode node)
 		{
 			// TODO: this can be made O(1) by numbering the dominator tree
-			ControlFlowNode tmp = node;
+			var tmp = node;
 			while (tmp != null) {
 				if (tmp == this)
 					return true;
@@ -129,9 +127,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					return block != null ? block.Label : node.UserData?.ToString();
 				};
 			}
-			GraphVizGraph g = new GraphVizGraph();
-			GraphVizNode[] n = new GraphVizNode[nodes.Count];
-			for (int i = 0; i < n.Length; i++) {
+			var g = new GraphVizGraph();
+			var n = new GraphVizNode[nodes.Count];
+			for (var i = 0; i < n.Length; i++) {
 				n[i] = new GraphVizNode(nodes[i].UserIndex);
 				n[i].shape = "box";
 				n[i].label = labelFunc(nodes[i]);

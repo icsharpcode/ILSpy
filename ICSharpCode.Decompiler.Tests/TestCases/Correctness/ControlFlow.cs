@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static int Main()
 		{
-			int result = 0;
+			var result = 0;
 			EmptyIf("Empty", ref result);
 			EmptyIf("test", ref result);
 			NormalIf("none", ref result);
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Test(string input, ref int result)
 		{
-			foreach (char c in input) {
+			foreach (var c in input) {
 				Console.Write(c);
 				result = result + 1;
 			}
@@ -100,8 +100,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			var tens = new[] { 10, 20, 30 };
 			var ones = new[] { 1, 2, 3 };
 
-			for (int i = 0; i < tens.Length; i++) {
-				for (int j = 0; j < ones.Length; j++) {
+			for (var i = 0; i < tens.Length; i++) {
+				for (var j = 0; j < ones.Length; j++) {
 					if (tens[i] + ones[j] == arg)
 						return i;
 				}
@@ -113,8 +113,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void ForeachWithAssignment(IEnumerable<int> inputs)
 		{
 			Console.WriteLine("ForeachWithAssignment");
-			foreach (int input in inputs) {
-				int i = input;
+			foreach (var input in inputs) {
+				var i = input;
 				if (i < 10)
 					i *= 2;
 				Console.WriteLine(i);
@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void BreakUnlessContinue(bool b)
 		{
 			Console.WriteLine("BreakUnlessContinue({0})", b);
-			for (int i = 0; i < 5; i++) {
+			for (var i = 0; i < 5; i++) {
 				if ((i % 3) == 0)
 					continue;
 				Console.WriteLine(i);
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static byte CastAfterConditional(int value)
 		{
-			byte answer = (byte)(value == 128 ? 255 : 0);
+			var answer = (byte)(value == 128 ? 255 : 0);
 			return answer;
 		}
 	}

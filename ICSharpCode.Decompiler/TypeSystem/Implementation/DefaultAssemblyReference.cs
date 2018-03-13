@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public DefaultAssemblyReference(string assemblyName)
 		{
-			int pos = assemblyName != null ? assemblyName.IndexOf(',') : -1;
+			var pos = assemblyName != null ? assemblyName.IndexOf(',') : -1;
 			if (pos >= 0)
 				shortName = assemblyName.Substring(0, pos);
 			else
@@ -41,10 +41,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IAssembly Resolve(ITypeResolveContext context)
 		{
-			IAssembly current = context.CurrentAssembly;
+			var current = context.CurrentAssembly;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
 				return current;
-			foreach (IAssembly asm in context.Compilation.Assemblies) {
+			foreach (var asm in context.Compilation.Assemblies) {
 				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			DefaultAssemblyReference o = other as DefaultAssemblyReference;
+			var o = other as DefaultAssemblyReference;
 			return o != null && shortName == o.shortName;
 		}
 		
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			public IAssembly Resolve(ITypeResolveContext context)
 			{
-				IAssembly asm = context.CurrentAssembly;
+				var asm = context.CurrentAssembly;
 				if (asm == null)
 					throw new ArgumentException("A reference to the current assembly cannot be resolved in the compilation's global type resolve context.");
 				return asm;

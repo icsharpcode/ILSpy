@@ -36,16 +36,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedVirtualMethodUsedByTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 		}
 
-		public override object Text
-		{
-			get { return "Used By"; }
-		}
+		public override object Text => "Used By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
@@ -71,7 +65,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			possibleTypes = new List<TypeReference>();
 
-			TypeReference type = analyzedMethod.DeclaringType.BaseType;
+			var type = analyzedMethod.DeclaringType.BaseType;
 			while (type != null) {
 				possibleTypes.Add(type);
 				type = type.Resolve().BaseType;
@@ -86,14 +80,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			string name = analyzedMethod.Name;
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
-				string prefix = string.Empty;
+			var name = analyzedMethod.Name;
+			foreach (var method in type.Methods) {
+				var found = false;
+				var prefix = string.Empty;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
+				foreach (var instr in method.Body.Instructions) {
+					var mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name) {
 						// explicit call to the requested method 
 						if (instr.OpCode.Code == Code.Call
@@ -105,7 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 						}
 						// virtual call to base method
 						if (instr.OpCode.Code == Code.Callvirt) {
-							MethodDefinition md = mr.Resolve();
+							var md = mr.Resolve();
 							if (md == null) {
 								// cannot resolve the operand, so ignore this method
 								break;
@@ -121,7 +115,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				method.Body = null;
 
 				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
+					var codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
 					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
 						var node = new AnalyzedMethodTreeNode(codeLocation);
 						node.Language = this.Language;

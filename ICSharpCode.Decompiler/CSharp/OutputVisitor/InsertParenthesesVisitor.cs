@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (value is long && (long)value < 0)
 					return Unary;
 			}
-			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
+			var boe = expr as BinaryOperatorExpression;
 			if (boe != null) {
 				switch (boe.Operator) {
 					case BinaryOperatorType.Multiply:
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitIndexerExpression(IndexerExpression indexerExpression)
 		{
 			ParenthesizeIfRequired(indexerExpression.Target, Primary);
-			ArrayCreateExpression ace = indexerExpression.Target as ArrayCreateExpression;
+			var ace = indexerExpression.Target as ArrayCreateExpression;
 			if (ace != null && (InsertParenthesesForReadability || ace.Initializer.IsNull)) {
 				// require parentheses for "(new int[1])[0]"
 				Parenthesize(indexerExpression.Target);
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
-			UnaryOperatorExpression child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
+			var child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
 			if (child != null && InsertParenthesesForReadability)
 				Parenthesize(child);
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
@@ -187,16 +187,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
-			UnaryOperatorExpression uoe = castExpression.Expression as UnaryOperatorExpression;
+			var uoe = castExpression.Expression as UnaryOperatorExpression;
 			if (uoe != null && !(uoe.Operator == UnaryOperatorType.BitNot || uoe.Operator == UnaryOperatorType.Not)) {
 				if (TypeCanBeMisinterpretedAsExpression(castExpression.Type)) {
 					Parenthesize(castExpression.Expression);
 				}
 			}
 			// The above issue can also happen with PrimitiveExpressions representing negative values:
-			PrimitiveExpression pe = castExpression.Expression as PrimitiveExpression;
+			var pe = castExpression.Expression as PrimitiveExpression;
 			if (pe != null && pe.Value != null && TypeCanBeMisinterpretedAsExpression(castExpression.Type)) {
-				TypeCode typeCode = Type.GetTypeCode(pe.Value.GetType());
+				var typeCode = Type.GetTypeCode(pe.Value.GetType());
 				switch (typeCode) {
 					case TypeCode.SByte:
 						if ((sbyte)pe.Value < 0)
@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// SimpleTypes can always be misinterpreted as IdentifierExpressions
 			// MemberTypes can be misinterpreted as MemberReferenceExpressions if they don't use double colon
 			// PrimitiveTypes or ComposedTypes can never be misinterpreted as expressions.
-			MemberType mt = type as MemberType;
+			var mt = type as MemberType;
 			if (mt != null)
 				return !mt.IsDoubleColon;
 			else
@@ -246,7 +246,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		// Binary Operators
 		public override void VisitBinaryOperatorExpression(BinaryOperatorExpression binaryOperatorExpression)
 		{
-			int precedence = GetPrecedence(binaryOperatorExpression);
+			var precedence = GetPrecedence(binaryOperatorExpression);
 			if (binaryOperatorExpression.Operator == BinaryOperatorType.NullCoalescing) {
 				if (InsertParenthesesForReadability) {
 					ParenthesizeIfRequired(binaryOperatorExpression.Left, NullableRewrap);
@@ -281,7 +281,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
 		{
-			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
+			var boe = expr as BinaryOperatorExpression;
 			if (boe != null)
 				return boe.Operator;
 			else

@@ -34,22 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class IndexerExpression : Expression
 	{
 		public Expression Target {
-			get { return GetChildByRole (Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
+			get => GetChildByRole (Roles.TargetExpression);
+			set => SetChildByRole(Roles.TargetExpression, value);
 		}
 		
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole (Roles.LBracket); }
-		}
-		
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
-		}
-		
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole (Roles.RBracket); }
-		}
-		
+		public CSharpTokenNode LBracketToken => GetChildByRole (Roles.LBracket);
+
+		public AstNodeCollection<Expression> Arguments => GetChildrenByRole<Expression>(Roles.Argument);
+
+		public CSharpTokenNode RBracketToken => GetChildByRole (Roles.RBracket);
+
 		public IndexerExpression ()
 		{
 		}
@@ -85,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			IndexerExpression o = other as IndexerExpression;
+			var o = other as IndexerExpression;
 			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}

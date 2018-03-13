@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var m = new DefaultUnresolvedMethod();
 			m.Name = "Method";
 			foreach (var typeOrDefaultValue in parameterTypesOrDefaultValues) {
-				Type type = typeOrDefaultValue as Type;
+				var type = typeOrDefaultValue as Type;
 				if (type != null)
 					m.Parameters.Add(new DefaultUnresolvedParameter(type.ToTypeReference(), string.Empty));
 				else if (Type.GetTypeCode(typeOrDefaultValue.GetType()) > TypeCode.Object)
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void PreferIntOverUInt()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort)));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort)));
 			var c1 = MakeMethod(typeof(int));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(c1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(uint))));
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void PreferUIntOverLong_FromIntLiteral()
 		{
 			ResolveResult[] args = { new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1) };
-			OverloadResolution r = new OverloadResolution(compilation, args);
+			var r = new OverloadResolution(compilation, args);
 			var c1 = MakeMethod(typeof(uint));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(c1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(long))));
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test, Ignore("Broken after migration to ICS.Decompiler")]
 		public void NullableIntAndNullableUIntIsAmbiguous()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort?)));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(ushort?)));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(int?))));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeMethod(typeof(uint?))));
 			Assert.AreEqual(OverloadResolutionErrors.AmbiguousMatch, r.BestCandidateErrors);
@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ParamsMethodMatchesEmptyArgumentList()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList());
+			var r = new OverloadResolution(compilation, MakeArgumentList());
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
 			Assert.IsTrue(r.BestCandidateIsExpandedForm);
 		}
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ParamsMethodMatchesOneArgumentInExpandedForm()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int)));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(int)));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
 			Assert.IsTrue(r.BestCandidateIsExpandedForm);
 		}
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void ParamsMethodMatchesInUnexpandedForm()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[])));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[])));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
 			Assert.IsFalse(r.BestCandidateIsExpandedForm);
 		}
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void LessArgumentsPassedToParamsIsBetter()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int), typeof(int), typeof(int)));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(int), typeof(int), typeof(int)));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int[]))));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(MakeParamsMethod(typeof(int), typeof(int[]))));
 			Assert.IsFalse(r.IsAmbiguous);
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void CallInvalidParamsDeclaration()
 		{
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[,])));
+			var r = new OverloadResolution(compilation, MakeArgumentList(typeof(int[,])));
 			Assert.AreEqual(OverloadResolutionErrors.ArgumentTypeMismatch, r.AddCandidate(MakeParamsMethod(typeof(int))));
 			Assert.IsFalse(r.BestCandidateIsExpandedForm);
 		}
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			var m1 = MakeMethod();
 			var m2 = MakeMethod(1);
 
-			OverloadResolution r = new OverloadResolution(compilation, MakeArgumentList());
+			var r = new OverloadResolution(compilation, MakeArgumentList());
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
 			Assert.IsFalse(r.IsAmbiguous);
@@ -168,9 +168,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// http://msmvps.com/blogs/jon_skeet/archive/2010/11/02/evil-code-overload-resolution-workaround.aspx
 
 			var container = compilation.FindType(typeof(SkeetEvilOverloadResolutionTestCase)).GetDefinition();
-			IMethod resolvedM1 = container.GetMethods(m => m.Name == "Foo").First();
-			IMethod resolvedM2 = container.GetMethods(m => m.Name == "Foo").Skip(1).First();
-			IMethod resolvedM3 = container.GetMethods(m => m.Name == "Foo").Skip(2).First();
+			var resolvedM1 = container.GetMethods(m => m.Name == "Foo").First();
+			var resolvedM2 = container.GetMethods(m => m.Name == "Foo").Skip(1).First();
+			var resolvedM3 = container.GetMethods(m => m.Name == "Foo").Skip(2).First();
 
 			// Call: Foo<int>();
 			OverloadResolution o;
@@ -214,38 +214,24 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				this.inferredReturnType = returnType;
 			}
 
-			public override IReadOnlyList<IParameter> Parameters {
-				get { return parameters; }
-			}
+			public override IReadOnlyList<IParameter> Parameters => parameters;
 
 			public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
 			{
 				return conversions.ImplicitConversion(inferredReturnType, returnType);
 			}
 
-			public override bool IsImplicitlyTyped {
-				get { return false; }
-			}
+			public override bool IsImplicitlyTyped => false;
 
-			public override bool IsAnonymousMethod {
-				get { return false; }
-			}
+			public override bool IsAnonymousMethod => false;
 
-			public override bool HasParameterList {
-				get { return true; }
-			}
+			public override bool HasParameterList => true;
 
-			public override bool IsAsync {
-				get { return false; }
-			}
+			public override bool IsAsync => false;
 
-			public override ResolveResult Body {
-				get { throw new NotImplementedException(); }
-			}
+			public override ResolveResult Body => throw new NotImplementedException();
 
-			public override IType ReturnType {
-				get { throw new NotImplementedException(); }
-			}
+			public override IType ReturnType => throw new NotImplementedException();
 
 			public override IType GetInferredReturnType(IType[] parameterTypes)
 			{
@@ -264,7 +250,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				new MockLambda(compilation.FindType(KnownTypeCode.Byte))
 			};
 
-			OverloadResolution r = new OverloadResolution(compilation, args);
+			var r = new OverloadResolution(compilation, args);
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
 			Assert.AreSame(m2, r.BestCandidate);
@@ -282,7 +268,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				new MockLambda(compilation.FindType(KnownTypeCode.Byte))
 			};
 
-			OverloadResolution r = new OverloadResolution(compilation, args);
+			var r = new OverloadResolution(compilation, args);
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
 			Assert.AreSame(m2, r.BestCandidate);
@@ -300,7 +286,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				new MockLambda(compilation.FindType(KnownTypeCode.Int32))
 			};
 
-			OverloadResolution r = new OverloadResolution(compilation, args);
+			var r = new OverloadResolution(compilation, args);
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m1));
 			Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(m2));
 			Assert.AreEqual(OverloadResolutionErrors.AmbiguousMatch, r.BestCandidateErrors);
@@ -315,7 +301,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				new MockLambda(compilation.FindType(KnownTypeCode.String)) { parameters = { new DefaultParameter(SpecialType.UnknownType, "arg") } } 
 			};
 
-			OverloadResolution r = new OverloadResolution(compilation, args);
+			var r = new OverloadResolution(compilation, args);
 			foreach (var method in container.GetMethods(m => m.Name == "Method")) {
 				Assert.AreEqual(OverloadResolutionErrors.None, r.AddCandidate(method));
 			}

@@ -25,20 +25,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <remarks>Does not match null nodes.</remarks>
 	public class AnyNode : Pattern
 	{
-		readonly string groupName;
-		
-		public string GroupName {
-			get { return groupName; }
-		}
-		
+		public string GroupName { get; }
+
 		public AnyNode(string groupName = null)
 		{
-			this.groupName = groupName;
+			this.GroupName = groupName;
 		}
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			match.Add(this.groupName, other);
+			match.Add(this.GroupName, other);
 			return other != null && !other.IsNull;
 		}
 	}

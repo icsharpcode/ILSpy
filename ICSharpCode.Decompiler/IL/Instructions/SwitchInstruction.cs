@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		ILInstruction value;
 		public ILInstruction Value {
-			get { return this.value; }
+			get => this.value;
 			set {
 				ValidateChild(value);
 				SetChildInstruction(ref this.value, value, 0);
@@ -68,12 +68,8 @@ namespace ICSharpCode.Decompiler.IL
 			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.ControlFlow;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
@@ -134,8 +130,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			bool expectNullSection = this.IsLifted;
-			LongSet sets = LongSet.Empty;
+			var expectNullSection = this.IsLifted;
+			var sets = LongSet.Empty;
 			foreach (var section in Sections) {
 				if (section.HasNullLabel) {
 					Debug.Assert(expectNullSection, "Duplicate 'case null' or 'case null' in non-lifted switch.");
@@ -174,12 +170,8 @@ namespace ICSharpCode.Decompiler.IL
 			return body.Flags;
 		}
 		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.None;
-			}
-		}
-		
+		public override InstructionFlags DirectFlags => InstructionFlags.None;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);

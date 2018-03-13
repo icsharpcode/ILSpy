@@ -30,35 +30,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 		}
 		
-		public bool IsReadOnly {
-			get { return ((IUnresolvedField)unresolved).IsReadOnly; }
-		}
-		
-		public bool IsVolatile {
-			get { return ((IUnresolvedField)unresolved).IsVolatile; }
-		}
-		
-		IType IVariable.Type {
-			get { return this.ReturnType; }
-		}
-		
-		public bool IsConst {
-			get { return ((IUnresolvedField)unresolved).IsConst; }
-		}
+		public bool IsReadOnly => ((IUnresolvedField)unresolved).IsReadOnly;
 
-		public bool IsFixed {
-			get { return ((IUnresolvedField)unresolved).IsFixed; }
-		}
+		public bool IsVolatile => ((IUnresolvedField)unresolved).IsVolatile;
+
+		IType IVariable.Type => this.ReturnType;
+
+		public bool IsConst => ((IUnresolvedField)unresolved).IsConst;
+
+		public bool IsFixed => ((IUnresolvedField)unresolved).IsFixed;
 
 		public object ConstantValue {
 			get {
-				ResolveResult rr = this.constantValue;
+				var rr = this.constantValue;
 				if (rr == null) {
 					using (var busyLock = BusyManager.Enter(this)) {
 						if (!busyLock.Success)
 							return null;
 
-						IConstantValue unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
+						var unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
 						if (unresolvedCV != null)
 							rr = unresolvedCV.Resolve(context);
 						else

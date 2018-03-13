@@ -23,9 +23,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public class DefaultTypeParameter : AbstractTypeParameter
 	{
-		readonly bool hasValueTypeConstraint;
-		readonly bool hasReferenceTypeConstraint;
-		readonly bool hasDefaultConstructorConstraint;
 		readonly IReadOnlyList<IType> constraints;
 		
 		public DefaultTypeParameter(
@@ -37,9 +34,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IReadOnlyList<IType> constraints = null)
 			: base(owner, index, name, variance, attributes)
 		{
-			this.hasValueTypeConstraint = hasValueTypeConstraint;
-			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
-			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.HasValueTypeConstraint = hasValueTypeConstraint;
+			this.HasReferenceTypeConstraint = hasReferenceTypeConstraint;
+			this.HasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
 			this.constraints = constraints ?? EmptyList<IType>.Instance;
 		}
 		
@@ -52,28 +49,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IReadOnlyList<IType> constraints = null)
 			: base(compilation, ownerType, index, name, variance, attributes)
 		{
-			this.hasValueTypeConstraint = hasValueTypeConstraint;
-			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
-			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.HasValueTypeConstraint = hasValueTypeConstraint;
+			this.HasReferenceTypeConstraint = hasReferenceTypeConstraint;
+			this.HasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
 			this.constraints = constraints ?? EmptyList<IType>.Instance;
 		}
 		
-		public override bool HasValueTypeConstraint {
-			get { return hasValueTypeConstraint; }
-		}
-		
-		public override bool HasReferenceTypeConstraint {
-			get { return hasReferenceTypeConstraint; }
-		}
-		
-		public override bool HasDefaultConstructorConstraint {
-			get { return hasDefaultConstructorConstraint; }
-		}
-		
+		public override bool HasValueTypeConstraint { get; }
+
+		public override bool HasReferenceTypeConstraint { get; }
+
+		public override bool HasDefaultConstructorConstraint { get; }
+
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
-				bool hasNonInterfaceConstraint = false;
-				foreach (IType c in constraints) {
+				var hasNonInterfaceConstraint = false;
+				foreach (var c in constraints) {
 					yield return c;
 					if (c.Kind != TypeKind.Interface)
 						hasNonInterfaceConstraint = true;

@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy
 		/// Only tree nodes containing the search term will be shown.
 		/// </summary>
 		public string SearchTerm {
-			get { return searchTerm; }
+			get => searchTerm;
 			set {
 				if (searchTerm != value) {
 					searchTerm = value;
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy
 		/// Gets/Sets whether internal API members should be shown.
 		/// </summary>
 		public bool ShowInternalApi {
-			get { return showInternalApi; }
+			get => showInternalApi;
 			set {
 				if (showInternalApi != value) {
 					showInternalApi = value;
@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy
 		/// makes it easy to pass it down into all tree nodes.
 		/// </remarks>
 		public Language Language {
-			get { return language; }
+			get => language;
 			set {
 				if (language != value) {
 					language = value;
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy
 		/// makes it easy to pass it down into all tree nodes.
 		/// </remarks>
 		public LanguageVersion LanguageVersion {
-			get { return languageVersion; }
+			get => languageVersion;
 			set {
 				if (languageVersion != value) {
 					languageVersion = value;
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy
 		
 		public FilterSettings Clone()
 		{
-			FilterSettings f = (FilterSettings)MemberwiseClone();
+			var f = (FilterSettings)MemberwiseClone();
 			f.PropertyChanged = null;
 			return f;
 		}

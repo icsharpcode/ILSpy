@@ -14,7 +14,7 @@ namespace LightJson
 	[DebuggerTypeProxy(typeof(JsonObjectDebugView))]
 	internal sealed class JsonObject : IEnumerable<KeyValuePair<string, JsonValue>>, IEnumerable<JsonValue>
 	{
-		private IDictionary<string, JsonValue> properties;
+		private readonly IDictionary<string, JsonValue> properties;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JsonObject"/> class.
@@ -28,11 +28,7 @@ namespace LightJson
 		/// Gets the number of properties in this JsonObject.
 		/// </summary>
 		/// <value>The number of properties in this JsonObject.</value>
-		public int Count {
-			get {
-				return this.properties.Count;
-			}
-		}
+		public int Count => this.properties.Count;
 
 		/// <summary>
 		/// Gets or sets the property with the given key.
@@ -52,9 +48,7 @@ namespace LightJson
 				}
 			}
 
-			set {
-				this.properties[key] = value;
-			}
+			set => this.properties[key] = value;
 		}
 
 		/// <summary>
@@ -179,7 +173,7 @@ namespace LightJson
 		[ExcludeFromCodeCoverage]
 		private class JsonObjectDebugView
 		{
-			private JsonObject jsonObject;
+			private readonly JsonObject jsonObject;
 
 			public JsonObjectDebugView(JsonObject jsonObject)
 			{
@@ -230,11 +224,7 @@ namespace LightJson
 				}
 
 				[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-				private JsonValueType Type {
-					get {
-						return this.value.Type;
-					}
-				}
+				private JsonValueType Type => this.value.Type;
 			}
 		}
 	}

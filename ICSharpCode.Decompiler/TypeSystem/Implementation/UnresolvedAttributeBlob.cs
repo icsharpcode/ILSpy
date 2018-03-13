@@ -41,21 +41,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public UnresolvedAttributeBlob(ITypeReference attributeType, IList<ITypeReference> ctorParameterTypes, byte[] blob)
 		{
-			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
-			if (ctorParameterTypes == null)
-				throw new ArgumentNullException("ctorParameterTypes");
-			if (blob == null)
-				throw new ArgumentNullException("blob");
-			this.attributeType = attributeType;
-			this.ctorParameterTypes = ctorParameterTypes;
-			this.blob = blob;
+			this.attributeType = attributeType ?? throw new ArgumentNullException("attributeType");
+			this.ctorParameterTypes = ctorParameterTypes ?? throw new ArgumentNullException("ctorParameterTypes");
+			this.blob = blob ?? throw new ArgumentNullException("blob");
 		}
 		
-		DomRegion IUnresolvedAttribute.Region {
-			get { return DomRegion.Empty; }
-		}
-		
+		DomRegion IUnresolvedAttribute.Region => DomRegion.Empty;
+
 		public IAttribute CreateResolvedAttribute(ITypeResolveContext context)
 		{
 			if (context.CurrentAssembly == null)
@@ -70,7 +62,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			UnresolvedAttributeBlob o = other as UnresolvedAttributeBlob;
+			var o = other as UnresolvedAttributeBlob;
 			return o != null && attributeType == o.attributeType && ctorParameterTypes == o.ctorParameterTypes
 				&& BlobReader.BlobEquals(blob, o.blob);
 		}

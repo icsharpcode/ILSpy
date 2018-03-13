@@ -76,8 +76,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		class CodeLineEqualityComparer : IEqualityComparer<string>
 		{
-			private IEqualityComparer<string> baseComparer = EqualityComparer<string>.Default;
-			private Func<string, string> normalizeLine;
+			private readonly IEqualityComparer<string> baseComparer = EqualityComparer<string>.Default;
+			private readonly Func<string, string> normalizeLine;
 
 			public CodeLineEqualityComparer(Func<string, string> normalizeLine)
 			{

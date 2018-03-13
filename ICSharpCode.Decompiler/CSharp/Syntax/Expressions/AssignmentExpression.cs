@@ -74,17 +74,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public Expression Left {
-			get { return GetChildByRole (LeftRole); }
-			set { SetChildByRole(LeftRole, value); }
+			get => GetChildByRole (LeftRole);
+			set => SetChildByRole(LeftRole, value);
 		}
 		
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole (GetOperatorRole(Operator)); }
-		}
-		
+		public CSharpTokenNode OperatorToken => GetChildByRole (GetOperatorRole(Operator));
+
 		public Expression Right {
-			get { return GetChildByRole (RightRole); }
-			set { SetChildByRole(RightRole, value); }
+			get => GetChildByRole (RightRole);
+			set => SetChildByRole(RightRole, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -104,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			AssignmentExpression o = other as AssignmentExpression;
+			var o = other as AssignmentExpression;
 			return o != null && (this.Operator == AssignmentOperatorType.Any || this.Operator == o.Operator)
 				&& this.Left.DoMatch(o.Left, match) && this.Right.DoMatch(o.Right, match);
 		}

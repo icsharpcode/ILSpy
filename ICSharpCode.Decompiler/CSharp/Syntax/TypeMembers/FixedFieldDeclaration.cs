@@ -32,17 +32,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole FixedKeywordRole = new TokenRole ("fixed");
 		public static readonly Role<FixedVariableInitializer> VariableRole = new Role<FixedVariableInitializer> ("FixedVariable");
 		
-		public override SymbolKind SymbolKind {
-			get { return SymbolKind.Field; }
-		}
-		
-		public CSharpTokenNode FixedToken {
-			get { return GetChildByRole (FixedKeywordRole); }
-		}
+		public override SymbolKind SymbolKind => SymbolKind.Field;
 
-		public AstNodeCollection<FixedVariableInitializer> Variables {
-			get { return GetChildrenByRole (VariableRole); }
-		}
+		public CSharpTokenNode FixedToken => GetChildByRole (FixedKeywordRole);
+
+		public AstNodeCollection<FixedVariableInitializer> Variables => GetChildrenByRole (VariableRole);
 
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{

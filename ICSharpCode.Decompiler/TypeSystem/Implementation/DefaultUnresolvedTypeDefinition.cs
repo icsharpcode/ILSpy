@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			string namespaceName;
 			string name;
-			int idx = fullName.LastIndexOf ('.');
+			var idx = fullName.LastIndexOf ('.');
 			if (idx > 0) {
 				namespaceName = fullName.Substring (0, idx);
 				name = fullName.Substring (idx + 1);
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public TypeKind Kind {
-			get { return kind; }
+			get => kind;
 			set {
 				ThrowIfFrozen();
 				kind = value;
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool AddDefaultConstructorIfRequired {
-			get { return flags[FlagAddDefaultConstructorIfRequired]; }
+			get => flags[FlagAddDefaultConstructorIfRequired];
 			set {
 				ThrowIfFrozen();
 				flags[FlagAddDefaultConstructorIfRequired] = value;
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public bool IsPartial {
-			get { return flags[FlagPartialTypeDefinition]; }
+			get => flags[FlagPartialTypeDefinition];
 			set {
 				ThrowIfFrozen();
 				flags[FlagPartialTypeDefinition] = value;
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public override string Namespace {
-			get { return namespaceName; }
+			get => namespaceName;
 			set {
 				if (value == null)
 					throw new ArgumentNullException("value");
@@ -146,15 +146,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public override string ReflectionName {
-			get {
-				return this.FullTypeName.ReflectionName;
-			}
-		}
-		
+		public override string ReflectionName => this.FullTypeName.ReflectionName;
+
 		public FullTypeName FullTypeName {
 			get {
-				IUnresolvedTypeDefinition declaringTypeDef = this.DeclaringTypeDefinition;
+				var declaringTypeDef = this.DeclaringTypeDefinition;
 				if (declaringTypeDef != null) {
 					return declaringTypeDef.FullTypeName.NestedType(this.Name, this.TypeParameters.Count - declaringTypeDef.TypeParameters.Count);
 				} else {
@@ -195,31 +191,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IEnumerable<IUnresolvedMethod> Methods {
-			get {
-				return Members.OfType<IUnresolvedMethod> ();
-			}
-		}
-		
-		public IEnumerable<IUnresolvedProperty> Properties {
-			get {
-				return Members.OfType<IUnresolvedProperty> ();
-			}
-		}
-		
-		public IEnumerable<IUnresolvedField> Fields {
-			get {
-				return Members.OfType<IUnresolvedField> ();
-			}
-		}
-		
-		public IEnumerable<IUnresolvedEvent> Events {
-			get {
-				return Members.OfType<IUnresolvedEvent> ();
-			}
-		}
-		
-		
+		public IEnumerable<IUnresolvedMethod> Methods => Members.OfType<IUnresolvedMethod> ();
+
+		public IEnumerable<IUnresolvedProperty> Properties => Members.OfType<IUnresolvedProperty> ();
+
+		public IEnumerable<IUnresolvedField> Fields => Members.OfType<IUnresolvedField> ();
+
+		public IEnumerable<IUnresolvedEvent> Events => Members.OfType<IUnresolvedEvent> ();
+
+
 		public IType Resolve(ITypeResolveContext context)
 		{
 			if (context == null)

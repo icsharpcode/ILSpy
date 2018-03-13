@@ -34,52 +34,40 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodUsesTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
-				throw new ArgumentNullException(nameof(analyzedMethod));
-
-			this.analyzedMethod = analyzedMethod;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
 		}
 
-		public override object Text
-		{
-			get { return "Uses"; }
-		}
+		public override object Text => "Uses";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
 			foreach (var f in GetUsedFields().Distinct()) {
-				var node = new AnalyzedFieldTreeNode(f);
-				node.Language = this.Language;
+				var node = new AnalyzedFieldTreeNode(f) {Language = this.Language};
 				yield return node;
 			}
 			foreach (var m in GetUsedMethods().Distinct()) {
-				var node = new AnalyzedMethodTreeNode(m);
-				node.Language = this.Language;
+				var node = new AnalyzedMethodTreeNode(m) {Language = this.Language};
 				yield return node;
 			}
 		}
 
 		private IEnumerable<MethodDefinition> GetUsedMethods()
 		{
-			foreach (Instruction instr in analyzedMethod.Body.Instructions) {
-				MethodReference mr = instr.Operand as MethodReference;
-				if (mr != null) {
-					MethodDefinition def = mr.Resolve();
-					if (def != null)
-						yield return def;
-				}
+			foreach (var instr in analyzedMethod.Body.Instructions) {
+				var mr = instr.Operand as MethodReference;
+				var def = mr?.Resolve();
+				if (def != null)
+					yield return def;
 			}
 		}
 
 		private IEnumerable<FieldDefinition> GetUsedFields()
 		{
-			foreach (Instruction instr in analyzedMethod.Body.Instructions) {
-				FieldReference fr = instr.Operand as FieldReference;
-				if (fr != null) {
-					FieldDefinition def = fr.Resolve();
-					if (def != null)
-						yield return def;
-				}
+			foreach (var instr in analyzedMethod.Body.Instructions) {
+				var fr = instr.Operand as FieldReference;
+				var def = fr?.Resolve();
+				if (def != null)
+					yield return def;
 			}
 		}
 	}

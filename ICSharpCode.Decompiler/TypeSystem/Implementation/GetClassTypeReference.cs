@@ -26,8 +26,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	[Serializable]
 	public sealed class GetClassTypeReference : ITypeReference, ISymbolReference, ISupportsInterning
 	{
-		readonly IAssemblyReference assembly;
-		readonly FullTypeName fullTypeName;
 		readonly bool? isReferenceType;
 
 		/// <summary>
@@ -40,8 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </param>
 		public GetClassTypeReference(FullTypeName fullTypeName, IAssemblyReference assembly = null, bool? isReferenceType = null)
 		{
-			this.fullTypeName = fullTypeName;
-			this.assembly = assembly;
+			this.FullTypeName = fullTypeName;
+			this.Assembly = assembly;
 			this.isReferenceType = isReferenceType;
 		}
 		
@@ -53,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
 		public GetClassTypeReference(string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
-			this.fullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
+			this.FullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
 		}
 
@@ -67,8 +65,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
 		public GetClassTypeReference(IAssemblyReference assembly, string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
-			this.assembly = assembly;
-			this.fullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
+			this.Assembly = assembly;
+			this.FullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
 			this.isReferenceType = isReferenceType;
 		}
 
@@ -77,18 +75,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// This property returns null if the GetClassTypeReference is searching in all assemblies
 		/// of the compilation.
 		/// </summary>
-		public IAssemblyReference Assembly { get { return assembly; } }
-		
+		public IAssemblyReference Assembly { get; }
+
 		/// <summary>
 		/// Gets the full name of the type this reference is searching for.
 		/// </summary>
-		public FullTypeName FullTypeName { get { return fullTypeName; } }
-		
+		public FullTypeName FullTypeName { get; }
+
 		IType ResolveInAllAssemblies(ITypeResolveContext context)
 		{
 			var compilation = context.Compilation;
 			foreach (var asm in compilation.Assemblies) {
-				IType type = asm.GetTypeDefinition(fullTypeName);
+				IType type = asm.GetTypeDefinition(FullTypeName);
 				if (type != null)
 					return type;
 			}
@@ -101,10 +99,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new ArgumentNullException("context");
 			
 			IType type = null;
-			if (assembly == null) {
+			if (Assembly == null) {
 				// No assembly specified: look in all assemblies, but prefer the current assembly
 				if (context.CurrentAssembly != null) {
-					type = context.CurrentAssembly.GetTypeDefinition(fullTypeName);
+					type = context.CurrentAssembly.GetTypeDefinition(FullTypeName);
 				}
 				if (type == null) {
 					type = ResolveInAllAssemblies(context);
@@ -114,14 +112,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// But if that's not loaded in the compilation, allow fall back to other assemblies.
 				// (the non-loaded assembly might be a facade containing type forwarders -
 				//  for example, when referencing a portable library from a non-portable project)
-				IAssembly asm = assembly.Resolve(context);
+				var asm = Assembly.Resolve(context);
 				if (asm != null) {
-					type = asm.GetTypeDefinition(fullTypeName);
+					type = asm.GetTypeDefinition(FullTypeName);
 				} else {
 					type = ResolveInAllAssemblies(context);
 				}
 			}
-			return type ?? new UnknownType(fullTypeName, isReferenceType);
+			return type ?? new UnknownType(FullTypeName, isReferenceType);
 		}
 		
 		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
@@ -134,20 +132,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return fullTypeName.ToString() + (assembly != null ? ", " + assembly.ToString() : null);
+			return FullTypeName.ToString() + (Assembly != null ? ", " + Assembly.ToString() : null);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
 			unchecked {
-				return 33 * assembly.GetHashCode() + fullTypeName.GetHashCode();
+				return 33 * Assembly.GetHashCode() + FullTypeName.GetHashCode();
 			}
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
-			GetClassTypeReference o = other as GetClassTypeReference;
-			return o != null && assembly == o.assembly && fullTypeName == o.fullTypeName && isReferenceType == o.isReferenceType;
+			var o = other as GetClassTypeReference;
+			return o != null && Assembly == o.Assembly && FullTypeName == o.FullTypeName && isReferenceType == o.isReferenceType;
 		}
 	}
 }

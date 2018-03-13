@@ -48,22 +48,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 		
-		bool INode.IsNull {
-			get { return false; }
-		}
-		
-		Role INode.Role {
-			get { return null; }
-		}
-		
-		INode INode.NextSibling {
-			get { return null; }
-		}
-		
-		INode INode.FirstChild {
-			get { return null; }
-		}
-		
+		bool INode.IsNull => false;
+
+		Role INode.Role => null;
+
+		INode INode.NextSibling => null;
+
+		INode INode.FirstChild => null;
+
 		public abstract bool DoMatch(INode other, Match match);
 		
 		public virtual bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
@@ -73,16 +65,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		
 		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
 		{
-			BacktrackingInfo backtrackingInfo = new BacktrackingInfo();
-			Stack<INode> patternStack = new Stack<INode>();
-			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
+			var backtrackingInfo = new BacktrackingInfo();
+			var patternStack = new Stack<INode>();
+			var stack = backtrackingInfo.backtrackingStack;
 			patternStack.Push(firstPatternChild);
 			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
 			while (stack.Count > 0) {
-				INode cur1 = patternStack.Pop();
-				INode cur2 = stack.Peek().NextOther;
+				var cur1 = patternStack.Pop();
+				var cur2 = stack.Peek().NextOther;
 				match.RestoreCheckPoint(stack.Pop().Checkpoint);
-				bool success = true;
+				var success = true;
 				while (cur1 != null && success) {
 					while (cur1 != null && cur1.Role != role)
 						cur1 = cur1.NextSibling;

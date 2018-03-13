@@ -36,30 +36,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		
 		public string Name {
-			get {
-				return GetChildByRole (Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value));
-			}
+			get => GetChildByRole (Roles.Identifier).Name;
+			set => SetChildByRole(Roles.Identifier, Identifier.Create (value));
 		}
 		
 		public Identifier NameToken {
-			get {
-				return GetChildByRole (Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
+			get => GetChildByRole (Roles.Identifier);
+			set => SetChildByRole(Roles.Identifier, value);
 		}
 		
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole (Roles.Colon); }
-		}
-		
+		public CSharpTokenNode ColonToken => GetChildByRole (Roles.Colon);
+
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
-			set { SetChildByRole (Roles.Expression, value); }
+			get => GetChildByRole (Roles.Expression);
+			set => SetChildByRole (Roles.Expression, value);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -79,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
-			NamedArgumentExpression o = other as NamedArgumentExpression;
+			var o = other as NamedArgumentExpression;
 			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}

@@ -42,9 +42,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public ILReader(IDecompilerTypeSystem typeSystem)
 		{
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.typeSystem = typeSystem;
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.compilation = typeSystem.Compilation;
 		}
 
@@ -69,9 +67,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		void Init(Cil.MethodBody body)
 		{
-			if (body == null)
-				throw new ArgumentNullException(nameof(body));
-			this.body = body;
+			this.body = body ?? throw new ArgumentNullException(nameof(body));
 			this.debugInfo = body.Method.DebugInformation;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;
@@ -119,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 		void InitParameterVariables()
 		{
 			parameterVariables = new ILVariable[GetPopCount(OpCode.Call, body.Method)];
-			int paramIndex = 0;
+			var paramIndex = 0;
 			if (body.Method.HasThis)
 				parameterVariables[paramIndex++] = CreateILVariable(body.ThisParameter);
 			foreach (var p in body.Method.Parameters)
@@ -129,9 +125,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(Cil.VariableDefinition v)
 		{
-			VariableKind kind = IsPinned(v.VariableType) ? VariableKind.PinnedLocal : VariableKind.Local;
-			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
-			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name)) {
+			var kind = IsPinned(v.VariableType) ? VariableKind.PinnedLocal : VariableKind.Local;
+			var ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
+			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out var name)) {
 				ilVar.Name = "V_" + v.Index;
 				ilVar.HasGeneratedName = true;
 			} else if (string.IsNullOrWhiteSpace(name)) {
@@ -157,7 +153,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (p.Index == -1) {
 				// Manually construct ctor parameter type due to Cecil bug:
 				// https://github.com/jbevain/cecil/issues/275
-				ITypeDefinition def = typeSystem.Resolve(body.Method.DeclaringType).GetDefinition();
+				var def = typeSystem.Resolve(body.Method.DeclaringType).GetDefinition();
 				if (def != null && def.TypeParameterCount > 0) {
 					parameterType = new ParameterizedType(def, def.TypeArguments);
 					if (def.IsReferenceType == false) {
@@ -201,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (CheckStackCompatibleWithoutAdjustments(a, b)) {
 				// We only need to union the input variables, but can 
 				// otherwise re-use the existing stack.
-				ImmutableStack<ILVariable> output = a;
+				var output = a;
 				while (!a.IsEmpty && !b.IsEmpty) {
 					Debug.Assert(a.Peek().StackType == b.Peek().StackType);
 					unionFind.Merge(a.Peek(), b.Peek());
@@ -320,13 +316,13 @@ namespace ICSharpCode.Decompiler.IL
 			
 			while (nextInstructionIndex < body.Instructions.Count) {
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = body.Instructions[nextInstructionIndex].Offset;
+				var start = body.Instructions[nextInstructionIndex].Offset;
 				StoreStackForOffset(start, ref currentStack);
-				ILInstruction decodedInstruction = DecodeInstruction();
+				var decodedInstruction = DecodeInstruction();
 				if (decodedInstruction.ResultType == StackType.Unknown)
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
-				int end = currentInstruction.GetEndOffset();
+				var end = currentInstruction.GetEndOffset();
 				decodedInstruction.ILRange = new Interval(start, end);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
@@ -339,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			
 			var visitor = new CollectStackVariablesVisitor(unionFind);
-			for (int i = 0; i < instructionBuilder.Count; i++) {
+			for (var i = 0; i < instructionBuilder.Count; i++) {
 				instructionBuilder[i] = instructionBuilder[i].AcceptVisitor(visitor);
 			}
 			stackVariables = visitor.variables;
@@ -391,7 +387,7 @@ namespace ICSharpCode.Decompiler.IL
 					continue;
 				}
 				output.Write("   [");
-				bool isFirstElement = true;
+				var isFirstElement = true;
 				foreach (var element in stackByOffset[inst.ILRange.Start]) {
 					if (isFirstElement)
 						isFirstElement = false;
@@ -994,7 +990,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
-			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			var type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
 			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType, inst.ILRange.Start);
 			v.HasGeneratedName = true;
 			currentStack = currentStack.Push(v);
@@ -1026,7 +1022,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction Pop(StackType expectedType)
 		{
-			ILInstruction inst = Pop();
+			var inst = Pop();
 			if (expectedType != inst.ResultType) {
 				if (inst is InvalidExpression) {
 					((InvalidExpression)inst).ExpectedResultType = expectedType;
@@ -1080,7 +1076,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		ILInstruction PopPointer()
 		{
-			ILInstruction inst = Pop();
+			var inst = Pop();
 			switch (inst.ResultType) {
 				case StackType.I4:
 					return new Conv(inst, PrimitiveType.I, false, Sign.None);
@@ -1198,7 +1194,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction DecodeUnaligned()
 		{
-			byte alignment = (byte)currentInstruction.Operand;
+			var alignment = (byte)currentInstruction.Operand;
 			var inst = DecodeInstruction();
 			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
 			if (sup != null)
@@ -1233,9 +1229,9 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
-			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
+			var firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
 			var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
-			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
+			for (var i = method.Parameters.Count - 1; i >= 0; i--) {
 				arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
 			}
 			if (firstArgument == 1) {
@@ -1282,7 +1278,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(!signature.HasThis);
 			var parameterTypes = new IType[signature.Parameters.Count];
 			var arguments = new ILInstruction[parameterTypes.Length];
-			for (int i = signature.Parameters.Count - 1; i >= 0; i--) {
+			for (var i = signature.Parameters.Count - 1; i >= 0; i--) {
 				parameterTypes[i] = typeSystem.Resolve(signature.Parameters[i].ParameterType);
 				arguments[i] = Pop(parameterTypes[i].GetStackType());
 			}
@@ -1301,7 +1297,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static int GetPopCount(OpCode callCode, MethodReference methodReference)
 		{
-			int popCount = methodReference.Parameters.Count;
+			var popCount = methodReference.Parameters.Count;
 			if (callCode != OpCode.NewObj && methodReference.HasThis)
 				popCount++;
 			return popCount;
@@ -1309,7 +1305,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static int GetPopCount(OpCode callCode, IMethod method)
 		{
-			int popCount = method.Parameters.Count;
+			var popCount = method.Parameters.Count;
 			if (callCode != OpCode.NewObj && !method.IsStatic)
 				popCount++;
 			return popCount;
@@ -1370,7 +1366,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		ILInstruction DecodeComparisonBranch(bool shortForm, ComparisonKind kind, bool un = false)
 		{
-			int? target = DecodeBranchTarget(shortForm);
+			var target = DecodeBranchTarget(shortForm);
 			var condition = Comparison(kind, un);
 			condition.ILRange = GetCurrentInstructionInterval();
 			if (target != null) {
@@ -1383,8 +1379,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeConditionalBranch(bool shortForm, bool negate)
 		{
-			int? target = DecodeBranchTarget(shortForm);
-			ILInstruction condition = Pop();
+			var target = DecodeBranchTarget(shortForm);
+			var condition = Pop();
 			switch (condition.ResultType) {
 				case StackType.O:
 					// introduce explicit comparison with null
@@ -1432,7 +1428,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeUnconditionalBranch(bool shortForm, bool isLeave = false)
 		{
-			int? target = DecodeBranchTarget(shortForm);
+			var target = DecodeBranchTarget(shortForm);
 			if (isLeave) {
 				currentStack = currentStack.Clear();
 			}
@@ -1457,10 +1453,10 @@ namespace ICSharpCode.Decompiler.IL
 			var labels = (Cil.Instruction[])currentInstruction.Operand;
 			var instr = new SwitchInstruction(Pop(StackType.I4));
 			
-			for (int i = 0; i < labels.Length; i++) {
+			for (var i = 0; i < labels.Length; i++) {
 				var section = new SwitchSection();
 				section.Labels = new LongSet(i);
-				int? target = labels[i]?.Offset; // baseOffset + reader.ReadInt32();
+				var target = labels[i]?.Offset; // baseOffset + reader.ReadInt32();
 				if (target != null) {
 					MarkBranchTarget(target.Value);
 					section.Body = new Branch(target.Value);
@@ -1493,9 +1489,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeJmp()
 		{
-			IMethod method = ReadAndDecodeMethodReference();
+			var method = ReadAndDecodeMethodReference();
 			// Translate jmp into tail call:
-			Call call = new Call(method);
+			var call = new Call(method);
 			call.IsTail = true;
 			call.ILStackWasEmpty = true;
 			if (!method.IsStatic) {

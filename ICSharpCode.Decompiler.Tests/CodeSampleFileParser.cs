@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			var lines = ToLines(s);
 
-			bool sectionFound = false;
+			var sectionFound = false;
 			var sectionText = new StringBuilder();
 
 			Action<string> parser = null;
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			Action<string> namedSectionReader = line =>
 				{
-					string name = ReadSectionName(line);
+					var name = ReadSectionName(line);
 					if (name == null)
 						sectionText.AppendLine(line);
 					else if (name != sectionName)

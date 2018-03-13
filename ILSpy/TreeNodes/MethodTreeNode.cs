@@ -36,18 +36,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public MethodTreeNode(MethodDefinition method)
 		{
-			if (method == null)
-				throw new ArgumentNullException(nameof(method));
-			this.MethodDefinition = method;
+			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
 		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.MetadataToken.ToSuffixString();
 
 		public static object GetText(MethodDefinition method, Language language)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
 			b.Append('(');
-			for (int i = 0; i < method.Parameters.Count; i++) {
+			for (var i = 0; i < method.Parameters.Count; i++) {
 				if (i > 0)
 					b.Append(", ");
 				b.Append(language.TypeToString(method.Parameters[i].ParameterType, false, method.Parameters[i]));
@@ -90,7 +88,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (method.HasPInvokeInfo)
 				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method.Attributes), true);
 
-			bool showAsVirtual = method.IsVirtual && !(method.IsNewSlot && method.IsFinal) && !method.DeclaringType.IsInterface;
+			var showAsVirtual = method.IsVirtual && !(method.IsNewSlot && method.IsFinal) && !method.DeclaringType.IsInterface;
 
 			return Images.GetIcon(
 				showAsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
@@ -135,11 +133,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 
-		public override bool IsPublicAPI {
-			get {
-				return MethodDefinition.IsPublic || MethodDefinition.IsFamily || MethodDefinition.IsFamilyOrAssembly;
-			}
-		}
+		public override bool IsPublicAPI => MethodDefinition.IsPublic || MethodDefinition.IsFamily || MethodDefinition.IsFamilyOrAssembly;
 
 		MemberReference IMemberTreeNode.Member => MethodDefinition;
 	}

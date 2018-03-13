@@ -33,11 +33,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.LazyLoading = true;
 		}
 		
-		public override object Icon
-		{
-			get { return Images.Search; }
-		}
-		
+		public override object Icon => Images.Search;
+
 		protected override void LoadChildren()
 		{
 			threading.LoadChildren(this, FetchChildren);
@@ -58,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
 			// only cancel a running analysis if user has manually added/removed assemblies
-			bool manualAdd = false;
+			var manualAdd = false;
 			foreach (var asm in addedAssemblies) {
 				if (!asm.IsAutoLoaded)
 					manualAdd = true;

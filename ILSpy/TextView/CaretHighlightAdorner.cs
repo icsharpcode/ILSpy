@@ -39,11 +39,11 @@ namespace ICSharpCode.ILSpy.TextView
 		public CaretHighlightAdorner(TextArea textArea)
 			: base(textArea.TextView)
 		{
-			Rect min = textArea.Caret.CalculateCaretRectangle();
+			var min = textArea.Caret.CalculateCaretRectangle();
 			min.Offset(-textArea.TextView.ScrollOffset);
 			
-			Rect max = min;
-			double size = Math.Max(min.Width, min.Height) * 0.25;
+			var max = min;
+			var size = Math.Max(min.Width, min.Height) * 0.25;
 			max.Inflate(size, size);
 			
 			pen = new Pen(TextBlock.GetForeground(textArea.TextView).Clone(), 1);
@@ -55,11 +55,11 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		public static void DisplayCaretHighlightAnimation(TextArea textArea)
 		{
-			AdornerLayer layer = AdornerLayer.GetAdornerLayer(textArea.TextView);
-			CaretHighlightAdorner adorner = new CaretHighlightAdorner(textArea);
+			var layer = AdornerLayer.GetAdornerLayer(textArea.TextView);
+			var adorner = new CaretHighlightAdorner(textArea);
 			layer.Add(adorner);
 			
-			DispatcherTimer timer = new DispatcherTimer();
+			var timer = new DispatcherTimer();
 			timer.Interval = TimeSpan.FromSeconds(1);
 			timer.Tick += delegate {
 				timer.Stop();

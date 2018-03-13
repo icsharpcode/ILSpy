@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL
 		ComparisonKind kind;
 
 		public ComparisonKind Kind {
-			get { return kind; }
+			get => kind;
 			set {
 				kind = value;
 				MakeDirty();
