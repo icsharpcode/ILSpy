@@ -31,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module QualifierTests.dll
-// MVID: {7AC69EDD-DA5A-4332-98FC-F0C038BF00B0}
+// MVID: {F6C4EDC3-2993-44D3-B98B-4D6A567BA56B}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04D00000
+// Image base: 0x03340000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -95,21 +95,35 @@
     .method private hidebysig instance void 
             Parameter(class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests test) cil managed
     {
-      // Code size       37 (0x25)
-      .maxstack  8
+      // Code size       83 (0x53)
+      .maxstack  3
       IL_0000:  ldarg.0
-      IL_0001:  ldarg.1
-      IL_0002:  ldftn      instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Parameter(object)
-      IL_0008:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+      IL_0001:  ldarg.0
+      IL_0002:  ldobj      ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test
+      IL_0007:  box        ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test
+      IL_000c:  ldftn      instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Parameter(object)
+      IL_0012:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
                                                                                         native int)
-      IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
-      IL_0012:  ldarg.0
-      IL_0013:  ldnull
-      IL_0014:  ldftn      void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::StaticParameter(object)
-      IL_001a:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+      IL_0017:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
+      IL_001c:  ldarg.0
+      IL_001d:  ldnull
+      IL_001e:  ldftn      void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::StaticParameter(object)
+      IL_0024:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
                                                                                         native int)
-      IL_001f:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
-      IL_0024:  ret
+      IL_0029:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
+      IL_002e:  ldarg.0
+      IL_002f:  ldarg.1
+      IL_0030:  ldftn      instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Parameter(object)
+      IL_0036:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+                                                                                        native int)
+      IL_003b:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
+      IL_0040:  ldarg.0
+      IL_0041:  ldnull
+      IL_0042:  ldftn      void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::StaticParameter(object)
+      IL_0048:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+                                                                                        native int)
+      IL_004d:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Test::Delegate(class [mscorlib]System.Action`1<object>)
+      IL_0052:  ret
     } // end of method Test::Parameter
 
     .method private hidebysig static void 

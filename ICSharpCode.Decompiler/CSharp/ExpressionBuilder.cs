@@ -245,6 +245,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			arg = UnwrapBoxingConversion(arg);
+			return new AsExpression(arg.Expression, ConvertType(inst.Type))
+				.WithILInstruction(inst)
+				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
+		}
+
+		internal static TranslatedExpression UnwrapBoxingConversion(TranslatedExpression arg)
+		{
 			if (arg.Expression is CastExpression cast
 					&& arg.Type.IsKnownType(KnownTypeCode.Object)
 					&& arg.ResolveResult is ConversionResolveResult crr
@@ -253,11 +261,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// the C# compiler implicitly boxes the input.
 				arg = arg.UnwrapChild(cast.Expression);
 			}
-			return new AsExpression(arg.Expression, ConvertType(inst.Type))
-				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
+
+			return arg;
 		}
-		
+
 		protected internal override TranslatedExpression VisitNewObj(NewObj inst, TranslationContext context)
 		{
 			return new CallBuilder(this, typeSystem, settings).Build(inst);

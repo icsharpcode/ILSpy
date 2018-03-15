@@ -37,9 +37,8 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 
 			private void Parameter(QualifierTests test)
 			{
-				// TODO : fix this
-				//Delegate(Parameter);
-				//Delegate(StaticParameter);
+				Delegate(Parameter);
+				Delegate(StaticParameter);
 				Delegate(test.Parameter);
 				Delegate(QualifierTests.StaticParameter);
 			}

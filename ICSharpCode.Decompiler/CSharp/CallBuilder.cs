@@ -509,10 +509,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
 				targetType = method.Parameters[0].Type;
 				target = expressionBuilder.Translate(inst.Arguments[0], targetType);
+				target = ExpressionBuilder.UnwrapBoxingConversion(target);
 				requireTarget = true;
 			} else {
 				targetType = method.DeclaringType;
 				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+				target = ExpressionBuilder.UnwrapBoxingConversion(target);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
 			}
@@ -521,14 +523,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			bool needsCast = false;
 			ResolveResult result = null;
+			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
 			if (!requireTarget) {
 				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
-				requireTarget = (!(result is MethodGroupResolveResult mgrr) || mgrr.IsError || !mgrr.Methods.Any() || mgrr.Methods.Skip(1).Any() || !IsAppropriateCallTarget(expectedTargetDetails, method, mgrr.Methods.First()));
+				if (result is MethodGroupResolveResult mgrr) {
+					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+					requireTarget = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
+				} else {
+					requireTarget = true;
+				}
 			}
 			MemberLookup lookup = null;
 			if (requireTarget) {
 				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-				var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
 				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false) ;
 				needsCast = true;
 				result = rr;
