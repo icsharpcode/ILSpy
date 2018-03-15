@@ -1174,7 +1174,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				if (decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")) {
 					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
-					if (enumDec.Initializer is PrimitiveExpression primitive && initValue > 9)
+					if (enumDec.Initializer is PrimitiveExpression primitive)
 						primitive.SetValue(initValue, $"0x{initValue:X}");
 				} else if (previousValue + 1 != initValue) {
 					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
