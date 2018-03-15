@@ -8,19 +8,19 @@
 
 		public string Text {
 			get {
-				return this.textStr;
+				return textStr;
 			}
 			set {
-				this.textStr = value;
+				textStr = value;
 			}
 		}
 
 		public string this[int index] {
 			get {
-				return this.textStr2;
+				return textStr2;
 			}
 			set {
-				this.textStr2 = value;
+				textStr2 = value;
 			}
 		}
 	}

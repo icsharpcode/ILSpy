@@ -121,7 +121,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			return result;
 		}
-		
+
+		public override bool VisitIdentifierExpression(IdentifierExpression identifierExpression)
+		{
+			bool result = base.VisitIdentifierExpression(identifierExpression);
+			var rr = identifierExpression.GetResolveResult();
+			if (rr != null) {
+				if (rr.Type is PointerType)
+					return true;
+				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate) {
+					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
+					if (method != null && (method.ReturnType is PointerType || method.Parameters.Any(p => p.Type is PointerType)))
+						return true;
+				}
+			}
+
+			return result;
+		}
+
 		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression)
 		{
 			base.VisitStackAllocExpression(stackAllocExpression);

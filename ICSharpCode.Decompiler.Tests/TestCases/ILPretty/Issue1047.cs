@@ -7,7 +7,7 @@
 		private void ProblemMethod()
 		{
 			IL_0000:
-			while (!Issue1047.dummy) {
+			while (!dummy) {
 			}
 			return;
 			IL_0014:

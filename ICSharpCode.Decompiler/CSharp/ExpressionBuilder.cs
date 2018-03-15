@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		readonly IDecompilerTypeSystem typeSystem;
 		readonly ITypeResolveContext decompilationContext;
+		internal readonly ILFunction currentFunction;
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
@@ -76,11 +77,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
-		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, DecompilerSettings settings, CancellationToken cancellationToken)
+		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
 			this.typeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.currentFunction = currentFunction;
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
@@ -185,18 +187,51 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		ExpressionWithResolveResult ConvertField(IField field, ILInstruction target = null)
+		internal bool HidesVariableWithName(string name)
 		{
-			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-			var targetExpression = TranslateTarget(field, target, true);
-			
-			var result = lookup.Lookup(targetExpression.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
-			
-			if (result == null || !result.Member.Equals(field))
-				targetExpression = targetExpression.ConvertTo(field.DeclaringType, this);
-			
-			return new MemberReferenceExpression(targetExpression, field.Name)
-				.WithRR(new MemberResolveResult(targetExpression.ResolveResult, field));
+			return currentFunction.Ancestors.OfType<ILFunction>().SelectMany(f => f.Variables).Any(v => v.Name == name);
+		}
+
+		ExpressionWithResolveResult ConvertField(IField field, ILInstruction targetInstruction = null)
+		{
+			var target = TranslateTarget(field, targetInstruction, true);
+			bool requireTarget = HidesVariableWithName(field.Name)
+				|| (field.IsStatic ? !IsCurrentOrContainingType(field.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
+			bool targetCasted = false;
+			var targetResolveResult = requireTarget ? target.ResolveResult : null;
+
+			bool IsUnambiguousAccess()
+			{
+				if (targetResolveResult == null) {
+					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
+					return !(result == null || result.IsError || !result.Member.Equals(field));
+				} else {
+					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
+					return !(result == null || result.IsError || !result.Member.Equals(field));
+				}
+			}
+
+			while (!IsUnambiguousAccess()) {
+				if (!requireTarget) {
+					requireTarget = true;
+					targetResolveResult = target.ResolveResult;
+				} else if (!targetCasted) {
+					targetCasted = true;
+					target = target.ConvertTo(field.DeclaringType, this);
+					targetResolveResult = target.ResolveResult;
+				} else {
+					break;
+				}
+			}
+
+			if (requireTarget) {
+				return new MemberReferenceExpression(target, field.Name)
+					.WithRR(new MemberResolveResult(target.ResolveResult, field));
+			} else {
+				return new IdentifierExpression(field.Name)
+					.WithRR(new MemberResolveResult(target.ResolveResult, field));
+			}
 		}
 		
 		TranslatedExpression IsType(IsInst inst)
@@ -1363,6 +1398,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr;
 		}
 
+		internal bool IsCurrentOrContainingType(ITypeDefinition type)
+		{
+			var currentTypeDefinition = decompilationContext.CurrentTypeDefinition;
+			while (currentTypeDefinition != null) {
+				if (type == currentTypeDefinition)
+					return true;
+				currentTypeDefinition = currentTypeDefinition.DeclaringTypeDefinition;
+			}
+			return false;
+		}
+
 		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			var method = function.Method?.MemberDefinition as IMethod;
@@ -1877,9 +1923,9 @@ namespace ICSharpCode.Decompiler.CSharp
 								.WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single(), typeHint: indexer.Type)));
 						} else {
-							var target = new IdentifierExpression(lastElement.Member.Name)
+							var assignment = new NamedExpression(lastElement.Member.Name, Translate(info.Values.Single(), typeHint: memberRR.Type))
 								.WithILInstruction(inst).WithRR(memberRR);
-							elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single(), typeHint: target.Type)));
+							elementsStack.Peek().Add(assignment);
 						}
 						break;
 				}
@@ -1897,13 +1943,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Expression MakeInitializerAssignment(IMember method, IL.Transforms.AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
-			var target = member.Indices?.Length > 0 ? (Expression)new IndexerExpression(null, member.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression)) : new IdentifierExpression(member.Member.Name);
 			Expression value;
-			if (values.Count == 1 && !(values[0] is AssignmentExpression) && !(method.SymbolKind == SymbolKind.Method && method.Name == "Add"))
+			if (values.Count == 1 && !(values[0] is AssignmentExpression || values[0] is NamedExpression) && !(method.SymbolKind == SymbolKind.Method && method.Name == "Add")) {
 				value = values[0];
-			else
+			} else {
 				value = new ArrayInitializerExpression(values);
-			return new AssignmentExpression(target, value);
+			}
+			if (member.Indices?.Length > 0) {
+				var index = new IndexerExpression(null, member.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression));
+				return new AssignmentExpression(index, value);
+			} else {
+				return new NamedExpression(member.Member.Name, value);
+			}
 		}
 
 		Expression MakeInitializerElements(List<ILInstruction> values, IReadOnlyList<IParameter> parameters)

@@ -156,38 +156,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public byte UseArrayWithInt(int i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithUInt(uint i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithLong(long i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithULong(ulong i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithShort(short i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithUShort(ushort i)
 		{
-			return this.byteArray[i];
+			return byteArray[i];
 		}
 
 		public byte UseArrayWithCastToUShort(int i)
 		{
 			// Unchecked cast = truncate to 16 bits
-			return this.byteArray[(ushort)i];
+			return byteArray[(ushort)i];
 		}
 
 		public StringComparison EnumDiffNumber(StringComparison data)

@@ -81,12 +81,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public string Substring()
 		{
-			return this.GetString()?.Substring(this.GetInt());
+			return GetString()?.Substring(GetInt());
 		}
 
 		public void CallSubstringAndIgnoreResult()
 		{
-			this.GetString()?.Substring(this.GetInt());
+			GetString()?.Substring(GetInt());
 		}
 
 		private void Use<T>(T t)
@@ -95,35 +95,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CallDone()
 		{
-			this.GetMyClass()?.Done();
-			this.GetMyClass()?.Field?.Done();
-			this.GetMyClass()?.Field.Done();
-			this.GetMyClass()?.Property?.Done();
-			this.GetMyClass()?.Property.Done();
-			this.GetMyClass()?.Method(this.GetInt())?.Done();
-			this.GetMyClass()?.Method(this.GetInt()).Done();
-			this.GetMyClass()?[this.GetInt()]?.Done();
-			this.GetMyClass()?[this.GetInt()].Done();
+			GetMyClass()?.Done();
+			GetMyClass()?.Field?.Done();
+			GetMyClass()?.Field.Done();
+			GetMyClass()?.Property?.Done();
+			GetMyClass()?.Property.Done();
+			GetMyClass()?.Method(GetInt())?.Done();
+			GetMyClass()?.Method(GetInt()).Done();
+			GetMyClass()?[GetInt()]?.Done();
+			GetMyClass()?[GetInt()].Done();
 		}
 
 		public void CallDoneStruct()
 		{
-			this.GetMyStruct()?.Done();
+			GetMyStruct()?.Done();
 #if STRUCT_SPLITTING_IMPROVED
-			this.GetMyStruct()?.Field?.Done();
-			this.GetMyStruct()?.Field.Done();
-			this.GetMyStruct()?.Property1?.Done();
-			this.GetMyStruct()?.Property2.Done();
-			this.GetMyStruct()?.Method1(this.GetInt())?.Done();
-			this.GetMyStruct()?.Method2(this.GetInt()).Done();
-			this.GetMyStruct()?[this.GetInt()]?.Done();
+			GetMyStruct()?.Field?.Done();
+			GetMyStruct()?.Field.Done();
+			GetMyStruct()?.Property1?.Done();
+			GetMyStruct()?.Property2.Done();
+			GetMyStruct()?.Method1(GetInt())?.Done();
+			GetMyStruct()?.Method2(GetInt()).Done();
+			GetMyStruct()?[GetInt()]?.Done();
 #endif
 		}
 
 		public void RequiredParentheses()
 		{
-			(this.GetMyClass()?.Field).Done();
-			(this.GetMyClass()?.Method(this.GetInt())).Done();
+			(GetMyClass()?.Field).Done();
+			(GetMyClass()?.Method(GetInt())).Done();
 #if STRUCT_SPLITTING_IMPROVED
 			(GetMyStruct()?.Property2)?.Done();
 #endif
@@ -132,15 +132,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int?[] ChainsOnClass()
 		{
 			return new int?[9] {
-				this.GetMyClass()?.IntVal,
-				this.GetMyClass()?.Field.IntVal,
-				this.GetMyClass()?.Field?.IntVal,
-				this.GetMyClass()?.Property.IntVal,
-				this.GetMyClass()?.Property?.IntVal,
-				this.GetMyClass()?.Method(this.GetInt()).IntVal,
-				this.GetMyClass()?.Method(this.GetInt())?.IntVal,
-				this.GetMyClass()?[this.GetInt()].IntVal,
-				this.GetMyClass()?[this.GetInt()]?.IntVal
+				GetMyClass()?.IntVal,
+				GetMyClass()?.Field.IntVal,
+				GetMyClass()?.Field?.IntVal,
+				GetMyClass()?.Property.IntVal,
+				GetMyClass()?.Property?.IntVal,
+				GetMyClass()?.Method(GetInt()).IntVal,
+				GetMyClass()?.Method(GetInt())?.IntVal,
+				GetMyClass()?[GetInt()].IntVal,
+				GetMyClass()?[GetInt()]?.IntVal
 			};
 		}
 
@@ -148,31 +148,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int?[] ChainsStruct()
 		{
 			return new int?[8] {
-				this.GetMyStruct()?.IntVal,
-				this.GetMyStruct()?.Field.IntVal,
-				this.GetMyStruct()?.Field?.IntVal,
-				this.GetMyStruct()?.Property2.IntVal,
-				this.GetMyStruct()?.Property1?.IntVal,
-				this.GetMyStruct()?.Method2(this.GetInt()).IntVal,
-				this.GetMyStruct()?.Method1(this.GetInt())?.IntVal,
-				this.GetMyStruct()?[this.GetInt()]?.IntVal
+				GetMyStruct()?.IntVal,
+				GetMyStruct()?.Field.IntVal,
+				GetMyStruct()?.Field?.IntVal,
+				GetMyStruct()?.Property2.IntVal,
+				GetMyStruct()?.Property1?.IntVal,
+				GetMyStruct()?.Method2(GetInt()).IntVal,
+				GetMyStruct()?.Method1(GetInt())?.IntVal,
+				GetMyStruct()?[GetInt()]?.IntVal
 			};
 		}
 #endif
 
 		public int CoalescingReturn()
 		{
-			return this.GetMyClass()?.IntVal ?? 1;
+			return GetMyClass()?.IntVal ?? 1;
 		}
 
 		public void Coalescing()
 		{
-			this.Use(this.GetMyClass()?.IntVal ?? 1);
+			Use(GetMyClass()?.IntVal ?? 1);
 		}
 
 		public void CoalescingString()
 		{
-			this.Use(this.GetMyClass()?.Text ?? "Hello");
+			Use(GetMyClass()?.Text ?? "Hello");
 		}
 
 		public void InvokeDelegate(EventHandler eh)
