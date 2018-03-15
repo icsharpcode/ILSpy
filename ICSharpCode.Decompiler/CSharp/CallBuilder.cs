@@ -521,18 +521,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			bool needsCast = false;
 			ResolveResult result = null;
-			ResolveResult targetResolveResult = requireTarget ? target.ResolveResult : null;
-			if (targetResolveResult == null) {
-				var rr = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
-				result = rr;
+			if (!requireTarget) {
+				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
 				requireTarget = (!(result is MethodGroupResolveResult mgrr) || mgrr.IsError || !mgrr.Methods.Any() || mgrr.Methods.Skip(1).Any() || !IsAppropriateCallTarget(expectedTargetDetails, method, mgrr.Methods.First()));
 			}
 			MemberLookup lookup = null;
 			if (requireTarget) {
-				targetResolveResult = target.ResolveResult;
 				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 				var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
-				var rr = lookup.Lookup(targetResolveResult, method.Name, method.TypeArguments, false) ;
+				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false) ;
 				needsCast = true;
 				result = rr;
 				if (rr is MethodGroupResolveResult mgrr) {
@@ -543,7 +540,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (needsCast) {
 				Debug.Assert(requireTarget);
 				target = target.ConvertTo(targetType, expressionBuilder);
-				result = lookup.Lookup(targetResolveResult, method.Name, method.TypeArguments, false);
+				result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 			}
 			Expression targetExpression;
 			if (requireTarget) {
