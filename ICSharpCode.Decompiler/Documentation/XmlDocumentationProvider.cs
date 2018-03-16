@@ -246,6 +246,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			public int GetPositionForLine(int line)
 			{
 				Debug.Assert(line >= currentLine);
+				char prevChar = '\0';
 				while (line > currentLine) {
 					int b = fs.ReadByte();
 					if (b < 0)
@@ -255,8 +256,12 @@ namespace ICSharpCode.Decompiler.Documentation
 					input[0] = (byte)b;
 					decoder.Convert(input, 0, 1, output, 0, 1, false, out bytesUsed, out charsUsed, out completed);
 					Debug.Assert(bytesUsed == 1);
-					if (charsUsed == 1 && output[0] == '\n') {
-						currentLine++;
+					if (charsUsed == 1) {
+						if ((prevChar != '\r' && output[0] == '\n') || output[0] == '\r')
+							currentLine++;
+						prevChar = output[0];
+					} else {
+						prevChar = '\0';
 					}
 				}
 				return checked((int)fs.Position);
