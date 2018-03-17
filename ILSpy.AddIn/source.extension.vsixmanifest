@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="a9120dbe-164a-4891-842f-fb7829273838" Version="1.7.4.0" Language="en-US" Publisher="ic#code" />
+    <Identity Id="a9120dbe-164a-4891-842f-fb7829273838" Version="1.7.3.0" Language="en-US" Publisher="ic#code" />
     <DisplayName>ILSpy</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
     <MoreInfo>http://www.ilspy.net</MoreInfo>
