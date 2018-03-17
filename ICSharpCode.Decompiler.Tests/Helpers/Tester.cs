@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
 			
 			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
-			info.Arguments = $"/out=\"{outputFile}\" \"{sourceFileName}\"";
+			info.Arguments = $"/nobar /utf8 /out=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
@@ -144,6 +144,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			Console.WriteLine("output: " + outputTask.Result);
 			Console.WriteLine("errors: " + errorTask.Result);
+
+			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
+			// the image base comment still varies... ildasm putting a random number here?
+			string il = File.ReadAllText(outputFile);
+			il = Regex.Replace(il, @"^// Image base: 0x[0-9A-F]+\r?\n", "", RegexOptions.Multiline);
+			// and while we're at it, also remove the MVID
+			il = Regex.Replace(il, @"^// MVID: \{[0-9A-F-]+\}\r?\n", "", RegexOptions.Multiline);
+			// and the ildasm version info (varies from system to system)
+			il = Regex.Replace(il, @"^// +Microsoft .* Disassembler\. +Version.*\r?\n", "", RegexOptions.Multiline);
+			// copyright header "All rights reserved" is dependent on system language
+			il = Regex.Replace(il, @"^// +Copyright .* Microsoft.*\r?\n", "", RegexOptions.Multiline);
+			File.WriteAllText(outputFile, il);
 
 			return outputFile;
 		}
@@ -199,12 +211,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,
 					new CSharpCompilationOptions(
-					flags.HasFlag(CSharpCompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
-					platform: flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
-					optimizationLevel: flags.HasFlag(CSharpCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
-					allowUnsafe: true,
-					deterministic: true
-				));
+						flags.HasFlag(CSharpCompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
+						platform: flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
+						optimizationLevel: flags.HasFlag(CSharpCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
+						allowUnsafe: true,
+						deterministic: true
+					));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				var emitResult = compilation.Emit(results.PathToAssembly);
@@ -273,6 +285,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.UseDebug) ? " /debug" : "");
 				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.CompilerOptions += " /baseaddress:0x40000";
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}

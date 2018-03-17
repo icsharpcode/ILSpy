@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -26,14 +24,12 @@
   .ver 0:0:0:0
 }
 .module Issue1080.dll
-// MVID: {C55AD4DD-F921-48E6-8863-FBA5C2E3280E}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04C30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -51,7 +47,7 @@
 
   .method private hidebysig static void  Test(object obj) cil managed
   {
-    // Code size       24 (0x18)
+    // Code size       26 (0x1a)
     .maxstack  2
     .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.Type2 V_0,
              bool V_1)
@@ -64,12 +60,14 @@
     IL_000a:  cgt.un
     IL_000c:  stloc.1
     IL_000d:  ldloc.1
-    IL_000e:  brfalse.s  IL_0017
+    IL_000e:  brfalse.s  IL_0019
 
-    IL_0010:  ldloc.0
-    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC.Extensions::Extension(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1)
-    IL_0016:  nop
-    IL_0017:  ret
+    IL_0010:  nop
+    IL_0011:  ldloc.0
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceC.Extensions::Extension(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1)
+    IL_0017:  nop
+    IL_0018:  nop
+    IL_0019:  ret
   } // end of method ExtensionsTest::Test
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.ExtensionsTest
@@ -95,14 +93,14 @@
 {
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.Type2
 
-.class interface private abstract auto ansi ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1
-{
-} // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1
-
 .class interface private abstract auto ansi ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type2
        implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1
 {
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type2
+
+.class interface private abstract auto ansi ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1
+{
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Type1
 
 .class private abstract auto ansi sealed beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Issue1080.SpaceA.SpaceB.Extensions
        extends [mscorlib]System.Object

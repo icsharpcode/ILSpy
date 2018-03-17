@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Tous droits r?serv?s.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module AsyncMain.exe
-// MVID: {B9141C5A-989C-49C7-986D-91A53478FC26}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x050A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================

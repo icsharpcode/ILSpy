@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -31,14 +29,12 @@
   .ver 0:0:0:0
 }
 .module QueryExpressions.dll
-// MVID: {35C85D69-E31F-42BF-9A00-868A7795799A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04B30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -161,7 +157,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       75 (0x4b)
     .maxstack  3
-    IL_0000:  ldc.i4     0xd9111ac7
+    IL_0000:  ldc.i4     0x14e70af6
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Name>j__TPar'>::get_Default()
@@ -391,7 +387,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x27a731f0
+    IL_0000:  ldc.i4     0x445055fe
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<c>j__TPar'>::get_Default()
@@ -609,7 +605,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       75 (0x4b)
     .maxstack  3
-    IL_0000:  ldc.i4     0x49426206
+    IL_0000:  ldc.i4     0x75371331
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Name>j__TPar'>::get_Default()
@@ -843,7 +839,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x24cc4ce
+    IL_0000:  ldc.i4     0x96da6cb9
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<<>h__TransparentIdentifier0>j__TPar'>::get_Default()
@@ -1038,7 +1034,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x9d43c4c9
+    IL_0000:  ldc.i4     0x9862fa00
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<<>h__TransparentIdentifier1>j__TPar'>::get_Default()
@@ -1256,7 +1252,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       75 (0x4b)
     .maxstack  3
-    IL_0000:  ldc.i4     0x2deb7e6
+    IL_0000:  ldc.i4     0x5c98e90
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Name>j__TPar'>::get_Default()
@@ -1486,7 +1482,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x9af831eb
+    IL_0000:  ldc.i4     0x75e40ecf
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<o>j__TPar'>::get_Default()
@@ -1678,7 +1674,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x4c4f2ab5
+    IL_0000:  ldc.i4     0x3a4ab16d
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<OrderID>j__TPar'>::get_Default()
@@ -1869,7 +1865,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0xe21831f0
+    IL_0000:  ldc.i4     0x2d27751f
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<a>j__TPar'>::get_Default()
@@ -2063,7 +2059,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0xf5cbc4ce
+    IL_0000:  ldc.i4     0xcd02c558
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<<>h__TransparentIdentifier0>j__TPar'>::get_Default()
@@ -2282,7 +2278,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       75 (0x4b)
     .maxstack  3
-    IL_0000:  ldc.i4     0xd81da1ec
+    IL_0000:  ldc.i4     0x2f4959e3
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Name>j__TPar'>::get_Default()
@@ -2513,7 +2509,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x7df4324e
+    IL_0000:  ldc.i4     0x8db48873
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<c>j__TPar'>::get_Default()
@@ -2707,7 +2703,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x21eec4ce
+    IL_0000:  ldc.i4     0x31d45abf
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<<>h__TransparentIdentifier0>j__TPar'>::get_Default()
@@ -2900,7 +2896,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x4be01753
+    IL_0000:  ldc.i4     0xd6b557e6
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Name>j__TPar'>::get_Default()
@@ -3093,7 +3089,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0xdf02304a
+    IL_0000:  ldc.i4     0x32fe72ac
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<Country>j__TPar'>::get_Default()
@@ -3285,7 +3281,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0x42e31eb
+    IL_0000:  ldc.i4     0x930ba4b1
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<m>j__TPar'>::get_Default()

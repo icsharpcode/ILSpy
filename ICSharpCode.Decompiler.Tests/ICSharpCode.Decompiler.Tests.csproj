@@ -37,8 +37,8 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="1.0.0.55" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.6.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.6.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.7.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
     <PackageReference Include="NUnit" Version="3.9.0" />

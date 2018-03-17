@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module NullPropagation.dll
-// MVID: {0DD72CB6-BC75-43B0-A076-30539A83A77C}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03540000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -148,38 +144,26 @@
             instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> 
             get_Property1() cil managed
     {
-      // Code size       15 (0xf)
+      // Code size       10 (0xa)
       .maxstack  1
-      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0,
-               valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_1)
-      IL_0000:  nop
-      IL_0001:  ldloca.s   V_0
-      IL_0003:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>
-      IL_0009:  ldloc.0
-      IL_000a:  stloc.1
-      IL_000b:  br.s       IL_000d
-
-      IL_000d:  ldloc.1
-      IL_000e:  ret
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0)
+      IL_0000:  ldloca.s   V_0
+      IL_0002:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>
+      IL_0008:  ldloc.0
+      IL_0009:  ret
     } // end of method MyStruct::get_Property1
 
     .method public hidebysig specialname 
             instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct 
             get_Property2() cil managed
     {
-      // Code size       15 (0xf)
+      // Code size       10 (0xa)
       .maxstack  1
-      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_0,
-               valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_1)
-      IL_0000:  nop
-      IL_0001:  ldloca.s   V_0
-      IL_0003:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct
-      IL_0009:  ldloc.0
-      IL_000a:  stloc.1
-      IL_000b:  br.s       IL_000d
-
-      IL_000d:  ldloc.1
-      IL_000e:  ret
+      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_0)
+      IL_0000:  ldloca.s   V_0
+      IL_0002:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct
+      IL_0008:  ldloc.0
+      IL_0009:  ret
     } // end of method MyStruct::get_Property2
 
     .method public hidebysig specialname 

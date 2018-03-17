@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module AnonymousTypes.dll
-// MVID: {2A63FF34-C81B-4BF5-936B-388A7D9A8D41}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04B80000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -155,7 +151,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       29 (0x1d)
     .maxstack  8
-    IL_0000:  ldc.i4     0xf83c6f13
+    IL_0000:  ldc.i4     0x1df2dd8e
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<X>j__TPar'>::get_Default()
@@ -307,7 +303,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0xe71b881e
+    IL_0000:  ldc.i4     0x60414d69
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<X>j__TPar'>::get_Default()
@@ -523,7 +519,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       75 (0x4b)
     .maxstack  3
-    IL_0000:  ldc.i4     0xb04731e1
+    IL_0000:  ldc.i4     0xb4568a5d
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<X>j__TPar'>::get_Default()
