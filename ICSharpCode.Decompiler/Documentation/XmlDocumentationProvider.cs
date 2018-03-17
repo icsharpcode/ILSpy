@@ -232,6 +232,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			readonly FileStream fs;
 			readonly Decoder decoder;
 			int currentLine = 1;
+			char prevChar = '\0';
 			
 			// buffers for use with Decoder:
 			byte[] input = new byte[1];
@@ -246,7 +247,6 @@ namespace ICSharpCode.Decompiler.Documentation
 			public int GetPositionForLine(int line)
 			{
 				Debug.Assert(line >= currentLine);
-				char prevChar = '\0';
 				while (line > currentLine) {
 					int b = fs.ReadByte();
 					if (b < 0)
@@ -260,8 +260,6 @@ namespace ICSharpCode.Decompiler.Documentation
 						if ((prevChar != '\r' && output[0] == '\n') || output[0] == '\r')
 							currentLine++;
 						prevChar = output[0];
-					} else {
-						prevChar = '\0';
 					}
 				}
 				return checked((int)fs.Position);
