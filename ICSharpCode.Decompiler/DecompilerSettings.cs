@@ -568,6 +568,21 @@ namespace ICSharpCode.Decompiler
 		}
 
 		#region Options to aid VB decompilation
+		bool assumeArrayLengthFitsIntoInt32 = true;
+
+		/// <summary>
+		/// Gets/Sets whether the decompiler can assume that 'ldlen; conv.i4.ovf' does not throw an overflow exception.
+		/// </summary>
+		public bool AssumeArrayLengthFitsIntoInt32 {
+			get { return assumeArrayLengthFitsIntoInt32; }
+			set {
+				if (assumeArrayLengthFitsIntoInt32 != value) {
+					assumeArrayLengthFitsIntoInt32 = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool introduceIncrementAndDecrement = true;
 
 		/// <summary>

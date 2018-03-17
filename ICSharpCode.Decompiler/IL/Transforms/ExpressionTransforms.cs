@@ -148,7 +148,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
+			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType()
+				&& (!inst.CheckForOverflow || context.Settings.AssumeArrayLengthFitsIntoInt32))
+			{
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
