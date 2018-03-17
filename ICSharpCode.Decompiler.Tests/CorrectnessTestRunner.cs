@@ -271,9 +271,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void LINQRaytracer([ValueSource("defaultOptions")] CSharpCompilerOptions options)
 		{
-			if (options.HasFlag(CSharpCompilerOptions.UseMcs)) {
-				Assert.Ignore("Decompiler bug with mono!");
-			}
 			RunCS(options: options);
 		}
 

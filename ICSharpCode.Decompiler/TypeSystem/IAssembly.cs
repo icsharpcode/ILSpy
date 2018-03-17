@@ -123,5 +123,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets all non-nested types in the assembly.
 		/// </summary>
 		IEnumerable<ITypeDefinition> TopLevelTypeDefinitions { get; }
+
+		/// <summary>
+		/// Gets the type definition from the metadata token, or null if not found.
+		/// </summary>
+		ITypeDefinition ResolveTypeDefToken(Mono.Cecil.MetadataToken token);
 	}
 }
