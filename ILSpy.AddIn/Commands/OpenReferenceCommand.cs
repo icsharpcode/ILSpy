@@ -63,6 +63,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					}
 				}
 			}
+			foreach (var projectReference in roslynProject.ProjectReferences) {
+				var project = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
+				dict.Add(project.AssemblyName, project.OutputFilePath);
+			}
 			return dict;
 		}
 
