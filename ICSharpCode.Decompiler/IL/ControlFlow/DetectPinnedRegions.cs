@@ -366,17 +366,28 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// C# doesn't support a "by reference" variable, so replace it with a native pointer
 				context.Step("Replace pinned ref-local with native pointer", pinnedRegion);
 				ILVariable oldVar = pinnedRegion.Variable;
+				IType elementType = ((ByReferenceType)oldVar.Type).ElementType;
+				if (elementType.Kind == TypeKind.Pointer && pinnedRegion.Init.MatchLdFlda(out _, out var field)
+					&& ((PointerType)elementType).ElementType.Equals(field.Type))
+				{
+					// Roslyn 2.6 (C# 7.2) uses type "int*&" for the pinned local referring to a
+					// fixed field of type "int".
+					// Remove the extra level of indirection.
+					elementType = ((PointerType)elementType).ElementType;
+				}
 				ILVariable newVar = new ILVariable(
 					VariableKind.PinnedLocal,
-					new PointerType(((ByReferenceType)oldVar.Type).ElementType),
+					new PointerType(elementType),
 					oldVar.Index);
 				newVar.Name = oldVar.Name;
 				newVar.HasGeneratedName = oldVar.HasGeneratedName;
 				oldVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
+				UseExistingVariableForPinnedRegion(pinnedRegion);
 			} else if (pinnedRegion.Variable.Type.Kind == TypeKind.Array) {
 				context.Step("Replace pinned array with native pointer", pinnedRegion);
 				MoveArrayToPointerToPinnedRegionInit(pinnedRegion);
+				UseExistingVariableForPinnedRegion(pinnedRegion);
 			} else if (pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String)) {
 				// fixing a string
 				ILVariable nativeVar;
@@ -525,6 +536,33 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
 			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
+		}
+
+		/// <summary>
+		/// Modifies a pinned region to eliminate an extra local variable that roslyn tends to generate.
+		/// </summary>
+		void UseExistingVariableForPinnedRegion(PinnedRegion pinnedRegion)
+		{
+			// PinnedRegion V_1(..., BlockContainer {
+			// Block IL_0000(incoming: 1) {
+			//    stloc V_0(ldloc V_1)
+			//    ...
+			if (!(pinnedRegion.Body is BlockContainer body))
+				return;
+			if (pinnedRegion.Variable.LoadCount != 1)
+				return;
+			if (!body.EntryPoint.Instructions[0].MatchStLoc(out var v, out var init))
+				return;
+			if (!init.MatchLdLoc(pinnedRegion.Variable))
+				return;
+			if (!(v.IsSingleDefinition && v.Type.Equals(pinnedRegion.Variable.Type)))
+				return;
+			if (v.Kind != VariableKind.Local)
+				return;
+			// replace V_1 with V_0
+			v.Kind = VariableKind.PinnedLocal;
+			pinnedRegion.Variable = v;
+			body.EntryPoint.Instructions.RemoveAt(0);
 		}
 		#endregion
 	}

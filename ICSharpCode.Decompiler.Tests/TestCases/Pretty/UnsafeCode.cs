@@ -350,7 +350,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string StackAllocStruct(int count)
 		{
 			SimpleStruct* ptr = stackalloc SimpleStruct[checked(count * 2)];
+#if !(ROSLYN && OPT)
+			// unused stackalloc gets optimized out by roslyn
 			SimpleStruct* ptr2 = stackalloc SimpleStruct[10];
+#endif
 			ptr->X = count;
 			ptr[1].X = ptr->X;
 			for (int i = 2; i < 10; i++) {
