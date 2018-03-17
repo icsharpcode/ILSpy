@@ -241,9 +241,21 @@ namespace ICSharpCode.ILSpy
 		public event NotifyCollectionChangedEventHandler CurrentAssemblyListChanged;
 		
 		List<LoadedAssembly> commandLineLoadedAssemblies = new List<LoadedAssembly>();
+
+		List<string> nugetPackagesToLoad = new List<string>();
 		
 		bool HandleCommandLineArguments(CommandLineArguments args)
 		{
+			int i = 0;
+			while (i < args.AssembliesToLoad.Count) {
+				var asm = args.AssembliesToLoad[i];
+				if (Path.GetExtension(asm) == ".nupkg") {
+					nugetPackagesToLoad.Add(asm);
+					args.AssembliesToLoad.RemoveAt(i);
+				} else {
+					i++;
+				}
+			}
 			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, false);
 			if (args.Language != null)
 				sessionSettings.FilterSettings.Language = Languages.GetLanguage(args.Language);
@@ -252,6 +264,10 @@ namespace ICSharpCode.ILSpy
 		
 		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
 		{
+			if (nugetPackagesToLoad.Count > 0) {
+				LoadAssemblies(nugetPackagesToLoad, commandLineLoadedAssemblies, focusNode: false);
+				nugetPackagesToLoad.Clear();
+			}
 			if (args.NavigateTo != null) {
 				bool found = false;
 				if (args.NavigateTo.StartsWith("N:", StringComparison.Ordinal)) {
