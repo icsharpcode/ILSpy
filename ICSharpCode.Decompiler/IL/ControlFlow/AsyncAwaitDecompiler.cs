@@ -134,6 +134,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private void CleanUpBodyOfMoveNext(ILFunction function)
 		{
 			context.StepStartGroup("CleanUpBodyOfMoveNext", function);
+			// Copy-propagate stack slots holding an 'ldloca':
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.Kind == VariableKind.StackSlot && s.Variable.IsSingleDefinition && s.Value is LdLoca).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+
 			// Simplify stobj(ldloca) -> stloc
 			foreach (var stobj in function.Descendants.OfType<StObj>()) {
 				EarlyExpressionTransforms.StObjToStLoc(stobj, context);
