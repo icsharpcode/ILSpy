@@ -299,7 +299,9 @@ namespace ICSharpCode.Decompiler.Tests
 				// re-create .il file if necessary
 				CompilerResults output = null;
 				try {
-					output = Tester.CompileCSharp(csFile, cscOptions);
+					string outputFile = Path.ChangeExtension(ilFile,
+						cscOptions.HasFlag(CSharpCompilerOptions.Library) ? ".dll" : ".exe");
+					output = Tester.CompileCSharp(csFile, cscOptions, outputFile);
 					Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions);
 				} finally {
 					if (output != null)

@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					if (module.Assembly != null)
 						rd.WriteAssemblyHeader(module.Assembly);
 					output.WriteLine();
-					rd.WriteModuleHeader(module);
+					rd.WriteModuleHeader(module, skipMVID: true);
 					output.WriteLine();
 					rd.WriteModuleContents(module);
 				}
@@ -155,6 +155,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			il = Regex.Replace(il, @"^// +Microsoft .* Disassembler\. +Version.*\r?\n", "", RegexOptions.Multiline);
 			// copyright header "All rights reserved" is dependent on system language
 			il = Regex.Replace(il, @"^// +Copyright .* Microsoft.*\r?\n", "", RegexOptions.Multiline);
+			// filename may contain full path
+			il = Regex.Replace(il, @"^// WARNING: Created Win32 resource file.*\r?\n", "", RegexOptions.Multiline);
 			File.WriteAllText(outputFile, il);
 
 			return outputFile;
@@ -285,7 +287,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.UseDebug) ? " /debug" : "");
 				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-				options.CompilerOptions += " /baseaddress:0x40000";
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}

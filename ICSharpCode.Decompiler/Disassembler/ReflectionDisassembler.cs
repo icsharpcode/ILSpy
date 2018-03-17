@@ -1145,7 +1145,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteModuleHeader(ModuleDefinition module)
+		public void WriteModuleHeader(ModuleDefinition module, bool skipMVID = false)
 		{
 			if (module.HasExportedTypes) {
 				foreach (ExportedType exportedType in module.ExportedTypes) {
@@ -1163,7 +1163,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 
 			output.WriteLine(".module {0}", module.Name);
-			output.WriteLine("// MVID: {0}", module.Mvid.ToString("B").ToUpperInvariant());
+			if (!skipMVID) {
+				output.WriteLine("// MVID: {0}", module.Mvid.ToString("B").ToUpperInvariant());
+			}
 			// TODO: imagebase, file alignment, stackreserve, subsystem
 			output.WriteLine(".corflags 0x{0:x} // {1}", module.Attributes, module.Attributes.ToString());
 
