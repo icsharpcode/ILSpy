@@ -153,7 +153,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.returnType = value;
 			}
 		}
-		
+
+		public Mono.Cecil.MetadataToken MetadataToken => baseMember.MetadataToken;
+
 		public bool IsVirtual {
 			get { return baseMember.IsVirtual; }
 		}

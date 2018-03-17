@@ -27,6 +27,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IUnresolvedEntity : INamedElement, IHasAccessibility
 	{
 		/// <summary>
+		/// Gets the metadata token for this entity.
+		/// </summary>
+		/// <remarks>
+		/// The token is only valid within the context of the assembly defining this entity.
+		/// Token may be 0 if this is a generated member.
+		/// </remarks>
+		Mono.Cecil.MetadataToken MetadataToken { get; }
+
+		/// <summary>
 		/// Gets the entity type.
 		/// </summary>
 		SymbolKind SymbolKind { get; }
@@ -77,6 +86,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface IEntity : ISymbol, ICompilationProvider, INamedElement, IHasAccessibility
 	{
+		/// <summary>
+		/// Gets the metadata token for this entity.
+		/// </summary>
+		/// <remarks>
+		/// The token is only valid within the context of the assembly defining this entity.
+		/// Token may be 0 if this is a generated member.
+		/// Note: specialized members will return the token of the member definition.
+		/// </remarks>
+		Mono.Cecil.MetadataToken MetadataToken { get; }
+
 		/// <summary>
 		/// Gets the short name of the entity.
 		/// </summary>

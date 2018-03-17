@@ -39,7 +39,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.parentContext = parentContext;
 			this.Attributes = unresolved.Attributes.CreateResolvedAttributes(parentContext);
 		}
-		
+
+		public Mono.Cecil.MetadataToken MetadataToken => unresolved.MetadataToken;
+
 		public SymbolKind SymbolKind {
 			get { return unresolved.SymbolKind; }
 		}

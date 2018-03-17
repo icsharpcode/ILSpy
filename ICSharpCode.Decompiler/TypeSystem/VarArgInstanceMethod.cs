@@ -118,6 +118,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.TypeArguments; }
 		}
 
+		public Mono.Cecil.MetadataToken MetadataToken => baseMethod.MetadataToken;
+
 		public bool IsExtensionMethod {
 			get { return baseMethod.IsExtensionMethod; }
 		}

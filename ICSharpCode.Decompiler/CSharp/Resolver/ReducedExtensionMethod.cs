@@ -271,6 +271,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region IEntity implementation
 
+		public Mono.Cecil.MetadataToken MetadataToken => baseMethod.MetadataToken;
+
 		public SymbolKind SymbolKind {
 			get {
 				return baseMethod.SymbolKind;

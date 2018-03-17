@@ -111,7 +111,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IUnresolvedTypeDefinition> Parts {
 			get { return parts; }
 		}
-		
+
+		public Mono.Cecil.MetadataToken MetadataToken => parts[0].MetadataToken;
+
 		public SymbolKind SymbolKind {
 			get { return parts[0].SymbolKind; }
 		}

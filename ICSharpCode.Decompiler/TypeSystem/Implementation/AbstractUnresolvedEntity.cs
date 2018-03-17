@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		string name = string.Empty;
 		IList<IUnresolvedAttribute> attributes;
-		
+		Mono.Cecil.MetadataToken metadataToken;
+
 		// 1 byte per enum + 2 bytes for flags
 		SymbolKind symbolKind;
 		Accessibility accessibility;
@@ -119,7 +120,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			FreezableHelper.ThrowIfFrozen(this);
 		}
-		
+
+		public Mono.Cecil.MetadataToken MetadataToken {
+			get { return metadataToken; }
+			set {
+				ThrowIfFrozen();
+				metadataToken = value;
+			}
+		}
+
 		public SymbolKind SymbolKind {
 			get { return symbolKind; }
 			set {

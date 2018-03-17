@@ -841,6 +841,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(typeDefinition.Name);
 			var td = new DefaultUnresolvedTypeDefinition(typeDefinition.Namespace, name);
+			td.MetadataToken = typeDefinition.MetadataToken;
 			if (typeDefinition.HasGenericParameters)
 				InitTypeParameters(typeDefinition, td.TypeParameters);
 			return td;
@@ -1109,6 +1110,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				this.loader = loader;
 				this.cecilTypeDef = typeDefinition;
+				this.MetadataToken = typeDefinition.MetadataToken;
 				this.SymbolKind = SymbolKind.TypeDefinition;
 				this.namespaceName = typeDefinition.Namespace;
 				this.Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(typeDefinition.Name);
@@ -1695,6 +1697,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region FinishReadMember / Interning
 		void FinishReadMember(AbstractUnresolvedMember member, MemberReference cecilDefinition)
 		{
+			member.MetadataToken = cecilDefinition.MetadataToken;
 			member.ApplyInterningProvider(interningProvider);
 			member.Freeze();
 			RegisterCecilObject(member, cecilDefinition);

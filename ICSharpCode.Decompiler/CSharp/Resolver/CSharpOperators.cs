@@ -115,7 +115,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return null;
 			}
-			
+
+			public Mono.Cecil.MetadataToken MetadataToken => default(Mono.Cecil.MetadataToken);
+
 			ITypeDefinition IEntity.DeclaringTypeDefinition {
 				get { return null; }
 			}
