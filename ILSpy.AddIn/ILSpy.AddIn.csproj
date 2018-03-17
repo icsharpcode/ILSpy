@@ -40,11 +40,19 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Design" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="VSSDK.Shell.10" Version="10.0.4" />
-    <PackageReference Include="VSSDK.DTE.10" Version="10.0.4" />
+    <PackageReference Include="EnvDTE" Version="8.0.2" />
+    <PackageReference Include="EnvDTE80" Version="8.0.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="2.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.7.0" />
+    <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" Version="15.6.27413" />
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.7.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.3.25407" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta7" />
+    <PackageReference Include="VSLangProj" Version="7.0.3301" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,8 +63,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Guids.cs" />
     <Compile Include="CodeElementXmlDocKeyProvider.cs" />
+    <Compile Include="Commands\OpenCodeItemCommand.cs" />
+    <Compile Include="Commands\OpenILSpyCommand.cs" />
+    <Compile Include="Commands\OpenProjectOutputCommand.cs" />
+    <Compile Include="Commands\OpenReferenceCommand.cs" />
+    <Compile Include="Guids.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
