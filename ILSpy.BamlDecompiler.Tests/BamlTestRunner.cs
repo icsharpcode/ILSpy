@@ -14,7 +14,7 @@ using NUnit.Framework;
 
 namespace ILSpy.BamlDecompiler.Tests
 {
-	[TestFixture]
+	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class BamlTestRunner
 	{
 		[Test]
@@ -104,12 +104,17 @@ namespace ILSpy.BamlDecompiler.Tests
 		#region RunTest
 		void RunTest(string name)
 		{
-			RunTest(name, typeof(BamlTestRunner).Assembly.Location, Path.Combine("..\\..\\..\\..\\ILSpy.BamlDecompiler.Tests", name + ".xaml"));
+			RunTest(name, typeof(BamlTestRunner).Assembly.Location,
+				Path.Combine(
+					Path.GetDirectoryName(typeof(BamlTestRunner).Assembly.Location),
+					"../../../../ILSpy.BamlDecompiler.Tests", name + ".xaml"));
 		}
 
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
 			var resolver = new DefaultAssemblyResolver();
+			resolver.RemoveSearchDirectory(".");
+			resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 			var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters { AssemblyResolver = resolver, InMemory = true });
 			Resource res = assembly.MainModule.Resources.First();
 			Stream bamlStream = LoadBaml(res, name + ".baml");

@@ -35,7 +35,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		ITypeReference type = SpecialType.UnknownType;
 		IList<IUnresolvedAttribute> attributes;
 		IConstantValue defaultValue;
-		DomRegion region;
 		byte flags;
 		
 		public DefaultUnresolvedParameter()
@@ -91,14 +90,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			set {
 				FreezableHelper.ThrowIfFrozen(this);
 				defaultValue = value;
-			}
-		}
-		
-		public DomRegion Region {
-			get { return region; }
-			set {
-				FreezableHelper.ThrowIfFrozen(this);
-				region = value;
 			}
 		}
 		
@@ -169,7 +160,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// compare everything except for the IsFrozen flag
 			DefaultUnresolvedParameter p = other as DefaultUnresolvedParameter;
 			return p != null && type == p.type && name == p.name &&
-				defaultValue == p.defaultValue && region == p.region && (flags & ~1) == (p.flags & ~1) && ListEquals(attributes, p.attributes);
+				defaultValue == p.defaultValue && (flags & ~1) == (p.flags & ~1) && ListEquals(attributes, p.attributes);
 		}
 		
 		static bool ListEquals(IList<IUnresolvedAttribute> list1, IList<IUnresolvedAttribute> list2)
@@ -208,7 +199,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return new ResolvedParameterWithDefaultValue(defaultValue, context) {
 					Type = type.Resolve(context),
 					Name = name,
-					Region = region,
 					Attributes = attributes.CreateResolvedAttributes(context),
 					IsRef = this.IsRef,
 					IsOut = this.IsOut,
@@ -218,7 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var owner = context.CurrentMember as IParameterizedMember;
 				var resolvedAttributes = attributes.CreateResolvedAttributes (context);
 				bool isOptional = resolvedAttributes != null && resolvedAttributes.Any (a => IsOptionalAttribute (a.AttributeType));
-				return new DefaultParameter (type.Resolve (context), name, owner, region,
+				return new DefaultParameter (type.Resolve (context), name, owner,
 				                             resolvedAttributes, IsRef, IsOut, IsParams, isOptional);
 			}
 		}
@@ -238,8 +228,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public IParameterizedMember Owner { get { return context.CurrentMember as IParameterizedMember; } }
 			public IType Type { get; internal set; }
 			public string Name { get; internal set; }
-			public DomRegion Region { get; internal set; }
-			public IList<IAttribute> Attributes { get; internal set; }
+			public IReadOnlyList<IAttribute> Attributes { get; internal set; }
 			public bool IsRef { get; internal set; }
 			public bool IsOut { get; internal set; }
 			public bool IsParams { get; internal set; }
@@ -267,7 +256,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public ISymbolReference ToReference()
 			{
 				if (Owner == null)
-					return new ParameterReference(Type.ToTypeReference(), Name, Region, IsRef, IsOut, IsParams, true, ConstantValue);
+					return new ParameterReference(Type.ToTypeReference(), Name, IsRef, IsOut, IsParams, true, ConstantValue);
 				return new OwnedParameterReference(Owner.ToReference(), Owner.Parameters.IndexOf(this));
 			}
 		}

@@ -62,12 +62,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			/// <summary>
 			/// Gets the original member parameters (before any substitution!)
 			/// </summary>
-			public readonly IList<IParameter> Parameters;
+			public readonly IReadOnlyList<IParameter> Parameters;
 			
 			/// <summary>
 			/// Gets the original method type parameters (before any substitution!)
 			/// </summary>
-			public readonly IList<ITypeParameter> TypeParameters;
+			public readonly IReadOnlyList<ITypeParameter> TypeParameters;
 			
 			/// <summary>
 			/// Conversions applied to the arguments.
@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// all methods in base types.
 		/// </summary>
 		/// <param name="methodLists">The methods, grouped by declaring type. Base types must come first in the list.</param>
-		public void AddMethodLists(IList<MethodListWithDeclaringType> methodLists)
+		public void AddMethodLists(IReadOnlyList<MethodListWithDeclaringType> methodLists)
 		{
 			if (methodLists == null)
 				throw new ArgumentNullException("methodLists");
@@ -348,20 +348,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MapCorrespondingParameters(Candidate candidate)
 		{
 			// C# 4.0 spec: §7.5.1.1 Corresponding parameters
+			// Updated for C# 7.2 non-trailing named arguments
 			candidate.ArgumentToParameterMap = new int[arguments.Length];
-			for (int i = 0; i < arguments.Length; i++) {
+			bool hasPositionalArgument = false;
+			// go backwards, so that hasPositionalArgument tells us whether there
+			// are non-trailing named arguments
+			for (int i = arguments.Length - 1; i >= 0; i--) {
 				candidate.ArgumentToParameterMap[i] = -1;
-				if (argumentNames[i] == null) {
-					// positional argument
+				if (argumentNames[i] == null || hasPositionalArgument) {
+					hasPositionalArgument = true;
+					// positional argument or non-trailing named argument
 					if (i < candidate.ParameterTypes.Length) {
 						candidate.ArgumentToParameterMap[i] = i;
+						if (argumentNames[i] != null && argumentNames[i] != candidate.Parameters[i].Name) {
+							// non-trailing named argument must match name
+							candidate.AddError(OverloadResolutionErrors.NoParameterFoundForNamedArgument);
+						}
 					} else if (candidate.IsExpandedForm) {
 						candidate.ArgumentToParameterMap[i] = candidate.ParameterTypes.Length - 1;
+						if (argumentNames[i] != null) {
+							// can't use non-trailing named argument here
+							candidate.AddError(OverloadResolutionErrors.NoParameterFoundForNamedArgument);
+						}
 					} else {
 						candidate.AddError(OverloadResolutionErrors.TooManyPositionalArguments);
 					}
 				} else {
-					// named argument
+					// (trailing) named argument
 					for (int j = 0; j < candidate.Parameters.Count; j++) {
 						if (argumentNames[i] == candidate.Parameters[j].Name) {
 							candidate.ArgumentToParameterMap[i] = j;
@@ -387,7 +400,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 			ParameterizedType parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
-			IList<IType> classTypeArguments;
+			IReadOnlyList<IType> classTypeArguments;
 			if (parameterizedDeclaringType != null) {
 				classTypeArguments = parameterizedDeclaringType.TypeArguments;
 			} else {
@@ -429,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			readonly CSharpConversions conversions;
 			public bool ConstraintsValid = true;
 			
-			public ConstraintValidatingSubstitution(IList<IType> classTypeArguments, IList<IType> methodTypeArguments, OverloadResolution overloadResolution)
+			public ConstraintValidatingSubstitution(IReadOnlyList<IType> classTypeArguments, IReadOnlyList<IType> methodTypeArguments, OverloadResolution overloadResolution)
 				: base(classTypeArguments, methodTypeArguments)
 			{
 				this.conversions = overloadResolution.conversions;
@@ -443,7 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					ParameterizedType newParameterizedType = newType as ParameterizedType;
 					if (newParameterizedType != null) {
 						// C# 4.0 spec: §4.4.4 Satisfying constraints
-						var typeParameters = newParameterizedType.GetDefinition().TypeParameters;
+						var typeParameters = newParameterizedType.TypeParameters;
 						var substitution = newParameterizedType.GetSubstitution();
 						for (int i = 0; i < typeParameters.Count; i++) {
 							if (!ValidateConstraints(typeParameters[i], newParameterizedType.GetTypeArgument(i), substitution, conversions)) {
@@ -803,7 +816,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get { return bestCandidateAmbiguousWith != null; }
 		}
 		
-		public IList<IType> InferredTypeArguments {
+		public IReadOnlyList<IType> InferredTypeArguments {
 			get {
 				if (bestCandidate != null && bestCandidate.InferredTypes != null)
 					return bestCandidate.InferredTypes;

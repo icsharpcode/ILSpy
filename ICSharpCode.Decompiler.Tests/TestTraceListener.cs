@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
-using NUnit.Core;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -25,14 +24,13 @@ namespace ICSharpCode.Decompiler.Tests
 	[SetUpFixture]
 	public class TestTraceListener : DefaultTraceListener
 	{
-		[SetUp]
+		[OneTimeSetUp]
 		public void RunBeforeAnyTests()
 		{
 			Debug.Listeners.Insert(0, this);
 		}
 		
-		
-		[TearDown]
+		[OneTimeTearDown]
 		public void RunAfterAnyTests()
 		{
 			Debug.Listeners.Remove(this);

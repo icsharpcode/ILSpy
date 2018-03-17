@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IMethod>.Instance;
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMethod>.Instance;
 		}

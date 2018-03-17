@@ -71,6 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.ShowParameterNames = true;
 			this.ShowConstantValues = true;
 			this.UseAliases = true;
+			this.UseSpecialConstants = true;
 		}
 		
 		/// <summary>
@@ -171,6 +172,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool UseAliases { get; set; }
+
+		/// <summary>
+		/// Controls if constants like <c>int.MaxValue</c> are converted to a <see cref="MemberReferenceExpression"/> or <see cref="PrimitiveExpression" />.
+		/// The default value is <c>true</c>.
+		/// </summary>
+		public bool UseSpecialConstants { get; set; }
 		#endregion
 		
 		#region Convert Type
@@ -226,10 +233,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			ParameterizedType pt = type as ParameterizedType;
 			if (pt != null) {
-				if (pt.Name == "Nullable" && pt.Namespace == "System" && pt.TypeParameterCount == 1) {
+				if (pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
-				return ConvertTypeHelper(pt.GetDefinition(), pt.TypeArguments);
+				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
 			ITypeDefinition typeDef = type as ITypeDefinition;
 			if (typeDef != null) {
@@ -247,22 +254,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return new SimpleType(type.Name);
 		}
 		
-		AstType ConvertTypeHelper(ITypeDefinition typeDef, IList<IType> typeArguments)
+		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
-			Debug.Assert(typeArguments.Count >= typeDef.TypeParameterCount);
-			
-			string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
-			if (keyword != null)
-				return new PrimitiveType(keyword);
+			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
+			Debug.Assert(genericType is ITypeDefinition || genericType.Kind == TypeKind.Unknown);
+
+			ITypeDefinition typeDef = genericType as ITypeDefinition;
+			if (typeDef != null) {
+				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
+				if (keyword != null)
+					return new PrimitiveType(keyword);
+			}
 			
 			// The number of type parameters belonging to outer classes
-			int outerTypeParameterCount;
-			if (typeDef.DeclaringType != null)
-				outerTypeParameterCount = typeDef.DeclaringType.TypeParameterCount;
-			else
-				outerTypeParameterCount = 0;
+			int outerTypeParameterCount = genericType.DeclaringType?.TypeParameterCount ?? 0;
 			
-			if (resolver != null) {
+			if (resolver != null && typeDef != null) {
 				// Look if there's an alias to the target type
 				if (UseAliases) {
 					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
@@ -275,54 +282,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 				}
 				
-				IList<IType> localTypeArguments;
+				IType[] localTypeArguments;
 				if (typeDef.TypeParameterCount > outerTypeParameterCount) {
 					localTypeArguments = new IType[typeDef.TypeParameterCount - outerTypeParameterCount];
-					for (int i = 0; i < localTypeArguments.Count; i++) {
+					for (int i = 0; i < localTypeArguments.Length; i++) {
 						localTypeArguments[i] = typeArguments[outerTypeParameterCount + i];
 					}
 				} else {
-					localTypeArguments = EmptyList<IType>.Instance;
+					localTypeArguments = Empty<IType>.Array;
 				}
 				ResolveResult rr = resolver.LookupSimpleNameOrTypeName(typeDef.Name, localTypeArguments, NameLookupMode);
 				TypeResolveResult trr = rr as TypeResolveResult;
-				if (trr != null || (localTypeArguments.Count == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
+				if (trr != null || (localTypeArguments.Length == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
 						SimpleType shortResult = new SimpleType(typeDef.Name);
-						AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 						return shortResult;
 					}
 				}
 			}
 			
-			if (AlwaysUseShortTypeNames) {
-				var shortResult = new SimpleType(typeDef.Name);
-				AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
+				var shortResult = new SimpleType(genericType.Name);
+				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				return shortResult;
 			}
 			MemberType result = new MemberType();
-			if (typeDef.DeclaringTypeDefinition != null) {
+			if (genericType.DeclaringType != null) {
 				// Handle nested types
-				result.Target = ConvertTypeHelper(typeDef.DeclaringTypeDefinition, typeArguments);
+				result.Target = ConvertTypeHelper(genericType.DeclaringType, typeArguments);
 			} else {
 				// Handle top-level types
-				if (string.IsNullOrEmpty(typeDef.Namespace)) {
+				if (string.IsNullOrEmpty(genericType.Namespace)) {
 					result.Target = new SimpleType("global");
 					result.IsDoubleColon = true;
 				} else {
-					result.Target = ConvertNamespace(typeDef.Namespace);
+					result.Target = ConvertNamespace(genericType.Namespace);
 				}
 			}
-			result.MemberName = typeDef.Name;
-			AddTypeArguments(result, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+			result.MemberName = genericType.Name;
+			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 			return result;
 		}
 		
 		/// <summary>
 		/// Gets whether 'type' is the same as 'typeDef' parameterized with the given type arguments.
 		/// </summary>
-		bool TypeMatches(IType type, ITypeDefinition typeDef, IList<IType> typeArguments)
+		bool TypeMatches(IType type, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
 		{
 			if (typeDef.TypeParameterCount == 0) {
 				return typeDef.Equals(type);
@@ -341,21 +348,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return true;
 			}
 		}
-		
+
 		/// <summary>
 		/// Adds type arguments to the result type.
 		/// </summary>
 		/// <param name="result">The result AST node (a SimpleType or MemberType)</param>
-		/// <param name="typeDef">The type definition that owns the type parameters</param>
+		/// <param name="typeParameters">The type parameters</param>
 		/// <param name="typeArguments">The list of type arguments</param>
 		/// <param name="startIndex">Index of first type argument to add</param>
 		/// <param name="endIndex">Index after last type argument to add</param>
-		void AddTypeArguments(AstType result, ITypeDefinition typeDef, IList<IType> typeArguments, int startIndex, int endIndex)
+		void AddTypeArguments(AstType result, IReadOnlyList<ITypeParameter> typeParameters, IReadOnlyList<IType> typeArguments, int startIndex, int endIndex)
 		{
-			Debug.Assert(endIndex <= typeDef.TypeParameterCount);
+			Debug.Assert(endIndex <= typeParameters.Count);
 			for (int i = startIndex; i < endIndex; i++) {
 				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument) {
-					result.AddChild(new SimpleType(typeDef.TypeParameters[i].Name), Roles.TypeArgument);
+					result.AddChild(new SimpleType(typeParameters[i].Name), Roles.TypeArgument);
 				} else {
 					result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
 				}
@@ -519,18 +526,129 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
+				if (IsSpecialConstant(type, constantValue, out var expr))
+					return expr;
 				if (type.IsCSharpSmallIntegerType()) { 
 					// C# does not have integer literals of small integer types,
 					// use `int` literal instead.
 					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
 					type = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
 				}
-				var expr = new PrimitiveExpression(constantValue);
+				expr = new PrimitiveExpression(constantValue);
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
 				return expr;
 			}
 		}
+
+		bool IsSpecialConstant(IType type, object constant, out Expression expression)
+		{
+			expression = null;
+			if (!specialConstants.TryGetValue(constant, out var info))
+				return false;
+			if (!UseSpecialConstants) {
+				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
+				// Use an equivalent arithmetic expression instead.
+				var resolver = this.resolver ?? new CSharpResolver(type.GetDefinition().Compilation);
+				if (info.Type == KnownTypeCode.Double) {
+					switch ((double)constant) {
+						case double.NegativeInfinity: // (-1.0 / 0.0)
+							var left = new PrimitiveExpression(-1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0));
+							var right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case double.PositiveInfinity: // (1.0 / 0.0)
+							left = new PrimitiveExpression(1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case double.NaN: // (0.0 / 0.0)
+							left = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+					}
+				}
+				if (info.Type == KnownTypeCode.Single) {
+					switch ((float)constant) {
+						case float.NegativeInfinity: // (-1.0f / 0.0f)
+							var left = new PrimitiveExpression(-1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0f));
+							var right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case float.PositiveInfinity: // (1.0f / 0.0f)
+							left = new PrimitiveExpression(1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+						case float.NaN: // (0.0f / 0.0f)
+							left = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+							return true;
+					}
+				}
+				return false;
+			}
+
+			expression = new TypeReferenceExpression(ConvertType(type));
+
+			if (AddResolveResultAnnotations)
+				expression.AddAnnotation(new TypeResolveResult(type));
+
+			expression = new MemberReferenceExpression(expression, info.Member);
+
+			if (AddResolveResultAnnotations)
+				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), type.GetFields(p => p.Name == info.Member).Single()));
+
+			return true;
+		}
+
+		Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+			// byte:
+			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
+			// sbyte:
+			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue") },
+			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue") },
+			// short:
+			{ short.MinValue, (KnownTypeCode.Int16, "MinValue") },
+			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue") },
+			// ushort:
+			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue") },
+			// int:
+			{ int.MinValue, (KnownTypeCode.Int32, "MinValue") },
+			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue") },
+			// uint:
+			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue") },
+			// long:
+			{ long.MinValue, (KnownTypeCode.Int64, "MinValue") },
+			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue") },
+			// ulong:
+			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue") },
+			// float:
+			{ float.NaN, (KnownTypeCode.Single, "NaN") },
+			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity") },
+			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity") },
+			{ float.MinValue, (KnownTypeCode.Single, "MinValue") },
+			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue") },
+			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon") },
+			// double:
+			{ double.NaN, (KnownTypeCode.Double, "NaN") },
+			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity") },
+			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity") },
+			{ double.MinValue, (KnownTypeCode.Double, "MinValue") },
+			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue") },
+			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon") },
+			// decimal:
+			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue") },
+			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue") },
+		};
 
 		bool IsFlagsEnum(ITypeDefinition type)
 		{

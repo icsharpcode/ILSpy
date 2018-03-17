@@ -30,26 +30,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class DefaultAttribute : IAttribute
 	{
 		readonly IType attributeType;
-		readonly IList<ResolveResult> positionalArguments;
-		readonly IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
-		readonly DomRegion region;
+		readonly IReadOnlyList<ResolveResult> positionalArguments;
+		readonly IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 		volatile IMethod constructor;
 		
-		public DefaultAttribute(IType attributeType, IList<ResolveResult> positionalArguments = null,
-		                        IList<KeyValuePair<IMember, ResolveResult>> namedArguments = null,
-		                        DomRegion region = default(DomRegion))
+		public DefaultAttribute(IType attributeType, IReadOnlyList<ResolveResult> positionalArguments = null,
+								IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments = null)
 		{
 			if (attributeType == null)
 				throw new ArgumentNullException("attributeType");
 			this.attributeType = attributeType;
 			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
 			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
-			this.region = region;
 		}
 		
-		public DefaultAttribute(IMethod constructor, IList<ResolveResult> positionalArguments = null,
-		                        IList<KeyValuePair<IMember, ResolveResult>> namedArguments = null,
-		                        DomRegion region = default(DomRegion))
+		public DefaultAttribute(IMethod constructor, IReadOnlyList<ResolveResult> positionalArguments = null,
+								IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments = null)
 		{
 			if (constructor == null)
 				throw new ArgumentNullException("constructor");
@@ -57,7 +53,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributeType = constructor.DeclaringType ?? SpecialType.UnknownType;
 			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
 			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
-			this.region = region;
 			if (this.positionalArguments.Count != constructor.Parameters.Count) {
 				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
 			}
@@ -65,10 +60,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IType AttributeType {
 			get { return attributeType; }
-		}
-		
-		public DomRegion Region {
-			get { return region; }
 		}
 		
 		public IMethod Constructor {
@@ -87,11 +78,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IList<ResolveResult> PositionalArguments {
+		public IReadOnlyList<ResolveResult> PositionalArguments {
 			get { return positionalArguments; }
 		}
 		
-		public IList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
+		public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
 			get { return namedArguments; }
 		}
 	}

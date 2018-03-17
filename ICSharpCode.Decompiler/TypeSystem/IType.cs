@@ -82,18 +82,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int TypeParameterCount { get; }
 
 		/// <summary>
+		/// Gets the type parameters.
+		/// Returns an empty list if this type is not generic.
+		/// </summary>
+		IReadOnlyList<ITypeParameter> TypeParameters { get; }
+
+		/// <summary>
 		/// Gets the type arguments passed to this type.
 		/// If this type is a generic type definition that is not parameterized, this property returns the type parameters,
 		/// as if the type was parameterized with its own type arguments (<c>class C&lt;T&gt; { C&lt;T&gt; field; }</c>).
-		/// 
-		/// NOTE: The type will change to IReadOnlyList&lt;IType&gt; in future versions.
 		/// </summary>
-		IList<IType> TypeArguments { get; }
-
-		/// <summary>
-		/// If true the type represents an instance of a generic type.
-		/// </summary>
-		bool IsParameterized { get; }
+		IReadOnlyList<IType> TypeArguments { get; }
 
 		/// <summary>
 		/// Calls ITypeVisitor.Visit for this type.
@@ -138,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and also substitutes method type parameters with the specified method type arguments.
 		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.
 		/// </summary>
-		TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments);
+		TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments);
 
 		
 		/// <summary>
@@ -197,7 +196,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and thus 'leaked' to the caller in the same way the GetMembers() method does not specialize members
 		/// from an <see cref="ITypeDefinition"/> and 'leaks' type parameters in member signatures.
 		/// </remarks>
-		IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None);
+		IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None);
 		
 		/// <summary>
 		/// Gets all instance constructors for this type.
@@ -261,7 +260,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// and the other overload's remarks about ambiguous signatures apply here as well.
 		/// </para>
 		/// </remarks>
-		IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
+		IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None);
 		
 		/// <summary>
 		/// Gets all properties that can be called on this type.

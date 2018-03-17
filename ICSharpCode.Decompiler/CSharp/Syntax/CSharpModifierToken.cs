@@ -25,7 +25,7 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -61,20 +61,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		// Not worth using a dictionary for such few elements.
 		// This table is sorted in the order that modifiers should be output when generating code.
-		static readonly Modifiers[] allModifiers = {
+		public static ImmutableArray<Modifiers> AllModifiers { get; } = ImmutableArray.Create(
 			Modifiers.Public, Modifiers.Private, Modifiers.Protected, Modifiers.Internal,
 			Modifiers.New,
 			Modifiers.Unsafe,
 			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,
 			Modifiers.Readonly, Modifiers.Volatile,
+			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
 			Modifiers.Async,
 			Modifiers.Any
-		};
-		
-		public static IEnumerable<Modifiers> AllModifiers {
-			get { return allModifiers; }
-		}
+		);
 		
 		public CSharpModifierToken (TextLocation location, Modifiers modifier) : base (location, null)
 		{
@@ -118,6 +115,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "unsafe";
 				case Modifiers.Async:
 					return "async";
+				case Modifiers.Ref:
+					return "ref";
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any";
@@ -163,6 +162,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "unsafe".Length;
 				case Modifiers.Async:
 					return "async".Length;
+				case Modifiers.Ref:
+					return "ref".Length;
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any".Length;
@@ -208,6 +209,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return Modifiers.Unsafe;
 				case "async":
 					return Modifiers.Async;
+				case "ref":
+					return Modifiers.Ref;
 				case "any":
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return Modifiers.Any;

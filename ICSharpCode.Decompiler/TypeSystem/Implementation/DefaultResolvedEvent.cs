@@ -60,8 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)
-			    || DeclaringTypeDefinition == null
-			    || DeclaringTypeDefinition.TypeParameterCount == 0)
+			    || DeclaringType.TypeParameterCount == 0)
 			{
 				return this;
 			}

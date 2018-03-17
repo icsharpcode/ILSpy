@@ -609,7 +609,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return "Test";
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public static void SimpleDictInitializer()
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {

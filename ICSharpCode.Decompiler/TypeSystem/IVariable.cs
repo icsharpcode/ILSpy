@@ -29,11 +29,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		new string Name { get; }
 		
 		/// <summary>
-		/// Gets the declaration region of the variable.
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
 		/// Gets the type of the variable.
 		/// </summary>
 		IType Type { get; }

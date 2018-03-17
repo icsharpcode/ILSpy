@@ -76,6 +76,8 @@ namespace ICSharpCode.Decompiler.Semantics
 						return new PointerType(member.ReturnType);
 					break;
 			}
+			if (member.ReturnType.Kind == TypeKind.ByReference)
+				return ((ByReferenceType)member.ReturnType).ElementType;
 			return member.ReturnType;
 		}
 		
@@ -136,11 +138,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, member);
-		}
-		
-		public override DomRegion GetDefinitionRegion()
-		{
-			return member.Region;
 		}
 	}
 }

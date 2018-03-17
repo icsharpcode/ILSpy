@@ -78,9 +78,13 @@
 				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 			</CheckBox>
 			<Separator />
-			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100"
+			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}"
 			          SelectedItem="{Binding FilterSettings.Language}"/>
+			<ComboBox Name="languageVersionComboBox" DisplayMemberPath="DisplayName" Width="100" MaxDropDownHeight="Auto"
+			          Visibility="{Binding SelectedItem.HasLanguageVersions, ElementName=languageComboBox, Converter={StaticResource BooleanToVisibilityConverter}}"
+			          ItemsSource="{Binding SelectedItem.LanguageVersions, ElementName=languageComboBox, UpdateSourceTrigger=PropertyChanged}"
+			          SelectedItem="{Binding FilterSettings.LanguageVersion, UpdateSourceTrigger=PropertyChanged}"/>
 		</ToolBar>
 		<!-- Status bar -->
 		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">

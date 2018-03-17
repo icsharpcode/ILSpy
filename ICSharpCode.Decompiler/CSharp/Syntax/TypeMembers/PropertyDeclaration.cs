@@ -34,7 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole SetKeywordRole = new TokenRole ("set");
 		public static readonly Role<Accessor> GetterRole = new Role<Accessor>("Getter", Accessor.Null);
 		public static readonly Role<Accessor> SetterRole = new Role<Accessor>("Setter", Accessor.Null);
-		
+		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }
 		}
@@ -75,6 +76,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Expression, value); }
 		}
 
+		public Expression ExpressionBody {
+			get { return GetChildByRole(ExpressionBodyRole); }
+			set { SetChildByRole(ExpressionBodyRole, value); }
+		}
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitPropertyDeclaration (this);
@@ -97,7 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
 				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
+				&& this.Initializer.DoMatch(o.Initializer, match)
+				&& this.ExpressionBody.DoMatch(o.ExpressionBody, match);
 		}
 	}
 }

@@ -41,6 +41,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (T)(BaseClass)d;
 		}
 
+		public TTarget GenericAsGeneric<TSource, TTarget>(TSource source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? GenericAsNullable<TSource, TTarget>(TSource source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
+		public TTarget ObjectAsGeneric<TTarget>(object source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? ObjectAsNullable<TTarget>(object source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
+		public TTarget IntAsGeneric<TTarget>(int source) where TTarget : class
+		{
+			return source as TTarget;
+		}
+
+		public TTarget? IntAsNullable<TTarget>(int source) where TTarget : struct
+		{
+			return source as TTarget?;
+		}
+
 		public T New<T>() where T : new()
 		{
 			return new T();
@@ -49,6 +79,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public bool IsNull<T>(T t)
 		{
 			return t == null;
+		}
+
+		public T[] NewArray<T>(int size)
+		{
+			return new T[size];
+		}
+
+		public T[,] NewArray<T>(int size1, int size2)
+		{
+			return new T[size1, size2];
 		}
 	}
 }

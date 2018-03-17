@@ -74,23 +74,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
 		
-		public bool IsParameterized {
-			get { return isParameterized; }
-		}
-		
-		public IList<IUnresolvedMethod> Parts {
+		public IReadOnlyList<IUnresolvedMethod> Parts {
 			get { return methodDefinition.Parts; }
 		}
 		
-		public IList<IAttribute> ReturnTypeAttributes {
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get { return methodDefinition.ReturnTypeAttributes; }
 		}
 		
-		public IList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return specializedTypeParameters ?? methodDefinition.TypeParameters;
 			}
@@ -238,7 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			internal TypeVisitor substitution;
 			
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
-				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes, baseTp.Region)
+				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.

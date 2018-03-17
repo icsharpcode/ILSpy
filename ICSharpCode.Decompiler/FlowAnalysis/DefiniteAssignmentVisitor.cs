@@ -183,7 +183,46 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitLdLoca(LdLoca inst)
 		{
+			// A variable needs to be initialized before we can take it by reference.
+			// The exception is if the variable is passed to an out parameter (handled in VisitCall).
 			EnsureInitialized(inst.Variable);
+		}
+
+		protected internal override void VisitCall(Call inst)
+		{
+			HandleCall(inst);
+		}
+
+		protected internal override void VisitCallVirt(CallVirt inst)
+		{
+			HandleCall(inst);
+		}
+
+		protected internal override void VisitNewObj(NewObj inst)
+		{
+			HandleCall(inst);
+		}
+
+		void HandleCall(CallInstruction call)
+		{
+			bool hasOutArgs = false;
+			foreach (var arg in call.Arguments) {
+				if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
+					// Visiting ldloca would require the variable to be initialized,
+					// but we don't need out arguments to be initialized.
+					hasOutArgs = true;
+				} else {
+					arg.AcceptVisitor(this);
+				}
+			}
+			// Mark out arguments as initialized, but only after the whole call:
+			if (hasOutArgs) {
+				foreach (var arg in call.Arguments) {
+					if (arg.MatchLdLoca(out var v) && call.GetParameter(arg.ChildIndex)?.IsOut == true) {
+						HandleStore(v);
+					}
+				}
+			}
 		}
 	}
 }

@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public class DefaultResolvedProperty : AbstractResolvedMember, IProperty
 	{
 		protected new readonly IUnresolvedProperty unresolved;
-		readonly IList<IParameter> parameters;
+		readonly IReadOnlyList<IParameter> parameters;
 		IMethod getter;
 		IMethod setter;
 		const Accessibility InvalidAccessibility = (Accessibility)0xff;
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.parameters = unresolved.Parameters.CreateResolvedParameters(context);
 		}
 		
-		public IList<IParameter> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get { return parameters; }
 		}
 		
@@ -100,8 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution)
-			    || DeclaringTypeDefinition == null
-			    || DeclaringTypeDefinition.TypeParameterCount == 0)
+			    || DeclaringType.TypeParameterCount == 0)
 			{
 				return this;
 			}

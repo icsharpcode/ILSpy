@@ -132,11 +132,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This property never returns <c>null</c>.
 		/// </summary>
 		IType ReturnType { get; }
-		
+
 		/// <summary>
 		/// Gets the interface members implemented by this member (both implicitly and explicitly).
 		/// </summary>
-		IList<IMember> ImplementedInterfaceMembers { get; }
+		IReadOnlyList<IMember> ImplementedInterfaceMembers { get; }
 		
 		/// <summary>
 		/// Gets whether this member is explicitly implementing an interface.

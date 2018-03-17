@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-#if !LEGACY_CSC
+#if CS60
 using System.IO;
 #endif
 using System.Threading;
@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public bool ConditionalReturnInThrow()
 		{
 			try {
-				if (this.B(0)) {
-					return this.B(1);
+				if (B(0)) {
+					return B(1);
 				}
 			} catch {
 			}
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			try {
 				Console.WriteLine("Try");
-				return this.B(new Random().Next());
+				return B(new Random().Next());
 			} catch (Exception) {
 				Console.WriteLine("CatchException");
 			}
@@ -57,19 +57,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			try {
 				Console.WriteLine("Try");
-				return this.B(new Random().Next());
+				return B(new Random().Next());
 			} catch (Exception ex) {
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public bool SimpleTryCatchExceptionWithNameAndCondition()
 		{
 			try {
 				Console.WriteLine("Try");
-				return this.B(new Random().Next());
+				return B(new Random().Next());
 			} catch (Exception ex) when (ex.Message.Contains("test")) {
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			try {
 				Console.WriteLine("Try");
-				return this.B(new Random().Next());
+				return B(new Random().Next());
 			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			try {
 				Console.WriteLine("Try");
-				return await this.T();
+				return await T();
 			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}

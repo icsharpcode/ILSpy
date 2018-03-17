@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -29,6 +30,36 @@ using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
+	public struct LanguageVersion : IEquatable<LanguageVersion>
+	{
+		public string Version { get; }
+		public string DisplayName { get; }
+
+		public LanguageVersion(string version, string name = null)
+		{
+			this.Version = version ?? "";
+			this.DisplayName = name ?? version.ToString();
+		}
+
+		public bool Equals(LanguageVersion other)
+		{
+			return other.Version == this.Version && other.DisplayName == this.DisplayName;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is LanguageVersion version && Equals(version);
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(982451629 * Version.GetHashCode() + 982451653 * DisplayName.GetHashCode());
+		}
+
+		public static bool operator ==(LanguageVersion lhs, LanguageVersion rhs) => lhs.Equals(rhs);
+		public static bool operator !=(LanguageVersion lhs, LanguageVersion rhs) => !lhs.Equals(rhs);
+	}
+
 	/// <summary>
 	/// Base class for language-specific decompiler implementations.
 	/// </summary>
@@ -48,6 +79,12 @@ namespace ICSharpCode.ILSpy
 		{
 			get { return null; }
 		}
+
+		public virtual IReadOnlyList<LanguageVersion> LanguageVersions {
+			get { return EmptyList<LanguageVersion>.Instance; }
+		}
+
+		public bool HasLanguageVersions => LanguageVersions.Count > 0;
 
 		/// <summary>
 		/// Gets the syntax highlighting used for this language.

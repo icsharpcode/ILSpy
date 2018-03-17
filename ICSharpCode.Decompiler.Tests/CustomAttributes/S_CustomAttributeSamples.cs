@@ -28,7 +28,7 @@ namespace ParameterLessAttributeUsage
 	[Flags]
 	public enum EnumWithFlagsAttribute
 	{
-		None = 0
+		None = 0x0
 	}
 }
 //$$ AttributeWithEnumArgument

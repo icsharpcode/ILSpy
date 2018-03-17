@@ -232,6 +232,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			readonly FileStream fs;
 			readonly Decoder decoder;
 			int currentLine = 1;
+			char prevChar = '\0';
 			
 			// buffers for use with Decoder:
 			byte[] input = new byte[1];
@@ -255,8 +256,10 @@ namespace ICSharpCode.Decompiler.Documentation
 					input[0] = (byte)b;
 					decoder.Convert(input, 0, 1, output, 0, 1, false, out bytesUsed, out charsUsed, out completed);
 					Debug.Assert(bytesUsed == 1);
-					if (charsUsed == 1 && output[0] == '\n') {
-						currentLine++;
+					if (charsUsed == 1) {
+						if ((prevChar != '\r' && output[0] == '\n') || output[0] == '\r')
+							currentLine++;
+						prevChar = output[0];
 					}
 				}
 				return checked((int)fs.Position);

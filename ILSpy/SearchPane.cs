@@ -61,6 +61,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Property" });
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
+			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Metadata Token" });
 			searchModeComboBox.SelectedIndex = (int)MainWindow.Instance.SessionSettings.SelectedSearchMode;
 			searchModeComboBox.SelectionChanged += (sender, e) => MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			ContextMenuProvider.Add(listBox);
@@ -297,6 +298,9 @@ namespace ICSharpCode.ILSpy
 
 					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
 						return new LiteralSearchStrategy(terms[0].Substring(2));
+
+					if (terms[0].StartsWith("@", StringComparison.Ordinal))
+						return new MetadataTokenSearchStrategy(terms[0].Substring(1));
 				}
 
 				switch (mode)
@@ -317,6 +321,8 @@ namespace ICSharpCode.ILSpy
 						return new MemberSearchStrategy(terms, MemberSearchKind.Property);
 					case SearchMode.Event:
 						return new MemberSearchStrategy(terms, MemberSearchKind.Event);
+					case SearchMode.Token:
+						return new MetadataTokenSearchStrategy(terms);
 				}
 
 				return null;
@@ -377,6 +383,7 @@ namespace ICSharpCode.ILSpy
 		Field,
 		Property,
 		Event,
-		Literal
+		Literal,
+		Token
 	}
 }

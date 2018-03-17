@@ -33,5 +33,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType Resolve(TypeReference typeReference);
 		IField Resolve(FieldReference fieldReference);
 		IMethod Resolve(MethodReference methodReference);
+
+		/// <summary>
+		/// Gets a type system instance that automatically specializes the results
+		/// of each Resolve() call with the provided substitution.
+		/// </summary>
+		IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution);
 	}
 }

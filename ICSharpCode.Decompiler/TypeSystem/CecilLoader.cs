@@ -93,17 +93,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// the callback may be invoked concurrently on multiple threads.
 		/// </remarks>
 		public Action<IUnresolvedEntity, EntityHandle> OnEntityLoaded { get; set; }
-		
-		/// <summary>
-		/// Gets a value indicating whether this instance stores references to the cecil objects.
-		/// </summary>
-		/// <value>
-		/// <c>true</c> if this instance has references to the cecil objects; otherwise, <c>false</c>.
-		/// </value>
-		public bool HasCecilReferences { get { return typeSystemTranslationTable != null; } }
-		
+
 		bool shortenInterfaceImplNames = true;
-		
+
 		/// <summary>
 		/// Specifies whether method names of explicit interface-implementations should be shortened.
 		/// </summary>
@@ -120,21 +112,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		MetadataReader currentModule;
 		DefaultUnresolvedAssembly currentAssembly;
-		
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MetadataLoader"/> class.
 		/// </summary>
 		public MetadataLoader()
 		{
 		}
-		
+
 		/// <summary>
 		/// Creates a nested CecilLoader for lazy-loading.
 		/// </summary>
 		private MetadataLoader(MetadataLoader loader)
 		{
 			// use a shared typeSystemTranslationTable
-			this.typeSystemTranslationTable = loader.typeSystemTranslationTable;
 			this.IncludeInternalMembers = loader.IncludeInternalMembers;
 			this.LazyLoad = loader.LazyLoad;
 			this.OnEntityLoaded = loader.OnEntityLoaded;
@@ -244,7 +235,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.currentModule = null;
 			return result;
 		}
-		
+
 		/// <summary>
 		/// Sets the current module.
 		/// This causes ReadTypeReference() to use <see cref="DefaultAssemblyReference.CurrentAssembly"/> for references
@@ -254,7 +245,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			this.currentModule = module;
 		}
-		
+
 		/// <summary>
 		/// Loads a type from Cecil.
 		/// </summary>
@@ -269,7 +260,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return td;
 		}
 		#endregion
-		
+
 		#region Load Assembly From Disk
 		public IUnresolvedAssembly LoadAssemblyFile(string fileName)
 		{
@@ -279,7 +270,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return LoadModule(module.GetMetadataReader());
 		}
 		#endregion
-		
+
 		#region Read Type Reference
 		/// <summary>
 		/// Reads a type reference.
@@ -288,10 +279,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// a type system type reference.</param>
 		/// <param name="typeAttributes">Attributes associated with the Cecil type reference.
 		/// This is used to support the 'dynamic' type.</param>
-		public ITypeReference ReadTypeReference(EntityHandle type, CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
+		/// <param name="isFromSignature">Whether this TypeReference is from a context where
+		/// IsValueType is set correctly.</param>
+		public ITypeReference ReadTypeReference(EntityHandle type, CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection), bool isFromSignature = false)
 		{
 			int typeIndex = 0;
-			return CreateType(type, typeAttributes, ref typeIndex);
+			return CreateType(type, typeAttributes, ref typeIndex, isFromSignature);
 		}
 
 		class DynamicTypeVisitor : TypeVisitor
@@ -302,7 +295,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		
-		ITypeReference CreateType(EntityHandle type, CustomAttributeHandleCollection typeAttributes, ref int typeIndex)
+		ITypeReference CreateType(EntityHandle type, CustomAttributeHandleCollection typeAttributes, ref int typeIndex, bool isFromSignature)
 		{
 			ITypeReference CreateTypeReference(TypeReferenceHandle handle)
 			{
@@ -323,6 +316,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return new DefaultUnresolvedTypeDefinition(type.GetFullTypeName(currentModule).ReflectionName);
 				default:
 					throw new NotSupportedException();
+			}
+		}
+
+		sealed class TypeDefTokenTypeReference : ITypeReference
+		{
+			readonly EntityHandle token;
+
+			public TypeDefTokenTypeReference(EntityHandle token)
+			{
+				if (token.Kind != HandleKind.TypeDefinition)
+					throw new ArgumentException(nameof(token), "must be TypeDef token");
+				this.token = token;
+			}
+
+			public IType Resolve(ITypeResolveContext context)
+			{
+				ITypeDefinition td = context.CurrentAssembly.ResolveTypeDefToken(token);
+				if (td != null)
+					return td;
+				return SpecialType.UnknownType;
 			}
 		}
 		#endregion
@@ -738,6 +751,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(currentModule.GetString(typeDefinition.Name));
 			var td = new DefaultUnresolvedTypeDefinition(currentModule.GetString(typeDefinition.Namespace), name);
+			//td.MetadataToken = ...
 			InitTypeParameters(currentModule, typeDefinition, td.TypeParameters);
 			return td;
 		}
@@ -829,6 +843,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						name = name.Substring(pos + 1);
 					name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name);
 					var nestedType = new DefaultUnresolvedTypeDefinition(declaringTypeDefinition, name);
+					nestedType.MetadataToken = h;
 					InitTypeParameters(currentModule, nestedTypeDef, nestedType.TypeParameters);
 					nestedTypes.Add(nestedType);
 					InitTypeDefinition(h, nestedType);
@@ -987,7 +1002,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// loader + cecilTypeDef, used for lazy-loading; and set to null after lazy loading is complete
 			readonly MetadataLoader loader;
 			readonly MetadataReader module;
-			readonly TypeDefinitionHandle cecilTypeDef;
 			
 			readonly string namespaceName;
 			readonly TypeKind kind;
@@ -1001,7 +1015,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			public LazySRMTypeDefinition(MetadataLoader loader, MetadataReader module, TypeDefinitionHandle typeDefinition)
 			{
 				this.loader = loader;
-				this.cecilTypeDef = typeDefinition;
+				this.MetadataToken = typeDefinition;
 				this.SymbolKind = SymbolKind.TypeDefinition;
 				var td = module.GetTypeDefinition(typeDefinition);
 				this.namespaceName = module.GetString(td.Namespace);
@@ -1059,7 +1073,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				lock (loader.currentModule) {
 					var result = new List<ITypeReference>();
-					loader.InitBaseTypes(cecilTypeDef, result);
+					loader.InitBaseTypes((TypeDefinitionHandle)MetadataToken, result);
 					return FreezableHelper.FreezeList(result);
 				}
 			}
@@ -1079,7 +1093,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				lock (loader.currentModule) {
 					var result = new List<IUnresolvedTypeDefinition>();
-					loader.InitNestedTypes(cecilTypeDef, this, result);
+					loader.InitNestedTypes((TypeDefinitionHandle)MetadataToken, this, result);
 					return FreezableHelper.FreezeList(result);
 				}
 			}
@@ -1101,7 +1115,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (this.members != null)
 						return this.members;
 					var result = new List<IUnresolvedMember>();
-					var td = module.GetTypeDefinition(cecilTypeDef);
+					var td = module.GetTypeDefinition((TypeDefinitionHandle)MetadataToken);
 					loader.InitMembers(td, this, result);
 					return FreezableHelper.FreezeList(result);
 				}
@@ -1673,6 +1687,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region FinishReadMember / Interning
 		void FinishReadMember(AbstractUnresolvedMember member, EntityHandle cecilDefinition)
 		{
+			member.MetadataToken = cecilDefinition;
 			member.ApplyInterningProvider(interningProvider);
 			member.Freeze();
 			RegisterCecilObject(member, cecilDefinition);
@@ -1680,80 +1695,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		#region Type system translation table
-		readonly Dictionary<object, EntityHandle> typeSystemTranslationTable;
-		
 		void RegisterCecilObject(IUnresolvedEntity typeSystemObject, EntityHandle cecilObject)
 		{
 			OnEntityLoaded?.Invoke(typeSystemObject, cecilObject);
-			
-			AddToTypeSystemTranslationTable(typeSystemObject, cecilObject);
-		}
-		
-		void AddToTypeSystemTranslationTable(object typeSystemObject, EntityHandle cecilObject)
-		{
-			if (typeSystemTranslationTable != null) {
-				// When lazy-loading, the dictionary might be shared between multiple cecil-loaders that are used concurrently
-				lock (typeSystemTranslationTable) {
-					typeSystemTranslationTable[typeSystemObject] = cecilObject;
-				}
-			}
-		}
-		
-		T InternalGetCecilObject<T> (object typeSystemObject) where T : class
-		{
-			if (typeSystemObject == null)
-				throw new ArgumentNullException ("typeSystemObject");
-			if (!HasCecilReferences)
-				throw new NotSupportedException ("This instance contains no cecil references.");
-			EntityHandle result;
-			lock (typeSystemTranslationTable) {
-				if (!typeSystemTranslationTable.TryGetValue (typeSystemObject, out result))
-					return null;
-			}
-			return result as T;
-		}
-		
-		public AssemblyDefinition GetCecilObject (IUnresolvedAssembly content)
-		{
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<AssemblyDefinition> (content);
-		}
-
-
-		public TypeDefinition GetCecilObject (IUnresolvedTypeDefinition type)
-		{
-			if (type == null)
-				throw new ArgumentNullException ("type");
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<TypeDefinition> (type);
-		}
-
-
-		public MethodDefinition GetCecilObject (IUnresolvedMethod method)
-		{
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<MethodDefinition> (method);
-		}
-
-
-		public FieldDefinition GetCecilObject (IUnresolvedField field)
-		{
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<FieldDefinition> (field);
-		}
-
-
-		public EventDefinition GetCecilObject (IUnresolvedEvent evt)
-		{
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<EventDefinition> (evt);
-		}
-
-
-		public PropertyDefinition GetCecilObject (IUnresolvedProperty property)
-		{
-			throw new NotImplementedException();
-			//return InternalGetCecilObject<PropertyDefinition> (property);
 		}
 		#endregion
 	}

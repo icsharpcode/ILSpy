@@ -91,11 +91,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				entityDict[entity] = mr;
 		}
 
-		MemberReference GetCecil(IUnresolvedEntity member)
+		/// <summary>
+		/// Retrieves the Cecil member definition for the specified member.
+		/// </summary>
+		/// <remarks>
+		/// Returns null if the member is not defined in the module being decompiled.
+		/// </remarks>
+		public MemberReference GetCecil(IUnresolvedEntity member)
 		{
+			if (member == null)
+				return null;
 			lock (entityDict) {
 				MemberReference mr;
-				if (member != null && entityDict.TryGetValue(member, out mr))
+				if (entityDict.TryGetValue(member, out mr))
 					return mr;
 				return null;
 			}
@@ -227,8 +235,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							methodReference.Parameters.SkipWhile(p => !p.ParameterType.IsSentinel).Select(p => Resolve(p.ParameterType))
 						);
 					} else if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
-						IList<IType> classTypeArguments = null;
-						IList<IType> methodTypeArguments = null;
+						IReadOnlyList<IType> classTypeArguments = null;
+						IReadOnlyList<IType> methodTypeArguments = null;
 						if (methodReference.IsGenericInstance) {
 							var gim = ((GenericInstanceMethod)methodReference);
 							methodTypeArguments = gim.GenericArguments.SelectArray(Resolve);
@@ -296,7 +304,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].Type.Kind == TypeKind.ArgList;
 		}
 		
-		static bool CompareSignatures(IList<IParameter> parameters, IType[] parameterTypes)
+		static bool CompareSignatures(IReadOnlyList<IParameter> parameters, IType[] parameterTypes)
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
@@ -422,5 +430,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 #endregion
+
+		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution)
+		{
+			if (substitution.Equals(TypeParameterSubstitution.Identity)) {
+				return this;
+			} else {
+				return new SpecializingDecompilerTypeSystem(this, substitution);
+	}
+		}
 	}
 }

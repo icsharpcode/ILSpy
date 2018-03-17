@@ -55,9 +55,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void SimpleUsingNullStatement()
 		{
 			Console.WriteLine("before using");
+			// Mono has a compiler bug and introduces an assembly reference to [gmcs] here...
+#if !MCS
 			using (null) {
 				Console.WriteLine("using (null)");
 			}
+#endif
 			Console.WriteLine("after using");
 		}
 

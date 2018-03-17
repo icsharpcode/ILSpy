@@ -35,14 +35,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public Action CaptureOfThis()
 			{
 				return delegate {
-					this.CaptureOfThis();
+					CaptureOfThis();
 				};
 			}
 
 			public Action CaptureOfThisAndParameter(int a)
 			{
 				return delegate {
-					this.CaptureOfThisAndParameter(a);
+					CaptureOfThisAndParameter(a);
 				};
 			}
 
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				foreach (int item in Enumerable.Empty<int>()) {
 					if (item > 0) {
 						return delegate {
-							this.CaptureOfThisAndParameter(item + a);
+							CaptureOfThisAndParameter(item + a);
 						};
 					}
 				}
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					int copyOfItem = item;
 					if (item > 0) {
 						return delegate {
-							this.CaptureOfThisAndParameter(item + a + copyOfItem);
+							CaptureOfThisAndParameter(item + a + copyOfItem);
 						};
 					}
 				}
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public void LambdaInForLoop()
 			{
 				for (int i = 0; i < 100000; i++) {
-					this.Bar(() => this.Foo());
+					Bar(() => Foo());
 				}
 			}
 
@@ -95,34 +95,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Bug951(int amount)
 			{
-				this.DoAction(delegate {
+				DoAction(delegate {
 					if (amount < 0) {
 						amount = 0;
 					}
-					this.DoAction(delegate {
-						this.NoOp(amount);
+					DoAction(delegate {
+						NoOp(amount);
 					});
 				});
 			}
 
 			public void Bug951b()
 			{
-				int amount = this.Foo();
-				this.DoAction(delegate {
+				int amount = Foo();
+				DoAction(delegate {
 					if (amount < 0) {
 						amount = 0;
 					}
-					this.DoAction(delegate {
-						this.NoOp(amount);
+					DoAction(delegate {
+						NoOp(amount);
 					});
 				});
 			}
 
 			public void Bug951c(SomeData data)
 			{
-				this.DoAction(delegate {
-					this.DoAction(delegate {
-						this.DoSomething(data.Value);
+				DoAction(delegate {
+					DoAction(delegate {
+						DoSomething(data.Value);
 					});
 				});
 			}
@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Action<string> ExtensionMethodUnbound()
 		{
-			return DelegateConstruction.Test;
+			return Test;
 		}
 
 		public static Action ExtensionMethodBound()
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static object StaticMethod()
 		{
-			return new Func<Action>(DelegateConstruction.ExtensionMethodBound);
+			return new Func<Action>(ExtensionMethodBound);
 		}
 
 		public static object InstanceMethod()

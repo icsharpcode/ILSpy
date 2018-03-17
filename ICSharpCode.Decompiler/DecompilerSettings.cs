@@ -28,6 +28,59 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerSettings : INotifyPropertyChanged
 	{
+		/// <summary>
+		/// Equivalent to <c>new DecompilerSettings(LanguageVersion.Latest)</c>
+		/// </summary>
+		public DecompilerSettings()
+		{
+		}
+
+		/// <summary>
+		/// Creates a new DecompilerSettings instance with initial settings
+		/// appropriate for the specified language version.
+		/// </summary>
+		/// <remarks>
+		/// This does not imply that the resulting
+		/// </remarks>
+		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
+		{
+			// By default, all decompiler features are enabled.
+			// Disable some of them based on language version:
+			if (languageVersion < CSharp.LanguageVersion.CSharp2) {
+				anonymousMethods = false;
+				liftNullables = false;
+				yieldReturn = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
+				anonymousTypes = false;
+				objectCollectionInitializers = false;
+				automaticProperties = false;
+				queryExpressions = false;
+				expressionTrees = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
+				// * dynamic (not supported yet)
+				// * named and optional arguments (not supported yet)
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
+				asyncAwait = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp6) {
+				awaitInCatchFinally = false;
+				useExpressionBodyForCalculatedGetterOnlyProperties = false;
+				nullPropagation = false;
+				stringInterpolation = false;
+				dictionaryInitializers = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
+				outVariables = false;
+				discards = false;
+			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
+				introduceRefAndReadonlyModifiersOnStructs = false;
+			}
+		}
+
 		bool anonymousMethods = true;
 
 		/// <summary>
@@ -103,6 +156,22 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool awaitInCatchFinally = true;
+
+		/// <summary>
+		/// Decompile await in catch/finally blocks.
+		/// Only has an effect if <see cref="AsyncAwait"/> is enabled.
+		/// </summary>
+		public bool AwaitInCatchFinally {
+			get { return awaitInCatchFinally; }
+			set {
+				if (awaitInCatchFinally != value) {
+					awaitInCatchFinally = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool fixedBuffers = true;
 
 		/// <summary>
@@ -128,6 +197,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (liftNullables != value) {
 					liftNullables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool nullPropagation = true;
+
+		/// <summary>
+		/// Decompile C# 6 ?. and ?[] operators.
+		/// </summary>
+		public bool NullPropagation {
+			get { return nullPropagation; }
+			set {
+				if (nullPropagation != value) {
+					nullPropagation = value;
 					OnPropertyChanged();
 				}
 			}
@@ -303,10 +387,29 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool arrayInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use array initializers.
+		/// If set to false, might produce non-compilable code.
+		/// </summary>
+		public bool ArrayInitializers
+		{
+			get { return arrayInitializers; }
+			set
+			{
+				if (arrayInitializers != value)
+				{
+					arrayInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool objectCollectionInitializers = true;
 
 		/// <summary>
-		/// Gets/Sets whether to use C# 3.0 object/collection initializers
+		/// Gets/Sets whether to use C# 3.0 object/collection initializers.
 		/// </summary>
 		public bool ObjectOrCollectionInitializers {
 			get { return objectCollectionInitializers; }
@@ -318,10 +421,41 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool dictionaryInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 dictionary initializers.
+		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// </summary>
+		public bool DictionaryInitializers {
+			get { return dictionaryInitializers; }
+			set {
+				if (dictionaryInitializers != value) {
+					dictionaryInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool stringInterpolation = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 string interpolation
+		/// </summary>
+		public bool StringInterpolation {
+			get { return stringInterpolation; }
+			set {
+				if (stringInterpolation != value) {
+					stringInterpolation = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool showXmlDocumentation = true;
 
 		/// <summary>
-		/// Gets/Sets whether to include XML documentation comments in the decompiled code
+		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
 		public bool ShowXmlDocumentation {
 			get { return showXmlDocumentation; }
@@ -345,7 +479,110 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandMemberDefinitions = false;
+
+		public bool ExpandMemberDefinitions {
+			get { return expandMemberDefinitions; }
+			set {
+				if (expandMemberDefinitions != value) {
+					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool decompileMemberBodies = true;
+
+		/// <summary>
+		/// Gets/Sets whether member bodies should be decompiled.
+		/// </summary>
+		public bool DecompileMemberBodies {
+			get { return decompileMemberBodies; }
+			set {
+				if (decompileMemberBodies != value) {
+					decompileMemberBodies = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useExpressionBodyForCalculatedGetterOnlyProperties = true;
+
+		/// <summary>
+		/// Gets/Sets whether simple calculated getter-only property declarations should use expression body syntax.
+		/// </summary>
+		public bool UseExpressionBodyForCalculatedGetterOnlyProperties {
+			get { return useExpressionBodyForCalculatedGetterOnlyProperties; }
+			set {
+				if (useExpressionBodyForCalculatedGetterOnlyProperties != value) {
+					useExpressionBodyForCalculatedGetterOnlyProperties = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool outVariables = true;
+
+		/// <summary>
+		/// Gets/Sets whether out variable declarations should be used when possible.
+		/// </summary>
+		public bool OutVariables {
+			get { return outVariables; }
+			set {
+				if (outVariables != value) {
+					outVariables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool discards = true;
+
+		/// <summary>
+		/// Gets/Sets whether discards should be used when possible.
+		/// Only has an effect if <see cref="OutVariables"/> is enabled.
+		/// </summary>
+		public bool Discards {
+			get { return discards; }
+			set {
+				if (discards != value) {
+					discards = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceRefAndReadonlyModifiersOnStructs = true;
+
+		/// <summary>
+		/// Gets/Sets whether IsByRefLikeAttribute and IsReadOnlyAttribute should be replaced with 'ref' and 'readonly' modifiers on structs.
+		/// </summary>
+		public bool IntroduceRefAndReadonlyModifiersOnStructs {
+			get { return introduceRefAndReadonlyModifiersOnStructs; }
+			set {
+				if (introduceRefAndReadonlyModifiersOnStructs != value) {
+					introduceRefAndReadonlyModifiersOnStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#region Options to aid VB decompilation
+		bool assumeArrayLengthFitsIntoInt32 = true;
+
+		/// <summary>
+		/// Gets/Sets whether the decompiler can assume that 'ldlen; conv.i4.ovf' does not throw an overflow exception.
+		/// </summary>
+		public bool AssumeArrayLengthFitsIntoInt32 {
+			get { return assumeArrayLengthFitsIntoInt32; }
+			set {
+				if (assumeArrayLengthFitsIntoInt32 != value) {
+					assumeArrayLengthFitsIntoInt32 = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool introduceIncrementAndDecrement = true;
 
 		/// <summary>

@@ -27,11 +27,11 @@ namespace CustomAttributes
 		public enum EnumWithFlag
 		{
 			All = 0xF,
-			None = 0,
-			Item1 = 1,
-			Item2 = 2,
-			Item3 = 4,
-			Item4 = 8
+			None = 0x0,
+			Item1 = 0x1,
+			Item2 = 0x2,
+			Item3 = 0x4,
+			Item4 = 0x8
 		}
 		[AttributeUsage(AttributeTargets.All)]
 		public class MyAttribute : Attribute
@@ -44,7 +44,7 @@ namespace CustomAttributes
 		public enum ULongEnum : ulong
 		{
 			[My(null)]
-			MaxUInt64 = 18446744073709551615uL
+			MaxUInt64 = ulong.MaxValue
 		}
 		[AttributeUsage(AttributeTargets.Field)]
 		public class TypesAttribute : Attribute

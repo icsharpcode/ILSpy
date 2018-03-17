@@ -72,6 +72,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
+		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution newSubstitution)
+		{
+			//return context.GetSpecializingTypeSystem(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
+			// Because the input new substitution is taken from IMember.Substitution for some member that
+			// was resolved by this type system, it already contains 'this.substitution'.
+			return context.GetSpecializingTypeSystem(newSubstitution);
+		}
+
 		public Mono.Cecil.TypeDefinition GetCecil(ITypeDefinition typeDefinition)
 		{
 			return context.GetCecil(typeDefinition);

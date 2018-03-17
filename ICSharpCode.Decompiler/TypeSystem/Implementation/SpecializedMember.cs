@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ToReference();
 		}
 		
-		internal static IList<ITypeReference> ToTypeReference(IList<IType> typeArguments)
+		internal static IList<ITypeReference> ToTypeReference(IReadOnlyList<IType> typeArguments)
 		{
 			if (typeArguments == null)
 				return null;
@@ -153,7 +153,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.returnType = value;
 			}
 		}
-		
+
+		public System.Reflection.Metadata.EntityHandle MetadataToken => baseMember.MetadataToken;
+
 		public bool IsVirtual {
 			get { return baseMember.IsVirtual; }
 		}
@@ -170,31 +172,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.SymbolKind; }
 		}
 		
-		public DomRegion Region {
-			get { return baseMember.Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return baseMember.BodyRegion; }
-		}
-		
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
 		
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get { return baseMember.Attributes; }
 		}
 		
-		IList<IMember> implementedInterfaceMembers;
+		IReadOnlyList<IMember> implementedInterfaceMembers;
 		
-		public IList<IMember> ImplementedInterfaceMembers {
+		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
 			get {
 				return LazyInitializer.EnsureInitialized(ref implementedInterfaceMembers, FindImplementedInterfaceMembers);
 			}
 		}
 		
-		IList<IMember> FindImplementedInterfaceMembers()
+		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
 		{
 			var definitionImplementations = baseMember.ImplementedInterfaceMembers;
 			IMember[] result = new IMember[definitionImplementations.Count];
@@ -317,14 +311,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	
 	public abstract class SpecializedParameterizedMember : SpecializedMember, IParameterizedMember
 	{
-		IList<IParameter> parameters;
+		IReadOnlyList<IParameter> parameters;
 		
 		protected SpecializedParameterizedMember(IParameterizedMember memberDefinition)
 			: base(memberDefinition)
 		{
 		}
 		
-		public IList<IParameter> Parameters {
+		public IReadOnlyList<IParameter> Parameters {
 			get {
 				var result = LazyInit.VolatileRead(ref this.parameters);
 				if (result != null)
@@ -342,11 +336,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		protected IList<IParameter> CreateParameters(TypeVisitor substitution)
+		protected IParameter[] CreateParameters(TypeVisitor substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
 			if (paramDefs.Count == 0) {
-				return EmptyList<IParameter>.Instance;
+				return Empty<IParameter>.Array;
 			} else {
 				var parameters = new IParameter[paramDefs.Count];
 				for (int i = 0; i < parameters.Length; i++) {
@@ -354,11 +348,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					IType newType = p.Type.AcceptVisitor(substitution);
 					parameters[i] = new DefaultParameter(
 						newType, p.Name, this,
-						p.Region, p.Attributes, p.IsRef, p.IsOut,
+						p.Attributes, p.IsRef, p.IsOut,
 						p.IsParams, p.IsOptional, p.ConstantValue
 					);
 				}
-				return Array.AsReadOnly(parameters);
+				return parameters;
 			}
 		}
 		

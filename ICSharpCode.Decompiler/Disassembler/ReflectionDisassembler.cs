@@ -50,6 +50,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowSequencePoints = value;
 		}
 
+		public bool ExpandMemberDefinitions { get; set; } = false;
+
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
 			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
 		{
@@ -1168,7 +1170,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.Write(typeDefinition.GetDeclaringType().IsNil ? typeDefinition.GetFullTypeName(metadata).ToILNameString() : DisassemblerHelpers.Escape(metadata.GetString(typeDefinition.Name)));
 			WriteTypeParameters(output, type.Module, new GenericContext(type), typeDefinition.GetGenericParameters());
-			output.MarkFoldStart(defaultCollapsed: isInType);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType);
 			output.WriteLine();
 
 			if (!typeDefinition.BaseType.IsNil) {
@@ -1339,7 +1341,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void OpenBlock(bool defaultCollapsed)
 		{
-			output.MarkFoldStart(defaultCollapsed: defaultCollapsed);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && defaultCollapsed);
 			output.WriteLine();
 			output.WriteLine("{");
 			output.Indent();
@@ -1486,7 +1488,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public void WriteModuleHeader(PEFile module)
+		public void WriteModuleHeader(PEFile module, bool skipMVID = false)
 		{
 			var metadata = module.GetMetadataReader();
 
@@ -1536,7 +1538,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			var moduleDefinition = metadata.GetModuleDefinition();
 
 			output.WriteLine(".module {0}", metadata.GetString(moduleDefinition.Name));
-			output.WriteLine("// MVID: {0}", metadata.GetGuid(moduleDefinition.Mvid).ToString("B").ToUpperInvariant());
+			if (!skipMVID) {
+				output.WriteLine("// MVID: {0}", metadata.GetGuid(moduleDefinition.Mvid).ToString("B").ToUpperInvariant());
+			}
 
 			var headers = module.Reader.PEHeaders;
 			output.WriteLine(".imagebase 0x{0:x8}", headers.PEHeader.ImageBase);

@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module FixProxyCalls.dll
-// MVID: {337B20CD-03F0-410E-9868-F4B4F95C9AEF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00DC0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -824,8 +820,8 @@
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public int32 a
     .field public class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.J '<>4__this'
+    .field public int32 a
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {

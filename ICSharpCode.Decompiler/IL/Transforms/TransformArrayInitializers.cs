@@ -35,6 +35,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.ArrayInitializers)
+				return;
 			this.context = context;
 			try {
 				if (!DoTransform(block, pos))

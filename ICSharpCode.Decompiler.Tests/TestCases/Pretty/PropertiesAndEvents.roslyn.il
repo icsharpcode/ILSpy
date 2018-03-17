@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module PropertiesAndEvents.dll
-// MVID: {5C49D703-0238-402E-BAF9-EBBFECDA8E13}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02A60000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -42,6 +38,16 @@
 {
   .class interface abstract auto ansi nested private IBase
   {
+    .method public hidebysig newslot specialname abstract virtual 
+            instance int32  get_Test() cil managed
+    {
+    } // end of method IBase::get_Test
+
+    .method public hidebysig newslot specialname abstract virtual 
+            instance void  set_Test(int32 'value') cil managed
+    {
+    } // end of method IBase::set_Test
+
     .method public hidebysig newslot specialname abstract virtual 
             instance void  add_Event(class [mscorlib]System.Action 'value') cil managed
     {
@@ -53,16 +59,6 @@
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     } // end of method IBase::remove_Event
-
-    .method public hidebysig newslot specialname abstract virtual 
-            instance int32  get_Test() cil managed
-    {
-    } // end of method IBase::get_Test
-
-    .method public hidebysig newslot specialname abstract virtual 
-            instance void  set_Test(int32 'value') cil managed
-    {
-    } // end of method IBase::set_Test
 
     .event [mscorlib]System.Action Event
     {
@@ -80,26 +76,6 @@
          extends [mscorlib]System.Object
          implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase
   {
-    .method private hidebysig newslot specialname virtual final 
-            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event
-      // Code size       2 (0x2)
-      .maxstack  8
-      IL_0000:  nop
-      IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
-
-    .method private hidebysig newslot specialname virtual final 
-            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event
-      // Code size       2 (0x2)
-      .maxstack  8
-      IL_0000:  nop
-      IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
-
     .method private hidebysig newslot specialname virtual final 
             instance int32  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test() cil managed
     {
@@ -120,6 +96,26 @@
       IL_0000:  nop
       IL_0001:  ret
     } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test
+
+    .method private hidebysig newslot specialname virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
+
+    .method private hidebysig newslot specialname virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
 
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
@@ -172,8 +168,8 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<.ctor>b__15_0'(object sender,
-                             class [mscorlib]System.EventArgs e) cil managed
+            '<.ctor>b__15_0'(object '<p0>',
+                             class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       2 (0x2)
       .maxstack  8

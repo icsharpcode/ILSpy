@@ -42,7 +42,6 @@
   <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
@@ -51,6 +50,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
   </ItemGroup>
 
   <ItemGroup>
@@ -86,6 +86,7 @@
     <Compile Include="Commands\OpenListCommand.cs" />
     <Compile Include="Commands\ShowDebugSteps.cs" />
     <Compile Include="Commands\SortAssemblyListCommand.cs" />
+    <Compile Include="Controls\BoolToVisibilityConverter.cs" />
     <Compile Include="Controls\CustomDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -369,11 +370,22 @@
   (related to https://github.com/icsharpcode/ILSpy/issues/511)
   -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="mkdir ..\ILSpy.AddIn\packages\" IgnoreExitCode="true" />
-	  <Exec Command="copy &quot;$(TargetDir)\System.ValueTuple.dll&quot; ..\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy &quot;$(TargetDir)\System.Collections.Immutable.dll&quot; ..\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy &quot;$(TargetDir)\ICSharpCode.AvalonEdit.dll&quot; ..\ILSpy.AddIn\packages\" />
-    <Exec Command="copy &quot;$(TargetDir)\Humanizer.dll&quot; ..\ILSpy.AddIn\packages\" />
-    <Exec Command="copy &quot;$(TargetDir)\Mono.Cecil.dll&quot; ..\ILSpy.AddIn\packages\" />
+    <ItemGroup>
+      <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.AttributedModel.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Convention.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Hosting.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Runtime.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.TypedParts.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
 </Project>

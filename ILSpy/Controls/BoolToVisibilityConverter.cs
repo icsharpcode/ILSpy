@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -14,15 +14,31 @@
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
+// DEALINGS IN THE SOFTWARE
 
 using System;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
 
-public class DoubleConstants
+namespace ICSharpCode.ILSpy.Controls
 {
-	public const double Zero = 0.0;
-	public const double MinusZero = -0.0;
-	public const double NaN = double.NaN;
-	public const double PositiveInfinity = double.PositiveInfinity;
-	public const double NegativeInfinity = double.NegativeInfinity;
+	public class BoolToVisibilityConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			if (!(parameter is Visibility notVisible))
+				notVisible = Visibility.Collapsed;
+			if (!(value is bool b))
+				return notVisible;
+			return b ? Visibility.Visible : notVisible; 
+		}
+
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			if (!(value is Visibility visibility))
+				return false;
+			return visibility == Visibility.Visible;
+		}
+	}
 }

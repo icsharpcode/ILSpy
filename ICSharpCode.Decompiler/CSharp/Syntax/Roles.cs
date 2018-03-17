@@ -66,6 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole Assign = new TokenRole ("=");
 		public static readonly TokenRole Colon = new TokenRole (":");
 		public static readonly TokenRole DoubleColon = new TokenRole ("::");
+		public static readonly TokenRole Arrow = new TokenRole("=>");
 		public static readonly Role<Comment> Comment = new Role<Comment> ("Comment");
 		public static readonly Role<NewLineNode> NewLine = new Role<NewLineNode> ("NewLine");
 		public static readonly Role<WhitespaceNode> Whitespace = new Role<WhitespaceNode> ("Whitespace");

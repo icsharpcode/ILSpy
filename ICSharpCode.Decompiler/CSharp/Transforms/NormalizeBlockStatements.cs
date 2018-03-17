@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -115,6 +116,29 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 			rootNode.AcceptVisitor(this);
+		}
+
+		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		{
+			if (context.Settings.UseExpressionBodyForCalculatedGetterOnlyProperties) {
+				SimplifyPropertyDeclaration(propertyDeclaration);
+			}
+			base.VisitPropertyDeclaration(propertyDeclaration);
+		}
+
+		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new PropertyDeclaration() {
+			Modifiers = Modifiers.Any,
+			Name = Pattern.AnyString,
+			ReturnType = new AnyNode(),
+			Getter = new Accessor() { Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) } }
+		};
+
+		void SimplifyPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		{
+			var m = CalculatedGetterOnlyPropertyPattern.Match(propertyDeclaration);
+			if (!m.Success)
+				return;
+			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
 		}
 	}
 }

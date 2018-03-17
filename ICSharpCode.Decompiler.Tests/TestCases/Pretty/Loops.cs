@@ -252,6 +252,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if MCS
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+#endif
 		public struct DataItem
 		{
 			public int Property {
@@ -287,7 +290,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForEachOnField()
 		{
-			foreach (string alternative in this.alternatives) {
+			foreach (string alternative in alternatives) {
 				alternative.ToLower();
 			}
 		}
@@ -415,10 +418,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if ROSLYN && OPT
 				// The variable name differs based on whether roslyn optimizes out the 'item' variable
 				int current = item;
-				Loops.Operation(ref current);
+				Operation(ref current);
 #else
 				int num = item;
-				Loops.Operation(ref num);
+				Operation(ref num);
 #endif
 			}
 		}
@@ -427,7 +430,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			foreach (int item in items) {
 				int c = item;
-				Loops.Operation(() => c == 5);
+				Operation(() => c == 5);
 			}
 		}
 
@@ -457,12 +460,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForEachBreakWhenFound(string name, ref StringComparison output)
 		{
+#if MCS
+			foreach (int value in Enum.GetValues(typeof(StringComparison))) {
+				if (((StringComparison)value).ToString() == name) {
+					output = (StringComparison)value;
+					break;
+				}
+			}
+#else
 			foreach (StringComparison value in Enum.GetValues(typeof(StringComparison))) {
 				if (value.ToString() == name) {
 					output = value;
 					break;
 				}
 			}
+#endif
 		}
 
 		public void ForEachOverListOfStruct(List<DataItem> items, int value)
@@ -496,6 +508,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !MCS
 		public void ForEachOverMultiDimArray(int[,] items)
 		{
 			foreach (int value in items) {
@@ -526,6 +539,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 #endif
 		}
+#endif
+
 #endregion
 
 		public void ForOverArray(string[] array)
@@ -606,14 +621,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void WhileLoop()
 		{
 			Console.WriteLine("Initial");
-			if (this.Condition("if")) {
-				while (this.Condition("while")) {
+			if (Condition("if")) {
+				while (Condition("while")) {
 					Console.WriteLine("Loop Body");
-					if (this.Condition("test")) {
-						if (this.Condition("continue")) {
+					if (Condition("test")) {
+						if (Condition("continue")) {
 							continue;
 						}
-						if (!this.Condition("break")) {
+						if (!Condition("break")) {
 							break;
 						}
 					}
@@ -626,12 +641,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		//public void WhileWithGoto()
 		//{
-		//	while (this.Condition("Main Loop")) {
-		//		if (!this.Condition("Condition"))
+		//	while (Condition("Main Loop")) {
+		//		if (!Condition("Condition"))
 		//			goto block2;
 		//		block1:
 		//		Console.WriteLine("Block1");
-		//		if (this.Condition("Condition2"))
+		//		if (Condition("Condition2"))
 		//			continue;
 		//		block2:
 		//		Console.WriteLine("Block2");
@@ -642,18 +657,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		//public void DoWhileLoop()
 		//{
 		//	Console.WriteLine("Initial");
-		//	if (this.Condition("if")) {
+		//	if (Condition("if")) {
 		//		do {
 		//			Console.WriteLine("Loop Body");
-		//			if (this.Condition("test")) {
-		//				if (this.Condition("continue")) {
+		//			if (Condition("test")) {
+		//				if (Condition("continue")) {
 		//					continue;
 		//				}
-		//				if (!this.Condition("break"))
+		//				if (!Condition("break"))
 		//					break;
 		//			}
 		//			Console.WriteLine("End of loop body");
-		//		} while (this.Condition("while"));
+		//		} while (Condition("while"));
 		//		Console.WriteLine("After loop");
 		//	}
 		//	Console.WriteLine("End of method");
@@ -662,14 +677,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ForLoop()
 		{
 			Console.WriteLine("Initial");
-			if (this.Condition("if")) {
-				for (int i = 0; this.Condition("for"); i++) {
+			if (Condition("if")) {
+				for (int i = 0; Condition("for"); i++) {
 					Console.WriteLine("Loop Body");
-					if (this.Condition("test")) {
-						if (this.Condition("continue")) {
+					if (Condition("test")) {
+						if (Condition("continue")) {
 							continue;
 						}
-						if (!this.Condition("not-break")) {
+						if (!Condition("not-break")) {
 							break;
 						}
 					}
@@ -684,10 +699,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			try {
 				do {
-					if (this.Condition("return")) {
+					if (Condition("return")) {
 						return;
 					}
-				} while (this.Condition("repeat"));
+				} while (Condition("repeat"));
 
 				Environment.GetCommandLineArgs();
 			} finally {
@@ -701,7 +716,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			for (int i = 0; i < ids.Length; i++) {
 				Item item = null;
-				this.TryGetItem(ids[i], out item);
+				TryGetItem(ids[i], out item);
 				if (item == null) {
 					break;
 				}
@@ -711,7 +726,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ForeachLoopWithEarlyReturn(List<object> items)
 		{
 			foreach (object item in items) {
-				if ((this.someObject = item) == null) {
+				if ((someObject = item) == null) {
 					break;
 				}
 			}

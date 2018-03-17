@@ -160,6 +160,20 @@
 			CustomClassName("ThreeValuedLogicAnd"), Binary, ResultType("O")),
 		new OpCode("3vl.logic.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
 			CustomClassName("ThreeValuedLogicOr"), Binary, ResultType("O")),
+		new OpCode("nullable.unwrap", "The input operand must be one of:" + Environment.NewLine
+				+ "  1. a nullable value type" + Environment.NewLine
+				+ "  2. a reference type" + Environment.NewLine
+				+ "  3. a managed reference to a type parameter." + Environment.NewLine
+				+ "If the input is non-null, evaluates to the (unwrapped) input." + Environment.NewLine
+				+ "If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction." + Environment.NewLine
+				+ "In case 3 (managed reference), the dereferenced value is the input being tested, and the nullable.unwrap instruction "
+				+ "returns the managed reference unmodified (if the value is non-null).",
+			Unary, CustomConstructor, CustomWriteTo, HasFlag("InstructionFlags.MayUnwrapNull")),
+		new OpCode("nullable.rewrap", "Serves as jump target for the nullable.unwrap instruction." + Environment.NewLine
+				+ "If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type)."
+				+ "If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,"
+				+ "the nullable.rewrap instruction evaluates to null.",
+			Unary, CustomComputeFlags),
 
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),

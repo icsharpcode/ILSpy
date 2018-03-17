@@ -477,9 +477,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			ParameterizedType pt = interfaceType as ParameterizedType;
 			if (pt != null) {
-				KnownTypeCode tc = pt.GetDefinition().KnownTypeCode;
-				if (tc == KnownTypeCode.IListOfT || tc == KnownTypeCode.ICollectionOfT || tc == KnownTypeCode.IEnumerableOfT || tc == KnownTypeCode.IReadOnlyListOfT) {
-					return pt.GetTypeArgument(0);
+				switch (pt.GetDefinition()?.KnownTypeCode) {
+					case KnownTypeCode.IListOfT:
+					case KnownTypeCode.ICollectionOfT:
+					case KnownTypeCode.IEnumerableOfT:
+					case KnownTypeCode.IReadOnlyListOfT:
+						return pt.GetTypeArgument(0);
 				}
 			}
 			return null;

@@ -80,35 +80,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the unresolved method parts.
 		/// For partial methods, this returns all parts.
 		/// Otherwise, this returns an array with a single element (new[] { UnresolvedMember }).
-		/// NOTE: The type will change to IReadOnlyList&lt;IUnresolvedMethod&gt; in future versions.
 		/// </summary>
-		IList<IUnresolvedMethod> Parts { get; }
-		
+		IReadOnlyList<IUnresolvedMethod> Parts { get; }
+
 		/// <summary>
 		/// Gets the attributes associated with the return type. (e.g. [return: MarshalAs(...)])
-		/// NOTE: The type will change to IReadOnlyList&lt;IAttribute&gt; in future versions.
 		/// </summary>
-		IList<IAttribute> ReturnTypeAttributes { get; }
+		IReadOnlyList<IAttribute> ReturnTypeAttributes { get; }
 
 		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.
-		/// NOTE: The type will change to IReadOnlyList&lt;ITypeParameter&gt; in future versions.
 		/// </summary>
-		IList<ITypeParameter> TypeParameters { get; }
+		IReadOnlyList<ITypeParameter> TypeParameters { get; }
 
-		/// <summary>
-		/// Gets whether this is a generic method that has been parameterized.
-		/// </summary>
-		bool IsParameterized { get; }
-		
 		/// <summary>
 		/// Gets the type arguments passed to this method.
 		/// If the method is generic but not parameterized yet, this property returns the type parameters,
 		/// as if the method was parameterized with its own type arguments (<c>void M&lt;T&gt;() { M&lt;T&gt;(); }</c>).
-		/// 
-		/// NOTE: The type will change to IReadOnlyList&lt;IType&gt; in future versions.
 		/// </summary>
-		IList<IType> TypeArguments { get; }
+		IReadOnlyList<IType> TypeArguments { get; }
 
 		bool IsExtensionMethod { get; }
 		bool IsConstructor { get; }

@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public async void TwoAwaitsWithDifferentAwaiterTypes()
 		{
 			Console.WriteLine("Before");
-			if (await this.SimpleBoolTaskMethod()) {
+			if (await SimpleBoolTaskMethod()) {
 				await Task.Delay(TimeSpan.FromSeconds(1.0));
 			}
 			Console.WriteLine("After");
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public async void AwaitInLoopCondition()
 		{
-			while (await this.SimpleBoolTaskMethod()) {
+			while (await SimpleBoolTaskMethod()) {
 				Console.WriteLine("Body");
 			}
 		}

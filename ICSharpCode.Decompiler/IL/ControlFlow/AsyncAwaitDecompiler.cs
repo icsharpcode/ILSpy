@@ -20,6 +20,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -42,6 +43,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return true;
 			}
 			return false;
+		}
+
+		public static bool IsCompilerGeneratedMainMethod(MethodDefinition method)
+		{
+			return method == method.Module.Assembly?.EntryPoint && method.Name.Equals("<Main>", StringComparison.Ordinal);
 		}
 
 		enum AsyncMethodType
@@ -120,11 +126,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
+
+			AwaitInCatchTransform.Run(function, context);
+			AwaitInFinallyTransform.Run(function, context);
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)
 		{
 			context.StepStartGroup("CleanUpBodyOfMoveNext", function);
+			// Copy-propagate stack slots holding an 'ldloca':
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.Kind == VariableKind.StackSlot && s.Variable.IsSingleDefinition && s.Value is LdLoca).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+
 			// Simplify stobj(ldloca) -> stloc
 			foreach (var stobj in function.Descendants.OfType<StObj>()) {
 				EarlyExpressionTransforms.StObjToStLoc(stobj, context);
@@ -507,15 +521,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-			#endregion
+		#endregion
 
-			#region AnalyzeStateMachine
+		#region AnalyzeStateMachine
 
-			/// <summary>
-			/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
-			/// entered on the next MoveNext() call.
-			/// </summary>
-			void AnalyzeStateMachine(ILFunction function)
+		/// <summary>
+		/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
+		/// entered on the next MoveNext() call.
+		/// </summary>
+		void AnalyzeStateMachine(ILFunction function)
 		{
 			context.Step("AnalyzeStateMachine()", function);
 			smallestAwaiterVarIndex = int.MaxValue;

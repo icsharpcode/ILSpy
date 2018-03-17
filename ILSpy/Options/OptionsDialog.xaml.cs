@@ -30,13 +30,17 @@ namespace ICSharpCode.ILSpy.Options
 	/// </summary>
 	public partial class OptionsDialog : Window
 	{
-		[ImportMany("OptionPages", typeof(UIElement), RequiredCreationPolicy = CreationPolicy.NonShared)]
-		Lazy<UIElement, IOptionsMetadata>[] optionPages = null;
+		
+		readonly Lazy<UIElement, IOptionsMetadata>[] optionPages;
 		
 		public OptionsDialog()
 		{
 			InitializeComponent();
-			App.CompositionContainer.ComposeParts(this);
+			// These used to have [ImportMany(..., RequiredCreationPolicy = CreationPolicy.NonShared)], so they use their own
+			// ExportProvider instance.
+			// FIXME: Ideally, the export provider should be disposed when it's no longer needed.
+			var ep = App.ExportProviderFactory.CreateExportProvider();
+			this.optionPages = ep.GetExports<UIElement, IOptionsMetadata>("OptionPages").ToArray();
 			ILSpySettings settings = ILSpySettings.Load();
 			foreach (var optionPage in optionPages.OrderBy(p => p.Metadata.Order)) {
 				TabItem tabItem = new TabItem();

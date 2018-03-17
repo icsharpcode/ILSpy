@@ -17,9 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -42,6 +46,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
 
+		internal DecompileRun DecompileRun { get; set; }
+		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem.Compilation);
+
 		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, DecompilerSettings settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
@@ -55,6 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.Function = context.Function;
 			this.TypeSystem = context.TypeSystem;
 			this.Settings = context.Settings;
+			this.DecompileRun = context.DecompileRun;
 			this.CancellationToken = context.CancellationToken;
 			this.Stepper = context.Stepper;
 		}

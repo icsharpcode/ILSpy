@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module CompoundAssignmentTest.dll
-// MVID: {A41AE390-D37A-4425-A0E0-8C87CC28D8D9}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04BC0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================

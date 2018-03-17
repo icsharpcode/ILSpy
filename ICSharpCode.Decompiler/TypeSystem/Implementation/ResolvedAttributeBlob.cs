@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		IMethod constructor;
 		volatile bool constructorResolved;
-		
-		IList<ResolveResult> positionalArguments;
-		IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+
+		IReadOnlyList<ResolveResult> positionalArguments;
+		IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 		
 		public CecilResolvedAttribute(ITypeResolveContext context, UnresolvedAttributeBlob unresolved)
 		{
@@ -59,10 +59,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.context = context;
 			this.attributeType = attributeType;
 			this.ctorParameterTypes = EmptyList<ITypeReference>.Instance;
-		}
-		
-		DomRegion IAttribute.Region {
-			get { return DomRegion.Empty; }
 		}
 		
 		public IType AttributeType {
@@ -96,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 		
-		public IList<ResolveResult> PositionalArguments {
+		public IReadOnlyList<ResolveResult> PositionalArguments {
 			get {
 				var result = LazyInit.VolatileRead(ref this.positionalArguments);
 				if (result != null) {
@@ -107,7 +103,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
+		public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
 			get {
 				var result = LazyInit.VolatileRead(ref this.namedArguments);
 				if (result != null) {

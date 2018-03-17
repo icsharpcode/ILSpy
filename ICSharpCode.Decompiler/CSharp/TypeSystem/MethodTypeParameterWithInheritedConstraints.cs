@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			
 			public ResolvedMethodTypeParameterWithInheritedConstraints(MethodTypeParameterWithInheritedConstraints unresolved, ITypeResolveContext context)
 				: base(context.CurrentMember, unresolved.Index, unresolved.Name, unresolved.Variance,
-				       unresolved.Attributes.CreateResolvedAttributes(context), unresolved.Region)
+				       unresolved.Attributes.CreateResolvedAttributes(context))
 			{
 			}
 			
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 						// Substitute occurrences of the base method's type parameters in the constraints
 						// with the type parameters from the
 						IMethod owner = (IMethod)this.Owner;
-						var substitution = new TypeParameterSubstitution(null, new ProjectedList<ITypeParameter, IType>(owner.TypeParameters, t => t));
+						var substitution = new TypeParameterSubstitution(null, owner.TypeParameters);
 						return baseTP.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));
 					} else {
 						return EmptyList<IType>.Instance;

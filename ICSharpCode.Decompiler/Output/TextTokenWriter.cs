@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler
 		bool lastUsingDeclaration;
 		
 		public bool FoldBraces = false;
+		public bool ExpandMemberDefinitions = false;
 		
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
@@ -64,7 +65,7 @@ namespace ICSharpCode.Decompiler
 			if (definition != null) {
 				MemberReference cecil = SymbolToCecil(definition);
 				if (cecil != null) {
-					output.WriteDefinition(identifier.Name, definition, false);
+					output.WriteDefinition(identifier.Name, cecil, false);
 					return;
 				}
 			}
@@ -213,15 +214,20 @@ namespace ICSharpCode.Decompiler
 		{
 			switch (token) {
 				case "{":
+					if (role != Roles.LBrace) {
+						output.Write("{");
+						break;
+					}
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
-						output.MarkFoldStart(defaultCollapsed: braceLevelWithinType == 1);
+						output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;
 				case "}":
 					output.Write('}');
+					if (role != Roles.RBrace) break;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
 						output.MarkFoldEnd();
 					if (braceLevelWithinType >= 0)

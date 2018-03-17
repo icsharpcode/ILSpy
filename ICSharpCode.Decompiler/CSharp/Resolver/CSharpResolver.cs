@@ -908,7 +908,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			return new CSharpOperators.BinaryOperatorMethod(compilation) {
 				ReturnType = resultType,
-				Parameters = {
+				parameters = {
 					new DefaultParameter(inputType1, string.Empty),
 					new DefaultParameter(inputType2, string.Empty)
 				}
@@ -1295,7 +1295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region ResolveSimpleName
-		public ResolveResult ResolveSimpleName(string identifier, IList<IType> typeArguments, bool isInvocationTarget = false)
+		public ResolveResult ResolveSimpleName(string identifier, IReadOnlyList<IType> typeArguments, bool isInvocationTarget = false)
 		{
 			// C# 4.0 spec: §7.6.2 Simple Names
 			
@@ -1304,7 +1304,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				isInvocationTarget ? NameLookupMode.InvocationTarget : NameLookupMode.Expression);
 		}
 		
-		public ResolveResult LookupSimpleNameOrTypeName(string identifier, IList<IType> typeArguments, NameLookupMode lookupMode)
+		public ResolveResult LookupSimpleNameOrTypeName(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode)
 		{
 			// C# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
 			
@@ -1416,7 +1416,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return trr != null && trr.Type.Equals (rr.Type);
 		}
 		
-		ResolveResult LookInCurrentType(string identifier, IList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
+		ResolveResult LookInCurrentType(string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
 		{
 			int k = typeArguments.Count;
 			MemberLookup lookup = CreateMemberLookup(lookupMode);
@@ -1451,7 +1451,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 		
-		ResolveResult LookInCurrentUsingScope(string identifier, IList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
+		ResolveResult LookInCurrentUsingScope(string identifier, IReadOnlyList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
 		{
 			// look in current namespace definitions
 			ResolvedUsingScope currentUsingScope = this.CurrentUsingScope;
@@ -1500,7 +1500,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return null;
 		}
 
-		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (n == null)
 				return null;
@@ -1569,7 +1569,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region ResolveMemberAccess
-		public ResolveResult ResolveMemberAccess(ResolveResult target, string identifier, IList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
+		public ResolveResult ResolveMemberAccess(ResolveResult target, string identifier, IReadOnlyList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
 		{
 			// C# 4.0 spec: §7.6.4
 			
@@ -1622,7 +1622,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return result;
 		}
 		
-		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier, IList<IType> typeArguments, bool parameterizeResultType)
+		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier, IReadOnlyList<IType> typeArguments, bool parameterizeResultType)
 		{
 			if (typeArguments.Count == 0) {
 				INamespace childNamespace = nrr.Namespace.GetChildNamespace(identifier);
@@ -1693,7 +1693,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///    new List { all extensions from SomeExtensions }
 		/// }
 		/// </remarks>
-		public List<List<IMethod>> GetExtensionMethods(string name = null, IList<IType> typeArguments = null)
+		public List<List<IMethod>> GetExtensionMethods(string name = null, IReadOnlyList<IType> typeArguments = null)
 		{
 			return GetExtensionMethods(null, name, typeArguments);
 		}
@@ -1722,7 +1722,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		///    new List { all extensions from SomeExtensions }
 		/// }
 		/// </remarks>
-		public List<List<IMethod>> GetExtensionMethods(IType targetType, string name = null, IList<IType> typeArguments = null, bool substituteInferredTypes = false)
+		public List<List<IMethod>> GetExtensionMethods(IType targetType, string name = null, IReadOnlyList<IType> typeArguments = null, bool substituteInferredTypes = false)
 		{
 			var lookup = CreateMemberLookup();
 			List<List<IMethod>> extensionMethodGroups = new List<List<IMethod>>();

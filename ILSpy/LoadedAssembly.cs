@@ -212,10 +212,12 @@ namespace ICSharpCode.ILSpy
 		
 		public LoadedAssembly LookupReferencedAssembly(IAssemblyReference reference)
 		{
+			if (reference == null)
+				throw new ArgumentNullException(nameof(reference));
 			if (reference.IsWindowsRuntime) {
-				return assemblyList.assemblyLookupCache.GetOrAdd((reference.Name, true), LookupReferencedAssemblyInternal);
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.Name, true), key => LookupReferencedAssemblyInternal(reference, true));
 			} else {
-				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false), LookupReferencedAssemblyInternal);
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false), key => LookupReferencedAssemblyInternal(reference, false));
 			}
 		}
 
@@ -229,8 +231,10 @@ namespace ICSharpCode.ILSpy
 
 		static Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 
-		LoadedAssembly LookupReferencedAssemblyInternal((string fullName, bool isWinRT) data)
+		LoadedAssembly LookupReferencedAssemblyInternal(IAssemblyReference fullName, bool isWinRT)
 		{
+			string GetName(IAssemblyReference name) => isWinRT ? name.Name : name.FullName;
+
 			string file;
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
@@ -238,18 +242,17 @@ namespace ICSharpCode.ILSpy
 					var reader = loaded.GetPEFileOrNull()?.GetMetadataReader();
 					if (reader == null || !reader.IsAssembly) continue;
 					var asmDef = reader.GetAssemblyDefinition();
-					if (data.fullName.Equals(data.isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
-						LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Info, "Success - Found in Assembly List");
+					if (GetName(fullName).Equals(isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}
 				}
 
-				if (data.isWinRT) {
-					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", data.fullName + ".winmd");
+				if (isWinRT) {
+					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", fullName.Name + ".winmd");
 				} else {
 					var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
-					var name = AssemblyNameReference.Parse(data.fullName);
-					file = resolver.FindAssemblyFile(name);
+					file = resolver.FindAssemblyFile(fullName);
 				}
 
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
@@ -265,10 +268,10 @@ namespace ICSharpCode.ILSpy
 					return null;
 
 				if (file != null) {
-					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Info, "Success - Loading from: " + file);
+					LoadedAssemblyReferencesInfo.AddMessage(fullName.ToString(), MessageKind.Info, "Success - Loading from: " + file);
 					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
 				} else {
-					LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
+					LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Error, "Could not find reference: " + fullName);
 					return null;
 				}
 				loadingAssemblies.Add(file, asm);

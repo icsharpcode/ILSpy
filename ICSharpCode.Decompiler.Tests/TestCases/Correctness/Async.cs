@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
@@ -40,16 +39,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			StreamCopyToWithConfigureAwait(new MemoryStream(new byte[1024]), 16);
 			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task.FromResult(i)));
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
-#if !LEGACY_CSC
+#if CS60
 			await AwaitCatch(Task.FromResult(1));
-			await AwaitFinally(Task.FromResult(2));
+			await AwaitMultipleCatchBlocks(Task.FromResult(1));
+			await AwaitMultipleCatchBlocks2(Task.FromResult(1));
+			Console.WriteLine(await AwaitInComplexFinally());
+			try {
+				await AwaitFinally(Task.FromResult(2));
+			} catch (Exception ex) {
+				Console.WriteLine(ex + " caught!");
+			}
 #endif
 			await NestedAwait(Task.FromResult(Task.FromResult(5)));
 			await AwaitWithStack(Task.FromResult(3));
 			await AwaitWithStack2(Task.FromResult(4));
-#if !LEGACY_CSC
+#if CS60
 			await AwaitInCatch(Task.FromResult(1), Task.FromResult(2));
 			await AwaitInFinally(Task.FromResult(2), Task.FromResult(4));
+			await AwaitInCatchAndFinally(Task.FromResult(3), Task.FromResult(6), Task.FromResult(9));
 #endif
 		}
 
@@ -113,12 +120,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public async Task AwaitCatch(Task<int> task)
 		{
 			try {
 				Console.WriteLine("Before throw");
 				throw new Exception();
+			} catch {
+				Console.WriteLine(await task);
+			}
+		}
+
+		public async Task AwaitMultipleCatchBlocks(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} catch (OutOfMemoryException ex) {
+				Console.WriteLine(ex.ToString());
+				Console.WriteLine(await task);
+			} catch {
+				Console.WriteLine(await task);
+			}
+		}
+
+
+		public async Task AwaitMultipleCatchBlocks2(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} catch (OutOfMemoryException ex) {
+				Console.WriteLine(ex.ToString());
+				Console.WriteLine(await task);
+			} catch (InternalBufferOverflowException ex) {
+				Console.WriteLine(ex.ToString());
 			} catch {
 				Console.WriteLine(await task);
 			}
@@ -155,7 +191,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public async Task AwaitInCatch(Task<int> task1, Task<int> task2)
 		{
 			try {
@@ -179,6 +215,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			} finally {
 				Console.WriteLine("Start finally");
 				await task2;
+				Console.WriteLine("End finally");
+			}
+			Console.WriteLine("End Method");
+		}
+
+		public static async Task<int> AwaitInComplexFinally()
+		{
+			Console.WriteLine("a");
+			try {
+				Console.WriteLine("b");
+				await Task.Delay(1);
+				Console.WriteLine("c");
+			} catch (Exception ex) {
+				await Task.Delay(ex.HResult);
+			} finally {
+				Console.WriteLine("d");
+				int i = 0;
+				if (Console.CapsLock) {
+					i++;
+					await Task.Delay(i);
+				} else {
+					while (i < 5) {
+						Console.WriteLine("i: " + i);
+						i++;
+					}
+				}
+				Console.WriteLine("e");
+			}
+			Console.WriteLine("f");
+			return 1;
+		}
+
+		public async Task AwaitInCatchAndFinally(Task<int> task1, Task<int> task2, Task<int> task3)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} catch (Exception ex) {
+				Console.WriteLine("Start catch");
+				await task2;
+				Console.WriteLine("End catch");
+			} finally {
+				Console.WriteLine("Start finally");
+				await task3;
 				Console.WriteLine("End finally");
 			}
 			Console.WriteLine("End Method");

@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ILSpyTreeNode Create(string key, object data)
 		{
 			ILSpyTreeNode result = null;
-			foreach (var factory in App.CompositionContainer.GetExportedValues<IResourceNodeFactory>()) {
+			foreach (var factory in App.ExportProvider.GetExportedValues<IResourceNodeFactory>()) {
 				result = factory.CreateNode(key, data);
 				if (result != null)
 					return result;

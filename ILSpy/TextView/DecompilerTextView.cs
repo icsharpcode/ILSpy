@@ -176,7 +176,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void TextViewMouseHover(object sender, MouseEventArgs e)
 		{
-			TextViewPosition? position = textEditor.TextArea.TextView.GetPosition(e.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
+			TextViewPosition? position = GetPositionFromMousePosition();
 			if (position == null)
 				return;
 			int offset = textEditor.Document.GetOffset(position.Value.Location);
@@ -752,7 +752,13 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		internal TextViewPosition? GetPositionFromMousePosition()
 		{
-			return textEditor.TextArea.TextView.GetPosition(Mouse.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
+			var position = textEditor.TextArea.TextView.GetPosition(Mouse.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
+			if (position == null)
+				return null;
+			var lineLength = textEditor.Document.GetLineByNumber(position.Value.Line).Length + 1;
+			if (position.Value.Column == lineLength)
+				return null;
+			return position;
 		}
 		
 		public DecompilerTextViewState GetState()

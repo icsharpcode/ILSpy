@@ -96,6 +96,19 @@ namespace ICSharpCode.Decompiler.IL
 					default:
 						return false; // operator not supported on enum types
 				}
+			} else if (type.Kind == TypeKind.Pointer) {
+				switch (binary.Operator) {
+					case BinaryNumericOperator.Add:
+					case BinaryNumericOperator.Sub:
+						// ensure that the byte offset is a multiple of the pointer size
+						return PointerArithmeticOffset.Detect(
+							binary.Right,
+							(PointerType)type,
+							checkForOverflow: binary.CheckForOverflow
+						) != null;
+					default:
+						return false; // operator not supported on pointer types
+				}
 			}
 			if (binary.Sign != Sign.None) {
 				if (type.GetSign() != binary.Sign)

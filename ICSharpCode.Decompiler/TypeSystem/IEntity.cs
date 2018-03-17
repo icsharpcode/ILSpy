@@ -27,19 +27,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IUnresolvedEntity : INamedElement, IHasAccessibility
 	{
 		/// <summary>
+		/// Gets the metadata token for this entity.
+		/// </summary>
+		/// <remarks>
+		/// The token is only valid within the context of the assembly defining this entity.
+		/// Token may be 0 if this is a generated member.
+		/// </remarks>
+		System.Reflection.Metadata.EntityHandle MetadataToken { get; }
+
+		/// <summary>
 		/// Gets the entity type.
 		/// </summary>
 		SymbolKind SymbolKind { get; }
-		
-		/// <summary>
-		/// Gets the complete entity region (including header+body)
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
-		/// Gets the entity body region.
-		/// </summary>
-		DomRegion BodyRegion { get; }
 		
 		/// <summary>
 		/// Gets the declaring class.
@@ -47,12 +46,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For nested classes, this is the outer class. For top-level entities, this property returns null.
 		/// </summary>
 		IUnresolvedTypeDefinition DeclaringTypeDefinition { get; }
-		
-		/// <summary>
-		/// Gets the parsed file in which this entity is defined.
-		/// Returns null if this entity wasn't parsed from source code (e.g. loaded from a .dll with CecilLoader).
-		/// </summary>
-		IUnresolvedFile UnresolvedFile { get; }
 		
 		/// <summary>
 		/// Gets the attributes on this entity.
@@ -94,19 +87,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IEntity : ISymbol, ICompilationProvider, INamedElement, IHasAccessibility
 	{
 		/// <summary>
+		/// Gets the metadata token for this entity.
+		/// </summary>
+		/// <remarks>
+		/// The token is only valid within the context of the assembly defining this entity.
+		/// Token may be 0 if this is a generated member.
+		/// Note: specialized members will return the token of the member definition.
+		/// </remarks>
+		System.Reflection.Metadata.EntityHandle MetadataToken { get; }
+
+		/// <summary>
 		/// Gets the short name of the entity.
 		/// </summary>
 		new string Name { get; }
-		
-		/// <summary>
-		/// Gets the complete entity region (including header+body)
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
-		/// Gets the entity body region.
-		/// </summary>
-		DomRegion BodyRegion { get; }
 		
 		/// <summary>
 		/// Gets the declaring class.
@@ -127,11 +120,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// This property never returns null.
 		/// </summary>
 		IAssembly ParentAssembly { get; }
-		
+
 		/// <summary>
 		/// Gets the attributes on this entity.
 		/// </summary>
-		IList<IAttribute> Attributes { get; }
+		IReadOnlyList<IAttribute> Attributes { get; }
 		
 		/// <summary>
 		/// Gets whether this entity is static.

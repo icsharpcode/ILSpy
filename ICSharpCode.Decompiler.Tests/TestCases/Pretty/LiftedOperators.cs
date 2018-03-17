@@ -868,21 +868,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UncheckedCasts(int? i4, long? i8, float? f)
 		{
-			LiftedExplicitConversions.Print((byte?)i4);
-			LiftedExplicitConversions.Print((short?)i4);
-			LiftedExplicitConversions.Print((uint?)i4);
-			LiftedExplicitConversions.Print((uint?)i8);
-			LiftedExplicitConversions.Print((uint?)f);
+			Print((byte?)i4);
+			Print((short?)i4);
+			Print((uint?)i4);
+			Print((uint?)i8);
+			Print((uint?)f);
 		}
 
 		public static void CheckedCasts(int? i4, long? i8, float? f)
 		{
 			checked {
-				LiftedExplicitConversions.Print((byte?)i4);
-				LiftedExplicitConversions.Print((short?)i4);
-				LiftedExplicitConversions.Print((uint?)i4);
-				LiftedExplicitConversions.Print((uint?)i8);
-				//LiftedExplicitConversions.Print((uint?)f); TODO
+				Print((byte?)i4);
+				Print((short?)i4);
+				Print((uint?)i4);
+				Print((uint?)i8);
+				//Print((uint?)f); TODO
 			}
 		}
 	}
@@ -896,45 +896,45 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Objects(object a, object b)
 		{
-			NullCoalescingTests.Print(a ?? b);
+			Print(a ?? b);
 		}
 
 		public static void Nullables(int? a, int? b)
 		{
-			NullCoalescingTests.Print(a ?? b);
+			Print(a ?? b);
 		}
 
 		public static void NullableWithNonNullableFallback(int? a, int b)
 		{
-			NullCoalescingTests.Print(a ?? b);
+			Print(a ?? b);
 		}
 
 		public static void NullableWithImplicitConversion(short? a, int? b)
 		{
-			NullCoalescingTests.Print(a ?? b);
+			Print(a ?? b);
 		}
 
 		public static void NullableWithImplicitConversionAndNonNullableFallback(short? a, int b)
 		{
 			// TODO: unnecessary cast
-			//NullCoalescingTests.Print(a ?? b);
+			//Print(a ?? b);
 		}
 
 		public static void Chain(int? a, int? b, int? c, int d)
 		{
-			NullCoalescingTests.Print(a ?? b ?? c ?? d);
+			Print(a ?? b ?? c ?? d);
 		}
 
 		public static void ChainWithImplicitConversions(int? a, short? b, long? c, byte d)
 		{
 			// TODO: unnecessary casts
-			//NullCoalescingTests.Print(a ?? b ?? c ?? d);
+			//Print(a ?? b ?? c ?? d);
 		}
 
 		public static void ChainWithComputation(int? a, short? b, long? c, byte d)
 		{
 			// TODO: unnecessary casts
-			//NullCoalescingTests.Print((a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4));
+			//Print((a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4));
 		}
 
 		public static object ReturnObjects(object a, object b)

@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole DereferenceRole = new TokenRole ("*");
 		public readonly static TokenRole AddressOfRole = new TokenRole ("&");
 		public readonly static TokenRole AwaitRole = new TokenRole ("await");
+		public readonly static TokenRole NullConditionalRole = new TokenRole ("?");
 		
 		public UnaryOperatorExpression()
 		{
@@ -63,9 +64,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole (GetOperatorRole (Operator)); }
 		}
 
-		static Expression NoUnaryExpressionError = new ErrorExpression ("No unary expression");
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression) ?? NoUnaryExpressionError; }
+			get { return GetChildByRole (Roles.Expression); }
 			set { SetChildByRole (Roles.Expression, value); }
 		}
 		
@@ -114,6 +114,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return AddressOfRole;
 				case UnaryOperatorType.Await:
 					return AwaitRole;
+				case UnaryOperatorType.NullConditional:
+					return NullConditionalRole;
+				case UnaryOperatorType.NullConditionalRewrap:
+					return null; // no syntax
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
@@ -176,6 +180,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>Get address (&a)</summary>
 		AddressOf,
 		/// <summary>C# 5.0 await</summary>
-		Await
+		Await,
+		/// <summary>C# 6 null-conditional operator.
+		/// Occurs as target of member reference or indexer expressions
+		/// to indicate <c>?.</c> or <c>?[]</c>.
+		/// Corresponds to <c>nullable.unwrap</c> in ILAst.
+		/// </summary>
+		NullConditional,
+		/// <summary>
+		/// Wrapper around a primary expression containing a null conditional operator.
+		/// Corresponds to <c>nullable.rewrap</c> in ILAst.
+		/// This has no syntax in C#, but the node is used to ensure parentheses are inserted where necessary.
+		/// </summary>
+		NullConditionalRewrap,
 	}
 }

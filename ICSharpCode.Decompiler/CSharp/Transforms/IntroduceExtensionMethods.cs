@@ -22,6 +22,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -34,10 +35,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		TransformContext context;
 		CSharpResolver resolver;
+		CSharpConversions conversions;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
+			this.conversions = CSharpConversions.Get(context.TypeSystem.Compilation);
 			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
@@ -92,24 +95,52 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			base.VisitInvocationExpression(invocationExpression);
-			var mre = invocationExpression.Target as MemberReferenceExpression;
 			var method = invocationExpression.GetSymbol() as IMethod;
-			if (method == null || !method.IsExtensionMethod || mre == null || !(mre.Target is TypeReferenceExpression) || !invocationExpression.Arguments.Any())
+			if (method == null || !method.IsExtensionMethod || !invocationExpression.Arguments.Any())
 				return;
-			var typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
+			IReadOnlyList<IType> typeArguments;
+			MemberReferenceExpression memberRefExpr;
+			switch (invocationExpression.Target) {
+				case MemberReferenceExpression mre:
+					typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
+					memberRefExpr = mre;
+					break;
+				case IdentifierExpression ide:
+					typeArguments = ide.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
+					memberRefExpr = null;
+					break;
+				default: return;
+			}
+			
 			var firstArgument = invocationExpression.Arguments.First();
 			var target = firstArgument.GetResolveResult();
+			if (target is ConstantResolveResult crr && crr.ConstantValue == null) {
+				target = new ConversionResolveResult(method.Parameters[0].Type, crr, Conversion.NullLiteralConversion);
+			}
 			var args = invocationExpression.Arguments.Skip(1).Select(a => a.GetResolveResult()).ToArray();
-			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
-			if (rr == null)
-				return;
-			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, args, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
+			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args))
 				return;
 			if (firstArgument is NullReferenceExpression)
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
-			else
-				mre.Target = firstArgument.Detach();
+			if (invocationExpression.Target is IdentifierExpression identifierExpression) {
+				identifierExpression.Detach();
+				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
+				invocationExpression.Target = memberRefExpr;
+			} else {
+				memberRefExpr.Target = firstArgument.Detach();
+			}
+		}
+
+		public static bool CanTransformToExtensionMethodCall(CSharpResolver resolver, IMethod method, IReadOnlyList<IType> typeArguments, ResolveResult target, ResolveResult[] arguments)
+		{
+			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			if (rr == null)
+				return false;
+			// TODO : add support for argument names as soon as named arguments are implemented in the decompiler.
+			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, arguments, allowExtensionMethods: true);
+			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
+				return false;
+			return true;
 		}
 	}
 }

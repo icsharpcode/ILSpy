@@ -33,7 +33,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IList<IUnresolvedAttribute> attributes;
 		IList<ITypeReference> constraints;
 		string name;
-		DomRegion region;
 		
 		SymbolKind ownerType;
 		VarianceModifier variance;
@@ -125,14 +124,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public DomRegion Region {
-			get { return region; }
-			set {
-				FreezableHelper.ThrowIfFrozen(this);
-				region = value;
-			}
-		}
-		
 		public bool HasDefaultConstructorConstraint {
 			get { return flags[FlagDefaultConstructorConstraint]; }
 			set {
@@ -185,7 +176,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new InvalidOperationException("Could not determine the type parameter's owner.");
 			return new DefaultTypeParameter(
 				owner, index, name, variance,
-				this.Attributes.CreateResolvedAttributes(context), this.Region,
+				this.Attributes.CreateResolvedAttributes(context),
 				this.HasValueTypeConstraint, this.HasReferenceTypeConstraint, this.HasDefaultConstructorConstraint, this.Constraints.Resolve(context)
 			);
 		}

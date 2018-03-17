@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly d3qdmgj3
+.assembly '1xvbqrhn'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module d3qdmgj3.dll
-// MVID: {580C0EC8-1048-4E5F-8BCB-8AF6994DA5B8}
+.module '1xvbqrhn.dll'
+// MVID: {FBEE2A5E-0EA6-4D81-AF17-0E675B5AAF7A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x017F0000
+// Image base: 0x02CF0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -183,6 +183,18 @@
     IL_0056:  nop
     IL_0057:  ret
   } // end of method AnonymousTypes::JaggedArray
+
+  .method private hidebysig static void  InlineVarDecl<T>([out] !!T& v,
+                                                          !!T 'init') cil managed
+  {
+    // Code size       9 (0x9)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  stobj      !!T
+    IL_0008:  ret
+  } // end of method AnonymousTypes::InlineVarDecl
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -839,4 +851,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../../ICSharpCode.Decompiler.Tests/TestCases/Pretty\AnonymousTypes.res
+// WARNING: Created Win32 resource file C:\work\ILSpy\ICSharpCode.Decompiler.Tests\bin\Debug\net46\../../../TestCases/Pretty\AnonymousTypes.res

@@ -54,12 +54,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectPinnedRegions : IILTransform
 	{
+		ILTransformContext context;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			this.context = context;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				SplitBlocksAtWritesToPinnedLocals(container);
 				DetectNullSafeArrayToPointer(container);
+				SplitBlocksAtWritesToPinnedLocals(container);
 				foreach (var block in container.Blocks)
 					CreatePinnedRegion(block);
 				container.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
@@ -78,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 			}
+			this.context = null;
 		}
 		
 		/// <summary>
@@ -93,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					ILVariable v;
 					if (inst.MatchStLoc(out v) && v.Kind == VariableKind.PinnedLocal && block.Instructions[j + 1].OpCode != OpCode.Branch) {
 						// split block after j:
+						context.Step("Split block after pinned local write", inst);
 						var newBlock = new Block();
 						for (int k = j + 1; k < block.Instructions.Count; k++) {
 							newBlock.Instructions.Add(block.Instructions[k]);
@@ -137,7 +142,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ILVariable v, p;
 				Block targetBlock;
 				if (IsNullSafeArrayToPointerPattern(block, out v, out p, out targetBlock)) {
-					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, new ArrayToPointer(new LdLoc(v)));
+					context.Step("NullSafeArrayToPointerPattern", block);
+					ILInstruction arrayToPointer = new ArrayToPointer(new LdLoc(v));
+					if (p.StackType != StackType.Ref) {
+						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
+					}
+					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer);
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
@@ -161,6 +171,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var condition = ifInst.Condition as Comp;
 			if (!(condition != null && condition.Kind == ComparisonKind.Equality && condition.Left.MatchLdLoc(out v) && condition.Right.MatchLdNull()))
 				return false;
+			bool usingPreviousVar = false;
 			if (v.Kind == VariableKind.StackSlot) {
 				// If the variable is a stack slot, that might be due to an inline assignment,
 				// so check the previous instruction:
@@ -169,16 +180,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// stloc V(ldloc S)
 					// if (comp(ldloc S == ldnull)) ...
 					v = previous.Variable;
+					usingPreviousVar = true;
 				}
 			}
-			Block nullOrEmptyBlock, notNullBlock;
-			return ifInst.TrueInst.MatchBranch(out nullOrEmptyBlock)
-				&& ifInst.FalseInst.MatchNop()
-				&& nullOrEmptyBlock.Parent == block.Parent
-				&& IsNullSafeArrayToPointerNullOrEmptyBlock(nullOrEmptyBlock, out p, out targetBlock)
-				&& block.Instructions.Last().MatchBranch(out notNullBlock)
-				&& notNullBlock.Parent == block.Parent
-				&& IsNullSafeArrayToPointerNotNullBlock(notNullBlock, v, p, nullOrEmptyBlock, targetBlock);
+			if (!ifInst.TrueInst.MatchBranch(out Block nullOrEmptyBlock))
+				return false;
+			if (!ifInst.FalseInst.MatchNop())
+				return false;
+			if (nullOrEmptyBlock.Parent != block.Parent)
+				return false;
+			if (!IsNullSafeArrayToPointerNullOrEmptyBlock(nullOrEmptyBlock, out p, out targetBlock))
+				return false;
+			if (!(p.Kind == VariableKind.PinnedLocal || (usingPreviousVar && v.Kind == VariableKind.PinnedLocal)))
+				return false;
+			if (!block.Instructions.Last().MatchBranch(out Block notNullBlock))
+				return false;
+			if (notNullBlock.Parent != block.Parent)
+				return false;
+			return IsNullSafeArrayToPointerNotNullBlock(notNullBlock, v, p, nullOrEmptyBlock, targetBlock);
 		}
 
 		bool IsNullSafeArrayToPointerNotNullBlock(Block block, ILVariable v, ILVariable p, Block nullOrEmptyBlock, Block targetBlock)
@@ -187,16 +206,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//   if (conv i->i4 (ldlen(ldloc V))) br B_not_null_and_not_empty
 			//   br B_null_or_empty
 			// }
-			ILInstruction condition, trueInst, array;
-			Block notNullAndNotEmptyBlock;
-			return block.Instructions.Count == 2
-				&& block.Instructions[0].MatchIfInstruction(out condition, out trueInst)
-				&& condition.UnwrapConv(ConversionKind.Truncate).MatchLdLen(StackType.I, out array)
-				&& array.MatchLdLoc(v)
-				&& trueInst.MatchBranch(out notNullAndNotEmptyBlock)
-				&& notNullAndNotEmptyBlock.Parent == block.Parent
-				&& IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(notNullAndNotEmptyBlock, v, p, targetBlock)
-				&& block.Instructions[1].MatchBranch(nullOrEmptyBlock);
+			if (block.Instructions.Count != 2)
+				return false;
+			if (!block.Instructions[0].MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst))
+				return false;
+			if (!condition.UnwrapConv(ConversionKind.Truncate).MatchLdLen(StackType.I, out ILInstruction array))
+				return false;
+			if (!array.MatchLdLoc(v))
+				return false;
+			if (!trueInst.MatchBranch(out Block notNullAndNotEmptyBlock))
+				return false;
+			if (notNullAndNotEmptyBlock.Parent != block.Parent)
+				return false;
+			if (!IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(notNullAndNotEmptyBlock, v, p, targetBlock))
+				return false;
+			return block.Instructions[1].MatchBranch(nullOrEmptyBlock);
 		}
 		
 		bool IsNullSafeArrayToPointerNotNullAndNotEmptyBlock(Block block, ILVariable v, ILVariable p, Block targetBlock)
@@ -206,12 +230,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//   br B_target
 			// }
 			ILInstruction value;
-			return block.Instructions.Count == 2
-				&& block.Instructions[0].MatchStLoc(p, out value)
-				&& value.OpCode == OpCode.LdElema
-				&& ((LdElema)value).Array.MatchLdLoc(v)
-				&& ((LdElema)value).Indices.All(i => i.MatchLdcI4(0))
-				&& block.Instructions[1].MatchBranch(targetBlock);
+			if (block.Instructions.Count != 2)
+				return false;
+			if (!block.Instructions[0].MatchStLoc(p, out value))
+				return false;
+			if (v.Kind == VariableKind.PinnedLocal) {
+				value = value.UnwrapConv(ConversionKind.StopGCTracking);
+			}
+			if (!(value is LdElema ldelema))
+				return false;
+			if (!ldelema.Array.MatchLdLoc(v))
+				return false;
+			if (!ldelema.Indices.All(i => i.MatchLdcI4(0)))
+				return false;
+			return block.Instructions[1].MatchBranch(targetBlock);
 		}
 		
 		bool IsNullSafeArrayToPointerNullOrEmptyBlock(Block block, out ILVariable p, out Block targetBlock)
@@ -225,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILInstruction value;
 			return block.Instructions.Count == 2
 				&& block.Instructions[0].MatchStLoc(out p, out value)
-				&& p.Kind == VariableKind.PinnedLocal
+				&& (p.Kind == VariableKind.PinnedLocal || p.Kind == VariableKind.Local)
 				&& IsNullOrZero(value)
 				&& block.Instructions[1].MatchBranch(out targetBlock);
 		}
@@ -285,7 +317,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				}
 			}
-			
+
+			context.Step("CreatePinnedRegion", block);
 			BlockContainer body = new BlockContainer();
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] > 0) {
@@ -331,15 +364,30 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			BlockContainer body = (BlockContainer)pinnedRegion.Body;
 			if (pinnedRegion.Variable.Type.Kind == TypeKind.ByReference) {
 				// C# doesn't support a "by reference" variable, so replace it with a native pointer
+				context.Step("Replace pinned ref-local with native pointer", pinnedRegion);
 				ILVariable oldVar = pinnedRegion.Variable;
+				IType elementType = ((ByReferenceType)oldVar.Type).ElementType;
+				if (elementType.Kind == TypeKind.Pointer && pinnedRegion.Init.MatchLdFlda(out _, out var field)
+					&& ((PointerType)elementType).ElementType.Equals(field.Type))
+				{
+					// Roslyn 2.6 (C# 7.2) uses type "int*&" for the pinned local referring to a
+					// fixed field of type "int".
+					// Remove the extra level of indirection.
+					elementType = ((PointerType)elementType).ElementType;
+				}
 				ILVariable newVar = new ILVariable(
 					VariableKind.PinnedLocal,
-					new PointerType(((ByReferenceType)oldVar.Type).ElementType),
+					new PointerType(elementType),
 					oldVar.Index);
 				newVar.Name = oldVar.Name;
 				newVar.HasGeneratedName = oldVar.HasGeneratedName;
 				oldVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
+				UseExistingVariableForPinnedRegion(pinnedRegion);
+			} else if (pinnedRegion.Variable.Type.Kind == TypeKind.Array) {
+				context.Step("Replace pinned array with native pointer", pinnedRegion);
+				MoveArrayToPointerToPinnedRegionInit(pinnedRegion);
+				UseExistingVariableForPinnedRegion(pinnedRegion);
 			} else if (pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String)) {
 				// fixing a string
 				ILVariable nativeVar;
@@ -360,6 +408,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				    && adjustOffsetToStringData.Parent == body && adjustOffsetToStringData.IncomingEdgeCount == 1
 					&& IsOffsetToStringDataBlock(adjustOffsetToStringData, nativeVar, targetBlock))
 				{
+					context.Step("Handle pinned string (with adjustOffsetToStringData)", pinnedRegion);
 					// remove old entry point
 					body.Blocks.RemoveAt(0);
 					body.Blocks.RemoveAt(adjustOffsetToStringData.ChildIndex);
@@ -399,6 +448,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 		}
 
+		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)
+		{
+			// Roslyn started marking the array variable as pinned,
+			// and then uses array.to.pointer immediately within the region.
+			Debug.Assert(pinnedRegion.Variable.Type.Kind == TypeKind.Array);
+			if (pinnedRegion.Variable.StoreInstructions.Count != 1 || pinnedRegion.Variable.AddressCount != 0 || pinnedRegion.Variable.LoadCount != 1)
+				return;
+			var ldloc = pinnedRegion.Variable.LoadInstructions.Single();
+			if (!(ldloc.Parent is ArrayToPointer arrayToPointer))
+				return;
+			if (!(arrayToPointer.Parent is Conv conv && conv.Kind == ConversionKind.StopGCTracking))
+				return;
+			Debug.Assert(arrayToPointer.IsDescendantOf(pinnedRegion));
+			ILVariable oldVar = pinnedRegion.Variable;
+			ILVariable newVar = new ILVariable(
+				VariableKind.PinnedLocal,
+				new PointerType(((ArrayType)oldVar.Type).ElementType),
+				oldVar.Index);
+			newVar.Name = oldVar.Name;
+			newVar.HasGeneratedName = oldVar.HasGeneratedName;
+			oldVar.Function.Variables.Add(newVar);
+			pinnedRegion.Variable = newVar;
+			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init) { ILRange = arrayToPointer.ILRange };
+			conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+		}
+
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
 		{
 			Debug.Assert(newVar.StackType == StackType.I);
@@ -427,7 +502,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ReplacePinnedVar(oldVar, newVar, child);
 			}
 		}
-
+		
 		private bool IsSlotAcceptingBothManagedAndUnmanagedPointers(SlotInfo slotInfo)
 		{
 			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
@@ -461,6 +536,33 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
 			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
+		}
+
+		/// <summary>
+		/// Modifies a pinned region to eliminate an extra local variable that roslyn tends to generate.
+		/// </summary>
+		void UseExistingVariableForPinnedRegion(PinnedRegion pinnedRegion)
+		{
+			// PinnedRegion V_1(..., BlockContainer {
+			// Block IL_0000(incoming: 1) {
+			//    stloc V_0(ldloc V_1)
+			//    ...
+			if (!(pinnedRegion.Body is BlockContainer body))
+				return;
+			if (pinnedRegion.Variable.LoadCount != 1)
+				return;
+			if (!body.EntryPoint.Instructions[0].MatchStLoc(out var v, out var init))
+				return;
+			if (!init.MatchLdLoc(pinnedRegion.Variable))
+				return;
+			if (!(v.IsSingleDefinition && v.Type.Equals(pinnedRegion.Variable.Type)))
+				return;
+			if (v.Kind != VariableKind.Local)
+				return;
+			// replace V_1 with V_0
+			v.Kind = VariableKind.PinnedLocal;
+			pinnedRegion.Variable = v;
+			body.EntryPoint.Instructions.RemoveAt(0);
 		}
 		#endregion
 	}

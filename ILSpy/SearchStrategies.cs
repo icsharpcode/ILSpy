@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
@@ -165,12 +166,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMetadataEntity
+		void Add<T>(Func<IEnumerable<T>> itemsGetter, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMetadataEntity
 		{
+			IEnumerable<T> items = Enumerable.Empty<T>();
+			try {
+				items = itemsGetter();
+			} catch (Exception ex) {
+				System.Diagnostics.Debug.Print(ex.ToString());
+			}
 			foreach (var item in items) {
 				if (matcher(item, language)) {
-					addResult(new SearchResult
-					{
+					addResult(new SearchResult {
 						Member = item,
 						Fitness = CalculateFitness(item),
 						Image = image(item),
@@ -186,10 +192,10 @@ namespace ICSharpCode.ILSpy
 		{
 			var td = type.This();
 			var metadata = type.Module.GetMetadataReader();
-			Add(td.GetFields().Select(f => new FieldDefinition(type.Module, f)), type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
-			Add(td.GetProperties().Select(p => new PropertyDefinition(type.Module, p)), type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
-			Add(td.GetEvents().Select(e => new EventDefinition(type.Module, e)), type, language, addResult, IsMatch, EventTreeNode.GetIcon);
-			Add(td.GetMethods().Where(m => NotSpecialMethod(m, metadata)).Select(m => new MethodDefinition(type.Module, m)), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
+			Add(() => td.GetFields().Select(f => new FieldDefinition(type.Module, f)), type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
+			Add(() => td.GetProperties().Select(p => new PropertyDefinition(type.Module, p)), type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
+			Add(() => td.GetEvents().Select(e => new EventDefinition(type.Module, e)), type, language, addResult, IsMatch, EventTreeNode.GetIcon);
+			Add(() => td.GetMethods().Where(m => NotSpecialMethod(m, metadata)).Select(m => new MethodDefinition(type.Module, m)), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
 
 			foreach (var nestedType in td.GetNestedTypes()) {
 				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
@@ -213,6 +219,24 @@ namespace ICSharpCode.ILSpy
 			} catch (ArgumentException) {
 				return null;
 			}
+		}
+	}
+
+	class MetadataTokenSearchStrategy : TypeAndMemberSearchStrategy
+	{
+		readonly int searchTermToken;
+
+		public MetadataTokenSearchStrategy(params string[] terms)
+			: base(terms)
+		{
+			if (searchTerm.Length == 1) {
+				int.TryParse(searchTerm[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out searchTermToken);
+			}
+		}
+
+		protected override bool MatchName(IMemberDefinition m, Language language)
+		{
+			return m.MetadataToken.ToInt32() == searchTermToken;
 		}
 	}
 

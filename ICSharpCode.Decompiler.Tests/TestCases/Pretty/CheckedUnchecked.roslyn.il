@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module CheckedUnchecked.dll
-// MVID: {99C747B4-9547-452B-8101-128D75599E60}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02FB0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -128,7 +124,7 @@
     .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       52 (0x34)
     .maxstack  8
-    IL_0000:  ldc.i4     0xf0268823
+    IL_0000:  ldc.i4     0x9256c2a8
     IL_0005:  ldc.i4     0xa5555529
     IL_000a:  mul
     IL_000b:  call       class [mscorlib]System.Collections.Generic.EqualityComparer`1<!0> class [mscorlib]System.Collections.Generic.EqualityComparer`1<!'<x>j__TPar'>::get_Default()

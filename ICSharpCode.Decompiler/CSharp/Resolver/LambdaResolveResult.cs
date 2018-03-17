@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the list of parameters.
 		/// </summary>
-		public abstract IList<IParameter> Parameters { get; }
+		public abstract IReadOnlyList<IParameter> Parameters { get; }
 		
 		/// <summary>
 		/// Gets the return type of the lambda.
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override bool IsImplicitlyTyped { get; }
 		public override bool IsAsync => function.IsAsync;
 
-		public override IList<IParameter> Parameters => function.Parameters;
+		public override IReadOnlyList<IParameter> Parameters => function.Parameters;
 		public override IType ReturnType => function.ReturnType;
 
 		public override ResolveResult Body { get; }

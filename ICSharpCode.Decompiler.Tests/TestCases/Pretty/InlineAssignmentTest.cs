@@ -40,30 +40,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void SimpleInlineWithLocals()
 		{
 			int index;
-			Console.WriteLine(this.GetFormat(), index = this.GetIndex());
+			Console.WriteLine(GetFormat(), index = GetIndex());
 			Console.WriteLine(index);
 			InlineAssignmentTest value;
-			Console.WriteLine(this.GetFormat(), value = new InlineAssignmentTest());
+			Console.WriteLine(GetFormat(), value = new InlineAssignmentTest());
 			Console.WriteLine(value);
 		}
 		
 		public void SimpleInlineWithFields()
 		{
-			Console.WriteLine(this.field1 = 5);
-			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
+			Console.WriteLine(field1 = 5);
+			Console.WriteLine(field2 = new InlineAssignmentTest());
 		}
 
 		public void SimpleInlineWithFields2()
 		{
-			Console.WriteLine(this.field1 = 5);
-			Console.WriteLine(this.field1);
-			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
-			Console.WriteLine(InlineAssignmentTest.field2);
-			this.UseShort(this.field4 = 6);
-			this.UseShort(this.field4 = -10000);
-			this.UseShort(this.field4 = (short)this.field1);
-			this.UseShort(this.field4 = this.UseShort(0));
-			Console.WriteLine(this.field4);
+			Console.WriteLine(field1 = 5);
+			Console.WriteLine(field1);
+			Console.WriteLine(field2 = new InlineAssignmentTest());
+			Console.WriteLine(field2);
+			UseShort(field4 = 6);
+			UseShort(field4 = -10000);
+			UseShort(field4 = (short)field1);
+			UseShort(field4 = UseShort(0));
+			Console.WriteLine(field4);
 		}
 		
 		public short UseShort(short s)
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		public int Array2(int i)
 		{
-			return this.field3[i] = 1;
+			return field3[i] = 1;
 		}
 		
 		public int GetIndex()
@@ -124,17 +124,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		public int ArrayUsageWithMethods()
 		{
-			return this.GetArray()[this.GetIndex()] = this.GetValue(this.GetIndex());
+			return GetArray()[GetIndex()] = GetValue(GetIndex());
 		}
 
 		public int StaticPropertyTest()
 		{
-			return InlineAssignmentTest.StaticProperty = this.GetIndex();
+			return StaticProperty = GetIndex();
 		}
 
 		public int InstancePropertyTest()
 		{
-			return this.InstanceProperty = this.GetIndex();
+			return InstanceProperty = GetIndex();
 		}
 	}
 }

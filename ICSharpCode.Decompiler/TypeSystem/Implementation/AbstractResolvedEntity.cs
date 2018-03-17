@@ -39,17 +39,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.parentContext = parentContext;
 			this.Attributes = unresolved.Attributes.CreateResolvedAttributes(parentContext);
 		}
-		
+
+		public System.Reflection.Metadata.EntityHandle MetadataToken => unresolved.MetadataToken;
+
 		public SymbolKind SymbolKind {
 			get { return unresolved.SymbolKind; }
-		}
-		
-		public DomRegion Region {
-			get { return unresolved.Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return unresolved.BodyRegion; }
 		}
 		
 		public ITypeDefinition DeclaringTypeDefinition {
@@ -64,7 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return parentContext.CurrentAssembly; }
 		}
 		
-		public IList<IAttribute> Attributes { get; protected set; }
+		public IReadOnlyList<IAttribute> Attributes { get; protected set; }
 
 		public abstract ISymbolReference ToReference();
 		

@@ -85,10 +85,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		static readonly ExpressionStatement fieldInitializerPattern = new ExpressionStatement {
 			Expression = new AssignmentExpression {
-				Left = new NamedNode("fieldAccess", new MemberReferenceExpression {
-				                     	Target = new ThisReferenceExpression(),
-				                     	MemberName = Pattern.AnyString
-				                     }),
+				Left = new Choice {
+					new NamedNode("fieldAccess", new MemberReferenceExpression {
+										 Target = new ThisReferenceExpression(),
+										 MemberName = Pattern.AnyString
+									 }),
+					new NamedNode("fieldAccess", new IdentifierExpression(Pattern.AnyString))
+				},
 				Operator = AssignmentOperatorType.Assign,
 				Right = new AnyNode("initializer")
 			}
@@ -127,12 +130,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
-					
 					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
 					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
 					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
-					if (fieldOrPropertyOrEventDecl == null)
+					// Cannot transform if member is not found or if it is a custom event.
+					if (fieldOrPropertyOrEventDecl == null || fieldOrPropertyOrEventDecl is CustomEventDeclaration)
 						break;
 					Expression initializer = m.Get<Expression>("initializer").Single();
 					// 'this'/'base' cannot be used in initializers
@@ -141,7 +144,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					
 					allSame = true;
 					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
-						if (!instanceCtorsNotChainingWithThis[0].Body.First().IsMatch(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault()))
+						var otherMatch = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault());
+						if (!otherMatch.Success) {
+							allSame = false;
+							break;
+						}
+						var otherMember = (otherMatch.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
+						if (!otherMember.Equals(fieldOrPropertyOrEvent))
+							allSame = false;
+						if (!initializer.IsMatch(otherMatch.Get<AstNode>("initializer").Single()))
 							allSame = false;
 					}
 					if (allSame) {

@@ -5,14 +5,14 @@
   <PropertyGroup>
     <!--
     <TargetFramework Condition=" '$(OS)' != 'Windows_NT' ">netstandard2.0</TargetFramework>
-    <TargetFrameworks Condition=" '$(OS)' == 'Windows_NT' ">netstandard2.0;net46</TargetFrameworks>
+    <TargetFrameworks Condition=" '$(OS)' == 'Windows_NT' ">netstandard2.0;net46;net45</TargetFrameworks>
     -->
     <TargetFramework>net46</TargetFramework>
 
     <Description>IL decompiler engine</Description>
     <Company>ic#code</Company>
     <Product>ILSpy</Product>
-    <Copyright>Copyright 2011-2017 AlphaSierraPapa for the SharpDevelop Team</Copyright>
+    <Copyright>Copyright 2011-2018 AlphaSierraPapa for the SharpDevelop Team</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
     <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
+    <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
@@ -92,6 +93,7 @@
     <Compile Include="CSharp\Syntax\Expressions\Expression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IdentifierExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IndexerExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\InterpolatedStringExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\InvocationExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IsExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\LambdaExpression.cs" />
@@ -237,7 +239,6 @@
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
     <Compile Include="CSharp\TypeSystem\ConstantValues.cs" />
-    <Compile Include="CSharp\TypeSystem\CSharpAttribute.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
@@ -268,6 +269,7 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
+    <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
@@ -293,8 +295,11 @@
     <Compile Include="Metadata\OperandType.cs" />
     <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
     <Compile Include="Metadata\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="IL\PointerArithmeticOffset.cs" />
+    <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\Instructions\LdFlda.cs" />
+    <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
     <Compile Include="Metadata\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
@@ -302,6 +307,7 @@
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\ExpressionTreeCast.cs" />
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
+    <Compile Include="IL\Transforms\NullPropagationTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
     <Compile Include="IL\Instructions\UsingInstruction.cs" />

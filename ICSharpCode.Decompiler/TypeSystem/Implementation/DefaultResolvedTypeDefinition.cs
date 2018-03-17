@@ -54,10 +54,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					accessibility = part.Accessibility;
 			}
 		}
+
+		IReadOnlyList<ITypeParameter> typeParameters;
 		
-		IList<ITypeParameter> typeParameters;
-		
-		public IList<ITypeParameter> TypeParameters {
+		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				var result = LazyInit.VolatileRead(ref this.typeParameters);
 				if (result != null) {
@@ -78,38 +78,42 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						else
 							typeParameters[i] = unresolvedTP.CreateResolvedTypeParameter(contextForTypeParameters);
 					}
-					result = Array.AsReadOnly(typeParameters);
+					result = typeParameters;
 				}
 				return LazyInit.GetOrSet(ref this.typeParameters, result);
 			}
 		}
+
+		IReadOnlyList<IAttribute> attributes;
 		
-		IList<IAttribute> attributes;
-		
-		public IList<IAttribute> Attributes {
+		public IReadOnlyList<IAttribute> Attributes {
 			get {
 				var result = LazyInit.VolatileRead(ref this.attributes);
 				if (result != null) {
 					return result;
 				}
-				result = new List<IAttribute>();
+				var newResult = new List<IAttribute>();
 				var context = parentContext.WithCurrentTypeDefinition(this);
 				foreach (IUnresolvedTypeDefinition part in parts) {
 					ITypeResolveContext parentContextForPart = part.CreateResolveContext(context);
 					foreach (var attr in part.Attributes) {
-						result.Add(attr.CreateResolvedAttribute(parentContextForPart));
+						newResult.Add(attr.CreateResolvedAttribute(parentContextForPart));
 					}
 				}
-				if (result.Count == 0)
+				if (newResult.Count == 0)
 					result = EmptyList<IAttribute>.Instance;
+				else
+					result = newResult;
 				return LazyInit.GetOrSet(ref this.attributes, result);
 			}
 		}
 		
-		public IList<IUnresolvedTypeDefinition> Parts {
+		public IReadOnlyList<IUnresolvedTypeDefinition> Parts {
 			get { return parts; }
 		}
-		
+
+		public System.Reflection.Metadata.EntityHandle MetadataToken => parts[0].MetadataToken;
+
 		public SymbolKind SymbolKind {
 			get { return parts[0].SymbolKind; }
 		}
@@ -117,13 +121,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public virtual TypeKind Kind {
 			get { return parts[0].Kind; }
 		}
-		
+
 		#region NestedTypes
-		IList<ITypeDefinition> nestedTypes;
+		IReadOnlyList<ITypeDefinition> nestedTypes;
 		
-		public IList<ITypeDefinition> NestedTypes {
+		public IReadOnlyList<ITypeDefinition> NestedTypes {
 			get {
-				IList<ITypeDefinition> result = LazyInit.VolatileRead(ref this.nestedTypes);
+				IReadOnlyList<ITypeDefinition> result = LazyInit.VolatileRead(ref this.nestedTypes);
 				if (result != null) {
 					return result;
 				} else {
@@ -132,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						from nestedTypeRef in part.NestedTypes
 						group nestedTypeRef by new { nestedTypeRef.Name, nestedTypeRef.TypeParameters.Count } into g
 						select new DefaultResolvedTypeDefinition(new SimpleTypeResolveContext(this), g.ToArray())
-					).ToList<ITypeDefinition>().AsReadOnly();
+					).ToList<ITypeDefinition>();
 					return LazyInit.GetOrSet(ref this.nestedTypes, result);
 				}
 			}
@@ -140,7 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region Members
-		sealed class MemberList : IList<IMember>
+		sealed class MemberList : IReadOnlyList<IMember>
 		{
 			internal readonly ITypeResolveContext[] contextPerMember;
 			internal readonly IUnresolvedMember[] unresolvedMembers;
@@ -173,15 +177,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 					return LazyInit.GetOrSet(ref resolvedMembers[index], unresolvedMembers[index].CreateResolved(contextPerMember[index]));
 				}
-				set { throw new NotSupportedException(); }
 			}
 			
 			public int Count {
 				get { return resolvedMembers.Length; }
-			}
-			
-			bool ICollection<IMember>.IsReadOnly {
-				get { return true; }
 			}
 			
 			public int IndexOf(IMember item)
@@ -191,43 +190,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						return i;
 				}
 				return -1;
-			}
-			
-			void IList<IMember>.Insert(int index, IMember item)
-			{
-				throw new NotSupportedException();
-			}
-			
-			void IList<IMember>.RemoveAt(int index)
-			{
-				throw new NotSupportedException();
-			}
-			
-			void ICollection<IMember>.Add(IMember item)
-			{
-				throw new NotSupportedException();
-			}
-			
-			void ICollection<IMember>.Clear()
-			{
-				throw new NotSupportedException();
-			}
-			
-			bool ICollection<IMember>.Contains(IMember item)
-			{
-				return IndexOf(item) >= 0;
-			}
-			
-			void ICollection<IMember>.CopyTo(IMember[] array, int arrayIndex)
-			{
-				for (int i = 0; i < this.Count; i++) {
-					array[arrayIndex + i] = this[i];
-				}
-			}
-			
-			bool ICollection<IMember>.Remove(IMember item)
-			{
-				throw new NotSupportedException();
 			}
 			
 			public IEnumerator<IMember> GetEnumerator()
@@ -247,7 +209,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			public readonly string Name;
 			public readonly int TypeParameterCount;
-			public readonly IList<IParameter> Parameters;
+			public readonly IReadOnlyList<IParameter> Parameters;
 			public readonly List<IUnresolvedMethod> Parts = new List<IUnresolvedMethod>();
 			public readonly List<ITypeResolveContext> Contexts = new List<ITypeResolveContext>();
 
@@ -336,7 +298,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return LazyInit.GetOrSet(ref this.memberList, result);
 		}
 		
-		public IList<IMember> Members {
+		public IReadOnlyList<IMember> Members {
 			get { return GetMemberList(); }
 		}
 		
@@ -497,16 +459,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return parts[0].TypeParameters.Count; }
 		}
 
-		public IList<IType> TypeArguments {
-			get {
-				// ToList() call is necessary because IList<> isn't covariant
-				return TypeParameters.ToList<IType>();
-			}
-		}
-
-		public bool IsParameterized {
-			get { return false; }
-		}
+		public IReadOnlyList<IType> TypeArguments => TypeParameters;
 
 		#region DirectBaseTypes
 		IList<IType> directBaseTypes;
@@ -595,14 +548,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return parts[0].FullTypeName; }
 		}
 		
-		public DomRegion Region {
-			get { return parts[0].Region; }
-		}
-		
-		public DomRegion BodyRegion {
-			get { return parts[0].BodyRegion; }
-		}
-		
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return parentContext.CurrentTypeDefinition; }
 		}
@@ -674,7 +619,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			ITypeDefinition declTypeDef = this.DeclaringTypeDefinition;
 			if (declTypeDef != null) {
-				return new NestedTypeReference(declTypeDef.ToTypeReference(), this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount);
+				return new NestedTypeReference(declTypeDef.ToTypeReference(),
+					this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount,
+					this.IsReferenceType);
 			} else {
 				IAssembly asm = this.ParentAssembly;
 				IAssemblyReference asmRef;
@@ -682,7 +629,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					asmRef = new DefaultAssemblyReference(asm.AssemblyName);
 				else
 					asmRef = null;
-				return new GetClassTypeReference(asmRef, this.Namespace, this.Name, this.TypeParameterCount);
+				return new GetClassTypeReference(asmRef, this.Namespace, this.Name, this.TypeParameterCount, this.IsReferenceType);
 			}
 		}
 		
@@ -712,7 +659,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
 		}
@@ -783,7 +730,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
@@ -882,7 +829,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetInterfaceImplementation(new[] { interfaceMember })[0];
 		}
 		
-		public IList<IMember> GetInterfaceImplementation(IList<IMember> interfaceMembers)
+		public IReadOnlyList<IMember> GetInterfaceImplementation(IReadOnlyList<IMember> interfaceMembers)
 		{
 			// TODO: review the subtle rules for interface reimplementation,
 			// write tests and fix this method.
@@ -921,7 +868,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 		
-		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
 			return TypeParameterSubstitution.Identity;
 		}

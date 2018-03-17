@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +23,12 @@
   .ver 0:0:0:0
 }
 .module Generics.dll
-// MVID: {6515FC2D-ED0B-41CF-9FD2-8CD5192CF5A1}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01880000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -105,6 +101,76 @@
     IL_0006:  ret
   } // end of method Generics::CastToTypeParameter
 
+  .method public hidebysig instance !!TTarget 
+          GenericAsGeneric<TSource,class TTarget>(!!TSource source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  box        !!TSource
+    IL_0006:  isinst     !!TTarget
+    IL_000b:  unbox.any  !!TTarget
+    IL_0010:  ret
+  } // end of method Generics::GenericAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          GenericAsNullable<TSource,valuetype .ctor ([mscorlib]System.ValueType) TTarget>(!!TSource source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  box        !!TSource
+    IL_0006:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000b:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0010:  ret
+  } // end of method Generics::GenericAsNullable
+
+  .method public hidebysig instance !!TTarget 
+          ObjectAsGeneric<class TTarget>(object source) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  isinst     !!TTarget
+    IL_0006:  unbox.any  !!TTarget
+    IL_000b:  ret
+  } // end of method Generics::ObjectAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          ObjectAsNullable<valuetype .ctor ([mscorlib]System.ValueType) TTarget>(object source) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0006:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000b:  ret
+  } // end of method Generics::ObjectAsNullable
+
+  .method public hidebysig instance !!TTarget 
+          IntAsGeneric<class TTarget>(int32 source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  box        [mscorlib]System.Int32
+    IL_0006:  isinst     !!TTarget
+    IL_000b:  unbox.any  !!TTarget
+    IL_0010:  ret
+  } // end of method Generics::IntAsGeneric
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<!!TTarget> 
+          IntAsNullable<valuetype .ctor ([mscorlib]System.ValueType) TTarget>(int32 source) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  box        [mscorlib]System.Int32
+    IL_0006:  isinst     valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_000b:  unbox.any  valuetype [mscorlib]System.Nullable`1<!!TTarget>
+    IL_0010:  ret
+  } // end of method Generics::IntAsNullable
+
   .method public hidebysig instance !!T  New<.ctor T>() cil managed
   {
     // Code size       6 (0x6)
@@ -124,6 +190,29 @@
     IL_0007:  ceq
     IL_0009:  ret
   } // end of method Generics::IsNull
+
+  .method public hidebysig instance !!T[] 
+          NewArray<T>(int32 size) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  newarr     !!T
+    IL_0006:  ret
+  } // end of method Generics::NewArray
+
+  .method public hidebysig instance !!T[0...,0...] 
+          NewArray<T>(int32 size1,
+                      int32 size2) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  newobj     instance void !!T[0...,0...]::.ctor(int32,
+                                                             int32)
+    IL_0007:  ret
+  } // end of method Generics::NewArray
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

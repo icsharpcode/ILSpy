@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region LookupType
-		public ResolveResult LookupType(IType declaringType, string name, IList<IType> typeArguments, bool parameterizeResultType = true)
+		public ResolveResult LookupType(IType declaringType, string name, IReadOnlyList<IType> typeArguments, bool parameterizeResultType = true)
 		{
 			if (declaringType == null)
 				throw new ArgumentNullException("declaringType");
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Performs a member lookup.
 		/// </summary>
-		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IList<IType> typeArguments, bool isInvocation)
+		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IReadOnlyList<IType> typeArguments, bool isInvocation)
 		{
 			if (targetResolveResult == null)
 				throw new ArgumentNullException("targetResolveResult");
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Looks up the indexers on the target type.
 		/// </summary>
-		public IList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
+		public IReadOnlyList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
 		{
 			if (targetResolveResult == null)
 				throw new ArgumentNullException("targetResolveResult");
@@ -634,7 +634,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region CreateResult
-		ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name, IList<IType> typeArguments)
+		ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name, IReadOnlyList<IType> typeArguments)
 		{
 			// Remove all hidden groups
 			lookupGroups.RemoveAll(g => g.AllHidden);

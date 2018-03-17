@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		IType[] parameterTypes;
 		ResolveResult[] arguments;
 		bool[,] dependencyMatrix;
-		IList<IType> classTypeArguments;
+		IReadOnlyList<IType> classTypeArguments;
 		
 		#region InferTypeArguments (main function)
 		/// <summary>
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// when inferring a method group or lambda.
 		/// </param>
 		/// <returns>The inferred type arguments.</returns>
-		public IType[] InferTypeArguments(IList<ITypeParameter> typeParameters, IList<ResolveResult> arguments, IList<IType> parameterTypes, out bool success, IList<IType> classTypeArguments = null)
+		public IType[] InferTypeArguments(IReadOnlyList<ITypeParameter> typeParameters, IReadOnlyList<ResolveResult> arguments, IReadOnlyList<IType> parameterTypes, out bool success, IReadOnlyList<IType> classTypeArguments = null)
 		{
 			if (typeParameters == null)
 				throw new ArgumentNullException("typeParameters");
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Infers type arguments for the <paramref name="typeParameters"/> occurring in the <paramref name="targetType"/>
 		/// so that the resulting type (after substition) satisfies the given bounds.
 		/// </summary>
-		public IType[] InferTypeArgumentsFromBounds(IList<ITypeParameter> typeParameters, IType targetType, IList<IType> lowerBounds, IList<IType> upperBounds, out bool success)
+		public IType[] InferTypeArgumentsFromBounds(IReadOnlyList<ITypeParameter> typeParameters, IType targetType, IEnumerable<IType> lowerBounds, IEnumerable<IType> upperBounds, out bool success)
 		{
 			if (typeParameters == null)
 				throw new ArgumentNullException("typeParameters");
@@ -596,7 +596,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ParameterizedType pU = U as ParameterizedType;
 			ParameterizedType pV = V as ParameterizedType;
 			if (pU != null && pV != null
-			    && object.Equals(pU.GetDefinition(), pV.GetDefinition())
+			    && object.Equals(pU.GenericType, pV.GenericType)
 			    && pU.TypeParameterCount == pV.TypeParameterCount)
 			{
 				Log.Indent();
@@ -657,7 +657,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseU in U.GetAllBaseTypes()) {
 					ParameterizedType pU = baseU as ParameterizedType;
-					if (pU != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
+					if (pU != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pU;
 						else
@@ -671,7 +671,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						IType Vi = pV.GetTypeArgument(i);
 						if (Ui.IsReferenceType == true) {
 							// look for variance
-							ITypeParameter Xi = pV.GetDefinition().TypeParameters[i];
+							ITypeParameter Xi = pV.TypeParameters[i];
 							switch (Xi.Variance) {
 								case VarianceModifier.Covariant:
 									MakeLowerBoundInference(Ui, Vi);
@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (rt == null || rt.TypeParameterCount != 1)
 				return false;
-			switch (rt.GetDefinition().KnownTypeCode) {
+			switch (rt.GetDefinition()?.KnownTypeCode) {
 				case KnownTypeCode.IEnumerableOfT:
 				case KnownTypeCode.ICollectionOfT:
 				case KnownTypeCode.IListOfT:
@@ -743,7 +743,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseV in V.GetAllBaseTypes()) {
 					ParameterizedType pV = baseV as ParameterizedType;
-					if (pV != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
+					if (pV != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pV;
 						else
@@ -757,7 +757,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						IType Vi = uniqueBaseType.GetTypeArgument(i);
 						if (Ui.IsReferenceType == true) {
 							// look for variance
-							ITypeParameter Xi = pU.GetDefinition().TypeParameters[i];
+							ITypeParameter Xi = pU.TypeParameters[i];
 							switch (Xi.Variance) {
 								case VarianceModifier.Covariant:
 									MakeUpperBoundInference(Ui, Vi);
@@ -840,14 +840,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Finds a type that satisfies the given lower and upper bounds.
 		/// </summary>
-		public IType FindTypeInBounds(IList<IType> lowerBounds, IList<IType> upperBounds)
+		public IType FindTypeInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
 		{
 			if (lowerBounds == null)
 				throw new ArgumentNullException("lowerBounds");
 			if (upperBounds == null)
 				throw new ArgumentNullException("upperBounds");
 			
-			IList<IType> result = FindTypesInBounds(lowerBounds, upperBounds);
+			var result = FindTypesInBounds(lowerBounds, upperBounds);
 			
 			if (algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults) {
 				return IntersectionType.Create(result);
@@ -857,13 +857,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		
-		static IType GetFirstTypePreferNonInterfaces(IList<IType> result)
+		static IType GetFirstTypePreferNonInterfaces(IReadOnlyList<IType> result)
 		{
 			return result.FirstOrDefault(c => c.Kind != TypeKind.Interface)
 				?? result.FirstOrDefault() ?? SpecialType.UnknownType;
 		}
 		
-		IList<IType> FindTypesInBounds(IList<IType> lowerBounds, IList<IType> upperBounds)
+		IReadOnlyList<IType> FindTypesInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
 		{
 			// If there's only a single type; return that single type.
 			// If both inputs are empty, return the empty list.

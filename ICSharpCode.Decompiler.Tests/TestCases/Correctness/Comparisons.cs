@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Globalization;
 
 #pragma warning disable 652
 
@@ -55,7 +56,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			float[] vals = { -1, 0, 3, float.PositiveInfinity, float.NaN };
 			for (int i = 0; i < vals.Length; i++) {
 				for (int j = 0; j < vals.Length; j++) {
-					Console.WriteLine("Float: {0:r} {1} {2:r} = {3}", vals[i], name, vals[j], f(vals[i], vals[j]));
+					Console.WriteLine("Float: {0} {1} {2:r} = {3}",
+						vals[i].ToString("r", CultureInfo.InvariantCulture),
+						name,
+						vals[j].ToString("r", CultureInfo.InvariantCulture),
+						f(vals[i], vals[j]));
 				}
 			}
 		}

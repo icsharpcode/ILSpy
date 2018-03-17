@@ -29,7 +29,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ITypeReference declaringTypeRef;
 		readonly string name;
 		readonly int additionalTypeParameterCount;
-		
+		readonly bool? isReferenceType;
+
 		/// <summary>
 		/// Creates a new NestedTypeReference.
 		/// </summary>
@@ -40,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <paramref name="declaringTypeRef"/> must be exactly the (unbound) declaring type, not a derived type, not a parameterized type.
 		/// NestedTypeReference thus always resolves to a type definition, never to (partially) parameterized types.
 		/// </remarks>
-		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount)
+		public NestedTypeReference(ITypeReference declaringTypeRef, string name, int additionalTypeParameterCount, bool? isReferenceType = null)
 		{
 			if (declaringTypeRef == null)
 				throw new ArgumentNullException("declaringTypeRef");
@@ -49,6 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.declaringTypeRef = declaringTypeRef;
 			this.name = name;
 			this.additionalTypeParameterCount = additionalTypeParameterCount;
+			this.isReferenceType = isReferenceType;
 		}
 		
 		public ITypeReference DeclaringTypeReference {
@@ -100,7 +102,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			NestedTypeReference o = other as NestedTypeReference;
-			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name && additionalTypeParameterCount == o.additionalTypeParameterCount;
+			return o != null && declaringTypeRef == o.declaringTypeRef && name == o.name 
+				&& additionalTypeParameterCount == o.additionalTypeParameterCount
+				&& isReferenceType == o.isReferenceType;
 		}
 	}
 }

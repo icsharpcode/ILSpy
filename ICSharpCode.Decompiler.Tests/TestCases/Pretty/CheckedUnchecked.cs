@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public void ObjectCreationInitializerChecked()
 		{
-			this.TestHelp(new {
+			TestHelp(new {
 				x = 0,
 				l = 0
 			}, n => checked(new {
@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ObjectCreationWithOneFieldChecked()
 		{
-			this.TestHelp(new {
+			TestHelp(new {
 				x = 0,
 				l = 0
 			}, n => new {
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ArrayInitializerChecked()
 		{
-			this.TestHelp(new int[2] {
+			TestHelp(new int[2] {
 				1,
 				2
 			}, (int[] n) => checked(new int[2] {

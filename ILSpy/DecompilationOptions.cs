@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the settings for the decompiler.
 		/// </summary>
-		public DecompilerSettings DecompilerSettings { get; set; }
+		public Decompiler.DecompilerSettings DecompilerSettings { get; private set; }
 
 		/// <summary>
 		/// Gets/sets an optional state of a decompiler text view.
@@ -67,8 +68,30 @@ namespace ICSharpCode.ILSpy
 		internal bool IsDebug = false;
 
 		public DecompilationOptions()
+			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings)
 		{
-			this.DecompilerSettings = DecompilerSettingsPanel.CurrentDecompilerSettings;
+		}
+
+		public DecompilationOptions(LanguageVersion version)
+			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings)
+		{
+		}
+
+		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings)
+		{
+			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+			this.DecompilerSettings = new Decompiler.DecompilerSettings(languageVersion) {
+				AlwaysUseBraces = settings.AlwaysUseBraces,
+				ExpandMemberDefinitions = settings.ExpandMemberDefinitions,
+				FoldBraces = settings.FoldBraces,
+				FullyQualifyAmbiguousTypeNames = settings.FullyQualifyAmbiguousTypeNames,
+				RemoveDeadCode = settings.RemoveDeadCode,
+				ShowDebugInfo = settings.ShowDebugInfo,
+				ShowXmlDocumentation = settings.ShowXmlDocumentation,
+				UseDebugSymbols = settings.UseDebugSymbols,
+				UsingDeclarations = settings.UsingDeclarations,
+			};
 		}
 	}
 }

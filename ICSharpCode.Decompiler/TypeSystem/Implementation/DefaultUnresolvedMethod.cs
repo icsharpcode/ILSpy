@@ -74,8 +74,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.SymbolKind = SymbolKind.Method;
 			this.DeclaringTypeDefinition = declaringType;
 			this.Name = name;
-			if (declaringType != null)
-				this.UnresolvedFile = declaringType.UnresolvedFile;
 		}
 		
 		public IList<IUnresolvedAttribute> ReturnTypeAttributes {
@@ -220,15 +218,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (typeDefinition == null)
 				throw new ArgumentNullException("typeDefinition");
-			DomRegion region = typeDefinition.Region;
-			region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove endline/endcolumn
 			return new DefaultUnresolvedMethod(typeDefinition, ".ctor") {
 				SymbolKind = SymbolKind.Constructor,
 				Accessibility = typeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public,
 				IsSynthetic = true,
 				HasBody = true,
-				Region = region,
-				BodyRegion = region,
 				ReturnType = KnownTypeReference.Void
 			};
 		}

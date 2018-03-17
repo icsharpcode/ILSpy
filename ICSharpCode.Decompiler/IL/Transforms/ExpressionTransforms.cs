@@ -148,10 +148,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
+			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType()
+				&& (!inst.CheckForOverflow || context.Settings.AssumeArrayLengthFitsIntoInt32))
+			{
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
+			}
+		}
+
+		protected internal override void VisitBox(Box inst)
+		{
+			inst.Argument.AcceptVisitor(this);
+			if (inst.Type.IsReferenceType == true && inst.Argument.ResultType == inst.ResultType) {
+				// For reference types, box is a no-op.
+				context.Step("box ref-type(arg) => arg", inst);
+				inst.Argument.AddILRange(inst.ILRange);
+				inst.ReplaceWith(inst.Argument);
 			}
 		}
 

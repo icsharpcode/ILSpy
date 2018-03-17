@@ -64,6 +64,19 @@ namespace ICSharpCode.Decompiler.IL
 			this.Method = method;
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
 		}
+
+		/// <summary>
+		/// Gets the parameter for the argument with the specified index.
+		/// Returns null for the <c>this</c> parameter.
+		/// </summary>
+		public IParameter GetParameter(int argumentIndex)
+		{
+			int firstParamIndex = (Method.IsStatic || OpCode == OpCode.NewObj) ? 0 : 1;
+			if (argumentIndex < firstParamIndex) {
+				return null; // asking for 'this' parameter
+			}
+			return Method.Parameters[argumentIndex - firstParamIndex];
+		}
 		
 		public override StackType ResultType {
 			get {

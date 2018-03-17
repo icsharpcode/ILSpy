@@ -76,12 +76,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public class MethodGroupResolveResult : ResolveResult
 	{
-		readonly IList<MethodListWithDeclaringType> methodLists;
-		readonly IList<IType> typeArguments;
+		readonly IReadOnlyList<MethodListWithDeclaringType> methodLists;
+		readonly IReadOnlyList<IType> typeArguments;
 		readonly ResolveResult targetResult;
 		readonly string methodName;
 		
-		public MethodGroupResolveResult(ResolveResult targetResult, string methodName, IList<MethodListWithDeclaringType> methods, IList<IType> typeArguments) : base(SpecialType.UnknownType)
+		public MethodGroupResolveResult(ResolveResult targetResult, string methodName, 
+			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
+			: base(SpecialType.UnknownType)
 		{
 			if (methods == null)
 				throw new ArgumentNullException("methods");
@@ -132,7 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Gets the type arguments that were explicitly provided.
 		/// </summary>
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get { return typeArguments; }
 		}
 		

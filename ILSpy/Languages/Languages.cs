@@ -18,8 +18,9 @@
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.Composition.Hosting;
 using System.Linq;
+
+using Microsoft.VisualStudio.Composition;
 
 namespace ICSharpCode.ILSpy
 {
@@ -39,10 +40,10 @@ namespace ICSharpCode.ILSpy
 			get { return allLanguages; }
 		}
 
-		internal static void Initialize(CompositionContainer composition)
+		internal static void Initialize(ExportProvider ep)
 		{
 			List<Language> languages = new List<Language>();
-			languages.AddRange(composition.GetExportedValues<Language>());
+			languages.AddRange(ep.GetExportedValues<Language>());
 			languages.Sort((a, b) => a.Name.CompareTo(b.Name));
 			#if DEBUG
 			//languages.AddRange(ILAstLanguage.GetDebugLanguages());

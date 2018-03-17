@@ -46,11 +46,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		VarianceModifier Variance { get; }
 		
-		/// <summary>
-		/// Gets the region where the type parameter is defined.
-		/// </summary>
-		DomRegion Region { get; }
-		
 		ITypeParameter CreateResolvedTypeParameter(ITypeResolveContext context);
 	}
 	
@@ -85,21 +80,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the name of the type parameter.
 		/// </summary>
 		new string Name { get; }
-		
+
 		/// <summary>
 		/// Gets the list of attributes declared on this type parameter.
 		/// </summary>
-		IList<IAttribute> Attributes { get; }
+		IReadOnlyList<IAttribute> Attributes { get; }
 		
 		/// <summary>
 		/// Gets the variance of this type parameter.
 		/// </summary>
 		VarianceModifier Variance { get; }
-		
-		/// <summary>
-		/// Gets the region where the type parameter is defined.
-		/// </summary>
-		DomRegion Region { get; }
 		
 		/// <summary>
 		/// Gets the effective base class of this type parameter.
@@ -109,7 +99,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the effective interface set of this type parameter.
 		/// </summary>
-		ICollection<IType> EffectiveInterfaceSet { get; }
+		IReadOnlyCollection<IType> EffectiveInterfaceSet { get; }
 		
 		/// <summary>
 		/// Gets if the type parameter has the 'new()' constraint.

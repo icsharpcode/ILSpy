@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IList<IUnresolvedAttribute> moduleAttributes;
 		Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition> typeDefinitions = new Dictionary<TopLevelTypeName, IUnresolvedTypeDefinition>(TopLevelTypeNameComparer.Ordinal);
 		Dictionary<TopLevelTypeName, ITypeReference> typeForwarders = new Dictionary<TopLevelTypeName, ITypeReference>(TopLevelTypeNameComparer.Ordinal);
-		
+
 		protected override void FreezeInternal()
 		{
 			base.FreezeInternal();
@@ -272,7 +272,46 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ns;
 		}
 		#endregion
-		
+
+		IUnresolvedTypeDefinition[] allTypesByMetadata;
+
+		IUnresolvedTypeDefinition[] BuildMetadataLookup()
+		{
+			Debug.Assert(IsFrozen);
+			int maxRowId = 0;
+			foreach (var td in this.GetAllTypeDefinitions()) {
+				var token = td.MetadataToken;
+				int rowId = System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(token);
+				if (token.Kind == System.Reflection.Metadata.HandleKind.TypeDefinition && rowId > maxRowId) {
+					maxRowId = rowId;
+				}
+			}
+			var lookup = new IUnresolvedTypeDefinition[maxRowId + 1];
+			foreach (var td in this.GetAllTypeDefinitions()) {
+				var token = td.MetadataToken;
+				if (token.Kind == System.Reflection.Metadata.HandleKind.TypeDefinition) {
+					int rowId = System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(token);
+					lookup[rowId] = td;
+				}
+			}
+			return lookup;
+		}
+
+		internal IUnresolvedTypeDefinition GetTypeDefByToken(System.Reflection.Metadata.EntityHandle token)
+		{
+			if (token.Kind != System.Reflection.Metadata.HandleKind.TypeDefinition)
+				throw new ArgumentException("Token must be typedef-token.");
+			var lookup = LazyInit.VolatileRead(ref allTypesByMetadata);
+			if (lookup == null) {
+				lookup = LazyInit.GetOrSet(ref allTypesByMetadata, BuildMetadataLookup());
+			}
+			int rid = System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(token);
+			if (rid < lookup.Length)
+				return lookup[rid];
+			else
+				return null;
+		}
+
 		sealed class DefaultResolvedAssembly : IAssembly
 		{
 			readonly DefaultUnresolvedAssembly unresolvedAssembly;
@@ -309,8 +348,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				get { return unresolvedAssembly.FullAssemblyName; }
 			}
 			
-			public IList<IAttribute> AssemblyAttributes { get; private set; }
-			public IList<IAttribute> ModuleAttributes { get; private set; }
+			public IReadOnlyList<IAttribute> AssemblyAttributes { get; private set; }
+			public IReadOnlyList<IAttribute> ModuleAttributes { get; private set; }
 			
 			public INamespace RootNamespace {
 				get { return rootNamespace; }
@@ -387,7 +426,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return typeDict.GetOrAdd(unresolved, t => CreateTypeDefinition(t));
 			}
-			
+
 			ITypeDefinition CreateTypeDefinition(IUnresolvedTypeDefinition unresolved)
 			{
 				if (unresolved.DeclaringTypeDefinition != null) {
@@ -405,7 +444,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return unresolvedAssembly.TopLevelTypeDefinitions.Select(t => GetTypeDefinition(t));
 				}
 			}
-			
+
+			public ITypeDefinition ResolveTypeDefToken(System.Reflection.Metadata.EntityHandle token)
+			{
+				var td = unresolvedAssembly.GetTypeDefByToken(token);
+				if (td != null)
+					return GetPotentiallyNestedTypeDefinition(td);
+				return null;
+			}
+
+			ITypeDefinition GetPotentiallyNestedTypeDefinition(IUnresolvedTypeDefinition unresolved)
+			{
+				var outerUnresolvedType = unresolved.DeclaringTypeDefinition;
+				if (outerUnresolvedType == null) {
+					// GetTypeDefinition() may only be called for top-level types
+					return GetTypeDefinition(unresolved);
+				}
+				var outerType = GetPotentiallyNestedTypeDefinition(outerUnresolvedType);
+				if (outerType == null)
+					return null;
+				foreach (var nestedType in outerType.NestedTypes) {
+					if (nestedType.MetadataToken == unresolved.MetadataToken)
+						return nestedType;
+				}
+				return null;
+			}
+
 			public override string ToString()
 			{
 				return "[DefaultResolvedAssembly " + AssemblyName + "]";
@@ -416,7 +480,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				readonly DefaultResolvedAssembly assembly;
 				readonly UnresolvedNamespace ns;
 				readonly INamespace parentNamespace;
-				readonly IList<NS> childNamespaces;
+				readonly IReadOnlyList<NS> childNamespaces;
 				IEnumerable<ITypeDefinition> types;
 				
 				public NS(DefaultResolvedAssembly assembly, UnresolvedNamespace ns, INamespace parentNamespace)

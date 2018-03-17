@@ -59,19 +59,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return 0; }
 		}
 
-		readonly static IList<IType> emptyTypeArguments = new IType[0];
-		public virtual IList<IType> TypeArguments {
-			get { return emptyTypeArguments; }
+		public virtual IReadOnlyList<ITypeParameter> TypeParameters {
+			get { return EmptyList<ITypeParameter>.Instance; }
+		}
+
+		public virtual IReadOnlyList<IType> TypeArguments {
+			get { return EmptyList<IType>.Instance; }
 		}
 
 		public virtual IType DeclaringType {
 			get { return null; }
 		}
-
-		public virtual bool IsParameterized { 
-			get { return false; }
-		}
-
+		
 		public virtual ITypeDefinition GetDefinition()
 		{
 			return null;
@@ -88,7 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IType>.Instance;
 		}
 		
-		public virtual IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IType> GetNestedTypes(IReadOnlyList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IType>.Instance;
 		}
@@ -98,7 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IMethod>.Instance;
 		}
 		
-		public virtual IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
@@ -142,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 		
-		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
 			return TypeParameterSubstitution.Identity;
 		}

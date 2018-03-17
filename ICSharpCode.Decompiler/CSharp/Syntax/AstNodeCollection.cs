@@ -129,6 +129,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (T item in this)
 				item.Remove();
 		}
+
+		public IEnumerable<T> Detach()
+		{
+			foreach (T item in this)
+				yield return item.Detach();
+		}
 		
 		/// <summary>
 		/// Returns the first element for which the predicate returns true,

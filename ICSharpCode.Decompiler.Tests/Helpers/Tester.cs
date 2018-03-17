@@ -41,7 +41,7 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	[Flags]
-	public enum CompilerOptions
+	public enum CSharpCompilerOptions
 	{
 		None,
 		Optimize = 0x1,
@@ -49,8 +49,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		Force32Bit = 0x4,
 		Library = 0x8,
 		UseRoslyn = 0x10,
+		UseMcs = 0x20,
 	}
-	
+
 	[Flags]
 	public enum AssemblerOptions
 	{
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseOwnDisassembler = 0x8,
 	}
 
-	public static class Tester
+	public static partial class Tester
 	{
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
@@ -119,7 +120,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					/*if (module.Assembly != null)
 						rd.WriteAssemblyHeader(module.Assembly);
 					output.WriteLine();
-					rd.WriteModuleHeader(module);
+					rd.WriteModuleHeader(module, skipMVID: true);
 					output.WriteLine();
 					rd.WriteModuleContents(module);*/
 				}
@@ -129,7 +130,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
 			
 			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
-			info.Arguments = $"/out=\"{outputFile}\" \"{sourceFileName}\"";
+			info.Arguments = $"/nobar /utf8 /out=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
@@ -144,6 +145,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			Console.WriteLine("output: " + outputTask.Result);
 			Console.WriteLine("errors: " + errorTask.Result);
+
+			// Unlike the .imagebase directive (which is a fixed value when compiling with /deterministic),
+			// the image base comment still varies... ildasm putting a random number here?
+			string il = File.ReadAllText(outputFile);
+			il = Regex.Replace(il, @"^// Image base: 0x[0-9A-F]+\r?\n", "", RegexOptions.Multiline);
+			// and while we're at it, also remove the MVID
+			il = Regex.Replace(il, @"^// MVID: \{[0-9A-F-]+\}\r?\n", "", RegexOptions.Multiline);
+			// and the ildasm version info (varies from system to system)
+			il = Regex.Replace(il, @"^// +Microsoft .* Disassembler\. +Version.*\r?\n", "", RegexOptions.Multiline);
+			// copyright header "All rights reserved" is dependent on system language
+			il = Regex.Replace(il, @"^// +Copyright .* Microsoft.*\r?\n", "", RegexOptions.Multiline);
+			// filename may contain full path
+			il = Regex.Replace(il, @"^// WARNING: Created Win32 resource file.*\r?\n", "", RegexOptions.Multiline);
+			File.WriteAllText(outputFile, il);
 
 			return outputFile;
 		}
@@ -161,24 +176,30 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		});
 		
 
-		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
+		public static List<string> GetPreprocessorSymbols(CSharpCompilerOptions flags)
 		{
 			var preprocessorSymbols = new List<string>();
-			if (flags.HasFlag(CompilerOptions.UseDebug)) {
+			if (flags.HasFlag(CSharpCompilerOptions.UseDebug)) {
 				preprocessorSymbols.Add("DEBUG");
 			}
-			if (flags.HasFlag(CompilerOptions.Optimize)) {
+			if (flags.HasFlag(CSharpCompilerOptions.Optimize)) {
 				preprocessorSymbols.Add("OPT");
 			}
-			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
 				preprocessorSymbols.Add("ROSLYN");
+				preprocessorSymbols.Add("CS60");
+				preprocessorSymbols.Add("CS70");
+				preprocessorSymbols.Add("CS71");
+				preprocessorSymbols.Add("CS72");
+			} else if (flags.HasFlag(CSharpCompilerOptions.UseMcs)) {
+				preprocessorSymbols.Add("MCS");
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
 			}
 			return preprocessorSymbols;
 		}
 
-		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
+		public static CompilerResults CompileCSharp(string sourceFileName, CSharpCompilerOptions flags = CSharpCompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
@@ -187,18 +208,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
-			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
-				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: LanguageVersion.Latest);
+			if (flags.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,
 					new CSharpCompilationOptions(
-					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
-					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
-					optimizationLevel: flags.HasFlag(CompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
-					allowUnsafe: true,
-					deterministic: true
-				));
+						flags.HasFlag(CSharpCompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
+						platform: flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
+						optimizationLevel: flags.HasFlag(CSharpCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
+						allowUnsafe: true,
+						deterministic: true
+					));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				var emitResult = compilation.Emit(results.PathToAssembly);
@@ -210,13 +231,63 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					throw new Exception(b.ToString());
 				}
 				return results;
+			} else if (flags.HasFlag(CSharpCompilerOptions.UseMcs)) {
+				CompilerResults results = new CompilerResults(new TempFileCollection());
+				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				string testBasePath = RoundtripAssembly.TestDir;
+				if (!Directory.Exists(testBasePath)) {
+					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
+			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
+				}
+				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
+				string otherOptions = " -unsafe -o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+ " : "- ");
+
+				if (flags.HasFlag(CSharpCompilerOptions.Library)) {
+					otherOptions += "-t:library ";
+				} else {
+					otherOptions += "-t:exe ";
+				}
+
+				if (flags.HasFlag(CSharpCompilerOptions.UseDebug)) {
+					otherOptions += "-g ";
+				}
+
+				if (flags.HasFlag(CSharpCompilerOptions.Force32Bit)) {
+					otherOptions += "-platform:x86 ";
+				} else {
+					otherOptions += "-platform:anycpu ";
+				}
+				if (preprocessorSymbols.Count > 0) {
+					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
+				}
+
+				ProcessStartInfo info = new ProcessStartInfo(mcsPath);
+				info.Arguments = $"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}";
+				info.RedirectStandardError = true;
+				info.RedirectStandardOutput = true;
+				info.UseShellExecute = false;
+
+				Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
+
+				Process process = Process.Start(info);
+
+				var outputTask = process.StandardOutput.ReadToEndAsync();
+				var errorTask = process.StandardError.ReadToEndAsync();
+
+				Task.WaitAll(outputTask, errorTask);
+				process.WaitForExit();
+
+				Console.WriteLine("output: " + outputTask.Result);
+				Console.WriteLine("errors: " + errorTask.Result);
+				Assert.AreEqual(0, process.ExitCode, "mcs failed");
+				return results;
 			} else {
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
-				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
-				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
-				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.GenerateExecutable = !flags.HasFlag(CSharpCompilerOptions.Library);
+				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.UseDebug) ? " /debug" : "");
+				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}
@@ -239,17 +310,47 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		internal static string GetSuffix(CompilerOptions cscOptions)
+		internal static DecompilerSettings GetSettings(CSharpCompilerOptions cscOptions)
+		{
+			if (cscOptions.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+				return new DecompilerSettings(CSharp.LanguageVersion.Latest);
+			} else {
+				return new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
+			}
+		}
+
+		public static CSharpDecompiler GetDecompilerForSnippet(string csharpText)
+		{
+			/*var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpText);
+			var compilation = CSharpCompilation.Create(
+				"TestAssembly",
+				new[] { syntaxTree },
+				defaultReferences.Value,
+				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+			var peStream = new MemoryStream();
+			var emitResult = compilation.Emit(peStream);
+			peStream.Position = 0;
+
+			var moduleDefinition = ModuleDefinition.ReadModule(peStream);
+			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
+
+			return decompiler;*/
+			throw new NotImplementedException();
+		}
+
+		internal static string GetSuffix(CSharpCompilerOptions cscOptions)
 		{
 			string suffix = "";
-			if ((cscOptions & CompilerOptions.Optimize) != 0)
+			if ((cscOptions & CSharpCompilerOptions.Optimize) != 0)
 				suffix += ".opt";
-			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
+			if ((cscOptions & CSharpCompilerOptions.Force32Bit) != 0)
 				suffix += ".32";
-			if ((cscOptions & CompilerOptions.UseDebug) != 0)
+			if ((cscOptions & CSharpCompilerOptions.UseDebug) != 0)
 				suffix += ".dbg";
-			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
+			if ((cscOptions & CSharpCompilerOptions.UseRoslyn) != 0)
 				suffix += ".roslyn";
+			if ((cscOptions & CSharpCompilerOptions.UseMcs) != 0)
+				suffix += ".mcs";
 			return suffix;
 		}
 
@@ -279,6 +380,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			using (var module = Mono.Cecil.ModuleDefinition.ReadModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();

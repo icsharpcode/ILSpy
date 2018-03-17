@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		bool IsTransparentIdentifier(string identifier)
 		{
-			return identifier.StartsWith("<>", StringComparison.Ordinal) && identifier.Contains("TransparentIdentifier");
+			return identifier.StartsWith("<>", StringComparison.Ordinal) && (identifier.Contains("TransparentIdentifier") || identifier.Contains("TranspIdent"));
 		}
 		
 		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery)

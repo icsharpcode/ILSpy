@@ -41,7 +41,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private void SimpleArray()
 		{
+#if ROSLYN && OPT
+			var obj = new[] {
+#else
 			var array = new[] {
+#endif
 				new {
 					X = 5,
 					Y = 2,
@@ -54,8 +58,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			};
 
+#if ROSLYN && OPT
+			Console.WriteLine(obj[0].X);
+			Console.WriteLine(obj[1].X);
+#else
 			Console.WriteLine(array[0].X);
 			Console.WriteLine(array[1].X);
+#endif
 		}
 
 		private void JaggedArray()
@@ -72,6 +81,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Z = -6
 				}
 			};
+#if ROSLYN && OPT
+			var obj = new[] {
+				array,
+				array
+			};
+
+			Console.WriteLine(array[0].X);
+			Console.WriteLine(array[1].X);
+			Console.WriteLine(obj.Length);
+#else
 			var array2 = new[] {
 				array,
 				array
@@ -80,6 +99,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(array[0].X);
 			Console.WriteLine(array[1].X);
 			Console.WriteLine(array2.Length);
+#endif
+		}
+
+#if CS70
+		private void AnonymousTypeOutVar()
+		{
+			InlineVarDecl(out var anon, new {
+				X = 1,
+				Y = 2
+			});
+			Console.WriteLine(anon.X);
+		}
+#endif
+
+		private static void InlineVarDecl<T>(out T v, T init)
+		{
+			v = init;
 		}
 	}
 }

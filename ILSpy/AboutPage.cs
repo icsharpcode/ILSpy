@@ -81,7 +81,7 @@ namespace ICSharpCode.ILSpy
 					};
 				});
 			output.WriteLine();
-			foreach (var plugin in App.CompositionContainer.GetExportedValues<IAboutPageAddition>())
+			foreach (var plugin in App.ExportProvider.GetExportedValues<IAboutPageAddition>())
 				plugin.Write(output);
 			output.WriteLine();
 			using (Stream s = typeof(AboutPage).Assembly.GetManifestResourceStream(typeof(AboutPage), "README.txt")) {

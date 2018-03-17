@@ -41,8 +41,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public S(int a)
 			{
-				this.A = a;
-				this.B = 0;
+				A = a;
+				B = 0;
 			}
 		}
 
@@ -119,8 +119,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public StructData(int initialValue)
 			{
 				this = default(StructData);
-				this.Field = initialValue;
-				this.Property = initialValue;
+				Field = initialValue;
+				Property = initialValue;
 			}
 		}
 
@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test1Alternative()
 		{
-			return InitializerTests.TestCall(1, new C {
+			return TestCall(1, new C {
 				L = new List<S> {
 					new S(1)
 				}
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public C Test3b()
 		{
-			return InitializerTests.TestCall(0, new C {
+			return TestCall(0, new C {
 				Z = 1,
 				Y = {
 					A = 2
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CollectionInitializerList()
 		{
-			InitializerTests.X(InitializerTests.Y(), new List<int> {
+			X(Y(), new List<int> {
 				1,
 				2,
 				3
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CollectionInitializerDictionary()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Dictionary<string, int> {
+			X(Y(), new Dictionary<string, int> {
 			{
 				"First",
 				1
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CollectionInitializerDictionaryWithEnumTypes()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Dictionary<MyEnum, MyEnum2> {
+			X(Y(), new Dictionary<MyEnum, MyEnum2> {
 			{
 				MyEnum.a,
 				MyEnum2.c
@@ -252,12 +252,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			list.Add(1);
 			list.Add(2);
 			list.Add(3);
-			InitializerTests.X(InitializerTests.Y(), list);
+			X(Y(), list);
 		}
 
 		public static void ObjectInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.a
 			});
 		}
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Data data = new Data();
 			data.a = MyEnum.a;
-			InitializerTests.X(InitializerTests.Y(), data);
+			X(Y(), data);
 		}
 
 		public static void NotAnObjectInitializerWithEvent()
@@ -275,12 +275,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			data.TestEvent += delegate {
 				Console.WriteLine();
 			};
-			InitializerTests.X(InitializerTests.Y(), data);
+			X(Y(), data);
 		}
 
 		public static void ObjectInitializerAssignCollectionToField()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.a,
 				FieldList = new List<MyEnum2> {
 					MyEnum2.c,
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ObjectInitializerAddToCollectionInField()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.a,
 				FieldList = {
 					MyEnum2.c,
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ObjectInitializerAssignCollectionToProperty()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.a,
 				PropertyList = new List<MyEnum2> {
 					MyEnum2.c,
@@ -313,7 +313,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ObjectInitializerAddToCollectionInProperty()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.a,
 				PropertyList = {
 					MyEnum2.c,
@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ObjectInitializerWithInitializationOfNestedObjects()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				MoreData = {
 					a = MyEnum.a,
 					MoreData = {
@@ -349,10 +349,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		}
 
-#if !LEGACY_CSC
+#if CS60
 		public static void SimpleDictInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				MoreData = {
 					a = MyEnum.a,
 					[2] = null
@@ -362,25 +362,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void MixedObjectAndDictInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				MoreData = {
 					a = MyEnum.a,
-					[InitializerTests.GetInt()] = {
+					[GetInt()] = {
 						a = MyEnum.b,
 						FieldList = {
 							MyEnum2.c
 						},
-						[InitializerTests.GetInt(), InitializerTests.GetString()] = new Data(),
+						[GetInt(), GetString()] = new Data(),
 						[2] = null
 					}
 				}
 			});
 		}
+
+		public void NestedListWithIndexInitializer()
+		{
+#if !OPT
+			List<List<int>> list = new List<List<int>> {
+#else
+			List<List<int>> obj = new List<List<int>> {
+#endif
+				[0] = {
+					1,
+					2,
+					3
+				}
+			};
+		}
 #endif
 
 		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				a = MyEnum.b,
 				MoreData = {
 				  a = MyEnum.a,
@@ -403,7 +418,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CollectionInitializerInsideObjectInitializers()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				MoreData = new Data {
 					a = MyEnum.a,
 					b = MyEnum.b,
@@ -419,12 +434,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			StructData structData = default(StructData);
 			structData.Field = 1;
 			structData.Property = 2;
-			InitializerTests.X(InitializerTests.Y(), structData);
+			X(Y(), structData);
 		}
 
 		public static void StructInitializer_DefaultConstructor()
 		{
-			InitializerTests.X(InitializerTests.Y(), new StructData {
+			X(Y(), new StructData {
 				Field = 1,
 				Property = 2
 			});
@@ -435,12 +450,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			StructData structData = new StructData(0);
 			structData.Field = 1;
 			structData.Property = 2;
-			InitializerTests.X(InitializerTests.Y(), structData);
+			X(Y(), structData);
 		}
 
 		public static void StructInitializer_ExplicitConstructor()
 		{
-			InitializerTests.X(InitializerTests.Y(), new StructData(0) {
+			X(Y(), new StructData(0) {
 				Field = 1,
 				Property = 2
 			});
@@ -448,7 +463,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructInitializerWithInitializationOfNestedObjects()
 		{
-			InitializerTests.X(InitializerTests.Y(), new StructData {
+			X(Y(), new StructData {
 				MoreData = {
 					a = MyEnum.a,
 					FieldList = {
@@ -461,7 +476,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructInitializerWithinObjectInitializer()
 		{
-			InitializerTests.X(InitializerTests.Y(), new Data {
+			X(Y(), new Data {
 				NestedStruct = new StructData(2) {
 					Field = 1,
 					Property = 2
@@ -473,7 +488,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			NumberFormatInfo[] source = null;
 
-			InitializerTests.TestCall(0, new Thread(InitializerTests.Bug270_NestedInitialisers) {
+			TestCall(0, new Thread(Bug270_NestedInitialisers) {
 				Priority = ThreadPriority.BelowNormal,
 				CurrentCulture = new CultureInfo(0) {
 					DateTimeFormat = new DateTimeFormatInfo {
@@ -488,7 +503,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Bug953_MissingNullableSpecifierForArrayInitializer()
 		{
-			InitializerTests.NoOp(new Guid?[1] {
+			NoOp(new Guid?[1] {
 				Guid.Empty
 			});
 		}

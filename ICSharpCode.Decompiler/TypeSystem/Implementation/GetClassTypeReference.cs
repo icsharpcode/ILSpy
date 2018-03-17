@@ -28,7 +28,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly IAssemblyReference assembly;
 		readonly FullTypeName fullTypeName;
-		
+		readonly bool? isReferenceType;
+
 		/// <summary>
 		/// Creates a new GetClassTypeReference that searches a type definition.
 		/// </summary>
@@ -37,10 +38,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// If this parameter is null, the GetClassTypeReference will search in all
 		/// assemblies belonging to the compilation.
 		/// </param>
-		public GetClassTypeReference(FullTypeName fullTypeName, IAssemblyReference assembly = null)
+		public GetClassTypeReference(FullTypeName fullTypeName, IAssemblyReference assembly = null, bool? isReferenceType = null)
 		{
 			this.fullTypeName = fullTypeName;
 			this.assembly = assembly;
+			this.isReferenceType = isReferenceType;
 		}
 		
 		/// <summary>
@@ -49,11 +51,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="namespaceName">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
 		/// <param name="name">The name of the type, e.g. "List".</param>
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
-		public GetClassTypeReference(string namespaceName, string name, int typeParameterCount = 0)
+		public GetClassTypeReference(string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
 			this.fullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
+			this.isReferenceType = isReferenceType;
 		}
-		
+
 		/// <summary>
 		/// Creates a new GetClassTypeReference that searches a top-level type in the specified assembly.
 		/// </summary>
@@ -62,12 +65,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// <param name="namespaceName">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
 		/// <param name="name">The name of the type, e.g. "List".</param>
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
-		public GetClassTypeReference(IAssemblyReference assembly, string namespaceName, string name, int typeParameterCount = 0)
+		public GetClassTypeReference(IAssemblyReference assembly, string namespaceName, string name, int typeParameterCount = 0, bool? isReferenceType = null)
 		{
 			this.assembly = assembly;
 			this.fullTypeName = new TopLevelTypeName(namespaceName, name, typeParameterCount);
+			this.isReferenceType = isReferenceType;
 		}
-		
+
 		/// <summary>
 		/// Gets the assembly reference.
 		/// This property returns null if the GetClassTypeReference is searching in all assemblies
@@ -117,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					type = ResolveInAllAssemblies(context);
 				}
 			}
-			return type ?? new UnknownType(fullTypeName);
+			return type ?? new UnknownType(fullTypeName, isReferenceType);
 		}
 		
 		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
@@ -143,7 +147,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			GetClassTypeReference o = other as GetClassTypeReference;
-			return o != null && assembly == o.assembly && fullTypeName == o.fullTypeName;
+			return o != null && assembly == o.assembly && fullTypeName == o.fullTypeName && isReferenceType == o.isReferenceType;
 		}
 	}
 }

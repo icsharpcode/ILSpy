@@ -32,7 +32,9 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	public abstract class DecompilerTestBase
 	{
-		public const string TestCasePath = "../../../TestCases";
+		public static readonly string TestCasePath = Path.Combine(
+			Path.GetDirectoryName(typeof(DecompilerTestBase).Assembly.Location),
+			"../../../TestCases");
 
 		protected static void ValidateFileRoundtrip(string samplesFileName)
 		{
@@ -52,6 +54,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
 
+			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();

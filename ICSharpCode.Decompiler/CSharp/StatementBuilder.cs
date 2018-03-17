@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null);
-			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, settings, cancellationToken);
+			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, currentFunction, settings, cancellationToken);
 			this.currentFunction = currentFunction;
 			this.typeSystem = typeSystem;
 			this.settings = settings;
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 
-		ConstantResolveResult CreateTypedCaseLabel(long i, IType type, string[] map = null)
+		IEnumerable<ConstantResolveResult> CreateTypedCaseLabel(long i, IType type, List<(string Key, int Value)> map = null)
 		{
 			object value;
 			// unpack nullable type, if necessary:
@@ -92,14 +92,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
 				value = i != 0;
 			} else if (type.IsKnownType(KnownTypeCode.String) && map != null) {
-				value = map[i];
+				var keys = map.Where(entry => entry.Value == i).Select(entry => entry.Key);
+				foreach (var key in keys)
+					yield return new ConstantResolveResult(type, key);
+				yield break;
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
-			return new ConstantResolveResult(type, value);
+			yield return new ConstantResolveResult(type, value);
 		}
 
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
@@ -109,7 +112,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		SwitchStatement TranslateSwitch(BlockContainer switchContainer, SwitchInstruction inst)
 		{
-			Debug.Assert(switchContainer.EntryPoint.IncomingEdgeCount == 1);
 			var oldBreakTarget = breakTarget;
 			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
 			var oldCaseLabelMapping = caseLabelMapping;
@@ -143,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					astSection.CaseLabels.Add(new CaseLabel());
 					firstValueResolveResult = null;
 				} else {
-					var values = section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
+					var values = section.Labels.Values.SelectMany(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
 					if (section.HasNullLabel) {
 						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
 						firstValueResolveResult = new ConstantResolveResult(SpecialType.NullType, null);
@@ -156,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (section.Body) {
 					case Branch br:
 						// we can only inline the block, if all branches are in the switchContainer.
-						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
+						if (br.TargetContainer == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
 							caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
 						break;
 					default:
@@ -170,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (section.Body) {
 					case Branch br:
 						// we can only inline the block, if all branches are in the switchContainer.
-						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
+						if (br.TargetContainer == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
 							ConvertSwitchSectionBody(astSection, br.TargetBlock);
 						else
 							ConvertSwitchSectionBody(astSection, section.Body);
@@ -264,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
 					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 				} else
 					return new ReturnStatement();
 			}
@@ -290,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem.Compilation, true, out var isGeneric);
 			return new YieldReturnStatement {
-				Expression = exprBuilder.Translate(inst.Value).ConvertTo(elementType, exprBuilder)
+				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
 			};
 		}
 
@@ -402,6 +404,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
 		{
+			if (!settings.ForEachStatement) {
+				resource = null;
+				return null;
+			}
 			// Check if the using resource matches the GetEnumerator pattern.
 			resource = exprBuilder.Translate(inst.ResourceExpression);
 			var m = getEnumeratorPattern.Match(resource);
@@ -702,7 +708,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Init.OpCode == OpCode.ArrayToPointer) {
 				initExpr = exprBuilder.Translate(((ArrayToPointer)inst.Init).Array);
 			} else {
-				initExpr = exprBuilder.Translate(inst.Init).ConvertTo(inst.Variable.Type, exprBuilder);
+				initExpr = exprBuilder.Translate(inst.Init, typeHint: inst.Variable.Type).ConvertTo(inst.Variable.Type, exprBuilder);
 			}
 			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
 			fixedStmt.EmbeddedStatement = Convert(inst.Body);
@@ -723,7 +729,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitBlockContainer(BlockContainer container)
 		{
-			if (container.EntryPoint.IncomingEdgeCount > 1) {
+			if (container.Kind != ContainerKind.Normal && container.EntryPoint.IncomingEdgeCount > 1) {
 				var oldContinueTarget = continueTarget;
 				var oldContinueCount = continueCount;
 				var oldBreakTarget = breakTarget;

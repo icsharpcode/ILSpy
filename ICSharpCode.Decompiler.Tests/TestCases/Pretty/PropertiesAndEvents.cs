@@ -45,10 +45,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public event EventHandler CustomEvent {
 			add {
-				this.AutomaticEvent += value;
+				AutomaticEvent += value;
 			}
 			remove {
-				this.AutomaticEvent -= value;
+				AutomaticEvent -= value;
 			}
 		}
 	}

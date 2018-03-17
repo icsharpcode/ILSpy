@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.ObjectOrCollectionInitializers) return;
 			this.context = context;
 			try {
 				DoTransform(block, pos);
@@ -167,6 +168,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// in the list of possible index variables.
 			// Index variables are used to implement dictionary initializers.
 			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
+				if (!context.Settings.DictionaryInitializers)
+					return false;
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 					return false;
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
@@ -254,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instruction = call.Arguments[0];
 						if (method.IsAccessor) {
 							var property = method.AccessorOwner as IProperty;
-							var isGetter = property?.Getter == method;
+							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (possibleIndexVariables != null) {
 								// Mark all index variables as used

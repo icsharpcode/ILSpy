@@ -32,7 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class LambdaExpression : Expression
 	{
 		public readonly static TokenRole AsyncModifierRole = new TokenRole ("async");
-		public readonly static TokenRole ArrowRole = new TokenRole ("=>");
 		public static readonly Role<AstNode> BodyRole = new Role<AstNode>("Body", AstNode.Null);
 		
 		bool isAsync;
@@ -55,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole (ArrowRole); }
+			get { return GetChildByRole (Roles.Arrow); }
 		}
 		
 		public AstNode Body {

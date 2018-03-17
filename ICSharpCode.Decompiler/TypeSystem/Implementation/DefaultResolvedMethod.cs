@@ -45,11 +45,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.IsExtensionMethod = isExtensionMethod;
 		}
 
-		class ListOfLists<T> : IList<T>
+		class ListOfLists<T> : IList<T>, IReadOnlyList<T>
 		{
-			List<IList<T>> lists =new List<IList<T>> ();
+			List<IReadOnlyList<T>> lists =new List<IReadOnlyList<T>> ();
 
-			public void AddList(IList<T> list)
+			public void AddList(IReadOnlyList<T> list)
 			{
 				lists.Add (list);
 			}
@@ -168,24 +168,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return method;
 		}
 		
-		public IList<IParameter> Parameters { get; private set; }
-		public IList<IAttribute> ReturnTypeAttributes { get; private set; }
-		public IList<ITypeParameter> TypeParameters { get; private set; }
+		public IReadOnlyList<IParameter> Parameters { get; private set; }
+		public IReadOnlyList<IAttribute> ReturnTypeAttributes { get; private set; }
+		public IReadOnlyList<ITypeParameter> TypeParameters { get; private set; }
 
-		public IList<IType> TypeArguments {
+		public IReadOnlyList<IType> TypeArguments {
 			get {
-				// ToList() call is necessary because IList<> isn't covariant
-				return TypeParameters.ToList<IType>();
+				return TypeParameters;
 			}
-		}
-		
-		bool IMethod.IsParameterized {
-			get { return false; }
 		}
 
 		public bool IsExtensionMethod { get; private set; }
 		
-		public IList<IUnresolvedMethod> Parts {
+		public IReadOnlyList<IUnresolvedMethod> Parts {
 			get {
 				return parts ?? new IUnresolvedMethod[] { (IUnresolvedMethod)unresolved };
 			}
@@ -250,8 +245,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution))
 				return this;
+			if (DeclaringType is ArrayType)
+				return new SpecializedMethod(this, substitution);
 			if (TypeParameters.Count == 0) {
-				if (DeclaringTypeDefinition == null || DeclaringTypeDefinition.TypeParameterCount == 0)
+				if (DeclaringType.TypeParameterCount == 0)
 					return this;
 				if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
 					substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);

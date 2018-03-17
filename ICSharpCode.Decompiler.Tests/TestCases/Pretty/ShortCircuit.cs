@@ -34,112 +34,112 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		public void ExprAnd()
 		{
-			this.B(this.F(0) && this.F(1));
+			B(F(0) && F(1));
 		}
 		
 		public void ExprOr()
 		{
-			this.B(this.F(0) || this.F(1));
+			B(F(0) || F(1));
 		}
 		
 		public void ExprCond()
 		{
-			this.B(this.F(0) ? this.F(1) : this.F(2));
+			B(F(0) ? F(1) : F(2));
 		}
 		
 		public void ExprCondAnd()
 		{
-			this.B((this.F(0) && this.F(1)) ? this.F(2) : this.F(3));
+			B((F(0) && F(1)) ? F(2) : F(3));
 		}
 
 		public void StmtAnd2()
 		{
-			if (this.F(0) && this.F(1)) {
-				this.M1();
+			if (F(0) && F(1)) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 		
 		public void StmtOr2()
 		{
-			if (this.F(0) || this.F(1)) {
-				this.M1();
+			if (F(0) || F(1)) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtAnd3()
 		{
-			if (this.F(0) && this.F(1) && this.F(2)) {
-				this.M1();
+			if (F(0) && F(1) && F(2)) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtOr3()
 		{
-			if (this.F(0) || this.F(1) || this.F(3)) {
-				this.M1();
+			if (F(0) || F(1) || F(3)) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtOr4()
 		{
-			if (this.GetInt(0) != 0 || this.GetInt(1) != 0) {
-				this.M1();
+			if (GetInt(0) != 0 || GetInt(1) != 0) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtComplex()
 		{
-			if (this.F(0) && this.F(1) && !this.F(2) && (this.F(3) || this.F(4))) {
-				this.M1();
+			if (F(0) && F(1) && !F(2) && (F(3) || F(4))) {
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtComplex2(int i)
 		{
 			if (i > 1000 || (i >= 1 && i <= 8) || i == 42) {
-				this.M1();
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtComplex3(int i)
 		{
 			if (i > 1000 || (i >= 1 && i <= 8) || (i >= 100 && i <= 200) || i == 42) {
-				this.M1();
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 
 		public void StmtComplex4(int i)
 		{
 			if (i > 1000 || (i >= 1 && i <= 8) || i == 42 || i == 23) {
-				this.M1();
+				M1();
 			} else {
-				this.M2();
+				M2();
 			}
-			this.E();
+			E();
 		}
 	}
 }

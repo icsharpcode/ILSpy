@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation compilation;
 		IUnresolvedProperty[] unresolvedProperties;
-		IList<IProperty> resolvedProperties;
+		IReadOnlyList<IProperty> resolvedProperties;
 		
 		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
 		{
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return true; }
 		}
 		
-		public IList<IProperty> Properties {
+		public IReadOnlyList<IProperty> Properties {
 			get { return resolvedProperties; }
 		}
 		
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Object).GetMethods(filter, options);
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;

@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace ICSharpCode.TreeView
 {
@@ -93,7 +94,7 @@ namespace ICSharpCode.TreeView
 				if (ParentTreeView.ShowLines) {
 					foreach (var child in Node.VisibleDescendantsAndSelf()) {
 						var container = ParentTreeView.ItemContainerGenerator.ContainerFromItem(child) as SharpTreeViewItem;
-						if (container != null) {
+						if (container != null && container.NodeView != null) {
 							container.NodeView.LinesRenderer.InvalidateVisual();
 						}
 					}
@@ -145,8 +146,10 @@ namespace ICSharpCode.TreeView
 			else {
 				result -= 19;
 			}
-			if (result < 0)
-				throw new InvalidOperationException();
+			if (result < 0) {
+				Debug.WriteLine("SharpTreeNodeView.CalculateIndent() on node without correctly-set level");
+				return 0;
+			}
 			return result;
 		}
 	}

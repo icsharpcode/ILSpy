@@ -386,20 +386,25 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			"from", "where", "join", "on", "equals", "into", "let", "orderby",
 			"ascending", "descending", "select", "group", "by"
 		};
-		
+		static readonly int maxKeywordLength = unconditionalKeywords.Concat(queryKeywords).Max(s => s.Length);
+
 		/// <summary>
 		/// Determines whether the specified identifier is a keyword in the given context.
 		/// </summary>
 		public static bool IsKeyword(string identifier, AstNode context)
 		{
+			// only 2-10 char lower-case identifiers can be keywords
+			if (identifier.Length > maxKeywordLength || identifier.Length < 2 || identifier[0] < 'a') {
+				return false;
+			}
 			if (unconditionalKeywords.Contains(identifier)) {
 				return true;
 			}
-			foreach (AstNode ancestor in context.Ancestors) {
-				if (ancestor is QueryExpression && queryKeywords.Contains(identifier)) {
-					return true;
-				}
-				if (identifier == "await") {
+			if (queryKeywords.Contains(identifier)) {
+				return context.Ancestors.Any(ancestor => ancestor is QueryExpression);
+			}
+			if (identifier == "await") {
+				foreach (AstNode ancestor in context.Ancestors) {
 					// with lambdas/anonymous methods,
 					if (ancestor is LambdaExpression) {
 						return ((LambdaExpression)ancestor).IsAsync;
@@ -806,7 +811,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space();
 			outVarDeclarationExpression.Type.AcceptVisitor(this);
 			Space();
-			outVarDeclarationExpression.Expression.AcceptVisitor(this);
+			outVarDeclarationExpression.Variable.AcceptVisitor(this);
 
 			EndNode(outVarDeclarationExpression);
 		}
@@ -866,7 +871,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				lambdaExpression.Parameters.Single().AcceptVisitor(this);
 			}
 			Space();
-			WriteToken(LambdaExpression.ArrowRole);
+			WriteToken(Roles.Arrow);
 			if (lambdaExpression.Body is BlockStatement) {
 				WriteBlock((BlockStatement)lambdaExpression.Body, policy.AnonymousMethodBraceStyle);
 			} else {
@@ -980,8 +985,44 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAfterSpace = false;
 			EndNode(primitiveExpression);
 		}
+
+		public virtual void VisitInterpolatedStringExpression(InterpolatedStringExpression interpolatedStringExpression)
+		{
+			StartNode(interpolatedStringExpression);
+
+			writer.WriteToken(InterpolatedStringExpression.OpenQuote, "$\"");
+			foreach (var element in interpolatedStringExpression.Content) {
+				element.AcceptVisitor(this);
+			}
+			writer.WriteToken(InterpolatedStringExpression.CloseQuote, "\"");
+			isAfterSpace = false;
+
+			EndNode(interpolatedStringExpression);
+		}
+
+		public virtual void VisitInterpolation(Interpolation interpolation)
+		{
+			StartNode(interpolation);
+
+			writer.WriteToken(Interpolation.LBrace, "{");
+			interpolation.Expression.AcceptVisitor(this);
+			if (interpolation.Suffix != null) {
+				writer.WriteToken(Roles.Colon, ":");
+				writer.WritePrimitiveValue("", interpolation.Suffix);
+			}
+			writer.WriteToken(Interpolation.RBrace, "}");
+
+			EndNode(interpolation);
+		}
+
+		public virtual void VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText)
+		{
+			StartNode(interpolatedStringText);
+			writer.WritePrimitiveValue("", TextWriterTokenWriter.ConvertString(interpolatedStringText.Text));
+			EndNode(interpolatedStringText);
+		}
 		#endregion
-		
+
 		public virtual void VisitSizeOfExpression(SizeOfExpression sizeOfExpression)
 		{
 			StartNode(sizeOfExpression);
@@ -1049,16 +1090,23 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
-			} else if (!(opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement)) {
+			} else if (!IsPostfixOperator(opType) && opType != UnaryOperatorType.NullConditionalRewrap) {
 				WriteToken(opSymbol);
 			}
 			unaryOperatorExpression.Expression.AcceptVisitor(this);
-			if (opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement) {
+			if (IsPostfixOperator(opType)) {
 				WriteToken(opSymbol);
 			}
 			EndNode(unaryOperatorExpression);
 		}
 		
+		static bool IsPostfixOperator(UnaryOperatorType op)
+		{
+			return op == UnaryOperatorType.PostIncrement
+				|| op == UnaryOperatorType.PostDecrement
+				|| op == UnaryOperatorType.NullConditional;
+		}
+
 		public virtual void VisitUncheckedExpression(UncheckedExpression uncheckedExpression)
 		{
 			StartNode(uncheckedExpression);
@@ -2136,22 +2184,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space();
 			WritePrivateImplementationType(propertyDeclaration.PrivateImplementationType);
 			WriteIdentifier(propertyDeclaration.NameToken);
-			OpenBrace(policy.PropertyBraceStyle);
-			// output get/set in their original order
-			foreach (AstNode node in propertyDeclaration.Children) {
-				if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
-					node.AcceptVisitor(this);
+			if (propertyDeclaration.ExpressionBody.IsNull) {
+				OpenBrace(policy.PropertyBraceStyle);
+				// output get/set in their original order
+				foreach (AstNode node in propertyDeclaration.Children) {
+					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
+						node.AcceptVisitor(this);
+					}
 				}
-			}
-			CloseBrace(policy.PropertyBraceStyle);
-			if (!propertyDeclaration.Initializer.IsNull) {
-				Space(policy.SpaceAroundAssignment);
-				WriteToken(Roles.Assign);
-				Space(policy.SpaceAroundAssignment);
-				propertyDeclaration.Initializer.AcceptVisitor(this);
+				CloseBrace(policy.PropertyBraceStyle);
+				if (!propertyDeclaration.Initializer.IsNull) {
+					Space(policy.SpaceAroundAssignment);
+					WriteToken(Roles.Assign);
+					Space(policy.SpaceAroundAssignment);
+					propertyDeclaration.Initializer.AcceptVisitor(this);
+					Semicolon();
+				}
+				NewLine();
+			} else {
+				Space();
+				WriteToken(Roles.Arrow);
+				Space();
+				propertyDeclaration.ExpressionBody.AcceptVisitor(this);
 				Semicolon();
 			}
-			NewLine();
 			EndNode(propertyDeclaration);
 		}
 

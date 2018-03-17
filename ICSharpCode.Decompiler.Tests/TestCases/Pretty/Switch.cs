@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public SetProperty(PropertyInfo property)
 			{
-				this.Property = property;
+				Property = property;
 			}
 		}
 
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					return "ten thousand";
 				case 10001:
 					return "ten thousand and one";
-				case 2147483647:
+				case int.MaxValue:
 					return "int.MaxValue";
 				default:
 					return "something else";
@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			List<SetProperty> list = new List<SetProperty>();
 			List<SetProperty> list2 = new List<SetProperty>();
-			SetProperty[] properties = Switch.GetProperties();
+			SetProperty[] properties = GetProperties();
 			for (int i = 0; i < properties.Length; i++) {
 				Console.WriteLine("In for-loop");
 				SetProperty setProperty = properties[i];

@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					IVariable v = (IVariable)symbol;
 					return new DefaultVariable(
 						Import(compilation, v.Type),
-						v.Name, v.Region, v.IsConst, v.ConstantValue
+						v.Name, v.IsConst, v.ConstantValue
 					);
 				case SymbolKind.Parameter:
 					IParameter p = (IParameter)symbol;
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					} else {
 						return new DefaultParameter(
 							Import(compilation, p.Type),
-							p.Name, null, p.Region,
+							p.Name, null,
 							null, p.IsRef, p.IsOut, p.IsParams
 						);
 					}
@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets all top level type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitons (this ICompilation compilation)
+		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
 		{
 			return compilation.Assemblies.SelectMany(a => a.TopLevelTypeDefinitions);
 		}
@@ -455,7 +455,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		#region Resolve on collections
-		public static IList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
+		public static IReadOnlyList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
 		{
 			if (attributes == null)
 				throw new ArgumentNullException("attributes");
@@ -465,7 +465,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedAttribute, IAttribute>(context, attributes, (c, a) => a.CreateResolvedAttribute(c));
 		}
 		
-		public static IList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
+		public static IReadOnlyList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
 		{
 			if (typeParameters == null)
 				throw new ArgumentNullException("typeParameters");
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedTypeParameter, ITypeParameter>(context, typeParameters, (c, a) => a.CreateResolvedTypeParameter(c));
 		}
 		
-		public static IList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
+		public static IReadOnlyList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
 		{
 			if (parameters == null)
 				throw new ArgumentNullException("parameters");
@@ -485,7 +485,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, IUnresolvedParameter, IParameter>(context, parameters, (c, a) => a.CreateResolvedParameter(c));
 		}
 		
-		public static IList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
+		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
 			if (typeReferences == null)
 				throw new ArgumentNullException("typeReferences");
@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
 		
-		public static IList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
+		public static IReadOnlyList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
 		{
 			if (constantValues == null)
 				throw new ArgumentNullException("constantValues");
@@ -813,6 +813,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			isGeneric = null;
 			return SpecialType.UnknownType;
+		}
+
+		public static bool FullNameIs(this IMethod method, string type, string name)
+		{
+			return method.Name == name && method.DeclaringType?.FullName == type;
 		}
 	}
 }

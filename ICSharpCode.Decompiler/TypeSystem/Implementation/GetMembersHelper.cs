@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetNestedTypes(type, null, filter, options);
 		}
 		
-		public static IEnumerable<IType> GetNestedTypes(IType type, IList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		public static IEnumerable<IType> GetNestedTypes(IType type, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetNestedTypesImpl(type, nestedTypeArguments, filter, options);
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+		static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IReadOnlyList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			ITypeDefinition outerTypeDef = outerType.GetDefinition();
 			if (outerTypeDef == null)
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return GetMethods(type, null, filter, options);
 		}
 		
-		public static IEnumerable<IMethod> GetMethods(IType type, IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			if (typeArguments != null && typeArguments.Count > 0) {
 				filter = FilterTypeParameterCount(typeArguments.Count).And(filter);
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		const GetMemberOptions declaredMembers = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 		
-		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IList<IType> methodTypeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType> methodTypeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			IEnumerable<IMethod> declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
 			

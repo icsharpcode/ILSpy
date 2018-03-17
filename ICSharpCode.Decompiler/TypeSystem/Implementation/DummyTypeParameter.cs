@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using ICSharpCode.Decompiler.Util;
@@ -26,6 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		static ITypeParameter[] methodTypeParameters = { new DummyTypeParameter(SymbolKind.Method, 0) };
 		static ITypeParameter[] classTypeParameters = { new DummyTypeParameter(SymbolKind.TypeDefinition, 0) };
+		static IReadOnlyList<ITypeParameter>[] classTypeParameterLists = { EmptyList<ITypeParameter>.Instance };
 		
 		public static ITypeParameter GetMethodTypeParameter(int index)
 		{
@@ -60,7 +62,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			return tps[index];
 		}
-		
+
+		/// <summary>
+		/// Gets a list filled with dummy type parameters.
+		/// </summary>
+		internal static IReadOnlyList<ITypeParameter> GetClassTypeParameterList(int length)
+		{
+			IReadOnlyList<ITypeParameter>[] tps = classTypeParameterLists;
+			while (length >= tps.Length) {
+				// We don't have a normal type parameter for this index, so we need to extend our array.
+				// Because the array can be used concurrently from multiple threads, we have to use
+				// Interlocked.CompareExchange.
+				IReadOnlyList<ITypeParameter>[] newTps = new IReadOnlyList<ITypeParameter>[length + 1];
+				tps.CopyTo(newTps, 0);
+				for (int i = tps.Length; i < newTps.Length; i++) {
+					var newList = new ITypeParameter[i];
+					for (int j = 0; j < newList.Length; j++) {
+						newList[j] = GetClassTypeParameter(j);
+					}
+					newTps[i] = newList;
+				}
+				var oldTps = Interlocked.CompareExchange(ref classTypeParameterLists, newTps, tps);
+				if (oldTps == tps) {
+					// exchange successful
+					tps = newTps;
+				} else {
+					// exchange not successful
+					tps = oldTps;
+				}
+			}
+			return tps[length];
+		}
+
 		sealed class NormalizeMethodTypeParametersVisitor : TypeVisitor
 		{
 			public override IType VisitTypeParameter(ITypeParameter type)
@@ -83,7 +116,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 		}
-		
+
 		static readonly NormalizeMethodTypeParametersVisitor normalizeMethodTypeParameters = new NormalizeMethodTypeParametersVisitor();
 		static readonly NormalizeClassTypeParametersVisitor normalizeClassTypeParameters = new NormalizeClassTypeParametersVisitor();
 		
@@ -169,7 +202,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return index; }
 		}
 		
-		IList<IAttribute> ITypeParameter.Attributes {
+		IReadOnlyList<IAttribute> ITypeParameter.Attributes {
 			get { return EmptyList<IAttribute>.Instance; }
 		}
 		
@@ -181,10 +214,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return VarianceModifier.Invariant; }
 		}
 		
-		DomRegion ITypeParameter.Region {
-			get { return DomRegion.Empty; }
-		}
-		
 		IEntity ITypeParameter.Owner {
 			get { return null; }
 		}
@@ -193,7 +222,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return SpecialType.UnknownType; }
 		}
 		
-		ICollection<IType> ITypeParameter.EffectiveInterfaceSet {
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet {
 			get { return EmptyList<IType>.Instance; }
 		}
 		
