@@ -75,14 +75,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public Action<IUnresolvedEntity, MemberReference> OnEntityLoaded { get; set; }
 		
-		/// <summary>
-		/// Gets a value indicating whether this instance stores references to the cecil objects.
-		/// </summary>
-		/// <value>
-		/// <c>true</c> if this instance has references to the cecil objects; otherwise, <c>false</c>.
-		/// </value>
-		public bool HasCecilReferences { get { return typeSystemTranslationTable != null; } }
-		
 		bool shortenInterfaceImplNames = true;
 		
 		/// <summary>
@@ -115,7 +107,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		private CecilLoader(CecilLoader loader)
 		{
 			// use a shared typeSystemTranslationTable
-			this.typeSystemTranslationTable = loader.typeSystemTranslationTable;
 			this.IncludeInternalMembers = loader.IncludeInternalMembers;
 			this.LazyLoad = loader.LazyLoad;
 			this.OnEntityLoaded = loader.OnEntityLoaded;
@@ -211,7 +202,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				InitTypeDefinition(cecilTypeDefs[i], typeDefs[i]);
 			}
 			
-			AddToTypeSystemTranslationTable(this.currentAssembly, assemblyDefinition);
 			// Freezing the assembly here is important:
 			// otherwise it will be frozen when a compilation is first created
 			// from it. But freezing has the effect of changing some collection instances
@@ -1705,75 +1695,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		#region Type system translation table
-		readonly Dictionary<object, object> typeSystemTranslationTable;
-		
 		void RegisterCecilObject(IUnresolvedEntity typeSystemObject, MemberReference cecilObject)
 		{
 			if (OnEntityLoaded != null)
 				OnEntityLoaded(typeSystemObject, cecilObject);
-			
-			AddToTypeSystemTranslationTable(typeSystemObject, cecilObject);
-		}
-		
-		void AddToTypeSystemTranslationTable(object typeSystemObject, object cecilObject)
-		{
-			if (typeSystemTranslationTable != null) {
-				// When lazy-loading, the dictionary might be shared between multiple cecil-loaders that are used concurrently
-				lock (typeSystemTranslationTable) {
-					typeSystemTranslationTable[typeSystemObject] = cecilObject;
-				}
-			}
-		}
-		
-		T InternalGetCecilObject<T> (object typeSystemObject) where T : class
-		{
-			if (typeSystemObject == null)
-				throw new ArgumentNullException ("typeSystemObject");
-			if (!HasCecilReferences)
-				throw new NotSupportedException ("This instance contains no cecil references.");
-			object result;
-			lock (typeSystemTranslationTable) {
-				if (!typeSystemTranslationTable.TryGetValue (typeSystemObject, out result))
-					return null;
-			}
-			return result as T;
-		}
-		
-		public AssemblyDefinition GetCecilObject (IUnresolvedAssembly content)
-		{
-			return InternalGetCecilObject<AssemblyDefinition> (content);
-		}
-		
-
-		public TypeDefinition GetCecilObject (IUnresolvedTypeDefinition type)
-		{
-			if (type == null)
-				throw new ArgumentNullException ("type");
-			return InternalGetCecilObject<TypeDefinition> (type);
-		}
-		
-
-		public MethodDefinition GetCecilObject (IUnresolvedMethod method)
-		{
-			return InternalGetCecilObject<MethodDefinition> (method);
-		}
-		
-
-		public FieldDefinition GetCecilObject (IUnresolvedField field)
-		{
-			return InternalGetCecilObject<FieldDefinition> (field);
-		}
-		
-
-		public EventDefinition GetCecilObject (IUnresolvedEvent evt)
-		{
-			return InternalGetCecilObject<EventDefinition> (evt);
-		}
-		
-
-		public PropertyDefinition GetCecilObject (IUnresolvedProperty property)
-		{
-			return InternalGetCecilObject<PropertyDefinition> (property);
 		}
 		#endregion
 	}
