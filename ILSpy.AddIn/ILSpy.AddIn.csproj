@@ -63,7 +63,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="CodeElementXmlDocKeyProvider.cs" />
     <Compile Include="Commands\OpenCodeItemCommand.cs" />
     <Compile Include="Commands\OpenILSpyCommand.cs" />
     <Compile Include="Commands\OpenProjectOutputCommand.cs" />
@@ -78,7 +77,6 @@
     <Compile Include="ILSpyAddInPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PkgCmdID.cs" />
-    <None Include="Samples\ILSpyAddInSamples.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
 

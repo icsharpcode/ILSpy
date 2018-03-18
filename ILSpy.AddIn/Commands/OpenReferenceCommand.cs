@@ -51,32 +51,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		private Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
-		{
-			var dict = new Dictionary<string, string>();
-			foreach (var reference in parentProject.MetadataReferences) {
-				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
-					if (IsReferenceAssembly(assemblyDef)) {
-						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
-					} else {
-						dict.Add(assemblyDef.Name.Name, reference.Display);
-					}
-				}
-			}
-			foreach (var projectReference in parentProject.ProjectReferences) {
-				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
-				if (roslynProject != null && project != null)
-					dict.Add(roslynProject.AssemblyName, GetProjectOutputPath(project, roslynProject));
-			}
-			return dict;
-		}
-
-		private bool IsReferenceAssembly(AssemblyDefinition assemblyDef)
-		{
-			return assemblyDef.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
-		}
-
 		private string[] GetProperties(Properties properties, params string[] names)
 		{
 			string[] values = new string[names.Length];

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -61,6 +62,32 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
 			//combine the project path and output path to get the bin path
 			return Path.Combine(projectPath, projectOutputPath, outputFileName);
+		}
+
+		protected Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
+		{
+			var dict = new Dictionary<string, string>();
+			foreach (var reference in parentProject.MetadataReferences) {
+				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
+					if (IsReferenceAssembly(assemblyDef)) {
+						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
+					} else {
+						dict.Add(assemblyDef.Name.Name, reference.Display);
+					}
+				}
+			}
+			foreach (var projectReference in parentProject.ProjectReferences) {
+				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
+				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
+				if (roslynProject != null && project != null)
+					dict.Add(roslynProject.AssemblyName, GetProjectOutputPath(project, roslynProject));
+			}
+			return dict;
+		}
+
+		protected bool IsReferenceAssembly(AssemblyDefinition assemblyDef)
+		{
+			return assemblyDef.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
 		}
 	}
 
