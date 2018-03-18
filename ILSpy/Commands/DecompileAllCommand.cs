@@ -20,7 +20,9 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
@@ -60,6 +62,32 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				});
+				return output;
+			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
+		}
+	}
+
+	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile 100x", MenuCategory = "Open", MenuOrder = 2.6)]
+	sealed class Decompile100TimesCommand : SimpleCommand
+	{
+		public override void Execute(object parameter)
+		{
+			const int numRuns = 100;
+			var language = MainWindow.Instance.CurrentLanguage;
+			var nodes = MainWindow.Instance.SelectedNodes.ToArray();
+			var options = new DecompilationOptions();
+			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
+				options.CancellationToken = ct;
+				Stopwatch w = Stopwatch.StartNew();
+				for (int i = 0; i < numRuns; ++i) {
+					foreach (var node in nodes) {
+						node.Decompile(language, new PlainTextOutput(), options);
+					}
+				}
+				w.Stop();
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
+				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
 				return output;
 			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
 		}

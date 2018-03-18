@@ -190,14 +190,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						RegisterCecilObject(t, td);
 					} else {
 						var t = CreateTopLevelTypeDefinition(td);
+						currentAssembly.AddTypeDefinition(t);
 						cecilTypeDefs.Add(td);
 						typeDefs.Add(t);
-						currentAssembly.AddTypeDefinition(t);
 						// The registration will happen after the members are initialized
 					}
 				}
 			}
-			// Initialize the type's members:
+			// Initialize the type's members (but only if not lazy-init)
 			for (int i = 0; i < typeDefs.Count; i++) {
 				InitTypeDefinition(cecilTypeDefs[i], typeDefs[i]);
 			}
@@ -967,6 +967,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (!typeDefinition.HasNestedTypes)
 				return;
+			if (LazyLoad) {
+				foreach (TypeDefinition nestedTypeDef in typeDefinition.NestedTypes) {
+					var nestedTd = new LazyCecilTypeDefinition(this, nestedTypeDef, declaringTypeDefinition);
+					nestedTypes.Add(nestedTd);
+					RegisterCecilObject(nestedTd, nestedTypeDef);
+				}
+				return;
+			}
 			foreach (TypeDefinition nestedTypeDef in typeDefinition.NestedTypes) {
 				TypeAttributes visibility = nestedTypeDef.Attributes & TypeAttributes.VisibilityMask;
 				if (this.IncludeInternalMembers
@@ -1159,13 +1167,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IList<IUnresolvedTypeDefinition> nestedTypes;
 			IList<IUnresolvedMember> members;
 			
-			public LazyCecilTypeDefinition(CecilLoader loader, TypeDefinition typeDefinition)
+			public LazyCecilTypeDefinition(CecilLoader loader, TypeDefinition typeDefinition, IUnresolvedTypeDefinition declaringTypeDefinition = null)
 			{
 				this.loader = loader;
 				this.cecilTypeDef = typeDefinition;
 				this.MetadataToken = typeDefinition.MetadataToken;
 				this.SymbolKind = SymbolKind.TypeDefinition;
-				this.namespaceName = typeDefinition.Namespace;
+				if (declaringTypeDefinition != null) {
+					this.DeclaringTypeDefinition = declaringTypeDefinition;
+					this.namespaceName = declaringTypeDefinition.Namespace;
+				} else {
+					this.namespaceName = typeDefinition.Namespace;
+				}
 				this.Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(typeDefinition.Name);
 				var tps = new List<IUnresolvedTypeParameter>();
 				InitTypeParameters(typeDefinition, tps);
@@ -1349,7 +1362,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					throw new ArgumentNullException("context");
 				if (context.CurrentAssembly == null)
 					throw new ArgumentException("An ITypeDefinition cannot be resolved in a context without a current assembly.");
-				return context.CurrentAssembly.GetTypeDefinition(this.FullTypeName)
+				return context.CurrentAssembly.ResolveTypeDefToken(this.MetadataToken)
 					?? (IType)new UnknownType(this.Namespace, this.Name, this.TypeParameters.Count);
 			}
 			
