@@ -101,6 +101,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static string ToILNameString(this FullTypeName typeName)
 		{
 			var escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
+			if (typeName.TypeParameterCount > 0)
+				escapedName += "`" + typeName.TypeParameterCount;
 			if (typeName.IsNested) {
 				return $"{typeName.GetDeclaringType().ToILNameString()}/{escapedName}";
 			} else if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {

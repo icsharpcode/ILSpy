@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
+		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
@@ -175,17 +175,18 @@ namespace ICSharpCode.Decompiler
 			return ts.DecodeSignature(new Metadata.FullTypeNameSignatureDecoder(reader), default(Unit));
 		}
 
-		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
+		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader)
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			var tr = reader.GetTypeReference(handle);
+			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(reader.GetString(tr.Name), out var typeParameterCount);
 			TypeReferenceHandle declaringTypeHandle;
 			if ((declaringTypeHandle = tr.GetDeclaringType()).IsNil) {
 				string @namespace = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(tr.Name)));
+				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			} else {
-				return declaringTypeHandle.GetFullTypeName(reader, omitGenericParamCount).NestedType(reader.GetString(tr.Name), 0);
+				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
 			}
 		}
 
@@ -199,11 +200,12 @@ namespace ICSharpCode.Decompiler
 		public static FullTypeName GetFullTypeName(this TypeDefinition td, MetadataReader reader)
 		{
 			TypeDefinitionHandle declaringTypeHandle;
+			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(reader.GetString(td.Name), out var typeParameterCount);
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil) {
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(td.Name)));
+				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			} else {
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(reader.GetString(td.Name), 0);
+				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
 			}
 		}
 

@@ -835,7 +835,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			return handle.GetFullTypeName(reader, omitGenericParamCount: true);
+			return handle.GetFullTypeName(reader);
 		}
 
 		public FullTypeName GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
