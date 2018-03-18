@@ -60,8 +60,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IReadOnlyList<IAttribute> Attributes { get; protected set; }
 
-		public abstract ISymbolReference ToReference();
-		
 		public bool IsStatic { get { return unresolved.IsStatic; } }
 		public bool IsAbstract { get { return unresolved.IsAbstract; } }
 		public bool IsSealed { get { return unresolved.IsSealed; } }

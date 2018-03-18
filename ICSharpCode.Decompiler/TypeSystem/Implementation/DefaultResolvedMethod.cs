@@ -228,19 +228,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public override ISymbolReference ToReference()
-		{
-			var declType = this.DeclaringType;
-			var declTypeRef = declType != null ? declType.ToTypeReference() : SpecialType.UnknownType;
-			if (IsExplicitInterfaceImplementation && ImplementedInterfaceMembers.Count == 1) {
-				return new ExplicitInterfaceImplementationMemberReference(declTypeRef, ImplementedInterfaceMembers[0].ToReference());
-			} else {
-				return new DefaultMemberReference(
-					this.SymbolKind, declTypeRef, this.Name, this.TypeParameters.Count,
-					this.Parameters.Select(p => p.Type.ToTypeReference()).ToList());
-			}
-		}
-		
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution))

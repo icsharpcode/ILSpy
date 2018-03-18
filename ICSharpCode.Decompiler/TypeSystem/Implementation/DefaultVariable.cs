@@ -67,35 +67,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public SymbolKind SymbolKind {
 			get { return SymbolKind.Variable; }
 		}
-
-		public ISymbolReference ToReference()
-		{
-			return new VariableReference(type.ToTypeReference(), name, isConst, constantValue);
-		}
-	}
-	
-	public sealed class VariableReference : ISymbolReference
-	{
-		ITypeReference variableTypeReference;
-		string name;
-		bool isConst;
-		object constantValue;
-		
-		public VariableReference(ITypeReference variableTypeReference, string name, bool isConst, object constantValue)
-		{
-			if (variableTypeReference == null)
-				throw new ArgumentNullException("variableTypeReference");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			this.variableTypeReference = variableTypeReference;
-			this.name = name;
-			this.isConst = isConst;
-			this.constantValue = constantValue;
-		}
-		
-		public ISymbol Resolve(ITypeResolveContext context)
-		{
-			return new DefaultVariable(variableTypeReference.Resolve(context), name, isConst, constantValue);
-		}
 	}
 }

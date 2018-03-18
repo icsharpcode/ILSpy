@@ -113,22 +113,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract IMember Specialize(TypeParameterSubstitution substitution);
 		
-		IMemberReference IMember.ToReference()
-		{
-			return (IMemberReference)ToReference();
-		}
-		
-		public override ISymbolReference ToReference()
-		{
-			var declType = this.DeclaringType;
-			var declTypeRef = declType != null ? declType.ToTypeReference() : SpecialType.UnknownType;
-			if (IsExplicitInterfaceImplementation && ImplementedInterfaceMembers.Count == 1) {
-				return new ExplicitInterfaceImplementationMemberReference(declTypeRef, ImplementedInterfaceMembers[0].ToReference());
-			} else {
-				return new DefaultMemberReference(this.SymbolKind, declTypeRef, this.Name);
-			}
-		}
-		
 		internal IMethod GetAccessor(ref IMethod accessorField, IUnresolvedMethod unresolvedAccessor)
 		{
 			if (unresolvedAccessor == null)

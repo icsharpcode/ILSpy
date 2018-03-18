@@ -489,7 +489,6 @@
     <Compile Include="TypeSystem\Implementation\DefaultUnresolvedTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\ExplicitInterfaceImplementationMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\GetMembersHelper.cs" />
     <Compile Include="TypeSystem\Implementation\KnownTypeCache.cs" />
@@ -505,7 +504,6 @@
     <Compile Include="TypeSystem\Implementation\SpecializedMember.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedMethod.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedProperty.cs" />
-    <Compile Include="TypeSystem\Implementation\SpecializingMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeParameterReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeWithElementType.cs" />
     <Compile Include="TypeSystem\Implementation\UnknownType.cs" />
@@ -534,7 +532,6 @@
     <Compile Include="TypeSystem\ParameterizedType.cs" />
     <Compile Include="TypeSystem\ParameterListComparer.cs" />
     <Compile Include="TypeSystem\PointerType.cs" />
-    <Compile Include="TypeSystem\ProjectReference.cs" />
     <Compile Include="TypeSystem\ReflectionHelper.cs" />
     <Compile Include="TypeSystem\ReflectionNameParseException.cs" />
     <Compile Include="TypeSystem\SimpleTypeResolveContext.cs" />

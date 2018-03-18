@@ -567,68 +567,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					else
 						return null;
 				}
-				
-				public ISymbolReference ToReference()
-				{
-					return new NamespaceReference(new DefaultAssemblyReference(assembly.AssemblyName), ns.FullName);
-				}
 			}
-		}
-	}
-	
-	public sealed class NamespaceReference : ISymbolReference
-	{
-		IAssemblyReference assemblyReference;
-		string fullName;
-		
-		public NamespaceReference(IAssemblyReference assemblyReference, string fullName)
-		{
-			if (assemblyReference == null)
-				throw new ArgumentNullException("assemblyReference");
-			this.assemblyReference = assemblyReference;
-			this.fullName = fullName;
-		}
-		
-		public ISymbol Resolve(ITypeResolveContext context)
-		{
-			IAssembly assembly = assemblyReference.Resolve(context);
-			INamespace parent = assembly.RootNamespace;
-			
-			string[] parts = fullName.Split('.');
-			
-			int i = 0;
-			while (i < parts.Length && parent != null) {
-				parent = parent.GetChildNamespace(parts[i]);
-				i++;
-			}
-			
-			return parent;
-		}
-	}
-	
-	public sealed class MergedNamespaceReference : ISymbolReference
-	{
-		string externAlias;
-		string fullName;
-		
-		public MergedNamespaceReference(string externAlias, string fullName)
-		{
-			this.externAlias = externAlias;
-			this.fullName = fullName;
-		}
-		
-		public ISymbol Resolve(ITypeResolveContext context)
-		{
-			string[] parts = fullName.Split('.');
-			INamespace parent = context.Compilation.GetNamespaceForExternAlias(externAlias);
-			
-			int i = 0;
-			while (i < parts.Length && parent != null) {
-				parent = parent.GetChildNamespace(parts[i]);
-				i++;
-			}
-			
-			return parent;
 		}
 	}
 }

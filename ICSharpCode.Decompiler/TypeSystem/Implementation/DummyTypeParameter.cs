@@ -237,10 +237,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasValueTypeConstraint {
 			get { return false; }
 		}
-
-		public ISymbolReference ToReference()
-		{
-			return new TypeParameterReference(ownerType, index);
-		}
 	}
 }

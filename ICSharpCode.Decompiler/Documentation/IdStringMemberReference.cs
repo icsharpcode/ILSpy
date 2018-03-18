@@ -68,10 +68,5 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 			return null;
 		}
-		
-		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
-		{
-			return Resolve(context);
-		}
 	}
 }
