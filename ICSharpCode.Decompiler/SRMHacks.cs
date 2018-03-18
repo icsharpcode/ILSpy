@@ -32,31 +32,19 @@ namespace ICSharpCode.Decompiler
 			return 0;
 		}
 
-		public static unsafe ImmutableArray<MethodImplementationHandle> GetMethodImplementations(this MethodDefinitionHandle handle, MetadataReader reader)
+		public static ImmutableArray<MethodImplementationHandle> GetMethodImplementations(this MethodDefinitionHandle handle, MetadataReader reader)
 		{
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodImpl);
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodImpl);
-			int rowCount = reader.GetTableRowCount(TableIndex.MethodImpl);
-			var methodDefSize = reader.GetReferenceSize(TableIndex.MethodDef);
-			var typeDefSize = reader.GetReferenceSize(TableIndex.TypeDef);
+			var resultBuilder = ImmutableArray.CreateBuilder<MethodImplementationHandle>();
+			var typeDefinition = reader.GetTypeDefinition(reader.GetMethodDefinition(handle).GetDeclaringType());
 
-			var containingTypeRow = reader.GetRowNumber(reader.GetMethodDefinition(handle).GetDeclaringType());
-			var methodDefRow = reader.GetRowNumber(handle);
-
-			var list = new List<MethodImplementationHandle>();
-
-			// TODO : if sorted -> binary search?
-			for (int row = 0; row < reader.GetTableRowCount(TableIndex.MethodImpl); row++) {
-				byte* ptr = startPointer + offset + rowSize * row;
-				uint currentTypeRow = typeDefSize == 2 ? *(ushort*)ptr : *(uint*)ptr;
-				if (currentTypeRow != containingTypeRow) continue;
-				uint currentMethodRowCoded = methodDefSize == 2 ? *(ushort*)(ptr + typeDefSize) : *(uint*)(ptr + typeDefSize);
-				if ((currentMethodRowCoded >> 1) != methodDefRow) continue;
-				list.Add(MetadataTokens.MethodImplementationHandle(row + 1));
+			foreach (var methodImplementationHandle in typeDefinition.GetMethodImplementations()) {
+				var methodImplementation = reader.GetMethodImplementation(methodImplementationHandle);
+				if (methodImplementation.MethodBody == handle) {
+					resultBuilder.Add(methodImplementationHandle);
+				}
 			}
 
-			return list.ToImmutableArray();
+			return resultBuilder.ToImmutable();
 		}
 
 		/*

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		ILInstruction functionPointer;
 
-		public Mono.Cecil.MethodCallingConvention CallingConvention { get; }
+		public System.Reflection.Metadata.SignatureCallingConvention CallingConvention { get; }
 		public IType ReturnType { get; }
 		public ImmutableArray<IType> ParameterTypes { get; }
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 				functionPointer.ChildIndex = Arguments.Count;
 		}
 
-		public CallIndirect(Mono.Cecil.MethodCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
+		public CallIndirect(System.Reflection.Metadata.SignatureCallingConvention callingConvention, IType returnType, ImmutableArray<IType> parameterTypes,
 			IEnumerable<ILInstruction> arguments, ILInstruction functionPointer) : base(OpCode.CallIndirect)
 		{
 			this.CallingConvention = callingConvention;

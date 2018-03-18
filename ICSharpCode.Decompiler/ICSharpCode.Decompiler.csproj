@@ -51,6 +51,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
     <PackageReference Include="Mono.Cecil" Version="0.10.0-beta7" />
@@ -450,7 +454,7 @@
     <Compile Include="TypeSystem\ArrayType.cs" />
     <Compile Include="TypeSystem\AssemblyQualifiedTypeName.cs" />
     <Compile Include="TypeSystem\ByReferenceType.cs" />
-    <Compile Include="TypeSystem\CecilLoader.cs" />
+    <Compile Include="TypeSystem\MetadataLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\DefaultSolutionSnapshot.cs" />

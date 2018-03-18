@@ -16,6 +16,10 @@ namespace ICSharpCode.Decompiler
 		public static bool HasFlag(this PropertyDefinition propertyDefinition, PropertyAttributes attribute) => (propertyDefinition.Attributes & attribute) == attribute;
 		public static bool HasFlag(this EventDefinition eventDefinition, EventAttributes attribute) => (eventDefinition.Attributes & attribute) == attribute;
 
+		public static bool IsTypeKind(this HandleKind kind) => kind == HandleKind.TypeDefinition || kind == HandleKind.TypeReference || kind == HandleKind.TypeSpecification;
+		public static bool IsMemberKind(this HandleKind kind) => kind == HandleKind.MethodDefinition || kind == HandleKind.PropertyDefinition || kind == HandleKind.FieldDefinition
+																|| kind == HandleKind.EventDefinition || kind == HandleKind.MemberReference || kind == HandleKind.MethodSpecification;
+
 		public static bool IsValueType(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
 			return reader.GetTypeDefinition(handle).IsValueType(reader);

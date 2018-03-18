@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -27,12 +27,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation Compilation { get; }
 		
-		TypeDefinition GetCecil(ITypeDefinition typeDefinition);
-		MemberReference GetCecil(IMember member);
-		
-		IType Resolve(TypeReference typeReference);
-		IField Resolve(FieldReference fieldReference);
-		IMethod Resolve(MethodReference methodReference);
+		IType ResolveAsType(EntityHandle typeReference);
+		IField ResolveAsField(EntityHandle fieldReference);
+		IMethod ResolveAsMethod(EntityHandle methodReference);
+		IMember ResolveAsMember(EntityHandle memberReference);
 
 		/// <summary>
 		/// Gets a type system instance that automatically specializes the results

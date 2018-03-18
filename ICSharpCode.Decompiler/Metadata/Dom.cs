@@ -76,6 +76,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		IList<SequencePoint> GetSequencePoints(MethodDefinition method);
 		IList<Variable> GetVariables(MethodDefinition method);
+		bool TryGetName(MethodDefinition method, int index, out string name);
 	}
 
 	public class PEFile
@@ -301,7 +302,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 	}
 
-	public struct AssemblyReference : IAssemblyReference
+	public struct AssemblyReference : IAssemblyReference, IEquatable<AssemblyReference>
 	{
 		static readonly SHA1 sha1 = SHA1.Create();
 
@@ -332,6 +333,26 @@ namespace ICSharpCode.Decompiler.Metadata
 			return bytes;
 		}
 
+		public bool Equals(AssemblyReference other)
+		{
+			return Module == other.Module && Handle == other.Handle;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is AssemblyReference reference)
+				return Equals(reference);
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
+		}
+
+		public static bool operator ==(AssemblyReference lhs, AssemblyReference rhs) => lhs.Equals(rhs);
+		public static bool operator !=(AssemblyReference lhs, AssemblyReference rhs) => !lhs.Equals(rhs);
+
 		public AssemblyReference(PEFile module, AssemblyReferenceHandle handle)
 		{
 			Module = module;
@@ -358,9 +379,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			return MetadataResolver.ResolveType(Handle, new SimpleMetadataResolveContext(Module));
 		}
 
+		public FieldDefinition ResolveAsField()
+		{
+			return MetadataResolver.ResolveAsField(Handle, new SimpleMetadataResolveContext(Module));
+		}
+
 		public MethodDefinition ResolveAsMethod()
 		{
-			return MetadataResolver.ResolveMember(Handle, new SimpleMetadataResolveContext(Module));
+			return MetadataResolver.ResolveAsMethod(Handle, new SimpleMetadataResolveContext(Module));
 		}
 
 		public bool Equals(Entity other)
@@ -717,7 +743,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName FullName {
 			get {
-				return DecodeSignature(new FullTypeNameSignatureDecoder(Module.GetMetadataReader()), default(Unit));
+				return DecodeSignature(new FullTypeNameSignatureDecoder(Module.GetMetadataReader()), default);
 			}
 		}
 
@@ -785,7 +811,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetFunctionPointerType(MethodSignature<FullTypeName> signature)
 		{
-			return default(FullTypeName);
+			return default;
 		}
 
 		public FullTypeName GetGenericInstantiation(FullTypeName genericType, ImmutableArray<FullTypeName> typeArguments)
@@ -795,12 +821,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetGenericMethodParameter(Unit genericContext, int index)
 		{
-			return default(FullTypeName);
+			return default;
 		}
 
 		public FullTypeName GetGenericTypeParameter(Unit genericContext, int index)
 		{
-			return default(FullTypeName);
+			return default;
 		}
 
 		public FullTypeName GetModifiedType(FullTypeName modifier, FullTypeName unmodifiedType, bool isRequired)
@@ -840,7 +866,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 		{
-			return reader.GetTypeSpecification(handle).DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
+			return reader.GetTypeSpecification(handle).DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
 		}
 	}
 

@@ -138,10 +138,19 @@ namespace ICSharpCode.Decompiler.Util
 		public static IEnumerable<U> SelectWithIndex<T, U>(this IEnumerable<T> source, Func<int, T, U> func)
 		{
 			int index = 0;
-			foreach	(var element in source)
+			foreach (var element in source)
 				yield return func(index++, element);
 		}
-		
+
+		public static IEnumerable<(int, T)> WithIndex<T>(this ICollection<T> source)
+		{
+			int index = 0;
+			foreach (var item in source) {
+				yield return (index, item);
+				index++;
+			}
+		}
+
 		/// <summary>
 		/// The merge step of merge sort.
 		/// </summary>

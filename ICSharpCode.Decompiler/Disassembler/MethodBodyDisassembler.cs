@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						handle = MetadataTokens.EntityHandle(blob.ReadInt32());
 						switch (handle.Kind) {
 							case HandleKind.MemberReference:
-								switch (method.Module.GetMetadataReader().GetMemberReference((MemberReferenceHandle)handle).GetKind()) {
+								switch (metadata.GetMemberReference((MemberReferenceHandle)handle).GetKind()) {
 									case MemberReferenceKind.Method:
 										output.Write("method ");
 										break;

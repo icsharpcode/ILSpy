@@ -23,7 +23,26 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			return new Entity(module, entity).ResolveAsType();
 		}
+
+		public static FieldDefinition ResolveAsField(this EntityHandle entity, PEFile module)
+		{
+			return new Entity(module, entity).ResolveAsField();
+		}
+
+		public static MethodDefinition ResolveAsMethod(this EntityHandle entity, PEFile module)
+		{
+			return new Entity(module, entity).ResolveAsMethod();
+		}
 		#endregion
+
+		public static MethodDefinition AsMethod(this IMetadataEntity entity)
+		{
+			if (entity is MethodDefinition method)
+				return method;
+			if (entity is Entity e)
+				return e;
+			throw new NotSupportedException();
+		}
 
 		public static bool IsNil(this IAssemblyReference reference)
 		{
@@ -121,7 +140,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				case HandleKind.AssemblyReference:
 					return (AssemblyReferenceHandle)tr.ResolutionScope;
 				default:
-					return default(AssemblyReferenceHandle);
+					return default;
 			}
 		}
 
@@ -373,6 +392,20 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (metadata.IsAssembly)
 				return metadata.GetAssemblyDefinition();
 			return null;
+		}
+
+		public unsafe static ParameterHandle At(this ParameterHandleCollection collection, MetadataReader metadata, int index)
+		{
+			if (metadata.GetTableRowCount(TableIndex.ParamPtr) > 0) {
+				int rowSize = metadata.GetTableRowSize(TableIndex.ParamPtr);
+				int paramRefSize = (metadata.GetReferenceSize(TableIndex.ParamPtr) > 2) ? 4 : metadata.GetReferenceSize(TableIndex.Param);
+				int offset = metadata.GetTableMetadataOffset(TableIndex.ParamPtr) + index * rowSize;
+				byte* ptr = metadata.MetadataPointer + offset;
+				if (paramRefSize == 2)
+					return MetadataTokens.ParameterHandle(*(ushort*)ptr);
+				return MetadataTokens.ParameterHandle((int)*(uint*)ptr);
+			}
+			return MetadataTokens.ParameterHandle((index + 1) & 0xFFFFFF);
 		}
 	}
 }

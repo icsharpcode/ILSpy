@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			SortChildren();
 		}
 
-		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default(ExceptionRegion))
+		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
 		{
 			Debug.Assert(startOffset < endOffset);
 			this.Method = method;

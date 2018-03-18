@@ -57,12 +57,34 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static MethodDefinition ResolveMember(EntityHandle handle, IMetadataResolveContext context)
+		public static MethodDefinition ResolveAsMethod(EntityHandle handle, IMetadataResolveContext context)
 		{
 			switch (handle.Kind) {
 				case HandleKind.MethodDefinition:
 					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
 				case HandleKind.MemberReference:
+					var memberRefHandle = (MemberReferenceHandle)handle;
+					var metadata = context.CurrentModule.GetMetadataReader();
+					var memberRef = metadata.GetMemberReference(memberRefHandle);
+					if (memberRef.GetKind() != MemberReferenceKind.Method)
+						return default;
+					break;
+			}
+			throw new NotImplementedException();
+		}
+
+		public static FieldDefinition ResolveAsField(EntityHandle handle, IMetadataResolveContext context)
+		{
+			switch (handle.Kind) {
+				case HandleKind.FieldDefinition:
+					return new FieldDefinition(context.CurrentModule, (FieldDefinitionHandle)handle);
+				case HandleKind.MemberReference:
+					var memberRefHandle = (MemberReferenceHandle)handle;
+					var metadata = context.CurrentModule.GetMetadataReader();
+					var memberRef = metadata.GetMemberReference(memberRefHandle);
+					if (memberRef.GetKind() != MemberReferenceKind.Field)
+						throw new ArgumentException("MemberReferenceKind must be Field!", nameof(handle));
+					
 					break;
 			}
 			throw new NotImplementedException();

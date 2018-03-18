@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var metadata = method.Module.GetMetadataReader();
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
+			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
 			var parameters = methodDefinition.GetParameters().Select(p => metadata.GetParameter(p)).ToArray();
 			var signatureHeader = signature.Header;
 			int index = sequence;

@@ -457,13 +457,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		PrimitiveSerializationTypeCode ResolveEnumUnderlyingType(string typeName, PEFile module, out Metadata.TypeDefinition typeDefinition)
 		{
-			typeDefinition = default(Metadata.TypeDefinition);
+			typeDefinition = default;
 
 			TypeDefinitionHandle FindType(PEFile currentModule, string[] name)
 			{
 				var metadata = currentModule.GetMetadataReader();
 				var currentNamespace = metadata.GetNamespaceDefinitionRoot();
-				ImmutableArray<TypeDefinitionHandle> typeDefinitions = default(ImmutableArray<TypeDefinitionHandle>);
+				ImmutableArray<TypeDefinitionHandle> typeDefinitions = default;
 
 				for (int i = 0; i < name.Length; i++) {
 					string identifier = name[i];
@@ -489,7 +489,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						}
 					}
 				}
-				return default(TypeDefinitionHandle);
+				return default;
 			}
 			string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
 			string[] typeNameParts = nameParts[0].Split('.');

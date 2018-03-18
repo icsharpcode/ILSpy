@@ -163,9 +163,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return targets;
 		}
 
-		public static string DecodeUserString(ref BlobReader blob, Metadata.PEFile module)
+		public static string DecodeUserString(ref BlobReader blob, MetadataReader metadata)
 		{
-			return module.GetMetadataReader().GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
+			return metadata.GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
+		}
+
+		public static int DecodeIndex(ref BlobReader blob, ILOpCode opCode)
+		{
+			switch (opCode.GetOperandType()) {
+				case OperandType.ShortVariable:
+					return blob.ReadByte();
+				case OperandType.Variable:
+					return blob.ReadUInt16();
+				default:
+					throw new ArgumentException($"{opCode} not supported!");
+			}
 		}
 
 		public static bool IsReturn(this ILOpCode opCode)

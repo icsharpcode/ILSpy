@@ -422,7 +422,7 @@ namespace ICSharpCode.ILSpy
 								return true;
 							break;
 						case ILOpCode.Ldstr:
-							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, module))
+							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, metadata))
 								return true;
 							break;
 					}
@@ -434,7 +434,7 @@ namespace ICSharpCode.ILSpy
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					if (IsMatch(t => ILParser.DecodeUserString(ref blob, module)))
+					if (IsMatch(t => ILParser.DecodeUserString(ref blob, metadata)))
 						return true;
 				}
 			}

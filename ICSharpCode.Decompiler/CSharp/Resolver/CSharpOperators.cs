@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return null;
 			}
 
-			public System.Reflection.Metadata.EntityHandle MetadataToken => default(System.Reflection.Metadata.EntityHandle);
+			public System.Reflection.Metadata.EntityHandle MetadataToken => default;
 
 			ITypeDefinition IEntity.DeclaringTypeDefinition {
 				get { return null; }

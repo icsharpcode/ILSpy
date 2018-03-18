@@ -51,22 +51,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return substitution; }
 		}
 
-		public IType Resolve(Mono.Cecil.TypeReference typeReference)
+		public IType ResolveAsType(System.Reflection.Metadata.EntityHandle typeReference)
 		{
-			return context.Resolve(typeReference).AcceptVisitor(substitution);
+			return context.ResolveAsType(typeReference).AcceptVisitor(substitution);
 		}
 
-		public IField Resolve(Mono.Cecil.FieldReference fieldReference)
+		public IField ResolveAsField(System.Reflection.Metadata.EntityHandle fieldReference)
 		{
-			IField field = context.Resolve(fieldReference);
+			IField field = context.ResolveAsField(fieldReference);
 			if (field != null)
 				field = (IField)field.Specialize(substitution);
 			return field;
 		}
 
-		public IMethod Resolve(Mono.Cecil.MethodReference methodReference)
+		public IMethod ResolveAsMethod(System.Reflection.Metadata.EntityHandle methodReference)
 		{
-			IMethod method = context.Resolve(methodReference);
+			IMethod method = context.ResolveAsMethod(methodReference);
 			if (method != null)
 				method = (IMethod)method.Specialize(substitution);
 			return method;
