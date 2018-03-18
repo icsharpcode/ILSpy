@@ -234,9 +234,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		protected override bool MatchName(IMemberDefinition m, Language language)
+		protected override bool MatchName(IMetadataEntity m, Language language)
 		{
-			return m.MetadataToken.ToInt32() == searchTermToken;
+			return SRM.Ecma335.MetadataTokens.GetToken(m.Handle) == searchTermToken;
 		}
 	}
 

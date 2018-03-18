@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// a type system type reference.</param>
 		/// <param name="typeAttributes">Attributes associated with the Cecil type reference.
 		/// This is used to support the 'dynamic' type.</param>
-		public ITypeReference ReadTypeReference(EntityHandle type, CustomAttributeHandleCollection typeAttributes = default)
+		public ITypeReference ReadTypeReference(EntityHandle type, SRM.CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
 		{
 			int typeIndex = 0;
 			return CreateType(type, typeAttributes, ref typeIndex);
@@ -1713,7 +1713,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			Metadata.IMetadataEntity result;
 			lock (typeSystemTranslationTable) {
 				if (!typeSystemTranslationTable.TryGetValue (typeSystemObject, out result))
-					return default;
+					return default(T);
 			}
 			return (T)result;
 		}

@@ -34,7 +34,6 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.ILSpy
 {
