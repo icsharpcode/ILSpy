@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (references.TryGetValue(reference.Name, out var path))
 					OpenAssembliesInILSpy(new[] { path });
 				else
-					owner.ShowMessage("Could not find reference '{0}'.", reference.Name);
+					owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", reference.Name);
 			} else {
 				dynamic referenceObject = item.Object;
 				var values = GetProperties(referenceObject.Properties, "Type", "FusionName", "ResolvedPath");
@@ -47,14 +47,14 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					OpenAssembliesInILSpy(new string[] { GacInterop.FindAssemblyInNetGac(AssemblyNameReference.Parse(values[1])) });
 					return;
 				}
-				owner.ShowMessage("Could not find reference '{0}'.", referenceObject.Name);
+				owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", referenceObject.Name);
 			}
 		}
 
-		private Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project roslynProject)
+		private Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
 		{
 			var dict = new Dictionary<string, string>();
-			foreach (var reference in roslynProject.MetadataReferences) {
+			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					if (IsReferenceAssembly(assemblyDef)) {
 						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
@@ -63,9 +63,11 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					}
 				}
 			}
-			foreach (var projectReference in roslynProject.ProjectReferences) {
-				var project = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				dict.Add(project.AssemblyName, project.OutputFilePath);
+			foreach (var projectReference in parentProject.ProjectReferences) {
+				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
+				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
+				if (roslynProject != null && project != null)
+					dict.Add(roslynProject.AssemblyName, GetProjectOutputPath(project, roslynProject));
 			}
 			return dict;
 		}
