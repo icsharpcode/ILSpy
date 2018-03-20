@@ -112,6 +112,14 @@ namespace ICSharpCode.Decompiler
 				(methodDefinition.ImplAttributes & MethodImplAttributes.Runtime) == 0;
 		}
 
+		public static int GetCodeSize(this MethodBodyBlock body)
+		{
+			if (body == null)
+				throw new ArgumentNullException(nameof(body));
+
+			return body.GetILReader().Length;
+		}
+
 		public static MethodDefinitionHandle GetAny(this PropertyAccessors accessors)
 		{
 			if (!accessors.Getter.IsNil)
