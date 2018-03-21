@@ -139,8 +139,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!catchBlock.Instructions.Last().MatchBranch(out var jumpTableStartBlock))
 				return false;
-			if (catchBlock.Instructions.Count > 2) {
-				objectVariableStore = (StLoc)catchBlock.Instructions[catchBlock.Instructions.Count - 3];
+			if (catchBlock.Instructions.Count > 2 && catchBlock.Instructions[catchBlock.Instructions.Count - 3] is StLoc stloc) {
+				objectVariableStore = stloc;
 			}
 			var identifierVariableAssignment = catchBlock.Instructions.SecondToLastOrDefault();
 			if (!identifierVariableAssignment.MatchStLoc(out identifierVariable, out var value) || !value.MatchLdcI4(out id))
