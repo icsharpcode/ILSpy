@@ -69,6 +69,8 @@
     <Compile Include="TestCases\Pretty\QualifierTests.cs" />
     <Compile Include="TestCases\Pretty\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\Pretty\WellKnownConstants.cs" />
+    <Compile Include="TypeSystem\TypeSystemLoaderTests.cs" />
+    <Compile Include="TypeSystem\TypeSystemTestCase.cs" />
     <Compile Include="VBPrettyTestRunner.cs" />
     <Compile Include="TestCases\VBPretty\Async.cs" />
     <Compile Include="UglyTestRunner.cs" />
