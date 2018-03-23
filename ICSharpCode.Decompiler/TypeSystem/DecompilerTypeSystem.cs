@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		#region Resolve Type
-		public IType Resolve(TypeReference typeReference)
+		public IType Resolve(TypeReference typeReference, bool isFromSignature = false)
 		{
 			if (typeReference == null)
 				return SpecialType.UnknownType;
@@ -144,14 +144,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// But PinnedType can be nested within modopt, so we'll also skip those.
 			while (typeReference is OptionalModifierType || typeReference is RequiredModifierType) {
 				typeReference = ((TypeSpecification)typeReference).ElementType;
+				isFromSignature = true;
 			}
 			if (typeReference is SentinelType || typeReference is PinnedType) {
 				typeReference = ((TypeSpecification)typeReference).ElementType;
+				isFromSignature = true;
 			}
 			ITypeReference typeRef;
 			lock (typeReferenceCecilLoader)
-				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
+				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference, isFromSignature: isFromSignature);
 			return typeRef.Resolve(context);
+		}
+
+		IType ResolveInSignature(TypeReference typeReference)
+		{
+			return Resolve(typeReference, isFromSignature: true);
 		}
 		#endregion
 
@@ -166,7 +173,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					field = FindNonGenericField(fieldReference);
 					if (fieldReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)fieldReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(Resolve);
+						var typeArguments = git.GenericArguments.SelectArray(ResolveInSignature);
 						field = (IField)field.Specialize(new TypeParameterSubstitution(typeArguments, null));
 					}
 					fieldLookupCache.Add(fieldReference, field);
@@ -226,18 +233,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (methodReference.CallingConvention == MethodCallingConvention.VarArg) {
 						method = new VarArgInstanceMethod(
 							method,
-							methodReference.Parameters.SkipWhile(p => !p.ParameterType.IsSentinel).Select(p => Resolve(p.ParameterType))
+							methodReference.Parameters.SkipWhile(p => !p.ParameterType.IsSentinel).Select(p => ResolveInSignature(p.ParameterType))
 						);
 					} else if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
 						IReadOnlyList<IType> classTypeArguments = null;
 						IReadOnlyList<IType> methodTypeArguments = null;
 						if (methodReference.IsGenericInstance) {
 							var gim = ((GenericInstanceMethod)methodReference);
-							methodTypeArguments = gim.GenericArguments.SelectArray(Resolve);
+							methodTypeArguments = gim.GenericArguments.SelectArray(ResolveInSignature);
 						}
 						if (methodReference.DeclaringType.IsGenericInstance) {
 							var git = (GenericInstanceType)methodReference.DeclaringType;
-							classTypeArguments = git.GenericArguments.SelectArray(Resolve);
+							classTypeArguments = git.GenericArguments.SelectArray(ResolveInSignature);
 						}
 						method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 					}
@@ -261,21 +268,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				methods = typeDef.GetMethods(m => m.Name == methodReference.Name, GetMemberOptions.IgnoreInheritedMembers)
 					.Concat(typeDef.GetAccessors(m => m.Name == methodReference.Name, GetMemberOptions.IgnoreInheritedMembers));
 			}
-			foreach (var method in methods) {
-				if (GetCecil(method) == methodReference)
-					return method;
+			if (methodReference.MetadataToken.TokenType == TokenType.Method) {
+				foreach (var method in methods) {
+					if (method.MetadataToken == methodReference.MetadataToken)
+						return method;
+				}
 			}
 			IType[] parameterTypes;
 			if (methodReference.CallingConvention == MethodCallingConvention.VarArg) {
 				parameterTypes = methodReference.Parameters
 					.TakeWhile(p => !p.ParameterType.IsSentinel)
-					.Select(p => Resolve(p.ParameterType))
+					.Select(p => ResolveInSignature(p.ParameterType))
 					.Concat(new[] { SpecialType.ArgList })
 					.ToArray();
 			} else {
-				parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+				parameterTypes = methodReference.Parameters.SelectArray(p => ResolveInSignature(p.ParameterType));
 			}
-			var returnType = Resolve(methodReference.ReturnType);
+			var returnType = ResolveInSignature(methodReference.ReturnType);
 			foreach (var method in methods) {
 				if (method.TypeParameters.Count != methodReference.GenericParameters.Count)
 					continue;
@@ -362,7 +371,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					property = FindNonGenericProperty(propertyReference);
 					if (propertyReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)propertyReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(Resolve);
+						var typeArguments = git.GenericArguments.SelectArray(ResolveInSignature);
 						property = (IProperty)property.Specialize(new TypeParameterSubstitution(typeArguments, null));
 					}
 					propertyLookupCache.Add(propertyReference, property);
@@ -376,7 +385,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ITypeDefinition typeDef = Resolve(propertyReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
-			var parameterTypes = propertyReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+			var parameterTypes = propertyReference.Parameters.SelectArray(p => ResolveInSignature(p.ParameterType));
 			var returnType = Resolve(propertyReference.PropertyType);
 			foreach (IProperty property in typeDef.Properties) {
 				if (property.Name == propertyReference.Name
@@ -399,7 +408,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ev = FindNonGenericEvent(eventReference);
 					if (eventReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)eventReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(Resolve);
+						var typeArguments = git.GenericArguments.SelectArray(ResolveInSignature);
 						ev = (IEvent)ev.Specialize(new TypeParameterSubstitution(typeArguments, null));
 					}
 					eventLookupCache.Add(eventReference, ev);

@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
-			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType).GetStackType();
+			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType, isFromSignature: true).GetStackType();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
 			if (body.InitLocals) {
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(Cil.VariableDefinition v)
 		{
 			VariableKind kind = IsPinned(v.VariableType) ? VariableKind.PinnedLocal : VariableKind.Local;
-			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
+			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType, isFromSignature: true), v.Index);
 			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name)) {
 				ilVar.Name = "V_" + v.Index;
 				ilVar.HasGeneratedName = true;
@@ -164,10 +164,10 @@ namespace ICSharpCode.Decompiler.IL
 						parameterType = new ByReferenceType(parameterType);
 					}
 				} else {
-					parameterType = typeSystem.Resolve(p.ParameterType);
+					parameterType = typeSystem.Resolve(p.ParameterType, isFromSignature: true);
 				}
 			} else {
-				parameterType = typeSystem.Resolve(p.ParameterType);
+				parameterType = typeSystem.Resolve(p.ParameterType, isFromSignature: true);
 			}
 			Debug.Assert(!parameterType.IsUnbound());
 			if (parameterType.IsUnbound()) {
@@ -1283,12 +1283,12 @@ namespace ICSharpCode.Decompiler.IL
 			var parameterTypes = new IType[signature.Parameters.Count];
 			var arguments = new ILInstruction[parameterTypes.Length];
 			for (int i = signature.Parameters.Count - 1; i >= 0; i--) {
-				parameterTypes[i] = typeSystem.Resolve(signature.Parameters[i].ParameterType);
+				parameterTypes[i] = typeSystem.Resolve(signature.Parameters[i].ParameterType, isFromSignature: true);
 				arguments[i] = Pop(parameterTypes[i].GetStackType());
 			}
 			var call = new CallIndirect(
 				signature.CallingConvention,
-				typeSystem.Resolve(signature.ReturnType),
+				typeSystem.Resolve(signature.ReturnType, isFromSignature: true),
 				parameterTypes.ToImmutableArray(),
 				arguments,
 				functionPointer

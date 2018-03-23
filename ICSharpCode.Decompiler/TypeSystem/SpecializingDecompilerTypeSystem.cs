@@ -51,9 +51,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return substitution; }
 		}
 
-		public IType Resolve(Mono.Cecil.TypeReference typeReference)
+		public IType Resolve(Mono.Cecil.TypeReference typeReference, bool isFromSignature)
 		{
-			return context.Resolve(typeReference).AcceptVisitor(substitution);
+			return context.Resolve(typeReference, isFromSignature).AcceptVisitor(substitution);
 		}
 
 		public IField Resolve(Mono.Cecil.FieldReference fieldReference)

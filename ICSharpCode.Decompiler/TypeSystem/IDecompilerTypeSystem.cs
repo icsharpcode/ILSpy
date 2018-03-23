@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		TypeDefinition GetCecil(ITypeDefinition typeDefinition);
 		MemberReference GetCecil(IMember member);
 		
-		IType Resolve(TypeReference typeReference);
+		IType Resolve(TypeReference typeReference, bool isFromSignature = false);
 		IField Resolve(FieldReference fieldReference);
 		IMethod Resolve(MethodReference methodReference);
 
