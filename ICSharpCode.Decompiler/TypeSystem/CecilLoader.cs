@@ -967,14 +967,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (!typeDefinition.HasNestedTypes)
 				return;
-			if (LazyLoad) {
-				foreach (TypeDefinition nestedTypeDef in typeDefinition.NestedTypes) {
-					var nestedTd = new LazyCecilTypeDefinition(this, nestedTypeDef, declaringTypeDefinition);
-					nestedTypes.Add(nestedTd);
-					RegisterCecilObject(nestedTd, nestedTypeDef);
-				}
-				return;
-			}
 			foreach (TypeDefinition nestedTypeDef in typeDefinition.NestedTypes) {
 				TypeAttributes visibility = nestedTypeDef.Attributes & TypeAttributes.VisibilityMask;
 				if (this.IncludeInternalMembers
@@ -986,12 +978,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					int pos = name.LastIndexOf('/');
 					if (pos > 0)
 						name = name.Substring(pos + 1);
-					name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name);
-					var nestedType = new DefaultUnresolvedTypeDefinition(declaringTypeDefinition, name);
-					nestedType.MetadataToken = nestedTypeDef.MetadataToken;
-					InitTypeParameters(nestedTypeDef, nestedType.TypeParameters);
-					nestedTypes.Add(nestedType);
-					InitTypeDefinition(nestedTypeDef, nestedType);
+					if (LazyLoad) {
+						var nestedTd = new LazyCecilTypeDefinition(this, nestedTypeDef, declaringTypeDefinition, name);
+						nestedTypes.Add(nestedTd);
+						RegisterCecilObject(nestedTd, nestedTypeDef);
+					} else {
+						name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name);
+						var nestedType = new DefaultUnresolvedTypeDefinition(declaringTypeDefinition, name);
+						nestedType.MetadataToken = nestedTypeDef.MetadataToken;
+						InitTypeParameters(nestedTypeDef, nestedType.TypeParameters);
+						nestedTypes.Add(nestedType);
+						InitTypeDefinition(nestedTypeDef, nestedType);
+					}
 				}
 			}
 		}
@@ -1167,7 +1165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IList<IUnresolvedTypeDefinition> nestedTypes;
 			IList<IUnresolvedMember> members;
 			
-			public LazyCecilTypeDefinition(CecilLoader loader, TypeDefinition typeDefinition, IUnresolvedTypeDefinition declaringTypeDefinition = null)
+			public LazyCecilTypeDefinition(CecilLoader loader, TypeDefinition typeDefinition, IUnresolvedTypeDefinition declaringTypeDefinition = null, string name = null)
 			{
 				this.loader = loader;
 				this.cecilTypeDef = typeDefinition;
@@ -1179,7 +1177,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				} else {
 					this.namespaceName = typeDefinition.Namespace;
 				}
-				this.Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(typeDefinition.Name);
+				this.Name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name ?? typeDefinition.Name);
 				var tps = new List<IUnresolvedTypeParameter>();
 				InitTypeParameters(typeDefinition, tps);
 				this.typeParameters = FreezableHelper.FreezeList(tps);
@@ -1206,7 +1204,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			
 			public FullTypeName FullTypeName {
 				get {
-					return new TopLevelTypeName(namespaceName, this.Name, typeParameters.Count);
+					IUnresolvedTypeDefinition declaringTypeDef = this.DeclaringTypeDefinition;
+					if (declaringTypeDef != null) {
+						return declaringTypeDef.FullTypeName.NestedType(this.Name, typeParameters.Count - declaringTypeDef.TypeParameters.Count);
+					} else {
+						return new TopLevelTypeName(namespaceName, this.Name, typeParameters.Count);
+					}
 				}
 			}
 			
