@@ -450,6 +450,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						namespaces.Add(typeRef.Namespace);
 					}
+					if (visited.Add(typeRef)) {
+						var typeDef = typeRef.Resolve();
+						if (typeDef != null) {
+							CollectNamespacesForDecompilation(typeDef.BaseType, namespaces, visited);
+							foreach (var intf in typeDef.Interfaces)
+								CollectNamespacesForDecompilation(intf.InterfaceType, namespaces, visited);
+						}
+					}
 					break;
 				case FieldReference fieldRef:
 					CollectNamespacesForDecompilation(fieldRef.DeclaringType, namespaces, visited);
@@ -539,7 +547,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectAttributes(cap);
 				}
 				if (def is ISecurityDeclarationProvider sdp) {
+					namespaces.Add("System.Security.Permissions");
 					CollectSecurityDeclarations(sdp);
+				}
+				if (def is IMarshalInfoProvider mip && mip.HasMarshalInfo) {
+					namespaces.Add("System.Runtime.InteropServices");
 				}
 				switch (def) {
 					case TypeDefinition typeDef:
