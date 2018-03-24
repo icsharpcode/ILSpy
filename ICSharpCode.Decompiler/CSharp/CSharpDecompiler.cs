@@ -524,9 +524,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
+			void CollectSecurityDeclarations(ISecurityDeclarationProvider provider)
+			{
+				if (!provider.HasSecurityDeclarations) return;
+				foreach (var sd in provider.SecurityDeclarations) {
+					foreach (var sa in sd.SecurityAttributes) {
+						CollectNamespacesForDecompilation(sa.AttributeType, namespaces, visited);
+					}
+				}
+			}
+
 			foreach (var def in memberDefinitions) {
 				if (def is ICustomAttributeProvider cap) {
 					CollectAttributes(cap);
+				}
+				if (def is ISecurityDeclarationProvider sdp) {
+					CollectSecurityDeclarations(sdp);
 				}
 				switch (def) {
 					case TypeDefinition typeDef:
