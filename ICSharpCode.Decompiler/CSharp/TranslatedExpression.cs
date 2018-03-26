@@ -198,8 +198,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Unknown) {
-				return this; // don't attempt to insert cast to '?'
+			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void) {
+				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 			}
 			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true) {
 				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
