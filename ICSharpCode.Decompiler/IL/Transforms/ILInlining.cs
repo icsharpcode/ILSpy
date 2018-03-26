@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool modified = false;
 			int i = 0;
 			while (i < block.Instructions.Count) {
-				if (InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block), context: context)) {
+				if (InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block) || IsInConstructurInitializer(i, block), context: context)) {
 					modified = true;
 					i = Math.Max(0, i - 1);
 					// Go back one step
@@ -60,6 +60,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return modified;
+		}
+
+		static bool IsInConstructurInitializer(int i, Block block)
+		{
+			var inst = block.Instructions[i];
+			var topLevelBlock = inst.Ancestors.OfType<Block>().LastOrDefault();
+			var function = topLevelBlock.Ancestors.OfType<ILFunction>().FirstOrDefault(f => f.Parent == null);
+			if (topLevelBlock == null || function == null || !function.Method.IsConstructor)
+				return false;
+			var topLevelInst = inst.Ancestors.FirstOrDefault(instr => instr.Parent == topLevelBlock);
+			var ctorCall = function.Descendants.OfType<CallInstruction>().FirstOrDefault(call => !(call is NewObj) && call.Method.IsConstructor);
+			if (topLevelInst == null || ctorCall == null)
+				return false;
+			return topLevelInst.ILRange.InclusiveEnd < ctorCall.ILRange.Start;
 		}
 
 		static bool IsCatchWhenBlock(Block block)
