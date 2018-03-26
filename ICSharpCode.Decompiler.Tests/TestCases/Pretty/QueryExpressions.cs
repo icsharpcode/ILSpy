@@ -19,11 +19,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class QueryExpressions
 	{
+		public class HbmParam
+		{
+			public string Name {
+				get;
+				set;
+			}
+			public string[] Text {
+				get;
+				set;
+			}
+		}
+
 		public class Customer
 		{
 			public int CustomerID;
@@ -125,6 +138,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   let b = a.Country
 				   let c = a.Name
 				   select b + c;
+		}
+
+		public object HibernateApplyGeneratorQuery()
+		{
+			return (from pi in customers.GetType().GetProperties()
+					let pname = pi.Name
+					let pvalue = pi.GetValue(customers, null)
+					select new HbmParam {
+							Name = pname,
+							Text = new string[1] {
+								(pvalue == null) ? "null" : pvalue.ToString()
+							}
+						}).ToArray();
 		}
 
 		public object Join()
