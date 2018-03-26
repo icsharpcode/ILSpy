@@ -525,9 +525,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var ca in provider.CustomAttributes) {
 					CollectNamespacesForDecompilation(ca.AttributeType, namespaces, visited);
 					CollectNamespacesForDecompilation(ca.Constructor, namespaces, visited);
+					bool isAsyncStateMachine = ca.AttributeType.FullName == "System.Runtime.CompilerServices.AsyncStateMachineAttribute";
 					foreach (var val in ca.ConstructorArguments) {
-						if (val.Value is TypeReference tr)
+						if (val.Value is TypeReference tr) {
 							namespaces.Add(tr.Namespace);
+							if (isAsyncStateMachine)
+								CollectNamespacesForDecompilation(new[] { tr.ResolveWithinSameModule() }, namespaces, visited);
+						}
 					}
 				}
 			}
@@ -662,6 +666,17 @@ namespace ICSharpCode.Decompiler.CSharp
 									namespaces.Add("System.Runtime.InteropServices");
 								CollectAttributes(p);
 								CollectNamespacesForDecompilation(p.ParameterType, namespaces, visited);
+							}
+						}
+						if (methodDef.HasGenericParameters) {
+							foreach (var gp in methodDef.GenericParameters) {
+								if (gp.HasConstraints) {
+									foreach (var constraint in gp.Constraints) {
+										// Avoid infinite recursion
+										if (!(constraint is GenericInstanceType git && git.ElementType == gp.Owner))
+											CollectNamespacesForDecompilation(constraint, namespaces, visited);
+									}
+								}
 							}
 						}
 						if (methodDef.HasBody) {
