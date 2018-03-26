@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler
 		
 		public static bool HasGeneratedName(this IType type)
 		{
-			return type.Name.StartsWith("<", StringComparison.Ordinal);
+			return type.Name.StartsWith("<", StringComparison.Ordinal) || type.Name.Contains("<");
 		}
 		
 		public static bool IsAnonymousType(this IType type)
