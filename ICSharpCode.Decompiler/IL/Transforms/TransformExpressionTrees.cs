@@ -809,11 +809,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return (null, SpecialType.UnknownType);
+			ArrayType arrayType = new ArrayType(context.BlockContext.TypeSystem.Compilation, type);
 			if (arguments.Count == 0)
-				return (null, SpecialType.UnknownType);
+				return (new NewArr(type, new LdcI4(0)), arrayType);
 			var block = (Block)invocation.Arguments[1];
 			var function = lambdaStack.Peek();
-			var variable = function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.BlockContext.TypeSystem.Compilation, type));
+			var variable = function.RegisterVariable(VariableKind.InitializerTarget, arrayType);
 			Block initializer = new Block(BlockKind.ArrayInitializer);
 			int i = 0;
 			initializer.Instructions.Add(new StLoc(variable, new NewArr(type, new LdcI4(arguments.Count))));
