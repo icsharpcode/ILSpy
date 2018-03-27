@@ -287,21 +287,25 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public static string GetRuntimeDisplayName(PEFile module)
+		public static string GetRuntimeDisplayName(TargetRuntime runtime)
 		{
-			string version = module.GetMetadataReader().MetadataVersion;
-			switch (version[1]) {
-				case '1':
-					if (version[3] == 1)
-						return ".NET 1.1";
-					else
-						return ".NET 1.0";
-				case '2':
+			switch (runtime) {
+				case TargetRuntime.Net_1_0:
+					return ".NET 1.1";
+				case TargetRuntime.Net_1_1:
+					return ".NET 1.0";
+				case TargetRuntime.Net_2_0:
 					return ".NET 2.0";
-				case '4':
+				case TargetRuntime.Net_4_0:
 					return ".NET 4.0";
 			}
 			return null;
+		}
+
+
+		public static string GetRuntimeDisplayName(PEFile module)
+		{
+			return GetRuntimeDisplayName(module.GetRuntime());
 		}
 	}
 

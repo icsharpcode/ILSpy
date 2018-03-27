@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -82,11 +84,7 @@ namespace ICSharpCode.Decompiler
 		public static bool IsExtensionMethod(this MethodDefinition methodDefinition, MetadataReader reader)
 		{
 			if (methodDefinition.HasFlag(MethodAttributes.Static)) {
-				foreach (var attribute in methodDefinition.GetCustomAttributes()) {
-					string typeName = reader.GetCustomAttribute(attribute).GetAttributeType(reader).GetFullTypeName(reader).ToString();
-					if (typeName == "System.Runtime.CompilerServices.ExtensionAttribute")
-						return true;
-				}
+				return methodDefinition.GetCustomAttributes().HasAttributeOfType<System.Runtime.CompilerServices.ExtensionAttribute>(reader);
 			}
 			return false;
 		}
@@ -134,23 +132,6 @@ namespace ICSharpCode.Decompiler
 			if (!accessors.Remover.IsNil)
 				return accessors.Remover;
 			return accessors.Raiser;
-		}
-
-		/// <summary>
-		/// Gets the type of the attribute.
-		/// </summary>
-		public static EntityHandle GetAttributeType(this CustomAttribute attribute, MetadataReader reader)
-		{
-			switch (attribute.Constructor.Kind) {
-				case HandleKind.MethodDefinition:
-					var md = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor);
-					return md.GetDeclaringType();
-				case HandleKind.MemberReference:
-					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
-					return mr.Parent;
-				default:
-					throw new NotSupportedException();
-			}
 		}
 
 		public static TypeReferenceHandle GetDeclaringType(this TypeReference tr)
@@ -232,6 +213,207 @@ namespace ICSharpCode.Decompiler
 					return provider.GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)ev.Type, 0);
 				default:
 					throw new NotSupportedException();
+			}
+		}
+
+		public static bool IsAnonymousType(this TypeDefinition type, MetadataReader metadata)
+		{
+			string name = metadata.GetString(type.Name);
+			if (type.Namespace.IsNil && type.HasGeneratedName(metadata) && (name.Contains("AnonType") || name.Contains("AnonymousType"))) {
+				return type.IsCompilerGenerated(metadata);
+			}
+			return false;
+		}
+
+		#region HasGeneratedName
+
+		public static bool IsGeneratedName(this StringHandle handle, MetadataReader metadata)
+		{
+			return !handle.IsNil && metadata.GetString(handle).StartsWith("<", StringComparison.Ordinal);
+		}
+
+		public static bool HasGeneratedName(this MethodDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetMethodDefinition(handle).Name.IsGeneratedName(metadata);
+		}
+
+		public static bool HasGeneratedName(this TypeDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetTypeDefinition(handle).Name.IsGeneratedName(metadata);
+		}
+
+		public static bool HasGeneratedName(this TypeDefinition type, MetadataReader metadata)
+		{
+			return type.Name.IsGeneratedName(metadata);
+		}
+
+		public static bool HasGeneratedName(this FieldDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetFieldDefinition(handle).Name.IsGeneratedName(metadata);
+		}
+
+		#endregion
+
+		#region IsCompilerGenerated
+
+		public static bool IsCompilerGenerated(this MethodDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetMethodDefinition(handle).IsCompilerGenerated(metadata);
+		}
+
+		public static bool IsCompilerGenerated(this MethodDefinition method, MetadataReader metadata)
+		{
+			return method.GetCustomAttributes().HasCompilerGeneratedAttribute(metadata);
+		}
+
+		public static bool IsCompilerGenerated(this FieldDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetFieldDefinition(handle).IsCompilerGenerated(metadata);
+		}
+
+		public static bool IsCompilerGenerated(this FieldDefinition field, MetadataReader metadata)
+		{
+			return field.GetCustomAttributes().HasCompilerGeneratedAttribute(metadata);
+		}
+
+		public static bool IsCompilerGenerated(this TypeDefinitionHandle handle, MetadataReader metadata)
+		{
+			return metadata.GetTypeDefinition(handle).IsCompilerGenerated(metadata);
+		}
+
+		public static bool IsCompilerGenerated(this TypeDefinition type, MetadataReader metadata)
+		{
+			return type.GetCustomAttributes().HasCompilerGeneratedAttribute(metadata);
+		}
+
+		#endregion
+
+		#region Attribute extensions
+		/// <summary>
+		/// Gets the type of the attribute.
+		/// </summary>
+		public static EntityHandle GetAttributeType(this CustomAttribute attribute, MetadataReader reader)
+		{
+			switch (attribute.Constructor.Kind) {
+				case HandleKind.MethodDefinition:
+					var md = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor);
+					return md.GetDeclaringType();
+				case HandleKind.MemberReference:
+					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
+					return mr.Parent;
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		public static bool HasCompilerGeneratedAttribute(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata)
+		{
+			return customAttributes.HasAttributeOfType<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(metadata);
+		}
+
+		public static bool HasParamArrayAttribute(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata)
+		{
+			return customAttributes.HasAttributeOfType<System.ParamArrayAttribute>(metadata);
+		}
+
+		public static bool HasDefaultMemberAttribute(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata)
+		{
+			return customAttributes.HasAttributeOfType<System.Reflection.DefaultMemberAttribute>(metadata);
+		}
+
+		public static bool HasAttributeOfType(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata, Type type)
+		{
+			var typeName = type.FullName;
+			foreach (var handle in customAttributes) {
+				var customAttribute = metadata.GetCustomAttribute(handle);
+				var attributeTypeName = customAttribute.GetAttributeType(metadata).GetFullTypeName(metadata).ToString();
+				if (typeName == attributeTypeName)
+					return true;
+			}
+			return false;
+		}
+
+		public static bool HasAttributeOfType<TAttribute>(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata) where TAttribute : Attribute
+		{
+			return HasAttributeOfType(customAttributes, metadata, typeof(TAttribute));
+		}
+		#endregion
+
+		public static byte[] GetInitialValue(this FieldDefinition field, PEReader pefile)
+		{
+			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
+				return Empty<byte>.Array;
+			int rva = field.GetRelativeVirtualAddress();
+			int size = field.DecodeSignature(new FieldValueSizeDecoder(), default);
+			var headers = pefile.PEHeaders;
+			int index = headers.GetContainingSectionIndex(rva);
+			var sectionHeader = headers.SectionHeaders[index];
+			var sectionData = pefile.GetEntireImage();
+			int totalOffset = rva + sectionHeader.PointerToRawData - sectionHeader.VirtualAddress;
+			var reader = sectionData.GetReader();
+			reader.Offset += totalOffset;
+			int offset = field.GetOffset();
+			if (offset > 0)
+				reader.Offset += offset;
+			return reader.ReadBytes(size);
+
+		}
+
+		class FieldValueSizeDecoder : ISignatureTypeProvider<int, Unit>
+		{
+			public int GetArrayType(int elementType, ArrayShape shape) => elementType;
+			public int GetByReferenceType(int elementType) => elementType;
+			public int GetFunctionPointerType(MethodSignature<int> signature) => IntPtr.Size;
+			public int GetGenericInstantiation(int genericType, ImmutableArray<int> typeArguments) => throw new NotSupportedException();
+			public int GetGenericMethodParameter(Unit genericContext, int index) => throw new NotSupportedException();
+			public int GetGenericTypeParameter(Unit genericContext, int index) => throw new NotSupportedException();
+			public int GetModifiedType(int modifier, int unmodifiedType, bool isRequired) => unmodifiedType;
+			public int GetPinnedType(int elementType) => elementType;
+			public int GetPointerType(int elementType) => elementType;
+
+			public int GetPrimitiveType(PrimitiveTypeCode typeCode)
+			{
+				switch (typeCode) {
+					case PrimitiveTypeCode.Boolean:
+					case PrimitiveTypeCode.Byte:
+					case PrimitiveTypeCode.SByte:
+						return 1;
+					case PrimitiveTypeCode.Char:
+					case PrimitiveTypeCode.Int16:
+					case PrimitiveTypeCode.UInt16:
+						return 2;
+					case PrimitiveTypeCode.Int32:
+					case PrimitiveTypeCode.UInt32:
+					case PrimitiveTypeCode.Single:
+						return 4;
+					case PrimitiveTypeCode.Int64:
+					case PrimitiveTypeCode.UInt64:
+					case PrimitiveTypeCode.Double:
+						return 8;
+					case PrimitiveTypeCode.IntPtr:
+					case PrimitiveTypeCode.UIntPtr:
+						return IntPtr.Size;
+					default:
+						throw new NotSupportedException();
+				}
+			}
+
+			public int GetSZArrayType(int elementType) => throw new NotSupportedException();
+
+			public int GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+			{
+				var td = reader.GetTypeDefinition(handle);
+				return td.GetLayout().Size;
+			}
+
+			public int GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+			{
+				throw new NotImplementedException();
+			}
+
+			public int GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+			{
+				throw new NotImplementedException();
 			}
 		}
 	}

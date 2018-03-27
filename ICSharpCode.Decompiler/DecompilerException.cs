@@ -20,12 +20,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
@@ -34,18 +34,24 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public AssemblyNameDefinition AssemblyName => DecompiledMethod.Module.Assembly.Name;
+		public string AssemblyName => Module.FullName;
 
-		public string FileName => DecompiledMethod.Module.FileName;
+		public string FileName => Module.FileName;
 
-		public FullTypeName DecompiledType => new FullTypeName(DecompiledMethod.DeclaringType.FullName);
+		public MethodDefinitionHandle DecompiledMethod { get; }
+		public Metadata.PEFile Module { get; }
 
-		public MethodDefinition DecompiledMethod { get; }
-		
-		public DecompilerException(MethodDefinition decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + decompiledMethod.FullName + Environment.NewLine, innerException)
+		public DecompilerException(Metadata.PEFile module, MethodDefinitionHandle decompiledMethod, Exception innerException) 
+			: base("Error decompiling " + GetFullName(decompiledMethod, module.GetMetadataReader()) + Environment.NewLine, innerException)
 		{
+			this.Module = module;
 			this.DecompiledMethod = decompiledMethod;
+		}
+
+		private static string GetFullName(MethodDefinitionHandle decompiledMethod, MetadataReader metadata)
+		{
+			var method = metadata.GetMethodDefinition(decompiledMethod);
+			return $"{method.GetDeclaringType().GetFullTypeName(metadata).ToString()}.{metadata.GetString(method.Name)}";
 		}
 
 		// This constructor is needed for serialization.

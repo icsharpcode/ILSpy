@@ -80,14 +80,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return context.GetSpecializingTypeSystem(newSubstitution);
 		}
 
-		public Mono.Cecil.TypeDefinition GetCecil(ITypeDefinition typeDefinition)
+		public System.Reflection.Metadata.MetadataReader GetMetadata()
 		{
-			return context.GetCecil(typeDefinition);
+			return context.GetMetadata();
 		}
 
-		public Mono.Cecil.MemberReference GetCecil(IMember member)
+		public IMember ResolveAsMember(System.Reflection.Metadata.EntityHandle memberReference)
 		{
-			return context.GetCecil(member);
+			throw new NotImplementedException();
 		}
 	}
 }

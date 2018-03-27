@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.IL.Transforms;
-using Mono.Cecil;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -30,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class ILFunction
 	{
 		public readonly IMethod Method;
-		public readonly MethodDefinition CecilMethod;
+		public readonly int CodeSize;
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
@@ -73,11 +72,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly IReadOnlyList<IParameter> Parameters;
 
-		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, int codeSize, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
-			this.CecilMethod = cecilMethod;
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
@@ -164,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var usedILRanges = new List<LongInterval>();
 			MarkUsedILRanges(body);
-			return new LongSet(new LongInterval(0, CecilMethod.Body.CodeSize)).ExceptWith(new LongSet(usedILRanges));
+			return new LongSet(new LongInterval(0, CodeSize)).ExceptWith(new LongSet(usedILRanges));
 
 			void MarkUsedILRanges(ILInstruction inst)
 			{

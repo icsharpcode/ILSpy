@@ -757,7 +757,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			throw new NotSupportedException("Unknown entity type");
 		}
 		#endregion
-		
+
+		#region IsCompilerGenerated
+		static readonly FullTypeName compilerGeneratedAttributeTypeName = new FullTypeName("System.Runtime.CompilerServices.CompilerGeneratedAttribute");
+
+		public static bool IsCompilerGenereated(this IEntity entity)
+		{
+			if (entity == null)
+				throw new ArgumentNullException(nameof(entity));
+
+			return entity.GetAttribute(compilerGeneratedAttributeTypeName) != null;
+		}
+		#endregion
+
 		#region IAssembly.GetTypeDefinition(string,string,int)
 		/// <summary>
 		/// Gets the type definition for a top-level type.
