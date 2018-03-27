@@ -65,8 +65,10 @@
 
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
+    <Compile Include="CSharp\AstTypeBuilder.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
