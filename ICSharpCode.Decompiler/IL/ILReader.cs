@@ -50,7 +50,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		MetadataReader metadata;
-		Metadata.MethodDefinition methodDefinition;
 		IMethod method;
 		MethodBodyBlock body;
 		Metadata.IDebugInfoProvider debugInfo;
@@ -73,14 +72,13 @@ namespace ICSharpCode.Decompiler.IL
 		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		
-		void Init(Metadata.MethodDefinition method, MethodBodyBlock body)
+		void Init(Metadata.PEFile module, MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body)
 		{
 			if (body == null)
 				throw new ArgumentNullException(nameof(body));
-			this.metadata = method.Module.GetMetadataReader();
-			this.methodDefinition = method;
-			this.method = typeSystem.ResolveAsMethod(method.Handle);
-			this.methodSignature = metadata.GetMethodDefinition(method.Handle).DecodeSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default); 
+			this.metadata = module.GetMetadataReader();
+			this.method = typeSystem.ResolveAsMethod(methodDefinitionHandle);
+			this.methodSignature = metadata.GetMethodDefinition(methodDefinitionHandle).DecodeSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default); 
 			this.body = body;
 			this.reader = body.GetILReader();
 			//this.debugInfo = metadata.GetMethodDebugInformation(method.Handle.ToDebugInformationHandle());
@@ -157,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			VariableKind kind = IsPinned(type) ? VariableKind.PinnedLocal : VariableKind.Local;
 			ILVariable ilVar = new ILVariable(kind, type.Resolve(resolveContext), index);
-			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(methodDefinition, index, out string name)) {
+			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name)) {
 				ilVar.Name = "V_" + index;
 				ilVar.HasGeneratedName = true;
 			} else if (string.IsNullOrWhiteSpace(name)) {
@@ -387,9 +385,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
 		/// </summary>
-		public void WriteTypedIL(Metadata.MethodDefinition method, MethodBodyBlock body, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
+		public void WriteTypedIL(Metadata.PEFile module, MethodDefinitionHandle method, MethodBodyBlock body, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Init(body);
+			Init(module, method, body);
 			ReadInstructions(cancellationToken);
 			foreach (var inst in instructionBuilder) {
 				if (inst is StLoc stloc && stloc.IsStackAdjustment) {
@@ -421,21 +419,21 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
-				.WriteExceptionHandlers(method, body);
+				.WriteExceptionHandlers(new Metadata.MethodDefinition(module, method), body);
 		}
 
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(Metadata.MethodDefinition method, MethodBodyBlock body, CancellationToken cancellationToken = default(CancellationToken))
+		public ILFunction ReadIL(Metadata.PEFile module, MethodDefinitionHandle method, MethodBodyBlock body, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			Init(method, body);
+			Init(module, method, body);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var resolvedMethod = typeSystem.Resolve(method);
-			var function = new ILFunction(resolvedMethod, method, mainContainer);
+			var resolvedMethod = typeSystem.ResolveAsMethod(method);
+			var function = new ILFunction(resolvedMethod, body.GetCodeSize(), mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);

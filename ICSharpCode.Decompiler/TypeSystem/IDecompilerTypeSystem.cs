@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveAsMethod(EntityHandle methodReference);
 		IMember ResolveAsMember(EntityHandle memberReference);
 
+		MetadataReader GetMetadata();
+
 		/// <summary>
 		/// Gets a type system instance that automatically specializes the results
 		/// of each Resolve() call with the provided substitution.

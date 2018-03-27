@@ -89,6 +89,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return moduleDefinition; }
 		}
 
+		public SRM.MetadataReader GetMetadata() => moduleDefinition.GetMetadataReader();
+
 		void StoreMemberReference(IUnresolvedEntity entity, SRM.EntityHandle mr)
 		{
 			// This is a callback from the type system, which is multi-threaded and may be accessed externally

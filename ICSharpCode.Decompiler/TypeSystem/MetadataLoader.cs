@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// a type system type reference.</param>
 		/// <param name="typeAttributes">Attributes associated with the Cecil type reference.
 		/// This is used to support the 'dynamic' type.</param>
-		public ITypeReference ReadTypeReference(EntityHandle type, SRM.CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
+		public ITypeReference ReadTypeReference(EntityHandle type, CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
 		{
 			ITypeReference CreateTypeReference(TypeReferenceHandle handle)
 			{
@@ -1688,7 +1688,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		void RegisterCecilObject(IUnresolvedEntity typeSystemObject, EntityHandle cecilObject)
 		{
 			OnEntityLoaded?.Invoke(typeSystemObject, cecilObject);
-		}
 		}
 		#endregion
 	}
