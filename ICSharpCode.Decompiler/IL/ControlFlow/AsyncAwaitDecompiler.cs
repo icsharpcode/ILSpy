@@ -20,7 +20,6 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -45,9 +44,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
-		public static bool IsCompilerGeneratedMainMethod(MethodDefinition method)
+		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, System.Reflection.Metadata.MethodDefinitionHandle method)
 		{
-			return method == method.Module.Assembly?.EntryPoint && method.Name.Equals("<Main>", StringComparison.Ordinal);
+			var metadata = module.GetMetadataReader();
+			var definition = metadata.GetMethodDefinition(method);
+			var entrypoint = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
+			return method == entrypoint && metadata.GetString(definition.Name).Equals("<Main>", StringComparison.Ordinal);
 		}
 
 		enum AsyncMethodType
