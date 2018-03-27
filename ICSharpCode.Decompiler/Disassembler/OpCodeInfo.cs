@@ -105,13 +105,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 	public static class ILParser
 	{
-		public static ILOpCode DecodeOpCode(ref BlobReader blob)
+		public static ILOpCode DecodeOpCode(this ref BlobReader blob)
 		{
 			byte opCodeByte = blob.ReadByte();
 			return (ILOpCode)(opCodeByte == 0xFE ? 0xFE00 + blob.ReadByte() : opCodeByte);
 		}
 
-		public static void SkipOperand(ref BlobReader blob, ILOpCode opCode)
+		public static void SkipOperand(this ref BlobReader blob, ILOpCode opCode)
 		{
 			switch (opCode.GetOperandType()) {
 				// 64-bit
@@ -149,12 +149,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static int DecodeBranchTarget(ref BlobReader blob, ILOpCode opCode)
+		public static int DecodeBranchTarget(this ref BlobReader blob, ILOpCode opCode)
 		{
 			return (opCode.GetBranchOperandSize() == 4 ? blob.ReadInt32() : blob.ReadSByte()) + blob.Offset;
 		}
 
-		public static int[] DecodeSwitchTargets(ref BlobReader blob)
+		public static int[] DecodeSwitchTargets(this ref BlobReader blob)
 		{
 			int[] targets = new int[blob.ReadUInt32()];
 			int offset = blob.Offset + 4 * targets.Length;
@@ -163,12 +163,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return targets;
 		}
 
-		public static string DecodeUserString(ref BlobReader blob, MetadataReader metadata)
+		public static string DecodeUserString(this ref BlobReader blob, MetadataReader metadata)
 		{
 			return metadata.GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
 		}
 
-		public static int DecodeIndex(ref BlobReader blob, ILOpCode opCode)
+		public static int DecodeIndex(this ref BlobReader blob, ILOpCode opCode)
 		{
 			switch (opCode.GetOperandType()) {
 				case OperandType.ShortVariable:
