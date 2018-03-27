@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Documentation;
@@ -40,24 +41,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (xmldoc == null)
 					return;
 				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
-					var symbol = entity.GetSymbol();
-#warning TODO : replace with SRM
-					/*switch (symbol) {
-						case IMember member:
-							mr = context.TypeSystem.GetCecil(member);
-							break;
-						case IType type:
-							mr = context.TypeSystem.GetCecil(type.GetDefinition());
-							break;
-						default:
-							continue;
-					}
-					if (mr == null)
+					var handle = ((entity.GetSymbol() as IEntity)?.MetadataToken).Value;
+					if (handle.IsNil)
 						continue;
-					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(context.TypeSystem.GetMetadata(), handle));
 					if (doc != null) {
 						InsertXmlDocumentation(entity, new StringReader(doc));
-					}*/
+					}
 				}
 			} catch (XmlException ex) {
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);

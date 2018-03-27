@@ -74,9 +74,17 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public interface IDebugInfoProvider
 	{
-		IList<SequencePoint> GetSequencePoints(MethodDefinition method);
-		IList<Variable> GetVariables(MethodDefinition method);
-		bool TryGetName(MethodDefinition method, int index, out string name);
+		IList<SequencePoint> GetSequencePoints(MethodDefinitionHandle method);
+		IList<Variable> GetVariables(MethodDefinitionHandle method);
+		bool TryGetName(MethodDefinitionHandle method, int index, out string name);
+	}
+
+	public enum TargetRuntime
+	{
+		Net_1_0,
+		Net_1_1,
+		Net_2_0,
+		Net_4_0
 	}
 
 	public class PEFile
@@ -97,6 +105,25 @@ namespace ICSharpCode.Decompiler.Metadata
 		public bool IsAssembly => GetMetadataReader().IsAssembly;
 		public string Name => GetName();
 		public string FullName => IsAssembly ? GetMetadataReader().GetFullAssemblyName() : Name;
+
+		public TargetRuntime GetRuntime()
+		{
+			string version = GetMetadataReader().MetadataVersion;
+			switch (version[1]) {
+				case '1':
+					if (version[3] == 1)
+						return TargetRuntime.Net_1_0;
+					else
+						return TargetRuntime.Net_1_1;
+				case '2':
+					return TargetRuntime.Net_2_0;
+				case '4':
+					return TargetRuntime.Net_4_0;
+				default:
+					throw new NotSupportedException($"metadata version {version} is not supported!");
+			}
+
+		}
 
 		public MetadataReader GetMetadataReader() => Reader.GetMetadataReader();
 
@@ -497,12 +524,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public IList<SequencePoint> GetSequencePoints()
 		{
-			return Module.DebugInfo?.GetSequencePoints(this);
+			return Module.DebugInfo?.GetSequencePoints(Handle);
 		}
 
 		public IList<Variable> GetVariables()
 		{
-			return Module.DebugInfo?.GetVariables(this);
+			return Module.DebugInfo?.GetVariables(Handle);
 		}
 	}
 
