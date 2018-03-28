@@ -47,6 +47,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return context.Compilation; }
 		}
 
+		public Metadata.PEFile ModuleDefinition => context.ModuleDefinition;
+
 		public TypeParameterSubstitution Substitution {
 			get { return substitution; }
 		}

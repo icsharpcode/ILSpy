@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -33,6 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMember ResolveAsMember(EntityHandle memberReference);
 
 		MetadataReader GetMetadata();
+		PEFile ModuleDefinition { get; }
 
 		/// <summary>
 		/// Gets a type system instance that automatically specializes the results
