@@ -23,8 +23,8 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
@@ -63,18 +63,18 @@ namespace ICSharpCode.Decompiler
 			
 			var definition = GetCurrentDefinition();
 			if (definition != null) {
-				MemberReference cecil = SymbolToCecil(definition);
-				if (cecil != null) {
-					output.WriteDefinition(identifier.Name, cecil, false);
+				IMetadataEntity entity = SymbolToMetadata(definition);
+				if (entity != null) {
+					output.WriteDefinition(identifier.Name, entity, false);
 					return;
 				}
 			}
 			
 			var member = GetCurrentMemberReference();
 			if (member != null) {
-				MemberReference cecil = SymbolToCecil(member);
-				if (cecil != null) {
-					output.WriteReference(identifier.Name, cecil);
+				IMetadataEntity entity = SymbolToMetadata(member);
+				if (entity != null) {
+					output.WriteReference(identifier.Name, entity);
 					return;
 				}
 			}
@@ -99,14 +99,24 @@ namespace ICSharpCode.Decompiler
 			output.Write(identifier.Name);
 		}
 
-		MemberReference SymbolToCecil(ISymbol symbol)
+		IMetadataEntity SymbolToMetadata(ISymbol symbol)
 		{
-			if (symbol is IType type) {
-				return typeSystem.GetCecil(type.GetDefinition());
-			} else if (symbol is IMember member) {
-				return typeSystem.GetCecil(member);
-			} else {
-				return null;
+			switch (symbol) {
+				case IType type:
+					var definition = type.GetDefinition();
+					if (definition == null)
+						return null;
+					return new TypeDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.TypeDefinitionHandle)definition.MetadataToken);
+				case IMethod method:
+					return new MethodDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.MethodDefinitionHandle)method.MetadataToken);
+				case IProperty property:
+					return new PropertyDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.PropertyDefinitionHandle)property.MetadataToken);
+				case IEvent @event:
+					return new EventDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.EventDefinitionHandle)@event.MetadataToken);
+				case IField field:
+					return new FieldDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.FieldDefinitionHandle)field.MetadataToken);
+				default:
+					return null;
 			}
 		}
 
@@ -200,9 +210,9 @@ namespace ICSharpCode.Decompiler
 			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
 			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole) {
 				if (nodeStack.Peek() is ConstructorInitializer initializer && initializer.GetSymbol() is IMember member) {
-					var cecil = typeSystem.GetCecil(member);
-					if (cecil != null) {
-						output.WriteReference(keyword, cecil);
+					var entity = SymbolToMetadata(member);
+					if (entity != null) {
+						output.WriteReference(keyword, entity);
 						return;
 					}
 				}
@@ -235,7 +245,7 @@ namespace ICSharpCode.Decompiler
 					break;
 				default:
 					// Attach member reference to token only if there's no identifier in the current node.
-					var member = SymbolToCecil(GetCurrentMemberReference());
+					var member = SymbolToMetadata(GetCurrentMemberReference());
 					var node = nodeStack.Peek();
 					if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
 						output.WriteReference(token, member);
@@ -349,7 +359,7 @@ namespace ICSharpCode.Decompiler
 						symbol = nodeStack.Peek().GetSymbol();
 					}
 					if (symbol == null) goto default;
-					output.WriteReference(type, SymbolToCecil(symbol));
+					output.WriteReference(type, SymbolToMetadata(symbol));
 					break;
 				default:
 					output.Write(type);
