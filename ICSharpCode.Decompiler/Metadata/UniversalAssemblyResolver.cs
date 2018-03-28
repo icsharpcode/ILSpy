@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var resolver = new UniversalAssemblyResolver(mainAssemblyFileName, throwOnError);
 
-			var module = new PEReader(new FileStream(mainAssemblyFileName, FileMode.Open), inMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default);
+			var module = new PEReader(new FileStream(mainAssemblyFileName, FileMode.Open, FileAccess.Read), inMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default);
 
 			resolver.TargetFramework = module.DetectTargetFrameworkId();
 

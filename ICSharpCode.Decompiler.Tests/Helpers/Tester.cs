@@ -377,7 +377,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			using (var module = Mono.Cecil.ModuleDefinition.ReadModule(assemblyFileName)) {
+			using (var module = Metadata.UniversalAssemblyResolver.LoadMainModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());

@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		Net_4_0
 	}
 
-	public class PEFile
+	public class PEFile : IDisposable
 	{
 		public string FileName { get; }
 		public PEReader Reader { get; }
@@ -155,6 +155,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			foreach (var h in metadata.ManifestResources) {
 				yield return new Resource(this, h);
 			}
+		}
+
+		public void Dispose()
+		{
+			Reader.Dispose();
 		}
 	}
 
