@@ -319,11 +319,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out Mono.Cecil.FieldReference field)
+		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out System.Reflection.Metadata.FieldDefinition field)
 		{
 			method = null;
 			array = null;
-			field = null;
+			field = default;
 			Call call = instruction as Call;
 			if (call == null || call.Arguments.Count != 2)
 				return false;
@@ -337,22 +337,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IMember member;
 			if (!call.Arguments[1].MatchLdMemberToken(out member))
 				return false;
-			field = context.TypeSystem.GetCecil(member) as Mono.Cecil.FieldReference;
-			if (field == null)
+			if (member.MetadataToken.IsNil)
 				return false;
+			field = context.TypeSystem.GetMetadata().GetFieldDefinition((System.Reflection.Metadata.FieldDefinitionHandle)member.MetadataToken);
 			return true;
 		}
 
 		bool ForwardScanInitializeArrayRuntimeHelper(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
 		{
-			ILVariable v2;
-			IMethod method;
-			Mono.Cecil.FieldReference field;
-			if (MatchInitializeArrayCall(body.Instructions[pos], out method, out v2, out field) && array == v2) {
-				var fieldDef = field.ResolveWithinSameModule();
-				if (fieldDef != null && fieldDef.InitialValue != null) {
+			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
+				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
-					if (DecodeArrayInitializer(arrayType, array, fieldDef.InitialValue, arrayLength, valuesList)) {
+					if (DecodeArrayInitializer(arrayType, array, field.GetInitialValue(context.TypeSystem.ModuleDefinition.Reader), arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;
 						return true;

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -137,13 +138,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
 				return null;
 			target = value.Arguments[0];
-			var methodDefinition = (Mono.Cecil.MethodDefinition)context.TypeSystem.GetCecil(targetMethod);
-			if (methodDefinition == null)
+			if (targetMethod.MetadataToken.IsNil)
+				return null;
+			var metadata = context.TypeSystem.GetMetadata();
+			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+			if (!methodDefinition.HasBody())
 				return null;
 			var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
 			var ilReader = new ILReader(localTypeSystem);
 			ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
-			var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);
+			var function = ilReader.ReadIL(context.TypeSystem.ModuleDefinition, (MethodDefinitionHandle)targetMethod.MetadataToken, context.TypeSystem.ModuleDefinition.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress), context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
 
