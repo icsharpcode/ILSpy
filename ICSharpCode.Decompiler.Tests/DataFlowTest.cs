@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public void TryFinallyWithAssignmentInFinally()
 		{
 			ILVariable v = new ILVariable(VariableKind.Local, SpecialType.UnknownType, 0);
-			ILFunction f = new ILFunction((IMethod)null, null, new TryFinally(
+			ILFunction f = new ILFunction((IMethod)null, 0, new TryFinally(
 				new Nop(),
 				new StLoc(v, new LdcI4(0))
 			));

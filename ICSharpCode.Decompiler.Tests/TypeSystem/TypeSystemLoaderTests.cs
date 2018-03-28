@@ -33,12 +33,12 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		static readonly Lazy<IUnresolvedAssembly> mscorlib = new Lazy<IUnresolvedAssembly>(
 			delegate {
-				return new CecilLoader().LoadAssemblyFile(typeof(object).Assembly.Location);
+				return new MetadataLoader().LoadAssemblyFile(typeof(object).Assembly.Location);
 			});
 
 		static readonly Lazy<IUnresolvedAssembly> systemCore = new Lazy<IUnresolvedAssembly>(
 			delegate {
-				return new CecilLoader().LoadAssemblyFile(typeof(System.Linq.Enumerable).Assembly.Location);
+				return new MetadataLoader().LoadAssemblyFile(typeof(System.Linq.Enumerable).Assembly.Location);
 			});
 
 		public static IUnresolvedAssembly Mscorlib { get { return mscorlib.Value; } }
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void FixtureSetUp()
 		{
 			// use "IncludeInternalMembers" so that Cecil results match C# parser results
-			CecilLoader loader = new CecilLoader() { IncludeInternalMembers = true };
+			MetadataLoader loader = new MetadataLoader() { IncludeInternalMembers = true };
 			IUnresolvedAssembly asm = loader.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
 			compilation = new SimpleCompilation(asm, Mscorlib);
 		}

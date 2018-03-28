@@ -24,9 +24,9 @@ using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.CSharp;
-using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using System.Reflection.PortableExecutable;
 
 namespace ICSharpCode.Decompiler.Tests
 {
@@ -50,9 +50,9 @@ namespace ICSharpCode.Decompiler.Tests
 		protected static void AssertRoundtripCode(string fileName, bool optimize = false, bool useDebug = false, int compilerVersion = 4)
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
-			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
+			var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
 
-			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
+			CSharpDecompiler decompiler = new CSharpDecompiler(assembly, new DecompilerSettings());
 
 			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CodeAssert.AreEqual(code, syntaxTree.ToString(options));
 		}
 
-		protected static AssemblyDefinition CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)
+		protected static Metadata.PEFile CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)
 		{
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v" + new Version(compilerVersion, 0) } });
 			CompilerParameters options = new CompilerParameters();
@@ -83,8 +83,7 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 					throw new Exception(b.ToString());
 				}
-				return AssemblyDefinition.ReadAssembly(results.PathToAssembly,
-					new ReaderParameters { InMemory = true });
+				return Metadata.UniversalAssemblyResolver.LoadMainModule(results.PathToAssembly, false, true);
 			}
 			finally
 			{
