@@ -81,10 +81,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
 			return new SpecializedField(this, substitution);
 		}
-		
-		IMemberReference IField.ToReference()
-		{
-			return (IMemberReference)ToReference();
-		}
 	}
 }

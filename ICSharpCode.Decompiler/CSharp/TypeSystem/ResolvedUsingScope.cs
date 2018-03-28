@@ -201,11 +201,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			{
 				return null;
 			}
-
-			public ISymbolReference ToReference()
-			{
-				return new MergedNamespaceReference(ExternAlias, ((INamespace)this).FullName);
-			}
 		}
 	}
 }

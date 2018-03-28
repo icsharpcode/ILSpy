@@ -549,26 +549,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (!UseSpecialConstants) {
 				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
 				// Use an equivalent arithmetic expression instead.
-				var resolver = this.resolver ?? new CSharpResolver(type.GetDefinition().Compilation);
 				if (info.Type == KnownTypeCode.Double) {
 					switch ((double)constant) {
 						case double.NegativeInfinity: // (-1.0 / 0.0)
 							var left = new PrimitiveExpression(-1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0));
 							var right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, double.NegativeInfinity));
 							return true;
 						case double.PositiveInfinity: // (1.0 / 0.0)
 							left = new PrimitiveExpression(1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0));
 							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, double.PositiveInfinity));
 							return true;
 						case double.NaN: // (0.0 / 0.0)
 							left = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
 							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, double.NaN));
 							return true;
 					}
 				}
@@ -578,19 +577,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 							var left = new PrimitiveExpression(-1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0f));
 							var right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, float.NegativeInfinity));
 							return true;
 						case float.PositiveInfinity: // (1.0f / 0.0f)
 							left = new PrimitiveExpression(1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0f));
 							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, float.PositiveInfinity));
 							return true;
 						case float.NaN: // (0.0f / 0.0f)
 							left = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
 							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(resolver.ResolveBinaryOperator(BinaryOperatorType.Divide, left.ResolveResult, right.ResolveResult));
+								.WithRR(new ConstantResolveResult(type, float.NaN));
 							return true;
 					}
 				}

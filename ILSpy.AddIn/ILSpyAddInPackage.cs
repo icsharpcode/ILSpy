@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			OpenILSpyCommand.Register(this);
 			OpenProjectOutputCommand.Register(this);
 			OpenReferenceCommand.Register(this);
-			OpenCodeItemCommand.Register(this);
+			//OpenCodeItemCommand.Register(this);
 		}
 		#endregion
 

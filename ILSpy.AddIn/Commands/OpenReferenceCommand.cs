@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (references.TryGetValue(reference.Name, out var path))
 					OpenAssembliesInILSpy(new[] { path });
 				else
-					owner.ShowMessage("Could not find reference '{0}'.", reference.Name);
+					owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", reference.Name);
 			} else {
 				dynamic referenceObject = item.Object;
 				var values = GetProperties(referenceObject.Properties, "Type", "FusionName", "ResolvedPath");
@@ -47,32 +47,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					OpenAssembliesInILSpy(new string[] { GacInterop.FindAssemblyInNetGac(AssemblyNameReference.Parse(values[1])) });
 					return;
 				}
-				owner.ShowMessage("Could not find reference '{0}'.", referenceObject.Name);
+				owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", referenceObject.Name);
 			}
-		}
-
-		private Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project roslynProject)
-		{
-			var dict = new Dictionary<string, string>();
-			foreach (var reference in roslynProject.MetadataReferences) {
-				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
-					if (IsReferenceAssembly(assemblyDef)) {
-						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
-					} else {
-						dict.Add(assemblyDef.Name.Name, reference.Display);
-					}
-				}
-			}
-			foreach (var projectReference in roslynProject.ProjectReferences) {
-				var project = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				dict.Add(project.AssemblyName, project.OutputFilePath);
-			}
-			return dict;
-		}
-
-		private bool IsReferenceAssembly(AssemblyDefinition assemblyDef)
-		{
-			return assemblyDef.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
 		}
 
 		private string[] GetProperties(Properties properties, params string[] names)

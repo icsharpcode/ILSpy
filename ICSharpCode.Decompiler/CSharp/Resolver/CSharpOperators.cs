@@ -214,16 +214,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return compilation.MainAssembly; }
 			}
 			
-			ISymbolReference ISymbol.ToReference()
-			{
-				throw new NotSupportedException();
-			}
-			
-			IMemberReference IMember.ToReference()
-			{
-				throw new NotSupportedException();
-			}
-
 			TypeParameterSubstitution IMember.Substitution {
 				get {
 					return TypeParameterSubstitution.Identity;

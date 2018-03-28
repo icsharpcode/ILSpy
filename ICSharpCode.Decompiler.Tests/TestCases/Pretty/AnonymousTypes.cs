@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(array[1].X);
 #endif
 		}
-
+#if !MCS
 		private void JaggedArray()
 		{
 			var array = new[] {
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(array2.Length);
 #endif
 		}
-
+#endif
 #if CS70
 		private void AnonymousTypeOutVar()
 		{

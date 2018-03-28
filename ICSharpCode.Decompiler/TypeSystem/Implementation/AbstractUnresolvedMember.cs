@@ -152,11 +152,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return Resolve(ExtendContextForType(context, this.DeclaringTypeDefinition), this.SymbolKind, this.Name, interfaceTypeReference);
 		}
 		
-		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
-		{
-			return ((IUnresolvedMember)this).Resolve(context);
-		}
-		
 		protected static ITypeResolveContext ExtendContextForType(ITypeResolveContext assemblyContext, IUnresolvedTypeDefinition typeDef)
 		{
 			if (typeDef == null)

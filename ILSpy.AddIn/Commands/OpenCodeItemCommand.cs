@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -27,55 +30,24 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 		}
 
-		protected override void OnExecute(object sender, EventArgs e)
+		protected override async void OnExecute(object sender, EventArgs e)
 		{
 			var document = owner.DTE.ActiveDocument;
 			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
+			var id = owner.Workspace.CurrentSolution.GetDocumentIdsWithFilePath(document.FullName).FirstOrDefault();
 
-			// Search code elements in desired order, working from innermost to outermost.
-			// Should eventually find something, and if not we'll just open the assembly itself.
-			var codeElement = GetSelectedCodeElement(selection,
-				EnvDTE.vsCMElement.vsCMElementFunction,
-				EnvDTE.vsCMElement.vsCMElementEvent,
-				EnvDTE.vsCMElement.vsCMElementVariable,		// There is no vsCMElementField, fields are just variables outside of function scope.
-				EnvDTE.vsCMElement.vsCMElementProperty,
-				EnvDTE.vsCMElement.vsCMElementDelegate,
-				EnvDTE.vsCMElement.vsCMElementEnum,
-				EnvDTE.vsCMElement.vsCMElementInterface,
-				EnvDTE.vsCMElement.vsCMElementStruct,
-				EnvDTE.vsCMElement.vsCMElementClass,
-				EnvDTE.vsCMElement.vsCMElementNamespace);
-
-			if (codeElement != null) {
-				OpenCodeItemInILSpy(codeElement);
-			}
-			else {
-				OpenProjectInILSpy(document.ProjectItem.ContainingProject);
-			}
-		}
-
-		private EnvDTE.CodeElement GetSelectedCodeElement(EnvDTE.TextPoint selection, params EnvDTE.vsCMElement[] elementTypes)
-		{
-			foreach (var elementType in elementTypes) {
-				var codeElement = selection.CodeElement[elementType];
-				if (codeElement != null) {
-					return codeElement;
-				}
-			}
-
-			return null;
-		}
-
-		private void OpenProjectInILSpy(EnvDTE.Project project, params string[] arguments)
-		{
-			var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
-			OpenAssembliesInILSpy(new[] { roslynProject.OutputFilePath }, arguments);
-		}
-
-		private void OpenCodeItemInILSpy(EnvDTE.CodeElement codeElement)
-		{
-			string codeElementKey = CodeElementXmlDocKeyProvider.GetKey(codeElement);
-			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, "/navigateTo:" + codeElementKey);
+			if (id == null) return;
+			var roslynDocument = owner.Workspace.CurrentSolution.GetDocument(id);
+			var ast = await roslynDocument.GetSyntaxRootAsync().ConfigureAwait(false);
+			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
+			var node = ast.FindNode(new Microsoft.CodeAnalysis.Text.TextSpan(selection.AbsoluteCharOffset, 1));
+			if (node == null)
+				return;
+			var symbol = model.GetSymbolInfo(node).Symbol;
+			if (symbol == null)
+				return;
+			var refs = GetReferences(roslynDocument.Project).Select(fn => fn.Value).Where(f => File.Exists(f)).ToArray();
+			OpenAssembliesInILSpy(refs, "/navigateTo:" + symbol.GetDocumentationCommentId());
 		}
 
 		internal static void Register(ILSpyAddInPackage owner)

@@ -50,11 +50,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IType instType;
 				switch (initInst) {
 					case NewObj newObjInst:
-						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor) {
+						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor && !context.Function.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
 							// on statement level (no other expressions on IL stack),
 							// prefer to keep local variables (but not stack slots),
 							// unless we are in a constructor (where inlining object initializers might be critical
-							// for the base ctor call)
+							// for the base ctor call) or a compiler-generated delegate method, which might be used in a query expression.
 							return false;
 						}
 						// Do not try to transform display class usages or delegate construction.
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					switch (body.Instructions[i + pos]) {
 						case CallInstruction call:
 							if (!(call is CallVirt || call is Call)) continue;
-							var newCall = (CallInstruction)call.Clone();
+							var newCall = call;
 							var newTarget = newCall.Arguments[0];
 							foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
 								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
@@ -127,14 +127,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							initializerBlock.Instructions.Add(newCall);
 							break;
 						case StObj stObj:
-							var newStObj = (StObj)stObj.Clone();
+							var newStObj = stObj;
 							foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
 								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
 									load.Variable = finalSlot;
 							initializerBlock.Instructions.Add(newStObj);
 							break;
 						case StLoc stLoc:
-							var newStLoc = (StLoc)stLoc.Clone();
+							var newStLoc = stLoc;
 							initializerBlock.Instructions.Add(newStLoc);
 							break;
 					}

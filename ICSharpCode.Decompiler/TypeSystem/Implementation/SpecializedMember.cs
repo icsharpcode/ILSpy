@@ -58,27 +58,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.substitution = TypeParameterSubstitution.Compose(newSubstitution, this.substitution);
 		}
 		
-		public virtual IMemberReference ToReference()
-		{
-			return new SpecializingMemberReference(
-				baseMember.ToReference(),
-				ToTypeReference(substitution.ClassTypeArguments),
-				null);
-		}
-		
-		ISymbolReference ISymbol.ToReference()
-		{
-			return ToReference();
-		}
-		
-		internal static IList<ITypeReference> ToTypeReference(IReadOnlyList<IType> typeArguments)
-		{
-			if (typeArguments == null)
-				return null;
-			else
-				return typeArguments.Select(t => t.ToTypeReference()).ToArray();
-		}
-		
 		internal IMethod WrapAccessor(ref IMethod cachingField, IMethod accessorDefinition)
 		{
 			if (accessorDefinition == null)

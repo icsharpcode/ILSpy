@@ -252,13 +252,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				return DefaultParameter.ToString(this);
 			}
-
-			public ISymbolReference ToReference()
-			{
-				if (Owner == null)
-					return new ParameterReference(Type.ToTypeReference(), Name, IsRef, IsOut, IsParams, true, ConstantValue);
-				return new OwnedParameterReference(Owner.ToReference(), Owner.Parameters.IndexOf(this));
-			}
 		}
 	}
 }

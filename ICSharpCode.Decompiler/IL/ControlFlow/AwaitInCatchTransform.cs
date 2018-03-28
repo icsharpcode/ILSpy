@@ -139,8 +139,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!catchBlock.Instructions.Last().MatchBranch(out var jumpTableStartBlock))
 				return false;
-			if (catchBlock.Instructions.Count > 2) {
-				objectVariableStore = (StLoc)catchBlock.Instructions[catchBlock.Instructions.Count - 3];
+			if (catchBlock.Instructions.Count > 2 && catchBlock.Instructions[catchBlock.Instructions.Count - 3] is StLoc stloc) {
+				objectVariableStore = stloc;
 			}
 			var identifierVariableAssignment = catchBlock.Instructions.SecondToLastOrDefault();
 			if (!identifierVariableAssignment.MatchStLoc(out identifierVariable, out var value) || !value.MatchLdcI4(out id))
@@ -221,17 +221,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var tempStore = globalCopyVar.LoadInstructions[0].Parent as StLoc;
 				if (tempStore == null || !MatchExceptionCaptureBlock(tempStore, out var exitOfFinally, out var afterFinally, out var blocksToRemove))
 					continue;
-				if (afterFinally.Instructions.Count < 2)
-					continue;
-				int offset = 0;
-				if (afterFinally.Instructions[0].MatchLdLoc(out var identifierVariable)) {
-					if (identifierVariable.LoadCount != 1 || identifierVariable.StoreCount != 1)
-						continue;
-					offset = 1;
-				}
-				if (!afterFinally.Instructions[offset].MatchStLoc(out var globalCopyVarSplitted, out var ldnull) || !ldnull.MatchLdNull())
-					continue;
-				if (globalCopyVarSplitted.StoreCount != 1 || globalCopyVarSplitted.LoadCount != 0)
+				if (!MatchAfterFinallyBlock(ref afterFinally, blocksToRemove, out bool removeFirstInstructionInAfterFinally))
 					continue;
 				var cfg = new ControlFlowGraph(container, context.CancellationToken);
 				var exitOfFinallyNode = cfg.GetNode(exitOfFinally);
@@ -269,9 +259,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				var finallyContainer = new BlockContainer();
 				entryPointOfFinally.Remove();
-				if (offset == 1)
+				if (removeFirstInstructionInAfterFinally)
 					afterFinally.Instructions.RemoveAt(0);
 				changedContainers.Add(container);
+				var outer = BlockContainer.FindClosestContainer(container.Parent);
+				if (outer != null) changedContainers.Add(outer);
 				finallyContainer.Blocks.Add(entryPointOfFinally);
 				exitOfFinally.Instructions.RemoveRange(tempStore.ChildIndex, 3);
 				exitOfFinally.Instructions.Add(new Leave(finallyContainer));
@@ -364,6 +356,48 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			blocksToRemove.Add(typeCheckBlock);
 			blocksToRemove.Add(throwBlock);
 			blocksToRemove.Add(captureBlock);
+			return true;
+		}
+
+		static bool MatchAfterFinallyBlock(ref Block afterFinally, List<Block> blocksToRemove, out bool removeFirstInstructionInAfterFinally)
+		{
+			removeFirstInstructionInAfterFinally = false;
+			if (afterFinally.Instructions.Count < 2)
+				return false;
+			ILVariable globalCopyVarSplitted;
+			switch (afterFinally.Instructions[0]) {
+				case IfInstruction ifInst:
+					if (ifInst.Condition.MatchCompEquals(out var load, out var ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out var variable)) {
+						if (!ifInst.TrueInst.MatchBranch(out var targetBlock))
+							return false;
+						blocksToRemove.Add(afterFinally);
+						afterFinally = targetBlock;
+						return true;
+					} else if (ifInst.Condition.MatchCompNotEquals(out load, out ldone) && ldone.MatchLdcI4(1) && load.MatchLdLoc(out variable)) {
+						if (!afterFinally.Instructions[1].MatchBranch(out var targetBlock))
+							return false;
+						blocksToRemove.Add(afterFinally);
+						afterFinally = targetBlock;
+						return true;
+					}
+					return false;
+				case LdLoc ldLoc:
+					if (ldLoc.Variable.LoadCount != 1 || ldLoc.Variable.StoreCount != 1)
+						return false;
+					if (!afterFinally.Instructions[1].MatchStLoc(out globalCopyVarSplitted, out var ldnull) || !ldnull.MatchLdNull())
+						return false;
+					removeFirstInstructionInAfterFinally = true;
+					break;
+				case StLoc stloc:
+					globalCopyVarSplitted = stloc.Variable;
+					if (!stloc.Value.MatchLdNull())
+						return false;
+					break;
+				default:
+					return false;
+			}
+			if (globalCopyVarSplitted.StoreCount != 1 || globalCopyVarSplitted.LoadCount != 0)
+				return false;
 			return true;
 		}
 	}

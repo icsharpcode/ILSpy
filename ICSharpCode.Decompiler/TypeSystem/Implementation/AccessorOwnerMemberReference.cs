@@ -47,10 +47,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			else
 				return null;
 		}
-		
-		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
-		{
-			return ((IMemberReference)this).Resolve(context);
-		}
 	}
 }

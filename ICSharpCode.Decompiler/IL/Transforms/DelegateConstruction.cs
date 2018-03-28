@@ -134,34 +134,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!IsDelegateConstruction(value))
 				return null;
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
-			if (IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod)) {
-				target = value.Arguments[0];
-				var methodDefinition = (Mono.Cecil.MethodDefinition)context.TypeSystem.GetCecil(targetMethod);
-				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
-				var ilReader = new ILReader(localTypeSystem);
-				ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
-				var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);
-				function.DelegateType = value.Method.DeclaringType;
-				function.CheckInvariant(ILPhase.Normal);
+			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
+				return null;
+			target = value.Arguments[0];
+			var methodDefinition = (Mono.Cecil.MethodDefinition)context.TypeSystem.GetCecil(targetMethod);
+			if (methodDefinition == null)
+				return null;
+			var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
+			var ilReader = new ILReader(localTypeSystem);
+			ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
+			var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);
+			function.DelegateType = value.Method.DeclaringType;
+			function.CheckInvariant(ILPhase.Normal);
 
-				var contextPrefix = targetMethod.Name;
-				foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
-					v.Name = contextPrefix + v.Name;
-				}
-
-				var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
-					CancellationToken = context.CancellationToken,
-					DecompileRun = context.DecompileRun
-				};
-				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
-				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
-				// handle nested lambdas
-				((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
-				function.AddILRange(target.ILRange);
-				function.AddILRange(value.Arguments[1].ILRange);
-				return function;
+			var contextPrefix = targetMethod.Name;
+			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
+				v.Name = contextPrefix + v.Name;
 			}
-			return null;
+
+			var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
+				CancellationToken = context.CancellationToken,
+				DecompileRun = context.DecompileRun
+			};
+			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
+			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
+			// handle nested lambdas
+			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
+			function.AddILRange(target.ILRange);
+			function.AddILRange(value.Arguments[1].ILRange);
+			return function;
 		}
 		
 		/// <summary>

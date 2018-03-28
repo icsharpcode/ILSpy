@@ -66,44 +66,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		#region IMember implementation
-
-		[Serializable]
-		public sealed class ReducedExtensionMethodMemberReference : IMemberReference
-		{
-			readonly IMethod baseMethod;
-
-			public ReducedExtensionMethodMemberReference (IMethod baseMethod)
-			{
-				this.baseMethod = baseMethod;
-			}
-
-			public IMember Resolve(ITypeResolveContext context)
-			{
-				return new ReducedExtensionMethod ((IMethod)baseMethod.ToReference ().Resolve (context));
-			}
-			
-			ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
-			{
-				return Resolve(context);
-			}
-
-			public ITypeReference DeclaringTypeReference {
-				get {
-					return baseMethod.ToReference ().DeclaringTypeReference;
-				}
-			}
-		}
-		
-		public IMemberReference ToReference()
-		{
-			return new ReducedExtensionMethodMemberReference (baseMethod);
-		}
-		
-		ISymbolReference ISymbol.ToReference()
-		{
-			return ToReference();
-		}
-
 		public IMember MemberDefinition {
 			get {
 				return baseMethod.MemberDefinition;

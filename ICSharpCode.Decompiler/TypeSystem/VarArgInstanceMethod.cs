@@ -164,11 +164,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		#region IMember implementation
 		
-		public IMemberReference ToReference()
-		{
-			throw new NotImplementedException();
-		}
-
 		IMember IMember.Specialize(TypeParameterSubstitution substitution)
 		{
 			return Specialize(substitution);
@@ -213,12 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region ISymbol implementation
-
-		ISymbolReference ISymbol.ToReference()
-		{
-			return ToReference();
-		}
-
+		
 		public SymbolKind SymbolKind {
 			get { return baseMethod.SymbolKind; }
 		}

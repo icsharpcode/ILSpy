@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void AnonymousTypes([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		public void AnonymousTypes([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

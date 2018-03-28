@@ -147,29 +147,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				accessorOwner = value;
 			}
 		}
-
-		public override IMemberReference ToReference()
-		{
-			// Pass the MethodTypeArguments to the SpecializingMemberReference only if
-			// the generic method itself is parameterized, not if the generic method is only
-			// specialized with class type arguments.
-			
-			// This is necessary due to this part of the ToReference() contract:
-			//   If this member is specialized using open generic types, the resulting member reference will need to be looked up in an appropriate generic context.
-			//   Otherwise, the main resolve context of a compilation is sufficient.
-			// ->
-			// This means that if the method itself isn't specialized,
-			// we must not include TypeParameterReferences for the specialized type parameters
-			// in the resulting member reference.
-			if (isParameterized) {
-				return new SpecializingMemberReference(
-					baseMember.ToReference(),
-					ToTypeReference(base.Substitution.ClassTypeArguments),
-					ToTypeReference(base.Substitution.MethodTypeArguments));
-			} else {
-				return base.ToReference();
-			}
-		}
 		
 		public override bool Equals(object obj)
 		{

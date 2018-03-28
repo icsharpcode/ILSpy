@@ -155,10 +155,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return string.Format(CultureInfo.InvariantCulture, "[MergedNamespace {0}{1} (from {2} assemblies)]",
 			                     externAlias != null ? externAlias + "::" : null, this.FullName, this.namespaces.Length);
 		}
-
-		public ISymbolReference ToReference()
-		{
-			return new MergedNamespaceReference(externAlias, FullName);
-		}
 	}
 }

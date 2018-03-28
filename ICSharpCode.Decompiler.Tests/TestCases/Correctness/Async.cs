@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			await AwaitInCatch(Task.FromResult(1), Task.FromResult(2));
 			await AwaitInFinally(Task.FromResult(2), Task.FromResult(4));
 			await AwaitInCatchAndFinally(Task.FromResult(3), Task.FromResult(6), Task.FromResult(9));
+			Console.WriteLine(await AwaitInFinallyInUsing(Task.FromResult<IDisposable>(new StringWriter()), Task.FromResult(6), Task.FromResult(9)));
 #endif
 		}
 
@@ -263,6 +264,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("End finally");
 			}
 			Console.WriteLine("End Method");
+		}
+
+		public async Task<int> AwaitInFinallyInUsing(Task<IDisposable> task1, Task<int> task2, Task<int> task3)
+		{
+			using (await task1) {
+				Console.WriteLine("Start using");
+				try {
+					Console.WriteLine("Before return");
+					return await task2;
+				} finally {
+					Console.WriteLine("Start finally");
+					await task3;
+					Console.WriteLine("End finally");
+				}
+			}
 		}
 #endif
 	}

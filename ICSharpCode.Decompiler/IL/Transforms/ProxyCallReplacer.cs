@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -89,6 +90,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;
 			}
+			return false;
+		}
+
+		static bool IsDefinedInCurrentOrOuterClass(IMethod method, ITypeDefinition declaringTypeDefinition)
+		{
+			while (declaringTypeDefinition != null) {
+				if (method.DeclaringTypeDefinition == declaringTypeDefinition)
+					return true;
+				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;
+	}
 			return false;
 		}
 	}

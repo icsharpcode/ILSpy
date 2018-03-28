@@ -1311,7 +1311,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// A = inputType.GetSize()
 					// B = inputStackType.GetSize()
 					// C = inst.TargetType.GetSize().
-					// We know that C <= B (otherwise this wouldn't be the truncation case).
+					// We know that C < B (otherwise this wouldn't be the truncation case).
 					// 1) If C < B < A, we just combine the two truncations into one.
 					// 2) If C < B = A, there's no input conversion, just the truncation
 					// 3) If C <= A < B, all the extended bits get removed again by the truncation.
