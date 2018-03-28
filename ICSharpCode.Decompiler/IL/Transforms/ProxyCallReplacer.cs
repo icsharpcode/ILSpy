@@ -92,15 +92,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return false;
 		}
-
-		static bool IsDefinedInCurrentOrOuterClass(IMethod method, ITypeDefinition declaringTypeDefinition)
-		{
-			while (declaringTypeDefinition != null) {
-				if (method.DeclaringTypeDefinition == declaringTypeDefinition)
-					return true;
-				declaringTypeDefinition = declaringTypeDefinition.DeclaringTypeDefinition;
-	}
-			return false;
-		}
 	}
 }
