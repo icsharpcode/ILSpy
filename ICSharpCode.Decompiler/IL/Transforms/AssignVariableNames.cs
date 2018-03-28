@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
-			currentFieldNames = function.CecilMethod.DeclaringType.Fields.Select(f => f.Name).ToArray();
+			currentFieldNames = function.Method.DeclaringTypeDefinition.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var f in function.Descendants.OfType<ILFunction>()) {
@@ -449,7 +449,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, v.Name);
 				}
 			}
-			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in rootFunction.Method.DeclaringTypeDefinition.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 			return reservedVariableNames;
 		}
