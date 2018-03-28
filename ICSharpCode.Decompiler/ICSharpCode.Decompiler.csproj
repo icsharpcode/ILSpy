@@ -302,7 +302,6 @@
     <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
     <Compile Include="Metadata\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\PointerArithmeticOffset.cs" />
-    <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
@@ -322,7 +321,6 @@
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
-    <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
@@ -332,7 +330,6 @@
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
     <Compile Include="IL\Instructions\ThreeValuedLogicInstructions.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
-    <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />
     <Compile Include="IL\Transforms\LockTransform.cs" />

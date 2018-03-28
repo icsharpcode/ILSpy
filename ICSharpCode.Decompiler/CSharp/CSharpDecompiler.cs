@@ -79,8 +79,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new InlineReturnTransform(),
-				new YieldReturnDecompiler(), // must run after inlining but before loop detection
-				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
+				//new YieldReturnDecompiler(), // must run after inlining but before loop detection
+				//new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new EarlyExpressionTransforms(),
@@ -216,8 +216,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
 						return true;
-					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, (MethodDefinitionHandle)member))
-						return true;
+					/*if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, (MethodDefinitionHandle)member))
+						return true;*/
 					return false;
 				case HandleKind.TypeDefinition:
 					var typeHandle = (TypeDefinitionHandle)member;
@@ -833,8 +833,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// When decompiling definitions only, we can cancel decompilation of all steps
 					// after yield and async detection, because only those are needed to properly set
 					// IsAsync/IsIterator flags on ILFunction.
-					if (!settings.DecompileMemberBodies && transform is AsyncAwaitDecompiler)
-						break;
+					//if (!settings.DecompileMemberBodies && transform is AsyncAwaitDecompiler)
+					//	break;
 				}
 
 				var body = BlockStatement.Null;
