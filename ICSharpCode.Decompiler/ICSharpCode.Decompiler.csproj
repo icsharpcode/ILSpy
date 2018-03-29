@@ -3,11 +3,8 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
-    <!--
     <TargetFramework Condition=" '$(OS)' != 'Windows_NT' ">netstandard2.0</TargetFramework>
     <TargetFrameworks Condition=" '$(OS)' == 'Windows_NT' ">netstandard2.0;net46;net45</TargetFrameworks>
-    -->
-    <TargetFramework>net46</TargetFramework>
 
     <Description>IL decompiler engine</Description>
     <Company>ic#code</Company>
@@ -19,6 +16,7 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
+    <LangVersion>7.2</LangVersion>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -49,10 +47,6 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>7.2</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

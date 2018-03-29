@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 	public unsafe class DynamicTest
 	{
+		public dynamic DynamicField;
 		public dynamic SimpleProperty { get; set; }
 
 		public List<dynamic> DynamicGenerics1(Action<object, dynamic[], object> param) { return null; }

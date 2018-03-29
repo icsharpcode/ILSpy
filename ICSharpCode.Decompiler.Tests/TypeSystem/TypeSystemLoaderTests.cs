@@ -98,6 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void DynamicType()
 		{
 			ITypeDefinition testClass = GetTypeDefinition(typeof(DynamicTest));
+			Assert.AreEqual(SpecialType.Dynamic, testClass.Fields.Single(f => f.Name == "DynamicField").ReturnType);
 			Assert.AreEqual(SpecialType.Dynamic, testClass.Properties.Single().ReturnType);
 			Assert.AreEqual(0, testClass.Properties.Single().Attributes.Count);
 		}

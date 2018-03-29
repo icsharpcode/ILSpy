@@ -523,7 +523,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			bool needsCast = false;
 			ResolveResult result = null;
-			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
+			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)));
 			if (!requireTarget) {
 				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
 				if (result is MethodGroupResolveResult mgrr) {

@@ -22,26 +22,10 @@ using System.Linq;
 using SRM = System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	class SignatureTypeReference : ITypeReference
-	{
-		readonly SRM.TypeSpecification typeSpecification;
-		readonly SRM.MetadataReader reader;
-
-		public SignatureTypeReference(SRM.TypeSpecificationHandle handle, SRM.MetadataReader reader)
-		{
-			this.typeSpecification = reader.GetTypeSpecification(handle);
-			this.reader = reader;
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return typeSpecification.DecodeSignature(new TypeReferenceSignatureDecoder(), default(Unit)).Resolve(context);
-		}
-	}
-
 	public sealed class PinnedType : TypeWithElementType
 	{
 		public PinnedType(IType elementType)
@@ -103,8 +87,114 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
+	sealed class DynamicAwareTypeReference : TypeVisitor, ITypeReference
+	{
+		readonly ITypeReference reference;
+		readonly bool isDynamic;
+		readonly bool[] dynamicInfo;
+		int typeIndex;
+
+		static readonly ITypeResolveContext minimalCorlibContext = new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation());
+
+		public static DynamicAwareTypeReference Create(ITypeReference reference, SRM.CustomAttributeHandleCollection? customAttributes, SRM.MetadataReader metadata)
+		{
+			bool isDynamic = HasDynamicAttribute(customAttributes, metadata, out var dynamicInfo);
+			return new DynamicAwareTypeReference(reference, isDynamic, dynamicInfo);
+		}
+
+		static bool HasDynamicAttribute(SRM.CustomAttributeHandleCollection? attributes, SRM.MetadataReader metadata, out bool[] mapping)
+		{
+			mapping = null;
+			if (attributes == null)
+				return false;
+
+			foreach (var handle in attributes) {
+				var a = metadata.GetCustomAttribute(handle);
+				var type = a.GetAttributeType(metadata);
+				if (type.GetFullTypeName(metadata).ToString() == "System.Runtime.CompilerServices.DynamicAttribute") {
+					var ctor = a.DecodeValue(new TypeSystemAttributeTypeProvider(minimalCorlibContext));
+					if (ctor.FixedArguments.Length == 1) {
+						var arg = ctor.FixedArguments[0];
+						if (arg.Type.ReflectionName == "System.Boolean[]" && arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values) {
+							mapping = values.SelectArray(v => (bool)v.Value);
+							return true;
+						}
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
+		DynamicAwareTypeReference(ITypeReference reference, bool isDynamic, bool[] dynamicInfo)
+		{
+			this.reference = reference;
+			this.isDynamic = isDynamic;
+			this.dynamicInfo = dynamicInfo;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			if (isDynamic)
+				return reference.Resolve(context).AcceptVisitor(this);
+			else
+				return reference.Resolve(context);
+		}
+
+		public override IType VisitPointerType(PointerType type)
+		{
+			typeIndex++;
+			return base.VisitPointerType(type);
+		}
+
+		public override IType VisitArrayType(ArrayType type)
+		{
+			typeIndex++;
+			return base.VisitArrayType(type);
+		}
+
+		public override IType VisitByReferenceType(ByReferenceType type)
+		{
+			typeIndex++;
+			return base.VisitByReferenceType(type);
+		}
+
+		public override IType VisitParameterizedType(ParameterizedType type)
+		{
+			var genericType = type.GenericType.AcceptVisitor(this);
+			bool changed = type.GenericType != genericType;
+			var arguments = new IType[type.TypeArguments.Count];
+			for (int i = 0; i < type.TypeArguments.Count; i++) {
+				typeIndex++;
+				arguments[i] = type.TypeArguments[i].AcceptVisitor(this);
+				changed = changed || arguments[i] != type.TypeArguments[i];
+			}
+			if (!changed)
+				return type;
+			return new ParameterizedType(genericType, arguments);
+		}
+
+		public override IType VisitTypeDefinition(ITypeDefinition type)
+		{
+			if (!isDynamic)
+				return type;
+			if (type.KnownTypeCode == KnownTypeCode.Object) {
+				if (dynamicInfo == null || typeIndex >= dynamicInfo.Length)
+					return SpecialType.Dynamic;
+				if (dynamicInfo[typeIndex])
+					return SpecialType.Dynamic;
+				return type;
+			}
+			return type;
+		}
+	}
+
 	class TypeReferenceSignatureDecoder : SRM.ISignatureTypeProvider<ITypeReference, Unit>
 	{
+		public static readonly TypeReferenceSignatureDecoder Instance = new TypeReferenceSignatureDecoder();
+
+		private TypeReferenceSignatureDecoder() { }
+
 		public ITypeReference GetArrayType(ITypeReference elementType, SRM.ArrayShape shape)
 		{
 			return new ArrayTypeReference(elementType, shape.Rank);
@@ -176,7 +266,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetTypeFromSpecification(SRM.MetadataReader reader, Unit genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
-			return new SignatureTypeReference(handle, reader);
+			return reader.GetTypeSpecification(handle)
+				.DecodeSignature(this, default);
 		}
 	}
 
@@ -233,40 +324,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsSystemType(IType type)
 		{
 			return type.IsKnownType(KnownTypeCode.Type);
-		}
-	}
-
-	public class MetadataUnresolvedAttributeBlob : IUnresolvedAttribute, ISupportsInterning
-	{
-		SRM.MetadataReader reader;
-		ITypeReference attributeType;
-		SRM.CustomAttribute attribute;
-
-		public MetadataUnresolvedAttributeBlob(SRM.MetadataReader reader, ITypeReference attributeType, SRM.CustomAttribute attribute)
-		{
-			this.reader = reader;
-			this.attributeType = attributeType;
-			this.attribute = attribute;
-		}
-
-		public DomRegion Region => DomRegion.Empty;
-
-		public IAttribute CreateResolvedAttribute(ITypeResolveContext context)
-		{
-			var blob = reader.GetBlobBytes(attribute.Value);
-			var signature = attribute.DecodeValue(new TypeSystemAttributeTypeProvider(context));
-			return new UnresolvedAttributeBlob(attributeType, signature.FixedArguments.Select(t => t.Type.ToTypeReference()).ToArray(), blob)
-				.CreateResolvedAttribute(context);
-		}
-
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			throw new NotImplementedException();
-		}
-
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			throw new NotImplementedException();
 		}
 	}
 }

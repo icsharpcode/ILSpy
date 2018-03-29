@@ -290,11 +290,11 @@ namespace ICSharpCode.Decompiler.Metadata
 				case PrimitiveTypeCode.SByte:
 					return KnownTypeCode.SByte;
 				case PrimitiveTypeCode.Char:
-					return KnownTypeCode.Byte;
+					return KnownTypeCode.Char;
 				case PrimitiveTypeCode.Int16:
-					return KnownTypeCode.Byte;
+					return KnownTypeCode.Int16;
 				case PrimitiveTypeCode.UInt16:
-					return KnownTypeCode.Byte;
+					return KnownTypeCode.UInt16;
 				case PrimitiveTypeCode.Int32:
 					return KnownTypeCode.Int32;
 				case PrimitiveTypeCode.UInt32:

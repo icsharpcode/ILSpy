@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (call.Method.Parameters.Count == 0) return false;
 			var targetType = call.Method.Parameters.Select(p => new ResolveResult(p.Type)).First();
 			var paramTypes = call.Method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = call.Method.Parameters.SelectArray(p => p.Name);
+			var paramNames = call.Method.Parameters.SelectReadOnlyArray(p => p.Name);
 			var typeArgs = call.Method.TypeArguments.ToArray();
 			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
 			var resolver = new CSharp.Resolver.CSharpResolver(resolveContext);

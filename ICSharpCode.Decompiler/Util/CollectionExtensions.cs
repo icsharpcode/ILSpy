@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// Equivalent to <code>collection.Select(func).ToArray()</code>, but more efficient as it makes
 		/// use of the input collection's known size.
 		/// </summary>
-		public static U[] SelectArray<T, U>(this IReadOnlyCollection<T> collection, Func<T, U> func)
+		public static U[] SelectReadOnlyArray<T, U>(this IReadOnlyCollection<T> collection, Func<T, U> func)
 		{
 			U[] result = new U[collection.Count];
 			int index = 0;

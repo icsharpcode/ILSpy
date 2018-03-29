@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.FieldDefinition:
 							var fieldDef = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)fieldReference);
 							declaringType = ResolveAsType(fieldDef.GetDeclaringType());
-							returnType = fieldDef.DecodeSignature(new TypeReferenceSignatureDecoder(), default);
+							returnType = DynamicAwareTypeReference.Create(fieldDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), fieldDef.GetCustomAttributes(), metadata);
 							var declaringTypeDefinition = declaringType.GetDefinition();
 							if (declaringTypeDefinition == null)
 								field = CreateFakeField(declaringType, metadata.GetString(fieldDef.Name), returnType);
@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			string name = metadata.GetString(memberRef.Name);
 			ITypeDefinition typeDef = declaringType.GetDefinition();
-			ITypeReference returnType = memberRef.DecodeFieldSignature(new TypeReferenceSignatureDecoder(), default);
+			ITypeReference returnType = memberRef.DecodeFieldSignature(TypeReferenceSignatureDecoder.Instance, default);
 
 			if (typeDef == null)
 				return CreateFakeField(declaringType, name, returnType);
@@ -263,11 +263,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
 							declaringType = ResolveAsType(methodDef.GetDeclaringType());
 							var declaringTypeDefinition = declaringType.GetDefinition();
-							if (declaringTypeDefinition == null)
-								method = CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(new TypeReferenceSignatureDecoder(), default));
-							else {
+							if (declaringTypeDefinition == null) {
+								method = CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
+							} else {
 								method = (IMethod)declaringTypeDefinition.GetMembers(m => m.MetadataToken == methodReference, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault()
-									?? CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(new TypeReferenceSignatureDecoder(), default));
+									?? CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
 							}
 							break;
 						case SRM.HandleKind.MemberReference:
@@ -282,7 +282,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.StandaloneSignature:
 							var standaloneSignature = metadata.GetStandaloneSignature((SRM.StandaloneSignatureHandle)methodReference);
 							Debug.Assert(standaloneSignature.GetKind() == SRM.StandaloneSignatureKind.Method);
-							var signature = standaloneSignature.DecodeMethodSignature(new TypeReferenceSignatureDecoder(), default);
+							var signature = standaloneSignature.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
 						method = new VarArgInstanceMethod(
 							method,
 								signature.ParameterTypes.Skip(signature.RequiredParameterCount).Select(p => p.Resolve(context))
@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						IReadOnlyList<IType> classTypeArguments = null;
 						IReadOnlyList<IType> methodTypeArguments = null;
 							var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
-							var typeArguments = methodSpec.DecodeSignature(new TypeReferenceSignatureDecoder(), default);
+							var typeArguments = methodSpec.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
 							if (typeArguments.Length > 0) {
 								methodTypeArguments = typeArguments.SelectArray(arg => arg.Resolve(context));
 						}
@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return m;
 			}
 			IType[] parameterTypes;
-			var signature = methodDefinition.DecodeSignature(new TypeReferenceSignatureDecoder(), default);
+			var signature = methodDefinition.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
 			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
 				parameterTypes = signature.ParameterTypes
 					.Take(signature.RequiredParameterCount)

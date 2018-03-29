@@ -78,7 +78,8 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentNullException(nameof(body));
 			this.metadata = module.GetMetadataReader();
 			this.method = typeSystem.ResolveAsMethod(methodDefinitionHandle);
-			this.methodSignature = metadata.GetMethodDefinition(methodDefinitionHandle).DecodeSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default); 
+			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
+			this.methodSignature = methodDefinition.DecodeSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default); 
 			this.body = body;
 			this.reader = body.GetILReader();
 			//this.debugInfo = metadata.GetMethodDebugInformation(method.Handle.ToDebugInformationHandle());
@@ -86,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
 			this.resolveContext = new SimpleTypeResolveContext(this.method);
-			this.methodReturnStackType = methodSignature.ReturnType.Resolve(resolveContext).GetStackType();
+			this.methodReturnStackType = TypeSystem.Implementation.DynamicAwareTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata).Resolve(resolveContext).GetStackType();
 			InitParameterVariables();
 			InitLocalVariables();
 			if (body.LocalVariablesInitialized) {
@@ -129,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (body.LocalSignature.IsNil) return;
 			var standaloneSignature = metadata.GetStandaloneSignature(body.LocalSignature);
 			Debug.Assert(standaloneSignature.GetKind() == StandaloneSignatureKind.LocalVariables);
-			var variableTypes = standaloneSignature.DecodeLocalSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default);
+			var variableTypes = standaloneSignature.DecodeLocalSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
 			localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
 				localVariables[index] = CreateILVariable(index, type);
@@ -1279,7 +1280,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature((StandaloneSignatureHandle)ReadAndDecodeMetadataToken());
 			Debug.Assert(standaloneSignature.GetKind() == StandaloneSignatureKind.Method);
-			var signature = standaloneSignature.DecodeMethodSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default);
+			var signature = standaloneSignature.DecodeMethodSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
 			var functionPointer = Pop(StackType.I);
 			Debug.Assert(!signature.Header.IsInstance);
 			var parameterTypes = new IType[signature.ParameterTypes.Length];
