@@ -29,6 +29,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.TypeSystem
 {
+	[TestFixture]
 	public class TypeSystemLoaderTests
 	{
 		static readonly Lazy<IUnresolvedAssembly> mscorlib = new Lazy<IUnresolvedAssembly>(

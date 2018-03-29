@@ -550,7 +550,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (def is ICustomAttributeProvider cap) {
 					CollectAttributes(cap);
 				}
-				if (def is ISecurityDeclarationProvider sdp) {
+				if (def is ISecurityDeclarationProvider sdp && sdp.HasSecurityDeclarations) {
 					namespaces.Add("System.Security.Permissions");
 					CollectSecurityDeclarations(sdp);
 				}
@@ -680,7 +680,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 						}
 						if (methodDef.HasBody) {
-							CollectNamespacesForDecompilation(methodDef.Body, namespaces, visited);
+							try {
+								CollectNamespacesForDecompilation(methodDef.Body, namespaces, visited);
+							} catch (Exception ex) {
+								Debug.WriteLine("Cecil failed to read method body: " + ex.ToString());
+							}
 						}
 						break;
 				}
