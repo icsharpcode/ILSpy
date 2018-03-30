@@ -111,13 +111,13 @@ namespace ICSharpCode.ILSpy
 		PEFile LoadAssembly(object state)
 		{
 			var stream = state as Stream;
-			PEReader module;
+			PEFile module;
 
 			// runs on background thread
 			if (stream != null)
 			{
 				// Read the module from a precrafted stream
-				module = new PEReader(stream);
+				module = new PEFile(fileName, stream, PEStreamOptions.Default) { AssemblyResolver = new MyAssemblyResolver(this) };
 			}
 			else
 			{
@@ -126,7 +126,7 @@ namespace ICSharpCode.ILSpy
 					var ms = new MemoryStream();
 					fs.CopyTo(ms);
 					ms.Position = 0;
-					module = new PEReader(ms, PEStreamOptions.PrefetchEntireImage);
+					module = new PEFile(fileName, ms, PEStreamOptions.Default) { AssemblyResolver = new MyAssemblyResolver(this) };
 				}
 			}
 
@@ -139,10 +139,10 @@ namespace ICSharpCode.ILSpy
 					// ignore any errors during symbol loading
 				}
 			}
-			return new PEFile(fileName, module, new MyAssemblyResolver(this));
+			return module;
 		}
 		
-		private void LoadSymbols(PEReader reader)
+		private void LoadSymbols(PEFile module)
 		{
 			/*string pdbDirectory = Path.GetDirectoryName(fileName);
 			if (!reader.TryOpenAssociatedPortablePdb(pdbDirectory, OpenStream, out var provider, out var pdbFileName) {
@@ -224,7 +224,7 @@ namespace ICSharpCode.ILSpy
 		class MyUniversalResolver : UniversalAssemblyResolver
 		{
 			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false)
+				: base(assembly.FileName, false, true, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.Default)
 			{
 			}
 		}
@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy
 				if (isWinRT) {
 					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", fullName.Name + ".winmd");
 				} else {
-					var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
+					var resolver = new MyUniversalResolver(this);
 					file = resolver.FindAssemblyFile(fullName);
 				}
 
