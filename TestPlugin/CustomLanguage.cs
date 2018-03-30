@@ -2,9 +2,10 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System.ComponentModel.Composition;
+using System.Reflection.Metadata;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy;
 
 namespace TestPlugin
@@ -27,14 +28,15 @@ namespace TestPlugin
 				return ".txt";
 			}
 		}
-		
+
 		// There are several methods available to override; in this sample, we deal with methods only
-		
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(ICSharpCode.Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-#if false
-			if (method.Body != null) {
-				output.WriteLine("Size of method: {0} bytes", method.Body.CodeSize);
+			var metadata = method.Module.GetMetadataReader();
+			var methodDef = metadata.GetMethodDefinition(method.Handle);
+			if (methodDef.HasBody()) {
+				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				output.WriteLine("Size of method: {0} bytes", methodBody.GetCodeSize());
 				
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;
 				if (smartOutput != null) {
@@ -55,7 +57,6 @@ namespace TestPlugin
 					syntaxTree.AcceptVisitor(visitor);
 				*/
 			}
-#endif
 		}
 	}
 }
