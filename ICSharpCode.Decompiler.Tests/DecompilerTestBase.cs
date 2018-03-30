@@ -50,21 +50,21 @@ namespace ICSharpCode.Decompiler.Tests
 		protected static void AssertRoundtripCode(string fileName, bool optimize = false, bool useDebug = false, int compilerVersion = 4)
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
-			var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
+			using (var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion)) {
+				CSharpDecompiler decompiler = new CSharpDecompiler(new Metadata.PEFile("temp.exe", assembly, PEStreamOptions.Default), new DecompilerSettings());
 
-			CSharpDecompiler decompiler = new CSharpDecompiler(assembly, new DecompilerSettings());
+				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
+				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 
-			decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
-			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 
-			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
-
-			var options = FormattingOptionsFactory.CreateAllman();
-			options.IndentSwitchBody = false;
-			CodeAssert.AreEqual(code, syntaxTree.ToString(options));
+				var options = FormattingOptionsFactory.CreateAllman();
+				options.IndentSwitchBody = false;
+				CodeAssert.AreEqual(code, syntaxTree.ToString(options));
+			}
 		}
 
-		protected static Metadata.PEFile CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)
+		protected static MemoryStream CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)
 		{
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v" + new Version(compilerVersion, 0) } });
 			CompilerParameters options = new CompilerParameters();
@@ -83,7 +83,11 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 					throw new Exception(b.ToString());
 				}
-				return Metadata.UniversalAssemblyResolver.LoadMainModule(results.PathToAssembly, false, true);
+				using (var file = new FileStream(results.PathToAssembly, FileMode.Open, FileAccess.Read)) {
+					var memory = new MemoryStream();
+					file.CopyTo(memory);
+					return memory;
+				}
 			}
 			finally
 			{

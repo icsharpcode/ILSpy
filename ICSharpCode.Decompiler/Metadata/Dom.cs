@@ -89,17 +89,18 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public class PEFile : IDisposable
 	{
+		Stream stream;
+
 		public string FileName { get; }
 		public PEReader Reader { get; }
-		public IAssemblyResolver AssemblyResolver { get; }
+		public IAssemblyResolver AssemblyResolver { get; set; }
 		public IAssemblyDocumentationResolver DocumentationResolver { get; set; }
 		public IDebugInfoProvider DebugInfo { get; set; }
 
-		public PEFile(string fileName, PEReader reader, IAssemblyResolver resolver)
+		public PEFile(string fileName, Stream stream, PEStreamOptions options)
 		{
 			this.FileName = fileName;
-			this.Reader = reader;
-			this.AssemblyResolver = resolver;
+			this.Reader = new PEReader(stream, options);
 		}
 
 		public bool IsAssembly => GetMetadataReader().IsAssembly;

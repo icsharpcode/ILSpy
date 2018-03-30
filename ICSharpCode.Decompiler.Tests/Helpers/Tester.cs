@@ -32,6 +32,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -377,7 +378,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			using (var module = Metadata.UniversalAssemblyResolver.LoadMainModule(assemblyFileName)) {
+			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
+				var module = new PEFile(assemblyFileName, file, PEStreamOptions.Default);
+				var resolver = new UniversalAssemblyResolver(assemblyFileName, false, true, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
+				module.AssemblyResolver = resolver;
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());

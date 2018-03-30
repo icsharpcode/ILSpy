@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public CSharpDecompiler(string fileName, DecompilerSettings settings)
-			: this(Metadata.UniversalAssemblyResolver.LoadMainModule(fileName, settings.ThrowOnAssemblyResolveErrors, settings.LoadInMemory), settings)
+			: this(LoadPEFile(fileName, settings), settings)
 		{
 		}
 
@@ -294,6 +294,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return type.BaseType.GetFullTypeName(metadata).ToString() == "System.Object" && !type.GetInterfaceImplementations().Any();
 		}
 		#endregion
+
+		static Metadata.PEFile LoadPEFile(string fileName, DecompilerSettings settings)
+		{
+			Stream stream;
+			if (settings.LoadInMemory) {
+				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
+					stream = new MemoryStream();
+					fileStream.CopyTo(stream);
+				}
+			} else {
+				stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			}
+			return new Metadata.PEFile(fileName, stream, System.Reflection.PortableExecutable.PEStreamOptions.Default);
+		}
 
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{

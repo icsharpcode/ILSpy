@@ -10,6 +10,8 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		DotNetCorePathFinder dotNetCorePathFinder;
 		readonly bool throwOnError;
+		readonly bool inMemory;
+		readonly PEStreamOptions options;
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
 		readonly List<string> directories = new List<string>();
@@ -45,27 +47,19 @@ namespace ICSharpCode.Decompiler.Metadata
 			return directories.ToArray();
 		}
 
-		public string TargetFramework { get; set; }
+		public string TargetFramework { get; }
 
-		protected UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError)
+		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, bool inMemory, string targetFramework, PEStreamOptions options)
 		{
+			this.inMemory = inMemory;
+			this.options = options;
+			this.TargetFramework = targetFramework;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
 			this.throwOnError = throwOnError;
 			if (string.IsNullOrWhiteSpace(this.baseDirectory))
 				this.baseDirectory = Environment.CurrentDirectory;
 			AddSearchDirectory(baseDirectory);
-		}
-
-		public static PEFile LoadMainModule(string mainAssemblyFileName, bool throwOnError = true, bool inMemory = false)
-		{
-			var resolver = new UniversalAssemblyResolver(mainAssemblyFileName, throwOnError);
-
-			var module = new PEReader(new FileStream(mainAssemblyFileName, FileMode.Open, FileAccess.Read), inMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default);
-
-			resolver.TargetFramework = module.DetectTargetFrameworkId();
-
-			return new PEFile(mainAssemblyFileName, module, resolver);
 		}
 
 		public PEFile Resolve(IAssemblyReference name)
@@ -76,7 +70,17 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return new PEFile(file, GetAssembly(file), this);
+			Stream stream;
+			if (inMemory) {
+				using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
+					stream = new MemoryStream();
+					fileStream.CopyTo(stream);
+				}
+			} else {
+				stream = new FileStream(file, FileMode.Open, FileAccess.Read);
+			}
+			stream.Position = 0;
+			return new PEFile(file, stream, options);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)
@@ -271,11 +275,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				Directory.GetParent(
 					Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)).FullName,
 				"gac");
-		}
-
-		PEReader GetAssembly(string file)
-		{
-			return new PEReader(new FileStream(file, FileMode.Open));
 		}
 
 		string GetAssemblyInGac(IAssemblyReference reference)

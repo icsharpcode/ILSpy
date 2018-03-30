@@ -142,16 +142,19 @@ namespace ICSharpCode.Decompiler.Tests
 				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					PEFile module = UniversalAssemblyResolver.LoadMainModule(file, false, true);
-					((UniversalAssemblyResolver)module.AssemblyResolver).AddSearchDirectory(inputDir);
-					((UniversalAssemblyResolver)module.AssemblyResolver).RemoveSearchDirectory(".");
+					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
+						PEFile module = new PEFile(file, fileStream, System.Reflection.PortableExecutable.PEStreamOptions.Default);
+						var resolver = new UniversalAssemblyResolver(file, false, true, module.Reader.DetectTargetFrameworkId(), System.Reflection.PortableExecutable.PEStreamOptions.Default);
+						resolver.AddSearchDirectory(inputDir);
+						resolver.RemoveSearchDirectory(".");
 
-					var decompiler = new TestProjectDecompiler(inputDir);
-					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-					decompiler.DecompileProject(module, decompiledDir);
-					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
-					projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+						var decompiler = new TestProjectDecompiler(inputDir);
+						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+						decompiler.DecompileProject(module, decompiledDir);
+						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
+						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+					}
 				} else {
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
