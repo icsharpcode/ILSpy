@@ -285,6 +285,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					sections.Add(new SwitchSection() { Body = switchBlock.Instructions[1], Labels = new LongSet(0).Invert(), ILRange = switchBlock.Instructions[1].ILRange });
 					break;
 			}
+			// mcs: map sections without a value to the default section, if possible
+			if (!FixCasesWithoutValue(sections, stringValues))
+				return false;
 			// switch contains case null:
 			if (nullValueCaseBlock != defaultBlock) {
 				if (!AddNullSection(sections, stringValues, nullValueCaseBlock)) {
@@ -309,6 +312,41 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				instructions.RemoveRange(i - 1, 2);
 				i -= 2;
 			}
+			return true;
+		}
+
+		bool FixCasesWithoutValue(List<SwitchSection> sections, List<(string, int)> stringValues)
+		{
+			bool HasLabel(SwitchSection section)
+			{
+				return section.Labels.Values.Any(i => stringValues.Any(value => i == value.Item2));
+			}
+
+			// Pick the section with the most labels as default section.
+			// And collect all sections that have no value mapped to them.
+			SwitchSection defaultSection = sections.First();
+			List<SwitchSection> sectionsWithoutLabels = new List<SwitchSection>();
+			foreach (var section in sections) {
+				if (section == defaultSection) continue;
+				if (section.Labels.Count() > defaultSection.Labels.Count()) {
+					if (!HasLabel(defaultSection))
+						sectionsWithoutLabels.Add(defaultSection);
+					defaultSection = section;
+					continue;
+				}
+				if (!HasLabel(section))
+					sectionsWithoutLabels.Add(section);
+			}
+
+			foreach (var section in sectionsWithoutLabels) {
+				if (!section.Body.Match(defaultSection.Body).Success)
+					return false;
+				defaultSection.Labels = defaultSection.Labels.UnionWith(section.Labels);
+				if (section.HasNullLabel)
+					defaultSection.HasNullLabel = true;
+				sections.Remove(section);
+			}
+
 			return true;
 		}
 
