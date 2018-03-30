@@ -45,8 +45,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
 			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
-			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition.GetMetadataReader());
-			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition.GetMetadataReader());
+			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
+			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null) {
-					referencedAssemblies.Add(cecilLoader.LoadModule(asm.GetMetadataReader()));
+					referencedAssemblies.Add(cecilLoader.LoadModule(asm));
 					var metadata = asm.GetMetadataReader();
 					foreach (var h in metadata.ExportedTypes) {
 						var forwarder = metadata.GetExportedType(h);
@@ -258,11 +258,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
 					var metadata = moduleDefinition.GetMetadataReader();
 					IType declaringType;
+					ITypeDefinition declaringTypeDefinition;
 					switch (methodReference.Kind) {
 						case SRM.HandleKind.MethodDefinition:
 							var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
 							declaringType = ResolveAsType(methodDef.GetDeclaringType());
-							var declaringTypeDefinition = declaringType.GetDefinition();
+							declaringTypeDefinition = declaringType.GetDefinition();
 							if (declaringTypeDefinition == null) {
 								method = CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
 							} else {
@@ -272,6 +273,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							break;
 						case SRM.HandleKind.MemberReference:
 							var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)methodReference);
+							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Method);
+							declaringType = ResolveAsType(memberRef.Parent);
+							// TODO : Support other handles
+							declaringTypeDefinition = declaringType.GetDefinition();
+							IEnumerable<IMethod> methods;
+							var name = metadata.GetString(memberRef.Name);
+							if (name == ".ctor") {
+								methods = declaringTypeDefinition.GetConstructors();
+							} else if (name == ".cctor") {
+								return declaringTypeDefinition.Methods.FirstOrDefault(m => m.IsConstructor && m.IsStatic);
+							} else {
+								methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
+									.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
+							}
+							IType[] parameterTypes;
+							var signature = memberRef.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
+							if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+								parameterTypes = signature.ParameterTypes
+									.Take(signature.RequiredParameterCount)
+									.Select(p => p.Resolve(context))
+									.Concat(new[] { SpecialType.ArgList })
+									.ToArray();
+							} else {
+								parameterTypes = signature.ParameterTypes.SelectArray(p => p.Resolve(context));
+							}
+							var returnType = signature.ReturnType.Resolve(context);
+							method = null;
+							foreach (var m in methods) {
+								if (m.TypeParameters.Count != signature.GenericParameterCount)
+									continue;
+								if (!CompareSignatures(m.Parameters, parameterTypes) || !CompareTypes(m.ReturnType, returnType))
+									continue;
+								method = m;
+								break;
+							}
+							if (method == null)
+								method = CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
 							break;
 						case SRM.HandleKind.MethodSpecification:
 							break;
