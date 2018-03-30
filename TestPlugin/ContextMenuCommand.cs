@@ -26,7 +26,7 @@ namespace TestPlugin
 			if (context.SelectedTreeNodes == null)
 				return;
 			AssemblyTreeNode node = (AssemblyTreeNode)context.SelectedTreeNodes[0];
-			var asm = node.LoadedAssembly.GetAssemblyDefinitionOrNull();
+			var asm = node.LoadedAssembly.GetPEFileOrNull();
 			if (asm != null) {
 				/*SaveFileDialog dlg = new SaveFileDialog();
 				dlg.FileName = node.LoadedAssembly.FileName;
