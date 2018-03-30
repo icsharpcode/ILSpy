@@ -309,9 +309,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return CreateTypeReference((TypeReferenceHandle)type);
 				case HandleKind.TypeDefinition:
 					return new TypeDefTokenTypeReference(type);
-				case HandleKind.FieldDefinition:
-					var fd = currentMetadata.GetFieldDefinition((FieldDefinitionHandle)type);
-					return DynamicAwareTypeReference.Create(fd.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), fd.GetCustomAttributes(), currentMetadata);
 				default:
 					throw new NotSupportedException();
 			}
@@ -1479,7 +1476,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			f.Accessibility = GetAccessibility(field.Attributes);
 			f.IsReadOnly = (field.Attributes & FieldAttributes.InitOnly) == FieldAttributes.InitOnly;
 			f.IsStatic = (field.Attributes & FieldAttributes.Static) == FieldAttributes.Static;
-			f.ReturnType = ReadTypeReference(handle, field.GetCustomAttributes());
+			f.ReturnType = DynamicAwareTypeReference.Create(field.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), field.GetCustomAttributes(), currentMetadata);
 			var constantHandle = field.GetDefaultValue();
 			if (!constantHandle.IsNil) {
 				var constant = currentMetadata.GetConstant(constantHandle);

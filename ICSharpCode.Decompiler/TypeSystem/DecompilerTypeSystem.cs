@@ -184,9 +184,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							break;
 						case SRM.HandleKind.MemberReference:
 							var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldReference);
+							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Field);
+							declaringType = ResolveAsType(memberRef.Parent);
 							switch (memberRef.Parent.Kind) {
 								case SRM.HandleKind.TypeReference:
-									declaringType = ResolveAsType(memberRef.Parent);
 									field = FindNonGenericField(metadata, memberRef, declaringType);
 									break;
 								case SRM.HandleKind.TypeSpecification:
@@ -312,7 +313,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								method = CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
 							break;
 						case SRM.HandleKind.MethodSpecification:
-							break;
+							throw new NotImplementedException();
 					}
 
 					/*method = FindNonGenericMethod(metadata, new Metadata.Entity(moduleDefinition, methodReference).ResolveAsMethod(), signature);
