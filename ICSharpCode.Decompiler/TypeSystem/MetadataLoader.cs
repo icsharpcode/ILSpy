@@ -650,9 +650,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						attr.AddNamedFieldArgument("ArraySubType", CreateSimpleConstantValue(unmanagedTypeTypeRef, type));
 					break;
 				case 0x1d: // SafeArray
-					VarEnum varType = (VarEnum)marshalInfo.ReadByte();
-					if (varType != VarEnum.VT_EMPTY)
-						attr.AddNamedFieldArgument("SafeArraySubType", CreateSimpleConstantValue(typeof(VarEnum).ToTypeReference(), (int)varType));
+					if (marshalInfo.RemainingBytes > 0) {
+						VarEnum varType = (VarEnum)marshalInfo.ReadByte();
+						if (varType != VarEnum.VT_EMPTY)
+							attr.AddNamedFieldArgument("SafeArraySubType", CreateSimpleConstantValue(typeof(VarEnum).ToTypeReference(), (int)varType));
+					}
 					break;
 				case 0x2a: // NATIVE_TYPE_ARRAY
 					if (marshalInfo.RemainingBytes > 0) {
