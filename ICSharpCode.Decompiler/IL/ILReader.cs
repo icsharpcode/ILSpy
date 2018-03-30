@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.resolveContext = new SimpleTypeResolveContext(this.method);
 			this.methodReturnStackType = TypeSystem.Implementation.DynamicAwareTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata).Resolve(resolveContext).GetStackType();
 			InitParameterVariables();
-			InitLocalVariables();
+			localVariables = InitLocalVariables();
 			if (body.LocalVariablesInitialized) {
 				foreach (var v in localVariables) {
 					v.HasInitialValue = true;
@@ -125,16 +125,17 @@ namespace ICSharpCode.Decompiler.IL
 			return typeSystem.ResolveAsField(fieldReference);
 		}
 
-		void InitLocalVariables()
+		ILVariable[] InitLocalVariables()
 		{
-			if (body.LocalSignature.IsNil) return;
+			if (body.LocalSignature.IsNil) return Empty<ILVariable>.Array;
 			var standaloneSignature = metadata.GetStandaloneSignature(body.LocalSignature);
 			Debug.Assert(standaloneSignature.GetKind() == StandaloneSignatureKind.LocalVariables);
 			var variableTypes = standaloneSignature.DecodeLocalSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
-			localVariables = new ILVariable[variableTypes.Length];
+			var localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
 				localVariables[index] = CreateILVariable(index, type);
 			}
+			return localVariables;
 		}
 
 		void InitParameterVariables()
@@ -147,7 +148,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			while (paramIndex < parameterVariables.Length) {
 				var type = methodSignature.ParameterTypes[paramIndex - offset];
-				parameterVariables[paramIndex++] = CreateILVariable(paramIndex, type, method.Parameters[paramIndex - offset].Name);
+				parameterVariables[paramIndex] = CreateILVariable(paramIndex - offset, type, method.Parameters[paramIndex - offset].Name);
+				paramIndex++;
 			}
 			Debug.Assert(paramIndex == parameterVariables.Length);
 		}
