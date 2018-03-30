@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	/// <summary>
 	/// Provides XML documentation tags.
 	/// </summary>
-	public sealed class XmlDocKeyProvider
+	public static class XmlDocKeyProvider
 	{
 		#region GetKey
 		public static string GetKey(Entity entity)

@@ -5,14 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
+using Metadata = ICSharpCode.Decompiler.Metadata;
 
 namespace ILSpy.BamlDecompiler
 {
@@ -29,37 +31,36 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	sealed class ConnectMethodDecompiler
 	{
-		AssemblyDefinition assembly;
-		
-		public ConnectMethodDecompiler(AssemblyDefinition assembly)
-		{
-			this.assembly = assembly;
-		}
-		
-		public List<(LongSet, EventRegistration[])> DecompileEventMappings(string fullTypeName, CancellationToken cancellationToken)
+		public List<(LongSet, EventRegistration[])> DecompileEventMappings(Metadata.PEFile module, string fullTypeName, CancellationToken cancellationToken)
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
-			TypeDefinition type = this.assembly.MainModule.GetType(fullTypeName);
-			
-			if (type == null)
+
+			var typeDefinition = (Metadata.TypeDefinition)XmlDocKeyProvider.FindMemberByKey(module, "T:" + fullTypeName);
+			if (typeDefinition.IsNil)
 				return result;
+
+			var metadata = module.GetMetadataReader();
+			TypeDefinition type = metadata.GetTypeDefinition(typeDefinition.Handle);
 			
-			MethodDefinition method = null;
+			MethodDefinition method = default;
+			MethodDefinitionHandle handle = default;
 			
-			foreach (var m in type.Methods) {
-				if (m.Name == "System.Windows.Markup.IComponentConnector.Connect") {
+			foreach (var h in type.GetMethods()) {
+				var m = metadata.GetMethodDefinition(h);
+				if (metadata.GetString(m.Name) == "System.Windows.Markup.IComponentConnector.Connect") {
+					handle = h;
 					method = m;
 					break;
 				}
 			}
 			
-			if (method == null)
+			if (handle.IsNil)
 				return result;
 			
 			// decompile method and optimize the switch
-			var typeSystem = new DecompilerTypeSystem(method.Module);
+			var typeSystem = new DecompilerTypeSystem(typeDefinition.Module);
 			var ilReader = new ILReader(typeSystem);
-			var function = ilReader.ReadIL(method.Body, cancellationToken);
+			var function = ilReader.ReadIL(typeDefinition.Module, handle, typeDefinition.Module.Reader.GetMethodBody(method.RelativeVirtualAddress), cancellationToken);
 
 			var context = new ILTransformContext(function, typeSystem) {
 				CancellationToken = cancellationToken

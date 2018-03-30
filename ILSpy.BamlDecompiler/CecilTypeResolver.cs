@@ -2,8 +2,8 @@
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
 using System;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler
@@ -13,11 +13,15 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	public class NRTypeResolver : IDotNetTypeResolver
 	{
+		readonly PEFile module;
+		readonly DecompilerTypeSystem typeSystem;
 		readonly ICompilation compilation;
 	
-		public NRTypeResolver(ICompilation compilation)
+		public NRTypeResolver(PEFile module)
 		{
-			this.compilation = compilation;
+			this.module = module;
+			this.typeSystem = new DecompilerTypeSystem(module);
+			this.compilation = typeSystem.Compilation;
 		}
 		
 		public bool IsLocalAssembly(string name)
@@ -66,10 +70,9 @@ namespace ILSpy.BamlDecompiler
 			throw new ArgumentException("Invalid IType: " + ownerType.GetType());
 		}
 		
-		public string RuntimeVersion {
+		public TargetRuntime RuntimeVersion {
 			get {
-				throw new NotImplementedException();
-				//return thisAssembly.MainModule.Runtime.ToString();
+				return module.GetRuntime();
 			}
 		}
 	}

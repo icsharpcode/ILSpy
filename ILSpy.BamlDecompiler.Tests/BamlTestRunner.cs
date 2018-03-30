@@ -8,8 +8,8 @@ using System.Linq;
 using System.Resources;
 using System.Threading;
 using System.Xml.Linq;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ILSpy.BamlDecompiler.Tests
@@ -112,16 +112,20 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
-			var resolver = new DefaultAssemblyResolver();
-			resolver.RemoveSearchDirectory(".");
-			resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
-			var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters { AssemblyResolver = resolver, InMemory = true });
-			Resource res = assembly.MainModule.Resources.First();
-			Stream bamlStream = LoadBaml(res, name + ".baml");
-			Assert.IsNotNull(bamlStream);
-			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream, CancellationToken.None);
+			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read)) {
+				var module = new PEFile(asmPath, fileStream, System.Reflection.PortableExecutable.PEStreamOptions.Default);
+				var resolver = new UniversalAssemblyResolver(asmPath, false, true, module.Reader.DetectTargetFrameworkId(), System.Reflection.PortableExecutable.PEStreamOptions.Default);
+				resolver.RemoveSearchDirectory(".");
+				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
+				module.AssemblyResolver = resolver;
+				var res = module.Resources.First();
+				Stream bamlStream = LoadBaml(res, name + ".baml");
+				Assert.IsNotNull(bamlStream);
+				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, bamlStream, CancellationToken.None);
 
-			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
+				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
+
+			}
 		}
 
 		void XamlIsEqual(string input1, string input2)
@@ -139,26 +143,23 @@ namespace ILSpy.BamlDecompiler.Tests
 
 		Stream LoadBaml(Resource res, string name)
 		{
-			EmbeddedResource er = res as EmbeddedResource;
-			if (er != null) {
-				Stream s = er.GetResourceStream();
-				s.Position = 0;
-				ResourceReader reader;
-				try {
-					reader = new ResourceReader(s);
-				} catch (ArgumentException) {
-					return null;
-				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
-					if (entry.Key.ToString() == name) {
-						if (entry.Value is Stream)
-							return (Stream)entry.Value;
-						if (entry.Value is byte[])
-							return new MemoryStream((byte[])entry.Value);
-					}
+			if (res.ResourceType != ResourceType.Embedded) return null;
+			Stream s = res.TryOpenStream();
+			s.Position = 0;
+			ResourceReader reader;
+			try {
+				reader = new ResourceReader(s);
+			} catch (ArgumentException) {
+				return null;
+			}
+			foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
+				if (entry.Key.ToString() == name) {
+					if (entry.Value is Stream)
+						return (Stream)entry.Value;
+					if (entry.Value is byte[])
+						return new MemoryStream((byte[])entry.Value);
 				}
 			}
-
 			return null;
 		}
 		#endregion

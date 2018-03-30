@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
@@ -50,7 +50,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
 			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.GetPEFileOrNull(), Data, cancellationToken);
+			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), Data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}
@@ -59,21 +59,21 @@ namespace ILSpy.BamlDecompiler
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			XDocument xamlDocument;
-			using (XmlBamlReader reader = new XmlBamlReader(stream, new NRTypeResolver(resolver, asm))) {
+			using (XmlBamlReader reader = new XmlBamlReader(stream, new NRTypeResolver(module))) {
 				xamlDocument = XDocument.Load(reader);
-				ConvertConnectionIds(xamlDocument, asm, cancellationToken);
+				ConvertConnectionIds(xamlDocument, module, cancellationToken);
 				ConvertToEmptyElements(xamlDocument.Root);
 				MoveNamespacesToRoot(xamlDocument, reader.XmlnsDefinitions);
 				return xamlDocument;
 			}
 		}
 
-		static void ConvertConnectionIds(XDocument xamlDocument, AssemblyDefinition asm, CancellationToken cancellationToken)
+		static void ConvertConnectionIds(XDocument xamlDocument, PEFile asm, CancellationToken cancellationToken)
 		{
 			var attr = xamlDocument.Root.Attribute(XName.Get("Class", XmlBamlReader.XWPFNamespace));
 			if (attr != null) {
 				string fullTypeName = attr.Value;
-				var mappings = new ConnectMethodDecompiler(asm).DecompileEventMappings(fullTypeName, cancellationToken);
+				var mappings = new ConnectMethodDecompiler().DecompileEventMappings(asm, fullTypeName, cancellationToken);
 				RemoveConnectionIds(xamlDocument.Root, mappings);
 			}
 		}
