@@ -61,31 +61,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var metadata = property.Module.GetMetadataReader();
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
-
-			string name = language.FormatPropertyName(property, isIndexer);
 			var signature = propertyDefinition.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(propertyDefinition.GetAccessors().GetAny(), property.Module));
-
-			var b = new System.Text.StringBuilder();
-			var hasParameters = property.Handle.HasParameters(metadata);
-			if (hasParameters) {
-				b.Append('(');
-				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-					if (i > 0)
-						b.Append(", ");
-					b.Append(signature.ParameterTypes[i]);
-				}
-				if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
-					if (hasParameters)
-						b.Append(", ");
-					b.Append("...");
-				}
-				b.Append(") : ");
-			} else {
-				b.Append(" : ");
-			}
-			b.Append(signature.ReturnType);
-
-			return HighlightSearchMatch(name, b.ToString());
+			return HighlightSearchMatch(language.FormatPropertyName(property, isIndexer), " : " + signature.ReturnType);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);
