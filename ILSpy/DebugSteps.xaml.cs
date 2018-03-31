@@ -20,7 +20,7 @@ namespace ICSharpCode.ILSpy
 
 		public static ILAstWritingOptions Options => writingOptions;
 
-#if false && DEBUG
+#if DEBUG
 		ILAstLanguage language;
 #endif
 
@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy
 		{
 			InitializeComponent();
 
-#if false && DEBUG
+#if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-#if false && DEBUG
+#if DEBUG
 			if (e.PropertyName == "Language") {
 				if (language != null) {
 					language.StepperUpdated -= ILAstStepperUpdated;
@@ -72,7 +72,7 @@ namespace ICSharpCode.ILSpy
 
 		private void ILAstStepperUpdated(object sender, EventArgs e)
 		{
-#if false && DEBUG
+#if DEBUG
 			if (language == null) return;
 			Dispatcher.Invoke(() => {
 				tree.ItemsSource = language.Stepper.Steps;
@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy
 
 		void IPane.Closed()
 		{
-#if false && DEBUG
+#if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged -= SelectionChanged;
 			writingOptions.PropertyChanged -= WritingOptions_PropertyChanged;

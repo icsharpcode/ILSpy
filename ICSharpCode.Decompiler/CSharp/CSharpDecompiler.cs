@@ -145,24 +145,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
-		List<IAstTransform> astTransforms = new List<IAstTransform> {
-			new PatternStatementTransform(),
-			new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
-			new IntroduceUnsafeModifier(),
-			new AddCheckedBlocks(),
-			new DeclareVariables(), // should run after most transforms that modify statements
-			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
-			new DecimalConstantTransform(),
-			new PrettifyAssignments(), // must run after DeclareVariables
-			new IntroduceUsingDeclarations(),
-			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
-			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
-			new CombineQueryExpressions(),
-			new NormalizeBlockStatements(),
-			new FlattenSwitchBlocks(),
-			new FixNameCollisions(),
-			new AddXmlDocumentationTransform(),
-		};
+		List<IAstTransform> astTransforms = GetAstTransforms();
+
+		public static List<IAstTransform> GetAstTransforms()
+		{
+			return new List<IAstTransform> {
+				new PatternStatementTransform(),
+				new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
+				new IntroduceUnsafeModifier(),
+				new AddCheckedBlocks(),
+				new DeclareVariables(), // should run after most transforms that modify statements
+				new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
+				new DecimalConstantTransform(),
+				new PrettifyAssignments(), // must run after DeclareVariables
+				new IntroduceUsingDeclarations(),
+				new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
+				new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
+				new CombineQueryExpressions(),
+				new NormalizeBlockStatements(),
+				new FlattenSwitchBlocks(),
+				new FixNameCollisions(),
+				new AddXmlDocumentationTransform(),
+			};
+		}
 
 		public CancellationToken CancellationToken { get; set; }
 
@@ -1068,15 +1073,5 @@ namespace ICSharpCode.Decompiler.CSharp
 			return spb.GetSequencePoints();
 	}
 		#endregion
-	}
-
-	[Flags]
-	public enum ConvertTypeOptions
-	{
-		None = 0,
-		IncludeNamespace = 1,
-		IncludeTypeParameterDefinitions = 2,
-		DoNotUsePrimitiveTypeNames = 4,
-		IncludeOuterTypeName = 8,
 	}
 }

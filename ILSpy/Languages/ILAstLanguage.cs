@@ -29,9 +29,12 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using SRM = System.Reflection.Metadata;
+using static System.Reflection.Metadata.PEReaderExtensions;
+
 namespace ICSharpCode.ILSpy
 {
-#if false && DEBUG
+#if DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>
@@ -58,8 +61,7 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
-			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
-			yield return new BlockIL(decompiler.ILTransforms.ToList());
+			yield return new BlockIL(CSharpDecompiler.GetILTransforms());
 		}
 		
 		public override string FileExtension {
@@ -68,17 +70,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
+		public override string TypeToString(Entity type, bool includeNamespace, SRM.CustomAttributeHandleCollection typeAttributes = default)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			type.WriteTo(output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
 
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
-			//new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
+			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
 			output.WriteLine();
 			output.WriteLine();
 		}
@@ -90,11 +92,14 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				if (!method.HasBody)
+				var metadata = method.Module.GetMetadataReader();
+				if (!method.Handle.HasBody(metadata))
 					return;
+				var methodDef = metadata.GetMethodDefinition(method.Handle);
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
-				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
+				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				reader.WriteTypedIL(method.Module, method.Handle, methodBody, output, options.CancellationToken);
 			}
 		}
 
@@ -110,13 +115,16 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				if (!method.HasBody)
+				var metadata = method.Module.GetMetadataReader();
+				if (!method.Handle.HasBody(metadata))
 					return;
+				var methodDef = metadata.GetMethodDefinition(method.Handle);
 				var typeSystem = new DecompilerTypeSystem(method.Module);
-				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.Resolve(method)));
+				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.ResolveAsMethod(method.Handle)));
 				var reader = new ILReader(specializingTypeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
-				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
+				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				ILFunction il = reader.ReadIL(method.Module, method.Handle, methodBody, options.CancellationToken);
 				var namespaces = new HashSet<string>();
 				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
 				ILTransformContext context = decompiler.CreateILTransformContext(il);

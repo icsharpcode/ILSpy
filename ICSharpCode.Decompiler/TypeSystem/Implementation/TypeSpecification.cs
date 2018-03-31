@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	sealed class DynamicAwareTypeReference : TypeVisitor, ITypeReference
+	public sealed class DynamicAwareTypeReference : TypeVisitor, ITypeReference
 	{
 		readonly ITypeReference reference;
 		readonly bool isDynamic;

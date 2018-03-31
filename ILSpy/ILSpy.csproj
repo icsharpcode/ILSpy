@@ -4,7 +4,7 @@
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
     <OutputType>WinExe</OutputType>
-
+    <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
