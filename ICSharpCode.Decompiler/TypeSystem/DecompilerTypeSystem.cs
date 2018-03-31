@@ -278,39 +278,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							declaringType = ResolveAsType(memberRef.Parent);
 							// TODO : Support other handles
 							declaringTypeDefinition = declaringType.GetDefinition();
-							IEnumerable<IMethod> methods;
-							var name = metadata.GetString(memberRef.Name);
-							if (name == ".ctor") {
-								methods = declaringTypeDefinition.GetConstructors();
-							} else if (name == ".cctor") {
-								return declaringTypeDefinition.Methods.FirstOrDefault(m => m.IsConstructor && m.IsStatic);
-							} else {
-								methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
-									.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
-							}
-							IType[] parameterTypes;
 							var signature = memberRef.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
-							if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
-								parameterTypes = signature.ParameterTypes
-									.Take(signature.RequiredParameterCount)
-									.Select(p => p.Resolve(context))
-									.Concat(new[] { SpecialType.ArgList })
-									.ToArray();
-							} else {
-								parameterTypes = signature.ParameterTypes.SelectArray(p => p.Resolve(context));
-							}
-							var returnType = signature.ReturnType.Resolve(context);
-							method = null;
-							foreach (var m in methods) {
-								if (m.TypeParameters.Count != signature.GenericParameterCount)
-									continue;
-								if (!CompareSignatures(m.Parameters, parameterTypes) || !CompareTypes(m.ReturnType, returnType))
-									continue;
-								method = m;
-								break;
-							}
-							if (method == null)
+							if (declaringTypeDefinition == null) {
 								method = CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
+							} else {
+								IEnumerable<IMethod> methods;
+								var name = metadata.GetString(memberRef.Name);
+								if (name == ".ctor") {
+									methods = declaringTypeDefinition.GetConstructors();
+								} else if (name == ".cctor") {
+									return declaringTypeDefinition.Methods.FirstOrDefault(m => m.IsConstructor && m.IsStatic);
+								} else {
+									methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
+										.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
+								}
+								IType[] parameterTypes;
+								if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+									parameterTypes = signature.ParameterTypes
+										.Take(signature.RequiredParameterCount)
+										.Select(p => p.Resolve(context))
+										.Concat(new[] { SpecialType.ArgList })
+										.ToArray();
+								} else {
+									parameterTypes = signature.ParameterTypes.SelectArray(p => p.Resolve(context));
+								}
+								var returnType = signature.ReturnType.Resolve(context);
+								method = null;
+								foreach (var m in methods) {
+									if (m.TypeParameters.Count != signature.GenericParameterCount)
+										continue;
+									if (!CompareSignatures(m.Parameters, parameterTypes) || !CompareTypes(m.ReturnType, returnType))
+										continue;
+									method = m;
+									break;
+								}
+								if (method == null)
+									method = CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
+							}
 							break;
 						case SRM.HandleKind.MethodSpecification:
 							throw new NotImplementedException();
@@ -424,6 +428,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (name == ".ctor" || name == ".cctor")
 				m.SymbolKind = SymbolKind.Constructor;
 			m.Name = name;
+			m.MetadataToken = default(SRM.MethodDefinitionHandle);
 			m.ReturnType = signature.ReturnType;
 			m.IsStatic = !signature.Header.IsInstance;
 			
