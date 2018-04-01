@@ -30,15 +30,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			int? ctorCallStart = null;
 			foreach (var block in function.Descendants.OfType<Block>()) {
-				InlineAllInBlock(block, context);
+				InlineAllInBlock(function, block, context, ref ctorCallStart);
 			}
 			function.Variables.RemoveDead();
 		}
 
 		public void Run(Block block, BlockTransformContext context)
 		{
-			InlineAllInBlock(block, context);
+			InlineAllInBlock(context.Function, block, context);
 		}
 
 		public void Run(Block block, int pos, StatementTransformContext context)
@@ -46,12 +47,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			InlineOneIfPossible(block, pos, aggressive: IsCatchWhenBlock(block), context: context);
 		}
 
-		public static bool InlineAllInBlock(Block block, ILTransformContext context)
+		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
+		{
+			int? ctorCallStart = null;
+			return InlineAllInBlock(function, block, context, ref ctorCallStart);
+		}
+
+		static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context, ref int? ctorCallStart)
 		{
 			bool modified = false;
-			int i = 0;
-			while (i < block.Instructions.Count) {
-				if (InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block) || IsInConstructorInitializer(i, block), context: context)) {
+			var instructions = block.Instructions;
+			for (int i = 0; i < instructions.Count;) {
+				if (instructions[i] is StLoc inst
+					&& InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst, ref ctorCallStart), context: context)) {
 					modified = true;
 					i = Math.Max(0, i - 1);
 					// Go back one step
@@ -62,21 +70,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return modified;
 		}
 
-		static bool IsInConstructorInitializer(int i, Block block)
+		static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst, ref int? ctorCallStart)
 		{
-			var inst = block.Instructions[i];
-			var topLevelBlock = inst.Ancestors.OfType<Block>().LastOrDefault();
-			var function = topLevelBlock.Ancestors.OfType<ILFunction>().FirstOrDefault(f => f.Parent == null);
-			if (topLevelBlock == null || function == null || !function.Method.IsConstructor)
+			if (ctorCallStart == null) {
+				if (function == null || !function.Method.IsConstructor)
+					ctorCallStart = -1;
+				else
+					ctorCallStart = function.Descendants.FirstOrDefault(d => d is CallInstruction call && !(call is NewObj)
+						&& call.Method.IsConstructor
+						&& call.Method.DeclaringType.IsReferenceType == true
+						&& call.Parent is Block)?.ILRange.Start ?? -1;
+			}
+			if (inst.ILRange.InclusiveEnd >= ctorCallStart.GetValueOrDefault())
 				return false;
-			var topLevelInst = inst.Ancestors.FirstOrDefault(instr => instr.Parent == topLevelBlock);
-			var ctorCall = function.Descendants.OfType<CallInstruction>().FirstOrDefault(call => !(call is NewObj) 
-				&& call.Method.IsConstructor
-				&& call.Method.DeclaringType.IsReferenceType == true
-				&& call.Parent is Block);
-			if (topLevelInst == null || ctorCall == null)
+			var topLevelInst = inst.Ancestors.LastOrDefault(instr => instr.Parent is Block);
+			if (topLevelInst == null)
 				return false;
-			return topLevelInst.ILRange.InclusiveEnd < ctorCall.ILRange.Start;
+			return topLevelInst.ILRange.InclusiveEnd < ctorCallStart.GetValueOrDefault();
 		}
 
 		static bool IsCatchWhenBlock(Block block)

@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			new RemoveDeadVariableInit().Run(function, context);
 			// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
 			foreach (var block in function.Descendants.OfType<Block>()) {
-				ILInlining.InlineAllInBlock(block, context);
+				ILInlining.InlineAllInBlock(function, block, context);
 			}
 			context.StepEndGroup();
 		}
