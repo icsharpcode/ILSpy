@@ -400,11 +400,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override ISignatureTypeProvider<string, GenericContext> CreateSignatureTypeProvider(bool includeNamespace)
-		{
-			return base.CreateSignatureTypeProvider(includeNamespace);
-		}
-
 		public override string TypeToString(Entity type, bool includeNamespace, CustomAttributeHandleCollection typeAttributes = default)
 		{
 			ConvertTypeOptions options = ConvertTypeOptions.IncludeTypeParameterDefinitions;
@@ -434,7 +429,12 @@ namespace ICSharpCode.ILSpy
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			return w.ToString();
 		}
-		
+
+		public override ISignatureTypeProvider<string, GenericContext> CreateSignatureTypeProvider(bool includeNamespace)
+		{
+			return base.CreateSignatureTypeProvider(includeNamespace);
+		}
+
 		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
 
 		public override string FormatPropertyName(Decompiler.Metadata.PropertyDefinition property, bool? isIndexer)

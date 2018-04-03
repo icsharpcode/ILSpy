@@ -37,6 +37,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Reflection.Metadata;
 using SRM = System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -272,24 +273,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		static bool IsSwitchOnStringCache(FieldDefinition field, MetadataReader metadata)
+		static bool IsSwitchOnStringCache(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
 		}
 
-		static bool IsAutomaticPropertyBackingField(FieldDefinition field, MetadataReader metadata)
+		static bool IsAutomaticPropertyBackingField(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			var name = metadata.GetString(field.Name);
 			return name.StartsWith("<", StringComparison.Ordinal) && name.EndsWith("BackingField", StringComparison.Ordinal);
 		}
 
-		static bool IsAnonymousMethodCacheField(FieldDefinition field, MetadataReader metadata)
+		static bool IsAnonymousMethodCacheField(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			var name = metadata.GetString(field.Name);
 			return name.StartsWith("CS$<>", StringComparison.Ordinal) || name.StartsWith("<>f__am", StringComparison.Ordinal);
 		}
 
-		static bool IsClosureType(TypeDefinition type, MetadataReader metadata)
+		static bool IsClosureType(SRM.TypeDefinition type, MetadataReader metadata)
 		{
 			var name = metadata.GetString(type.Name);
 			if (!type.Name.IsGeneratedName(metadata) || !type.IsCompilerGenerated(metadata))
@@ -307,6 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
 					stream = new MemoryStream();
 					fileStream.CopyTo(stream);
+					stream.Position = 0;
 				}
 			} else {
 				stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
@@ -416,9 +418,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 			MetadataReader metadata = typeSystem.ModuleDefinition.GetMetadataReader();
-			RequiredNamespaceCollector.CollectNamespaces(metadata, decompileRun.Namespaces);
+			RequiredNamespaceCollector.CollectNamespaces(typeSystem, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
-			DoDecompileTypes(metadata.TypeDefinitions, decompileRun, decompilationContext, syntaxTree);
+			DoDecompileTypes(metadata.GetTopLevelTypeDefinitions(), decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
 		}
@@ -426,7 +428,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ILTransformContext CreateILTransformContext(ILFunction function)
 		{
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
-			RequiredNamespaceCollector.CollectNamespaces((MethodDefinitionHandle)function.Method.MetadataToken, typeSystem.ModuleDefinition.Reader, decompileRun.Namespaces);
+			RequiredNamespaceCollector.CollectNamespaces(function.Method, typeSystem, decompileRun.Namespaces);
 			return new ILTransformContext(function, typeSystem, settings) {
 				CancellationToken = CancellationToken,
 				DecompileRun = decompileRun
@@ -458,7 +460,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			syntaxTree = new SyntaxTree();
 
 			foreach (var type in types)
-				RequiredNamespaceCollector.CollectNamespaces(type, typeSystem.ModuleDefinition.Reader, decompileRun.Namespaces);
+				RequiredNamespaceCollector.CollectNamespaces(type, typeSystem, decompileRun.Namespaces);
 			DoDecompileTypes(types, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -491,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
-			RequiredNamespaceCollector.CollectNamespaces((TypeDefinitionHandle)type.MetadataToken, typeSystem.ModuleDefinition.Reader, decompileRun.Namespaces);
+			RequiredNamespaceCollector.CollectNamespaces(type.MetadataToken, typeSystem, decompileRun.Namespaces);
 			DoDecompileTypes(new[] { (TypeDefinitionHandle)type.MetadataToken }, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -527,7 +529,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
 			foreach (var entity in definitions)
-				RequiredNamespaceCollector.CollectNamespaces(entity, typeSystem.ModuleDefinition.Reader, decompileRun.Namespaces);
+				RequiredNamespaceCollector.CollectNamespaces(entity, typeSystem, decompileRun.Namespaces);
 			foreach (var entity in definitions) {
 				if (entity.IsNil)
 					throw new ArgumentException("definitions contains null element");
