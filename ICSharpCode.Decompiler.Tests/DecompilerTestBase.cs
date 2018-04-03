@@ -27,6 +27,7 @@ using Microsoft.CSharp;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using System.Reflection.PortableExecutable;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Tests
 {
@@ -51,7 +52,9 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
 			using (var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion)) {
-				CSharpDecompiler decompiler = new CSharpDecompiler(new Metadata.PEFile("temp.exe", assembly, PEStreamOptions.Default), new DecompilerSettings());
+				var module = new Metadata.PEFile("temp.exe", assembly, PEStreamOptions.Default);
+				module.AssemblyResolver = new Metadata.UniversalAssemblyResolver(fileName, false, true, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
+				CSharpDecompiler decompiler = new CSharpDecompiler(module, new DecompilerSettings());
 
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
@@ -86,6 +89,7 @@ namespace ICSharpCode.Decompiler.Tests
 				using (var file = new FileStream(results.PathToAssembly, FileMode.Open, FileAccess.Read)) {
 					var memory = new MemoryStream();
 					file.CopyTo(memory);
+					memory.Position = 0;
 					return memory;
 				}
 			}
