@@ -507,13 +507,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			AddSecurityAttributes(methodDefinition.GetDeclarativeSecurityAttributes(), attributes);
 			if (methodDefinition.GetParameters().Count > 0) {
 				var retParam = currentMetadata.GetParameter(methodDefinition.GetParameters().First());
-				var marshallingDesc = retParam.GetMarshallingDescriptor();
+				if (retParam.SequenceNumber == 0) {
+					var marshallingDesc = retParam.GetMarshallingDescriptor();
 
-				if (!marshallingDesc.IsNil) {
-					returnTypeAttributes.Add(ConvertMarshalInfo(currentMetadata.GetBlobReader(marshallingDesc)));
+					if (!marshallingDesc.IsNil) {
+						returnTypeAttributes.Add(ConvertMarshalInfo(currentMetadata.GetBlobReader(marshallingDesc)));
+					}
+
+					AddCustomAttributes(retParam.GetCustomAttributes(), returnTypeAttributes);
 				}
-
-				AddCustomAttributes(retParam.GetCustomAttributes(), returnTypeAttributes);
 			}
 		}
 		#endregion
@@ -1232,16 +1234,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var declaringType = currentMetadata.GetTypeDefinition(method.GetDeclaringType());
 			var reader = currentMetadata.GetBlobReader(method.Signature);
 			var signature = method.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
-			var parameters = method.GetParameters();
-			int parameterOffset = parameters.Count > signature.ParameterTypes.Length ? 1 : 0;
-			CustomAttributeHandleCollection? returnAttributes = parameterOffset > 0 ? (CustomAttributeHandleCollection?)currentMetadata.GetParameter(parameters.First()).GetCustomAttributes() : null;
 
-			m.ReturnType = DynamicAwareTypeReference.Create(signature.ReturnType, returnAttributes, currentMetadata);
+			var parameters = method.GetParameters();
+			m.ReturnType = HandleReturnType(parameters.FirstOrDefault(), signature.ReturnType);
 
 			int j = 0;
-			foreach (var par in method.GetParameters().Skip(parameterOffset)) {
-				m.Parameters.Add(ReadParameter(par, signature.ParameterTypes[j]));
-				j++;
+			foreach (var p in parameters) {
+				var par = currentMetadata.GetParameter(p);
+				if (par.SequenceNumber > 0) {
+					m.Parameters.Add(ReadParameter(par, signature.ParameterTypes[j]));
+					j++;
+				}
 			}
 
 			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
@@ -1293,6 +1296,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			FinishReadMember(m, handle);
 			return m;
+		}
+
+		ITypeReference HandleReturnType(ParameterHandle parameterHandle, ITypeReference returnType)
+		{
+			CustomAttributeHandleCollection? attributes = null;
+			if (!parameterHandle.IsNil) {
+				var par = currentMetadata.GetParameter(parameterHandle);
+				if (par.SequenceNumber == 0) {
+					attributes = par.GetCustomAttributes();
+				}
+			}
+			return DynamicAwareTypeReference.Create(returnType, attributes, currentMetadata);
 		}
 
 		static bool HasExtensionAttribute(MetadataReader currentModule, CustomAttributeHandleCollection attributes)
@@ -1362,11 +1377,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Read Parameter
-		public IUnresolvedParameter ReadParameter(ParameterHandle handle, ITypeReference type)
+		public IUnresolvedParameter ReadParameter(Parameter parameter, ITypeReference type)
 		{
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			var parameter = currentMetadata.GetParameter(handle);
 			var p = new DefaultUnresolvedParameter(DynamicAwareTypeReference.Create(type, parameter.GetCustomAttributes(), currentMetadata), interningProvider.Intern(currentMetadata.GetString(parameter.Name)));
 
 			if (type is ByReferenceTypeReference) {
@@ -1589,8 +1601,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				p.Accessibility = MergePropertyAccessibility(GetAccessibility(currentMetadata.GetMethodDefinition(accessors.Getter).Attributes), GetAccessibility(currentMetadata.GetMethodDefinition(accessors.Setter).Attributes));
 
 			var signature = property.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
-			p.ReturnType = DynamicAwareTypeReference.Create(signature.ReturnType, property.GetCustomAttributes(), currentMetadata);
-
 			p.Getter = ReadMethod(accessors.Getter, parentType, SymbolKind.Accessor, p);
 			p.Setter = ReadMethod(accessors.Setter, parentType, SymbolKind.Accessor, p);
 
@@ -1605,11 +1615,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 
+			p.ReturnType = HandleReturnType(parameterHandles.FirstOrDefault(), signature.ReturnType);
+
 			int i = 0;
-			int parameterOffset = parameterHandles.Count > signature.ParameterTypes.Length ? 1 : 0;
-			foreach (var par in parameterHandles.Skip(parameterOffset)) {
-				p.Parameters.Add(ReadParameter(par, signature.ParameterTypes[i]));
-				i++;
+			foreach (var h in parameterHandles) {
+				var par = currentMetadata.GetParameter(h);
+				if (par.SequenceNumber > 0 && i < signature.ParameterTypes.Length) {
+					p.Parameters.Add(ReadParameter(par, signature.ParameterTypes[i]));
+					i++;
+				}
 			}
 			AddAttributes(property, p);
 
