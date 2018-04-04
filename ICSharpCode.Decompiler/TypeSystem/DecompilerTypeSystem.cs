@@ -278,56 +278,42 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentException("HandleKind must be either a MethodDefinition, MemberReference or MethodSpecification", nameof(methodReference));
 			lock (methodLookupCache) {
 				IMethod method;
+				IType declaringType;
+				IReadOnlyList<IType> classTypeArguments = null;
+				IReadOnlyList<IType> methodTypeArguments = null;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
 					var metadata = moduleDefinition.GetMetadataReader();
-					IType declaringType;
-					ITypeDefinition declaringTypeDefinition;
 					switch (methodReference.Kind) {
 						case SRM.HandleKind.MethodDefinition:
 						case SRM.HandleKind.MemberReference:
-							method = FindNonGenericMethod(metadata, methodReference);
+							method = FindNonGenericMethod(metadata, methodReference, out declaringType);
 							break;
 						case SRM.HandleKind.MethodSpecification:
 							var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
-							method = FindNonGenericMethod(metadata, methodSpec.Method);
-							IReadOnlyList<IType> classTypeArguments = null;
-							IReadOnlyList<IType> methodTypeArguments = null;
+							method = FindNonGenericMethod(metadata, methodSpec.Method, out declaringType);
 							var typeArguments = methodSpec.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
 							if (typeArguments.Length > 0) {
 								methodTypeArguments = typeArguments.SelectArray(arg => arg.Resolve(context));
 							}
-							/*if (method.de) {
-								var git = (GenericInstanceType)methodReference.DeclaringType;
-								classTypeArguments = git.GenericArguments.SelectArray(Resolve);
-							}*/
-							method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 							break;
+						default:
+							throw new NotSupportedException();
+					}
+					if (declaringType.TypeArguments.Count > 0) {
+						classTypeArguments = declaringType.TypeArguments.ToList();
+					}
+					if (classTypeArguments != null || methodTypeArguments != null) {
+						method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 					}
 
-					/*method = FindNonGenericMethod(metadata, new Metadata.Entity(moduleDefinition, methodReference).ResolveAsMethod(), signature);
-					switch (methodReference.Kind) {
-						case SRM.HandleKind.StandaloneSignature:
-							var standaloneSignature = metadata.GetStandaloneSignature((SRM.StandaloneSignatureHandle)methodReference);
-							Debug.Assert(standaloneSignature.GetKind() == SRM.StandaloneSignatureKind.Method);
-							var signature = standaloneSignature.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
-						method = new VarArgInstanceMethod(
-							method,
-								signature.ParameterTypes.Skip(signature.RequiredParameterCount).Select(p => p.Resolve(context))
-						);
-							break;
-						case SRM.HandleKind.MethodSpecification:
-
-
-					}*/
 					methodLookupCache.Add(methodReference, method);
 				}
 				return method;
 			}
 		}
 
-		IMethod FindNonGenericMethod(SRM.MetadataReader metadata, SRM.EntityHandle methodReference)
+		IMethod FindNonGenericMethod(SRM.MetadataReader metadata, SRM.EntityHandle methodReference, out IType declaringType)
 		{
-			IType declaringType;
 			ITypeDefinition declaringTypeDefinition;
 			string name;
 			switch (methodReference.Kind) {
