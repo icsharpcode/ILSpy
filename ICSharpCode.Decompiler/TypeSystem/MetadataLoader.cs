@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		void AddMarshalInfo(BlobHandle marshalInfo, IList<IUnresolvedAttribute> target)
 		{
 			if (marshalInfo.IsNil) return;
-
+			target.Add(ConvertMarshalInfo(currentMetadata.GetBlobReader(marshalInfo)));
 		}
 
 		IUnresolvedAttribute ConvertMarshalInfo(System.Reflection.Metadata.BlobReader marshalInfo)
@@ -627,9 +627,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case 0x1e: // FixedArray
 					if (!marshalInfo.TryReadCompressedInteger(out size))
 						size = 0;
-					type = marshalInfo.ReadByte();
-					if (type != 0x66) // None
-						attr.AddNamedFieldArgument("ArraySubType", CreateSimpleConstantValue(unmanagedTypeTypeRef, type));
+					attr.AddNamedFieldArgument("SizeConst", CreateSimpleConstantValue(KnownTypeReference.Int32, size));
+					if (marshalInfo.RemainingBytes > 0) {
+						type = marshalInfo.ReadByte();
+						if (type != 0x66) // None
+							attr.AddNamedFieldArgument("ArraySubType", CreateSimpleConstantValue(unmanagedTypeTypeRef, type));
+					}
 					break;
 				case 0x1d: // SafeArray
 					if (marshalInfo.RemainingBytes > 0) {
