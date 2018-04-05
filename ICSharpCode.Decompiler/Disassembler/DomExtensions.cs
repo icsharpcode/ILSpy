@@ -290,6 +290,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					for (int i = 0; i < methodSignature.ParameterTypes.Length; ++i) {
 						if (i > 0)
 							output.Write(", ");
+						if (i == methodSignature.RequiredParameterCount)
+							output.Write("..., ");
 						methodSignature.ParameterTypes[i](ILNameSyntax.SignatureNoNamedTypeParameters);
 					}
 					output.Write(")");
@@ -337,7 +339,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			switch (parentHandle.Kind) {
 				case HandleKind.MethodDefinition:
-					new Metadata.MethodDefinition(module, (MethodDefinitionHandle)parentHandle).WriteTo(output);
+					var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)parentHandle);
+					new Metadata.TypeDefinition(module, methodDef.GetDeclaringType()).WriteTo(output, syntax);
 					break;
 				case HandleKind.ModuleReference:
 					output.Write('[');
