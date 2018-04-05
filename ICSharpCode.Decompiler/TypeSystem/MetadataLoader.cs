@@ -313,26 +313,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					throw new NotSupportedException();
 			}
 		}
-
-		sealed class TypeDefTokenTypeReference : ITypeReference
-		{
-			readonly EntityHandle token;
-
-			public TypeDefTokenTypeReference(EntityHandle token)
-			{
-				if (token.Kind != HandleKind.TypeDefinition)
-					throw new ArgumentException(nameof(token), "must be TypeDef token");
-				this.token = token;
-			}
-
-			public IType Resolve(ITypeResolveContext context)
-			{
-				ITypeDefinition td = context.CurrentAssembly.ResolveTypeDefToken(token);
-				if (td != null)
-					return td;
-				return SpecialType.UnknownType;
-			}
-		}
 		#endregion
 
 		#region Read Attributes

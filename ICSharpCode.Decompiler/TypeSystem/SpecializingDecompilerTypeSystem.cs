@@ -53,6 +53,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return substitution; }
 		}
 
+		public IType ResolveFromSignature(ITypeReference typeReference)
+		{
+			return context.ResolveFromSignature(typeReference).AcceptVisitor(substitution);
+		}
+
 		public IType ResolveAsType(System.Reflection.Metadata.EntityHandle typeReference)
 		{
 			return context.ResolveAsType(typeReference).AcceptVisitor(substitution);

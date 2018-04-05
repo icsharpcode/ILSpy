@@ -189,6 +189,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
+	sealed class TypeDefTokenTypeReference : ITypeReference
+	{
+		readonly SRM.EntityHandle token;
+
+		public TypeDefTokenTypeReference(SRM.EntityHandle token)
+		{
+			if (token.Kind != SRM.HandleKind.TypeDefinition)
+				throw new ArgumentException(nameof(token), "must be TypeDef token");
+			this.token = token;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			ITypeDefinition td = context.CurrentAssembly.ResolveTypeDefToken(token);
+			if (td != null)
+				return td;
+			return SpecialType.UnknownType;
+		}
+	}
+
 	class TypeReferenceSignatureDecoder : SRM.ISignatureTypeProvider<ITypeReference, Unit>
 	{
 		public static readonly TypeReferenceSignatureDecoder Instance = new TypeReferenceSignatureDecoder();
@@ -252,7 +272,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			return new GetClassTypeReference(handle.GetFullTypeName(reader), DefaultAssemblyReference.CurrentAssembly);
+			return new TypeDefTokenTypeReference(handle);
 		}
 
 		public ITypeReference GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)

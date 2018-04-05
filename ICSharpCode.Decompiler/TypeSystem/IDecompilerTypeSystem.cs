@@ -27,7 +27,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IDecompilerTypeSystem
 	{
 		ICompilation Compilation { get; }
-		
+
+		IType ResolveFromSignature(ITypeReference typeReference);
 		IType ResolveAsType(EntityHandle typeReference);
 		IField ResolveAsField(EntityHandle fieldReference);
 		IMethod ResolveAsMethod(EntityHandle methodReference);

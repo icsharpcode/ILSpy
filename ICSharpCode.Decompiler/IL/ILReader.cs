@@ -28,6 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ArrayType = ICSharpCode.Decompiler.TypeSystem.ArrayType;
 using ByReferenceType = ICSharpCode.Decompiler.TypeSystem.ByReferenceType;
+using PinnedType = ICSharpCode.Decompiler.TypeSystem.Implementation.PinnedType;
 using ICSharpCode.Decompiler.Disassembler;
 using System.Reflection.Metadata.Ecma335;
 
@@ -53,7 +54,6 @@ namespace ICSharpCode.Decompiler.IL
 		IMethod method;
 		MethodBodyBlock body;
 		Metadata.IDebugInfoProvider debugInfo;
-		ITypeResolveContext resolveContext;
 		MethodSignature<ITypeReference> methodSignature;
 		StackType methodReturnStackType;
 		BlobReader reader;
@@ -86,8 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
-			this.resolveContext = new SimpleTypeResolveContext(this.method);
-			this.methodReturnStackType = TypeSystem.Implementation.DynamicAwareTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata).Resolve(resolveContext).GetStackType();
+			this.methodReturnStackType = typeSystem.ResolveFromSignature(TypeSystem.Implementation.DynamicAwareTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata)).GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
 			if (body.LocalVariablesInitialized) {
@@ -140,7 +139,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		void InitParameterVariables()
 		{
-			parameterVariables = new ILVariable[GetPopCount(OpCode.Call, method)];
+			int popCount = method.Parameters.Count;
+			if (!method.IsStatic)
+				popCount++;
+			if (method.Parameters.LastOrDefault()?.Type == SpecialType.ArgList)
+				popCount--;
+			parameterVariables = new ILVariable[popCount];
 			int paramIndex = 0; int offset = 0;
 			if (methodSignature.Header.IsInstance) {
 				offset = 1;
@@ -154,10 +158,17 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(paramIndex == parameterVariables.Length);
 		}
 
-		ILVariable CreateILVariable(int index, ITypeReference type)
+		ILVariable CreateILVariable(int index, ITypeReference typeRef)
 		{
-			VariableKind kind = IsPinned(type) ? VariableKind.PinnedLocal : VariableKind.Local;
-			ILVariable ilVar = new ILVariable(kind, type.Resolve(resolveContext), index);
+			IType type = typeSystem.ResolveFromSignature(typeRef);
+			VariableKind kind;
+			if (type is PinnedType pinned) {
+				kind = VariableKind.PinnedLocal;
+				type = pinned.ElementType;
+			} else {
+				kind = VariableKind.Local;
+			}
+			ILVariable ilVar = new ILVariable(kind, type, index);
 			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name)) {
 				ilVar.Name = "V_" + index;
 				ilVar.HasGeneratedName = true;
@@ -170,14 +181,13 @@ namespace ICSharpCode.Decompiler.IL
 			return ilVar;
 		}
 
-		bool IsPinned(ITypeReference type)
-		{
-			return type is TypeSystem.Implementation.PinnedTypeReference;
-		}
-
 		ILVariable CreateILVariable(int index, ITypeReference typeReference, string name)
 		{
-			IType parameterType = typeReference.Resolve(resolveContext);
+			IType parameterType = typeSystem.ResolveFromSignature(typeReference);
+			ITypeDefinition def = parameterType.GetDefinition();
+			if (def != null && index < 0 && def.IsReferenceType == false) {
+				parameterType = new ByReferenceType(parameterType);
+			}
 			Debug.Assert(!parameterType.IsUnbound());
 			if (parameterType.IsUnbound()) {
 				// parameter types should not be unbound, the only known cause for these is a Cecil bug:
@@ -1288,12 +1298,12 @@ namespace ICSharpCode.Decompiler.IL
 			var parameterTypes = new IType[signature.ParameterTypes.Length];
 			var arguments = new ILInstruction[parameterTypes.Length];
 			for (int i = signature.ParameterTypes.Length - 1; i >= 0; i--) {
-				parameterTypes[i] = signature.ParameterTypes[i].Resolve(resolveContext);
+				parameterTypes[i] = typeSystem.ResolveFromSignature(signature.ParameterTypes[i]);
 				arguments[i] = Pop(parameterTypes[i].GetStackType());
 			}
 			var call = new CallIndirect(
 				signature.Header.CallingConvention,
-				signature.ReturnType.Resolve(resolveContext),
+				typeSystem.ResolveFromSignature(signature.ReturnType),
 				parameterTypes.ToImmutableArray(),
 				arguments,
 				functionPointer
@@ -1302,14 +1312,6 @@ namespace ICSharpCode.Decompiler.IL
 				return Push(call);
 			else
 				return call;
-		}
-
-		static int GetPopCount(OpCode callCode, IMethod method)
-		{
-			int popCount = method.Parameters.Count;
-			if (callCode != OpCode.NewObj && !method.IsStatic)
-				popCount++;
-			return popCount;
 		}
 
 		ILInstruction Comparison(ComparisonKind kind, bool un = false)
