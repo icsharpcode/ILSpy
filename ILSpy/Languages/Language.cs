@@ -409,19 +409,18 @@ namespace ICSharpCode.ILSpy
 				case SRM.PrimitiveTypeCode.IntPtr:
 					return "native int";
 				case SRM.PrimitiveTypeCode.UIntPtr:
-					break;
+					return "native uint";
 				case SRM.PrimitiveTypeCode.Object:
 					return "object";
 				case SRM.PrimitiveTypeCode.String:
 					return "string";
 				case SRM.PrimitiveTypeCode.TypedReference:
-					break;
+					return "typedref";
 				case SRM.PrimitiveTypeCode.Void:
 					return "void";
 				default:
-					break;
+					throw new NotImplementedException();
 			}
-			throw new NotImplementedException();
 		}
 
 		public string GetSZArrayType(string elementType)
