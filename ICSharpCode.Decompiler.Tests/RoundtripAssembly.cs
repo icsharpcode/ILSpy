@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Tests
 						var resolver = new UniversalAssemblyResolver(file, false, true, module.Reader.DetectTargetFrameworkId(), System.Reflection.PortableExecutable.PEStreamOptions.Default);
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
-
+						module.AssemblyResolver = resolver;
 						var decompiler = new TestProjectDecompiler(inputDir);
 						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");

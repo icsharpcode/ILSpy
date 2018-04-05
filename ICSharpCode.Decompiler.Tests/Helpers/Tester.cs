@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static CSharpDecompiler GetDecompilerForSnippet(string csharpText)
 		{
-			/*var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpText);
+			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpText);
 			var compilation = CSharpCompilation.Create(
 				"TestAssembly",
 				new[] { syntaxTree },
@@ -332,11 +332,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var emitResult = compilation.Emit(peStream);
 			peStream.Position = 0;
 
-			var moduleDefinition = ModuleDefinition.ReadModule(peStream);
+			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, PEStreamOptions.Default);
+			moduleDefinition.AssemblyResolver = new UniversalAssemblyResolver(typeof(Tester).Assembly.Location, false, true, moduleDefinition.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
 			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
 
-			return decompiler;*/
-			throw new NotImplementedException();
+			return decompiler;
 		}
 
 		internal static string GetSuffix(CSharpCompilerOptions cscOptions)
