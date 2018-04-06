@@ -33,6 +33,7 @@ using System.Threading;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
 using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
+using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -128,16 +129,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				w.WriteValue(platformName);
 				w.WriteEndElement(); // </Platform>
 
-				switch (module.Reader.PEHeaders.PEHeader.Subsystem) {
-					case Subsystem.WindowsGui:
-						w.WriteElementString("OutputType", "WinExe");
-						break;
-					case Subsystem.WindowsCui:
-						w.WriteElementString("OutputType", "Exe");
-						break;
-					default:
-						w.WriteElementString("OutputType", "Library");
-						break;
+				if (module.Reader.PEHeaders.IsDll) {
+					w.WriteElementString("OutputType", "Library");
+				} else {
+					switch (module.Reader.PEHeaders.PEHeader.Subsystem) {
+						case Subsystem.WindowsGui:
+							w.WriteElementString("OutputType", "WinExe");
+							break;
+						case Subsystem.WindowsCui:
+							w.WriteElementString("OutputType", "Exe");
+							break;
+						default:
+							w.WriteElementString("OutputType", "Library");
+							break;
+					}
 				}
 
 				w.WriteElementString("AssemblyName", module.Name);
@@ -296,7 +301,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
 		{
 			var metadata = module.GetMetadataReader();
-			var files = module.GetMetadataReader().TypeDefinitions.Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
+			var files = module.GetMetadataReader().GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
 				delegate (TypeDefinitionHandle h) {
 					var type = metadata.GetTypeDefinition(h);
 					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";
