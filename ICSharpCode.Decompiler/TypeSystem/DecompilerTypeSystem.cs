@@ -202,7 +202,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IField CreateFakeField(IType declaringType, string name, ITypeReference returnType)
 		{
-			Debug.Assert(false, $"Creating fake field for {name}!");
 			var f = new DefaultUnresolvedField();
 			f.Name = name;
 			f.ReturnType = returnType;
@@ -386,7 +385,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IMethod CreateFakeMethod(IType declaringType, string name, SRM.MethodSignature<ITypeReference> signature)
 		{
-			Debug.Assert(declaringType is ArrayType, $"Creating fake method for {name}!");
 			var m = new DefaultUnresolvedMethod();
 			if (name == ".ctor" || name == ".cctor")
 				m.SymbolKind = SymbolKind.Constructor;
