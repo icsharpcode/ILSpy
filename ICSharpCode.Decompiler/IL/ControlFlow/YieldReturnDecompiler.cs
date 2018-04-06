@@ -20,11 +20,11 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -42,24 +42,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// for a description of this step.
 
 		ILTransformContext context;
+		MetadataReader metadata;
 
 		/// <summary>The type that contains the function being decompiled.</summary>
-		TypeDefinition currentType;
+		TypeDefinitionHandle currentType;
 
 		/// <summary>The compiler-generated enumerator class.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
-		TypeDefinition enumeratorType;
+		TypeDefinitionHandle enumeratorType;
 
 		/// <summary>The constructor of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
-		MethodDefinition enumeratorCtor;
+		MethodDefinitionHandle enumeratorCtor;
 
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
 		bool isCompiledWithMono;
 
 		/// <summary>The dispose method of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
-		MethodDefinition disposeMethod;
+		MethodDefinitionHandle disposeMethod;
 
 		/// <summary>The field in the compiler-generated class holding the current state of the state machine</summary>
 		/// <remarks>Set in AnalyzeCtor() for MS, MatchEnumeratorCreationPattern() or AnalyzeMoveNext() for Mono</remarks>
@@ -105,9 +106,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.YieldReturn)
 				return; // abort if enumerator decompilation is disabled
 			this.context = context;
-			this.currentType = function.CecilMethod.DeclaringType;
-			this.enumeratorType = null;
-			this.enumeratorCtor = null;
+			this.metadata = context.TypeSystem.GetMetadata();
+			this.currentType = metadata.GetMethodDefinition((MethodDefinitionHandle)context.Function.Method.MetadataToken).GetDeclaringType();
+			this.enumeratorType = default;
+			this.enumeratorCtor = default;
 			this.stateField = null;
 			this.currentField = null;
 			this.fieldToParameterMap.Clear();
@@ -303,10 +305,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!(initialState == -2 || initialState == 0))
 				return false;
-			enumeratorCtor = context.TypeSystem.GetCecil(newObj.Method) as MethodDefinition;
-			enumeratorType = enumeratorCtor?.DeclaringType;
-			return enumeratorType?.DeclaringType == currentType
-				&& IsCompilerGeneratorEnumerator(enumeratorType);
+			enumeratorCtor = (MethodDefinitionHandle)newObj.Method.MetadataToken;
+			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
+			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
+				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
 		}
 
 		bool MatchMonoEnumeratorCreationNewObj(ILInstruction inst)
@@ -316,19 +318,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (newObj.Arguments.Count != 0)
 				return false;
-			enumeratorCtor = context.TypeSystem.GetCecil(newObj.Method) as MethodDefinition;
-			enumeratorType = enumeratorCtor?.DeclaringType;
-			return enumeratorType?.DeclaringType == currentType
-				&& IsCompilerGeneratorEnumerator(enumeratorType);
+			enumeratorCtor = (MethodDefinitionHandle)newObj.Method.MetadataToken;
+			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
+			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
+				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
 		}
 
-		public static bool IsCompilerGeneratorEnumerator(TypeDefinition type)
+		public static bool IsCompilerGeneratorEnumerator(TypeDefinitionHandle type, MetadataReader metadata)
 		{
-			if (!(type?.DeclaringType != null && type.IsCompilerGenerated()))
+			TypeDefinition td;
+			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
-			foreach (var i in type.Interfaces) {
-				var tr = i.InterfaceType;
-				if (tr.Namespace == "System.Collections" && tr.Name == "IEnumerator")
+			foreach (var i in td.GetInterfaceImplementations()) {
+				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
+				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Collections" && tr.TopLevelTypeName.Name == "IEnumerator")
 					return true;
 			}
 			return false;
@@ -359,12 +362,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Creates ILAst for the specified method, optimized up to before the 'YieldReturn' step.
 		/// </summary>
-		internal static ILFunction CreateILAst(MethodDefinition method, ILTransformContext context)
+		internal static ILFunction CreateILAst(MethodDefinitionHandle method, ILTransformContext context)
 		{
-			if (method == null || !method.HasBody)
+			var typeSystem = context.TypeSystem;
+			var metadata = typeSystem.GetMetadata();
+			if (method.IsNil || !method.HasBody(metadata))
 				throw new SymbolicAnalysisFailedException();
 
-			var typeSystem = context.TypeSystem;
+			var methodDef = metadata.GetMethodDefinition(method);
+
 			var sdtp = typeSystem as SpecializingDecompilerTypeSystem;
 			if (sdtp != null) {
 				typeSystem = new SpecializingDecompilerTypeSystem(
@@ -376,7 +382,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					)
 				);
 			}
-			var il = new ILReader(typeSystem).ReadIL(method.Body, context.CancellationToken);
+			var il = new ILReader(typeSystem).ReadIL(typeSystem.ModuleDefinition, method, typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress), context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
 				new ILTransformContext(il, typeSystem, context.Settings) {
 					CancellationToken = context.CancellationToken,
@@ -392,9 +398,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeCurrentProperty()
 		{
-			MethodDefinition getCurrentMethod = enumeratorType.Methods.FirstOrDefault(
-				m => m.Name.StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
-				&& m.Name.EndsWith(".get_Current", StringComparison.Ordinal));
+			MethodDefinitionHandle getCurrentMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
+				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
+				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".get_Current", StringComparison.Ordinal));
 			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException();
@@ -426,10 +432,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region Figure out the mapping of IEnumerable fields to IEnumerator fields  (analysis of GetEnumerator())
 		void ResolveIEnumerableIEnumeratorFieldMapping()
 		{
-			MethodDefinition getEnumeratorMethod = enumeratorType.Methods.FirstOrDefault(
-				m => m.Name.StartsWith("System.Collections.Generic.IEnumerable", StringComparison.Ordinal)
-				&& m.Name.EndsWith(".GetEnumerator", StringComparison.Ordinal));
-			if (getEnumeratorMethod == null)
+			MethodDefinitionHandle getEnumeratorMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(
+				m => metadata.GetString(metadata.GetMethodDefinition(m).Name).StartsWith("System.Collections.Generic.IEnumerable", StringComparison.Ordinal)
+				&& metadata.GetString(metadata.GetMethodDefinition(m).Name).EndsWith(".GetEnumerator", StringComparison.Ordinal));
+			if (getEnumeratorMethod.IsNil)
 				return; // no mappings (maybe it's just an IEnumerator implementation?)
 			var function = CreateILAst(getEnumeratorMethod, context);
 			foreach (var block in function.Descendants.OfType<Block>()) {
@@ -455,12 +461,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (isCompiledWithMono) {
 				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
-				disposeMethod = null;
-				finallyMethodToStateRange = null;
+				disposeMethod = default;
+				finallyMethodToStateRange = default;
 				return;
 			}
 
-			disposeMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "System.IDisposable.Dispose");
+			disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
 			var function = CreateILAst(disposeMethod, context);
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
@@ -485,7 +491,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		BlockContainer AnalyzeMoveNext()
 		{
 			context.StepStartGroup("AnalyzeMoveNext");
-			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
+			MethodDefinitionHandle moveNextMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "MoveNext");
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod, context);
 
 			// Copy-propagate temporaries holding a copy of 'this'.
@@ -503,7 +509,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var faultBlock = faultBlockContainer.Blocks.Single();
 				if (!(faultBlock.Instructions.Count == 2
 					&& faultBlock.Instructions[0] is Call call
-					&& context.TypeSystem.GetCecil(call.Method) == disposeMethod
+					&& call.Method.MetadataToken == disposeMethod
 					&& call.Arguments.Count == 1
 					&& call.Arguments[0].MatchLdThis()
 					&& faultBlock.Instructions[1].MatchLeave(faultBlockContainer))) {
@@ -823,7 +829,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void DecompileFinallyBlocks()
 		{
 			foreach (var method in finallyMethodToStateRange.Keys) {
-				var function = CreateILAst((MethodDefinition)context.TypeSystem.GetCecil(method), context);
+				var function = CreateILAst((MethodDefinitionHandle)method.MetadataToken, context);
 				var body = (BlockContainer)function.Body;
 				var newState = GetNewState(body.EntryPoint);
 				if (newState != null) {

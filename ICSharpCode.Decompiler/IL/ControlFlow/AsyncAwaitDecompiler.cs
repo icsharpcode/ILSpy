@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -32,19 +33,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class AsyncAwaitDecompiler : IILTransform
 	{
-		public static bool IsCompilerGeneratedStateMachine(Mono.Cecil.TypeDefinition type)
+		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
-			if (!(type.DeclaringType != null && type.IsCompilerGenerated()))
+			TypeDefinition td;
+			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
-			foreach (var i in type.Interfaces) {
-				var iface = i.InterfaceType;
-				if (iface.Namespace == "System.Runtime.CompilerServices" && iface.Name == "IAsyncStateMachine")
+			foreach (var i in td.GetInterfaceImplementations()) {
+				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
+				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Runtime.CompilerServices" && tr.TopLevelTypeName.Name == "IAsyncStateMachine")
 					return true;
 			}
 			return false;
 		}
 
-		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, System.Reflection.Metadata.MethodDefinitionHandle method)
+		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
 		{
 			var metadata = module.GetMetadataReader();
 			var definition = metadata.GetMethodDefinition(method);
@@ -60,6 +62,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		ILTransformContext context;
+		MetadataReader metadata;
 
 		// These fields are set by MatchTaskCreationPattern()
 		IType taskType; // return type of the async method
@@ -95,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.AsyncAwait)
 				return; // abort if async/await decompilation is disabled
 			this.context = context;
+			this.metadata = context.TypeSystem.GetMetadata();
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
@@ -328,7 +332,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeMoveNext()
 		{
-			var moveNextMethod = context.TypeSystem.GetCecil(stateMachineType)?.Methods.FirstOrDefault(f => f.Name == "MoveNext");
+			if (stateMachineType.MetadataToken.IsNil)
+				throw new SymbolicAnalysisFailedException();
+			var moveNextMethod = metadata.GetTypeDefinition((TypeDefinitionHandle)stateMachineType.MetadataToken).GetMethods().FirstOrDefault(f => metadata.GetString(metadata.GetMethodDefinition(f).Name)== "MoveNext");
 			if (moveNextMethod == null)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);

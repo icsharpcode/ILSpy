@@ -80,8 +80,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new InlineReturnTransform(),
-				//new YieldReturnDecompiler(), // must run after inlining but before loop detection
-				//new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
+				new YieldReturnDecompiler(), // must run after inlining but before loop detection
+				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new EarlyExpressionTransforms(),
@@ -222,8 +222,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
 						return true;
-					/*if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, (MethodDefinitionHandle)member))
-						return true;*/
+					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, (MethodDefinitionHandle)member))
+						return true;
 					return false;
 				case HandleKind.TypeDefinition:
 					var typeHandle = (TypeDefinitionHandle)member;
@@ -232,10 +232,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!type.GetDeclaringType().IsNil) {
 						if (settings.AnonymousMethods && IsClosureType(type, metadata))
 							return true;
-						/*if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
+						if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(typeHandle, metadata))
 							return true;
-						if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
-							return true;*/
+						if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(typeHandle, metadata))
+							return true;
 						if (settings.FixedBuffers && name.StartsWith("<", StringComparison.Ordinal) && name.Contains("__FixedBuffer"))
 							return true;
 					} else if (type.IsCompilerGenerated(metadata)) {
