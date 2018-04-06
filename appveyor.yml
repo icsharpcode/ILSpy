@@ -1,0 +1,41 @@
+platform: Any CPU
+configuration:
+- Debug
+- Release
+image: Visual Studio 2017
+install:
+- git submodule update --init --recursive
+- ps: .\BuildTools\appveyor-install.ps1
+nuget:
+  account_feed: false
+  project_feed: true
+  disable_publish_on_pr: true
+before_build:
+- nuget restore ILSpy.sln
+build_script:
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+after_build:
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.config
+test:
+  assemblies:
+    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net46\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net46\ILSpy.BamlDecompiler.Tests.dll'
+after_test:
+- python BuildTools\tidy.py
+for:
+- branches:
+    except:
+      - master
+  artifacts:
+    #nothing
+- branches:
+    only:
+      - master
+      - 3.0.x
+  artifacts:
+    - path: ILSpy_binaries.zip
+      name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
+    - path: '**\*.vsix'
+      name: ILSpy AddIn for Visual Studio
+    - path: '**\*.nupkg'
+      name: ICSharpCode.Decompiler %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% NuGet
