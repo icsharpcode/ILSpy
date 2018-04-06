@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>7.2</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
