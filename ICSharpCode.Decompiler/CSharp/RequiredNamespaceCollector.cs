@@ -39,6 +39,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						CollectNamespacesForTypeReference(baseType, namespaces);
 					}
 
+					foreach (var nestedType in td.NestedTypes) {
+						CollectNamespaces(nestedType, typeSystem, namespaces);
+					}
+
 					foreach (var field in td.Fields) {
 						CollectNamespaces(field, typeSystem, namespaces);
 					}
@@ -100,6 +104,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var arg in parameterizedType.TypeArguments)
 						CollectNamespacesForTypeReference(arg, namespaces);
 					break;
+				case ByReferenceType byReferenceType:
+					CollectNamespacesForTypeReference(byReferenceType.ElementType, namespaces);
+					break;
+				case PointerType pointerType:
+					CollectNamespacesForTypeReference(pointerType.ElementType, namespaces);
+					break;
 				default:
 					namespaces.Add(type.Namespace);
 					break;
@@ -132,6 +142,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var instructions = method.GetILReader();
 			var metadata = reader.GetMetadataReader();
+
+			if (!method.LocalSignature.IsNil) {
+				var localSignature = metadata.GetStandaloneSignature(method.LocalSignature).DecodeLocalSignature(TypeReferenceSignatureDecoder.Instance, default);
+				foreach (var type in localSignature)
+					CollectNamespacesForTypeReference(typeSystem.ResolveFromSignature(type), namespaces);
+			}
+
+			foreach (var region in method.ExceptionRegions) {
+				if (region.CatchType.IsNil) continue;
+				CollectNamespacesForTypeReference(typeSystem.ResolveAsType(region.CatchType), namespaces);
+			}
+
 			while (instructions.RemainingBytes > 0) {
 				var opCode = instructions.DecodeOpCode();
 				switch (opCode.GetOperandType()) {
