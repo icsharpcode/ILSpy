@@ -18,7 +18,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition)) {
 				var attribute = reader.GetCustomAttribute(h);
-				if (attribute.GetAttributeType(reader).ToString() != TargetFrameworkAttributeName)
+				if (attribute.GetAttributeType(reader).GetFullTypeName(reader).ToString() != TargetFrameworkAttributeName)
 					continue;
 				var blobReader = reader.GetBlobReader(attribute.Value);
 				if (blobReader.ReadUInt16() == 0x0001) {
