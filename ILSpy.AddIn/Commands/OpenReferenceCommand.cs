@@ -33,21 +33,41 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", reference.Name);
 			} else {
 				dynamic referenceObject = item.Object;
-				var values = GetProperties(referenceObject.Properties, "Type", "FusionName", "ResolvedPath");
-				if (values[0] == "Package") {
-					values = GetProperties(referenceObject.Properties, "Name", "Version", "Path");
-					if (values[0] != null && values[1] != null && values[2] != null) {
-						OpenAssembliesInILSpy(new[] { $"{values[2]}\\{values[0]}.{values[1]}.nupkg" });
+				if (TryGetProjectFileName(referenceObject, out string fileName)) {
+					var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == fileName);
+					var references = GetReferences(roslynProject);
+					if (references.TryGetValue(referenceObject.Name, out string path)) {
+						OpenAssembliesInILSpy(new[] { path });
 						return;
 					}
-				} else if (values[2] != null) {
-					OpenAssembliesInILSpy(new[] { $"{values[2]}" });
-					return;
-				} else if (!string.IsNullOrWhiteSpace(values[1])) {
-					OpenAssembliesInILSpy(new string[] { GacInterop.FindAssemblyInNetGac(AssemblyNameReference.Parse(values[1])) });
-					return;
+				} else {
+					var values = GetProperties(referenceObject.Properties, "Type", "FusionName", "ResolvedPath");
+					if (values[0] == "Package") {
+						values = GetProperties(referenceObject.Properties, "Name", "Version", "Path");
+						if (values[0] != null && values[1] != null && values[2] != null) {
+							OpenAssembliesInILSpy(new[] { $"{values[2]}\\{values[0]}.{values[1]}.nupkg" });
+							return;
+						}
+					} else if (values[2] != null) {
+						OpenAssembliesInILSpy(new[] { $"{values[2]}" });
+						return;
+					} else if (!string.IsNullOrWhiteSpace(values[1])) {
+						OpenAssembliesInILSpy(new string[] { GacInterop.FindAssemblyInNetGac(AssemblyNameReference.Parse(values[1])) });
+						return;
+					}
 				}
 				owner.ShowMessage("Could not find reference '{0}', please ensure the project and all references were built correctly!", referenceObject.Name);
+			}
+		}
+
+		private bool TryGetProjectFileName(dynamic referenceObject, out string fileName)
+		{
+			try {
+				fileName = referenceObject.Project.FileName;
+				return true;
+			} catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
+				fileName = null;
+				return false;
 			}
 		}
 
