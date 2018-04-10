@@ -18,9 +18,9 @@
 
 using System.Windows;
 using System.Windows.Controls;
-using Mono.Cecil;
 using System.Windows.Input;
 using System;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy
 {

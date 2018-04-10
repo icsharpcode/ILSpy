@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Mono.Cecil;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -88,7 +87,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return ~start;
 		}
-
+		/*
 		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
 			while (type.FullName != "System.Object") {
@@ -101,7 +100,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return false;
 		}
-
+		*/
 		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle token)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)

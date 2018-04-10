@@ -26,9 +26,8 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {

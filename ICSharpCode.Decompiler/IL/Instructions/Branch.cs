@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
+			get { return targetBlock != null ? targetBlock.Label : string.Format("IL_{0:x4}", TargetILOffset); }
 		}
 
 		/// <summary>

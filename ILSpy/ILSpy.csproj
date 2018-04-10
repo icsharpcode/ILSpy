@@ -75,7 +75,6 @@
     <Compile Include="AssemblyListManager.cs" />
     <Compile Include="AvalonEdit\ITextMarker.cs" />
     <Compile Include="AvalonEdit\TextMarkerService.cs" />
-    <Compile Include="Cecil\CecilExtensions.cs" />
     <Compile Include="Commands\CheckForUpdatesCommand.cs" />
     <Compile Include="Commands\BrowseBackCommand.cs" />
     <Compile Include="Commands\BrowseForwardCommand.cs" />
@@ -381,8 +380,7 @@
       <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
     </ItemGroup>

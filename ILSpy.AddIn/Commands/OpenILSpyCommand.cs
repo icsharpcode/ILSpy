@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					if (IsReferenceAssembly(assemblyDef)) {
-						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
+						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDef.FullName)));
 					} else {
 						dict.Add(assemblyDef.Name.Name, reference.Display);
 					}

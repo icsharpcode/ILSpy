@@ -4,7 +4,6 @@
 using System;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler
