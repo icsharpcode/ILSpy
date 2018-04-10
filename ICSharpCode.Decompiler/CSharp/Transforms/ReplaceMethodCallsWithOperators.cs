@@ -24,7 +24,6 @@ using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -79,7 +78,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
+					/*
 				case "System.Reflection.FieldInfo.GetFieldFromHandle":
+					// TODO : This is dead code because LdTokenAnnotation is not added anywhere:
 					if (arguments.Length == 1) {
 						MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
 						if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
@@ -103,6 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
+					*/
 				case "System.Activator.CreateInstance":
 					if (method.TypeArguments.Count == 1 && arguments.Length == 0 && method.TypeArguments[0].Kind == TypeKind.TypeParameter) {
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
