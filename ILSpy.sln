@@ -31,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Rebracer.xml = Rebracer.xml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.Decompiler.PdbProvider.Cecil", "ICSharpCode.Decompiler.PdbProvider.Cecil\ICSharpCode.Decompiler.PdbProvider.Cecil.csproj", "{B85A155A-9DD6-43BC-A624-2D8EC773D71F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
