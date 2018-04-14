@@ -119,16 +119,20 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToILNameString(this FullTypeName typeName)
 		{
-			var escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
-			if (typeName.TypeParameterCount > 0)
-				escapedName += "`" + typeName.TypeParameterCount;
+			string escapedName;
 			if (typeName.IsNested) {
+				escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
+				if (typeName.TypeParameterCount > 0)
+					escapedName += "`" + typeName.TypeParameterCount;
 				return $"{typeName.GetDeclaringType().ToILNameString()}/{escapedName}";
 			} else if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {
-				return $"{typeName.TopLevelTypeName.Namespace}.{escapedName}";
+				escapedName = Disassembler.DisassemblerHelpers.Escape($"{typeName.TopLevelTypeName.Namespace}.{typeName.Name}");
+				if (typeName.TypeParameterCount > 0)
+					escapedName += "`" + typeName.TypeParameterCount;
 			} else {
-				return $"{escapedName}";
+				escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
 			}
+			return escapedName;
 		}
 
 		public static AssemblyReferenceHandle GetDeclaringAssembly(this TypeReferenceHandle handle, MetadataReader reader)

@@ -317,6 +317,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					currentTypeRef = new Metadata.TypeReference(currentTypeRef.Module, (TypeReferenceHandle)currentTypeRef.ResolutionScope);
 				}
 				switch (currentTypeRef.ResolutionScope.Kind) {
+					case HandleKind.ModuleDefinition:
+						var modDef = metadata.GetModuleDefinition();
+						output.Write(DisassemblerHelpers.Escape(metadata.GetString(modDef.Name)));
+						break;
 					case HandleKind.ModuleReference:
 						break;
 					case HandleKind.AssemblyReference:
