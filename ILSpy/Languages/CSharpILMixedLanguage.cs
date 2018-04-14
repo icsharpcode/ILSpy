@@ -13,13 +13,12 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy
 {
-#if false
 	[Export(typeof(Language))]
 	class CSharpILMixedLanguage : ILLanguage
 	{
@@ -35,7 +34,7 @@ namespace ICSharpCode.ILSpy
 				options.CancellationToken);
 		}
 
-		static CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
+		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
@@ -54,7 +53,7 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly DecompilationOptions options;
 			// list sorted by IL offset
-			IList<Decompiler.IL.SequencePoint> sequencePoints;
+			IList<SequencePoint> sequencePoints;
 			// lines of raw c# source code
 			string[] codeLines;
 
@@ -64,27 +63,26 @@ namespace ICSharpCode.ILSpy
 				this.options = options;
 			}
 
-			public override void Disassemble(MethodBody body)
+			public override void Disassemble(MethodDefinition method)
 			{
-				var method = body.Method;
 				try {
 					var csharpOutput = new StringWriter();
 					CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
-					var st = decompiler.Decompile(method);
+					var st = decompiler.Decompile(method.Handle);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
-					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.CecilMethod == method);
-					this.sequencePoints = mapping.Value ?? (IList<Decompiler.IL.SequencePoint>)EmptyList<Decompiler.IL.SequencePoint>.Instance;
+					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.Method.MetadataToken == method.Handle);
+					this.sequencePoints = mapping.Value ?? (IList<SequencePoint>)EmptyList<SequencePoint>.Instance;
 					this.codeLines = csharpOutput.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-					base.Disassemble(body);
+					base.Disassemble(method);
 				} finally {
 					this.sequencePoints = null;
 					this.codeLines = null;
 				}
 			}
 
-			protected override void WriteInstruction(ITextOutput output, Instruction instruction)
+			protected override void WriteInstruction(ITextOutput output, Decompiler.Metadata.MethodDefinition method, ref System.Reflection.Metadata.BlobReader blob)
 			{
-				int index = sequencePoints.BinarySearch(instruction.Offset, seq => seq.Offset);
+				int index = sequencePoints.BinarySearch(blob.Offset, seq => seq.Offset);
 				if (index >= 0) {
 					var info = sequencePoints[index];
 					var highlightingOutput = output as ISmartTextOutput;
@@ -109,7 +107,7 @@ namespace ICSharpCode.ILSpy
 						highlightingOutput?.EndSpan();
 					}
 				}
-				base.WriteInstruction(output, instruction);
+				base.WriteInstruction(output, method, ref blob);
 			}
 
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
@@ -144,5 +142,4 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
-#endif
 }
