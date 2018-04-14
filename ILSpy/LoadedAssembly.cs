@@ -19,11 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpy.DebugInfo;
 using ICSharpCode.ILSpy.Options;
 
 using static System.Reflection.Metadata.PEReaderExtensions;
@@ -144,28 +146,28 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(PEFile module)
 		{
-			/*string pdbDirectory = Path.GetDirectoryName(fileName);
-			if (!reader.TryOpenAssociatedPortablePdb(pdbDirectory, OpenStream, out var provider, out var pdbFileName) {
-				return;
-			}
-
-			// search for pdb in same directory as dll
-			string pdbName = Path.Combine(, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
-			if (File.Exists(pdbName)) {
-				using (Stream s = File.OpenRead(pdbName)) {
-					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
+			string pdbDirectory = Path.GetDirectoryName(fileName);
+			var reader = module.Reader;
+			// try to open portable pdb file/embedded pdb info:
+			if (reader.TryOpenAssociatedPortablePdb(pdbDirectory, OpenStream, out var provider, out var pdbFileName)) {
+				module.DebugInfo = new PortableDebugInfoProvider(pdbFileName, provider);
+			} else {
+				// search for pdb in same directory as dll
+				pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
+				if (File.Exists(pdbFileName)) {
+					module.DebugInfo = new DiaSymNativeDebugInfoProvider(module, pdbFileName, File.OpenRead(pdbFileName));
+					return;
 				}
-				return;
+
+				// TODO: use symbol cache, get symbols from microsoft
 			}
-			
-			// TODO: use symbol cache, get symbols from microsoft
 
-			Stream OpenStream(string pdbFileName)
+			Stream OpenStream(string fileName)
 			{
-
-			}*/
+				return File.OpenRead(fileName);
+			}
 		}
-		
+
 		[ThreadStatic]
 		static int assemblyLoadDisableCount;
 		

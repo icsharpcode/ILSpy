@@ -70,7 +70,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		EntityHandle Handle { get; }
 	}
 
-	public struct Variable { }
+	public struct Variable
+	{
+		public string Name { get; set; }
+	}
 
 	public interface IDebugInfoProvider
 	{
@@ -530,12 +533,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public IList<SequencePoint> GetSequencePoints()
 		{
-			return Module.DebugInfo?.GetSequencePoints(Handle);
+			return Module.DebugInfo?.GetSequencePoints(Handle) ?? EmptyList<SequencePoint>.Instance;
 		}
 
 		public IList<Variable> GetVariables()
 		{
-			return Module.DebugInfo?.GetVariables(Handle);
+			return Module.DebugInfo?.GetVariables(Handle) ?? EmptyList<Variable>.Instance;
 		}
 	}
 

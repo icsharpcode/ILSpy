@@ -37,56 +37,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			get { return StartLine == 0xfeefee && StartLine == EndLine; }
 		}
 
-		public Document Document { get; set; }
+		public string DocumentUrl { get; set; }
 
 		internal void SetHidden()
 		{
 			StartLine = EndLine = 0xfeefee;
-		}
-	}
-
-	public struct Document : IEquatable<Document>
-	{
-		public PEFile Module { get; }
-		public DocumentHandle Handle { get; }
-		public bool IsNil => Handle.IsNil;
-
-		public Document(PEFile module, DocumentHandle handle) : this()
-		{
-			this.Module = module ?? throw new ArgumentNullException(nameof(module));
-			this.Handle = handle;
-		}
-
-		SRMDocument This() => Module.GetMetadataReader().GetDocument(Handle);
-
-		public bool Equals(Document other)
-		{
-			return Module == other.Module && Handle == other.Handle;
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (obj is Document md)
-				return Equals(md);
-			return false;
-		}
-
-		public override int GetHashCode()
-		{
-			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
-		}
-
-		public static bool operator ==(Document lhs, Document rhs) => lhs.Equals(rhs);
-		public static bool operator !=(Document lhs, Document rhs) => !lhs.Equals(rhs);
-
-		public string Url {
-			get {
-				if (Handle.IsNil)
-					return null;
-				var h = This().Name;
-				if (h.IsNil) return null;
-				return Module.GetMetadataReader().GetString(h);
-			}
 		}
 	}
 }

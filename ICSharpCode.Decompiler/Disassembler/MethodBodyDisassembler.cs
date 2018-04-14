@@ -269,7 +269,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (sp.IsHidden) {
 						output.WriteLine("hidden");
 					} else {
-						output.WriteLine($"(line {sp.StartLine}, col {sp.StartColumn}) to (line {sp.EndLine}, col {sp.EndColumn}) in {sp.Document.Url}");
+						output.WriteLine($"(line {sp.StartLine}, col {sp.StartColumn}) to (line {sp.EndLine}, col {sp.EndColumn}) in {sp.DocumentUrl}");
 					}
 					nextSequencePointIndex++;
 				}

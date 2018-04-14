@@ -50,7 +50,9 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
+    <PackageReference Include="Microsoft.DiaSymReader" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -102,6 +104,8 @@
     <Compile Include="CreateListDialog.xaml.cs">
       <DependentUpon>CreateListDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DebugInfo\DiaSymNativeDebugInfoProvider.cs" />
+    <Compile Include="DebugInfo\PortableDebugInfoProvider.cs" />
     <Compile Include="DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>

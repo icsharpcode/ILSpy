@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.methodSignature = methodDefinition.DecodeSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default); 
 			this.body = body;
 			this.reader = body.GetILReader();
-			//this.debugInfo = metadata.GetMethodDebugInformation(method.Handle.ToDebugInformationHandle());
+			this.debugInfo = module.DebugInfo;
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
