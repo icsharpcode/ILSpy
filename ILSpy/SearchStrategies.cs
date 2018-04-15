@@ -491,10 +491,10 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (MatchName(type, language)) 
+			if (MatchName(type, language))
 			{
 				string name = language.TypeToString(type, includeNamespace: false);
-				addResult(new SearchResult 
+				addResult(new SearchResult
 				{
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
