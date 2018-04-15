@@ -17,6 +17,7 @@ namespace ICSharpCode.ILSpy
 		protected string[] searchTerm;
 		protected Regex regex;
 		protected bool fullNameSearch;
+		protected bool allowNonContiguousMatch;
 
 		protected AbstractSearchStrategy(params string[] terms)
 		{
@@ -114,10 +115,35 @@ namespace ICSharpCode.ILSpy
 						}
 						break;
 					default:
-						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
-							return false;
+						if (!fullNameSearch && allowNonContiguousMatch) {
+							if (!IsNonContiguousMatch(text.ToLower(), term.ToLower()))
+								return false;
+						} else {
+							if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+								return false;
+						}
 						break;
 				}
+			}
+			return true;
+		}
+
+		private bool IsNonContiguousMatch(string text, string searchTerm)
+		{
+			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm)) {
+				return false;
+			}
+			var index = 0;
+			foreach (char c in searchTerm) {
+				while (index != text.Length) {
+					if (text[index] == c) {
+						index++;
+						break;
+					}
+					index++;
+				}
+				if (index == text.Length)
+					return false;
 			}
 			return true;
 		}
@@ -227,23 +253,23 @@ namespace ICSharpCode.ILSpy
 				if (value != null && value.LiteralValue != null) {
 					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
 					switch (valueType) {
-					case TypeCode.Byte:
-					case TypeCode.SByte:
-					case TypeCode.Int16:
-					case TypeCode.UInt16:
-					case TypeCode.Int32:
-					case TypeCode.UInt32:
-					case TypeCode.Int64:
-					case TypeCode.UInt64:
-						searchTermLiteralType = TypeCode.Int64;
-						searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, value.LiteralValue, false);
-						break;
-					case TypeCode.Single:
-					case TypeCode.Double:
-					case TypeCode.String:
-						searchTermLiteralType = valueType;
-						searchTermLiteralValue = value.LiteralValue;
-						break;
+						case TypeCode.Byte:
+						case TypeCode.SByte:
+						case TypeCode.Int16:
+						case TypeCode.UInt16:
+						case TypeCode.Int32:
+						case TypeCode.UInt32:
+						case TypeCode.Int64:
+						case TypeCode.UInt64:
+							searchTermLiteralType = TypeCode.Int64;
+							searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, value.LiteralValue, false);
+							break;
+						case TypeCode.Single:
+						case TypeCode.Double:
+						case TypeCode.String:
+							searchTermLiteralType = valueType;
+							searchTermLiteralValue = value.LiteralValue;
+							break;
 					}
 				}
 			}
@@ -301,74 +327,74 @@ namespace ICSharpCode.ILSpy
 				long val = (long)searchTermLiteralValue;
 				foreach (var inst in body.Instructions) {
 					switch (inst.OpCode.Code) {
-					case Code.Ldc_I8:
-						if (val == (long)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4:
-						if (val == (int)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4_S:
-						if (val == (sbyte)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4_M1:
-						if (val == -1)
-							return true;
-						break;
-					case Code.Ldc_I4_0:
-						if (val == 0)
-							return true;
-						break;
-					case Code.Ldc_I4_1:
-						if (val == 1)
-							return true;
-						break;
-					case Code.Ldc_I4_2:
-						if (val == 2)
-							return true;
-						break;
-					case Code.Ldc_I4_3:
-						if (val == 3)
-							return true;
-						break;
-					case Code.Ldc_I4_4:
-						if (val == 4)
-							return true;
-						break;
-					case Code.Ldc_I4_5:
-						if (val == 5)
-							return true;
-						break;
-					case Code.Ldc_I4_6:
-						if (val == 6)
-							return true;
-						break;
-					case Code.Ldc_I4_7:
-						if (val == 7)
-							return true;
-						break;
-					case Code.Ldc_I4_8:
-						if (val == 8)
-							return true;
-						break;
+						case Code.Ldc_I8:
+							if (val == (long)inst.Operand)
+								return true;
+							break;
+						case Code.Ldc_I4:
+							if (val == (int)inst.Operand)
+								return true;
+							break;
+						case Code.Ldc_I4_S:
+							if (val == (sbyte)inst.Operand)
+								return true;
+							break;
+						case Code.Ldc_I4_M1:
+							if (val == -1)
+								return true;
+							break;
+						case Code.Ldc_I4_0:
+							if (val == 0)
+								return true;
+							break;
+						case Code.Ldc_I4_1:
+							if (val == 1)
+								return true;
+							break;
+						case Code.Ldc_I4_2:
+							if (val == 2)
+								return true;
+							break;
+						case Code.Ldc_I4_3:
+							if (val == 3)
+								return true;
+							break;
+						case Code.Ldc_I4_4:
+							if (val == 4)
+								return true;
+							break;
+						case Code.Ldc_I4_5:
+							if (val == 5)
+								return true;
+							break;
+						case Code.Ldc_I4_6:
+							if (val == 6)
+								return true;
+							break;
+						case Code.Ldc_I4_7:
+							if (val == 7)
+								return true;
+							break;
+						case Code.Ldc_I4_8:
+							if (val == 8)
+								return true;
+							break;
 					}
 				}
 			} else if (searchTermLiteralType != TypeCode.Empty) {
 				Code expectedCode;
 				switch (searchTermLiteralType) {
-				case TypeCode.Single:
-					expectedCode = Code.Ldc_R4;
-					break;
-				case TypeCode.Double:
-					expectedCode = Code.Ldc_R8;
-					break;
-				case TypeCode.String:
-					expectedCode = Code.Ldstr;
-					break;
-				default:
-					throw new InvalidOperationException();
+					case TypeCode.Single:
+						expectedCode = Code.Ldc_R4;
+						break;
+					case TypeCode.Double:
+						expectedCode = Code.Ldc_R8;
+						break;
+					case TypeCode.String:
+						expectedCode = Code.Ldstr;
+						break;
+					default:
+						throw new InvalidOperationException();
 				}
 				foreach (var inst in body.Instructions) {
 					if (inst.OpCode.Code == expectedCode && searchTermLiteralValue.Equals(inst.Operand))
@@ -465,10 +491,10 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (MatchName(type, language))
+			if (MatchName(type, language)) 
 			{
 				string name = language.TypeToString(type, includeNamespace: false);
-				addResult(new SearchResult
+				addResult(new SearchResult 
 				{
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
