@@ -183,7 +183,121 @@
 
   } // end of class Test
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass12_0'
+  .class auto ansi nested assembly beforefieldinit Parent
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig newslot virtual 
+            instance void  Virtual() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Parent::Virtual
+
+    .method public hidebysig newslot virtual 
+            instance void  NewVirtual() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Parent::NewVirtual
+
+    .method public hidebysig instance void 
+            New() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Parent::New
+
+    .method public hidebysig instance void 
+            BaseOnly() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Parent::BaseOnly
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method Parent::.ctor
+
+  } // end of class Parent
+
+  .class auto ansi nested assembly beforefieldinit Child
+         extends ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent
+  {
+    .method public hidebysig virtual instance void 
+            Virtual() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_0006:  ret
+    } // end of method Child::Virtual
+
+    .method public hidebysig instance void 
+            NewVirtual() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::NewVirtual()
+      IL_0006:  ret
+    } // end of method Child::NewVirtual
+
+    .method public hidebysig instance void 
+            New() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::New()
+      IL_0006:  ret
+    } // end of method Child::New
+
+    .method public hidebysig instance void 
+            BaseQualifiers() cil managed
+    {
+      // Code size       43 (0x2b)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  callvirt   instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_0006:  ldarg.0
+      IL_0007:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_000c:  ldarg.0
+      IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Child::NewVirtual()
+      IL_0012:  ldarg.0
+      IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::NewVirtual()
+      IL_0018:  ldarg.0
+      IL_0019:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Child::New()
+      IL_001e:  ldarg.0
+      IL_001f:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::New()
+      IL_0024:  ldarg.0
+      IL_0025:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::BaseOnly()
+      IL_002a:  ret
+    } // end of method Child::BaseQualifiers
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::.ctor()
+      IL_0006:  ret
+    } // end of method Child::.ctor
+
+  } // end of class Child
+
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass14_0'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -196,7 +310,7 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass12_0'::.ctor
+    } // end of method '<>c__DisplayClass14_0'::.ctor
 
     .method assembly hidebysig instance int32 
             '<Conflicts>b__0'() cil managed
@@ -204,13 +318,13 @@
       // Code size       7 (0x7)
       .maxstack  8
       IL_0000:  ldarg.0
-      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0'::conflictWithVariable
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0'::conflictWithVariable
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass12_0'::'<Conflicts>b__0'
+    } // end of method '<>c__DisplayClass14_0'::'<Conflicts>b__0'
 
-  } // end of class '<>c__DisplayClass12_0'
+  } // end of class '<>c__DisplayClass14_0'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass13_0'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass15_0'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -224,7 +338,7 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass13_0'::.ctor
+    } // end of method '<>c__DisplayClass15_0'::.ctor
 
     .method assembly hidebysig instance int32 
             '<Capturing>b__0'() cil managed
@@ -232,53 +346,53 @@
       // Code size       19 (0x13)
       .maxstack  8
       IL_0000:  ldarg.0
-      IL_0001:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+      IL_0001:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
       IL_0006:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::fieldConflict
       IL_000b:  ldarg.0
-      IL_000c:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::fieldConflict
+      IL_000c:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::fieldConflict
       IL_0011:  add
       IL_0012:  ret
-    } // end of method '<>c__DisplayClass13_0'::'<Capturing>b__0'
+    } // end of method '<>c__DisplayClass15_0'::'<Capturing>b__0'
 
     .method assembly hidebysig instance int32 
             '<Capturing>b__1'() cil managed
     {
       // Code size       63 (0x3f)
       .maxstack  4
-      .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1' V_0)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::.ctor()
+      .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1' V_0)
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::'CS$<>8__locals1'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::'CS$<>8__locals1'
       IL_000d:  ldloc.0
       IL_000e:  ldc.i4.5
-      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::innerConflict
+      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::innerConflict
       IL_0014:  ldarg.0
-      IL_0015:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+      IL_0015:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
       IL_001a:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::fieldConflict
       IL_001f:  ldarg.0
-      IL_0020:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::fieldConflict
+      IL_0020:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::fieldConflict
       IL_0025:  add
       IL_0026:  ldarg.0
-      IL_0027:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+      IL_0027:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
       IL_002c:  ldloc.0
-      IL_002d:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::'<Capturing>b__2'()
+      IL_002d:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::'<Capturing>b__2'()
       IL_0033:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                      native int)
       IL_0038:  call       instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Capturer2(class [mscorlib]System.Func`1<int32>)
       IL_003d:  add
       IL_003e:  ret
-    } // end of method '<>c__DisplayClass13_0'::'<Capturing>b__1'
+    } // end of method '<>c__DisplayClass15_0'::'<Capturing>b__1'
 
-  } // end of class '<>c__DisplayClass13_0'
+  } // end of class '<>c__DisplayClass15_0'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass13_1'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass15_1'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public int32 innerConflict
-    .field public class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' 'CS$<>8__locals1'
+    .field public class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' 'CS$<>8__locals1'
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -287,7 +401,7 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass13_1'::.ctor
+    } // end of method '<>c__DisplayClass15_1'::.ctor
 
     .method assembly hidebysig instance int32 
             '<Capturing>b__2'() cil managed
@@ -295,25 +409,25 @@
       // Code size       53 (0x35)
       .maxstack  8
       IL_0000:  ldarg.0
-      IL_0001:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::'CS$<>8__locals1'
-      IL_0006:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+      IL_0001:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::'CS$<>8__locals1'
+      IL_0006:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
       IL_000b:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::innerConflict
       IL_0010:  ldarg.0
-      IL_0011:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::innerConflict
+      IL_0011:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::innerConflict
       IL_0016:  add
       IL_0017:  ldarg.0
-      IL_0018:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::'CS$<>8__locals1'
-      IL_001d:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+      IL_0018:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::'CS$<>8__locals1'
+      IL_001d:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
       IL_0022:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::fieldConflict
       IL_0027:  add
       IL_0028:  ldarg.0
-      IL_0029:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_1'::'CS$<>8__locals1'
-      IL_002e:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::fieldConflict
+      IL_0029:  ldfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_1'::'CS$<>8__locals1'
+      IL_002e:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::fieldConflict
       IL_0033:  add
       IL_0034:  ret
-    } // end of method '<>c__DisplayClass13_1'::'<Capturing>b__2'
+    } // end of method '<>c__DisplayClass15_1'::'<Capturing>b__2'
 
-  } // end of class '<>c__DisplayClass13_1'
+  } // end of class '<>c__DisplayClass15_1'
 
   .field private int32 fieldConflict
   .field private int32 innerConflict
@@ -405,19 +519,19 @@
   {
     // Code size       44 (0x2c)
     .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.5
-    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0'::conflictWithVariable
+    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0'::conflictWithVariable
     IL_000d:  ldarg.0
     IL_000e:  ldloc.0
-    IL_000f:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0'::conflictWithVariable
+    IL_000f:  ldfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0'::conflictWithVariable
     IL_0014:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::conflictWithVariable(int32)
     IL_0019:  ldarg.0
     IL_001a:  ldloc.0
-    IL_001b:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass12_0'::'<Conflicts>b__0'()
+    IL_001b:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass14_0'::'<Conflicts>b__0'()
     IL_0021:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
     IL_0026:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Capturer(class [mscorlib]System.Func`1<int32>)
@@ -429,24 +543,24 @@
   {
     // Code size       57 (0x39)
     .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldarg.0
-    IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<>4__this'
+    IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.Pretty.QualifierTests ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<>4__this'
     IL_000d:  ldloc.0
     IL_000e:  ldc.i4.5
-    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::fieldConflict
+    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::fieldConflict
     IL_0014:  ldarg.0
     IL_0015:  ldloc.0
-    IL_0016:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<Capturing>b__0'()
+    IL_0016:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<Capturing>b__0'()
     IL_001c:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
     IL_0021:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Capturer(class [mscorlib]System.Func`1<int32>)
     IL_0026:  ldarg.0
     IL_0027:  ldloc.0
-    IL_0028:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass13_0'::'<Capturing>b__1'()
+    IL_0028:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/'<>c__DisplayClass15_0'::'<Capturing>b__1'()
     IL_002e:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
     IL_0033:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests::Capturer(class [mscorlib]System.Func`1<int32>)
