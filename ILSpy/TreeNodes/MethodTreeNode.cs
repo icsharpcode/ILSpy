@@ -47,30 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(MethodDefinition method, Language language)
 		{
-			var b = new StringBuilder();
-			var metadata = method.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			var signatureProvider = language.CreateSignatureTypeProvider(false);
-			var signature = methodDefinition.DecodeSignature(signatureProvider, new GenericContext(method));
-
-			b.Append('(');
-			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-				if (i > 0)
-					b.Append(", ");
-				b.Append(signature.ParameterTypes[i]);
-			}
-			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
-				if (signature.ParameterTypes.Length > 0)
-					b.Append(", ");
-				b.Append("...");
-			}
-			if (methodDefinition.IsConstructor(metadata)) {
-				b.Append(')');
-			} else {
-				b.Append(") : ");
-				b.Append(signature.ReturnType);
-			}
-			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
+			return language.MethodToString(method, false, false);
 		}
 
 		public override object Icon => GetIcon(MethodDefinition);

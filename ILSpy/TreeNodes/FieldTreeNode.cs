@@ -43,10 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(FieldDefinition field, Language language)
 		{
-			var metadata = field.Module.GetMetadataReader();
-			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
-			string fieldType = fieldDefinition.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(fieldDefinition.GetDeclaringType(), field.Module));
-			return HighlightSearchMatch(metadata.GetString(fieldDefinition.Name), " : " + fieldType);
+			return language.FieldToString(field, includeTypeName: false, includeNamespace: false);
 		}
 
 		public override object Icon => GetIcon(FieldDefinition);

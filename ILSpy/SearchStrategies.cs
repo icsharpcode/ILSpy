@@ -152,15 +152,15 @@ namespace ICSharpCode.ILSpy
 			var metadata = member.Module.GetMetadataReader();
 			switch (member) {
 				case TypeDefinition t:
-					return language.TypeToString(t, fullName);
+					return language.TypeDefinitionToString(t, fullName);
 				case FieldDefinition f:
-					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetFieldDefinition(f.Handle).GetDeclaringType()), fullName) + "." + language.FormatFieldName(f) : language.FormatFieldName(f);
+					return language.FieldToString(f, fullName, fullName);
 				case PropertyDefinition p:
-					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(metadata.GetPropertyDefinition(p.Handle).GetAccessors().GetAny()).GetDeclaringType()), fullName) + "." + language.FormatPropertyName(p) : language.FormatPropertyName(p);
+					return language.PropertyToString(p, fullName, fullName, p.Handle.HasMatchingDefaultMemberAttribute(member.Module, out _));
 				case MethodDefinition m:
-					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(m.Handle).GetDeclaringType()), fullName) + "." + language.FormatMethodName(m) : language.FormatMethodName(m);
+					return language.MethodToString(m, fullName, fullName);
 				case EventDefinition e:
-					return fullName ? language.TypeToString(new TypeDefinition(member.Module, metadata.GetMethodDefinition(metadata.GetEventDefinition(e.Handle).GetAccessors().GetAny()).GetDeclaringType()), fullName) + "." + language.FormatEventName(e) : language.FormatEventName(e);
+					return language.EventToString(e, fullName, fullName);
 				default:
 					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}
@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy
 						Image = image(item),
 						Name = GetLanguageSpecificName(language, item),
 						LocationImage = TypeTreeNode.GetIcon(type),
-						Location = language.TypeToString(type, includeNamespace: true)
+						Location = language.TypeDefinitionToString(type, includeNamespace: true)
 					});
 				}
 			}
@@ -497,7 +497,7 @@ namespace ICSharpCode.ILSpy
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (MatchName(type, language)) {
-				string name = language.TypeToString(type, includeNamespace: false);
+				string name = language.TypeDefinitionToString(type, includeNamespace: false);
 				var metadata = type.Module.GetMetadataReader();
 				var declaringType = type.This().GetDeclaringType();
 				addResult(new SearchResult {
@@ -506,7 +506,7 @@ namespace ICSharpCode.ILSpy
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
 					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					Location = !declaringType.IsNil ? language.TypeDefinitionToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 
@@ -527,7 +527,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language))
 			{
-				string name = language.TypeToString(type, includeNamespace: false);
+				string name = language.TypeDefinitionToString(type, includeNamespace: false);
 				var metadata = type.Module.GetMetadataReader();
 				var declaringType = type.This().GetDeclaringType();
 				addResult(new SearchResult {
@@ -536,7 +536,7 @@ namespace ICSharpCode.ILSpy
 					Fitness = CalculateFitness(type),
 					Name = name,
 					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					Location = !declaringType.IsNil ? language.TypeDefinitionToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 

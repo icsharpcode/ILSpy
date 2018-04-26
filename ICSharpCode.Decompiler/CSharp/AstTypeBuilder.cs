@@ -25,23 +25,9 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		ConvertTypeOptions options;
 
-		public static AstType BuildAstType(EntityHandle type, PEFile module, GenericContext context, CustomAttributeHandleCollection customAttributes = default, ConvertTypeOptions options = ConvertTypeOptions.None)
+		public AstTypeBuilder(ConvertTypeOptions options)
 		{
-			if (type.IsNil)
-				return AstType.Null;
-			var metadata = module.GetMetadataReader();
-			var provider = new AstTypeBuilder() { options = options };
-			switch (type.Kind) {
-				case HandleKind.TypeDefinition:
-					return provider.GetTypeFromDefinition(metadata, (TypeDefinitionHandle)type, 0);
-				case HandleKind.TypeReference:
-					return provider.GetTypeFromReference(metadata, (TypeReferenceHandle)type, 0);
-				case HandleKind.TypeSpecification:
-					var ts = metadata.GetTypeSpecification((TypeSpecificationHandle)type);
-					return ts.DecodeSignature(provider, context);
-				default:
-					throw new NotSupportedException();
-			}
+			this.options = options;
 		}
 
 		public AstType GetArrayType(AstType elementType, ArrayShape shape)
@@ -61,17 +47,26 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetGenericInstantiation(AstType genericType, ImmutableArray<AstType> typeArguments)
 		{
-			return new ComposedType { BaseType = genericType };
+			switch (genericType) {
+				case SimpleType st:
+					st.TypeArguments.AddRange(typeArguments);
+					return st;
+				case MemberType mt:
+					mt.TypeArguments.AddRange(typeArguments);
+					return mt;
+				default:
+					throw new NotImplementedException();
+			}
 		}
 
 		public AstType GetGenericMethodParameter(GenericContext genericContext, int index)
 		{
-			throw new NotImplementedException();
+			return new SimpleType(genericContext.GetGenericMethodTypeParameterName(index));
 		}
 
 		public AstType GetGenericTypeParameter(GenericContext genericContext, int index)
 		{
-			throw new NotImplementedException();
+			return new SimpleType(genericContext.GetGenericMethodTypeParameterName(index));
 		}
 
 		public AstType GetModifiedType(AstType modifier, AstType unmodifiedType, bool isRequired)
@@ -91,48 +86,117 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
-			AstType t;
 			switch (typeCode) {
 				case PrimitiveTypeCode.Boolean:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Boolean");
+						return AstType.Create("System.Boolean");
+					}
 					return new PrimitiveType("bool");
 				case PrimitiveTypeCode.Byte:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Byte");
+						return AstType.Create("System.Byte");
+					}
 					return new PrimitiveType("byte");
 				case PrimitiveTypeCode.SByte:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("SByte");
+						return AstType.Create("System.SByte");
+					}
 					return new PrimitiveType("sbyte");
 				case PrimitiveTypeCode.Char:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Char");
+						return AstType.Create("System.Char");
+					}
 					return new PrimitiveType("char");
 				case PrimitiveTypeCode.Int16:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Int16");
+						return AstType.Create("System.Int16");
+					}
 					return new PrimitiveType("short");
 				case PrimitiveTypeCode.UInt16:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("UInt16");
+						return AstType.Create("System.UInt16");
+					}
 					return new PrimitiveType("ushort");
 				case PrimitiveTypeCode.Int32:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Int32");
+						return AstType.Create("System.In32");
+					}
 					return new PrimitiveType("int");
 				case PrimitiveTypeCode.UInt32:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("UInt32");
+						return AstType.Create("System.UInt32");
+					}
 					return new PrimitiveType("uint");
 				case PrimitiveTypeCode.Int64:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Int64");
+						return AstType.Create("System.Int64");
+					}
 					return new PrimitiveType("long");
 				case PrimitiveTypeCode.UInt64:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("UInt64");
+						return AstType.Create("System.UInt64");
+					}
 					return new PrimitiveType("ulong");
 				case PrimitiveTypeCode.Single:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Single");
+						return AstType.Create("System.Single");
+					}
 					return new PrimitiveType("float");
 				case PrimitiveTypeCode.Double:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Double");
+						return AstType.Create("System.Double");
+					}
 					return new PrimitiveType("double");
 				case PrimitiveTypeCode.IntPtr:
-					t = AstType.Create("System.IntPtr");
-					t.AddAnnotation(new FullTypeName("System.IntPtr"));
-					return t;
+					if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+						return AstType.Create("IntPtr");
+					return AstType.Create("System.IntPtr");
 				case PrimitiveTypeCode.UIntPtr:
-					t = AstType.Create("System.UIntPtr");
-					t.AddAnnotation(new FullTypeName("System.UIntPtr"));
-					return t;
+					if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+						return AstType.Create("UIntPtr");
+					return AstType.Create("System.UIntPtr");
 				case PrimitiveTypeCode.Object:
-					return new PrimitiveType("object"); // TODO : dynamic
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("Object");
+						return AstType.Create("System.Object");
+					}
+					return new PrimitiveType("object");
 				case PrimitiveTypeCode.String:
+					if ((options & ConvertTypeOptions.DoNotUsePrimitiveTypeNames) != 0) {
+						if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+							return AstType.Create("String");
+						return AstType.Create("System.String");
+					}
 					return new PrimitiveType("string");
 				case PrimitiveTypeCode.TypedReference:
-					t = AstType.Create("System.TypedReference");
-					t.AddAnnotation(new FullTypeName("System.TypedReference"));
-					return t;
+					if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+						return AstType.Create("TypedReference");
+					return AstType.Create("System.TypedReference");
 				case PrimitiveTypeCode.Void:
 					return new PrimitiveType("void");
 				default:
@@ -147,139 +211,73 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			AstType MakeAstType(FullTypeName fullTypeName)
-			{
-				if (fullTypeName.IsNested) {
-					if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
-						var outerType = MakeAstType(fullTypeName.GetDeclaringType());
-						return new MemberType(outerType, fullTypeName.Name);
-					} else {
-						return AstType.Create(fullTypeName.Name);
-					}
-				}
-				var name = Decompiler.TypeSystem.ReflectionHelper.SplitTypeParameterCountFromReflectionName(fullTypeName.ReflectionName, out int parameterCount);
-				if ((options & ConvertTypeOptions.IncludeNamespace) != 0)
-					return AstType.Create(name);
-				return AstType.Create(fullTypeName.Name);
-			}
-			return MakeAstType(handle.GetFullTypeName(reader));
+			var td = reader.GetTypeDefinition(handle);
+			var genericParams = td.GetGenericParameters().Select(gp => (AstType)new SimpleType(reader.GetString(reader.GetGenericParameter(gp).Name))).ToList();
+			return MakeAstType(handle.GetFullTypeName(reader), genericParams);
 		}
 
 		public AstType GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			throw new NotImplementedException();
+			return MakeAstType(handle.GetFullTypeName(reader), EmptyList<AstType>.Instance);
 		}
 
 		public AstType GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 		{
-			throw new NotImplementedException();
+			var ts = reader.GetTypeSpecification(handle);
+			return ts.DecodeSignature(this, genericContext);
 		}
-#if false
-		static void ApplyTypeArgumentsTo(AstType baseType, List<AstType> typeArguments)
-		{
-			SimpleType st = baseType as SimpleType;
-			if (st != null) {
-				TypeReference type = st.Annotation<TypeReference>();
-				if (type != null) {
-					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
-					if (typeParameterCount > typeArguments.Count)
-						typeParameterCount = typeArguments.Count;
-					st.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
-				} else {
-					st.TypeArguments.AddRange(typeArguments);
 
+		AstType MakeAstType(FullTypeName fullTypeName, IList<AstType> genericParams)
+		{
+			if (fullTypeName.IsNested) {
+				int count = fullTypeName.GetNestedTypeAdditionalTypeParameterCount(fullTypeName.NestingLevel - 1);
+				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
+					var outerType = MakeAstType(fullTypeName.GetDeclaringType(), genericParams);
+					var mt = new MemberType(outerType, fullTypeName.Name);
+					ApplyGenericParametersTo(mt, genericParams, count);
+					return mt;
+				} else {
+					var st = new SimpleType(fullTypeName.Name);
+					for (int i = 0; i < fullTypeName.TypeParameterCount - count; i++)
+						genericParams.RemoveAt(0);
+					ApplyGenericParametersTo(st, genericParams, count);
+					return st;
 				}
 			}
-			MemberType mt = baseType as MemberType;
-			if (mt != null) {
-				TypeReference type = mt.Annotation<TypeReference>();
-				if (type != null) {
-					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
-					if (typeParameterCount > typeArguments.Count)
-						typeParameterCount = typeArguments.Count;
-					mt.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
-					typeArguments.RemoveRange(typeArguments.Count - typeParameterCount, typeParameterCount);
-					if (typeArguments.Count > 0)
-						ApplyTypeArgumentsTo(mt.Target, typeArguments);
-				} else {
-					mt.TypeArguments.AddRange(typeArguments);
-				}
+			AstType baseType;
+			var topLevel = fullTypeName.TopLevelTypeName;
+			if ((options & ConvertTypeOptions.IncludeNamespace) != 0) {
+				baseType = AstType.Create(topLevel.Namespace + "." + topLevel.Name);
+			} else {
+				baseType = AstType.Create(topLevel.Name);
 			}
-		}
-#endif
-
-	}
-
-	class StringSignatureBuilder : ISignatureTypeProvider<string, GenericContext>
-	{
-		public string GetArrayType(string elementType, ArrayShape shape)
-		{
-			throw new NotImplementedException();
+			ApplyGenericParametersTo(baseType, genericParams, topLevel.TypeParameterCount);
+			return baseType;
 		}
 
-		public string GetByReferenceType(string elementType)
+		void ApplyGenericParametersTo(AstType targetType, IList<AstType> genericParams, int count)
 		{
-			throw new NotImplementedException();
-		}
-
-		public string GetFunctionPointerType(MethodSignature<string> signature)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetGenericMethodParameter(GenericContext genericContext, int index)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetGenericTypeParameter(GenericContext genericContext, int index)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetPinnedType(string elementType)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetPointerType(string elementType)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetPrimitiveType(PrimitiveTypeCode typeCode)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetSZArrayType(string elementType)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
-		{
-			throw new NotImplementedException();
+			if (count > genericParams.Count)
+				count = genericParams.Count;
+			int i = 0;
+			switch (targetType) {
+				case MemberType mt:
+					while (i < count) {
+						// Always add the first and remove it from the other list.
+						mt.TypeArguments.Add(genericParams[0]);
+						genericParams.RemoveAt(0);
+						i++;
+					}
+					break;
+				case SimpleType st:
+					while (i < count) {
+						// Always add the first and remove it from the other list.
+						st.TypeArguments.Add(genericParams[0]);
+						genericParams.RemoveAt(0);
+						i++;
+					}
+					break;
+			}
 		}
 	}
 }

@@ -146,10 +146,10 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string TypeToString(Entity type, bool includeNamespace, CustomAttributeHandleCollection typeAttributes = default(CustomAttributeHandleCollection))
+		public override string TypeDefinitionToString(Decompiler.Metadata.TypeDefinition type, bool includeNamespace)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
 	}

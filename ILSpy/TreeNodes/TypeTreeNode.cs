@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => HighlightSearchMatch(this.Language.FormatTypeName(TypeDefinition), TypeDefinition.Handle.ToSuffixString());
+		public override object Text => this.Language.TypeDefinitionToString(TypeDefinition, false) +  TypeDefinition.Handle.ToSuffixString();
 
 		public override bool IsPublicAPI {
 			get {

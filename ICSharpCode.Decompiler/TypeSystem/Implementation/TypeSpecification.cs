@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new DynamicAwareTypeReference(reference, isDynamic, dynamicInfo);
 		}
 
-		static bool HasDynamicAttribute(SRM.CustomAttributeHandleCollection? attributes, SRM.MetadataReader metadata, out bool[] mapping)
+		public static bool HasDynamicAttribute(SRM.CustomAttributeHandleCollection? attributes, SRM.MetadataReader metadata, out bool[] mapping)
 		{
 			mapping = null;
 			if (attributes == null)

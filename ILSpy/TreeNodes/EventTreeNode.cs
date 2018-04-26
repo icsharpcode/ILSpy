@@ -55,19 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(EventDefinition ev, Language language)
 		{
-			var metadata = ev.Module.GetMetadataReader();
-			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
-			var accessors = eventDefinition.GetAccessors();
-			SRM.TypeDefinitionHandle declaringType;
-			if (!accessors.Adder.IsNil) {
-				declaringType = metadata.GetMethodDefinition(accessors.Adder).GetDeclaringType();
-			} else if (!accessors.Remover.IsNil) {
-				declaringType = metadata.GetMethodDefinition(accessors.Remover).GetDeclaringType();
-			} else {
-				declaringType = metadata.GetMethodDefinition(accessors.Raiser).GetDeclaringType();
-			}
-			var eventType = eventDefinition.DecodeSignature(metadata, language.CreateSignatureTypeProvider(false), new GenericContext(declaringType, ev.Module));
-			return HighlightSearchMatch(metadata.GetString(eventDefinition.Name), " : " + eventType);
+			return language.EventToString(ev, false, false);
 		}
 
 		public override object Icon => GetIcon(EventDefinition);

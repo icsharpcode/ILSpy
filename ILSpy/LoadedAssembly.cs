@@ -155,7 +155,7 @@ namespace ICSharpCode.ILSpy
 				// search for pdb in same directory as dll
 				pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 				if (File.Exists(pdbFileName)) {
-					module.DebugInfo = new DiaSymNativeDebugInfoProvider(module, pdbFileName, File.OpenRead(pdbFileName));
+					module.DebugInfo = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
 					return;
 				}
 
@@ -164,7 +164,12 @@ namespace ICSharpCode.ILSpy
 
 			Stream OpenStream(string fileName)
 			{
-				return File.OpenRead(fileName);
+				if (!File.Exists(fileName))
+					return null;
+				var memory = new MemoryStream();
+				using (var stream = File.OpenRead(fileName))
+					stream.CopyTo(memory);
+				return memory;
 			}
 		}
 

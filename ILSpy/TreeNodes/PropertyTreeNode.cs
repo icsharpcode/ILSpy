@@ -59,10 +59,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
 		{
-			var metadata = property.Module.GetMetadataReader();
-			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
-			var signature = propertyDefinition.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(propertyDefinition.GetAccessors().GetAny(), property.Module));
-			return HighlightSearchMatch(language.FormatPropertyName(property, isIndexer), " : " + signature.ReturnType);
+			return language.PropertyToString(property, false, false, isIndexer);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);

@@ -206,18 +206,14 @@ namespace ICSharpCode.ILSpy.TextView
 					}
 				}
 				return $"{code.Name} (0x{code.Code:x})";
-			} else if (segment.Reference is Entity entity) {
-				// if possible, resolve the reference
-				if (entity.IsType()) {
-					var td = entity.ResolveAsType();
-					if (!td.IsNil) entity = td;
-				}
+			} else if (segment.Reference is IMetadataEntity entity) {
 				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(new Entity(entity.Module, entity.Handle)));
 				try {
-					var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
+					//var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
+					var docProvider = XmlDocLoader.LoadDocumentation(entity.Module);
 					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(new Entity(entity.Module, entity.Handle)));
 						if (documentation != null) {
 							renderer.AppendText(Environment.NewLine);
 							renderer.AddXmlDocumentation(documentation);

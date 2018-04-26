@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var metadata = method.Module.GetMetadataReader();
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			WriteCommentLine(output, TypeToString(new Entity(method.Module, methodDefinition.GetDeclaringType()), true) + "." + metadata.GetString(methodDefinition.Name));
+			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(method.Module, methodDefinition.GetDeclaringType()), true) + "." + metadata.GetString(methodDefinition.Name));
 		}
 
 		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
@@ -109,14 +109,14 @@ namespace ICSharpCode.ILSpy
 			var metadata = property.Module.GetMetadataReader();
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeToString(new Entity(property.Module, declaringType), true) + "." + metadata.GetString(propertyDefinition.Name));
+			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(property.Module, declaringType), true) + "." + metadata.GetString(propertyDefinition.Name));
 		}
 
 		public virtual void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			var metadata = field.Module.GetMetadataReader();
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
-			WriteCommentLine(output, TypeToString(new Entity(field.Module, fieldDefinition.GetDeclaringType()), true) + "." + metadata.GetString(fieldDefinition.Name));
+			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(field.Module, fieldDefinition.GetDeclaringType()), true) + "." + metadata.GetString(fieldDefinition.Name));
 		}
 
 		public virtual void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
@@ -124,12 +124,12 @@ namespace ICSharpCode.ILSpy
 			var metadata = ev.Module.GetMetadataReader();
 			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
 			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeToString(new Entity(ev.Module, declaringType), true) + "." + metadata.GetString(eventDefinition.Name));
+			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(ev.Module, declaringType), true) + "." + metadata.GetString(eventDefinition.Name));
 		}
 
 		public virtual void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(type, true));
+			WriteCommentLine(output, TypeDefinitionToString(type, true));
 		}
 
 		public virtual void DecompileNamespace(string nameSpace, IEnumerable<TypeDefinition> types, ITextOutput output, DecompilationOptions options)
@@ -161,9 +161,9 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Converts a type reference into a string. This method is used by the member tree node for parameter and return types.
+		/// Converts a type definition into a string. This method is used by the type tree nodes and search results.
 		/// </summary>
-		public virtual string TypeToString(Entity type, bool includeNamespace, SRM.CustomAttributeHandleCollection typeAttributes = default(SRM.CustomAttributeHandleCollection))
+		public virtual string TypeDefinitionToString(TypeDefinition type, bool includeNamespace)
 		{
 			var metadata = type.Module.GetMetadataReader();
 			var fullName = type.Handle.GetFullTypeName(metadata);
@@ -171,11 +171,6 @@ namespace ICSharpCode.ILSpy
 				return fullName.ToString();
 			else
 				return fullName.Name;
-		}
-
-		public virtual SRM.ISignatureTypeProvider<string, GenericContext> CreateSignatureTypeProvider(bool includeNamespace)
-		{
-			return new ILSignatureProvider(includeNamespace);
 		}
 
 		/// <summary>
@@ -192,7 +187,7 @@ namespace ICSharpCode.ILSpy
 					return entity.Handle.GetFullTypeName(metadata).ToString();
 				case SRM.HandleKind.FieldDefinition:
 					var fieldDefinition = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)entity.Handle);
-					string fieldType = fieldDefinition.DecodeSignature(CreateSignatureTypeProvider(false), new GenericContext(fieldDefinition.GetDeclaringType(), entity.Module));
+					string fieldType = fieldDefinition.DecodeSignature(ILSignatureProvider.WithoutNamespace, new GenericContext(fieldDefinition.GetDeclaringType(), entity.Module));
 					return fieldType + " " + fieldDefinition.GetDeclaringType().GetFullTypeName(metadata) +  "." + metadata.GetString(fieldDefinition.Name);
 				case SRM.HandleKind.MethodDefinition:
 					return TreeNodes.MethodTreeNode.GetText(entity, this).ToString();
@@ -205,23 +200,40 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual string FormatFieldName(FieldDefinition field)
+		public virtual string FieldToString(FieldDefinition field, bool includeTypeName, bool includeNamespace)
 		{
 			if (field.Handle.IsNil)
 				throw new ArgumentNullException(nameof(field));
 			var metadata = field.Module.GetMetadataReader();
-			return metadata.GetString(metadata.GetFieldDefinition(field.Handle).Name);
+			var fd = metadata.GetFieldDefinition(field.Handle);
+			string fieldType = fd.DecodeSignature(ILSignatureProvider.WithoutNamespace, new GenericContext(fd.GetDeclaringType(), field.Module));
+			string simple = metadata.GetString(fd.Name) + " : " + fieldType;
+			if (!includeTypeName)
+				return simple;
+			var typeName = fd.GetDeclaringType().GetFullTypeName(metadata);
+			if (!includeNamespace)
+				return typeName.Name + "." + simple;
+			return typeName + "." + simple;
 		}
 
-		public virtual string FormatPropertyName(PropertyDefinition property, bool? isIndexer = null)
+		public virtual string PropertyToString(PropertyDefinition property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
 		{
 			if (property.Handle.IsNil)
 				throw new ArgumentNullException(nameof(property));
 			var metadata = property.Module.GetMetadataReader();
-			return metadata.GetString(metadata.GetPropertyDefinition(property.Handle).Name);
+			var pd = metadata.GetPropertyDefinition(property.Handle);
+			var declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+			var signature = pd.DecodeSignature(!includeNamespace ? ILSignatureProvider.WithoutNamespace : ILSignatureProvider.WithNamespace, new GenericContext(declaringType, property.Module));
+			string simple = metadata.GetString(metadata.GetPropertyDefinition(property.Handle).Name) + " : " + signature.ReturnType;
+			if (!includeTypeName)
+				return simple;
+			var typeName = declaringType.GetFullTypeName(metadata);
+			if (!includeNamespace)
+				return typeName.Name + "." + simple;
+			return typeName + "." + simple;
 		}
 
-		public virtual string FormatMethodName(MethodDefinition method)
+		public virtual string MethodToString(MethodDefinition method, bool includeTypeName, bool includeNamespace)
 		{
 			if (method.Handle.IsNil)
 				throw new ArgumentNullException(nameof(method));
@@ -229,20 +241,12 @@ namespace ICSharpCode.ILSpy
 			return metadata.GetString(metadata.GetMethodDefinition(method.Handle).Name);
 		}
 
-		public virtual string FormatEventName(EventDefinition @event)
+		public virtual string EventToString(EventDefinition @event, bool includeTypeName, bool includeNamespace)
 		{
 			if (@event.Handle.IsNil)
 				throw new ArgumentNullException(nameof(@event));
 			var metadata = @event.Module.GetMetadataReader();
 			return metadata.GetString(metadata.GetEventDefinition(@event.Handle).Name);
-		}
-
-		public virtual string FormatTypeName(TypeDefinition type)
-		{
-			if (type.Handle.IsNil)
-				throw new ArgumentNullException(nameof(type));
-			var metadata = type.Module.GetMetadataReader();
-			return metadata.GetString(metadata.GetTypeDefinition(type.Handle).Name);
 		}
 
 		/// <summary>
@@ -311,6 +315,9 @@ namespace ICSharpCode.ILSpy
 
 	class ILSignatureProvider : SRM.ISignatureTypeProvider<string, GenericContext>
 	{
+		public static readonly ILSignatureProvider WithoutNamespace = new ILSignatureProvider(false);
+		public static readonly ILSignatureProvider WithNamespace = new ILSignatureProvider(true);
+
 		bool includeNamespace;
 
 		public ILSignatureProvider(bool includeNamespace)
