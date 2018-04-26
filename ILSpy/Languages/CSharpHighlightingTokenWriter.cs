@@ -125,7 +125,6 @@ namespace ICSharpCode.ILSpy
 				case "foreach":
 				case "lock":
 				case "global":
-				case "dynamic":
 				case "await":
 					color = structureKeywordsColor;
 					break;
@@ -291,6 +290,8 @@ namespace ICSharpCode.ILSpy
 			HighlightingColor color = null;
 			if (identifier.Name == "value" && identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
 				color = valueKeywordColor;
+			if ((identifier.Name == "dynamic" || identifier.Name == "var") && identifier.Parent is AstType)
+				color = queryKeywordsColor;
 			switch (GetCurrentDefinition()) {
 				case ITypeDefinition t:
 					switch (t.Kind) {
