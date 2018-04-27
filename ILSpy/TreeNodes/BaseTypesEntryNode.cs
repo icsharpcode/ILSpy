@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeDefinitionToString(tr, true));
+			language.WriteCommentLine(output, language.TypeDefinitionToString(td, true));
 		}
 
 		IMetadataEntity IMemberTreeNode.Member => tr;
