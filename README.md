@@ -57,7 +57,7 @@ Unix:
   Add `Sdk="Microsoft.NET.Sdk"` to the `Project` element.
   This is required due to a tooling issue on Unix.
   Please do not commit this when contributing a pull request!
-- Use ICSharpCode.Decompiler.Console.sln to work.
+- Use Frontends.sln to work.
 
 How to contribute
 -----------------

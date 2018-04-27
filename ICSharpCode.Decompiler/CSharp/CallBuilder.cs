@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (method.IsStatic)
 							requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
 						else
-							requireTarget = !(target.Expression is ThisReferenceExpression) || method.Name == ".ctor";
+							requireTarget = !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression) || method.Name == ".ctor";
 					}
 					bool targetCasted = false;
 					bool argumentsCasted = false;

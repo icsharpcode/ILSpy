@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal IEnumerable<string> Test2(string test)
 		{
-			yield return base.Test(test);
+			yield return Test(test);
 		}
 	}
 

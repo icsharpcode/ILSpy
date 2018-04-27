@@ -76,6 +76,58 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 			}
 		}
 
+		internal class Parent
+		{
+			public virtual void Virtual()
+			{
+
+			}
+
+			public virtual void NewVirtual()
+			{
+
+			}
+
+			public void New()
+			{
+
+			}
+
+			public void BaseOnly()
+			{
+
+			}
+		}
+
+		internal class Child : Parent
+		{
+			public override void Virtual()
+			{
+				base.Virtual();
+			}
+
+			public new void NewVirtual()
+			{
+				base.NewVirtual();
+			}
+
+			public new void New()
+			{
+				base.New();
+			}
+
+			public void BaseQualifiers()
+			{
+				Virtual();
+				base.Virtual();
+				NewVirtual();
+				base.NewVirtual();
+				New();
+				base.New();
+				BaseOnly();
+			}
+		}
+
 		private int fieldConflict;
 		private int innerConflict;
 
