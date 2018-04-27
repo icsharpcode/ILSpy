@@ -35,6 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.Attributes, namespaces);
 
+					foreach (var typeParam in td.TypeParameters) {
+						HandleAttributes(typeParam.Attributes, namespaces);
+					}
+
 					foreach (var baseType in td.DirectBaseTypes) {
 						CollectNamespacesForTypeReference(baseType, namespaces);
 					}
@@ -67,7 +71,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					HandleAttributes(method.Attributes, namespaces);
 					CollectNamespacesForTypeReference(method.ReturnType, namespaces);
 					foreach (var param in method.Parameters) {
+						HandleAttributes(param.Attributes, namespaces);
 						CollectNamespacesForTypeReference(param.Type, namespaces);
+					}
+					foreach (var typeParam in method.TypeParameters) {
+						HandleAttributes(typeParam.Attributes, namespaces);
 					}
 					if (!method.MetadataToken.IsNil && method.HasBody) {
 						var reader = typeSystem.ModuleDefinition.Reader;
