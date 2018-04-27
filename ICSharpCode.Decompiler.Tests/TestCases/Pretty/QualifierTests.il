@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -15,7 +13,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly zgfoqdfc
+.assembly QualifierTests
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -26,15 +24,13 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module zgfoqdfc.dll
-// MVID: {1C0110BE-438D-48BD-8A01-FFE7CCD962C7}
+.module QualifierTests.dll
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00810000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -207,6 +203,138 @@
     } // end of method Test::Delegate
 
   } // end of class Test
+
+  .class auto ansi nested assembly beforefieldinit Parent
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig newslot virtual 
+            instance void  Virtual() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Parent::Virtual
+
+    .method public hidebysig newslot virtual 
+            instance void  NewVirtual() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Parent::NewVirtual
+
+    .method public hidebysig instance void 
+            New() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Parent::New
+
+    .method public hidebysig instance void 
+            BaseOnly() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Parent::BaseOnly
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method Parent::.ctor
+
+  } // end of class Parent
+
+  .class auto ansi nested assembly beforefieldinit Child
+         extends ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent
+  {
+    .method public hidebysig virtual instance void 
+            Virtual() cil managed
+    {
+      // Code size       9 (0x9)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldarg.0
+      IL_0002:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_0007:  nop
+      IL_0008:  ret
+    } // end of method Child::Virtual
+
+    .method public hidebysig instance void 
+            NewVirtual() cil managed
+    {
+      // Code size       9 (0x9)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldarg.0
+      IL_0002:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::NewVirtual()
+      IL_0007:  nop
+      IL_0008:  ret
+    } // end of method Child::NewVirtual
+
+    .method public hidebysig instance void 
+            New() cil managed
+    {
+      // Code size       9 (0x9)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldarg.0
+      IL_0002:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::New()
+      IL_0007:  nop
+      IL_0008:  ret
+    } // end of method Child::New
+
+    .method public hidebysig instance void 
+            BaseQualifiers() cil managed
+    {
+      // Code size       51 (0x33)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldarg.0
+      IL_0002:  callvirt   instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_0007:  nop
+      IL_0008:  ldarg.0
+      IL_0009:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::Virtual()
+      IL_000e:  nop
+      IL_000f:  ldarg.0
+      IL_0010:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Child::NewVirtual()
+      IL_0015:  nop
+      IL_0016:  ldarg.0
+      IL_0017:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::NewVirtual()
+      IL_001c:  nop
+      IL_001d:  ldarg.0
+      IL_001e:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Child::New()
+      IL_0023:  nop
+      IL_0024:  ldarg.0
+      IL_0025:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::New()
+      IL_002a:  nop
+      IL_002b:  ldarg.0
+      IL_002c:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::BaseOnly()
+      IL_0031:  nop
+      IL_0032:  ret
+    } // end of method Child::BaseQualifiers
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.Pretty.QualifierTests/Parent::.ctor()
+      IL_0006:  ret
+    } // end of method Child::.ctor
+
+  } // end of class Child
 
   .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1'
          extends [mscorlib]System.Object
@@ -609,4 +737,3 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file C:\Users\Siegfried\Projects\ILSpy\ICSharpCode.Decompiler.Tests\bin\Debug\net46\../../../TestCases/Pretty\QualifierTests.res
