@@ -237,12 +237,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetGenericMethodParameter(Unit genericContext, int index)
 		{
-			return new TypeParameterReference(SymbolKind.Method, index);
+			return TypeParameterReference.Create(SymbolKind.Method, index);
 		}
 
 		public ITypeReference GetGenericTypeParameter(Unit genericContext, int index)
 		{
-			return new TypeParameterReference(SymbolKind.TypeDefinition, index);
+			return TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
 		}
 
 		public ITypeReference GetModifiedType(ITypeReference modifier, ITypeReference unmodifiedType, bool isRequired)

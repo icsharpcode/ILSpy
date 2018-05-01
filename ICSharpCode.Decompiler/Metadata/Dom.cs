@@ -882,7 +882,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public FullTypeName GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
-			return new FullTypeName($"System.{typeCode}");
+			return new TopLevelTypeName("System", typeCode.ToString());
 		}
 
 		public FullTypeName GetSZArrayType(FullTypeName elementType)

@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return this;
 			} else {
 				return new SpecializingDecompilerTypeSystem(this, substitution);
-	}
+			}
 		}
 	}
 }
