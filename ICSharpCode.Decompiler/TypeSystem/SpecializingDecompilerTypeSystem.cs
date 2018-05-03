@@ -94,7 +94,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IMember ResolveAsMember(System.Reflection.Metadata.EntityHandle memberReference)
 		{
-			throw new NotImplementedException();
+			IMember member = context.ResolveAsMember(memberReference);
+			if (member != null)
+				member = member.Specialize(substitution);
+			return member;
 		}
 	}
 }
