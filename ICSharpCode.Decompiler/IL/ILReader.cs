@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
-			this.methodReturnStackType = typeSystem.ResolveFromSignature(TypeSystem.Implementation.DynamicAwareTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata)).GetStackType();
+			this.methodReturnStackType = typeSystem.ResolveFromSignature(TypeSystem.Implementation.DynamicTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata)).GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
 			if (body.LocalVariablesInitialized) {

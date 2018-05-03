@@ -683,7 +683,7 @@ namespace ICSharpCode.ILSpy
 
 		public InsertDynamicTypeVisitor(MetadataReader metadata, CustomAttributeHandleCollection? customAttributes)
 		{
-			isDynamic = DynamicAwareTypeReference.HasDynamicAttribute(customAttributes, metadata, out mapping);
+			isDynamic = DynamicTypeReference.HasDynamicAttribute(customAttributes, metadata, out mapping);
 		}
 
 		public override void VisitComposedType(ComposedType composedType)

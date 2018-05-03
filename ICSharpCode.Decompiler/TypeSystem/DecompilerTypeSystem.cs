@@ -28,12 +28,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		readonly MetadataLoader typeReferenceCecilLoader = new MetadataLoader();
 
-		/// <summary>
-		/// Dictionary for NRefactory->Cecil lookup.
-		/// May only be accessed within lock(entityDict)
-		/// </summary>
-		Dictionary<IUnresolvedEntity, SRM.EntityHandle> entityDict = new Dictionary<IUnresolvedEntity, SRM.EntityHandle>();
-
 		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
 		Dictionary<SRM.EntityHandle, IMethod> methodLookupCache = new Dictionary<SRM.EntityHandle, IMethod>();
@@ -44,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (moduleDefinition == null)
 				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
-			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -90,13 +84,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public SRM.MetadataReader GetMetadata() => moduleDefinition.GetMetadataReader();
-
-		void StoreMemberReference(IUnresolvedEntity entity, SRM.EntityHandle mr)
-		{
-			// This is a callback from the type system, which is multi-threaded and may be accessed externally
-			lock (entityDict)
-				entityDict[entity] = mr;
-		}
 
 		public IType ResolveFromSignature(ITypeReference typeReference)
 		{
@@ -159,7 +146,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.FieldDefinition:
 							var fieldDef = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)fieldReference);
 							declaringType = ResolveAsType(fieldDef.GetDeclaringType());
-							returnType = DynamicAwareTypeReference.Create(fieldDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), fieldDef.GetCustomAttributes(), metadata);
+							returnType = DynamicTypeReference.Create(fieldDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), fieldDef.GetCustomAttributes(), metadata);
 							var declaringTypeDefinition = declaringType.GetDefinition();
 							if (declaringTypeDefinition == null)
 								field = CreateFakeField(declaringType, metadata.GetString(fieldDef.Name), returnType);

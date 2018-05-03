@@ -87,19 +87,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	public sealed class DynamicAwareTypeReference : TypeVisitor, ITypeReference
+	public sealed class DynamicTypeReference : TypeVisitor, ITypeReference
 	{
 		readonly ITypeReference reference;
-		readonly bool isDynamic;
 		readonly bool[] dynamicInfo;
 		int typeIndex;
 
 		static readonly ITypeResolveContext minimalCorlibContext = new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation());
 
-		public static DynamicAwareTypeReference Create(ITypeReference reference, SRM.CustomAttributeHandleCollection? customAttributes, SRM.MetadataReader metadata)
+		public static ITypeReference Create(ITypeReference reference, SRM.CustomAttributeHandleCollection? customAttributes, SRM.MetadataReader metadata)
 		{
-			bool isDynamic = HasDynamicAttribute(customAttributes, metadata, out var dynamicInfo);
-			return new DynamicAwareTypeReference(reference, isDynamic, dynamicInfo);
+			if (HasDynamicAttribute(customAttributes, metadata, out var dynamicInfo))
+				return new DynamicTypeReference(reference, dynamicInfo);
+			return reference;
 		}
 
 		public static bool HasDynamicAttribute(SRM.CustomAttributeHandleCollection? attributes, SRM.MetadataReader metadata, out bool[] mapping)
@@ -126,19 +126,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return false;
 		}
 
-		DynamicAwareTypeReference(ITypeReference reference, bool isDynamic, bool[] dynamicInfo)
+		DynamicTypeReference(ITypeReference reference, bool[] dynamicInfo)
 		{
 			this.reference = reference;
-			this.isDynamic = isDynamic;
 			this.dynamicInfo = dynamicInfo;
 		}
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			if (isDynamic)
-				return reference.Resolve(context).AcceptVisitor(this);
-			else
-				return reference.Resolve(context);
+			return reference.Resolve(context).AcceptVisitor(this);
 		}
 
 		public override IType VisitPointerType(PointerType type)
@@ -176,8 +172,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
-			if (!isDynamic)
-				return type;
 			if (type.KnownTypeCode == KnownTypeCode.Object) {
 				if (dynamicInfo == null || typeIndex >= dynamicInfo.Length)
 					return SpecialType.Dynamic;

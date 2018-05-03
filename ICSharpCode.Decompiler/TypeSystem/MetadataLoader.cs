@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Warning: if delay-loading is used and the type system is accessed by multiple threads,
 		/// the callback may be invoked concurrently on multiple threads.
 		/// </remarks>
-		public Action<IUnresolvedEntity, EntityHandle> OnEntityLoaded { get; set; }
+		public Action<IUnresolvedEntity> OnEntityLoaded { get; set; }
 
 		bool shortenInterfaceImplNames = true;
 
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (this.LazyLoad) {
 						var t = new LazySRMTypeDefinition(cecilLoaderCloneForLazyLoading, module, h);
 						currentAssembly.AddTypeDefinition(t);
-						RegisterCecilObject(t, h);
+						RegisterCecilObject(t);
 					} else {
 						var t = CreateTopLevelTypeDefinition(h, td);
 						cecilTypeDefs.Add(h);
@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			switch (type.Kind) {
 				case HandleKind.TypeSpecification:
-					return DynamicAwareTypeReference.Create(currentMetadata.GetTypeSpecification((TypeSpecificationHandle)type)
+					return DynamicTypeReference.Create(currentMetadata.GetTypeSpecification((TypeSpecificationHandle)type)
 						.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), typeAttributes, currentMetadata);
 				case HandleKind.TypeReference:
 					return CreateTypeReference((TypeReferenceHandle)type);
@@ -798,7 +798,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			InitMembers(typeDefinition, td, td.Members);
 			td.ApplyInterningProvider(interningProvider);
 			td.Freeze();
-			RegisterCecilObject(td, handle);
+			RegisterCecilObject(td);
 		}
 
 		void InitBaseTypes(TypeDefinitionHandle handle, IList<ITypeReference> baseTypes)
@@ -1224,7 +1224,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			int j = 0;
 			if (signature.RequiredParameterCount > parameters.Length) {
 				foreach (var parameterType in signature.ParameterTypes) {
-					m.Parameters.Add(new DefaultUnresolvedParameter(DynamicAwareTypeReference.Create(parameterType, null, currentMetadata), string.Empty));
+					m.Parameters.Add(new DefaultUnresolvedParameter(DynamicTypeReference.Create(parameterType, null, currentMetadata), string.Empty));
 				}
 			} else {
 				foreach (var p in parameters) {
@@ -1296,7 +1296,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					attributes = par.GetCustomAttributes();
 				}
 			}
-			return DynamicAwareTypeReference.Create(returnType, attributes, currentMetadata);
+			return DynamicTypeReference.Create(returnType, attributes, currentMetadata);
 		}
 
 		static bool HasExtensionAttribute(MetadataReader currentModule, CustomAttributeHandleCollection attributes)
@@ -1368,7 +1368,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region Read Parameter
 		public IUnresolvedParameter ReadParameter(Parameter parameter, ITypeReference type)
 		{
-			var p = new DefaultUnresolvedParameter(DynamicAwareTypeReference.Create(type, parameter.GetCustomAttributes(), currentMetadata), interningProvider.Intern(currentMetadata.GetString(parameter.Name)));
+			var p = new DefaultUnresolvedParameter(DynamicTypeReference.Create(type, parameter.GetCustomAttributes(), currentMetadata), interningProvider.Intern(currentMetadata.GetString(parameter.Name)));
 
 			if (type is ByReferenceTypeReference) {
 				if ((parameter.Attributes & ParameterAttributes.In) == 0 && (parameter.Attributes & ParameterAttributes.Out) != 0)
@@ -1479,7 +1479,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			f.Accessibility = GetAccessibility(field.Attributes);
 			f.IsReadOnly = (field.Attributes & FieldAttributes.InitOnly) == FieldAttributes.InitOnly;
 			f.IsStatic = (field.Attributes & FieldAttributes.Static) == FieldAttributes.Static;
-			f.ReturnType = DynamicAwareTypeReference.Create(field.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), field.GetCustomAttributes(), currentMetadata);
+			f.ReturnType = DynamicTypeReference.Create(field.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), field.GetCustomAttributes(), currentMetadata);
 			var constantHandle = field.GetDefaultValue();
 			if (!constantHandle.IsNil) {
 				var constant = currentMetadata.GetConstant(constantHandle);
@@ -1609,7 +1609,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			int i = 0;
 			if (signature.RequiredParameterCount > parameterHandles.Length) {
 				foreach (var parameterType in signature.ParameterTypes) {
-					p.Parameters.Add(new DefaultUnresolvedParameter(DynamicAwareTypeReference.Create(parameterType, null, currentMetadata), string.Empty));
+					p.Parameters.Add(new DefaultUnresolvedParameter(DynamicTypeReference.Create(parameterType, null, currentMetadata), string.Empty));
 				}
 			} else {
 				foreach (var h in parameterHandles) {
@@ -1681,14 +1681,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			member.MetadataToken = cecilDefinition;
 			member.ApplyInterningProvider(interningProvider);
 			member.Freeze();
-			RegisterCecilObject(member, cecilDefinition);
+			RegisterCecilObject(member);
 		}
 		#endregion
 
 		#region Type system translation table
-		void RegisterCecilObject(IUnresolvedEntity typeSystemObject, EntityHandle cecilObject)
+		void RegisterCecilObject(IUnresolvedEntity typeSystemObject)
 		{
-			OnEntityLoaded?.Invoke(typeSystemObject, cecilObject);
+			OnEntityLoaded?.Invoke(typeSystemObject);
 		}
 		#endregion
 	}
