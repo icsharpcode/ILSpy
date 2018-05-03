@@ -334,6 +334,7 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Pdb\PortablePdbWriter.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
