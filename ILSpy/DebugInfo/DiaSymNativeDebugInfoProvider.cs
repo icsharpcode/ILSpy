@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.DebugInfo
 		public IList<Decompiler.Metadata.SequencePoint> GetSequencePoints(MethodDefinitionHandle handle)
 		{
 			var method = reader.GetMethod(MetadataTokens.GetToken(handle));
-			if (method.GetSequencePointCount(out int count) != 0)
+			if (method == null || method.GetSequencePointCount(out int count) != 0)
 				return Empty<Decompiler.Metadata.SequencePoint>.Array;
 			var sequencePoints = new Decompiler.Metadata.SequencePoint[count];
 			var points = method.GetSequencePoints();
