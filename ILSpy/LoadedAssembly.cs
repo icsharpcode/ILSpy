@@ -146,13 +146,13 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(PEFile module)
 		{
-			string pdbDirectory = Path.GetDirectoryName(fileName);
 			var reader = module.Reader;
 			// try to open portable pdb file/embedded pdb info:
-			if (reader.TryOpenAssociatedPortablePdb(pdbDirectory, OpenStream, out var provider, out var pdbFileName)) {
+			if (reader.TryOpenAssociatedPortablePdb(fileName, OpenStream, out var provider, out var pdbFileName)) {
 				module.DebugInfo = new PortableDebugInfoProvider(pdbFileName, provider);
 			} else {
 				// search for pdb in same directory as dll
+				string pdbDirectory = Path.GetDirectoryName(fileName);
 				pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 				if (File.Exists(pdbFileName)) {
 					module.DebugInfo = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
@@ -169,6 +169,7 @@ namespace ICSharpCode.ILSpy
 				var memory = new MemoryStream();
 				using (var stream = File.OpenRead(fileName))
 					stream.CopyTo(memory);
+				memory.Position = 0;
 				return memory;
 			}
 		}
