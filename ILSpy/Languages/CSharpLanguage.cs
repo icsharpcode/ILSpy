@@ -404,15 +404,33 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeDefinitionToString(Decompiler.Metadata.TypeDefinition type, bool includeNamespace)
 		{
-			ConvertTypeOptions options = ConvertTypeOptions.IncludeTypeParameterDefinitions;
-			if (includeNamespace)
-				options |= ConvertTypeOptions.IncludeNamespace;
-
 			var metadata = type.Module.GetMetadataReader();
-			var provider = new AstTypeBuilder(options);
+			var td = metadata.GetTypeDefinition(type.Handle);
+			var genericParams = td.GetGenericParameters();
 
-			AstType astType = provider.GetTypeFromDefinition(metadata, type.Handle, 0);
-			return TypeToString(astType, metadata, null);
+			var buffer = new System.Text.StringBuilder();
+
+			var name = td.GetFullTypeName(metadata);
+
+			if (includeNamespace)
+				buffer.Append(name.ToString());
+			else
+				buffer.Append(name.Name);
+
+			if (genericParams.Count > 0) {
+				buffer.Append('<');
+				int i = 0;
+				foreach (var h in genericParams) {
+					var gp = metadata.GetGenericParameter(h);
+					if (i > 0)
+						buffer.Append(", ");
+					buffer.Append(metadata.GetString(gp.Name));
+					i++;
+				}
+				buffer.Append('>');
+			}
+
+			return buffer.ToString();
 		}
 
 		public override string FieldToString(Decompiler.Metadata.FieldDefinition field, bool includeTypeName, bool includeNamespace)

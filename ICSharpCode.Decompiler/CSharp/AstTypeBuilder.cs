@@ -42,7 +42,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetFunctionPointerType(MethodSignature<AstType> signature)
 		{
-			throw new NotImplementedException();
+			if ((options & ConvertTypeOptions.IncludeNamespace) == 0)
+				return AstType.Create("IntPtr");
+			return AstType.Create("System.IntPtr");
 		}
 
 		public AstType GetGenericInstantiation(AstType genericType, ImmutableArray<AstType> typeArguments)
@@ -71,12 +73,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetModifiedType(AstType modifier, AstType unmodifiedType, bool isRequired)
 		{
-			throw new NotImplementedException();
+			return unmodifiedType;
 		}
 
 		public AstType GetPinnedType(AstType elementType)
 		{
-			throw new NotImplementedException();
+			return elementType;
 		}
 
 		public AstType GetPointerType(AstType elementType)
@@ -234,13 +236,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
 					var outerType = MakeAstType(fullTypeName.GetDeclaringType(), genericParams);
 					var mt = new MemberType(outerType, fullTypeName.Name);
-					ApplyGenericParametersTo(mt, genericParams, count);
 					return mt;
 				} else {
 					var st = new SimpleType(fullTypeName.Name);
 					for (int i = 0; i < fullTypeName.TypeParameterCount - count; i++)
 						genericParams.RemoveAt(0);
-					ApplyGenericParametersTo(st, genericParams, count);
 					return st;
 				}
 			}
@@ -251,33 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				baseType = AstType.Create(topLevel.Name);
 			}
-			ApplyGenericParametersTo(baseType, genericParams, topLevel.TypeParameterCount);
 			return baseType;
-		}
-
-		void ApplyGenericParametersTo(AstType targetType, IList<AstType> genericParams, int count)
-		{
-			if (count > genericParams.Count)
-				count = genericParams.Count;
-			int i = 0;
-			switch (targetType) {
-				case MemberType mt:
-					while (i < count) {
-						// Always add the first and remove it from the other list.
-						mt.TypeArguments.Add(genericParams[0]);
-						genericParams.RemoveAt(0);
-						i++;
-					}
-					break;
-				case SimpleType st:
-					while (i < count) {
-						// Always add the first and remove it from the other list.
-						st.TypeArguments.Add(genericParams[0]);
-						genericParams.RemoveAt(0);
-						i++;
-					}
-					break;
-			}
 		}
 	}
 }
