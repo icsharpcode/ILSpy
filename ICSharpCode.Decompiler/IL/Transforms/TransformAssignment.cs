@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
 		/// due to implicit truncation.
 		/// </summary>
-		bool IsImplicitTruncation(ILInstruction value, IType type)
+		static internal bool IsImplicitTruncation(ILInstruction value, IType type, bool allowNullableValue = false)
 		{
 			if (!type.IsSmallIntegerType()) {
 				// Implicit truncation in ILAst only happens for small integer types;
@@ -363,6 +363,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false; // comp returns 0 or 1, which always fits
 			} else {
 				IType inferredType = value.InferType();
+				if (allowNullableValue) {
+					inferredType = NullableType.GetUnderlyingType(inferredType);
+				}
 				if (inferredType.Kind != TypeKind.Unknown) {
 					return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
 				}
