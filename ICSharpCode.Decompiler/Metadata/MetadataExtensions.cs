@@ -411,5 +411,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 			return MetadataTokens.ParameterHandle((index + 1) & 0xFFFFFF);
 		}
+
+
+		public static IEnumerable<ModuleReferenceHandle> GetModuleReferences(this MetadataReader metadata)
+		{
+			var rowCount = metadata.GetTableRowCount(TableIndex.ModuleRef);
+			for (int row = 1; row <= rowCount; row++) {
+				yield return MetadataTokens.ModuleReferenceHandle(row);
+			}
+		}
 	}
 }

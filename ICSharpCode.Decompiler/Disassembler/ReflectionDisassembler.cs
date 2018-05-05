@@ -343,14 +343,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 					blob.Reset();
 					WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
 				} else {
+					string currentAssemblyName = null;
+					if (metadata.IsAssembly) {
+						currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+					}
 					int count = blob.ReadCompressedInteger();
 					for (int i = 0; i < count; i++) {
 						var typeName = blob.ReadSerializedString();
-						string[] nameParts = typeName.Split(new[] { ", " }, 2, StringSplitOptions.None);
-						if (nameParts.Length != 2)
+						string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
+						if (nameParts.Length < 2)
 							throw new NotImplementedException();
-						var referencedModule = module.AssemblyResolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
-						if (referencedModule == module) {
+						if (nameParts[1] == currentAssemblyName) {
 							output.Write("class ");
 							output.Write(DisassemblerHelpers.Escape(typeName));
 						} else {
@@ -1462,15 +1465,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			CloseBlock();
 		}
 
-		public void WriteAssemblyReferences(PEFile module)
+		public void WriteAssemblyReferences(MetadataReader metadata)
 		{
-			var metadata = module.GetMetadataReader();
-			foreach (var m in module.ModuleReferences) {
+			foreach (var m in metadata.GetModuleReferences()) {
 				var mref = metadata.GetModuleReference(m);
 				output.WriteLine(".module extern {0}", DisassemblerHelpers.Escape(metadata.GetString(mref.Name)));
 			}
-			foreach (var a in module.AssemblyReferences) {
-				var aref = metadata.GetAssemblyReference(a.Handle);
+			foreach (var a in metadata.AssemblyReferences) {
+				var aref = metadata.GetAssemblyReference(a);
 				output.Write(".assembly extern ");
 				if ((aref.Flags & AssemblyFlags.WindowsRuntime) == AssemblyFlags.WindowsRuntime)
 					output.Write("windowsruntime ");

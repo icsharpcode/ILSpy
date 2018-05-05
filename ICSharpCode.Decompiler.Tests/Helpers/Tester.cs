@@ -111,19 +111,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
-				using (var module = new PEReader(new FileStream(sourceFileName, FileMode.Open)))
+				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
+				using (var peFile = new PEFile(sourceFileName, peFileStream, PEStreamOptions.Default))
 				using (var writer = new StringWriter()) {
-					//module.Name = Path.GetFileNameWithoutExtension(outputFile);
+					var metadata = peFile.GetMetadataReader();
 					var output = new PlainTextOutput(writer);
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
 					rd.DetectControlStructure = false;
-					//rd.WriteAssemblyReferences(module);
-					/*if (module.Assembly != null)
-						rd.WriteAssemblyHeader(module.Assembly);
+					rd.WriteAssemblyReferences(metadata);
+					if (metadata.IsAssembly)
+						rd.WriteAssemblyHeader(peFile);
 					output.WriteLine();
-					rd.WriteModuleHeader(module, skipMVID: true);
+					rd.WriteModuleHeader(peFile, skipMVID: true);
 					output.WriteLine();
-					rd.WriteModuleContents(module);*/
+					rd.WriteModuleContents(peFile);
 
 					File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
 				}

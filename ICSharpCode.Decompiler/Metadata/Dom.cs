@@ -92,8 +92,6 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public class PEFile : IDisposable
 	{
-		Stream stream;
-
 		public string FileName { get; }
 		public PEReader Reader { get; }
 		public IAssemblyResolver AssemblyResolver { get; set; }
@@ -140,18 +138,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		public ImmutableArray<AssemblyReference> AssemblyReferences => GetMetadataReader().AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
-		public ImmutableArray<ModuleReferenceHandle> ModuleReferences => GetModuleReferences().ToImmutableArray();
+		public ImmutableArray<ModuleReferenceHandle> ModuleReferences => GetMetadataReader().GetModuleReferences().ToImmutableArray();
 		public ImmutableArray<TypeDefinition> TypeDefinitions => Reader.GetMetadataReader().GetTopLevelTypeDefinitions().Select(t => new TypeDefinition(this, t)).ToImmutableArray();
 		public ImmutableArray<TypeReference> TypeReferences => Reader.GetMetadataReader().TypeReferences.Select(t => new TypeReference(this, t)).ToImmutableArray();
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
-
-		IEnumerable<ModuleReferenceHandle> GetModuleReferences()
-		{
-			var rowCount = GetMetadataReader().GetTableRowCount(TableIndex.ModuleRef);
-			for (int row = 1; row <= rowCount; row++) {
-				yield return MetadataTokens.ModuleReferenceHandle(row);
-			}
-		}
 
 		IEnumerable<Resource> GetResources()
 		{
