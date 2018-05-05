@@ -71,8 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				target = default(TranslatedExpression); // no target
 			} else {
 				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call, constrainedTo);
-				if (callOpCode == OpCode.CallVirt
-					&& constrainedTo == null
+				if (constrainedTo == null
 					&& target.Expression is CastExpression cast
 					&& target.ResolveResult is ConversionResolveResult conversion
 					&& target.Type.IsKnownType(KnownTypeCode.Object)

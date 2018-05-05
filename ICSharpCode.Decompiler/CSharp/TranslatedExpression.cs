@@ -201,6 +201,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 			}
+			var compilation = expressionBuilder.compilation;
+			var conversions = Resolver.CSharpConversions.Get(compilation);
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 && conv.Conversion.IsBoxingConversion && conversions.IsBoxingConversion(conv.Input.Type, targetType)) {
+				var unwrapped = this.UnwrapChild(cast2.Expression);
+				if (allowImplicitConversion)
+					return unwrapped;
+				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
 			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true) {
 				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
 				return new UnaryOperatorExpression(
@@ -208,7 +216,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
 				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
 			}
-			var compilation = expressionBuilder.compilation;
 			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
 			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
 			IType targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
@@ -350,7 +357,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
-			var conversions = Resolver.CSharpConversions.Get(compilation);
 			if (allowImplicitConversion && conversions.ImplicitConversion(type, targetType).IsValid) {
 				return this;
 			}

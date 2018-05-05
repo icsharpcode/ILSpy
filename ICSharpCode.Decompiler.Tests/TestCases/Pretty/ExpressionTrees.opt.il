@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -20,7 +18,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly tngduxjw
+.assembly ExpressionTrees.opt
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -30,15 +28,13 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module tngduxjw.dll
-// MVID: {416BD71B-B506-4355-8604-9F8C6A2FDEE6}
+.module ExpressionTrees.opt.dll
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04A60000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -9453,7 +9449,7 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     [mscorlib]System.Int32
     IL_0006:  dup
-    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'::'$$method0x60000bc-1'
+    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000bc-1'
     IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0011:  ret
@@ -9509,7 +9505,7 @@
     IL_0009:  ldc.i4.3
     IL_000a:  newarr     [mscorlib]System.Int32
     IL_000f:  dup
-    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'::'$$method0x60000c0-1'
+    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000c0-1'
     IL_0015:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001a:  stelem.ref
@@ -10095,7 +10091,7 @@
   } // end of property '<>f__AnonymousType1`2'::Y
 } // end of class '<>f__AnonymousType1`2'
 
-.class private auto ansi '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'
+.class private auto ansi '<PrivateImplementationDetails>'
        extends [mscorlib]System.Object
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -10106,9 +10102,9 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'/'__StaticArrayInitTypeSize=12' '$$method0x60000bc-1' at I_00007670
-  .field static assembly valuetype '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'/'__StaticArrayInitTypeSize=12' '$$method0x60000c0-1' at I_000076A8
-} // end of class '<PrivateImplementationDetails>{416BD71B-B506-4355-8604-9F8C6A2FDEE6}'
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000bc-1' at I_00007670
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000c0-1' at I_000076A8
+} // end of class '<PrivateImplementationDetails>'
 
 .class private auto ansi sealed beforefieldinit '<>f__AnonymousType2`2'<'<A>j__TPar','<B>j__TPar'>
        extends [mscorlib]System.Object
@@ -10279,4 +10275,3 @@
 .data cil I_000076A8 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\ExpressionTrees.opt.res
