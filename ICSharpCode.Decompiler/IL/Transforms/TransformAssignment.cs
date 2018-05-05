@@ -361,6 +361,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return conv.TargetType != type.ToPrimitiveType();
 			} else if (value is Comp) {
 				return false; // comp returns 0 or 1, which always fits
+			} else if (value is IfInstruction ifInst) {
+				return IsImplicitTruncation(ifInst.TrueInst, type, allowNullableValue)
+					|| IsImplicitTruncation(ifInst.FalseInst, type, allowNullableValue);
 			} else {
 				IType inferredType = value.InferType();
 				if (allowNullableValue) {
