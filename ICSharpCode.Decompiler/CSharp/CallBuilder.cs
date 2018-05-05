@@ -71,8 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				target = default(TranslatedExpression); // no target
 			} else {
 				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call, constrainedTo);
-				if (callOpCode == OpCode.CallVirt
-					&& constrainedTo == null
+				if (constrainedTo == null
 					&& target.Expression is CastExpression cast
 					&& target.ResolveResult is ConversionResolveResult conversion
 					&& target.Type.IsKnownType(KnownTypeCode.Object)
@@ -209,8 +208,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						if (method.IsStatic)
 							requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
+						else if (method.Name == ".ctor")
+							requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
+						else if (target.Expression is BaseReferenceExpression)
+							requireTarget = (callOpCode != OpCode.CallVirt && method.IsVirtual);
 						else
-							requireTarget = !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression) || method.Name == ".ctor";
+							requireTarget = !(target.Expression is ThisReferenceExpression);
 					}
 					bool targetCasted = false;
 					bool argumentsCasted = false;

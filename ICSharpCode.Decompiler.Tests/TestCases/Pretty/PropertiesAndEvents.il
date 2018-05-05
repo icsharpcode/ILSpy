@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -10,7 +8,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly l2f5cj2d
+.assembly PropertiesAndEvents
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -20,15 +18,13 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module l2f5cj2d.dll
-// MVID: {B40A9FBE-DEAE-43DA-970B-68C48E122E20}
+.module PropertiesAndEvents.dll
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00DC0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -39,16 +35,6 @@
   .class interface abstract auto ansi nested private IBase
   {
     .method public hidebysig newslot specialname abstract virtual 
-            instance void  add_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-    } // end of method IBase::add_Event
-
-    .method public hidebysig newslot specialname abstract virtual 
-            instance void  remove_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-    } // end of method IBase::remove_Event
-
-    .method public hidebysig newslot specialname abstract virtual 
             instance int32  get_Test() cil managed
     {
     } // end of method IBase::get_Test
@@ -57,6 +43,16 @@
             instance void  set_Test(int32 'value') cil managed
     {
     } // end of method IBase::set_Test
+
+    .method public hidebysig newslot specialname abstract virtual 
+            instance void  add_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+    } // end of method IBase::add_Event
+
+    .method public hidebysig newslot specialname abstract virtual 
+            instance void  remove_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+    } // end of method IBase::remove_Event
 
     .event [mscorlib]System.Action Event
     {
@@ -74,26 +70,6 @@
          extends [mscorlib]System.Object
          implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase
   {
-    .method private hidebysig newslot specialname virtual final 
-            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event
-      // Code size       2 (0x2)
-      .maxstack  8
-      IL_0000:  nop
-      IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
-
-    .method private hidebysig newslot specialname virtual final 
-            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action 'value') cil managed
-    {
-      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event
-      // Code size       2 (0x2)
-      .maxstack  8
-      IL_0000:  nop
-      IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
-
     .method private hidebysig newslot specialname virtual final 
             instance int32  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test() cil managed
     {
@@ -114,6 +90,26 @@
       IL_0000:  nop
       IL_0001:  ret
     } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test
+
+    .method private hidebysig newslot specialname virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
+
+    .method private hidebysig newslot specialname virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
 
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
@@ -382,8 +378,8 @@
     IL_002c:  ret
   } // end of method PropertiesAndEvents::.ctor
 
-  .method private hidebysig static void  '<.ctor>b__0'(object sender,
-                                                       class [mscorlib]System.EventArgs e) cil managed
+  .method private hidebysig static void  '<.ctor>b__0'(object param0,
+                                                       class [mscorlib]System.EventArgs param1) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       2 (0x2)
@@ -418,4 +414,3 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\PropertiesAndEvents.res

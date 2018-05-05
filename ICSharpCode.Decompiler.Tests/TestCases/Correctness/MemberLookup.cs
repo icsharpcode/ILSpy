@@ -29,6 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine((new Child1() as Base1).Field);
 			Child1.Test();
 			delegateConstruction();
+			new Child2b().CallTestMethod();
 			return 0;
 		}
 		
@@ -82,6 +83,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					child.TestMethod();
 				Console.WriteLine("Child1.TestMethod()");
 				Console.WriteLine("Property = " + Property + " " + base.Property);
+				Console.WriteLine("Field = " + Field);
+				Console.WriteLine("base.Field = " + base.Field);
 			}
 			
 			new public void TestAction()
@@ -95,6 +98,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				get {
 					return base.VirtProp * 2;
 				}
+			}
+		}
+
+		class Child2 : Base1
+		{
+			public void CallTestMethod()
+			{
+				Console.WriteLine("Child2 calling this.TestMethod():");
+				this.TestMethod();
+				Console.WriteLine("Child2 calling base.TestMethod():");
+				base.TestMethod();
+			}
+		}
+
+		class Child2b : Child2
+		{
+			protected override void TestMethod()
+			{
+				Console.WriteLine("Child2b.TestMethod");
 			}
 		}
 	}

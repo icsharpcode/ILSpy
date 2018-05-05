@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		string GetOperatorName(BinaryNumericOperator @operator)
+		internal static string GetOperatorName(BinaryNumericOperator @operator)
 		{
 			switch (@operator) {
 				case BinaryNumericOperator.Add:

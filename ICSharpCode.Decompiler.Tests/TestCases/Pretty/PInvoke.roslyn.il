@@ -29,7 +29,6 @@
 }
 
 .module PInvoke.roslyn
-// MVID: {86F00A7C-01D7-4EA0-AFE1-EB3A06A0C1FD}
 .corflags 0x00000001 // ILOnly
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = (
 	01 00 00 00

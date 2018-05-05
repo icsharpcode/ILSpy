@@ -111,9 +111,19 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			if (binary.Sign != Sign.None) {
-				if (type.GetSign() != binary.Sign)
-					return false;
+				if (type.IsCSharpSmallIntegerType()) {
+					// C# will use numeric promotion to int, binary op must be signed
+					if (binary.Sign != Sign.Signed)
+						return false;
+				} else {
+					// C# will use sign from type
+					if (type.GetSign() != binary.Sign)
+						return false;
+				}
 			}
+			// Can't transform if the RHS value would be need to be truncated for the LHS type.
+			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, binary.IsLifted))
+				return false;
 			return true;
 		}
 
@@ -148,40 +158,12 @@ namespace ICSharpCode.Decompiler.IL
 				return flags;
 			}
 		}
-
-		string GetOperatorName(BinaryNumericOperator @operator)
-		{
-			switch (@operator) {
-				case BinaryNumericOperator.Add:
-					return "add";
-				case BinaryNumericOperator.Sub:
-					return "sub";
-				case BinaryNumericOperator.Mul:
-					return "mul";
-				case BinaryNumericOperator.Div:
-					return "div";
-				case BinaryNumericOperator.Rem:
-					return "rem";
-				case BinaryNumericOperator.BitAnd:
-					return "bit.and";
-				case BinaryNumericOperator.BitOr:
-					return "bit.or";
-				case BinaryNumericOperator.BitXor:
-					return "bit.xor";
-				case BinaryNumericOperator.ShiftLeft:
-					return "bit.shl";
-				case BinaryNumericOperator.ShiftRight:
-					return "bit.shr";
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
-		}
-
+		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
-			output.Write("." + GetOperatorName(Operator));
+			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
 				output.Write(".new");
 			else
