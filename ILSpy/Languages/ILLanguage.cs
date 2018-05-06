@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpy
 			var metadata = module.GetMetadataReader();
 			var dis = CreateDisassembler(output, options);
 			if (options.FullDecompilation)
-				dis.WriteAssemblyReferences(module);
+				dis.WriteAssemblyReferences(metadata);
 			if (metadata.IsAssembly)
 				dis.WriteAssemblyHeader(module);
 			output.WriteLine();
