@@ -241,14 +241,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				expr.AcceptVisitor(this);
 			} else {
 				base.VisitCall(inst);
-				TransformAssignment.HandleCallCompoundAssign(inst, context);
+				if (TransformAssignment.HandleCallCompoundAssign(inst, context))
+					return;
+				if (TransformAssignment.HandleUserDefinedCompoundAssignOnCall(inst, context))
+					return;
 			}
 		}
 
 		protected internal override void VisitCallVirt(CallVirt inst)
 		{
 			base.VisitCallVirt(inst);
-			TransformAssignment.HandleCallCompoundAssign(inst, context);
+			if (TransformAssignment.HandleCallCompoundAssign(inst, context))
+				return;
+			if (TransformAssignment.HandleUserDefinedCompoundAssignOnCall(inst, context))
+				return;
 		}
 
 		protected internal override void VisitNewObj(NewObj inst)
@@ -301,7 +307,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun();
 				return;
 			}
-			TransformAssignment.HandleStObjCompoundAssign(inst, context);
+			if (TransformAssignment.HandleStObjCompoundAssign(inst, context)) {
+				context.RequestRerun();
+				return;
+			}
+			if (TransformAssignment.HandleUserDefinedCompoundAssignOnReference(inst, context)) {
+				context.RequestRerun();
+				return;
+			}
 		}
 
 		protected internal override void VisitIfInstruction(IfInstruction inst)

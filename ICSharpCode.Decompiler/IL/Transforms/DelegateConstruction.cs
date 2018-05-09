@@ -321,9 +321,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			protected internal override void VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+			protected internal override void VisitNumericCompoundAssign(NumericCompoundAssign inst)
 			{
-				base.VisitCompoundAssignmentInstruction(inst);
+				base.VisitNumericCompoundAssign(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
 					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
 		}

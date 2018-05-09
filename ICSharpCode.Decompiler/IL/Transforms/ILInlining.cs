@@ -296,7 +296,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (inlinedExpression.OpCode) {
 				case OpCode.DefaultValue:
 				case OpCode.StObj:
-				case OpCode.CompoundAssignmentInstruction:
+				case OpCode.NumericCompoundAssign:
+				case OpCode.UserDefinedCompoundAssign:
 				case OpCode.Await:
 					return true;
 				case OpCode.LdLoc:

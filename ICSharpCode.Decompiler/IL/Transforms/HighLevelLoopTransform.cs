@@ -451,7 +451,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.NewObj:
 				case OpCode.StLoc:
 				case OpCode.StObj:
-				case OpCode.CompoundAssignmentInstruction:
+				case OpCode.NumericCompoundAssign:
+				case OpCode.UserDefinedCompoundAssign:
 					return true;
 				default:
 					return false;
