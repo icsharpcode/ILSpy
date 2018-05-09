@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -27,6 +28,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// (=the initial value is a dead store).
 	/// 
 	/// In yield return generators, additionally removes dead 'V = null;' assignments.
+	/// 
+	/// Additionally infers IType of stack slots that have StackType.Ref
 	/// </summary>
 	public class RemoveDeadVariableInit : IILTransform
 	{
@@ -64,6 +67,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 					}
+				}
+			}
+
+			// Try to infer IType of stack slots that are of StackType.Ref:
+			foreach (var v in function.Variables) {
+				if (v.Kind == VariableKind.StackSlot && v.StackType == StackType.Ref && v.AddressCount == 0) {
+					IType newType = null;
+					// Multiple store are possible in case of (c ? ref a : ref b) += 1, for example.
+					foreach (var stloc in v.StoreInstructions.OfType<StLoc>()) {
+						var inferredType = stloc.Value.InferType();
+						// cancel, if types of values do not match exactly
+						if (newType != null && !newType.Equals(inferredType)) {
+							newType = SpecialType.UnknownType;
+							break;
+						}
+						newType = inferredType;
+					}
+					// Only overwrite existing type, if a "better" type was found.
+					if (newType != null && newType != SpecialType.UnknownType)
+						v.Type = newType;
 				}
 			}
 		}
