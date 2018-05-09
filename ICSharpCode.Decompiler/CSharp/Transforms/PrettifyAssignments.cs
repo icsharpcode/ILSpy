@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -52,7 +55,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// TODO: context.Settings.IntroduceIncrementAndDecrement
 			if (assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract) {
 				// detect increment/decrement
-				if (assignment.Right.IsMatch(new PrimitiveExpression(1))) {
+				var rr = assignment.Right.GetResolveResult();
+				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast.Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue)) {
 					// only if it's not a custom operator
 					if (assignment.Annotation<IL.CallInstruction>() == null) {
 						UnaryOperatorType type;
