@@ -229,6 +229,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
+				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+					return true;
 			}
 
 			FieldDefinition field = member as FieldDefinition;
@@ -244,11 +246,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				// event-fields are not [CompilerGenerated]
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
 					return true;
-				// HACK : only hide fields starting with '__StaticArrayInit'
 				if (settings.ArrayInitializers && field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
+					// hide fields starting with '__StaticArrayInit'
 					if (field.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 						return true;
 					if (field.FieldType.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
+						return true;
+					// hide fields starting with '$$method'
+					if (field.Name.StartsWith("$$method", StringComparison.Ordinal))
 						return true;
 				}
 			}
