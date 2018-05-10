@@ -108,7 +108,9 @@ namespace ICSharpCode.Decompiler.IL
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
-			if (type.Kind == TypeKind.Enum) {
+			if (type.Kind == TypeKind.Unknown) {
+				return false; // avoid introducing a potentially-incorrect compound assignment
+			} else if (type.Kind == TypeKind.Enum) {
 				switch (binary.Operator) {
 					case BinaryNumericOperator.Add:
 					case BinaryNumericOperator.Sub:
