@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				context.Step($"Compound assignment (user-defined binary)", compoundStore);
 				newInst = new UserDefinedCompoundAssign(operatorCall.Method, CompoundAssignmentType.EvaluatesToNewValue,
-					operatorCall.Arguments[0], rhs, operatorCall.IsLifted);
+					operatorCall.Arguments[0], rhs);
 			} else {
 				return false;
 			}
@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				Call operatorCall = (Call)value;
 				block.Instructions[pos] = new StLoc(stloc.Variable, new UserDefinedCompoundAssign(
-					operatorCall.Method, CompoundAssignmentType.EvaluatesToOldValue, stloc.Value, new LdcI4(1), operatorCall.IsLifted));
+					operatorCall.Method, CompoundAssignmentType.EvaluatesToOldValue, stloc.Value, new LdcI4(1)));
 			}
 			return true;
 		}
@@ -587,7 +587,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				context.Step("TransformPostIncDecOperator (user-defined)", inst);
 				inst.Value = new UserDefinedCompoundAssign(operatorCall.Method,
-					CompoundAssignmentType.EvaluatesToOldValue, inst.Value, new LdcI4(1), operatorCall.IsLifted);
+					CompoundAssignmentType.EvaluatesToOldValue, inst.Value, new LdcI4(1));
 			} else {
 				return false;
 			}

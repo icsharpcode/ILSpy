@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	public partial class NumericCompoundAssign : CompoundAssignmentInstruction
+	public partial class NumericCompoundAssign : CompoundAssignmentInstruction, ILiftableInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -195,13 +195,12 @@ namespace ICSharpCode.Decompiler.IL
 	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
 	{
 		public readonly IMethod Method;
-		public readonly bool IsLifted;
+		public bool IsLifted => false; // TODO: implement ILi
 
-		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value, bool isLifted)
+		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
 			: base(OpCode.UserDefinedCompoundAssign, compoundAssignmentType, target, value)
 		{
 			this.Method = method;
-			this.IsLifted = isLifted;
 			Debug.Assert(Method.IsOperator);
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
