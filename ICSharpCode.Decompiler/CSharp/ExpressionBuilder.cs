@@ -1775,7 +1775,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
 			var arrayType = arrayExpr.Type as ArrayType;
-			if (arrayType == null) {
+			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(arrayType.ElementType), inst.Type)) {
 				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
