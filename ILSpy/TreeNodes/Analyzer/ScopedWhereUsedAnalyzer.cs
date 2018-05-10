@@ -250,26 +250,27 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AssemblyDefinition> GetReferencingAssemblies(AssemblyDefinition asm, CancellationToken ct)
 		{
-			yield return asm;
+			using (LoadedAssembly.DisableAssemblyLoad()) {
+				yield return asm;
 
-			string requiredAssemblyFullName = asm.FullName;
+				IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
 
-			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
-
-			foreach (var assembly in assemblies) {
-				ct.ThrowIfCancellationRequested();
-				bool found = false;
-				var module = assembly.GetModuleDefinitionOrNull();
-				if (module == null)
-					continue;
-				foreach (var reference in module.AssemblyReferences) {
-					if (requiredAssemblyFullName == reference.FullName) {
-						found = true;
-						break;
+				foreach (var assembly in assemblies) {
+					ct.ThrowIfCancellationRequested();
+					bool found = false;
+					var module = assembly.GetModuleDefinitionOrNull();
+					if (module == null)
+						continue;
+					var resolver = assembly.GetAssemblyResolver();
+					foreach (var reference in module.AssemblyReferences) {
+						if (resolver.Resolve(reference) == asm) {
+							found = true;
+							break;
+						}
 					}
+					if (found && AssemblyReferencesScopeType(module.Assembly))
+						yield return module.Assembly;
 				}
-				if (found && AssemblyReferencesScopeType(module.Assembly))
-					yield return module.Assembly;
 			}
 		}
 
