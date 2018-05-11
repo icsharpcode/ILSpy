@@ -391,7 +391,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!m.Success) break;
 				if (upperBounds == null) {
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
-					if (!(collection.Type is Decompiler.TypeSystem.ArrayType arrayType))
+					if (!(collection?.Type is Decompiler.TypeSystem.ArrayType arrayType))
 						break;
 					upperBounds = new IL.ILVariable[arrayType.Dimensions];
 				} else {
@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt);
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
-			if (!itemVariable.IsSingleDefinition
+			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
