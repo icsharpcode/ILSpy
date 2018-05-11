@@ -510,6 +510,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				property.Getter.Body = null;
 				property.Setter.Body = null;
 			}
+			// Add C# 7.3 attributes on backing field:
+			var attributes = fieldInfo.Attributes
+				.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
+				.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
+			if (attributes.Length > 0) {
+				var section = new AttributeSection {
+					AttributeTarget = "field"
+				};
+				section.Attributes.AddRange(attributes);
+				property.Attributes.Add(section);
+			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
 		}
@@ -704,6 +715,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute",
 			"System.Runtime.CompilerServices.MethodImplAttribute"
+		};
+
+		static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
 		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)

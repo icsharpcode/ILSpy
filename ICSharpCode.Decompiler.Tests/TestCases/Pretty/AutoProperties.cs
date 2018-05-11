@@ -1,4 +1,6 @@
-﻿namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+﻿using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	// TODO : maybe use single-line formatting in this case?
 	internal class AutoProperties
@@ -20,5 +22,12 @@
 			get;
 			set;
 		} = 4;
+
+		[Obsolete("Property")]
+		[field: Obsolete("Field")]
+		public int PropertyWithAttributeOnBackingField {
+			get;
+			set;
+		}
 	}
 }
