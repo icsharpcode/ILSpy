@@ -456,6 +456,17 @@
 
     .method public hidebysig specialname static 
             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass 
+            op_Addition(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass lhs,
+                        int32 rhs) cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClass::op_Addition
+
+    .method public hidebysig specialname static 
+            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass 
             op_Subtraction(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass lhs,
                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass rhs) cil managed
     {
@@ -19659,6 +19670,28 @@
     IL_0183:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::X<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomStruct>(!!0)
     IL_0188:  ret
   } // end of method CompoundAssignmentTest::CustomStructPreDecTest
+
+  .method public hidebysig static void  AddOneToCustomClass(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass& c) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  dup
+    IL_0002:  ldind.ref
+    IL_0003:  ldc.i4.1
+    IL_0004:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::op_Addition(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass,
+                                                                                                                                                                                                              int32)
+    IL_0009:  stind.ref
+    IL_000a:  ldarg.0
+    IL_000b:  ldind.ref
+    IL_000c:  dup
+    IL_000d:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::get_CustomClassProp()
+    IL_0012:  ldc.i4.1
+    IL_0013:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::op_Addition(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass,
+                                                                                                                                                                                                              int32)
+    IL_0018:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::set_CustomClassProp(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass)
+    IL_001d:  ret
+  } // end of method CompoundAssignmentTest::AddOneToCustomClass
 
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item 
           GetItem(object obj) cil managed

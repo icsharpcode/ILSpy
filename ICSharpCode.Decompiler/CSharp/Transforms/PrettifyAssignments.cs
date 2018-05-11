@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var rr = assignment.Right.GetResolveResult();
 				if (rr.IsCompileTimeConstant && rr.Type.IsCSharpPrimitiveIntegerType() && CSharpPrimitiveCast.Cast(rr.Type.GetTypeCode(), 1, false).Equals(rr.ConstantValue)) {
 					// only if it's not a custom operator
-					if (assignment.Annotation<IL.CallInstruction>() == null) {
+					if (assignment.Annotation<IL.CallInstruction>() == null && assignment.Annotation<IL.UserDefinedCompoundAssign>() == null) {
 						UnaryOperatorType type;
 						// When the parent is an expression statement, pre- or post-increment doesn't matter;
 						// so we can pick post-increment which is more commonly used (for (int i = 0; i < x; i++))

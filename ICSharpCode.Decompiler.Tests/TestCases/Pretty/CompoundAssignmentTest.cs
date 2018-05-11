@@ -134,6 +134,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				throw new NotImplementedException();
 			}
+			public static CustomClass operator +(CustomClass lhs, int rhs)
+			{
+				throw new NotImplementedException();
+			}
 			public static CustomClass operator -(CustomClass lhs, CustomClass rhs)
 			{
 				throw new NotImplementedException();
@@ -4498,6 +4502,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 		#endregion
+
+		public static void AddOneToCustomClass(ref CustomClass c)
+		{
+			// This should not be turned into post-increment:
+			c += 1;
+			c.CustomClassProp += 1;
+		}
 
 		private static Item GetItem(object obj)
 		{
