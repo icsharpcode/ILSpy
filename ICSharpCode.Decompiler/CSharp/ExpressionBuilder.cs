@@ -1987,7 +1987,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
 						if (lastElement.Indices?.Length > 0) {
-							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression))
+							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => TranslateInitializerIndexerValue(i, indexVariables)))
 								.WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single(), typeHint: indexer.Type)));
 						} else {
@@ -2007,6 +2007,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = new ArrayInitializerExpression(elements);
 			return expr.WithILInstruction(block);
+		}
+
+		Expression TranslateInitializerIndexerValue(ILInstruction inst, Dictionary<ILVariable, ILInstruction> indexVariables)
+		{
+			if (inst is LdLoc ld && indexVariables.TryGetValue(ld.Variable, out var newInst)) {
+				inst = newInst;
+			}
+			return Translate(inst).Expression;
 		}
 
 		Expression MakeInitializerAssignment(IMember method, IL.Transforms.AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
