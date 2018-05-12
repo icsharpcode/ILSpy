@@ -15,6 +15,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		CSharp7 = 7,
 		CSharp7_1 = 701,
 		CSharp7_2 = 702,
+		CSharp7_3 = 703,
 		Latest = 0x7FFFFFFF
 	}
 }
