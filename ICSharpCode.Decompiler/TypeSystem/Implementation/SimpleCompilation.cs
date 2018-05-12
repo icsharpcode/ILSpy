@@ -27,7 +27,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly ISolutionSnapshot solutionSnapshot;
 		readonly ITypeResolveContext context;
 		readonly CacheManager cacheManager = new CacheManager();
 		readonly KnownTypeCache knownTypeCache;
@@ -37,29 +36,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		INamespace rootNamespace;
 		
 		public SimpleCompilation(IUnresolvedAssembly mainAssembly, params IAssemblyReference[] assemblyReferences)
-			: this(new DefaultSolutionSnapshot(), mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
+			: this(mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
 		{
 		}
 		
 		public SimpleCompilation(IUnresolvedAssembly mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
-			: this(new DefaultSolutionSnapshot(), mainAssembly, assemblyReferences)
 		{
-		}
-		
-		public SimpleCompilation(ISolutionSnapshot solutionSnapshot, IUnresolvedAssembly mainAssembly, params IAssemblyReference[] assemblyReferences)
-			: this(solutionSnapshot, mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
-		{
-		}
-		
-		public SimpleCompilation(ISolutionSnapshot solutionSnapshot, IUnresolvedAssembly mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
-		{
-			if (solutionSnapshot == null)
-				throw new ArgumentNullException("solutionSnapshot");
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");
 			if (assemblyReferences == null)
 				throw new ArgumentNullException("assemblyReferences");
-			this.solutionSnapshot = solutionSnapshot;
 			this.context = new SimpleTypeResolveContext(this);
 			this.mainAssembly = mainAssembly.Resolve(context);
 			List<IAssembly> assemblies = new List<IAssembly>();
@@ -154,10 +140,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public StringComparer NameComparer {
 			get { return StringComparer.Ordinal; }
-		}
-		
-		public ISolutionSnapshot SolutionSnapshot {
-			get { return solutionSnapshot; }
 		}
 		
 		public override string ToString()

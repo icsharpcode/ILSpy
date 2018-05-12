@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public ICompilation CreateCompilation()
 		{
-			return new SimpleCompilation(new DefaultSolutionSnapshot(), this);
+			return new SimpleCompilation(this);
 		}
 		
 		private MinimalCorlib() : base("corlib")

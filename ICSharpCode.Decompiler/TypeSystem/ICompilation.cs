@@ -75,8 +75,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		StringComparer NameComparer { get; }
 		
-		ISolutionSnapshot SolutionSnapshot { get; }
-		
 		CacheManager CacheManager { get; }
 	}
 	
