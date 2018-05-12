@@ -310,6 +310,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else
 					return base.VisitOtherType(type);
 			}
+
+			public override IType VisitTupleType(TupleType type)
+			{
+				return type.UnderlyingType;
+			}
 		}
 		#endregion
 		

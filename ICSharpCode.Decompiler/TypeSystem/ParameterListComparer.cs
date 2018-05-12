@@ -52,6 +52,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return SpecialType.Dynamic;
 				return base.VisitTypeDefinition(type);
 			}
+
+			public override IType VisitTupleType(TupleType type)
+			{
+				return type.UnderlyingType.AcceptVisitor(this);
+			}
 		}
 		
 		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor();

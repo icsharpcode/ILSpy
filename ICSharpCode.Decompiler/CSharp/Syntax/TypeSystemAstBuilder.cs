@@ -231,15 +231,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ConvertType(typeWithElementType.ElementType);
 				}
 			}
-			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null) {
+			if (type is ParameterizedType pt) {
 				if (pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
-			ITypeDefinition typeDef = type as ITypeDefinition;
-			if (typeDef != null) {
+			if (type is TupleType tuple) {
+				var astType = new TupleAstType();
+				if (tuple.HasCustomElementNames) {
+					foreach (var (etype, ename) in tuple.TupleElementTypes.Zip(tuple.TupleElementNames)) {
+						astType.ElementTypes.Add(ConvertType(etype));
+						astType.ElementNames.Add(Identifier.Create(ename));
+					}
+				} else {
+					astType.ElementTypes.AddRange(tuple.TupleElementTypes.Select(ConvertType));
+				}
+				return astType;
+			}
+			if (type is ITypeDefinition typeDef) {
 				if (typeDef.TypeParameterCount > 0) {
 					// Unbound type
 					IType[] typeArguments = new IType[typeDef.TypeParameterCount];

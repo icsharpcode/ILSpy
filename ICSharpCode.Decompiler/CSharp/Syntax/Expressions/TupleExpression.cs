@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,51 +16,36 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ICSharpCode.Decompiler.TypeSystem
+using System;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	/// <summary>
-	/// Base class for the visitor pattern on <see cref="IType"/>.
-	/// </summary>
-	public abstract class TypeVisitor
+	public class TupleExpression : Expression
 	{
-		public virtual IType VisitTypeDefinition(ITypeDefinition type)
-		{
-			return type.VisitChildren(this);
-		}
-		
-		public virtual IType VisitTypeParameter(ITypeParameter type)
-		{
-			return type.VisitChildren(this);
-		}
-		
-		public virtual IType VisitParameterizedType(ParameterizedType type)
-		{
-			return type.VisitChildren(this);
-		}
-		
-		public virtual IType VisitArrayType(ArrayType type)
-		{
-			return type.VisitChildren(this);
-		}
-		
-		public virtual IType VisitPointerType(PointerType type)
-		{
-			return type.VisitChildren(this);
-		}
-		
-		public virtual IType VisitByReferenceType(ByReferenceType type)
-		{
-			return type.VisitChildren(this);
+		public AstNodeCollection<Expression> Elements {
+			get { return GetChildrenByRole(Roles.Expression); }
 		}
 
-		public virtual IType VisitTupleType(TupleType type)
+		public override void AcceptVisitor(IAstVisitor visitor)
 		{
-			return type.VisitChildren(this);
+			visitor.VisitTupleExpression(this);
 		}
 
-		public virtual IType VisitOtherType(IType type)
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
 		{
-			return type.VisitChildren(this);
+			return visitor.VisitTupleExpression(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitTupleExpression(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, Match match)
+		{
+			return other is TupleExpression tuple
+				&& Elements.DoMatch(tuple.Elements, match);
 		}
 	}
 }

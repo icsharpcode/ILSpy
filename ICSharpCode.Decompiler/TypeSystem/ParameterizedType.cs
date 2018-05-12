@@ -271,6 +271,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public bool Equals(IType other)
 		{
+			if (this == other)
+				return true;
 			ParameterizedType c = other as ParameterizedType;
 			if (c == null || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
 				return false;

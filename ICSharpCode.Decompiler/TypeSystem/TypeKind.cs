@@ -81,5 +81,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Intersection,
 		/// <see cref="SpecialType.ArgList"/>
 		ArgList,
+		/// <summary>A C# 7 tuple type.
+		/// E.g. <code>(string, int)</code>
+		/// Note: <code>System.ValueTuple&lt;string, int&gt;</code> is not considered a tuple type.
+		/// </summary>
+		/// <see cref="TupleType"/>
+		Tuple,
 	}
 }
