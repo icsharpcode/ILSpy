@@ -280,8 +280,6 @@
     <Compile Include="DotNetCore\LightJson\JsonValueType.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\JsonParseException.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonSerializationException.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonWriter.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\TextPosition.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
