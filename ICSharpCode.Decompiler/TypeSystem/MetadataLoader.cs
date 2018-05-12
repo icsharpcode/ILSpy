@@ -272,12 +272,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Load Assembly From Disk
-		public IUnresolvedAssembly LoadAssemblyFile(string fileName)
+		public IUnresolvedAssembly LoadAssemblyFile(string fileName, bool throwOnResolveError = true, PEStreamOptions options = PEStreamOptions.Default)
 		{
 			if (fileName == null)
 				throw new ArgumentNullException(nameof(fileName));
 			var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-			return LoadModule(new Metadata.PEFile(fileName, fileStream, PEStreamOptions.Default));
+			return LoadModule(new Metadata.PEFile(fileName, fileStream, throwOnResolveError, options));
 		}
 		#endregion
 

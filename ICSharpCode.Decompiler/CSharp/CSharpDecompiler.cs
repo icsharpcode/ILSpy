@@ -38,6 +38,7 @@ using System.Runtime.InteropServices;
 using System.Reflection.Metadata;
 using SRM = System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
+using System.Reflection.PortableExecutable;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -301,19 +302,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
-		static Metadata.PEFile LoadPEFile(string fileName, DecompilerSettings settings)
+		static PEFile LoadPEFile(string fileName, DecompilerSettings settings)
 		{
-			Stream stream;
-			if (settings.LoadInMemory) {
-				using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
-					stream = new MemoryStream();
-					fileStream.CopyTo(stream);
-					stream.Position = 0;
-				}
-			} else {
-				stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-			}
-			return new Metadata.PEFile(fileName, stream, System.Reflection.PortableExecutable.PEStreamOptions.Default);
+			return new PEFile(
+				fileName,
+				new FileStream(fileName, FileMode.Open, FileAccess.Read),
+				settings.ThrowOnAssemblyResolveErrors,
+				options: settings.LoadInMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default
+			);
 		}
 
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)

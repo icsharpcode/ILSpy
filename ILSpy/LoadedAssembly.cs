@@ -119,17 +119,12 @@ namespace ICSharpCode.ILSpy
 			if (stream != null)
 			{
 				// Read the module from a precrafted stream
-				module = new PEFile(fileName, stream, PEStreamOptions.Default) { AssemblyResolver = new MyAssemblyResolver(this) };
+				module = new PEFile(fileName, stream, new MyAssemblyResolver(this), PEStreamOptions.Default);
 			}
 			else
 			{
 				// Read the module from disk (by default)
-				using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
-					var ms = new MemoryStream();
-					fs.CopyTo(ms);
-					ms.Position = 0;
-					module = new PEFile(fileName, ms, PEStreamOptions.Default) { AssemblyResolver = new MyAssemblyResolver(this) };
-				}
+				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), new MyAssemblyResolver(this), PEStreamOptions.PrefetchEntireImage);
 			}
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
@@ -232,7 +227,7 @@ namespace ICSharpCode.ILSpy
 		class MyUniversalResolver : UniversalAssemblyResolver
 		{
 			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false, true, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.Default)
+				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage)
 			{
 			}
 		}

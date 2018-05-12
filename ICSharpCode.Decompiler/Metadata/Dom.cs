@@ -94,14 +94,22 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		public string FileName { get; }
 		public PEReader Reader { get; }
-		public IAssemblyResolver AssemblyResolver { get; set; }
+		public IAssemblyResolver AssemblyResolver { get; }
 		public IAssemblyDocumentationResolver DocumentationResolver { get; set; }
 		public IDebugInfoProvider DebugInfo { get; set; }
 
-		public PEFile(string fileName, Stream stream, PEStreamOptions options)
+		public PEFile(string fileName, Stream stream, bool throwOnResolveError = false, PEStreamOptions options = PEStreamOptions.Default)
 		{
 			this.FileName = fileName;
 			this.Reader = new PEReader(stream, options);
+			this.AssemblyResolver = new UniversalAssemblyResolver(fileName, throwOnResolveError, Reader.DetectTargetFrameworkId(), options);
+		}
+
+		public PEFile(string fileName, Stream stream, IAssemblyResolver assemblyResolver, PEStreamOptions options = PEStreamOptions.Default)
+		{
+			this.FileName = fileName;
+			this.Reader = new PEReader(stream, options);
+			this.AssemblyResolver = assemblyResolver;
 		}
 
 		public bool IsAssembly => GetMetadataReader().IsAssembly;
@@ -140,7 +148,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		public ImmutableArray<AssemblyReference> AssemblyReferences => GetMetadataReader().AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
 		public ImmutableArray<ModuleReferenceHandle> ModuleReferences => GetMetadataReader().GetModuleReferences().ToImmutableArray();
 		public ImmutableArray<TypeDefinition> TypeDefinitions => Reader.GetMetadataReader().GetTopLevelTypeDefinitions().Select(t => new TypeDefinition(this, t)).ToImmutableArray();
-		public ImmutableArray<TypeReference> TypeReferences => Reader.GetMetadataReader().TypeReferences.Select(t => new TypeReference(this, t)).ToImmutableArray();
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
 
 		IEnumerable<Resource> GetResources()

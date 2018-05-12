@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
@@ -143,11 +144,10 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
-						PEFile module = new PEFile(file, fileStream, System.Reflection.PortableExecutable.PEStreamOptions.Default);
-						var resolver = new UniversalAssemblyResolver(file, false, true, module.Reader.DetectTargetFrameworkId(), System.Reflection.PortableExecutable.PEStreamOptions.Default);
+						PEFile module = new PEFile(file, fileStream, false, PEStreamOptions.PrefetchEntireImage);
+						UniversalAssemblyResolver resolver = (UniversalAssemblyResolver)module.AssemblyResolver;
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
-						module.AssemblyResolver = resolver;
 						var decompiler = new TestProjectDecompiler(inputDir);
 						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");

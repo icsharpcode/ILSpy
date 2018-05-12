@@ -10,7 +10,6 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		DotNetCorePathFinder dotNetCorePathFinder;
 		readonly bool throwOnError;
-		readonly bool inMemory;
 		readonly PEStreamOptions options;
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
@@ -49,9 +48,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string TargetFramework { get; }
 
-		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, bool inMemory, string targetFramework, PEStreamOptions options)
+		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework, PEStreamOptions options)
 		{
-			this.inMemory = inMemory;
 			this.options = options;
 			this.TargetFramework = targetFramework;
 			this.mainAssemblyFileName = mainAssemblyFileName;
@@ -70,17 +68,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			Stream stream;
-			if (inMemory) {
-				using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
-					stream = new MemoryStream();
-					fileStream.CopyTo(stream);
-				}
-			} else {
-				stream = new FileStream(file, FileMode.Open, FileAccess.Read);
-			}
-			stream.Position = 0;
-			return new PEFile(file, stream, options);
+			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), this, options);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)
@@ -334,15 +322,5 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		#endregion
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-		}
 	}
 }

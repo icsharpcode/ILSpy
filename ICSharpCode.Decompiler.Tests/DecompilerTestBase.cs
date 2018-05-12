@@ -52,8 +52,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
 			using (var assembly = CompileLegacy(code, optimize, useDebug, compilerVersion)) {
-				var module = new Metadata.PEFile("temp.exe", assembly, PEStreamOptions.Default);
-				module.AssemblyResolver = new Metadata.UniversalAssemblyResolver(fileName, false, true, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
+				var module = new PEFile("temp.exe", assembly, throwOnResolveError: false, options: PEStreamOptions.PrefetchEntireImage);
 				CSharpDecompiler decompiler = new CSharpDecompiler(module, new DecompilerSettings());
 
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());

@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
 				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
-				using (var peFile = new PEFile(sourceFileName, peFileStream, PEStreamOptions.Default))
+				using (var peFile = new PEFile(sourceFileName, peFileStream))
 				using (var writer = new StringWriter()) {
 					var metadata = peFile.GetMetadataReader();
 					var output = new PlainTextOutput(writer);
@@ -341,8 +341,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var emitResult = compilation.Emit(peStream);
 			peStream.Position = 0;
 
-			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, PEStreamOptions.Default);
-			moduleDefinition.AssemblyResolver = new UniversalAssemblyResolver(typeof(Tester).Assembly.Location, false, true, moduleDefinition.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
+			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, false, PEStreamOptions.PrefetchEntireImage);
 			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
 
 			return decompiler;
@@ -388,9 +387,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
-				var module = new PEFile(assemblyFileName, file, PEStreamOptions.Default);
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, false, true, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.Default);
-				module.AssemblyResolver = resolver;
+				var module = new PEFile(assemblyFileName, file, false, PEStreamOptions.PrefetchEntireImage);
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
