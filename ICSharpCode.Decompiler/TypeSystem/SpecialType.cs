@@ -64,11 +64,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.isReferenceType = isReferenceType;
 		}
 		
-		public override ITypeReference ToTypeReference()
-		{
-			return this;
-		}
-		
 		public override string Name {
 			get { return name; }
 		}

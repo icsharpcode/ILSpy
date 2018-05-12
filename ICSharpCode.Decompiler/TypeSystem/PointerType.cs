@@ -65,11 +65,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return new PointerType(e);
 		}
-		
-		public override ITypeReference ToTypeReference()
-		{
-			return new PointerTypeReference(elementType.ToTypeReference());
-		}
 	}
 	
 	[Serializable]

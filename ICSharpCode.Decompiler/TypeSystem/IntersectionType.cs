@@ -126,11 +126,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return types; }
 		}
 		
-		public override ITypeReference ToTypeReference()
-		{
-			throw new NotSupportedException();
-		}
-		
 		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
 			return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);

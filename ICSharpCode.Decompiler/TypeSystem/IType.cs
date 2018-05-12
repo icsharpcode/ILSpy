@@ -116,15 +116,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<IType> DirectBaseTypes { get; }
 		
 		/// <summary>
-		/// Creates a type reference that can be used to look up a type equivalent to this type in another compilation.
-		/// </summary>
-		/// <remarks>
-		/// If this type contains open generics, the resulting type reference will need to be looked up in an appropriate generic context.
-		/// Otherwise, the main resolve context of a compilation is sufficient.
-		/// </remarks>
-		ITypeReference ToTypeReference();
-
-		/// <summary>
 		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
 		/// of this parameterized type.
 		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.

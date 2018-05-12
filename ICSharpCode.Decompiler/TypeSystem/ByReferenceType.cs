@@ -65,11 +65,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return new ByReferenceType(e);
 		}
-		
-		public override ITypeReference ToTypeReference()
-		{
-			return new ByReferenceTypeReference(elementType.ToTypeReference());
-		}
 	}
 	
 	[Serializable]
