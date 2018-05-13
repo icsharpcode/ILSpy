@@ -129,21 +129,26 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		private bool IsNoncontiguousMatch(string text, string searchTerm)
+		bool IsNoncontiguousMatch(string text, string searchTerm)
 		{
 			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm)) {
 				return false;
 			}
+			var textLength = text.Length;
+			if (searchTerm.Length > textLength) {
+				return false;
+			}
 			var index = 0;
 			foreach (char c in searchTerm) {
-				while (index != text.Length) {
+				while (index != textLength) {
 					if (text[index] == c) {
 						index++;
 						break;
 					}
 					index++;
-				}
-				if (index == text.Length)
+				} 
+				// Check if we reached end of text without matching the full search string
+				if (index == textLength)
 					return false;
 			}
 			return true;
