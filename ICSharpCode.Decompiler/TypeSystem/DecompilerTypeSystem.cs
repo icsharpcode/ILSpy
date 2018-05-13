@@ -311,11 +311,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return CreateFakeMethod(methodReference);
 		}
-		
+
+		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = true,
+			ReplaceMethodTypeParametersWithDummy = true,
+		};
+
 		static bool CompareTypes(IType a, IType b)
 		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			IType type1 = a.AcceptVisitor(normalizeTypeVisitor);
+			IType type2 = b.AcceptVisitor(normalizeTypeVisitor);
 			return type1.Equals(type2);
 		}
 		

@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void TupleTypes([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
+		public void TupleTests([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

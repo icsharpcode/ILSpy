@@ -63,7 +63,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return baseMethod.GetHashCode();
 		}
-		
+
+		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			return other != null && baseMethod.Equals(other.baseMethod, typeNormalization);
+		}
+
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder("[");

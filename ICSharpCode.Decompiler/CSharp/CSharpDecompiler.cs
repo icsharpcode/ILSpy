@@ -1374,6 +1374,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						HasNullableSpecifier = true
 					};
 				}
+				if (CecilLoader.IsValueTuple(gType, out int tupleCardinality) && tupleCardinality > 1 && tupleCardinality < TupleType.RestPosition) {
+					var tupleType = new TupleAstType();
+					foreach (var typeArgument in gType.GenericArguments) {
+						typeIndex++;
+						tupleType.Elements.Add(new TupleTypeElement {
+							Type = ConvertType(typeArgument, typeAttributes, ref typeIndex, options)
+						});
+					}
+					return tupleType;
+				}
 				AstType baseType = ConvertType(gType.ElementType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 				List<AstType> typeArguments = new List<AstType>();
 				foreach (var typeArgument in gType.GenericArguments) {

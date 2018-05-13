@@ -258,6 +258,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
 		}
 
+		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			SpecializedMember other = obj as SpecializedMember;
+			if (other == null)
+				return false;
+			return this.baseMember.Equals(other.baseMember, typeNormalization)
+				&& this.substitution.Equals(other.substitution, typeNormalization);
+		}
+
 		public override bool Equals(object obj)
 		{
 			SpecializedMember other = obj as SpecializedMember;

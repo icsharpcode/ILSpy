@@ -255,6 +255,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				b.Append(')');
 				return b.ToString();
 			}
+
+			bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+			{
+				return this == obj;
+			}
 		}
 		#endregion
 		
@@ -1063,7 +1068,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IsComparisonOperator(nonLiftedMethod))
 					this.ReturnType = nonLiftedMethod.ReturnType;
 				else
-					this.ReturnType = nonLiftedMethod.ReturnType.AcceptVisitor(substitution);
+					this.ReturnType = NullableType.Create(compilation, nonLiftedMethod.ReturnType.AcceptVisitor(substitution));
 			}
 
 			public IReadOnlyList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;

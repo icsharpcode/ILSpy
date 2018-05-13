@@ -45,6 +45,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			this.baseMethod = baseMethod;
 		}
 
+		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			var other = obj as ReducedExtensionMethod;
+			if (other == null)
+				return false;
+			return baseMethod.Equals(other.baseMethod, typeNormalization);
+		}
+
 		public override bool Equals(object obj)
 		{
 			var other = obj as ReducedExtensionMethod;

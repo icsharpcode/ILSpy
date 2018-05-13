@@ -363,6 +363,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ITypeReference baseType = CreateType(gType.ElementType, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
 					if (UseTupleTypes && IsValueTuple(gType, out int tupleCardinality)) {
 						if (tupleCardinality > 1) {
+							var assemblyRef = GetAssemblyReference(gType.ElementType.Scope);
 							var elementNames = GetTupleElementNames(typeAttributes, tupleTypeIndex, tupleCardinality);
 							tupleTypeIndex += tupleCardinality;
 							ITypeReference[] elementTypeRefs = new ITypeReference[tupleCardinality];
@@ -385,7 +386,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 									gType = null;
 								}
 							} while (gType != null);
-							return new TupleTypeReference(elementTypeRefs.ToImmutableArray(), elementNames);
+							return new TupleTypeReference( 
+								elementTypeRefs.ToImmutableArray(), elementNames,
+								assemblyRef);
 						} else {
 							// C# doesn't have syntax for tuples of cardinality <= 1
 							tupleTypeIndex += tupleCardinality;
@@ -451,10 +454,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static bool IsValueTuple(GenericInstanceType gType, out int tupleCardinality)
+		static internal bool IsValueTuple(GenericInstanceType gType, out int tupleCardinality)
 		{
 			tupleCardinality = 0;
-			if (gType == null || !gType.Name.StartsWith("ValueTuple`", StringComparison.Ordinal) || gType.Namespace != "System")
+			if (gType == null || gType.DeclaringType != null || !gType.Name.StartsWith("ValueTuple`", StringComparison.Ordinal) || gType.Namespace != "System")
 				return false;
 			if (gType.GenericArguments.Count == TupleType.RestPosition) {
 				if (IsValueTuple(gType.GenericArguments.Last() as GenericInstanceType, out tupleCardinality)) {

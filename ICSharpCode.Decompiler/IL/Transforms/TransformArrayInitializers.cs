@@ -283,24 +283,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return block;
 		}
 		
-		static bool CompareTypes(IType a, IType b)
-		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
-			return type1.Equals(type2);
-		}
-		
-		static bool CompareSignatures(IList<IParameter> parameters, IList<IParameter> otherParameters)
-		{
-			if (otherParameters.Count != parameters.Count)
-				return false;
-			for (int i = 0; i < otherParameters.Count; i++) {
-				if (!CompareTypes(otherParameters[i].Type, parameters[i].Type))
-					return false;
-			}
-			return true;
-		}
-		
 		internal static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
 		{
 			NewArr newArr = instruction as NewArr;

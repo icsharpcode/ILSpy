@@ -17,10 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class TupleTypes
+	public class TupleTests
 	{
 		public ValueTuple VT0;
 		public ValueTuple<int> VT1;
@@ -44,5 +46,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public ((object a, dynamic b), dynamic, (dynamic c, object d)) Nested2;
 		public (ValueTuple a, (int x1, int x2), ValueTuple<int> b, (int y1, int y2), (int, int) c) Nested3;
 		public (int a, int b, int c, int d, int e, int f, int g, int h, (int i, int j)) Nested4;
+
+		public Dictionary<(int a, string b), (string c, int d)> TupleDict;
+
+		public int VT1Member => VT1.Item1;
+		public int AccessUnnamed8 => Unnamed8.Item8;
+		public int AccessNamed8 => Named8.h;
+		public int AccessPartiallyNamed => PartiallyNamed.a + PartiallyNamed.Item3;
+
+		public ValueTuple<int> NewTuple1 => new ValueTuple<int>(1);
+		public (int a, int b) NewTuple2 => (1, 2);
+		public object BoxedTuple10 => (1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+		public (uint, int) SwapUnnamed => (Unnamed2.Item2, Unnamed2.Item1);
+		public (uint, int) SwapNamed2 => (Named2.b, Named2.a);
+
+		public int TupleHash => (1, 2, 3).GetHashCode();
+		public int TupleHash2 => Named2.GetHashCode();
+
+		public void UseDict()
+		{
+			if (TupleDict.Count > 10) {
+				TupleDict.Clear();
+			}
+			// TODO: it would be nice if we could infer the name 'c' for the local
+			string item = TupleDict[(1, "abc")].c;
+			Console.WriteLine(item);
+			Console.WriteLine(item);
+			Console.WriteLine(TupleDict.Values.ToList().First().d);
+		}
 	}
 }
