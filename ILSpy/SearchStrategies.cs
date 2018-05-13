@@ -14,10 +14,11 @@ namespace ICSharpCode.ILSpy
 {
 	abstract class AbstractSearchStrategy
 	{
+		private const string NoncontiguousSearchPrefix = "s:";
+
 		protected string[] searchTerm;
 		protected Regex regex;
 		protected bool fullNameSearch;
-		protected bool allowNonContiguousMatch;
 
 		protected AbstractSearchStrategy(params string[] terms)
 		{
@@ -115,8 +116,8 @@ namespace ICSharpCode.ILSpy
 						}
 						break;
 					default:
-						if (!fullNameSearch && allowNonContiguousMatch) {
-							if (!IsNonContiguousMatch(text.ToLower(), term.ToLower()))
+						if (term.Length > 2 && term.StartsWith(NoncontiguousSearchPrefix, StringComparison.OrdinalIgnoreCase)) {
+							if (!IsNoncontiguousMatch(text.ToLower(), term.Substring(2).ToLower()))
 								return false;
 						} else {
 							if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
@@ -128,7 +129,7 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		private bool IsNonContiguousMatch(string text, string searchTerm)
+		private bool IsNoncontiguousMatch(string text, string searchTerm)
 		{
 			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm)) {
 				return false;
