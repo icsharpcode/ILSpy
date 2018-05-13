@@ -239,13 +239,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			if (type is TupleType tuple) {
 				var astType = new TupleAstType();
-				if (tuple.HasCustomElementNames) {
-					foreach (var (etype, ename) in tuple.TupleElementTypes.Zip(tuple.TupleElementNames)) {
-						astType.ElementTypes.Add(ConvertType(etype));
-						astType.ElementNames.Add(Identifier.Create(ename));
-					}
-				} else {
-					astType.ElementTypes.AddRange(tuple.TupleElementTypes.Select(ConvertType));
+				foreach (var (etype, ename) in tuple.ElementTypes.Zip(tuple.ElementNames)) {
+					astType.Elements.Add(new TupleTypeElement {
+						Type = ConvertType(etype),
+						Name = ename
+					});
 				}
 				return astType;
 			}

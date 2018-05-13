@@ -121,6 +121,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(tupleType);
 		}
 
+		public virtual void VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			VisitChildren (tupleTypeElement);
+		}
+
 		public virtual void VisitAttribute (Attribute attribute)
 		{
 			VisitChildren (attribute);
@@ -762,7 +767,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (tupleType);
 		}
-		
+
+		public virtual T VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			return VisitChildren (tupleTypeElement);
+		}
+
 		public virtual T VisitAttribute (Attribute attribute)
 		{
 			return VisitChildren (attribute);
@@ -1403,6 +1413,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitTupleType(TupleAstType tupleType, T data)
 		{
 			return VisitChildren (tupleType, data);
+		}
+
+		public virtual S VisitTupleTypeElement(TupleTypeElement tupleTypeElement, T data)
+		{
+			return VisitChildren (tupleTypeElement, data);
 		}
 
 		public virtual S VisitAttribute (Attribute attribute, T data)

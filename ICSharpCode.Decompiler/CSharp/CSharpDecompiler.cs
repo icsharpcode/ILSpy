@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public CSharpDecompiler(ModuleDefinition module, DecompilerSettings settings)
-			: this(new DecompilerTypeSystem(module), settings)
+			: this(new DecompilerTypeSystem(module, settings), settings)
 		{
 		}
 

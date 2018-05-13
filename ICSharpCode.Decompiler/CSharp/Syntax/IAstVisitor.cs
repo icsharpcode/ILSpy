@@ -135,6 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitSimpleType(SimpleType simpleType);
 		void VisitMemberType(MemberType memberType);
 		void VisitTupleType(TupleAstType tupleType);
+		void VisitTupleTypeElement(TupleTypeElement tupleTypeElement);
 		void VisitComposedType(ComposedType composedType);
 		void VisitArraySpecifier(ArraySpecifier arraySpecifier);
 		void VisitPrimitiveType(PrimitiveType primitiveType);
@@ -275,6 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitSimpleType(SimpleType simpleType);
 		S VisitMemberType(MemberType memberType);
 		S VisitTupleType(TupleAstType tupleType);
+		S VisitTupleTypeElement(TupleTypeElement tupleTypeElement);
 		S VisitComposedType(ComposedType composedType);
 		S VisitArraySpecifier(ArraySpecifier arraySpecifier);
 		S VisitPrimitiveType(PrimitiveType primitiveType);
@@ -415,6 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitSimpleType(SimpleType simpleType, T data);
 		S VisitMemberType(MemberType memberType, T data);
 		S VisitTupleType(TupleAstType tupleType, T data);
+		S VisitTupleTypeElement(TupleTypeElement tupleTypeElement, T data);
 		S VisitComposedType(ComposedType composedType, T data);
 		S VisitArraySpecifier(ArraySpecifier arraySpecifier, T data);
 		S VisitPrimitiveType(PrimitiveType primitiveType, T data);

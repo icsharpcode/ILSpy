@@ -445,6 +445,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			foreach (CSharpModifierToken modifier in modifierTokens) {
 				modifier.AcceptVisitor(this);
+				Space();
 			}
 		}
 		
@@ -2283,26 +2284,23 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public virtual void VisitTupleType(TupleAstType tupleType)
 		{
-			Debug.Assert(tupleType.ElementTypes.Count >= 2);
+			Debug.Assert(tupleType.Elements.Count >= 2);
 			StartNode(tupleType);
 			LPar();
-			if (tupleType.ElementNames.Any()) {
-				bool isFirst = true;
-				foreach (var (type, name) in tupleType.ElementTypes.Zip(tupleType.ElementNames)) {
-					if (isFirst) {
-						isFirst = false;
-					} else {
-						Comma(type);
-					}
-					type.AcceptVisitor(this);
-					Space();
-					name.AcceptVisitor(this);
-				}
-			} else {
-				WriteCommaSeparatedList(tupleType.ElementTypes);
-			}
+			WriteCommaSeparatedList(tupleType.Elements);
 			RPar();
 			EndNode(tupleType);
+		}
+
+		public virtual void VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			StartNode(tupleTypeElement);
+			tupleTypeElement.Type.AcceptVisitor(this);
+			if (!tupleTypeElement.NameToken.IsNull) {
+				Space();
+				tupleTypeElement.NameToken.AcceptVisitor(this);
+			}
+			EndNode(tupleTypeElement);
 		}
 
 		public virtual void VisitComposedType(ComposedType composedType)

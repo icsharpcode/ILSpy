@@ -41,31 +41,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the tuple elements.
 		/// </summary>
-		public ImmutableArray<IType> TupleElementTypes { get; }
+		public ImmutableArray<IType> ElementTypes { get; }
 
 		/// <summary>
 		/// Gets the names of the tuple elements.
 		/// </summary>
-		public ImmutableArray<string> TupleElementNames { get; }
-
-		public bool HasCustomElementNames { get; }
-
-		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes)
+		public ImmutableArray<string> ElementNames { get; }
+		
+		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes,
+			ImmutableArray<string> elementNames = default(ImmutableArray<string>))
 		{
 			this.Compilation = compilation;
 			this.UnderlyingType = CreateUnderlyingType(compilation, elementTypes);
-			this.TupleElementTypes = elementTypes;
-			this.TupleElementNames = Enumerable.Range(1, elementTypes.Length).Select(p => "Item" + p).ToImmutableArray();
-			this.HasCustomElementNames = false;
-		}
-
-		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes, ImmutableArray<string> elementNames)
-		{
-			this.Compilation = compilation;
-			this.UnderlyingType = CreateUnderlyingType(compilation, elementTypes);
-			this.TupleElementTypes = elementTypes;
-			this.TupleElementNames = elementNames;
-			this.HasCustomElementNames = true;
+			this.ElementTypes = elementTypes;
+			if (elementNames.IsDefault) {
+				this.ElementNames = Enumerable.Repeat<string>(null, elementTypes.Length).ToImmutableArray();
+			} else {
+				Debug.Assert(elementNames.Length == elementTypes.Length);
+				this.ElementNames = elementNames;
+			}
 		}
 
 		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes)
@@ -94,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			switch (type.Kind) {
 				case TypeKind.Tuple:
-					tupleCardinality = ((TupleType)type).TupleElementNames.Length;
+					tupleCardinality = ((TupleType)type).ElementNames.Length;
 					return true;
 				case TypeKind.Class:
 				case TypeKind.Struct:
@@ -120,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			switch (type.Kind) {
 				case TypeKind.Tuple:
-					output.AddRange(((TupleType)type).TupleElementTypes);
+					output.AddRange(((TupleType)type).ElementTypes);
 					return true;
 				case TypeKind.Class:
 				case TypeKind.Struct:
@@ -158,16 +152,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (!UnderlyingType.Equals(o.UnderlyingType))
 				return false;
 			return UnderlyingType.Equals(o.UnderlyingType)
-				&& TupleElementNames.SequenceEqual(o.TupleElementNames);
+				&& ElementNames.SequenceEqual(o.ElementNames);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked {
 				int hash = UnderlyingType.GetHashCode();
-				foreach (string name in TupleElementNames) {
+				foreach (string name in ElementNames) {
 					hash *= 31;
-					hash += name.GetHashCode();
+					hash += name != null ? name.GetHashCode() : 0;
 				}
 				return hash;
 			}
@@ -181,18 +175,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			IType[] newElementTypes = null;
-			for (int i = 0; i < TupleElementTypes.Length; i++) {
-				IType type = TupleElementTypes[i];
+			for (int i = 0; i < ElementTypes.Length; i++) {
+				IType type = ElementTypes[i];
 				var newType = type.AcceptVisitor(visitor);
 				if (newType != type) {
 					if (newElementTypes == null) {
-						newElementTypes = TupleElementTypes.ToArray();
+						newElementTypes = ElementTypes.ToArray();
 					}
 					newElementTypes[i] = newType;
 				}
 			}
 			if (newElementTypes != null) {
-				return new TupleType(this.Compilation, newElementTypes.ToImmutableArray(), this.TupleElementNames);
+				return new TupleType(this.Compilation, newElementTypes.ToImmutableArray(), this.ElementNames);
 			} else {
 				return this;
 			}
@@ -225,12 +219,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			foreach (var field in UnderlyingType.GetFields(filter, options)) {
 				yield return field;
 			}
-			for (int i = 0; i <= TupleElementTypes.Length; i++) {
-				var type = TupleElementTypes[i];
-				var name = TupleElementNames[i];
+			for (int i = 0; i < ElementTypes.Length; i++) {
+				var type = ElementTypes[i];
+				var name = ElementNames[i];
 				int pos = i + 1;
 				string itemName = "Item" + pos;
-				if (name != itemName)
+				if (name != itemName && name != null)
 					yield return MakeField(type, name);
 				if (pos >= RestPosition)
 					yield return MakeField(type, itemName);
@@ -265,6 +259,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetProperties(filter, options);
+		}
+	}
+
+	public class TupleTypeReference : ITypeReference
+	{
+		/// <summary>
+		/// Gets the types of the tuple elements.
+		/// </summary>
+		public ImmutableArray<ITypeReference> ElementTypes { get; }
+
+		/// <summary>
+		/// Gets the names of the tuple elements.
+		/// </summary>
+		public ImmutableArray<string> ElementNames { get; }
+
+		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
+		{
+			this.ElementTypes = elementTypes;
+		}
+
+		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes, ImmutableArray<string> elementNames)
+		{
+			this.ElementTypes = elementTypes;
+			this.ElementNames = elementNames;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return new TupleType(context.Compilation,
+				ElementTypes.Select(t => t.Resolve(context)).ToImmutableArray(),
+				ElementNames
+			);
 		}
 	}
 
