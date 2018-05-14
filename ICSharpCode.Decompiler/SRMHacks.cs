@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler
 		/*
 		internal static unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors(PEFile module, uint encodedTag)
 		{
-			var reader = module.GetMetadataReader();
+			var reader = Module.Metadata;
 			byte* startPointer = reader.MetadataPointer;
 			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
 

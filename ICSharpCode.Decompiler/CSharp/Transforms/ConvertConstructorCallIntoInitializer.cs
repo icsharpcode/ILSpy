@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (staticCtor != null) {
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
 				if (!ctorMethod.MetadataToken.IsNil) {
-					var metadata = context.TypeSystem.ModuleDefinition.GetMetadataReader();
+					var metadata = context.TypeSystem.ModuleDefinition.Metadata;
 					SRM.MethodDefinition ctorMethodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)ctorMethod.MetadataToken);
 					SRM.TypeDefinition declaringType = metadata.GetTypeDefinition(ctorMethodDef.GetDeclaringType());
 					if (declaringType.HasFlag(System.Reflection.TypeAttributes.BeforeFieldInit)) {

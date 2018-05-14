@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 
 		protected float CalculateFitness(IMetadataEntity member)
 		{
-			var metadata = member.Module.GetMetadataReader();
+			var metadata = member.Module.Metadata;
 			string text;
 			switch (member) {
 				case TypeDefinition td:
@@ -149,7 +149,7 @@ namespace ICSharpCode.ILSpy
 
 		string GetLanguageSpecificName(Language language, IMetadataEntity member, bool fullName = false)
 		{
-			var metadata = member.Module.GetMetadataReader();
+			var metadata = member.Module.Metadata;
 			switch (member) {
 				case TypeDefinition t:
 					return language.TypeDefinitionToString(t, fullName);
@@ -190,8 +190,8 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			var td = type.This();
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
+			var td = metadata.GetTypeDefinition(type.Handle);
 			Add(() => td.GetFields().Select(f => new FieldDefinition(type.Module, f)), type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
 			Add(() => td.GetProperties().Select(p => new PropertyDefinition(type.Module, p)), type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
 			Add(() => td.GetEvents().Select(e => new EventDefinition(type.Module, e)), type, language, addResult, IsMatch, EventTreeNode.GetIcon);
@@ -284,13 +284,13 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(PropertyDefinition property, Language language)
 		{
-			var accessors = property.This().GetAccessors();
+			var accessors = property.Module.Metadata.GetPropertyDefinition(property.Handle).GetAccessors();
 			return MethodIsLiteralMatch(accessors.Getter, property.Module) || MethodIsLiteralMatch(accessors.Setter, property.Module);
 		}
 
 		protected override bool IsMatch(EventDefinition ev, Language language)
 		{
-			var accessors = ev.This().GetAccessors();
+			var accessors = ev.Module.Metadata.GetEventDefinition(ev.Handle).GetAccessors();
 			return MethodIsLiteralMatch(accessors.Adder, ev.Module) || MethodIsLiteralMatch(accessors.Remover, ev.Module) || MethodIsLiteralMatch(accessors.Raiser, ev.Module);
 		}
 
@@ -324,7 +324,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (module == null)
 				return false;
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			if (m.IsNil || !m.HasBody(metadata))
 				return false;
 			var methodDefinition = metadata.GetMethodDefinition(m);
@@ -496,10 +496,12 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
+			var metadata = type.Module.Metadata;
+			var td = metadata.GetTypeDefinition(type.Handle);
+
 			if (MatchName(type, language)) {
 				string name = language.TypeDefinitionToString(type, includeNamespace: false);
-				var metadata = type.Module.GetMetadataReader();
-				var declaringType = type.This().GetDeclaringType();
+				var declaringType = td.GetDeclaringType();
 				addResult(new SearchResult {
 					Member = type,
 					Fitness = CalculateFitness(type),
@@ -510,7 +512,7 @@ namespace ICSharpCode.ILSpy
 				});
 			}
 
-			foreach (var nestedType in type.This().GetNestedTypes()) {
+			foreach (var nestedType in td.GetNestedTypes()) {
 				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
 			}
 		}
@@ -528,8 +530,8 @@ namespace ICSharpCode.ILSpy
 			if (MatchName(type, language))
 			{
 				string name = language.TypeDefinitionToString(type, includeNamespace: false);
-				var metadata = type.Module.GetMetadataReader();
-				var declaringType = type.This().GetDeclaringType();
+				var metadata = type.Module.Metadata;
+				var declaringType = metadata.GetTypeDefinition(type.Handle).GetDeclaringType();
 				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),

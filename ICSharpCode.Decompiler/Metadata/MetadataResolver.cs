@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
 				case HandleKind.MemberReference:
 					var memberRefHandle = (MemberReferenceHandle)handle;
-					var metadata = context.CurrentModule.GetMetadataReader();
+					var metadata = context.CurrentModule.Metadata;
 					var memberRef = metadata.GetMemberReference(memberRefHandle);
 					if (memberRef.GetKind() != MemberReferenceKind.Method)
 						return default;
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					return new FieldDefinition(context.CurrentModule, (FieldDefinitionHandle)handle);
 				case HandleKind.MemberReference:
 					var memberRefHandle = (MemberReferenceHandle)handle;
-					var metadata = context.CurrentModule.GetMetadataReader();
+					var metadata = context.CurrentModule.Metadata;
 					var memberRef = metadata.GetMemberReference(memberRefHandle);
 					if (memberRef.GetKind() != MemberReferenceKind.Field)
 						throw new ArgumentException("MemberReferenceKind must be Field!", nameof(handle));
@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// </summary>
 		public static TypeDefinition Resolve(this TypeReferenceHandle handle, IMetadataResolveContext context)
 		{
-			var metadata = context.CurrentModule.GetMetadataReader();
+			var metadata = context.CurrentModule.Metadata;
 			var tr = metadata.GetTypeReference(handle);
 			if (tr.ResolutionScope.IsNil) {
 				foreach (var h in metadata.ExportedTypes) {
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 				case HandleKind.AssemblyReference:
 					var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, (AssemblyReferenceHandle)tr.ResolutionScope));
-					var moduleMetadata = module.GetMetadataReader();
+					var moduleMetadata = module.Metadata;
 					var @namespace = ResolveNamespace(moduleMetadata, metadata.GetString(tr.Namespace).Split('.'));
 					if (@namespace == null)
 						throw new NotSupportedException();
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static IMetadataEntity Resolve(MemberReferenceHandle handle, IMetadataResolveContext context)
 		{
-			var metadata = context.CurrentModule.GetMetadataReader();
+			var metadata = context.CurrentModule.Metadata;
 			var mr = metadata.GetMemberReference(handle);
 			TypeDefinition declaringType;
 			switch (mr.Parent.Kind) {
@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static TypeDefinition Resolve(TypeSpecificationHandle handle, IMetadataResolveContext context)
 		{
-			var metadata = context.CurrentModule.GetMetadataReader();
+			var metadata = context.CurrentModule.Metadata;
 			var ts = metadata.GetTypeSpecification(handle);
 			var unspecialized = ts.DecodeSignature(new Unspecializer(), default(Unit));
 			switch (unspecialized.Kind) {

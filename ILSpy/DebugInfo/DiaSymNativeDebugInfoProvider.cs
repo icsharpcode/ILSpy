@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.DebugInfo
 			this.module = module;
 			this.pdbFileName = pdbFileName;
 			this.stream = stream;
-			this.metadata = module.GetMetadataReader();
+			this.metadata = module.Metadata;
 			this.reader = SymUnmanagedReaderFactory.CreateReader<ISymUnmanagedReader5>(stream, this);
 		}
 

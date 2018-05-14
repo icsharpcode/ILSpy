@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (module == null || member.IsNil)
 				return false;
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			string name;
 			switch (member.Kind) {
 				case HandleKind.MethodDefinition:
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
-			MetadataReader metadata = typeSystem.ModuleDefinition.GetMetadataReader();
+			MetadataReader metadata = typeSystem.ModuleDefinition.Metadata;
 			RequiredNamespaceCollector.CollectNamespaces(typeSystem, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
 			DoDecompileTypes(metadata.GetTopLevelTypeDefinitions(), decompileRun, decompilationContext, syntaxTree);
@@ -595,7 +595,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull) {
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
-			MetadataReader metadata = typeSystem.ModuleDefinition.GetMetadataReader();
+			MetadataReader metadata = typeSystem.ModuleDefinition.Metadata;
 			foreach (var h in methodHandle.GetMethodImplementations(metadata)) {
 				var mi = metadata.GetMethodImplementation(h);
 				IMethod m = typeSystem.ResolveAsMethod(mi.MethodDeclaration);
@@ -825,7 +825,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
 				var ilReader = new ILReader(specializingTypeSystem);
 				ilReader.UseDebugSymbols = settings.UseDebugSymbols;
-				var methodDef = typeSystem.ModuleDefinition.GetMetadataReader().GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+				var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 				var function = ilReader.ReadIL(typeSystem.ModuleDefinition, (MethodDefinitionHandle)method.MetadataToken, typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress), CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
@@ -1044,7 +1044,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (ev.IsExplicitInterfaceImplementation) {
 				eventDecl.Name = ev.Name.Substring(lastDot + 1);
 			}
-			var metadata = typeSystem.ModuleDefinition.GetMetadataReader();
+			var metadata = typeSystem.ModuleDefinition.Metadata;
 			if (ev.CanAdd && ev.AddAccessor.HasBody) {
 				DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
 			}

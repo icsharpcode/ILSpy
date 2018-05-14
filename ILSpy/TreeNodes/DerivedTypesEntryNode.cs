@@ -22,6 +22,7 @@ using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -30,10 +31,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		private readonly TypeDefinition type;
 		private readonly PEFile[] assemblies;
 		private readonly ThreadingSupport threading;
+		private readonly SRM.TypeDefinition td;
 
 		public DerivedTypesEntryNode(TypeDefinition type, PEFile[] assemblies)
 		{
 			this.type = type;
+			this.td = type.Module.Metadata.GetTypeDefinition(type.Handle);
 			this.assemblies = assemblies;
 			this.LazyLoading = true;
 			threading = new ThreadingSupport();
@@ -41,12 +44,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool ShowExpander
 		{
-			get { return !type.This().HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
+			get { return !type.Module.Metadata.GetTypeDefinition(type.Handle).HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
 		}
 
 		public override object Text
 		{
-			get { return type.Handle.GetFullTypeName(type.Module.GetMetadataReader()) + type.Handle.ToSuffixString(); }
+			get { return type.Handle.GetFullTypeName(type.Module.Metadata) + type.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
@@ -58,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
 			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
 			if (settings.SearchTermMatches(metadata.GetString(typeDefinition.Name))) {
 				if (!typeDefinition.GetDeclaringType().IsNil && !settings.Language.ShowMember(type))
@@ -71,7 +74,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				switch (type.This().Attributes & TypeAttributes.VisibilityMask) {
+				switch (td.Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
 					case TypeAttributes.NestedPublic:
 					case TypeAttributes.NestedFamily:

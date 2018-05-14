@@ -48,8 +48,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static void AddBaseTypes(SharpTreeNodeCollection children, TypeDefinition type)
 		{
-			var metadata = type.Module.GetMetadataReader();
-			var def = type.This();
+			var metadata = type.Module.Metadata;
+			var def = metadata.GetTypeDefinition(type.Handle);
 			if (!def.BaseType.IsNil)
 				children.Add(new BaseTypesEntryNode(new Entity(type.Module, def.BaseType), false));
 			foreach (var i in def.GetInterfaceImplementations()) {

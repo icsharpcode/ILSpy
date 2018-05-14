@@ -99,14 +99,14 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = method.Module.GetMetadataReader();
+			var metadata = method.Module.Metadata;
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
 			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(method.Module, methodDefinition.GetDeclaringType()), true) + "." + metadata.GetString(methodDefinition.Name));
 		}
 
 		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
 			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(property.Module, declaringType), true) + "." + metadata.GetString(propertyDefinition.Name));
@@ -114,14 +114,14 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
 			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(field.Module, fieldDefinition.GetDeclaringType()), true) + "." + metadata.GetString(fieldDefinition.Name));
 		}
 
 		public virtual void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = ev.Module.GetMetadataReader();
+			var metadata = ev.Module.Metadata;
 			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
 			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
 			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(ev.Module, declaringType), true) + "." + metadata.GetString(eventDefinition.Name));
@@ -142,16 +142,16 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, assembly.FileName);
 			var asm = assembly.GetPEFileOrNull();
 			if (asm == null) return;
-			var reader = asm.GetMetadataReader();
-			if (reader.IsAssembly) {
-				var name = reader.GetAssemblyDefinition();
+			var metadata = asm.Metadata;
+			if (metadata.IsAssembly) {
+				var name = metadata.GetAssemblyDefinition();
 				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0) {
 					WriteCommentLine(output, name.Name + " [WinRT]");
 				} else {
-					WriteCommentLine(output, reader.GetFullAssemblyName());
+					WriteCommentLine(output, metadata.GetFullAssemblyName());
 				}
 			} else {
-				WriteCommentLine(output, reader.GetString(reader.GetModuleDefinition().Name));
+				WriteCommentLine(output, metadata.GetString(metadata.GetModuleDefinition().Name));
 			}
 		}
 
@@ -165,7 +165,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public virtual string TypeDefinitionToString(TypeDefinition type, bool includeNamespace)
 		{
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
 			var fullName = type.Handle.GetFullTypeName(metadata);
 			if (includeNamespace)
 				return fullName.ToString();
@@ -179,7 +179,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public virtual string GetTooltip(Entity entity)
 		{
-			var metadata = entity.Module.GetMetadataReader();
+			var metadata = entity.Module.Metadata;
 			switch (entity.Handle.Kind) {
 				case SRM.HandleKind.TypeReference:
 				case SRM.HandleKind.TypeDefinition:
@@ -204,7 +204,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (field.Handle.IsNil)
 				throw new ArgumentNullException(nameof(field));
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fd = metadata.GetFieldDefinition(field.Handle);
 			string fieldType = fd.DecodeSignature(ILSignatureProvider.WithoutNamespace, new GenericContext(fd.GetDeclaringType(), field.Module));
 			string simple = metadata.GetString(fd.Name) + " : " + fieldType;
@@ -220,7 +220,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (property.Handle.IsNil)
 				throw new ArgumentNullException(nameof(property));
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var pd = metadata.GetPropertyDefinition(property.Handle);
 			var declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
 			var signature = pd.DecodeSignature(!includeNamespace ? ILSignatureProvider.WithoutNamespace : ILSignatureProvider.WithNamespace, new GenericContext(declaringType, property.Module));
@@ -237,7 +237,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (method.Handle.IsNil)
 				throw new ArgumentNullException(nameof(method));
-			var metadata = method.Module.GetMetadataReader();
+			var metadata = method.Module.Metadata;
 			return metadata.GetString(metadata.GetMethodDefinition(method.Handle).Name);
 		}
 
@@ -245,7 +245,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (@event.Handle.IsNil)
 				throw new ArgumentNullException(nameof(@event));
-			var metadata = @event.Module.GetMetadataReader();
+			var metadata = @event.Module.Metadata;
 			return metadata.GetString(metadata.GetEventDefinition(@event.Handle).Name);
 		}
 
@@ -291,25 +291,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public static string GetRuntimeDisplayName(TargetRuntime runtime)
-		{
-			switch (runtime) {
-				case TargetRuntime.Net_1_0:
-					return ".NET 1.1";
-				case TargetRuntime.Net_1_1:
-					return ".NET 1.0";
-				case TargetRuntime.Net_2_0:
-					return ".NET 2.0";
-				case TargetRuntime.Net_4_0:
-					return ".NET 4.0";
-			}
-			return null;
-		}
-
-
 		public static string GetRuntimeDisplayName(PEFile module)
 		{
-			return GetRuntimeDisplayName(module.GetRuntime());
+			return module.Metadata.MetadataVersion;
 		}
 	}
 

@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static bool HasMatchingDefaultMemberAttribute(this PropertyDefinitionHandle handle, PEFile module, out CustomAttributeHandle defaultMemberAttribute)
 		{
 			defaultMemberAttribute = default(CustomAttributeHandle);
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(handle);
 			var accessorHandle = propertyDefinition.GetAccessors().GetAny();
 			var accessor = metadata.GetMethodDefinition(accessorHandle);

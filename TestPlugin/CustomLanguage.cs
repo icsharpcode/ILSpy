@@ -32,7 +32,7 @@ namespace TestPlugin
 		// There are several methods available to override; in this sample, we deal with methods only
 		public override void DecompileMethod(ICSharpCode.Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = method.Module.GetMetadataReader();
+			var metadata = method.Module.Metadata;
 			var methodDef = metadata.GetMethodDefinition(method.Handle);
 			if (methodDef.HasBody()) {
 				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);

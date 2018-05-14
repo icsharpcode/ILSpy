@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (body == null)
 				throw new ArgumentNullException(nameof(body));
-			this.metadata = module.GetMetadataReader();
+			this.metadata = module.Metadata;
 			this.method = typeSystem.ResolveAsMethod(methodDefinitionHandle);
 			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
 			this.methodSignature = methodDefinition.DecodeSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default); 
@@ -432,7 +432,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
-				.WriteExceptionHandlers(new Metadata.MethodDefinition(module, method), body);
+				.WriteExceptionHandlers(module, method, body);
 		}
 
 		/// <summary>

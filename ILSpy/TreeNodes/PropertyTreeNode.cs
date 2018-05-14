@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
 			this.PropertyDefinition = property;
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			var accessors = propertyDefinition.GetAccessors();
 			using (LoadedAssembly.DisableAssemblyLoad()) {
@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// in numeric order, so we can do an integer comparison of the masked attribute
 			int accessLevel = 0;
 
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			var accessors = propertyDefinition.GetAccessors();
 
@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = PropertyDefinition.Module.GetMetadataReader();
+			var metadata = PropertyDefinition.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(PropertyDefinition.Handle);
 			if (settings.SearchTermMatches(metadata.GetString(propertyDefinition.Name)) && settings.Language.ShowMember(PropertyDefinition))
 				return FilterResult.Match;

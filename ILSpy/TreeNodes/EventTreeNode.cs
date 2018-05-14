@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (ev.IsNil)
 				throw new ArgumentNullException(nameof(ev));
 			this.EventDefinition = ev;
-			var metadata = ev.Module.GetMetadataReader();
+			var metadata = ev.Module.Metadata;
 			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
 			var accessors = eventDefinition.GetAccessors();
 			if (!accessors.Adder.IsNil)
@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(EventDefinition @event)
 		{
-			var metadata = @event.Module.GetMetadataReader();
+			var metadata = @event.Module.Metadata;
 			var accessor = metadata.GetEventDefinition(@event.Handle).GetAccessors().GetAny();
 			if (!accessor.IsNil) {
 				var accessorMethod = metadata.GetMethodDefinition(accessor);
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = EventDefinition.Module.GetMetadataReader();
+			var metadata = EventDefinition.Module.Metadata;
 			if (settings.SearchTermMatches(metadata.GetString(metadata.GetEventDefinition(EventDefinition.Handle).Name)) && settings.Language.ShowMember(EventDefinition))
 				return FilterResult.Match;
 			else
@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				var metadata = EventDefinition.Module.GetMetadataReader();
+				var metadata = EventDefinition.Module.Metadata;
 				var accessor = metadata.GetEventDefinition(EventDefinition.Handle).GetAccessors().GetAny();
 				if (accessor.IsNil) return false;
 				var accessorMethod = metadata.GetMethodDefinition(accessor);

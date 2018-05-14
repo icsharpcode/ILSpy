@@ -43,14 +43,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			get {
 				if (td.IsNil) return false;
-				var typeDef = td.This();
+				var typeDef = td.Module.Metadata.GetTypeDefinition(td.Handle);
 				return !typeDef.BaseType.IsNil || typeDef.GetInterfaceImplementations().Any();
 			}
 		}
 
 		public override object Text
 		{
-			get { return tr.Handle.GetFullTypeName(tr.Module.GetMetadataReader()) + tr.Handle.ToSuffixString(); }
+			get { return tr.Handle.GetFullTypeName(tr.Module.Metadata) + tr.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon

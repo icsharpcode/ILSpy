@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler
 		public Metadata.PEFile Module { get; }
 
 		public DecompilerException(Metadata.PEFile module, MethodDefinitionHandle decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + GetFullName(decompiledMethod, module.GetMetadataReader()) + Environment.NewLine, innerException)
+			: base("Error decompiling " + GetFullName(decompiledMethod, module.Metadata) + Environment.NewLine, innerException)
 		{
 			this.Module = module;
 			this.DecompiledMethod = decompiledMethod;

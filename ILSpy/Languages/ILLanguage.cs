@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleMethod(method);
+			dis.DisassembleMethod(method.Module, method.Handle);
 		}
 		
 		public override void DecompileField(Decompiler.Metadata.FieldDefinition field, ITextOutput output, DecompilationOptions options)
@@ -74,16 +74,16 @@ namespace ICSharpCode.ILSpy
 		{
 			var dis = CreateDisassembler(output, options);
 			dis.DisassembleProperty(property);
-
-			var accessors = property.This().GetAccessors();
+			var pd = property.Module.Metadata.GetPropertyDefinition(property.Handle);
+			var accessors = pd.GetAccessors();
 
 			if (!accessors.Getter.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(property.Module, accessors.Getter));
+				dis.DisassembleMethod(property.Module, accessors.Getter);
 			}
 			if (!accessors.Setter.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(property.Module, accessors.Setter));
+				dis.DisassembleMethod(property.Module, accessors.Setter);
 			}
 			/*foreach (var m in property.OtherMethods) {
 				output.WriteLine();
@@ -94,19 +94,22 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(Decompiler.Metadata.EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleEvent(ev);
-			var accessors = ev.This().GetAccessors();
+			var metadata = ev.Module.Metadata;
+			dis.DisassembleEvent(ev.Module, ev.Handle);
+
+			var ed = metadata.GetEventDefinition(ev.Handle);
+			var accessors = ed.GetAccessors();
 			if (!accessors.Adder.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Adder));
+				dis.DisassembleMethod(ev.Module, accessors.Adder);
 			}
 			if (!accessors.Remover.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Remover));
+				dis.DisassembleMethod(ev.Module, accessors.Remover);
 			}
 			if (!accessors.Raiser.IsNil) {
 				output.WriteLine();
-				dis.DisassembleMethod(new Decompiler.Metadata.MethodDefinition(ev.Module, accessors.Raiser));
+				dis.DisassembleMethod(ev.Module, accessors.Raiser);
 			}
 			/*foreach (var m in ev.OtherMethods) {
 				output.WriteLine();
@@ -131,7 +134,7 @@ namespace ICSharpCode.ILSpy
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
 			var module = assembly.GetPEFileOrNull();
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
 			if (options.FullDecompilation)
 				dis.WriteAssemblyReferences(metadata);
@@ -149,7 +152,7 @@ namespace ICSharpCode.ILSpy
 		public override string TypeDefinitionToString(Decompiler.Metadata.TypeDefinition type, bool includeNamespace)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			((EntityHandle)type.Handle).WriteTo(type.Module, output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
 	}

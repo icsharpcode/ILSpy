@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.WriteReference(OffsetToString(offset.Value), offset);
 		}
 
-		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.MethodDefinition method, ITextOutput writer)
+		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, GenericContext context, ITextOutput writer)
 		{
 			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryOffset);
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			if (!exceptionHandler.CatchType.IsNil) {
 				writer.Write(' ');
-				exceptionHandler.CatchType.WriteTo(method.Module, writer, new GenericContext(method));
+				exceptionHandler.CatchType.WriteTo(module, writer, context);
 			}
 			writer.Write(' ');
 			WriteOffsetReference(writer, exceptionHandler.HandlerOffset);
@@ -129,10 +129,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static void WriteParameterReference(ITextOutput writer, Metadata.MethodDefinition method, int sequence)
+		public static void WriteParameterReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int sequence)
 		{
-			var metadata = method.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			var methodDefinition = metadata.GetMethodDefinition(handle);
 			var signature = methodDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default);
 			var parameters = methodDefinition.GetParameters().Select(p => metadata.GetParameter(p)).ToArray();
 			var signatureHeader = signature.Header;
@@ -152,7 +151,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		public static void WriteVariableReference(ITextOutput writer, Metadata.MethodDefinition method, int index)
+		public static void WriteVariableReference(ITextOutput writer, MetadataReader metadata, MethodDefinitionHandle handle, int index)
 		{
 			writer.Write(index.ToString());
 		}

@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly TypeDefinition typeDefinition;
-		readonly SRM.TypeDefinition metadataTypeDefinition;
+		readonly SRM.TypeDefinition td;
 
 		public TypeTreeNode(TypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
 		{
@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				throw new ArgumentNullException(nameof(typeDefinition));
 			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
 			this.typeDefinition = typeDefinition;
-			this.metadataTypeDefinition = typeDefinition.This();
+			this.td = typeDefinition.Module.Metadata.GetTypeDefinition(typeDefinition.Handle);
 			this.LazyLoading = true;
 		}
 
@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (metadataTypeDefinition.Attributes & TypeAttributes.VisibilityMask) {
+				switch (td.Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
 					case TypeAttributes.NestedPublic:
 					case TypeAttributes.NestedFamily:
@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(TypeDefinition.Module.GetMetadataReader().GetString(metadataTypeDefinition.Name))) {
+			if (settings.SearchTermMatches(TypeDefinition.Module.Metadata.GetString(td.Name))) {
 				if (settings.Language.ShowMember(TypeDefinition))
 					return FilterResult.Match;
 				else
@@ -79,25 +79,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			var metadata = TypeDefinition.Module.GetMetadataReader();
-			if (!metadataTypeDefinition.BaseType.IsNil || metadataTypeDefinition.GetInterfaceImplementations().Any())
+			var metadata = TypeDefinition.Module.Metadata;
+			if (!td.BaseType.IsNil || td.GetInterfaceImplementations().Any())
 				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
-			if (!metadataTypeDefinition.HasFlag(TypeAttributes.Sealed))
+			if (!td.HasFlag(TypeAttributes.Sealed))
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			foreach (var nestedType in metadataTypeDefinition.GetNestedTypes().OrderBy(m => metadata.GetString(metadata.GetTypeDefinition(m).Name), NaturalStringComparer.Instance)) {
+			foreach (var nestedType in td.GetNestedTypes().OrderBy(m => metadata.GetString(metadata.GetTypeDefinition(m).Name), NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(new TypeDefinition(TypeDefinition.Module, nestedType), ParentAssemblyNode));
 			}
-			foreach (var field in metadataTypeDefinition.GetFields().OrderBy(m => metadata.GetString(metadata.GetFieldDefinition(m).Name), NaturalStringComparer.Instance)) {
+			foreach (var field in td.GetFields().OrderBy(m => metadata.GetString(metadata.GetFieldDefinition(m).Name), NaturalStringComparer.Instance)) {
 				this.Children.Add(new FieldTreeNode(new FieldDefinition(TypeDefinition.Module, field)));
 			}
 			
-			foreach (var property in metadataTypeDefinition.GetProperties().OrderBy(m => metadata.GetString(metadata.GetPropertyDefinition(m).Name), NaturalStringComparer.Instance)) {
+			foreach (var property in td.GetProperties().OrderBy(m => metadata.GetString(metadata.GetPropertyDefinition(m).Name), NaturalStringComparer.Instance)) {
 				this.Children.Add(new PropertyTreeNode(new PropertyDefinition(TypeDefinition.Module, property)));
 			}
-			foreach (var ev in metadataTypeDefinition.GetEvents().OrderBy(m => metadata.GetString(metadata.GetEventDefinition(m).Name), NaturalStringComparer.Instance)) {
+			foreach (var ev in td.GetEvents().OrderBy(m => metadata.GetString(metadata.GetEventDefinition(m).Name), NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(new EventDefinition(TypeDefinition.Module, ev)));
 			}
-			foreach (var method in metadataTypeDefinition.GetMethods().OrderBy(m => metadata.GetString(metadata.GetMethodDefinition(m).Name), NaturalStringComparer.Instance)) {
+			foreach (var method in td.GetMethods().OrderBy(m => metadata.GetString(metadata.GetMethodDefinition(m).Name), NaturalStringComparer.Instance)) {
 				if (method.GetMethodSemanticsAttributes(metadata) == 0) {
 					this.Children.Add(new MethodTreeNode(new MethodDefinition(TypeDefinition.Module, method)));
 				}
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		static TypeIcon GetTypeIcon(TypeDefinition type)
 		{
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
 			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
 			if (typeDefinition.IsValueType(metadata)) {
 				if (typeDefinition.IsEnum(metadata))
@@ -144,7 +144,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private static AccessOverlayIcon GetOverlayIcon(TypeDefinition type)
 		{
-			var def = type.This();
+			var def = type.Module.Metadata.GetTypeDefinition(type.Handle);
 			AccessOverlayIcon overlay;
 			switch (def.Attributes & TypeAttributes.VisibilityMask) {
 				case TypeAttributes.Public:

@@ -73,14 +73,15 @@ namespace ICSharpCode.ILSpy
 		public override string TypeDefinitionToString(TypeDefinition type, bool includeNamespace)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			((SRM.EntityHandle)type.Handle).WriteTo(type.Module, output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
 
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
-			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
+			var module = method.Module;
+			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(module, method.Handle);
 			output.WriteLine();
 			output.WriteLine();
 		}
@@ -92,7 +93,7 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var metadata = method.Module.GetMetadataReader();
+				var metadata = method.Module.Metadata;
 				if (!method.Handle.HasBody(metadata))
 					return;
 				var methodDef = metadata.GetMethodDefinition(method.Handle);
@@ -115,7 +116,7 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var metadata = method.Module.GetMetadataReader();
+				var metadata = method.Module.Metadata;
 				if (!method.Handle.HasBody(metadata))
 					return;
 				var methodDef = metadata.GetMethodDefinition(method.Handle);

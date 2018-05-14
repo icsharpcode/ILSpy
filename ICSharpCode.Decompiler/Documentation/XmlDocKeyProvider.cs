@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		#region GetKey
 		public static string GetKey(Entity entity)
 		{
-			return GetKey(entity.Module.GetMetadataReader(), entity.Handle);
+			return GetKey(entity.Module.Metadata, entity.Handle);
 		}
 
 		public static string GetKey(SRM.MetadataReader metadata, SRM.EntityHandle member)
@@ -249,13 +249,13 @@ namespace ICSharpCode.Decompiler.Documentation
 				case 'T':
 					return FindType(module, key.Substring(2));
 				case 'F':
-					return FindMember(module, key, type => type.This().GetFields().Select(f => new Entity(module, f)));
+					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetFields().Select(f => new Entity(module, f)));
 				case 'P':
-					return FindMember(module, key, type => type.This().GetProperties().Select(p => new Entity(module, p)));
+					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetProperties().Select(p => new Entity(module, p)));
 				case 'E':
-					return FindMember(module, key, type => type.This().GetEvents().Select(e => new Entity(module, e)));
+					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetEvents().Select(e => new Entity(module, e)));
 				case 'M':
-					return FindMember(module, key, type => type.This().GetMethods().Select(m => new Entity(module, m)));
+					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetMethods().Select(m => new Entity(module, m)));
 				default:
 					return default(Entity);
 			}
@@ -282,9 +282,9 @@ namespace ICSharpCode.Decompiler.Documentation
 			} else {
 				shortName = key.Substring(dotPos + 1);
 			}
-			Debug.WriteLine("Searching in type {0} for {1}", type.Handle.GetFullTypeName(module.GetMetadataReader()), shortName);
+			var metadata = module.Metadata;
+			Debug.WriteLine("Searching in type {0} for {1}", type.Handle.GetFullTypeName(metadata), shortName);
 			Entity shortNameMatch = default(Entity);
-			var metadata = module.GetMetadataReader();
 			foreach (var member in memberSelector(type)) {
 				string memberKey = GetKey(member);
 				Debug.WriteLine(memberKey);
@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		
 		static TypeDefinition FindType(PEFile module, string name)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			string[] segments = name.Split('.');
 			var currentNamespace = metadata.GetNamespaceDefinitionRoot();
 			int i = 0;

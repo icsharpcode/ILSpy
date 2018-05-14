@@ -57,7 +57,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// </summary>
 	public class ILStructure
 	{
-		public readonly Metadata.MethodDefinition Method;
+		public readonly PEFile Module;
+		public readonly MethodDefinitionHandle MethodHandle;
+		public readonly GenericContext GenericContext;
 		public readonly ILStructureType Type;
 
 		/// <summary>
@@ -85,17 +87,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public readonly List<ILStructure> Children = new List<ILStructure>();
 
-		public ILStructure(Metadata.MethodDefinition method, MethodBodyBlock body)
-			: this(method, ILStructureType.Root, 0, body.GetILReader().Length)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, MethodBodyBlock body)
+			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
 			for (int i = 0; i < body.ExceptionRegions.Length; i++) {
 				ExceptionRegion eh = body.ExceptionRegions[i];
 				if (!body.ExceptionRegions.Take(i).Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
-					AddNestedStructure(new ILStructure(method, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
 				if (eh.Kind == ExceptionRegionKind.Filter)
-					AddNestedStructure(new ILStructure(method, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
-				AddNestedStructure(new ILStructure(method, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
+				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
 			}
 			// Very simple loop detection: look for backward branches
 			(var allBranches, var isAfterConditionalBranch) = FindAllBranches(body.GetILReader());
@@ -125,27 +127,31 @@ namespace ICSharpCode.Decompiler.Disassembler
 						}
 					}
 					if (!multipleEntryPoints) {
-						AddNestedStructure(new ILStructure(method, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
+						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
 					}
 				}
 			}
 			SortChildren();
 		}
 
-		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
 		{
 			Debug.Assert(startOffset < endOffset);
-			this.Method = method;
+			this.Module = module;
+			this.MethodHandle = handle;
+			this.GenericContext = genericContext;
 			this.Type = type;
 			this.StartOffset = startOffset;
 			this.EndOffset = endOffset;
 			this.ExceptionHandler = handler;
 		}
 
-		public ILStructure(Metadata.MethodDefinition method, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);
-			this.Method = method;
+			this.Module = module;
+			this.MethodHandle = handle;
+			this.GenericContext = genericContext;
 			this.Type = type;
 			this.StartOffset = startOffset;
 			this.EndOffset = endOffset;

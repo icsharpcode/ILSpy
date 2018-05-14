@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			var definition = metadata.GetMethodDefinition(method);
 			var entrypoint = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
 			return method == entrypoint && metadata.GetString(definition.Name).Equals("<Main>", StringComparison.Ordinal);

@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
 				this.Children.Add(new AssemblyReferenceTreeNode(r, parentAssembly));
 			foreach (var r in module.ModuleReferences.OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))

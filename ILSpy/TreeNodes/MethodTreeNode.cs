@@ -35,12 +35,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public MethodDefinition MethodDefinition { get; }
+		SRM.MethodDefinition md;
 
 		public MethodTreeNode(MethodDefinition method)
 		{
 			if (method.IsNil)
 				throw new ArgumentNullException(nameof(method));
 			this.MethodDefinition = method;
+			this.md = method.Module.Metadata.GetMethodDefinition(method.Handle);
 		}
 
 		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.Handle.ToSuffixString();
@@ -54,7 +56,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(MethodDefinition method)
 		{
-			var metadata = method.Module.GetMetadataReader();
+			var metadata = method.Module.Metadata;
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
 			var methodName = metadata.GetString(methodDefinition.Name);
 			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) && methodName.StartsWith("op_", StringComparison.Ordinal)) {
@@ -114,9 +116,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = MethodDefinition.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(MethodDefinition.Handle);
-			if (settings.SearchTermMatches(metadata.GetString(methodDefinition.Name)) && settings.Language.ShowMember(MethodDefinition))
+			var metadata = MethodDefinition.Module.Metadata;
+			if (settings.SearchTermMatches(metadata.GetString(md.Name)) && settings.Language.ShowMember(MethodDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -124,7 +125,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (MethodDefinition.This().Attributes & MethodAttributes.MemberAccessMask) {
+				switch (md.Attributes & MethodAttributes.MemberAccessMask) {
 					case MethodAttributes.Public:
 					case MethodAttributes.Family:
 					case MethodAttributes.FamORAssem:

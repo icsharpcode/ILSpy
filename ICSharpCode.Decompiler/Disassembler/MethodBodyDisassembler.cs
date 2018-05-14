@@ -24,6 +24,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -48,17 +49,27 @@ namespace ICSharpCode.Decompiler.Disassembler
 		IList<Metadata.SequencePoint> sequencePoints;
 		int nextSequencePointIndex;
 
+		// cache info
+		PEFile module;
+		MetadataReader metadata;
+		GenericContext genericContext;
+		DisassemblerSignatureProvider signatureDecoder;
+
 		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
 		{
 			this.output = output ?? throw new ArgumentNullException(nameof(output));
 			this.cancellationToken = cancellationToken;
 		}
 
-		public unsafe virtual void Disassemble(Metadata.MethodDefinition method)
+		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
 		{
+			this.module = module;
+			metadata = module.Metadata;
+			genericContext = new GenericContext(handle, module);
+			signatureDecoder = new DisassemblerSignatureProvider(module, output);
+			var methodDefinition = metadata.GetMethodDefinition(handle);
+
 			// start writing IL code
-			var metadata = method.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
 			output.WriteLine("// Method begins at RVA 0x{0:x4}", methodDefinition.RelativeVirtualAddress);
 			if (methodDefinition.RelativeVirtualAddress == 0) {
 				output.WriteLine("// Code size {0} (0x{0:x})", 0);
@@ -66,39 +77,37 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 				return;
 			}
-			var body = method.Module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			var body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var blob = body.GetILReader();
 			output.WriteLine("// Code size {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);
 
-			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(method.Module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
-			if (method.Handle == entrypointHandle)
+			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
+			if (handle == entrypointHandle)
 				output.WriteLine(".entrypoint");
 
-			DisassembleLocalsBlock(method, body);
+			DisassembleLocalsBlock(body);
 			output.WriteLine();
 
-
-			sequencePoints = method.GetSequencePoints();
+			sequencePoints = module.DebugInfo?.GetSequencePoints(handle) ?? EmptyList<Metadata.SequencePoint>.Instance;
 			nextSequencePointIndex = 0;
 			if (DetectControlStructure && blob.Length > 0) {
 				blob.Reset();
 				HashSet<int> branchTargets = GetBranchTargets(blob);
 				blob.Reset();
-				WriteStructureBody(new ILStructure(method, body), branchTargets, ref blob);
+				WriteStructureBody(new ILStructure(module, handle, genericContext, body), branchTargets, ref blob);
 			} else {
 				while (blob.RemainingBytes > 0) {
-					WriteInstruction(output, method, ref blob);
+					WriteInstruction(output, metadata, handle, ref blob);
 				}
-				WriteExceptionHandlers(method, body);
+				WriteExceptionHandlers(module, handle, body);
 			}
 			sequencePoints = null;
 		}
 
-		void DisassembleLocalsBlock(Metadata.MethodDefinition method, MethodBodyBlock body)
+		void DisassembleLocalsBlock(MethodBodyBlock body)
 		{
 			if (body.LocalSignature.IsNil) return;
-			var metadata = method.Module.GetMetadataReader();
 			var blob = metadata.GetStandaloneSignature(body.LocalSignature);
 			if (blob.GetKind() != StandaloneSignatureKind.LocalVariables)
 				return;
@@ -108,7 +117,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			reader.Offset = 1;
 			if (reader.ReadCompressedInteger() == 0)
 				return;
-			var signature = blob.DecodeLocalSignature(new DisassemblerSignatureProvider(method.Module, output), new GenericContext(method));
+			var signature = blob.DecodeLocalSignature(signatureDecoder, genericContext);
 			if (!signature.IsEmpty) {
 				output.Write(".locals ");
 				if (body.LocalVariablesInitialized)
@@ -129,13 +138,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		internal void WriteExceptionHandlers(Metadata.MethodDefinition method, MethodBodyBlock body)
+		internal void WriteExceptionHandlers(PEFile module, MethodDefinitionHandle handle, MethodBodyBlock body)
 		{
+			this.module = module;
+			metadata = module.Metadata;
+			genericContext = new GenericContext(handle, module);
+			signatureDecoder = new DisassemblerSignatureProvider(module, output);
 			var handlers = body.ExceptionRegions;
 			if (!handlers.IsEmpty) {
 				output.WriteLine();
 				foreach (var eh in handlers) {
-					eh.WriteTo(method, output);
+					eh.WriteTo(module, genericContext, output);
 					output.WriteLine();
 				}
 			}
@@ -180,7 +193,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write("catch");
 							if (!s.ExceptionHandler.CatchType.IsNil) {
 								output.Write(' ');
-								s.ExceptionHandler.CatchType.WriteTo(s.Method.Module, output, new Metadata.GenericContext(s.Method), ILNameSyntax.TypeName);
+								s.ExceptionHandler.CatchType.WriteTo(s.Module, output, s.GenericContext, ILNameSyntax.TypeName);
 							}
 							output.WriteLine();
 							break;
@@ -223,7 +236,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					var currentOpCode = ILParser.DecodeOpCode(ref body);
 					body.Offset = offset; // reset IL stream
-					WriteInstruction(output, s.Method, ref body);
+					WriteInstruction(output, metadata, s.MethodHandle, ref body);
 					prevInstructionWasBranch = currentOpCode.IsBranch()
 						|| currentOpCode.IsReturn()
 						|| currentOpCode == ILOpCode.Throw
@@ -255,9 +268,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
-		protected virtual void WriteInstruction(ITextOutput output, Metadata.MethodDefinition method, ref BlobReader blob)
+		protected virtual void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodDefinition, ref BlobReader blob)
 		{
-			var metadata = method.Module.GetMetadataReader();
 			int offset = blob.Offset;
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
 				Metadata.SequencePoint sp = sequencePoints[nextSequencePointIndex];
@@ -292,7 +304,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Type:
 						output.Write(' ');
 						var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
-						handle.WriteTo(method.Module, output, new GenericContext(method));
+						handle.WriteTo(module, output, genericContext);
 						break;
 					case OperandType.Tok:
 						output.Write(' ');
@@ -312,7 +324,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write("field ");
 								break;
 						}
-						handle.WriteTo(method.Module, output, new GenericContext(method));
+						handle.WriteTo(module, output, genericContext);
 						break;
 					case OperandType.ShortI:
 						output.Write(' ');
@@ -353,18 +365,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(' ');
 						int index = blob.ReadUInt16();
 						if (opCode == ILOpCode.Ldloc || opCode == ILOpCode.Ldloca || opCode == ILOpCode.Stloc) {
-							DisassemblerHelpers.WriteVariableReference(output, method, index);
+							DisassemblerHelpers.WriteVariableReference(output, metadata, methodDefinition, index);
 						} else {
-							DisassemblerHelpers.WriteParameterReference(output, method, index);
+							DisassemblerHelpers.WriteParameterReference(output, metadata, methodDefinition, index);
 						}
 						break;
 					case OperandType.ShortVariable:
 						output.Write(' ');
 						index = blob.ReadByte();
 						if (opCode == ILOpCode.Ldloc_s || opCode == ILOpCode.Ldloca_s || opCode == ILOpCode.Stloc_s) {
-							DisassemblerHelpers.WriteVariableReference(output, method, index);
+							DisassemblerHelpers.WriteVariableReference(output, metadata, methodDefinition, index);
 						} else {
-							DisassemblerHelpers.WriteParameterReference(output, method, index);
+							DisassemblerHelpers.WriteParameterReference(output, metadata, methodDefinition, index);
 						}
 						break;
 				}

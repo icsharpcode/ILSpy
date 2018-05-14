@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			AddReferenceWarningMessage(method.Module, output);
-			var md = method.This();
+			var md = method.Module.Metadata.GetMethodDefinition(method.Handle);
 			WriteCommentLine(output, TypeDefinitionToString(new Entity(method.Module, md.GetDeclaringType()), includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
 			var methodDefinition = decompiler.TypeSystem.ResolveAsMethod(method.Handle);
@@ -199,7 +199,7 @@ namespace ICSharpCode.ILSpy
 		{
 			AddReferenceWarningMessage(property.Module, output);
 			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var accessorHandle = metadata.GetPropertyDefinition(property.Handle).GetAccessors().GetAny();
 			WriteCommentLine(output, TypeDefinitionToString(new Decompiler.Metadata.TypeDefinition(property.Module, metadata.GetMethodDefinition(accessorHandle).GetDeclaringType()), includeNamespace: true));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.Handle), decompiler.TypeSystem);
@@ -208,7 +208,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileField(Decompiler.Metadata.FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			AddReferenceWarningMessage(field.Module, output);
-			var fd = field.This();
+			var fd = field.Module.Metadata.GetFieldDefinition(field.Handle);
 			WriteCommentLine(output, TypeDefinitionToString(new Decompiler.Metadata.TypeDefinition(field.Module, fd.GetDeclaringType()), includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(field.Module, options);
 			var fieldDefinition = decompiler.TypeSystem.ResolveAsField(field.Handle);
@@ -268,7 +268,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(Decompiler.Metadata.EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			AddReferenceWarningMessage(ev.Module, output);
-			var metadata = ev.Module.GetMetadataReader();
+			var metadata = ev.Module.Metadata;
 			var accessorHandle = metadata.GetEventDefinition(ev.Handle).GetAccessors().GetAny();
 			base.WriteCommentLine(output, TypeDefinitionToString(new Decompiler.Metadata.TypeDefinition(ev.Module, metadata.GetMethodDefinition(accessorHandle).GetDeclaringType()), includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(ev.Module, options);
@@ -327,7 +327,7 @@ namespace ICSharpCode.ILSpy
 				AddReferenceWarningMessage(module, output);
 				output.WriteLine();
 				base.DecompileAssembly(assembly, output, options);
-				var metadata = module.GetMetadataReader();
+				var metadata = module.Metadata;
 				
 				if (metadata.TypeDefinitions.Count > 0) {
 					output.Write("// Global type: ");
@@ -404,7 +404,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string TypeDefinitionToString(Decompiler.Metadata.TypeDefinition type, bool includeNamespace)
 		{
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
 			var td = metadata.GetTypeDefinition(type.Handle);
 			var genericParams = td.GetGenericParameters();
 
@@ -437,7 +437,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (field.Handle.IsNil)
 				throw new ArgumentNullException(nameof(field));
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fd = metadata.GetFieldDefinition(field.Handle);
 			AstType fieldType = fd.DecodeSignature(new AstTypeBuilder(ConvertTypeOptions.IncludeTypeParameterDefinitions), new GenericContext(fd.GetDeclaringType(), field.Module));
 			string simple = metadata.GetString(fd.Name) + " : " + TypeToString(fieldType, metadata, fd.GetCustomAttributes());
@@ -453,7 +453,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (property.IsNil)
 				throw new ArgumentNullException(nameof(property));
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var pd = metadata.GetPropertyDefinition(property.Handle);
 			var accessors = pd.GetAccessors();
 			var accessorHandle = accessors.GetAny();
@@ -562,7 +562,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (method.IsNil)
 				throw new ArgumentNullException("method");
-			var metadata = method.Module.GetMetadataReader();
+			var metadata = method.Module.Metadata;
 			var md = metadata.GetMethodDefinition(method.Handle);
 			var name = (md.IsConstructor(metadata)) ? TypeDefinitionToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace) : metadata.GetString(md.Name);
 			var signature = md.DecodeSignature(new AstTypeBuilder(ConvertTypeOptions.IncludeTypeParameterDefinitions), new GenericContext(method));
@@ -622,7 +622,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (@event.IsNil)
 				throw new ArgumentNullException(nameof(@event));
-			var metadata = @event.Module.GetMetadataReader();
+			var metadata = @event.Module.Metadata;
 			var ed = metadata.GetEventDefinition(@event.Handle);
 			var accessors = ed.GetAccessors();
 			var accessorHandle = accessors.GetAny();

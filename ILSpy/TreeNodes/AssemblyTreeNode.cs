@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (tooltip == null && assembly.IsLoaded) {
 					tooltip = new TextBlock();
 					var module = assembly.GetPEFileOrNull();
-					var metadata = module?.GetMetadataReader();
+					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true) {
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
 						tooltip.Inlines.Add(new Run(metadata.GetFullAssemblyName()));
@@ -152,7 +152,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
 			if (module.Resources.Any())
@@ -404,7 +404,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
 				var module = la.GetPEFileOrNull();
 				if (module != null) {
-					var metadata = module.GetMetadataReader();
+					var metadata = module.Metadata;
 					foreach (var assyRef in metadata.AssemblyReferences) {
 						la.LookupReferencedAssembly(new AssemblyReference(module, assyRef));
 					}

@@ -242,7 +242,7 @@ namespace ICSharpCode.ILSpy
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
-					var reader = loaded.GetPEFileOrNull()?.GetMetadataReader();
+					var reader = loaded.GetPEFileOrNull()?.Metadata;
 					if (reader == null || !reader.IsAssembly) continue;
 					var asmDef = reader.GetAssemblyDefinition();
 					if (GetName(fullName).Equals(isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName(), StringComparison.OrdinalIgnoreCase)) {

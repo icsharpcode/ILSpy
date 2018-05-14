@@ -22,6 +22,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
@@ -37,6 +38,8 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy
 {
+	using SequencePoint = ICSharpCode.Decompiler.Metadata.SequencePoint;
+
 	[Export(typeof(Language))]
 	class CSharpILMixedLanguage : ILLanguage
 	{
@@ -81,24 +84,24 @@ namespace ICSharpCode.ILSpy
 				this.options = options;
 			}
 
-			public override void Disassemble(MethodDefinition method)
+			public override void Disassemble(PEFile module, MethodDefinitionHandle handle)
 			{
 				try {
 					var csharpOutput = new StringWriter();
-					CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
-					var st = decompiler.Decompile(method.Handle);
+					CSharpDecompiler decompiler = CreateDecompiler(module, options);
+					var st = decompiler.Decompile(handle);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
-					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.Method.MetadataToken == method.Handle);
+					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.Method.MetadataToken == handle);
 					this.sequencePoints = mapping.Value ?? (IList<SequencePoint>)EmptyList<SequencePoint>.Instance;
 					this.codeLines = csharpOutput.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-					base.Disassemble(method);
+					base.Disassemble(module, handle);
 				} finally {
 					this.sequencePoints = null;
 					this.codeLines = null;
 				}
 			}
 
-			protected override void WriteInstruction(ITextOutput output, Decompiler.Metadata.MethodDefinition method, ref System.Reflection.Metadata.BlobReader blob)
+			protected override void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodDefinition, ref BlobReader blob)
 			{
 				int index = sequencePoints.BinarySearch(blob.Offset, seq => seq.Offset);
 				if (index >= 0) {
@@ -125,7 +128,7 @@ namespace ICSharpCode.ILSpy
 						highlightingOutput?.EndSpan();
 					}
 				}
-				base.WriteInstruction(output, method, ref blob);
+				base.WriteInstruction(output, metadata, methodDefinition, ref blob);
 			}
 
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };

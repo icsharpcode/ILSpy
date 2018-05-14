@@ -118,23 +118,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodImplAttributes.AggressiveInlining, "aggressiveinlining" },
 		};
 
-		public void DisassembleMethod(Metadata.MethodDefinition method)
+		public void DisassembleMethod(PEFile module, MethodDefinitionHandle handle)
 		{
-			DisassembleMethodHeader(method);
-			DisassembleMethodBlock(method);
-		}
-
-		public void DisassembleMethodHeader(Metadata.MethodDefinition method)
-		{
+			var metadata = module.Metadata;
+			var genericContext = new GenericContext(handle, module);
 			// write method header
-			output.WriteDefinition(".method ", method);
-			DisassembleMethodHeaderInternal(method);
+			output.WriteDefinition(".method ", new Metadata.MethodDefinition(module, handle));
+			DisassembleMethodHeaderInternal(module, handle, metadata, genericContext);
+			DisassembleMethodBlock(module, handle, metadata, genericContext);
 		}
 
-		void DisassembleMethodHeaderInternal(Metadata.MethodDefinition method)
+		public void DisassembleMethodHeader(PEFile module, MethodDefinitionHandle handle)
 		{
-			var metadata = method.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			var metadata = module.Metadata;
+			var genericContext = new GenericContext(handle, module);
+			// write method header
+			output.WriteDefinition(".method ", new Metadata.MethodDefinition(module, handle));
+			DisassembleMethodHeaderInternal(module, handle, metadata, genericContext);
+		}
+
+		void DisassembleMethodHeaderInternal(PEFile module, MethodDefinitionHandle handle, MetadataReader metadata, GenericContext genericContext)
+		{
+			var methodDefinition = metadata.GetMethodDefinition(handle);
 			//    .method public hidebysig  specialname
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
 			//
@@ -199,8 +204,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 			output.Indent();
 			var declaringType = methodDefinition.GetDeclaringType();
-			var signatureProvider = new DisassemblerSignatureProvider(method.Module, output);
-			var signature = methodDefinition.DecodeSignature(signatureProvider, new GenericContext(method));
+			var signatureProvider = new DisassemblerSignatureProvider(module, output);
+			var signature = methodDefinition.DecodeSignature(signatureProvider, genericContext);
 			if (signature.Header.HasExplicitThis) {
 				output.Write("instance explicit ");
 			} else if (signature.Header.IsInstance) {
@@ -224,12 +229,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 
 			if (isCompilerControlled) {
-				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" + MetadataTokens.GetToken(method.Handle).ToString("X8")));
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" + MetadataTokens.GetToken(handle).ToString("X8")));
 			} else {
 				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
 			}
 
-			WriteTypeParameters(output, method.Module, new GenericContext(method), methodDefinition.GetGenericParameters());
+			WriteTypeParameters(output, module, genericContext, methodDefinition.GetGenericParameters());
 
 			//( params )
 			output.Write(" (");
@@ -251,27 +256,26 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Unindent();
 		}
 
-		void DisassembleMethodBlock(Metadata.MethodDefinition method)
+		void DisassembleMethodBlock(PEFile module, MethodDefinitionHandle handle, MetadataReader metadata, GenericContext genericContext)
 		{
-			var metadata = method.Module.GetMetadataReader();
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			var methodDefinition = metadata.GetMethodDefinition(handle);
 
 			OpenBlock(defaultCollapsed: isInType);
-			WriteAttributes(method.Module, methodDefinition.GetCustomAttributes());
-			foreach (var h in method.Handle.GetMethodImplementations(metadata)) {
+			WriteAttributes(module, methodDefinition.GetCustomAttributes());
+			foreach (var h in handle.GetMethodImplementations(metadata)) {
 				var impl = metadata.GetMethodImplementation(h);
 				output.Write(".override method ");
-				impl.MethodDeclaration.WriteTo(method.Module, output, new GenericContext(method));
+				impl.MethodDeclaration.WriteTo(module, output, genericContext);
 				output.WriteLine();
 			}
 
 			foreach (var p in methodDefinition.GetParameters()) {
-				WriteParameterAttributes(method.Module, p);
+				WriteParameterAttributes(module, p);
 			}
-			WriteSecurityDeclarations(method.Module, methodDefinition.GetDeclarativeSecurityAttributes());
+			WriteSecurityDeclarations(module, methodDefinition.GetDeclarativeSecurityAttributes());
 
-			if (method.Handle.HasBody(metadata)) {
-				methodBodyDisassembler.Disassemble(method);
+			if (handle.HasBody(metadata)) {
+				methodBodyDisassembler.Disassemble(module, handle);
 			}
 			var declaringType = metadata.GetTypeDefinition(methodDefinition.GetDeclaringType());
 			CloseBlock("end of method " + DisassemblerHelpers.Escape(metadata.GetString(declaringType.Name)) + "::" + DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
@@ -282,7 +286,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (secDeclProvider.Count == 0)
 				return;
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			foreach (var h in secDeclProvider) {
 				output.Write(".permissionset ");
 				var secdecl = metadata.GetDeclarativeSecurityAttribute(h);
@@ -344,18 +348,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 					WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
 				} else {
 					string currentAssemblyName = null;
+					string currentFullAssemblyName = null;
 					if (metadata.IsAssembly) {
 						currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+						currentFullAssemblyName = metadata.GetFullAssemblyName();
 					}
 					int count = blob.ReadCompressedInteger();
 					for (int i = 0; i < count; i++) {
 						var typeName = blob.ReadSerializedString();
 						string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
-						if (nameParts.Length < 2)
-							throw new NotImplementedException();
-						if (nameParts[1] == currentAssemblyName) {
+						if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
 							output.Write("class ");
-							output.Write(DisassemblerHelpers.Escape(typeName));
+							output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
 						} else {
 							string[] typeNameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
 							if (typeNameParts.Length < 2)
@@ -464,7 +468,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			TypeDefinitionHandle FindType(PEFile currentModule, string[] name)
 			{
-				var metadata = currentModule.GetMetadataReader();
+				var metadata = currentModule.Metadata;
 				var currentNamespace = metadata.GetNamespaceDefinitionRoot();
 				ImmutableArray<TypeDefinitionHandle> typeDefinitions = default;
 
@@ -503,7 +507,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (containingModule != null) {
 				// try to find the type in the assembly
 				var handle = FindType(containingModule, typeNameParts);
-				var metadata = containingModule.GetMetadataReader();
+				var metadata = containingModule.Metadata;
 				if (handle.IsNil || !handle.IsEnum(metadata, out var typeCode))
 					throw new NotSupportedException();
 				typeDefinition = new Metadata.TypeDefinition(containingModule, handle);
@@ -519,7 +523,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						throw new NotImplementedException();
 					module = mscorlib;
 				}
-				var metadata = module.GetMetadataReader();
+				var metadata = module.Metadata;
 				if (handle.IsNil || !handle.IsEnum(metadata, out var typeCode))
 					throw new NotSupportedException();
 				typeDefinition = new Metadata.TypeDefinition(module, handle);
@@ -651,7 +655,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write('[');
 						output.Write(referencedModule.Name);
 						output.Write(']');
-						output.WriteReference(type.Handle.GetFullTypeName(type.Module.GetMetadataReader()).ToString(), type);
+						output.WriteReference(type.Handle.GetFullTypeName(type.Module.Metadata).ToString(), type);
 					} else {
 						output.Write(DisassemblerHelpers.Escape(typeName));
 					}
@@ -922,7 +926,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteParameterAttributes(PEFile module, ParameterHandle handle)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			var p = metadata.GetParameter(handle);
 			if (p.GetDefaultValue().IsNil && p.GetCustomAttributes().Count == 0)
 				return;
@@ -987,7 +991,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleField(Metadata.FieldDefinition field)
 		{
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
 			output.WriteDefinition(".field ", field);
 			int offset = fieldDefinition.GetOffset();
@@ -1037,7 +1041,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleProperty(Metadata.PropertyDefinition property)
 		{
-			var metadata = property.Module.GetMetadataReader();
+			var metadata = property.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			output.WriteDefinition(".property ", property);
 			WriteFlags(propertyDefinition.Attributes, propertyAttributes);
@@ -1080,7 +1084,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.Write(keyword);
 			output.Write(' ');
-			method.WriteTo(output);
+			((EntityHandle)method.Handle).WriteTo(method.Module, output, GenericContext.Empty);
 			output.WriteLine();
 		}
 		#endregion
@@ -1091,10 +1095,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
 
-		public void DisassembleEvent(Metadata.EventDefinition ev)
+		public void DisassembleEvent(PEFile module, EventDefinitionHandle handle)
 		{
-			var metadata = ev.Module.GetMetadataReader();
-			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
+			var metadata = module.Metadata;
+			var eventDefinition = metadata.GetEventDefinition(handle);
 			var accessors = eventDefinition.GetAccessors();
 			TypeDefinitionHandle declaringType;
 			if (!accessors.Adder.IsNil) {
@@ -1104,17 +1108,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else {
 				declaringType = metadata.GetMethodDefinition(accessors.Raiser).GetDeclaringType();
 			}
-			output.WriteDefinition(".event ", ev);
+			output.WriteDefinition(".event ", new Metadata.EventDefinition(module, handle));
 			WriteFlags(eventDefinition.Attributes, eventAttributes);
-			var signature = eventDefinition.DecodeSignature(metadata, new DisassemblerSignatureProvider(ev.Module, output), new GenericContext(declaringType, ev.Module));
+			var signature = eventDefinition.DecodeSignature(metadata, new DisassemblerSignatureProvider(module, output), new GenericContext(declaringType, module));
 			signature(ILNameSyntax.TypeName);
 			output.Write(' ');
 			output.Write(DisassemblerHelpers.Escape(metadata.GetString(eventDefinition.Name)));
 			OpenBlock(false);
-			WriteAttributes(ev.Module, eventDefinition.GetCustomAttributes());
-			WriteNestedMethod(".addon", new Metadata.MethodDefinition(ev.Module, accessors.Adder));
-			WriteNestedMethod(".removeon", new Metadata.MethodDefinition(ev.Module, accessors.Remover));
-			WriteNestedMethod(".fire", new Metadata.MethodDefinition(ev.Module, accessors.Raiser));
+			WriteAttributes(module, eventDefinition.GetCustomAttributes());
+			WriteNestedMethod(".addon", new Metadata.MethodDefinition(module, accessors.Adder));
+			WriteNestedMethod(".removeon", new Metadata.MethodDefinition(module, accessors.Remover));
+			WriteNestedMethod(".fire", new Metadata.MethodDefinition(module, accessors.Raiser));
 			/*foreach (var method in ev.OtherMethods) {
 				WriteNestedMethod(".other", method);
 			}*/
@@ -1159,7 +1163,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleType(Metadata.TypeDefinition type)
 		{
-			var metadata = type.Module.GetMetadataReader();
+			var metadata = type.Module.Metadata;
 			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
 			output.WriteDefinition(".class ", type);
 
@@ -1209,7 +1213,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			isInType = true;
 			WriteAttributes(type.Module, typeDefinition.GetCustomAttributes());
 			WriteSecurityDeclarations(type.Module, typeDefinition.GetDeclarativeSecurityAttributes());
-			var layout = type.This().GetLayout();
+			var layout = typeDefinition.GetLayout();
 			if (!layout.IsDefault) {
 				output.WriteLine(".pack {0}", layout.PackingSize);
 				output.WriteLine(".size {0}", layout.Size);
@@ -1239,7 +1243,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine("// Methods");
 				foreach (var m in methods) {
 					cancellationToken.ThrowIfCancellationRequested();
-					DisassembleMethod(new Metadata.MethodDefinition(type.Module, m));
+					DisassembleMethod(type.Module, m);
 					output.WriteLine();
 				}
 			}
@@ -1248,7 +1252,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine("// Events");
 				foreach (var ev in events) {
 					cancellationToken.ThrowIfCancellationRequested();
-					DisassembleEvent(new Metadata.EventDefinition(type.Module, ev));
+					DisassembleEvent(type.Module, ev);
 					output.WriteLine();
 				}
 				output.WriteLine();
@@ -1270,7 +1274,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			if (p.Count > 0) {
 				output.Write('<');
-				var metadata = module.GetMetadataReader();
+				var metadata = module.Metadata;
 				for (int i = 0; i < p.Count; i++) {
 					if (i > 0)
 						output.Write(", ");
@@ -1309,7 +1313,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		#region Helper methods
 		void WriteAttributes(PEFile module, CustomAttributeHandleCollection attributes)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			foreach (CustomAttributeHandle a in attributes) {
 				output.Write(".custom ");
 				var attr = metadata.GetCustomAttribute(a);
@@ -1436,7 +1440,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void WriteAssemblyHeader(PEFile module)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			if (!metadata.IsAssembly) return;
 			output.Write(".assembly ");
 			var asm = metadata.GetAssemblyDefinition();
@@ -1492,7 +1496,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void WriteModuleHeader(PEFile module, bool skipMVID = false)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 
 			void WriteExportedType(ExportedType exportedType)
 			{
@@ -1573,7 +1577,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.output = output ?? throw new ArgumentNullException(nameof(output));
-			this.metadata = module.GetMetadataReader();
+			this.metadata = module.Metadata;
 		}
 
 		public Action<ILNameSyntax> GetArrayType(Action<ILNameSyntax> elementType, ArrayShape shape)
@@ -1769,8 +1773,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new NotSupportedException($"rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
-				var td = new Metadata.TypeDefinition(module, handle);
-				td.WriteTo(output);
+				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
 			};
 		}
 
@@ -1789,8 +1792,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					default:
 						throw new NotSupportedException($"rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
-				var typeRef = new Metadata.TypeReference(module, handle);
-				typeRef.WriteTo(output);
+				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
 			};
 		}
 

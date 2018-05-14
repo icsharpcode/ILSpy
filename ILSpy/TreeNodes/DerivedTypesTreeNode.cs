@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
 		{
 			foreach (var module in assemblies) {
-				var metadata = module.GetMetadataReader();
+				var metadata = module.Metadata;
 				foreach (var h in TreeTraversal.PreOrder(metadata.GetTopLevelTypeDefinitions(), t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
 					cancellationToken.ThrowIfCancellationRequested();
 					var td = new TypeDefinition(module, h);

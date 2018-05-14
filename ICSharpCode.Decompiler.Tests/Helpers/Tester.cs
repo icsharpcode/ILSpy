@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
 				using (var peFile = new PEFile(sourceFileName, peFileStream))
 				using (var writer = new StringWriter()) {
-					var metadata = peFile.GetMetadataReader();
+					var metadata = peFile.Metadata;
 					var output = new PlainTextOutput(writer);
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
 					rd.DetectControlStructure = false;

@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public IUnresolvedAssembly LoadModule(Metadata.PEFile module)
 		{
 			this.currentModule = module;
-			this.currentMetadata = module.GetMetadataReader();
+			this.currentMetadata = module.Metadata;
 
 			// Read assembly and module attributes
 			IList<IUnresolvedAttribute> assemblyAttributes = new List<IUnresolvedAttribute>();
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public void SetCurrentModule(Metadata.PEFile module)
 		{
 			this.currentModule = module;
-			this.currentMetadata = module.GetMetadataReader();
+			this.currentMetadata = module.Metadata;
 		}
 
 		/// <summary>
@@ -1013,7 +1013,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				this.loader = loader;
 				this.module = module;
-				this.metadata = module.GetMetadataReader();
+				this.metadata = module.Metadata;
 				this.MetadataToken = typeDefinition;
 				this.SymbolKind = SymbolKind.TypeDefinition;
 				var td = metadata.GetTypeDefinition(typeDefinition);

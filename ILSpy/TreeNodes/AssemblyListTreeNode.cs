@@ -206,7 +206,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public TypeTreeNode FindTypeNode(TypeDefinition def)
 		{
-			var declaringType = def.This().GetDeclaringType();
+			var declaringType = def.Module.Metadata.GetTypeDefinition(def.Handle).GetDeclaringType();
 			if (!declaringType.IsNil) {
 				TypeTreeNode decl = FindTypeNode(new TypeDefinition(def.Module, declaringType));
 				if (decl != null) {
@@ -228,7 +228,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public ILSpyTreeNode FindMethodNode(MethodDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.This().GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.Module.Metadata.GetMethodDefinition(def.Handle).GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -263,7 +263,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public FieldTreeNode FindFieldNode(FieldDefinition def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.This().GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.Module.Metadata.GetFieldDefinition(def.Handle).GetDeclaringType()));
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
@@ -276,7 +276,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public PropertyTreeNode FindPropertyNode(PropertyDefinition def)
 		{
-			var metadata = def.Module.GetMetadataReader();
+			var metadata = def.Module.Metadata;
 			var accessor = metadata.GetMethodDefinition(metadata.GetPropertyDefinition(def.Handle).GetAccessors().GetAny());
 			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
 			if (typeNode == null)
@@ -291,7 +291,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public EventTreeNode FindEventNode(EventDefinition def)
 		{
-			var metadata = def.Module.GetMetadataReader();
+			var metadata = def.Module.Metadata;
 			var accessor = metadata.GetMethodDefinition(metadata.GetEventDefinition(def.Handle).GetAccessors().GetAny());
 			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
 			if (typeNode == null)

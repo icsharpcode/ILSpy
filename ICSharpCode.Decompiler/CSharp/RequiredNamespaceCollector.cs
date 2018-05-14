@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (!method.MetadataToken.IsNil && method.HasBody) {
 						var reader = typeSystem.ModuleDefinition.Reader;
-						var methodDef = typeSystem.ModuleDefinition.GetMetadataReader().GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+						var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 						var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 						CollectNamespacesFromMethodBody(body, reader, typeSystem, namespaces);
 					}

@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		#region WriteCodeFilesInProject
 		protected virtual bool IncludeTypeWhenDecompilingProject(Metadata.PEFile module, TypeDefinitionHandle type)
 		{
-			var metadata = module.GetMetadataReader();
+			var metadata = module.Metadata;
 			var typeDef = metadata.GetTypeDefinition(type);
 			if (metadata.GetString(typeDef.Name) == "<Module>" || CSharpDecompiler.MemberIsHidden(module, type, settings))
 				return false;
@@ -300,8 +300,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(Metadata.PEFile module, CancellationToken cancellationToken)
 		{
-			var metadata = module.GetMetadataReader();
-			var files = module.GetMetadataReader().GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
+			var metadata = module.Metadata;
+			var files = module.Metadata.GetTopLevelTypeDefinitions().Where(td => IncludeTypeWhenDecompilingProject(module, td)).GroupBy(
 				delegate (TypeDefinitionHandle h) {
 					var type = metadata.GetTypeDefinition(h);
 					string file = CleanUpFileName(metadata.GetString(type.Name)) + ".cs";

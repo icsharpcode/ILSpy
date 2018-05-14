@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(FieldDefinition field)
 		{
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
 			if (fieldDefinition.GetDeclaringType().IsEnum(metadata) && !fieldDefinition.HasFlag(FieldAttributes.SpecialName))
 				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(fieldDefinition.Attributes), false);
@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private static bool IsDecimalConstant(FieldDefinition field)
 		{
-			var metadata = field.Module.GetMetadataReader();
+			var metadata = field.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
 
 			var fieldType = fieldDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = FieldDefinition.Module.GetMetadataReader();
+			var metadata = FieldDefinition.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
 			if (settings.SearchTermMatches(metadata.GetString(fieldDefinition.Name)) && settings.Language.ShowMember(FieldDefinition))
 				return FilterResult.Match;
@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				var metadata = FieldDefinition.Module.GetMetadataReader();
+				var metadata = FieldDefinition.Module.Metadata;
 				var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
 
 				switch (fieldDefinition.Attributes & FieldAttributes.FieldAccessMask) {

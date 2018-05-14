@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.Pdb
 		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream)
 		{
 			MetadataBuilder metadata = new MetadataBuilder();
-			MetadataReader reader = file.GetMetadataReader();
+			MetadataReader reader = file.Metadata;
 			var entrypointHandle = MetadataTokens.MethodDefinitionHandle(file.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
 
 			var hasher = SHA256.Create();

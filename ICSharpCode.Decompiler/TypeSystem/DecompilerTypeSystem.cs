@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null) {
 					referencedAssemblies.Add(cecilLoader.LoadModule(asm));
-					var metadata = asm.GetMetadataReader();
+					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes) {
 						var forwarder = metadata.GetExportedType(h);
 						if (!forwarder.IsForwarder || forwarder.Implementation.Kind != SRM.HandleKind.AssemblyReference) continue;
@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return moduleDefinition; }
 		}
 
-		public SRM.MetadataReader GetMetadata() => moduleDefinition.GetMetadataReader();
+		public SRM.MetadataReader GetMetadata() => moduleDefinition.Metadata;
 
 		public IType ResolveFromSignature(ITypeReference typeReference)
 		{
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case SRM.HandleKind.MethodDefinition:
 					return ResolveAsMethod(memberReference);
 				case SRM.HandleKind.MemberReference:
-					var mr = moduleDefinition.GetMetadataReader().GetMemberReference((SRM.MemberReferenceHandle)memberReference);
+					var mr = moduleDefinition.Metadata.GetMemberReference((SRM.MemberReferenceHandle)memberReference);
 					switch (mr.GetKind()) {
 						case SRM.MemberReferenceKind.Method:
 							return ResolveAsMethod(memberReference);
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (fieldLookupCache) {
 				IField field;
 				if (!fieldLookupCache.TryGetValue(fieldReference, out field)) {
-					var metadata = moduleDefinition.GetMetadataReader();
+					var metadata = moduleDefinition.Metadata;
 					IType declaringType;
 					ITypeReference returnType;
 					switch (fieldReference.Kind) {
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				IReadOnlyList<IType> methodTypeArguments = null;
 				SRM.MethodSignature<ITypeReference>? signature = null;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
-					var metadata = moduleDefinition.GetMetadataReader();
+					var metadata = moduleDefinition.Metadata;
 					switch (methodReference.Kind) {
 						case SRM.HandleKind.MethodDefinition:
 							var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			m.IsStatic = !signature.Header.IsInstance;
 			
 			lock (typeReferenceCecilLoader) {
-				var metadata = moduleDefinition.GetMetadataReader();
+				var metadata = moduleDefinition.Metadata;
 				for (int i = 0; i < signature.GenericParameterCount; i++) {
 					m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, ""));
 				}
@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (propertyLookupCache) {
 				IProperty property;
 				if (!propertyLookupCache.TryGetValue(propertyReference, out property)) {
-					var metadata = moduleDefinition.GetMetadataReader();
+					var metadata = moduleDefinition.Metadata;
 					property = FindNonGenericProperty(metadata, (SRM.PropertyDefinitionHandle)propertyReference);
 					/*if (propertyReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)propertyReference.DeclaringType;
@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			lock (eventLookupCache) {
 				IEvent ev;
 				if (!eventLookupCache.TryGetValue(eventReference, out ev)) {
-					var metadata = moduleDefinition.GetMetadataReader();
+					var metadata = moduleDefinition.Metadata;
 					ev = FindNonGenericEvent(metadata, (SRM.EventDefinitionHandle)eventReference);
 					/*if (eventReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)eventReference.DeclaringType;
