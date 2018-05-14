@@ -207,11 +207,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (targetResolveResult == null) {
 					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field));
+					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field));
+					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				}
 			}
 

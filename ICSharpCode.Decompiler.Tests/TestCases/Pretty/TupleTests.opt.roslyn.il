@@ -41,6 +41,43 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests
        extends [mscorlib]System.Object
 {
+  .class abstract auto ansi nested private beforefieldinit OverloadResolution
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig newslot abstract virtual 
+            instance void  M1(valuetype [mscorlib]System.ValueTuple`2<int64,int64> a) cil managed
+    {
+    } // end of method OverloadResolution::M1
+
+    .method public hidebysig newslot abstract virtual 
+            instance void  M1(object a) cil managed
+    {
+    } // end of method OverloadResolution::M1
+
+    .method public hidebysig instance void 
+            UseM1(valuetype [mscorlib]System.ValueTuple`2<int32,int32> a) cil managed
+    {
+      // Code size       13 (0xd)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  box        valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+      IL_0007:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/OverloadResolution::M1(object)
+      IL_000c:  ret
+    } // end of method OverloadResolution::UseM1
+
+    .method family hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method OverloadResolution::.ctor
+
+  } // end of class OverloadResolution
+
   .field public valuetype [mscorlib]System.ValueTuple VT0
   .field public valuetype [mscorlib]System.ValueTuple`1<int32> VT1
   .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple> VT7EmptyRest
@@ -242,6 +279,34 @@
     IL_0011:  ret
   } // end of method TupleTests::get_TupleHash2
 
+  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> 
+          get_AccessRest() cil managed
+  {
+    // Code size       26 (0x1a)
+    .maxstack  9
+    IL_0000:  ldc.i4.1
+    IL_0001:  ldc.i4.2
+    IL_0002:  ldc.i4.3
+    IL_0003:  ldc.i4.4
+    IL_0004:  ldc.i4.5
+    IL_0005:  ldc.i4.6
+    IL_0006:  ldc.i4.7
+    IL_0007:  ldc.i4.8
+    IL_0008:  ldc.i4.s   9
+    IL_000a:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,int32>::.ctor(!0,
+                                                                                                   !1)
+    IL_000f:  newobj     instance void valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`2<int32,int32>>::.ctor(!0,
+                                                                                                                                                                                      !1,
+                                                                                                                                                                                      !2,
+                                                                                                                                                                                      !3,
+                                                                                                                                                                                      !4,
+                                                                                                                                                                                      !5,
+                                                                                                                                                                                      !6,
+                                                                                                                                                                                      !7)
+    IL_0014:  ldfld      !7 valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`2<int32,int32>>::Rest
+    IL_0019:  ret
+  } // end of method TupleTests::get_AccessRest
+
   .method public hidebysig instance void 
           UseDict() cil managed
   {
@@ -336,6 +401,11 @@
   {
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_TupleHash2()
   } // end of property TupleTests::TupleHash2
+  .property instance valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+          AccessRest()
+  {
+    .get instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_AccessRest()
+  } // end of property TupleTests::AccessRest
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests
 
 

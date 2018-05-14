@@ -518,23 +518,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static readonly NormalizeTypeVisitor typeErasure = new NormalizeTypeVisitor {
-			ReplaceClassTypeParametersWithDummy = false,
-			ReplaceMethodTypeParametersWithDummy = false,
-			DynamicAndObject = true,
-			TupleToUnderlyingType = true
-		};
-
 		bool IsAppropriateCallTarget(ExpectedTargetDetails expectedTargetDetails, IMember expectedTarget, IMember actualTarget)
 		{
-			if (expectedTarget.Equals(actualTarget, typeErasure))
+			if (expectedTarget.Equals(actualTarget, NormalizeTypeVisitor.TypeErasure))
 				return true;
 
 			if (expectedTargetDetails.CallOpCode == OpCode.CallVirt && actualTarget.IsOverride) {
 				if (expectedTargetDetails.NeedsBoxingConversion && actualTarget.DeclaringType.IsReferenceType != true)
 					return false;
 				foreach (var possibleTarget in InheritanceHelper.GetBaseMembers(actualTarget, false)) {
-					if (expectedTarget.Equals(possibleTarget, typeErasure))
+					if (expectedTarget.Equals(possibleTarget, NormalizeTypeVisitor.TypeErasure))
 						return true;
 					if (!possibleTarget.IsOverride)
 						break;

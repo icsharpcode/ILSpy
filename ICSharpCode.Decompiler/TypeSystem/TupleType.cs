@@ -21,13 +21,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	[DebuggerDisplay("TupleType({ElementTypes}, {ElementNames})")]
 	public sealed class TupleType : AbstractType, ICompilationProvider
 	{
 		public const int RestPosition = 8;
@@ -130,11 +130,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static TupleType FromUnderlyingType(ICompilation compilation, IType type)
 		{
-			var elementTypes = new List<IType>();
-			if (CollectTupleElementTypes(type, elementTypes)) {
+			var elementTypes = GetTupleElementTypes(type);
+			if (elementTypes.Length > 0) {
 				return new TupleType(
 					compilation,
-					elementTypes.ToImmutableArray(),
+					elementTypes,
 					valueTupleAssembly: type.GetDefinition()?.ParentAssembly
 				);
 			} else {
@@ -142,27 +142,44 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static bool CollectTupleElementTypes(IType type, List<IType> output)
+		/// <summary>
+		/// Gets the tuple element types from a tuple type or tuple underlying type.
+		/// </summary>
+		public static ImmutableArray<IType> GetTupleElementTypes(IType tupleType)
 		{
-			switch (type.Kind) {
-				case TypeKind.Tuple:
-					output.AddRange(((TupleType)type).ElementTypes);
-					return true;
-				case TypeKind.Class:
-				case TypeKind.Struct:
-					if (type.Namespace == "System" && type.Name == "ValueTuple") {
-						int tpc = type.TypeParameterCount;
-						if (tpc > 0 && tpc < RestPosition) {
-							output.AddRange(type.TypeArguments);
-							return true;
-						} else if (tpc == RestPosition) {
-							output.AddRange(type.TypeArguments.Take(RestPosition - 1));
-							return CollectTupleElementTypes(type.TypeArguments[RestIndex], output);
-						}
-					}
-					break;
+			List<IType> output = null;
+			if (Collect(tupleType)) {
+				return output.ToImmutableArray();
+			} else {
+				return default(ImmutableArray<IType>);
 			}
-			return false;
+
+			bool Collect(IType type)
+			{
+				switch (type.Kind) {
+					case TypeKind.Tuple:
+						if (output == null)
+							output = new List<IType>();
+						output.AddRange(((TupleType)type).ElementTypes);
+						return true;
+					case TypeKind.Class:
+					case TypeKind.Struct:
+						if (type.Namespace == "System" && type.Name == "ValueTuple") {
+							if (output == null)
+								output = new List<IType>();
+							int tpc = type.TypeParameterCount;
+							if (tpc > 0 && tpc < RestPosition) {
+								output.AddRange(type.TypeArguments);
+								return true;
+							} else if (tpc == RestPosition) {
+								output.AddRange(type.TypeArguments.Take(RestPosition - 1));
+								return Collect(type.TypeArguments[RestIndex]);
+							}
+						}
+						break;
+				}
+				return false;
+			}
 		}
 
 		public override TypeKind Kind => TypeKind.Tuple;
@@ -197,6 +214,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 				return hash;
 			}
+		}
+
+		public override string ToString()
+		{
+			StringBuilder b = new StringBuilder();
+			b.Append('(');
+			for (int i = 0; i < ElementTypes.Length; i++) {
+				if (i > 0)
+					b.Append(", ");
+				b.Append(ElementTypes[i]);
+				if (ElementNames[i] != null) {
+					b.Append(' ');
+					b.Append(ElementNames[i]);
+				}
+			}
+			b.Append(')');
+			return b.ToString();
 		}
 
 		public override IType AcceptVisitor(TypeVisitor visitor)

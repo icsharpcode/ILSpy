@@ -24,6 +24,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class TupleTests
 	{
+		private abstract class OverloadResolution
+		{
+			public abstract void M1((long, long) a);
+			public abstract void M1(object a);
+
+			public void UseM1((int, int) a)
+			{
+				// M1(a); TODO: tuple conversion transform
+				// Cast is required to avoid the overload usable via tuple conversion:
+				M1((object)a);
+			}
+		}
+
 		public ValueTuple VT0;
 		public ValueTuple<int> VT1;
 		public ValueTuple<int, int, int, int, int, int, int, ValueTuple> VT7EmptyRest;
@@ -63,6 +76,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int TupleHash => (1, 2, 3).GetHashCode();
 		public int TupleHash2 => Named2.GetHashCode();
+
+		public (int, int) AccessRest => (1, 2, 3, 4, 5, 6, 7, 8, 9).Rest;
 
 		public void UseDict()
 		{

@@ -104,6 +104,18 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
+		public void TupleConversions()
+		{
+			Assert.AreEqual(
+				C.TupleConversion(ImmutableArray.Create(C.ImplicitNumericConversion, C.ImplicitReferenceConversion)),
+				ImplicitConversion(typeof((int, string)), typeof((long, object))));
+
+			Assert.AreEqual(
+				C.TupleConversion(ImmutableArray.Create(C.ImplicitNumericConversion)),
+				ImplicitConversion(typeof(ValueTuple<float>), typeof(ValueTuple<double>)));
+		}
+
+		[Test]
 		public void PrimitiveConversions()
 		{
 			Assert.AreEqual(C.ImplicitNumericConversion, ImplicitConversion(typeof(char), typeof(ushort)));
