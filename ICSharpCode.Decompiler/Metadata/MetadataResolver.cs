@@ -101,28 +101,49 @@ namespace ICSharpCode.Decompiler.Metadata
 				foreach (var h in metadata.ExportedTypes) {
 					var exportedType = metadata.GetExportedType(h);
 					if (exportedType.Name == tr.Name && exportedType.Namespace == tr.Namespace) {
-						// TODO
+						switch (exportedType.Implementation.Kind) {
+							case HandleKind.AssemblyFile:
+								throw new NotSupportedException();
+							case HandleKind.AssemblyReference:
+								return ResolveTypeInOtherAssembly((AssemblyReferenceHandle)exportedType.Implementation, metadata.GetString(tr.Namespace), metadata.GetString(tr.Name));
+							default:
+								throw new NotSupportedException();
+						}
 					}
 				}
 			}
 			switch (tr.ResolutionScope.Kind) {
 				case HandleKind.TypeReference:
-					//return Resolve((TypeReferenceHandle)tr.ResolutionScope, context).GetNestedType(new );
+					var outerType = Resolve((TypeReferenceHandle)tr.ResolutionScope, context);
+					if (outerType == null)
+						throw new NotSupportedException();
+					var td = outerType.Module.Metadata.GetTypeDefinition(outerType.Handle);
+					var name = metadata.GetString(tr.Name);
+					foreach (var nestedType in td.GetNestedTypes()) {
+						var nestedTypeDef = outerType.Module.Metadata.GetTypeDefinition(nestedType);
+						if (outerType.Module.Metadata.GetString(nestedTypeDef.Name) == name)
+							return new TypeDefinition(outerType.Module, nestedType);
+					}
 					break;
 				case HandleKind.ModuleReference:
 					break;
 				case HandleKind.AssemblyReference:
-					var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, (AssemblyReferenceHandle)tr.ResolutionScope));
-					var moduleMetadata = module.Metadata;
-					var @namespace = ResolveNamespace(moduleMetadata, metadata.GetString(tr.Namespace).Split('.'));
-					if (@namespace == null)
-						throw new NotSupportedException();
-					var type = FindTypeInNamespace(moduleMetadata, @namespace.Value, metadata.GetString(tr.Name));
-					if (type.IsNil)
-						throw new NotSupportedException();
-					return new TypeDefinition(module, type);
+					return ResolveTypeInOtherAssembly((AssemblyReferenceHandle)tr.ResolutionScope, metadata.GetString(tr.Namespace), metadata.GetString(tr.Name));
 			}
 			throw new NotSupportedException();
+
+			TypeDefinition ResolveTypeInOtherAssembly(AssemblyReferenceHandle asm, string ns, string typeName)
+			{
+				var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, (AssemblyReferenceHandle)tr.ResolutionScope));
+				var moduleMetadata = module.Metadata;
+				var @namespace = ResolveNamespace(moduleMetadata, ns.Split('.'));
+				if (@namespace == null)
+					throw new NotSupportedException();
+				var type = FindTypeInNamespace(moduleMetadata, @namespace.Value, typeName);
+				if (type.IsNil)
+					throw new NotSupportedException();
+				return new TypeDefinition(module, type);
+			}
 		}
 
 		static NamespaceDefinition? ResolveNamespace(MetadataReader metadata, string[] namespaceParts)
@@ -145,7 +166,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				if (name == typeName)
 					return type;
 			}
-			return default(TypeDefinitionHandle);
+			return default;
 		}
 
 		public static IMetadataEntity Resolve(MemberReferenceHandle handle, IMetadataResolveContext context)
@@ -191,7 +212,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var ts = metadata.GetTypeSpecification(handle);
-			var unspecialized = ts.DecodeSignature(new Unspecializer(), default(Unit));
+			var unspecialized = ts.DecodeSignature(new Unspecializer(), default);
 			switch (unspecialized.Kind) {
 				case HandleKind.TypeDefinition:
 					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)unspecialized);
@@ -216,7 +237,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			public EntityHandle GetFunctionPointerType(MethodSignature<EntityHandle> signature)
 			{
-				throw new NotImplementedException();
+				return MetadataTokens.EntityHandle(0);
 			}
 
 			public EntityHandle GetGenericInstantiation(EntityHandle genericType, ImmutableArray<EntityHandle> typeArguments)
@@ -251,12 +272,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			public EntityHandle GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
-				throw new NotImplementedException();
+				return MetadataTokens.EntityHandle(0);
 			}
 
 			public EntityHandle GetSZArrayType(EntityHandle elementType)
 			{
-				throw new NotImplementedException();
+				return MetadataTokens.EntityHandle(0);
 			}
 
 			public EntityHandle GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
@@ -273,6 +294,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 			}
+		}
+	}
+
+	public struct SignatureBlobComparer
+	{
+		public bool Compare(BlobHandle a, BlobHandle b)
+		{
+			return false;
 		}
 	}
 }
