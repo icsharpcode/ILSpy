@@ -171,7 +171,32 @@ namespace ICSharpCode.ILSpy
 				case SRM.HandleKind.TypeReference:
 					return provider.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type.Handle, 0);
 				case SRM.HandleKind.TypeDefinition:
-					return provider.GetTypeFromDefinition(metadata, (SRM.TypeDefinitionHandle)type.Handle, 0);
+					var td = metadata.GetTypeDefinition((SRM.TypeDefinitionHandle)type.Handle);
+					var genericParams = td.GetGenericParameters();
+
+					var buffer = new System.Text.StringBuilder();
+
+					var name = td.GetFullTypeName(metadata);
+
+					if (includeNamespace)
+						buffer.Append(name.ToString());
+					else
+						buffer.Append(name.Name);
+
+					if (genericParams.Count > 0) {
+						buffer.Append('<');
+						int i = 0;
+						foreach (var h in genericParams) {
+							var gp = metadata.GetGenericParameter(h);
+							if (i > 0)
+								buffer.Append(", ");
+							buffer.Append(metadata.GetString(gp.Name));
+							i++;
+						}
+						buffer.Append('>');
+					}
+
+					return buffer.ToString();
 				case SRM.HandleKind.TypeSpecification:
 					return provider.GetTypeFromSpecification(metadata, genericContext ?? GenericContext.Empty, (SRM.TypeSpecificationHandle)type.Handle, 0);
 				default:
@@ -241,18 +266,73 @@ namespace ICSharpCode.ILSpy
 
 		public virtual string MethodToString(MethodDefinition method, bool includeTypeName, bool includeNamespace)
 		{
-			if (method.Handle.IsNil)
+			if (method.IsNil)
 				throw new ArgumentNullException(nameof(method));
 			var metadata = method.Module.Metadata;
-			return metadata.GetString(metadata.GetMethodDefinition(method.Handle).Name);
+			var md = metadata.GetMethodDefinition(method.Handle);
+			var name = metadata.GetString(md.Name);
+			var signature = md.DecodeSignature(includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace, new GenericContext(method));
+
+			int i = 0;
+			var buffer = new System.Text.StringBuilder(name);
+			var genericParams = md.GetGenericParameters();
+			if (genericParams.Count > 0) {
+				buffer.Append('<');
+				foreach (var h in genericParams) {
+					var gp = metadata.GetGenericParameter(h);
+					if (i > 0)
+						buffer.Append(", ");
+					buffer.Append(metadata.GetString(gp.Name));
+					i++;
+				}
+				buffer.Append('>');
+			}
+			buffer.Append('(');
+
+			i = 0;
+			var parameterHandles = md.GetParameters();
+			if (signature.RequiredParameterCount > parameterHandles.Count) {
+				foreach (var type in signature.ParameterTypes) {
+					if (i > 0)
+						buffer.Append(", ");
+					buffer.Append(signature.ParameterTypes[i]);
+					i++;
+				}
+			} else {
+				foreach (var h in parameterHandles) {
+					var p = metadata.GetParameter(h);
+					if (p.SequenceNumber > 0 && i < signature.ParameterTypes.Length) {
+						if (i > 0)
+							buffer.Append(", ");
+						buffer.Append(signature.ParameterTypes[i]);
+						i++;
+					}
+				}
+			}
+			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+				if (signature.ParameterTypes.Length > 0)
+					buffer.Append(", ");
+				buffer.Append("...");
+			}
+			buffer.Append(')');
+			buffer.Append(" : ");
+			buffer.Append(signature.ReturnType);
+			return buffer.ToString();
 		}
 
 		public virtual string EventToString(EventDefinition @event, bool includeTypeName, bool includeNamespace)
 		{
-			if (@event.Handle.IsNil)
+			if (@event.IsNil)
 				throw new ArgumentNullException(nameof(@event));
 			var metadata = @event.Module.Metadata;
-			return metadata.GetString(metadata.GetEventDefinition(@event.Handle).Name);
+			var ed = metadata.GetEventDefinition(@event.Handle);
+			var accessorHandle = ed.GetAccessors().GetAny();
+			var signature = ed.DecodeSignature(metadata, includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace, new GenericContext(accessorHandle, @event.Module));
+			var buffer = new System.Text.StringBuilder();
+			buffer.Append(metadata.GetString(ed.Name));
+			buffer.Append(" : ");
+			buffer.Append(signature);
+			return buffer.ToString();
 		}
 
 		/// <summary>
