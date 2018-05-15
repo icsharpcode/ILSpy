@@ -39,7 +39,7 @@ namespace ILSpy.BamlDecompiler
 			if (typeDefinition.IsNil)
 				return result;
 
-			var metadata = Module.Metadata;
+			var metadata = module.Metadata;
 			TypeDefinition type = metadata.GetTypeDefinition(typeDefinition.Handle);
 			
 			MethodDefinition method = default;
