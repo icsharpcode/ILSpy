@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		static readonly Lazy<IUnresolvedAssembly> testAssembly = new Lazy<IUnresolvedAssembly>(
 			delegate {
-				return new CecilLoader { IncludeInternalMembers = true }.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
+				return new MetadataLoader { IncludeInternalMembers = true }.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
 			});
 
 		public static IUnresolvedAssembly Mscorlib { get { return mscorlib.Value; } }

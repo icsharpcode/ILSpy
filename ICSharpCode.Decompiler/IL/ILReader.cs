@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL
 			var variableTypes = standaloneSignature.DecodeLocalSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
 			var localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
-				localVariables[index] = CreateILVariable(index, type);
+				localVariables[index] = CreateILVariable(index, typeSystem.ResolveFromSignature(type));
 			}
 			return localVariables;
 		}
@@ -148,19 +148,18 @@ namespace ICSharpCode.Decompiler.IL
 			int paramIndex = 0; int offset = 0;
 			if (methodSignature.Header.IsInstance) {
 				offset = 1;
-				parameterVariables[paramIndex++] = CreateILVariable(-1, method.DeclaringType.ToTypeReference(), "this");
+				parameterVariables[paramIndex++] = CreateILVariable(-1, method.DeclaringType, "this");
 			}
 			while (paramIndex < parameterVariables.Length) {
-				var type = methodSignature.ParameterTypes[paramIndex - offset];
+				var type = typeSystem.ResolveFromSignature(methodSignature.ParameterTypes[paramIndex - offset]);
 				parameterVariables[paramIndex] = CreateILVariable(paramIndex - offset, type, method.Parameters[paramIndex - offset].Name);
 				paramIndex++;
 			}
 			Debug.Assert(paramIndex == parameterVariables.Length);
 		}
 
-		ILVariable CreateILVariable(int index, ITypeReference typeRef)
+		ILVariable CreateILVariable(int index, IType type)
 		{
-			IType type = typeSystem.ResolveFromSignature(typeRef);
 			VariableKind kind;
 			if (type is PinnedType pinned) {
 				kind = VariableKind.PinnedLocal;
@@ -181,9 +180,8 @@ namespace ICSharpCode.Decompiler.IL
 			return ilVar;
 		}
 
-		ILVariable CreateILVariable(int index, ITypeReference typeReference, string name)
+		ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
-			IType parameterType = typeSystem.ResolveFromSignature(typeReference);
 			ITypeDefinition def = parameterType.GetDefinition();
 			if (def != null && index < 0 && def.IsReferenceType == false) {
 				parameterType = new ByReferenceType(parameterType);

@@ -39,11 +39,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override TypeKind Kind => TypeKind.Other;
 
-		public override ITypeReference ToTypeReference()
-		{
-			return new PinnedTypeReference(elementType.ToTypeReference());
-		}
-
 		public override IType VisitChildren(TypeVisitor visitor)
 		{
 			var newType = elementType.AcceptVisitor(visitor);

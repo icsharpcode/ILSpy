@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				propertyDeclaration.Setter.Body = null;
 			}
 			// Add C# 7.3 attributes on backing field:
-			var attributes = fieldInfo.Attributes
+			var attributes = field.Attributes
 				.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
 				.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 			if (attributes.Length > 0) {
@@ -514,7 +514,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					AttributeTarget = "field"
 				};
 				section.Attributes.AddRange(attributes);
-				property.Attributes.Add(section);
+				propertyDeclaration.Attributes.Add(section);
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;

@@ -289,8 +289,6 @@
     <Compile Include="Metadata\LightJson\JsonValueType.cs" />
     <Compile Include="Metadata\LightJson\Serialization\JsonParseException.cs" />
     <Compile Include="Metadata\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="Metadata\LightJson\Serialization\JsonSerializationException.cs" />
-    <Compile Include="Metadata\LightJson\Serialization\JsonWriter.cs" />
     <Compile Include="Metadata\LightJson\Serialization\TextPosition.cs" />
     <Compile Include="Metadata\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="Metadata\OperandType.cs" />
