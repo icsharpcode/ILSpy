@@ -68,6 +68,7 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		PEFile Module { get; }
 		EntityHandle Handle { get; }
+		bool IsNil { get; }
 	}
 
 	public struct Variable

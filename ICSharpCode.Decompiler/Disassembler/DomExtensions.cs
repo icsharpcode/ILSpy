@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(' ');
 					((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, GenericContext.Empty, ILNameSyntax.TypeName);
 					output.Write("::");
-					output.Write(DisassemblerHelpers.Escape(metadata.GetString(fd.Name)));
+					output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(fd.Name)), new Metadata.FieldDefinition(module, (FieldDefinitionHandle)entity));
 					break;
 				}
 				case HandleKind.MethodDefinition: {
@@ -106,10 +106,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("::");
 					}
 					bool isCompilerControlled = (md.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
+					var reference = new Metadata.MethodDefinition(module, (MethodDefinitionHandle)entity);
 					if (isCompilerControlled) {
-						output.Write(DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" + MetadataTokens.GetToken(entity).ToString("X8")));
+						output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" + MetadataTokens.GetToken(entity).ToString("X8")), reference);
 					} else {
-						output.Write(DisassemblerHelpers.Escape(metadata.GetString(md.Name)));
+						output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(md.Name)), reference);
 					}
 					var genericParameters = md.GetGenericParameters();
 					if (genericParameters.Count > 0) {
@@ -173,7 +174,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
 							output.Write("::");
-							output.Write(DisassemblerHelpers.Escape(memberName));
+							output.WriteReference(DisassemblerHelpers.Escape(memberName), new Metadata.MemberReference(module, (MemberReferenceHandle)entity));
 							output.Write("(");
 							for (int i = 0; i < methodSignature.ParameterTypes.Length; ++i) {
 								if (i > 0)
@@ -190,7 +191,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
 							output.Write("::");
-							output.Write(DisassemblerHelpers.Escape(memberName));
+							output.WriteReference(DisassemblerHelpers.Escape(memberName), new Metadata.MemberReference(module, (MemberReferenceHandle)entity));
 							break;
 					}
 					break;

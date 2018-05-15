@@ -8,6 +8,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Util;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
@@ -21,12 +22,20 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		readonly PEFile mainModule;
 		readonly IAssemblyResolver assemblyResolver;
-		readonly Dictionary<IAssemblyReference, PEFile> loadedModules = new Dictionary<IAssemblyReference, PEFile>();
+		readonly Dictionary<IAssemblyReference, PEFile> loadedModules;
 
 		public SimpleMetadataResolveContext(PEFile mainModule)
 		{
 			this.mainModule = mainModule;
 			this.assemblyResolver = mainModule.AssemblyResolver;
+			this.loadedModules = new Dictionary<IAssemblyReference, PEFile>();
+		}
+
+		public SimpleMetadataResolveContext(PEFile mainModule, IMetadataResolveContext parentContext)
+		{
+			this.mainModule = mainModule;
+			this.assemblyResolver = mainModule.AssemblyResolver;
+			this.loadedModules = parentContext is SimpleMetadataResolveContext simple ? simple.loadedModules : new Dictionary<IAssemblyReference, PEFile>();
 		}
 
 		public PEFile CurrentModule => mainModule;
@@ -63,12 +72,10 @@ namespace ICSharpCode.Decompiler.Metadata
 				case HandleKind.MethodDefinition:
 					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
 				case HandleKind.MemberReference:
-					var memberRefHandle = (MemberReferenceHandle)handle;
-					var metadata = context.CurrentModule.Metadata;
-					var memberRef = metadata.GetMemberReference(memberRefHandle);
-					if (memberRef.GetKind() != MemberReferenceKind.Method)
-						return default;
-					break;
+					var resolved = ((MemberReferenceHandle)handle).Resolve(context);
+					if (resolved is MethodDefinition m)
+						return m;
+					return default;
 			}
 			throw new NotImplementedException();
 		}
@@ -79,13 +86,10 @@ namespace ICSharpCode.Decompiler.Metadata
 				case HandleKind.FieldDefinition:
 					return new FieldDefinition(context.CurrentModule, (FieldDefinitionHandle)handle);
 				case HandleKind.MemberReference:
-					var memberRefHandle = (MemberReferenceHandle)handle;
-					var metadata = context.CurrentModule.Metadata;
-					var memberRef = metadata.GetMemberReference(memberRefHandle);
-					if (memberRef.GetKind() != MemberReferenceKind.Field)
-						throw new ArgumentException("MemberReferenceKind must be Field!", nameof(handle));
-					
-					break;
+					var resolved = ((MemberReferenceHandle)handle).Resolve(context);
+					if (resolved is FieldDefinition m)
+						return m;
+					return default;
 			}
 			throw new NotImplementedException();
 		}
@@ -169,46 +173,65 @@ namespace ICSharpCode.Decompiler.Metadata
 			return default;
 		}
 
-		public static IMetadataEntity Resolve(MemberReferenceHandle handle, IMetadataResolveContext context)
+		public static IMetadataEntity Resolve(this MemberReferenceHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var mr = metadata.GetMemberReference(handle);
-			TypeDefinition declaringType;
+			SRM.TypeDefinition declaringType;
+			MetadataReader targetMetadata;
+			PEFile targetModule;
 			switch (mr.Parent.Kind) {
 				case HandleKind.TypeDefinition:
-					declaringType = new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)mr.Parent);
+					declaringType = metadata.GetTypeDefinition((TypeDefinitionHandle)mr.Parent);
+					targetMetadata = metadata;
+					targetModule = context.CurrentModule;
 					break;
 				case HandleKind.TypeReference:
-					declaringType = Resolve((TypeReferenceHandle)mr.Parent, context);
+					var resolvedTypeReference = Resolve((TypeReferenceHandle)mr.Parent, context);
+					targetModule = resolvedTypeReference.Module;
+					targetMetadata = targetModule.Metadata;
+					declaringType = targetMetadata.GetTypeDefinition(resolvedTypeReference.Handle);
 					break;
 				case HandleKind.TypeSpecification:
+					resolvedTypeReference = Resolve((TypeSpecificationHandle)mr.Parent, context);
+					targetModule = resolvedTypeReference.Module;
+					targetMetadata = targetModule.Metadata;
+					declaringType = targetMetadata.GetTypeDefinition(resolvedTypeReference.Handle);
+					break;
 				case HandleKind.MethodDefinition:
 				case HandleKind.ModuleReference:
 					throw new NotImplementedException();
 				default:
 					throw new NotSupportedException();
 			}
-			/*var name = metadata.GetString(mr.Name);
+			var name = metadata.GetString(mr.Name);
 			switch (mr.GetKind()) {
 				case MemberReferenceKind.Field:
-					return declaringType.Fields.FirstOrDefault(fd => fd.Name == name);
+					foreach (var f in declaringType.GetFields()) {
+						var fd = targetMetadata.GetFieldDefinition(f);
+						if (targetMetadata.StringComparer.Equals(fd.Name, name))
+							return new FieldDefinition(targetModule, f);
+					}
+					throw new NotSupportedException();
 				case MemberReferenceKind.Method:
-					var signature = mr.DecodeMethodSignature(new TypeSystem.Implementation.TypeReferenceSignatureDecoder(), default(Unit));
-					return declaringType.Methods.SingleOrDefault(md => MatchMethodDefinition(name, signature, md));
-			}*/
+					var candidates = new List<(MethodDefinitionHandle, BlobHandle)>();
+					foreach (var m in declaringType.GetMethods()) {
+						var md = targetMetadata.GetMethodDefinition(m);
+						if (targetMetadata.StringComparer.Equals(md.Name, name))
+							candidates.Add((m, md.Signature));
+					}
+					if (candidates.Count == 0)
+						throw new NotSupportedException();
+					foreach (var (method, signature) in candidates) {
+						if (SignatureBlobComparer.EqualsMethodSignature(targetMetadata.GetBlobReader(signature), metadata.GetBlobReader(mr.Signature), new SimpleMetadataResolveContext(targetModule, context), context))
+							return new MethodDefinition(targetModule, method);
+					}
+					throw new NotSupportedException();
+			}
 			throw new NotSupportedException();
 		}
 
-		static bool MatchMethodDefinition(string name, MethodSignature<TypeSystem.ITypeReference> signature, MethodDefinition md)
-		{
-			throw new NotImplementedException();
-			//if (name != md.Name || md.GenericParameters.Count != signature.GenericParameterCount || signature.RequiredParameterCount != md.Parameters.Count)
-			//	return false;
-			// TODO overload resolution... OMG
-			//return true;
-		}
-
-		public static TypeDefinition Resolve(TypeSpecificationHandle handle, IMetadataResolveContext context)
+		public static TypeDefinition Resolve(this TypeSpecificationHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var ts = metadata.GetTypeSpecification(handle);
@@ -297,11 +320,175 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 	}
 
-	public struct SignatureBlobComparer
+	public static class SignatureBlobComparer
 	{
-		public bool Compare(BlobHandle a, BlobHandle b)
+		public static bool EqualsMethodSignature(BlobReader a, BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
 		{
-			return false;
+			return EqualsMethodSignature(ref a, ref b, contextForA, contextForB);
+		}
+
+		static bool EqualsMethodSignature(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
+		{
+			SignatureHeader header;
+			// compare signature headers
+			if (a.RemainingBytes == 0 || b.RemainingBytes == 0 || (header = a.ReadSignatureHeader()) != b.ReadSignatureHeader())
+				return false;
+			if (header.IsGeneric) {
+				// read & compare generic parameter count
+				if (!IsSameCompressedInteger(ref a, ref b, out _))
+					return false;
+			}
+			// read & compare parameter count
+			if (!IsSameCompressedInteger(ref a, ref b, out int totalParameterCount))
+				return false;
+			if (!IsSameCompressedInteger(ref a, ref b, out int typeCode))
+				return false;
+			if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+				return false;
+			int i = 0;
+			for (; i < totalParameterCount; i++) {
+				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+					return false;
+				if (typeCode == 65)
+					break;
+				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+					return false;
+			}
+			for (; i < totalParameterCount; i++) {
+				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+					return false;
+				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+					return false;
+			}
+			return true;
+		}
+
+		static bool IsSameCompressedInteger(ref BlobReader a, ref BlobReader b, out int value)
+		{
+			return a.TryReadCompressedInteger(out value) == b.TryReadCompressedInteger(out int otherValue) && value == otherValue;
+		}
+
+		static bool IsSameCompressedSignedInteger(ref BlobReader a, ref BlobReader b, out int value)
+		{
+			return a.TryReadCompressedSignedInteger(out value) == b.TryReadCompressedSignedInteger(out int otherValue) && value == otherValue;
+		}
+
+		static bool TypesAreEqual(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB, int typeCode)
+		{
+			switch (typeCode) {
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+				case 22:
+				case 24:
+				case 25:
+				case 28: // primitive types
+					return true;
+				case 15: // pointer type
+				case 16: // byref type
+				case 69: // pinned type
+				case 29: // szarray type
+					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+						return false;
+					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+						return false;
+					return true;
+				case 27:
+					if (!EqualsMethodSignature(ref a, ref b, contextForA, contextForB))
+						return false;
+					return true;
+				case 20: // array type
+					// element type
+					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+						return false;
+					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+						return false;
+					// rank
+					if (!IsSameCompressedInteger(ref a, ref b, out _))
+						return false;
+					// sizes
+					if (!IsSameCompressedInteger(ref a, ref b, out int numOfSizes))
+						return false;
+					for (int i = 0; i < numOfSizes; i++) {
+						if (!IsSameCompressedInteger(ref a, ref b, out _))
+							return false;
+					}
+					// lowerBounds
+					if (!IsSameCompressedInteger(ref a, ref b, out int numOfLowerBounds))
+						return false;
+					for (int i = 0; i < numOfLowerBounds; i++) {
+						if (!IsSameCompressedSignedInteger(ref a, ref b, out _))
+							return false;
+					}
+					return true;
+				case 31: // mod-req type
+				case 32: // mod-opt type
+					// modifier
+					if (!TypeHandleEquals(ref a, ref b, contextForA, contextForB))
+						return false;
+					// unmodified type
+					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+						return false;
+					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+						return false;
+					return true;
+				case 21: // generic instance type
+					// generic type
+					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+						return false;
+					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+						return false;
+					if (!IsSameCompressedInteger(ref a, ref b, out int numOfArguments))
+						return false;
+					for (int i = 0; i < numOfArguments; i++) {
+						if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
+							return false;
+						if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
+							return false;
+					}
+					return true;
+				case 19: // type parameter
+				case 30: // method type parameter
+					// index
+					if (!IsSameCompressedInteger(ref a, ref b, out _))
+						return false;
+					return true;
+				case 17:
+				case 18:
+					if (!TypeHandleEquals(ref a, ref b, contextForA, contextForB))
+						return false;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		static bool TypeHandleEquals(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
+		{
+			var typeA = a.ReadTypeHandle();
+			var typeB = b.ReadTypeHandle();
+			if (typeA.IsNil || typeB.IsNil)
+				return false;
+			var resolvedA = MetadataResolver.ResolveType(typeA, contextForA);
+			var resolvedB = MetadataResolver.ResolveType(typeB, contextForB);
+			if (resolvedA.IsNil || resolvedB.IsNil)
+				return false;
+			if (resolvedA.Handle != resolvedB.Handle)
+				return false;
+			if (resolvedA.Module.FullName != resolvedB.Module.FullName)
+				return false;
+			return true;
 		}
 	}
 }

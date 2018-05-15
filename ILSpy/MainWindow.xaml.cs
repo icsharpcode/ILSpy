@@ -609,6 +609,29 @@ namespace ICSharpCode.ILSpy
 						default:
 							throw new NotSupportedException();
 					}
+				case TypeReference tr:
+					var resolved = tr.Handle.Resolve(new SimpleMetadataResolveContext(tr.Module));
+					if (!resolved.IsNil)
+						return assemblyListTreeNode.FindTypeNode(resolved);
+					return null;
+				case TypeSpecification ts:
+					resolved = ts.Handle.Resolve(new SimpleMetadataResolveContext(ts.Module));
+					if (!resolved.IsNil)
+						return assemblyListTreeNode.FindTypeNode(resolved);
+					return null;
+				case MemberReference mr:
+					var resolvedMember = mr.Handle.Resolve(new SimpleMetadataResolveContext(mr.Module));
+					if (!resolvedMember.IsNil) {
+						switch (resolvedMember) {
+							case FieldDefinition fd:
+								return assemblyListTreeNode.FindFieldNode(fd);
+							case MethodDefinition md:
+								return assemblyListTreeNode.FindMethodNode(md);
+							default:
+								throw new NotSupportedException();
+						}
+					}
+					return null;
 				default:
 					return null;
 			}

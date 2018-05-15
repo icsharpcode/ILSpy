@@ -18,32 +18,6 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
-		#region Resolver
-		public static TypeDefinition ResolveAsType(this EntityHandle entity, PEFile module)
-		{
-			return new Entity(module, entity).ResolveAsType();
-		}
-
-		public static FieldDefinition ResolveAsField(this EntityHandle entity, PEFile module)
-		{
-			return new Entity(module, entity).ResolveAsField();
-		}
-
-		public static MethodDefinition ResolveAsMethod(this EntityHandle entity, PEFile module)
-		{
-			return new Entity(module, entity).ResolveAsMethod();
-		}
-		#endregion
-
-		public static MethodDefinition AsMethod(this IMetadataEntity entity)
-		{
-			if (entity is MethodDefinition method)
-				return method;
-			if (entity is Entity e)
-				return e;
-			throw new NotSupportedException();
-		}
-
 		public static bool IsNil(this IAssemblyReference reference)
 		{
 			return reference == null || (reference is Metadata.AssemblyReference ar && ar.IsNil);
