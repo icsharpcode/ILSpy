@@ -50,11 +50,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var metadata = type.Module.Metadata;
 			var def = metadata.GetTypeDefinition(type.Handle);
+			var context = new GenericContext(type);
 			if (!def.BaseType.IsNil)
-				children.Add(new BaseTypesEntryNode(new Entity(type.Module, def.BaseType), false));
+				children.Add(new BaseTypesEntryNode(context, new Entity(type.Module, def.BaseType), false));
 			foreach (var i in def.GetInterfaceImplementations()) {
 				var interfaceImpl = metadata.GetInterfaceImplementation(i);
-				children.Add(new BaseTypesEntryNode(new Entity(type.Module, interfaceImpl.Interface), true));
+				children.Add(new BaseTypesEntryNode(context, new Entity(type.Module, interfaceImpl.Interface), true));
 			}
 		}
 

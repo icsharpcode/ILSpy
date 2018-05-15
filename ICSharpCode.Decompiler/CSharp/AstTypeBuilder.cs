@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetGenericTypeParameter(GenericContext genericContext, int index)
 		{
-			return new SimpleType(genericContext.GetGenericMethodTypeParameterName(index));
+			return new SimpleType(genericContext.GetGenericTypeParameterName(index));
 		}
 
 		public AstType GetModifiedType(AstType modifier, AstType unmodifiedType, bool isRequired)
@@ -213,14 +213,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public AstType GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			var td = reader.GetTypeDefinition(handle);
-			var genericParams = td.GetGenericParameters().Select(gp => (AstType)new SimpleType(reader.GetString(reader.GetGenericParameter(gp).Name))).ToList();
-			return MakeAstType(handle.GetFullTypeName(reader), genericParams);
+			return MakeAstType(handle.GetFullTypeName(reader));
 		}
 
 		public AstType GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			return MakeAstType(handle.GetFullTypeName(reader), EmptyList<AstType>.Instance);
+			return MakeAstType(handle.GetFullTypeName(reader));
 		}
 
 		public AstType GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
@@ -229,19 +227,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			return ts.DecodeSignature(this, genericContext);
 		}
 
-		AstType MakeAstType(FullTypeName fullTypeName, IList<AstType> genericParams)
+		AstType MakeAstType(FullTypeName fullTypeName)
 		{
 			if (fullTypeName.IsNested) {
 				int count = fullTypeName.GetNestedTypeAdditionalTypeParameterCount(fullTypeName.NestingLevel - 1);
 				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
-					var outerType = MakeAstType(fullTypeName.GetDeclaringType(), genericParams);
-					var mt = new MemberType(outerType, fullTypeName.Name);
-					return mt;
+					var outerType = MakeAstType(fullTypeName.GetDeclaringType());
+					return new MemberType(outerType, fullTypeName.Name);
 				} else {
-					var st = new SimpleType(fullTypeName.Name);
-					for (int i = 0; i < fullTypeName.TypeParameterCount - count; i++)
-						genericParams.RemoveAt(0);
-					return st;
+					return new SimpleType(fullTypeName.Name);
 				}
 			}
 			AstType baseType;

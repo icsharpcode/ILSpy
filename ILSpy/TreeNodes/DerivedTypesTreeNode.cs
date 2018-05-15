@@ -18,8 +18,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -76,13 +74,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					cancellationToken.ThrowIfCancellationRequested();
 					var td = new TypeDefinition(module, h);
 					var typeDefinition = metadata.GetTypeDefinition(h);
-					if ((typeDefinition.Attributes & TypeAttributes.ClassSemanticsMask) == TypeAttributes.Interface) {
-						foreach (var iface in typeDefinition.GetInterfaceImplementations()) {
-							var ifaceImpl = metadata.GetInterfaceImplementation(iface);
-							if (IsSameType(metadata, ifaceImpl.Interface, type.Handle))
-								yield return new DerivedTypesEntryNode(td, assemblies);
-						}
-					} else if (!typeDefinition.BaseType.IsNil && IsSameType(metadata, typeDefinition.BaseType, type.Handle)) {
+					foreach (var iface in typeDefinition.GetInterfaceImplementations()) {
+						var ifaceImpl = metadata.GetInterfaceImplementation(iface);
+						if (IsSameType(metadata, ifaceImpl.Interface, type))
+							yield return new DerivedTypesEntryNode(td, assemblies);
+					}
+					if (!typeDefinition.BaseType.IsNil && IsSameType(metadata, typeDefinition.BaseType, type)) {
 						yield return new DerivedTypesEntryNode(td, assemblies);
 					}
 				}
@@ -90,10 +87,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			yield break;
 		}
 		
-		static bool IsSameType(SRM.MetadataReader metadata, SRM.EntityHandle typeRef, SRM.TypeDefinitionHandle type)
+		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef, TypeDefinition type)
 		{
 			// FullName contains only namespace, name and type parameter count, therefore this should suffice.
-			return typeRef.GetFullTypeName(metadata) == type.GetFullTypeName(metadata);
+			return typeRef.GetFullTypeName(referenceMetadata) == type.Handle.GetFullTypeName(type.Module.Metadata);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

@@ -70,13 +70,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string TypeDefinitionToString(TypeDefinition type, bool includeNamespace)
-		{
-			PlainTextOutput output = new PlainTextOutput();
-			((SRM.EntityHandle)type.Handle).WriteTo(type.Module, output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
-			return output.ToString();
-		}
-
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);

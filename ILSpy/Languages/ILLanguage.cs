@@ -148,12 +148,5 @@ namespace ICSharpCode.ILSpy
 				dis.WriteModuleContents(module);
 			}
 		}
-
-		public override string TypeDefinitionToString(Decompiler.Metadata.TypeDefinition type, bool includeNamespace)
-		{
-			PlainTextOutput output = new PlainTextOutput();
-			((EntityHandle)type.Handle).WriteTo(type.Module, output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
-			return output.ToString();
-		}
 	}
 }

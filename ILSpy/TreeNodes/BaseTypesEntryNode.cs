@@ -27,14 +27,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly Entity tr;
-		TypeDefinition td;
+		readonly GenericContext context;
 		readonly bool isInterface;
+		TypeDefinition td;
 
-		public BaseTypesEntryNode(Entity entity, bool isInterface)
+		public BaseTypesEntryNode(GenericContext context, Entity entity, bool isInterface)
 		{
 			if (entity.IsNil) throw new ArgumentNullException(nameof(entity));
 			this.tr = entity;
 			this.td = tr.ResolveAsType();
+			this.context = context;
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
 		}
@@ -50,7 +52,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return tr.Handle.GetFullTypeName(tr.Module.Metadata) + tr.Handle.ToSuffixString(); }
+			get { return this.Language.TypeToString(tr, context, includeNamespace: true) + tr.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
@@ -96,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeDefinitionToString(td, true));
+			language.WriteCommentLine(output, language.TypeToString(tr, context, includeNamespace: true));
 		}
 
 		IMetadataEntity IMemberTreeNode.Member => tr;

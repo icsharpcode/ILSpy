@@ -152,7 +152,7 @@ namespace ICSharpCode.ILSpy
 			var metadata = member.Module.Metadata;
 			switch (member) {
 				case TypeDefinition t:
-					return language.TypeDefinitionToString(t, fullName);
+					return language.TypeToString(t, includeNamespace: fullName);
 				case FieldDefinition f:
 					return language.FieldToString(f, fullName, fullName);
 				case PropertyDefinition p:
@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy
 						Image = image(item),
 						Name = GetLanguageSpecificName(language, item),
 						LocationImage = TypeTreeNode.GetIcon(type),
-						Location = language.TypeDefinitionToString(type, includeNamespace: true)
+						Location = language.TypeToString(type, includeNamespace: true)
 					});
 				}
 			}
@@ -500,7 +500,7 @@ namespace ICSharpCode.ILSpy
 			var td = metadata.GetTypeDefinition(type.Handle);
 
 			if (MatchName(type, language)) {
-				string name = language.TypeDefinitionToString(type, includeNamespace: false);
+				string name = language.TypeToString(type, includeNamespace: false);
 				var declaringType = td.GetDeclaringType();
 				addResult(new SearchResult {
 					Member = type,
@@ -508,7 +508,7 @@ namespace ICSharpCode.ILSpy
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
 					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeDefinitionToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 
@@ -529,7 +529,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language))
 			{
-				string name = language.TypeDefinitionToString(type, includeNamespace: false);
+				string name = language.TypeToString(type, includeNamespace: false);
 				var metadata = type.Module.Metadata;
 				var declaringType = metadata.GetTypeDefinition(type.Handle).GetDeclaringType();
 				addResult(new SearchResult {
@@ -538,7 +538,7 @@ namespace ICSharpCode.ILSpy
 					Fitness = CalculateFitness(type),
 					Name = name,
 					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeDefinitionToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
 				});
 			}
 

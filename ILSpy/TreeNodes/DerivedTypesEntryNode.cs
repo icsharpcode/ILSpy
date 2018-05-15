@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeDefinitionToString(type, true));
+			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
 		}
 
 		IMetadataEntity IMemberTreeNode.Member => type;

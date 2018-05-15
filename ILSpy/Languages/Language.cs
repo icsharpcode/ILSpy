@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var metadata = method.Module.Metadata;
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(method.Module, methodDefinition.GetDeclaringType()), true) + "." + metadata.GetString(methodDefinition.Name));
+			WriteCommentLine(output, TypeToString(new TypeDefinition(method.Module, methodDefinition.GetDeclaringType()), includeNamespace: true) + "." + metadata.GetString(methodDefinition.Name));
 		}
 
 		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
@@ -109,14 +109,14 @@ namespace ICSharpCode.ILSpy
 			var metadata = property.Module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
 			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(property.Module, declaringType), true) + "." + metadata.GetString(propertyDefinition.Name));
+			WriteCommentLine(output, TypeToString(new TypeDefinition(property.Module, declaringType), includeNamespace: true) + "." + metadata.GetString(propertyDefinition.Name));
 		}
 
 		public virtual void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			var metadata = field.Module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
-			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(field.Module, fieldDefinition.GetDeclaringType()), true) + "." + metadata.GetString(fieldDefinition.Name));
+			WriteCommentLine(output, TypeToString(new TypeDefinition(field.Module, fieldDefinition.GetDeclaringType()), includeNamespace: true) + "." + metadata.GetString(fieldDefinition.Name));
 		}
 
 		public virtual void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
@@ -124,12 +124,12 @@ namespace ICSharpCode.ILSpy
 			var metadata = ev.Module.Metadata;
 			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
 			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeDefinitionToString(new TypeDefinition(ev.Module, declaringType), true) + "." + metadata.GetString(eventDefinition.Name));
+			WriteCommentLine(output, TypeToString(new TypeDefinition(ev.Module, declaringType), includeNamespace: true) + "." + metadata.GetString(eventDefinition.Name));
 		}
 
 		public virtual void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeDefinitionToString(type, true));
+			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 		}
 
 		public virtual void DecompileNamespace(string nameSpace, IEnumerable<TypeDefinition> types, ITextOutput output, DecompilationOptions options)
@@ -161,16 +161,22 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Converts a type definition into a string. This method is used by the type tree nodes and search results.
+		/// Converts a type definition, reference or specification into a string. This method is used by the type tree nodes and search results.
 		/// </summary>
-		public virtual string TypeDefinitionToString(TypeDefinition type, bool includeNamespace)
+		public virtual string TypeToString(Entity type, GenericContext genericContext = null, bool includeNamespace = true)
 		{
+			var provider = includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace;
 			var metadata = type.Module.Metadata;
-			var fullName = type.Handle.GetFullTypeName(metadata);
-			if (includeNamespace)
-				return fullName.ToString();
-			else
-				return fullName.Name;
+			switch (type.Handle.Kind) {
+				case SRM.HandleKind.TypeReference:
+					return provider.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type.Handle, 0);
+				case SRM.HandleKind.TypeDefinition:
+					return provider.GetTypeFromDefinition(metadata, (SRM.TypeDefinitionHandle)type.Handle, 0);
+				case SRM.HandleKind.TypeSpecification:
+					return provider.GetTypeFromSpecification(metadata, genericContext ?? GenericContext.Empty, (SRM.TypeSpecificationHandle)type.Handle, 0);
+				default:
+					throw new NotSupportedException();
+			}
 		}
 
 		/// <summary>
