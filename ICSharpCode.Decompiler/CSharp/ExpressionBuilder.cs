@@ -1102,8 +1102,69 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
 		}
-		
-		protected internal override TranslatedExpression VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst, TranslationContext context)
+
+		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
+		{
+			var target = Translate(inst.Target);
+			if (inst.Method.Parameters.Count == 2) {
+				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this);
+				AssignmentOperatorType? op = GetAssignmentOperatorTypeFromMetadataName(inst.Method.Name);
+				Debug.Assert(op != null);
+
+				return new AssignmentExpression(target, op.Value, value)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, AssignmentExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+			} else {
+				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue);
+				Debug.Assert(op != null);
+
+				return new UnaryOperatorExpression(op.Value, target)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, UnaryOperatorExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult }));
+			}
+		}
+
+		internal static AssignmentOperatorType? GetAssignmentOperatorTypeFromMetadataName(string name)
+		{
+			switch (name) {
+				case "op_Addition":
+					return AssignmentOperatorType.Add;
+				case "op_Subtraction":
+					return AssignmentOperatorType.Subtract;
+				case "op_Multiply":
+					return AssignmentOperatorType.Multiply;
+				case "op_Division":
+					return AssignmentOperatorType.Divide;
+				case "op_Modulus":
+					return AssignmentOperatorType.Modulus;
+				case "op_BitwiseAnd":
+					return AssignmentOperatorType.BitwiseAnd;
+				case "op_BitwiseOr":
+					return AssignmentOperatorType.BitwiseOr;
+				case "op_ExclusiveOr":
+					return AssignmentOperatorType.ExclusiveOr;
+				case "op_LeftShift":
+					return AssignmentOperatorType.ShiftLeft;
+				case "op_RightShift":
+					return AssignmentOperatorType.ShiftRight;
+				default:
+					return null;
+			}
+		}
+
+		internal static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name, bool isPostfix)
+		{
+			switch (name) {
+				case "op_Increment":
+					return isPostfix ? UnaryOperatorType.PostIncrement : UnaryOperatorType.Increment;
+				case "op_Decrement":
+					return isPostfix ? UnaryOperatorType.PostDecrement : UnaryOperatorType.Decrement;
+				default:
+					return null;
+			}
+		}
+
+		protected internal override TranslatedExpression VisitNumericCompoundAssign(NumericCompoundAssign inst, TranslationContext context)
 		{
 			switch (inst.Operator) {
 				case BinaryNumericOperator.Add:
@@ -1131,7 +1192,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		TranslatedExpression HandleCompoundAssignment(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
+		TranslatedExpression HandleCompoundAssignment(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
@@ -1196,7 +1257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return resultExpr;
 		}
 		
-		TranslatedExpression HandleCompoundShift(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
+		TranslatedExpression HandleCompoundShift(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
 			Debug.Assert(inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue);
 			var target = Translate(inst.Target);
@@ -1714,7 +1775,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
 			var arrayType = arrayExpr.Type as ArrayType;
-			if (arrayType == null) {
+			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(arrayType.ElementType), inst.Type)) {
 				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
@@ -1926,7 +1987,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
 						if (lastElement.Indices?.Length > 0) {
-							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression))
+							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => TranslateInitializerIndexerValue(i, indexVariables)))
 								.WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single(), typeHint: indexer.Type)));
 						} else {
@@ -1946,6 +2007,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = new ArrayInitializerExpression(elements);
 			return expr.WithILInstruction(block);
+		}
+
+		Expression TranslateInitializerIndexerValue(ILInstruction inst, Dictionary<ILVariable, ILInstruction> indexVariables)
+		{
+			if (inst is LdLoc ld && indexVariables.TryGetValue(ld.Variable, out var newInst)) {
+				inst = newInst;
+			}
+			return Translate(inst).Expression;
 		}
 
 		Expression MakeInitializerAssignment(IMember method, IL.Transforms.AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)

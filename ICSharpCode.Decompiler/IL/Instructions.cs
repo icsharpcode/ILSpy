@@ -45,8 +45,10 @@ namespace ICSharpCode.Decompiler.IL
 		PinnedRegion,
 		/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
 		BinaryNumericInstruction,
-		/// <summary>Common instruction for compound assignments.</summary>
-		CompoundAssignmentInstruction,
+		/// <summary>Common instruction for numeric compound assignments.</summary>
+		NumericCompoundAssign,
+		/// <summary>Common instruction for user-defined compound assignments.</summary>
+		UserDefinedCompoundAssign,
 		/// <summary>Bitwise NOT</summary>
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
@@ -486,6 +488,96 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Common instruction for compound assignments.</summary>
+	public abstract partial class CompoundAssignmentInstruction : ILInstruction
+	{
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.target, value, 0);
+			}
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				case 1:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				case 1:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (CompoundAssignmentInstruction)ShallowClone();
+			clone.Target = this.target.Clone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return target.Flags | value.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write('(');
+			this.target.WriteTo(output, options);
+			output.Write(", ");
+			this.value.WriteTo(output, options);
+			output.Write(')');
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
 	public sealed partial class InvalidBranch : SimpleInstruction
 	{
@@ -891,73 +983,9 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Common instruction for compound assignments.</summary>
-	public sealed partial class CompoundAssignmentInstruction : ILInstruction
+	/// <summary>Common instruction for numeric compound assignments.</summary>
+	public sealed partial class NumericCompoundAssign : CompoundAssignmentInstruction
 	{
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
-		ILInstruction target;
-		public ILInstruction Target {
-			get { return this.target; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.target, value, 0);
-			}
-		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		ILInstruction value;
-		public ILInstruction Value {
-			get { return this.value; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.value, value, 1);
-			}
-		}
-		protected sealed override int GetChildCount()
-		{
-			return 2;
-		}
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			switch (index) {
-				case 0:
-					return this.target;
-				case 1:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			switch (index) {
-				case 0:
-					this.Target = value;
-					break;
-				case 1:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override SlotInfo GetChildSlot(int index)
-		{
-			switch (index) {
-				case 0:
-					return TargetSlot;
-				case 1:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		public sealed override ILInstruction Clone()
-		{
-			var clone = (CompoundAssignmentInstruction)ShallowClone();
-			clone.Target = this.target.Clone();
-			clone.Value = this.value.Clone();
-			return clone;
-		}
 		IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type {
@@ -967,20 +995,54 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitCompoundAssignmentInstruction(this);
+			visitor.VisitNumericCompoundAssign(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitCompoundAssignmentInstruction(this);
+			return visitor.VisitNumericCompoundAssign(this);
 		}
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
-			return visitor.VisitCompoundAssignmentInstruction(this, context);
+			return visitor.VisitNumericCompoundAssign(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			var o = other as CompoundAssignmentInstruction;
-			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator;
+			var o = other as NumericCompoundAssign;
+			return o != null && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Common instruction for user-defined compound assignments.</summary>
+	public sealed partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
+	{
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitUserDefinedCompoundAssign(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitUserDefinedCompoundAssign(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitUserDefinedCompoundAssign(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as UserDefinedCompoundAssign;
+			return o != null && this.Method.Equals(o.Method) && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -5099,7 +5161,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+		protected internal virtual void VisitNumericCompoundAssign(NumericCompoundAssign inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst)
 		{
 			Default(inst);
 		}
@@ -5417,7 +5483,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+		protected internal virtual T VisitNumericCompoundAssign(NumericCompoundAssign inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst)
 		{
 			return Default(inst);
 		}
@@ -5735,7 +5805,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst, C context)
+		protected internal virtual T VisitNumericCompoundAssign(NumericCompoundAssign inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -6024,7 +6098,8 @@ namespace ICSharpCode.Decompiler.IL
 			"Block",
 			"PinnedRegion",
 			"binary",
-			"compound",
+			"numeric.compound",
+			"user.compound",
 			"bit.not",
 			"arglist",
 			"br",

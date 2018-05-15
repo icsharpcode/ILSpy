@@ -25,6 +25,8 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	using HashtableInitializer = Dictionary<IField, (List<(string, int)> Labels, IfInstruction JumpToNext, Block ContainingBlock, Block Previous, Block Next, bool Transformed)>;
+
 	/// <summary>
 	/// Detects switch-on-string patterns employed by the C# compiler and transforms them to an ILAst-switch-instruction.
 	/// </summary>
@@ -35,6 +37,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.SwitchStatementOnString)
 				return;
 
+			BlockContainer body = (BlockContainer)function.Body;
+			var hashtableInitializers = ScanHashtableInitializerBlocks(body.EntryPoint); 
+
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			foreach (var block in function.Descendants.OfType<Block>()) {
@@ -44,7 +49,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						changed = true;
 						continue;
 					}
-					if (MatchLegacySwitchOnStringWithHashtable(block.Instructions, ref i)) {
+					if (SimplifyCSharp1CascadingIfStatements(block.Instructions, ref i)) {
+						changed = true;
+						continue;
+					}
+					if (MatchLegacySwitchOnStringWithHashtable(block, hashtableInitializers, ref i)) {
 						changed = true;
 						continue;
 					}
@@ -63,8 +72,81 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					changedContainers.Add(container);
 			}
 
+			var omittedBlocks = new Dictionary<Block, Block>();
+
+			// Remove all transformed hashtable initializers from the entrypoint.
+			foreach (var item in hashtableInitializers) {
+				var (labels, jumpToNext, containingBlock, previous, next, transformed) = item.Value;
+				if (!transformed) continue;
+				if (!omittedBlocks.TryGetValue(previous, out var actual))
+					actual = previous;
+				if (jumpToNext != null) {
+					actual.Instructions.SecondToLastOrDefault().ReplaceWith(jumpToNext);
+				}
+				actual.Instructions.LastOrDefault().ReplaceWith(new Branch(next));
+				omittedBlocks.Add(containingBlock, previous);
+				changedContainers.Add(body);
+			}
+
+			// If all initializer where removed, remove the initial null check as well.
+			if (hashtableInitializers.Count > 0 && omittedBlocks.Count == hashtableInitializers.Count && body.EntryPoint.Instructions.Count == 2) {
+				if (body.EntryPoint.Instructions[0] is IfInstruction ifInst
+					&& ifInst.TrueInst.MatchBranch(out var beginOfMethod) && body.EntryPoint.Instructions[1].MatchBranch(beginOfMethod)) {
+					body.EntryPoint.Instructions.RemoveAt(0);
+				}
+			}
+
 			foreach (var container in changedContainers)
 				container.SortBlocks(deleteUnreachableBlocks: true);
+		}
+
+		HashtableInitializer ScanHashtableInitializerBlocks(Block entryPoint)
+		{
+			var hashtables = new HashtableInitializer();
+			if (entryPoint.Instructions.Count != 2)
+				return hashtables;
+			// match first block: checking compiler-generated Hashtable for null
+			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-1) != ldnull)) br switchHeadBlock
+			// br tableInitBlock
+			if (!(entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branchToSwitchHead)))
+				return hashtables;
+			if (!entryPoint.Instructions[1].MatchBranch(out var tableInitBlock))
+				return hashtables;
+			if (!(condition.MatchCompNotEquals(out var left, out var right) && right.MatchLdNull() &&
+				MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out var dictField, out var dictionaryType)))
+				return hashtables;
+			if (!branchToSwitchHead.MatchBranch(out var switchHead))
+				return hashtables;
+			// match second block: initialization of compiler-generated Hashtable
+			// stloc table(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
+			// call Add(ldloc table, ldstr value, box System.Int32(ldc.i4 index))
+			// ... more calls to Add ...
+			// volatile.stobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1, ldloc table)
+			// br switchHeadBlock
+			if (tableInitBlock.IncomingEdgeCount != 1 || tableInitBlock.Instructions.Count < 3)
+				return hashtables;
+			Block previousBlock = entryPoint;
+			while (tableInitBlock != null) {
+				if (!ExtractStringValuesFromInitBlock(tableInitBlock, out var stringValues, out var blockAfterThisInitBlock, dictionaryType, dictField, true))
+					break;
+				var nextHashtableInitHead = tableInitBlock.Instructions.SecondToLastOrDefault() as IfInstruction;
+				hashtables.Add(dictField, (stringValues, nextHashtableInitHead, tableInitBlock, previousBlock, blockAfterThisInitBlock, false));
+				previousBlock = tableInitBlock;
+				// if there is another IfInstruction before the end of the block, it might be a jump to the next hashtable init block.
+				// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-2) != ldnull)) br switchHeadBlock
+				if (nextHashtableInitHead != null) {
+					if (!(nextHashtableInitHead.Condition.MatchCompNotEquals(out left, out right) && right.MatchLdNull() &&
+						MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out var nextDictField, out _)))
+						break;
+					if (!nextHashtableInitHead.TrueInst.MatchBranch(switchHead))
+						break;
+					tableInitBlock = blockAfterThisInitBlock;
+					dictField = nextDictField;
+				} else {
+					break;
+				}
+			}
+			return hashtables;
 		}
 
 		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, ref int i)
@@ -98,8 +180,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var otherSwitchValueVar = switchValueVar;
 				switchValueVar = stloc.Variable;
 				if (i >= 2 && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
-					&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2)
-				{
+					&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
 					extraLoad = true;
 				} else {
 					switchValue = new LdLoc(otherSwitchValueVar);
@@ -146,6 +227,91 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return true;
+		}
+
+		bool SimplifyCSharp1CascadingIfStatements(InstructionCollection<ILInstruction> instructions, ref int i)
+		{
+			if (i < 1) return false;
+			// match first block:
+			// stloc switchValueVar(ldloc temp)
+			// if (comp(ldloc temp == ldnull)) br defaultBlock
+			// br isInternedBlock
+			if (!(instructions[i].MatchIfInstruction(out var condition, out var defaultBlockJump)))
+				return false;
+			if (!instructions[i + 1].MatchBranch(out var isInternedBlock))
+				return false;
+			if (!defaultBlockJump.MatchBranch(out var defaultOrNullBlock))
+				return false;
+			if (!(condition.MatchCompEqualsNull(out var tempLoad) && tempLoad.MatchLdLoc(out var temp)))
+				return false;
+			if (!(temp.Kind == VariableKind.StackSlot && temp.LoadCount == 2))
+				return false;
+			if (!(instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue) && switchValue.MatchLdLoc(temp)))
+				return false;
+			// match isInternedBlock:
+			// stloc switchValueVarCopy(call IsInterned(ldloc switchValueVar))
+			// if (comp(ldloc switchValueVarCopy == ldstr "case1")) br caseBlock1
+			// br caseHeader2
+			if (isInternedBlock.IncomingEdgeCount != 1 || isInternedBlock.Instructions.Count != 3)
+				return false;
+			if (!(isInternedBlock.Instructions[0].MatchStLoc(out var switchValueVarCopy, out var arg) && IsIsInternedCall(arg as Call, out arg) && arg.MatchLdLoc(switchValueVar)))
+				return false;
+			switchValueVar = switchValueVarCopy;
+			int conditionOffset = 1;
+			Block currentCaseBlock = isInternedBlock;
+			List<(string, Block)> values = new List<(string, Block)>();
+
+			// each case starts with:
+			// if (comp(ldloc switchValueVar == ldstr "case label")) br caseBlock
+			// br currentCaseBlock
+
+			while (currentCaseBlock.Instructions[conditionOffset].MatchIfInstruction(out condition, out var caseBlockJump)) {
+				if (currentCaseBlock.Instructions.Count != conditionOffset + 2)
+					break;
+				if (!condition.MatchCompEquals(out var left, out var right))
+					break;
+				if (!left.MatchLdLoc(switchValueVar))
+					break;
+				if (!right.MatchLdStr(out string value))
+					break;
+				if (!caseBlockJump.MatchBranch(out var caseBlock))
+					break;
+				if (!currentCaseBlock.Instructions[conditionOffset + 1].MatchBranch(out currentCaseBlock))
+					break;
+				conditionOffset = 0;
+				values.Add((value, caseBlock));
+			}
+
+			// switch contains case null: 
+			if (currentCaseBlock != defaultOrNullBlock) {
+				values.Add((null, defaultOrNullBlock));
+			}
+
+			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
+			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
+			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
+			var inst = new SwitchInstruction(stringToInt);
+			inst.Sections.AddRange(sections);
+
+			instructions[i].ReplaceWith(inst);
+			instructions.RemoveAt(i + 1);
+			instructions.RemoveAt(i - 1);
+
+			return true;
+		}
+
+		bool IsIsInternedCall(Call call, out ILInstruction argument)
+		{
+			if (call != null
+				&& call.Method.DeclaringType.IsKnownType(KnownTypeCode.String)
+				&& call.Method.IsStatic
+				&& call.Method.Name == "IsInterned"
+				&& call.Arguments.Count == 1) {
+				argument = call.Arguments[0];
+				return true;
+			}
+			argument = null;
+			return false;
 		}
 
 		/// <summary>
@@ -235,7 +401,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// br switchHeadBlock
 			if (dictInitBlock.IncomingEdgeCount != 1 || dictInitBlock.Instructions.Count < 3)
 				return false;
-			if (!ExtractStringValuesFromInitBlock(dictInitBlock, out var stringValues, tryGetValueBlock, dictionaryType, dictField))
+			if (!ExtractStringValuesFromInitBlock(dictInitBlock, out var stringValues, out var blockAfterInit, dictionaryType, dictField, false))
+				return false;
+			if (tryGetValueBlock != blockAfterInit)
 				return false;
 			// match fourth block: TryGetValue on compiler-generated Dictionary<string, int>
 			// if (logic.not(call TryGetValue(volatile.ldobj System.Collections.Generic.Dictionary`2[[System.String],[System.Int32]](ldsflda $$method0x600000c-1), ldloc switchValueVar, ldloca switchIndexVar))) br defaultBlock
@@ -382,9 +550,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches and extracts values from Add-call sequences.
 		/// </summary>
-		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
+		bool ExtractStringValuesFromInitBlock(Block block, out List<(string, int)> values, out Block blockAfterInit, IType dictionaryType, IField dictionaryField, bool isHashtablePattern)
 		{
 			values = null;
+			blockAfterInit = null;
 			// stloc dictVar(newobj Dictionary..ctor(ldc.i4 valuesLength))
 			// -or-
 			// stloc dictVar(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f4 loadFactor))
@@ -414,7 +583,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				dictType.Equals(dictionaryType) && loadField.MatchLdsFlda(out var dictField) && dictField.Equals(dictionaryField) &&
 				dictVarLoad.MatchLdLoc(dictVar)))
 				return false;
-			return block.Instructions[i + 2].MatchBranch(targetBlock);
+			if (isHashtablePattern && block.Instructions[i + 2] is IfInstruction) {
+				return block.Instructions[i + 3].MatchBranch(out blockAfterInit);
+			}
+			return block.Instructions[i + 2].MatchBranch(out blockAfterInit);
 		}
 
 		/// <summary>
@@ -454,48 +626,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLegacySwitchOnStringWithHashtable(InstructionCollection<ILInstruction> instructions, ref int i)
+		bool MatchLegacySwitchOnStringWithHashtable(Block block, HashtableInitializer hashtableInitializers, ref int i)
 		{
-			// match first block: checking compiler-generated Hashtable for null
-			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-1) != ldnull)) br switchHeadBlock
-			// br tableInitBlock
-			if (!(instructions[i].MatchIfInstruction(out var condition, out var branchToSwitchHead) && i + 1 < instructions.Count))
-				return false;
-			if (!instructions[i + 1].MatchBranch(out var tableInitBlock) || tableInitBlock.IncomingEdgeCount != 1)
-				return false;
-			if (!(condition.MatchCompNotEquals(out var left, out var right) && right.MatchLdNull() &&
-				MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out var dictField, out var dictionaryType)))
-				return false;
-			if (!branchToSwitchHead.MatchBranch(out var switchHead))
-				return false;
-			// match second block: initialization of compiler-generated Hashtable
-			// stloc table(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
-			// call Add(ldloc table, ldstr value, box System.Int32(ldc.i4 index))
-			// ... more calls to Add ...
-			// volatile.stobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1, ldloc table)
-			// br switchHeadBlock
-			if (tableInitBlock.IncomingEdgeCount != 1 || tableInitBlock.Instructions.Count < 3)
-				return false;
-			if (!ExtractStringValuesFromInitBlock(tableInitBlock, out var stringValues, switchHead, dictionaryType, dictField))
-				return false;
-			// match third block: checking switch-value for null
+			// match first block: checking switch-value for null
 			// stloc tmp(ldloc switch-value)
 			// stloc switchVariable(ldloc tmp)
 			// if (comp(ldloc tmp == ldnull)) br nullCaseBlock
-			// br getItemBlock
-			if (switchHead.Instructions.Count != 4 || switchHead.IncomingEdgeCount != 2)
+			// br getItemBloc
+			if (block.Instructions.Count != i + 4)
 				return false;
-			if (!switchHead.Instructions[0].MatchStLoc(out var tmp, out var switchValue))
+			if (!block.Instructions[i].MatchStLoc(out var tmp, out var switchValue))
 				return false;
-			if (!switchHead.Instructions[1].MatchStLoc(out var switchVariable, out var tmpLoad) || !tmpLoad.MatchLdLoc(tmp))
+			if (!block.Instructions[i + 1].MatchStLoc(out var switchVariable, out var tmpLoad) || !tmpLoad.MatchLdLoc(tmp))
 				return false;
-			if (!switchHead.Instructions[2].MatchIfInstruction(out condition, out var nullCaseBlockBranch))
+			if (!block.Instructions[i + 2].MatchIfInstruction(out var condition, out var nullCaseBlockBranch))
 				return false;
-			if (!switchHead.Instructions[3].MatchBranch(out var getItemBlock) || !nullCaseBlockBranch.MatchBranch(out var nullCaseBlock))
+			if (!block.Instructions[i + 3].MatchBranch(out var getItemBlock) || !(nullCaseBlockBranch.MatchBranch(out var nullCaseBlock) || nullCaseBlockBranch is Leave))
 				return false;
-			if (!(condition.MatchCompEquals(out left, out right) && right.MatchLdNull() && left.MatchLdLoc(tmp)))
+			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(tmp)))
 				return false;
-			// match fourth block: get_Item on compiler-generated Hashtable
+			// match second block: get_Item on compiler-generated Hashtable
 			// stloc tmp2(call get_Item(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1), ldloc switchVariable))
 			// stloc switchVariable(ldloc tmp2)
 			// if (comp(ldloc tmp2 == ldnull)) br defaultCaseBlock
@@ -510,14 +660,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!getItemBlock.Instructions[2].MatchIfInstruction(out condition, out var defaultBlockBranch))
 				return false;
-			if (!getItemBlock.Instructions[3].MatchBranch(out var switchBlock) || !defaultBlockBranch.MatchBranch(out var defaultBlock))
+			if (!getItemBlock.Instructions[3].MatchBranch(out var switchBlock) || !(defaultBlockBranch.MatchBranch(out var defaultBlock) || defaultBlockBranch is Leave))
 				return false;
 			if (!(condition.MatchCompEquals(out left, out right) && right.MatchLdNull() && left.MatchLdLoc(tmp2)))
 				return false;
-			if (!(getItemCall.Arguments.Count == 2 && MatchDictionaryFieldLoad(getItemCall.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)) &&
-				getItemCall.Arguments[1].MatchLdLoc(switchVariable2))
+			if (!(getItemCall.Arguments.Count == 2 && MatchDictionaryFieldLoad(getItemCall.Arguments[0], IsNonGenericHashtable, out var dictField, out _) && getItemCall.Arguments[1].MatchLdLoc(switchVariable)))
 				return false;
-			// match fifth block: switch-instruction block
+			// Check if there is a hashtable init block at the beginning of the method
+			if (!hashtableInitializers.TryGetValue(dictField, out var info))
+				return false;
+			var stringValues = info.Labels;
+			// match third block: switch-instruction block
 			// switch (ldobj System.Int32(unbox System.Int32(ldloc switchVariable))) {
 			// 	case [0..1): br caseBlock1
 			//  ... more cases ...
@@ -530,7 +683,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var sections = new List<SwitchSection>(switchInst.Sections);
 			// switch contains case null: 
-			if (nullCaseBlock != defaultBlock) {
+			if (!(nullCaseBlockBranch is Leave) && nullCaseBlock != defaultBlock) {
 				if (!AddNullSection(sections, stringValues, nullCaseBlock)) {
 					return false;
 				}
@@ -538,8 +691,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
-			instructions[i + 1].ReplaceWith(inst);
-			instructions.RemoveAt(i);
+			block.Instructions[i].ReplaceWith(inst);
+			block.Instructions.RemoveRange(i + 1, 3);
+			info.Transformed = true;
+			hashtableInitializers[dictField] = info;
+			return true;
+		}
+
+		bool FindHashtableInitBlock(Block entryPoint, out List<(string, int)> stringValues, out IField dictField, out Block blockAfterThisInitBlock, out ILInstruction thisSwitchInitJumpInst, out ILInstruction nextSwitchInitJumpInst)
+		{
+			stringValues = null;
+			dictField = null;
+			blockAfterThisInitBlock = null;
+			nextSwitchInitJumpInst = null;
+			thisSwitchInitJumpInst = null;
+			if (entryPoint.Instructions.Count != 2)
+				return false;
+			// match first block: checking compiler-generated Hashtable for null
+			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-1) != ldnull)) br switchHeadBlock
+			// br tableInitBlock
+			if (!(entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branchToSwitchHead)))
+				return false;
+			if (!entryPoint.Instructions[1].MatchBranch(out var tableInitBlock))
+				return false;
+			if (!(condition.MatchCompNotEquals(out var left, out var right) && right.MatchLdNull() &&
+				MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out dictField, out var dictionaryType)))
+				return false;
+			if (!branchToSwitchHead.MatchBranch(out var switchHead))
+				return false;
+			thisSwitchInitJumpInst = entryPoint.Instructions[0];
+			// match second block: initialization of compiler-generated Hashtable
+			// stloc table(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
+			// call Add(ldloc table, ldstr value, box System.Int32(ldc.i4 index))
+			// ... more calls to Add ...
+			// volatile.stobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1, ldloc table)
+			// br switchHeadBlock
+			if (tableInitBlock.IncomingEdgeCount != 1 || tableInitBlock.Instructions.Count < 3)
+				return false;
+			if (!ExtractStringValuesFromInitBlock(tableInitBlock, out stringValues, out blockAfterThisInitBlock, dictionaryType, dictField, true))
+				return false;
+			// if there is another IfInstruction before the end of the block, it might be a jump to the next hashtable init block.
+			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-2) != ldnull)) br switchHeadBlock
+			if (tableInitBlock.Instructions.SecondToLastOrDefault() is IfInstruction nextHashtableInitHead) {
+				if (!(nextHashtableInitHead.Condition.MatchCompNotEquals(out left, out right) && right.MatchLdNull() &&
+					MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out var nextSwitchInitField, out _)))
+					return false;
+				if (!nextHashtableInitHead.TrueInst.MatchBranch(switchHead))
+					return false;
+				nextSwitchInitJumpInst = nextHashtableInitHead;
+			}
 			return true;
 		}
 

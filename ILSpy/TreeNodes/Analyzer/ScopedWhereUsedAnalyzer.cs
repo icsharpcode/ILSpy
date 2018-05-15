@@ -256,8 +256,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			yield return asm;
 
-			string requiredAssemblyFullName = asm.FullName;
-
 			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetPEFileOrNull()?.IsAssembly == true);
 
 			foreach (var assembly in assemblies) {
@@ -266,11 +264,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				var module = assembly.GetPEFileOrNull();
 				if (module == null)
 					continue;
+				var resolver = assembly.GetAssemblyResolver();
 				var metadata = module.GetMetadataReader();
 				foreach (var reference in module.AssemblyReferences) {
-					if (requiredAssemblyFullName == reference.FullName) {
-						found = true;
-						break;
+					using (LoadedAssembly.DisableAssemblyLoad()) {
+						if (resolver.Resolve(reference) == asm) {
+							found = true;
+							break;
+						}
 					}
 				}
 				if (found && AssemblyReferencesScopeType(module))

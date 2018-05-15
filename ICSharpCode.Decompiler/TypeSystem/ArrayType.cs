@@ -78,11 +78,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions;
 		}
 		
-		public override ITypeReference ToTypeReference()
-		{
-			return new ArrayTypeReference(elementType.ToTypeReference(), dimensions);
-		}
-		
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
 				List<IType> baseTypes = new List<IType>();

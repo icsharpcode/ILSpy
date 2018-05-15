@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!m.Success) break;
 				if (upperBounds == null) {
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
-					if (!(collection.Type is Decompiler.TypeSystem.ArrayType arrayType))
+					if (!(collection?.Type is Decompiler.TypeSystem.ArrayType arrayType))
 						break;
 					upperBounds = new IL.ILVariable[arrayType.Dimensions];
 				} else {
@@ -412,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt);
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
-			if (!itemVariable.IsSingleDefinition
+			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -504,6 +504,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
 				propertyDeclaration.Getter.Body = null;
 				propertyDeclaration.Setter.Body = null;
+			}
+			// Add C# 7.3 attributes on backing field:
+			var attributes = fieldInfo.Attributes
+				.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
+				.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
+			if (attributes.Length > 0) {
+				var section = new AttributeSection {
+					AttributeTarget = "field"
+				};
+				section.Attributes.AddRange(attributes);
+				property.Attributes.Add(section);
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
@@ -699,6 +710,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute",
 			"System.Runtime.CompilerServices.MethodImplAttribute"
+		};
+
+		static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
 		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)

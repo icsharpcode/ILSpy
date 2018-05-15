@@ -615,24 +615,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 		
-		public ITypeReference ToTypeReference()
-		{
-			ITypeDefinition declTypeDef = this.DeclaringTypeDefinition;
-			if (declTypeDef != null) {
-				return new NestedTypeReference(declTypeDef.ToTypeReference(),
-					this.Name, this.TypeParameterCount - declTypeDef.TypeParameterCount,
-					this.IsReferenceType);
-			} else {
-				IAssembly asm = this.ParentAssembly;
-				IAssemblyReference asmRef;
-				if (asm != null)
-					asmRef = new DefaultAssemblyReference(asm.AssemblyName);
-				else
-					asmRef = null;
-				return new GetClassTypeReference(asmRef, this.Namespace, this.Name, this.TypeParameterCount, this.IsReferenceType);
-			}
-		}
-		
 		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;

@@ -68,11 +68,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return TypeKind.Unknown; }
 		}
 		
-		public override ITypeReference ToTypeReference()
-		{
-			return this;
-		}
-		
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (context == null)

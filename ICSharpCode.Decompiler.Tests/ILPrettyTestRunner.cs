@@ -94,6 +94,18 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
+		[Test]
+		public void CS1xSwitch_Debug()
+		{
+			Run();
+		}
+
+		[Test]
+		public void CS1xSwitch_Release()
+		{
+			Run();
+		}
+
 		[Test, Ignore("?")]
 		public void FSharpLoops_Debug()
 		{

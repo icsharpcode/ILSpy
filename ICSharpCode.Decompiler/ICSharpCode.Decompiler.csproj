@@ -237,7 +237,6 @@
     <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
-    <Compile Include="CSharp\TypeSystem\ConstantValues.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
@@ -452,7 +451,6 @@
     <Compile Include="TypeSystem\MetadataLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
-    <Compile Include="TypeSystem\DefaultSolutionSnapshot.cs" />
     <Compile Include="TypeSystem\DomRegion.cs" />
     <Compile Include="TypeSystem\Error.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
@@ -527,9 +525,7 @@
     <Compile Include="TypeSystem\IntersectionType.cs" />
     <Compile Include="TypeSystem\IParameter.cs" />
     <Compile Include="TypeSystem\IParameterizedMember.cs" />
-    <Compile Include="TypeSystem\IProjectContent.cs" />
     <Compile Include="TypeSystem\IProperty.cs" />
-    <Compile Include="TypeSystem\ISolutionSnapshot.cs" />
     <Compile Include="TypeSystem\ISupportsInterning.cs" />
     <Compile Include="TypeSystem\ISymbol.cs" />
     <Compile Include="TypeSystem\IType.cs" />

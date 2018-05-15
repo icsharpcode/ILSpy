@@ -265,11 +265,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.ArrayInitializers && metadata.GetString(metadata.GetTypeDefinition(field.GetDeclaringType()).Name).StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
 						if (name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 							return true;
+						// hide fields starting with '$$method'
+						if (name.StartsWith("$$method", StringComparison.Ordinal))
+							return true;
 						if (field.DecodeSignature(new Metadata.FullTypeNameSignatureDecoder(metadata), default).ToString().StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 							return true;
 					}
 					return false;
+				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+					return true;
 			}
+
 
 			return false;
 		}

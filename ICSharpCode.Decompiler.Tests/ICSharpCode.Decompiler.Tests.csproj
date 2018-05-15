@@ -62,6 +62,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Semantics\ConversionTests.cs" />
+    <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
@@ -69,6 +71,7 @@
     <Compile Include="TestCases\Pretty\QualifierTests.cs" />
     <Compile Include="TestCases\Pretty\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\Pretty\WellKnownConstants.cs" />
+    <Compile Include="TypeSystem\TypeSystemHelper.cs" />
     <Compile Include="TypeSystem\TypeSystemLoaderTests.cs" />
     <Compile Include="TypeSystem\TypeSystemTestCase.cs" />
     <Compile Include="VBPrettyTestRunner.cs" />

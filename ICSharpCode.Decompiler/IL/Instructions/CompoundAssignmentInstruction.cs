@@ -28,7 +28,35 @@ namespace ICSharpCode.Decompiler.IL
 		EvaluatesToNewValue
 	}
 
-	public partial class CompoundAssignmentInstruction : ILInstruction
+	public abstract partial class CompoundAssignmentInstruction : ILInstruction
+	{
+		public readonly CompoundAssignmentType CompoundAssignmentType;
+
+		public CompoundAssignmentInstruction(OpCode opCode, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
+			: base(opCode)
+		{
+			this.CompoundAssignmentType = compoundAssignmentType;
+			this.Target = target;
+			this.Value = value;
+		}
+
+		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				// case OpCode.LdLoc: -- not valid -- does not mark the variable as written to
+				case OpCode.LdObj:
+					return true;
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					var owner = ((CallInstruction)inst).Method.AccessorOwner as IProperty;
+					return owner != null && owner.CanSet;
+				default:
+					return false;
+			}
+		}
+	}
+
+	public partial class NumericCompoundAssign : CompoundAssignmentInstruction, ILiftableInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -50,13 +78,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// The operator used by this assignment operator instruction.
 		/// </summary>
 		public readonly BinaryNumericOperator Operator;
-		
-		public readonly CompoundAssignmentType CompoundAssignmentType;
 
 		public bool IsLifted { get; }
 
-		public CompoundAssignmentInstruction(BinaryNumericInstruction binary, ILInstruction target, ILInstruction value, IType type, CompoundAssignmentType compoundAssignmentType)
-			: base(OpCode.CompoundAssignmentInstruction)
+		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target, ILInstruction value, IType type, CompoundAssignmentType compoundAssignmentType)
+			: base(OpCode.NumericCompoundAssign, compoundAssignmentType, target, value)
 		{
 			Debug.Assert(IsBinaryCompatibleWithType(binary, type));
 			this.CheckForOverflow = binary.CheckForOverflow;
@@ -65,11 +91,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.RightInputType = binary.RightInputType;
 			this.UnderlyingResultType = binary.UnderlyingResultType;
 			this.Operator = binary.Operator;
-			this.CompoundAssignmentType = compoundAssignmentType;
 			this.IsLifted = binary.IsLifted;
-			this.Target = target;
 			this.type = type;
-			this.Value = value;
 			this.ILRange = binary.ILRange;
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
@@ -85,7 +108,9 @@ namespace ICSharpCode.Decompiler.IL
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
-			if (type.Kind == TypeKind.Enum) {
+			if (type.Kind == TypeKind.Unknown) {
+				return false; // avoid introducing a potentially-incorrect compound assignment
+			} else if (type.Kind == TypeKind.Enum) {
 				switch (binary.Operator) {
 					case BinaryNumericOperator.Add:
 					case BinaryNumericOperator.Sub:
@@ -127,24 +152,9 @@ namespace ICSharpCode.Decompiler.IL
 			return true;
 		}
 
-		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
-		{
-			switch (inst.OpCode) {
-				// case OpCode.LdLoc: -- not valid -- does not mark the variable as written to
-				case OpCode.LdObj:
-					return true;
-				case OpCode.Call:
-				case OpCode.CallVirt:
-					var owner = ((CallInstruction)inst).Method.AccessorOwner as IProperty;
-					return owner != null && owner.CanSet;
-				default:
-					return false;
-			}
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = target.Flags | value.Flags | InstructionFlags.SideEffect;
+			var flags = Target.Flags | Value.Flags | InstructionFlags.SideEffect;
 			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
 				flags |= InstructionFlags.MayThrow;
 			return flags;
@@ -178,6 +188,40 @@ namespace ICSharpCode.Decompiler.IL
 			Target.WriteTo(output, options);
 			output.Write(", ");
 			Value.WriteTo(output, options);
+			output.Write(')');
+		}
+	}
+
+	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
+	{
+		public readonly IMethod Method;
+		public bool IsLifted => false; // TODO: implement ILi
+
+		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
+			: base(OpCode.UserDefinedCompoundAssign, compoundAssignmentType, target, value)
+		{
+			this.Method = method;
+			Debug.Assert(Method.IsOperator);
+			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
+			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+		}
+
+		public override StackType ResultType => Method.ReturnType.GetStackType();
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
+				output.Write(".new");
+			else
+				output.Write(".old");
+			output.Write(' ');
+			Method.WriteTo(output);
+			output.Write('(');
+			this.Target.WriteTo(output, options);
+			output.Write(", ");
+			this.Value.WriteTo(output, options);
 			output.Write(')');
 		}
 	}

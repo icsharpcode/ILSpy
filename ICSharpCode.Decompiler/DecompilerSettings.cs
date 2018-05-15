@@ -79,6 +79,10 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
 				introduceRefAndReadonlyModifiersOnStructs = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
+				//introduceUnmanagedTypeConstraint = false;
+				//...
+			}
 		}
 
 		bool anonymousMethods = true;

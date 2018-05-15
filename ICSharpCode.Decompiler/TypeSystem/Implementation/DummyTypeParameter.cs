@@ -188,11 +188,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return TypeKind.TypeParameter; }
 		}
 		
-		public override ITypeReference ToTypeReference()
-		{
-			return TypeParameterReference.Create(ownerType, index);
-		}
-		
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
 			return visitor.VisitTypeParameter(this);
