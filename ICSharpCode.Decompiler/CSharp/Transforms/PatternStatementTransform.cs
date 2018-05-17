@@ -257,6 +257,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
 			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
+			if (itemVariable == null || indexVariable == null || arrayVariable == null)
+				return null;
 			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
