@@ -771,6 +771,74 @@
     IL_002b:  ret
   } // end of method InitializerTests::Test4
 
+  .method public hidebysig static void  InvalidIndices(int32 a) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.1
+    IL_000a:  ldarg.0
+    IL_000b:  stelem.i4
+    IL_000c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0011:  ldloc.0
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0017:  nop
+    IL_0018:  ret
+  } // end of method InitializerTests::InvalidIndices
+
+  .method public hidebysig static void  InvalidIndices2(int32 a) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.m1
+    IL_000a:  ldarg.0
+    IL_000b:  stelem.i4
+    IL_000c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0011:  ldloc.0
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0017:  nop
+    IL_0018:  ret
+  } // end of method InitializerTests::InvalidIndices2
+
+  .method public hidebysig static void  IndicesInWrongOrder(int32 a,
+                                                            int32 b) cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.5
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.2
+    IL_000a:  ldarg.1
+    IL_000b:  stelem.i4
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.1
+    IL_000e:  ldarg.0
+    IL_000f:  stelem.i4
+    IL_0010:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0015:  ldloc.0
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_001b:  nop
+    IL_001c:  ret
+  } // end of method InitializerTests::IndicesInWrongOrder
+
   .method public hidebysig static void  CollectionInitializerList() cil managed
   {
     // Code size       44 (0x2c)

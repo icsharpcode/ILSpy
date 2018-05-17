@@ -526,8 +526,8 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c' '<>9'
-    .field public static class [mscorlib]System.EventHandler '<>9__23_0'
-    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__43_0'
+    .field public static class [mscorlib]System.EventHandler '<>9__26_0'
+    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__46_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -550,7 +550,7 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<NotAnObjectInitializerWithEvent>b__23_0'(object '<p0>',
+            '<NotAnObjectInitializerWithEvent>b__26_0'(object '<p0>',
                                                        class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       8 (0x8)
@@ -559,10 +559,10 @@
       IL_0001:  call       void [mscorlib]System.Console::WriteLine()
       IL_0006:  nop
       IL_0007:  ret
-    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__23_0'
+    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__26_0'
 
     .method assembly hidebysig instance bool 
-            '<Bug270_NestedInitialisers>b__43_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
+            '<Bug270_NestedInitialisers>b__46_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
     {
       // Code size       17 (0x11)
       .maxstack  8
@@ -572,7 +572,7 @@
       IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                      string)
       IL_0010:  ret
-    } // end of method '<>c'::'<Bug270_NestedInitialisers>b__43_0'
+    } // end of method '<>c'::'<Bug270_NestedInitialisers>b__46_0'
 
   } // end of class '<>c'
 
@@ -782,6 +782,74 @@
     IL_002b:  ret
   } // end of method InitializerTests::Test4
 
+  .method public hidebysig static void  InvalidIndices(int32 a) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.1
+    IL_000a:  ldarg.0
+    IL_000b:  stelem.i4
+    IL_000c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0011:  ldloc.0
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0017:  nop
+    IL_0018:  ret
+  } // end of method InitializerTests::InvalidIndices
+
+  .method public hidebysig static void  InvalidIndices2(int32 a) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.m1
+    IL_000a:  ldarg.0
+    IL_000b:  stelem.i4
+    IL_000c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0011:  ldloc.0
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0017:  nop
+    IL_0018:  ret
+  } // end of method InitializerTests::InvalidIndices2
+
+  .method public hidebysig static void  IndicesInWrongOrder(int32 a,
+                                                            int32 b) cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.5
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.2
+    IL_000a:  ldarg.1
+    IL_000b:  stelem.i4
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.1
+    IL_000e:  ldarg.0
+    IL_000f:  stelem.i4
+    IL_0010:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0015:  ldloc.0
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_001b:  nop
+    IL_001c:  ret
+  } // end of method InitializerTests::IndicesInWrongOrder
+
   .method public hidebysig static void  CollectionInitializerList() cil managed
   {
     // Code size       42 (0x2a)
@@ -959,18 +1027,18 @@
     IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/Data::.ctor()
     IL_0006:  stloc.0
     IL_0007:  ldloc.0
-    IL_0008:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__23_0'
+    IL_0008:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__26_0'
     IL_000d:  dup
     IL_000e:  brtrue.s   IL_0027
 
     IL_0010:  pop
     IL_0011:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9'
-    IL_0016:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<NotAnObjectInitializerWithEvent>b__23_0'(object,
+    IL_0016:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<NotAnObjectInitializerWithEvent>b__26_0'(object,
                                                                                                                                                         class [mscorlib]System.EventArgs)
     IL_001c:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
                                                                             native int)
     IL_0021:  dup
-    IL_0022:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__23_0'
+    IL_0022:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__26_0'
     IL_0027:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/Data::add_TestEvent(class [mscorlib]System.EventHandler)
     IL_002c:  nop
     IL_002d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
@@ -1525,17 +1593,17 @@
     IL_003b:  nop
     IL_003c:  dup
     IL_003d:  ldloc.0
-    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__43_0'
+    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__46_0'
     IL_0043:  dup
     IL_0044:  brtrue.s   IL_005d
 
     IL_0046:  pop
     IL_0047:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9'
-    IL_004c:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<Bug270_NestedInitialisers>b__43_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_004c:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<Bug270_NestedInitialisers>b__46_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
     IL_0052:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
                                                                                                                                         native int)
     IL_0057:  dup
-    IL_0058:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__43_0'
+    IL_0058:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__46_0'
     IL_005d:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,bool>)
     IL_0062:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)

@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// However, leaving array slots empty is allowed, as those are filled with default values when the
 				// initializer block is generated.
 				if (index < 0 || index >= length || index < nextMinimumIndex)
-					break;
+					return false;
 				nextMinimumIndex = index;
 				values[nextMinimumIndex] = value;
 				nextMinimumIndex++;
