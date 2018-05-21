@@ -430,7 +430,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				attr.Arguments.Add(ConvertConstantValue(arg));
 			}
 			foreach (var pair in attribute.NamedArguments) {
-				attr.Arguments.Add(new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value)));
+				NamedExpression namedArgument = new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value));
+				if (AddResolveResultAnnotations)
+					namedArgument.AddAnnotation(new MemberResolveResult(new InitializedObjectResolveResult(attribute.AttributeType), pair.Key));
+				attr.Arguments.Add(namedArgument);
 			}
 			return attr;
 		}
@@ -660,8 +663,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ITypeDefinition enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			foreach (IField field in enumDefinition.Fields) {
-				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val))
-					return new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val)) {
+					MemberReferenceExpression mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+					if (AddResolveResultAnnotations)
+						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
+					return mre;
+				}
 			}
 			if (IsFlagsEnum(enumDefinition)) {
 				long enumValue = val;
