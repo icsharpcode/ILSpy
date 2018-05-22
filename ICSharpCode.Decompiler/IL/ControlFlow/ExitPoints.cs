@@ -119,13 +119,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		List<ILInstruction> potentialExits;
 
+		readonly List<Block> blocksPotentiallyMadeUnreachable = new List<Block>();
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			cancellationToken = context.CancellationToken;
 			currentExit = NoExit;
+			blocksPotentiallyMadeUnreachable.Clear();
 			function.AcceptVisitor(this);
+			// It's possible that there are unreachable code blocks which we only
+			// detect as such during exit point detection.
+			// Clean them up.
+			foreach (var block in blocksPotentiallyMadeUnreachable) {
+				if (block.IncomingEdgeCount == 0 || block.IncomingEdgeCount == 1 && IsInfiniteLoop(block)) {
+					block.Remove();
+				}
+			}
+			blocksPotentiallyMadeUnreachable.Clear();
 		}
-		
+
+		static bool IsInfiniteLoop(Block block)
+		{
+			return block.Instructions.Count == 1
+				&& block.Instructions[0] is Branch b
+				&& b.TargetBlock == block;
+		}
+
 		protected override void Default(ILInstruction inst)
 		{
 			foreach (var child in inst.Children)
@@ -157,7 +176,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				while (inst.Parent.OpCode != OpCode.Block)
 					inst = inst.Parent;
 				Block block = (Block)inst.Parent;
-				block.Instructions.Add(currentExit);
+				if (block.HasFlag(InstructionFlags.EndPointUnreachable)) {
+					// Special case: despite replacing the exits with leave(currentContainer),
+					// we still have an unreachable endpoint.
+					// The appended currentExit instruction would not be reachable!
+					// This happens in test case ExceptionHandling.ThrowInFinally()
+					if (currentExit is Branch b) {
+						blocksPotentiallyMadeUnreachable.Add(b.TargetBlock);
+					}
+				} else {
+					block.Instructions.Add(currentExit);
+				}
 			} else {
 				Debug.Assert(thisExit == currentExit);
 			}
