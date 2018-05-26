@@ -798,7 +798,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Matches and the negated version:
+		/// Matches (and the negated version):
 		/// if (call op_Equality(ldloc V_0, ldstr "Fifth case")) br body
 		/// br exit
 		/// </summary>
@@ -810,15 +810,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
 				return false;
-			if (!bodyBranch.MatchBranch(out body))
-				return false;
 			if (MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-				return body != null;
-			} else if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-				if (!target.Instructions[1].MatchBranch(out Block exit))
+				var exitBranch = target.Instructions[1];
+				if (!(exitBranch.MatchBranch(out _) || exitBranch.MatchLeave(out _)))
 					return false;
-				body = exit;
-				return true;
+				return bodyBranch.MatchBranch(out body) && body != null;
+			} else if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
+				if (!(bodyBranch.MatchBranch(out _) || bodyBranch.MatchLeave(out _)))
+					return false;
+				return target.Instructions[1].MatchBranch(out body) && body != null;
 			} else {
 				return false;
 			}
