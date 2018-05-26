@@ -682,10 +682,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Left = new IdentifierExpressionBackreference("var1"),
 							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
 								"CompareExchange",
-								new AstType[] { new AnyNode("type") }), // type argument+
+								new AstType[] { new Repeat(new AnyNode()) }), // optional type arguments
 								new Expression[] { // arguments
 									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
-									new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
+									new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
 									new IdentifierExpressionBackreference("var1")
 								}
 							)
