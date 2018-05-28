@@ -45,12 +45,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>The <c>System.Void</c> type.</summary>
 		/// <see cref="KnownTypeReference.Void"/>
 		Void,
-		
+
+		/// <summary>Type used for invalid expressions and for types whose definition could not be found.</summary>
 		/// <see cref="SpecialType.UnknownType"/>
 		Unknown,
 		/// <summary>The type of the null literal.</summary>
 		/// <see cref="SpecialType.NullType"/>
 		Null,
+		/// <summary>The type of expressions without type (except for null literals, which have <c>TypeKind.Null</c>).</summary>
+		/// <see cref="SpecialType.NoType"/>
+		None,
 		/// <summary>Type representing the C# 'dynamic' type.</summary>
 		/// <see cref="SpecialType.Dynamic"/>
 		Dynamic,

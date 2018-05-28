@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		static bool IsValidType(IType type)
 		{
-			return type.Kind != TypeKind.Unknown && type.Kind != TypeKind.Null;
+			return type.Kind != TypeKind.Unknown && type.Kind != TypeKind.Null && type.Kind != TypeKind.None;
 		}
 		
 		bool PhaseTwo()
@@ -818,7 +818,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (expressions == null)
 				throw new ArgumentNullException("expressions");
 			if (expressions.Count == 1) {
-				success = (expressions[0].Type.Kind != TypeKind.Unknown);
+				success = IsValidType(expressions[0].Type);
 				return expressions[0].Type;
 			}
 			Log.WriteCollection("GetBestCommonType() for ", expressions);

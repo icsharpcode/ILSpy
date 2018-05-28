@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		public MethodGroupResolveResult(ResolveResult targetResult, string methodName, 
 			IReadOnlyList<MethodListWithDeclaringType> methods, IReadOnlyList<IType> typeArguments)
-			: base(SpecialType.UnknownType)
+			: base(SpecialType.NoType)
 		{
 			if (methods == null)
 				throw new ArgumentNullException("methods");
