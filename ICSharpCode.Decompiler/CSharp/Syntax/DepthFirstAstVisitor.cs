@@ -115,7 +115,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (memberType);
 		}
-		
+
+		public virtual void VisitTupleType(TupleAstType tupleType)
+		{
+			VisitChildren(tupleType);
+		}
+
+		public virtual void VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			VisitChildren (tupleTypeElement);
+		}
+
 		public virtual void VisitAttribute (Attribute attribute)
 		{
 			VisitChildren (attribute);
@@ -536,6 +546,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren (throwExpression);
 		}
 
+		public virtual void VisitTupleExpression(TupleExpression tupleExpression)
+		{
+			VisitChildren (tupleExpression);
+		}
+
 		public virtual void VisitTypeOfExpression (TypeOfExpression typeOfExpression)
 		{
 			VisitChildren (typeOfExpression);
@@ -747,7 +762,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (memberType);
 		}
-		
+
+		public virtual T VisitTupleType(TupleAstType tupleType)
+		{
+			return VisitChildren (tupleType);
+		}
+
+		public virtual T VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			return VisitChildren (tupleTypeElement);
+		}
+
 		public virtual T VisitAttribute (Attribute attribute)
 		{
 			return VisitChildren (attribute);
@@ -1168,6 +1193,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren (throwExpression);
 		}
 
+		public virtual T VisitTupleExpression (TupleExpression tupleExpression)
+		{
+			return VisitChildren (tupleExpression);
+		}
+
 		public virtual T VisitTypeOfExpression (TypeOfExpression typeOfExpression)
 		{
 			return VisitChildren (typeOfExpression);
@@ -1379,7 +1409,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (memberType, data);
 		}
-		
+
+		public virtual S VisitTupleType(TupleAstType tupleType, T data)
+		{
+			return VisitChildren (tupleType, data);
+		}
+
+		public virtual S VisitTupleTypeElement(TupleTypeElement tupleTypeElement, T data)
+		{
+			return VisitChildren (tupleTypeElement, data);
+		}
+
 		public virtual S VisitAttribute (Attribute attribute, T data)
 		{
 			return VisitChildren (attribute, data);
@@ -1798,6 +1838,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitThrowExpression (ThrowExpression throwExpression, T data)
 		{
 			return VisitChildren (throwExpression, data);
+		}
+
+		public virtual S VisitTupleExpression (TupleExpression tupleExpression, T data)
+		{
+			return VisitChildren (tupleExpression, data);
 		}
 
 		public virtual S VisitTypeOfExpression (TypeOfExpression typeOfExpression, T data)

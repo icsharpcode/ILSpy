@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
@@ -86,6 +87,32 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(List<List<dynamic>[]>), typeof(List<List<object>[]>)));
 			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(List<List<object>[]>), typeof(List<List<dynamic>[]>)));
 			Assert.AreEqual(C.None, ImplicitConversion(typeof(List<List<object>[,]>), typeof(List<List<dynamic>[]>)));
+		}
+
+		[Test]
+		public void TupleIdentityConversions()
+		{
+			var intType = compilation.FindType(typeof(int));
+			var stringType = compilation.FindType(typeof(string));
+			Assert.AreEqual(C.IdentityConversion, conversions.ImplicitConversion(
+				new TupleType(compilation, ImmutableArray.Create(intType, stringType), ImmutableArray.Create("a", "b")),
+				new TupleType(compilation, ImmutableArray.Create(intType, stringType), ImmutableArray.Create("a", "c"))));
+
+			Assert.AreEqual(C.None, conversions.ImplicitConversion(
+				new TupleType(compilation, ImmutableArray.Create(intType, stringType), ImmutableArray.Create("a", "b")),
+				new TupleType(compilation, ImmutableArray.Create(stringType, intType), ImmutableArray.Create("a", "b"))));
+		}
+
+		[Test]
+		public void TupleConversions()
+		{
+			Assert.AreEqual(
+				C.TupleConversion(ImmutableArray.Create(C.ImplicitNumericConversion, C.ImplicitReferenceConversion)),
+				ImplicitConversion(typeof((int, string)), typeof((long, object))));
+
+			Assert.AreEqual(
+				C.TupleConversion(ImmutableArray.Create(C.ImplicitNumericConversion)),
+				ImplicitConversion(typeof(ValueTuple<float>), typeof(ValueTuple<double>)));
 		}
 
 		[Test]

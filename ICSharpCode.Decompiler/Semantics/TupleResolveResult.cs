@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,34 +16,42 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Globalization;
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
-	/// Represents that an expression resolved to a namespace.
+	/// Resolve result for a C# 7 tuple literal.
 	/// </summary>
-	public class NamespaceResolveResult : ResolveResult
+	public class TupleResolveResult : ResolveResult
 	{
-		readonly INamespace ns;
-		
-		public NamespaceResolveResult(INamespace ns) : base(SpecialType.NoType)
+		public ImmutableArray<ResolveResult> Elements { get; }
+
+		public TupleResolveResult(ICompilation compilation,
+			ImmutableArray<ResolveResult> elements,
+			ImmutableArray<string> elementNames = default(ImmutableArray<string>))
+		: base(GetTupleType(compilation, elements, elementNames))
 		{
-			this.ns = ns;
+			this.Elements = elements;
 		}
-		
-		public INamespace Namespace {
-			get { return ns; }
-		}
-		
-		public string NamespaceName {
-			get { return ns.FullName; }
-		}
-		
-		public override string ToString()
+
+		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, ns);
+			return Elements;
+		}
+
+		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements, ImmutableArray<string> elementNames)
+		{
+			if (elements.Any(e => e.Type.Kind == TypeKind.None || e.Type.Kind == TypeKind.Null))
+				return SpecialType.NoType;
+			else
+				return new TupleType(compilation, elements.Select(e => e.Type).ToImmutableArray(), elementNames);
 		}
 	}
 }

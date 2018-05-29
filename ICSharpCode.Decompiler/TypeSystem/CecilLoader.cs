@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -38,13 +39,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// if you want to load multiple project contents in parallel.</remarks>
 	public sealed class CecilLoader : AssemblyLoader
 	{
-		/// <summary>
-		/// Version number of the cecil loader.
-		/// Should be incremented when fixing bugs in the cecil loader so that project contents cached on disk
-		/// (which might be incorrect due to the bug) are re-created.
-		/// </summary>
-		const int cecilLoaderVersion = 1;
-
 		#region Options
 		// Most options are defined in the AssemblyLoader base class
 
@@ -65,6 +59,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool LazyLoad { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether to use the <c>dynamic</c> type.
+		/// </summary>
+		public bool UseDynamicType { get; set; } = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use the tuple types.
+		/// </summary>
+		public bool UseTupleTypes { get; set; } = true;
+
+		/// <summary>
 		/// This delegate gets executed whenever an entity was loaded.
 		/// </summary>
 		/// <remarks>
@@ -75,20 +79,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public Action<IUnresolvedEntity, MemberReference> OnEntityLoaded { get; set; }
 
-		bool shortenInterfaceImplNames = true;
-
 		/// <summary>
 		/// Specifies whether method names of explicit interface-implementations should be shortened.
 		/// </summary>
 		/// <remarks>This is important when working with parser-initialized type-systems in order to be consistent.</remarks>
-		public bool ShortenInterfaceImplNames {
-			get {
-				return shortenInterfaceImplNames;
-			}
-			set {
-				shortenInterfaceImplNames = value;
-			}
-		}
+		public bool ShortenInterfaceImplNames { get; set; } = true;
 		#endregion
 
 		ModuleDefinition currentModule;
@@ -108,6 +103,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			// use a shared typeSystemTranslationTable
 			this.IncludeInternalMembers = loader.IncludeInternalMembers;
+			this.UseDynamicType = loader.UseDynamicType;
+			this.UseTupleTypes = loader.UseTupleTypes;
 			this.LazyLoad = loader.LazyLoad;
 			this.OnEntityLoaded = loader.OnEntityLoaded;
 			this.ShortenInterfaceImplNames = loader.ShortenInterfaceImplNames;
@@ -295,11 +292,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// IsValueType is set correctly.</param>
 		public ITypeReference ReadTypeReference(TypeReference type, ICustomAttributeProvider typeAttributes = null, bool isFromSignature = false)
 		{
-			int typeIndex = 0;
-			return CreateType(type, typeAttributes, ref typeIndex, isFromSignature);
+			int dynamicTypeIndex = 0;
+			int tupleTypeIndex = 0;
+			return CreateType(type, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature);
 		}
 
-		ITypeReference CreateType(TypeReference type, ICustomAttributeProvider typeAttributes, ref int typeIndex, bool isFromSignature)
+		ITypeReference CreateType(TypeReference type, ICustomAttributeProvider typeAttributes, ref int dynamicTypeIndex, ref int tupleTypeIndex, bool isFromSignature)
 		{
 			if (type == null) {
 				return SpecialType.UnknownType;
@@ -307,90 +305,123 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 			switch (type.MetadataType) {
 				case MetadataType.Void:
-					return KnownTypeReference.Get(KnownTypeCode.Void);
+					return KnownTypeReference.Void;
 				case MetadataType.Boolean:
-					return KnownTypeReference.Get(KnownTypeCode.Boolean);
+					return KnownTypeReference.Boolean;
 				case MetadataType.Char:
-					return KnownTypeReference.Get(KnownTypeCode.Char);
+					return KnownTypeReference.Char;
 				case MetadataType.SByte:
-					return KnownTypeReference.Get(KnownTypeCode.SByte);
+					return KnownTypeReference.SByte;
 				case MetadataType.Byte:
-					return KnownTypeReference.Get(KnownTypeCode.Byte);
+					return KnownTypeReference.Byte;
 				case MetadataType.Int16:
-					return KnownTypeReference.Get(KnownTypeCode.Int16);
+					return KnownTypeReference.Int16;
 				case MetadataType.UInt16:
-					return KnownTypeReference.Get(KnownTypeCode.UInt16);
+					return KnownTypeReference.UInt16;
 				case MetadataType.Int32:
-					return KnownTypeReference.Get(KnownTypeCode.Int32);
+					return KnownTypeReference.Int32;
 				case MetadataType.UInt32:
-					return KnownTypeReference.Get(KnownTypeCode.UInt32);
+					return KnownTypeReference.UInt32;
 				case MetadataType.Int64:
-					return KnownTypeReference.Get(KnownTypeCode.Int64);
+					return KnownTypeReference.Int64;
 				case MetadataType.UInt64:
-					return KnownTypeReference.Get(KnownTypeCode.UInt64);
+					return KnownTypeReference.UInt64;
 				case MetadataType.Single:
-					return KnownTypeReference.Get(KnownTypeCode.Single);
+					return KnownTypeReference.Single;
 				case MetadataType.Double:
-					return KnownTypeReference.Get(KnownTypeCode.Double);
+					return KnownTypeReference.Double;
 				case MetadataType.String:
-					return KnownTypeReference.Get(KnownTypeCode.String);
+					return KnownTypeReference.String;
 				case MetadataType.Pointer:
-					typeIndex++;
+					dynamicTypeIndex++;
 					return interningProvider.Intern(
 						new PointerTypeReference(
 							CreateType(
 								(type as Mono.Cecil.PointerType).ElementType,
-								typeAttributes, ref typeIndex, isFromSignature: true)));
+								typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true)));
 				case MetadataType.ByReference:
-					typeIndex++;
+					dynamicTypeIndex++;
 					return interningProvider.Intern(
 						new ByReferenceTypeReference(
 							CreateType(
 								(type as Mono.Cecil.ByReferenceType).ElementType,
-								typeAttributes, ref typeIndex, isFromSignature: true)));
+								typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true)));
 				case MetadataType.Var:
 					return TypeParameterReference.Create(SymbolKind.TypeDefinition, ((GenericParameter)type).Position);
 				case MetadataType.MVar:
 					return TypeParameterReference.Create(SymbolKind.Method, ((GenericParameter)type).Position);
 				case MetadataType.Array:
-					typeIndex++;
+					dynamicTypeIndex++;
 					return interningProvider.Intern(
 						new ArrayTypeReference(
 							CreateType(
 								(type as Mono.Cecil.ArrayType).ElementType,
-								typeAttributes, ref typeIndex, isFromSignature: true),
+								typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true),
 							(type as Mono.Cecil.ArrayType).Rank));
 				case MetadataType.GenericInstance:
 					GenericInstanceType gType = (GenericInstanceType)type;
-					ITypeReference baseType = CreateType(gType.ElementType, typeAttributes, ref typeIndex, isFromSignature: true);
+					ITypeReference baseType = CreateType(gType.ElementType, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
+					if (UseTupleTypes && IsValueTuple(gType, out int tupleCardinality)) {
+						if (tupleCardinality > 1) {
+							var assemblyRef = GetAssemblyReference(gType.ElementType.Scope);
+							var elementNames = GetTupleElementNames(typeAttributes, tupleTypeIndex, tupleCardinality);
+							tupleTypeIndex += tupleCardinality;
+							ITypeReference[] elementTypeRefs = new ITypeReference[tupleCardinality];
+							int outPos = 0;
+							do {
+								int normalArgCount = Math.Min(gType.GenericArguments.Count, TupleType.RestPosition - 1);
+								for (int i = 0; i < normalArgCount; i++) {
+									dynamicTypeIndex++;
+									elementTypeRefs[outPos++] = CreateType(gType.GenericArguments[i], typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
+								}
+								if (gType.GenericArguments.Count == TupleType.RestPosition) {
+									gType = (GenericInstanceType)gType.GenericArguments.Last();
+									dynamicTypeIndex++;
+									if (IsValueTuple(gType, out int nestedCardinality)) {
+										tupleTypeIndex += nestedCardinality;
+									} else {
+										Debug.Fail("TRest should be another value tuple");
+									}
+								} else {
+									gType = null;
+								}
+							} while (gType != null);
+							return new TupleTypeReference( 
+								elementTypeRefs.ToImmutableArray(), elementNames,
+								assemblyRef);
+						} else {
+							// C# doesn't have syntax for tuples of cardinality <= 1
+							tupleTypeIndex += tupleCardinality;
+						}
+					}
 					ITypeReference[] para = new ITypeReference[gType.GenericArguments.Count];
 					for (int i = 0; i < para.Length; ++i) {
-						typeIndex++;
-						para[i] = CreateType(gType.GenericArguments[i], typeAttributes, ref typeIndex, isFromSignature: true);
+						dynamicTypeIndex++;
+						para[i] = CreateType(gType.GenericArguments[i], typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
 					}
 					return interningProvider.Intern(new ParameterizedTypeReference(baseType, para));
 				case MetadataType.IntPtr:
-					return KnownTypeReference.Get(KnownTypeCode.IntPtr);
+					return KnownTypeReference.IntPtr;
 				case MetadataType.UIntPtr:
-					return KnownTypeReference.Get(KnownTypeCode.UIntPtr);
+					return KnownTypeReference.UIntPtr;
 				case MetadataType.FunctionPointer:
 					// C# and the NR typesystem don't support function pointer types.
 					// Function pointer types map to StackType.I, so we'll use IntPtr instead.
-					return KnownTypeReference.Get(KnownTypeCode.IntPtr);
+					return KnownTypeReference.IntPtr;
 				case MetadataType.Object:
-					if (HasDynamicAttribute(typeAttributes, typeIndex)) {
+					if (UseDynamicType && HasDynamicAttribute(typeAttributes, dynamicTypeIndex)) {
 						return SpecialType.Dynamic;
 					} else {
-						return KnownTypeReference.Get(KnownTypeCode.Object);
+						return KnownTypeReference.Object;
 					}
 				case MetadataType.RequiredModifier:
 				case MetadataType.OptionalModifier:
 					// we don't store modopts/modreqs in the NR type system
-					return CreateType(((TypeSpecification)type).ElementType, typeAttributes, ref typeIndex, isFromSignature: true);
+					return CreateType(((TypeSpecification)type).ElementType, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
 				case MetadataType.Sentinel:
 					return SpecialType.ArgList;
 				case MetadataType.Pinned:
-					return CreateType(((PinnedType)type).ElementType, typeAttributes, ref typeIndex, isFromSignature: true);
+					return CreateType(((PinnedType)type).ElementType, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature: true);
 			}
 			// valuetype/class/typedbyreference
 			if (type is TypeDefinition) {
@@ -400,7 +431,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// or if it's a TypeSpecification.
 			bool? isReferenceType = isFromSignature ? (bool?)!type.IsValueType : null;
 			if (type.IsNested) {
-				ITypeReference typeRef = CreateType(type.DeclaringType, typeAttributes, ref typeIndex, isFromSignature);
+				ITypeReference typeRef = CreateType(type.DeclaringType, typeAttributes, ref dynamicTypeIndex, ref tupleTypeIndex, isFromSignature);
 				int partTypeParameterCount;
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out partTypeParameterCount);
 				namepart = interningProvider.Intern(namepart);
@@ -411,7 +442,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (name == null)
 					throw new InvalidOperationException("type.Name returned null. Type: " + type.ToString());
 
-				if (name == "Object" && ns == "System" && HasDynamicAttribute(typeAttributes, typeIndex)) {
+				if (UseDynamicType && name == "Object" && ns == "System" && HasDynamicAttribute(typeAttributes, dynamicTypeIndex)) {
 					return SpecialType.Dynamic;
 				}
 				int typeParameterCount;
@@ -422,7 +453,46 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					isReferenceType));
 			}
 		}
-		
+
+		static internal bool IsValueTuple(GenericInstanceType gType, out int tupleCardinality)
+		{
+			tupleCardinality = 0;
+			if (gType == null || gType.DeclaringType != null || !gType.Name.StartsWith("ValueTuple`", StringComparison.Ordinal) || gType.Namespace != "System")
+				return false;
+			if (gType.GenericArguments.Count == TupleType.RestPosition) {
+				if (IsValueTuple(gType.GenericArguments.Last() as GenericInstanceType, out tupleCardinality)) {
+					tupleCardinality += TupleType.RestPosition - 1;
+					return true;
+				}
+			}
+			tupleCardinality = gType.GenericArguments.Count;
+			return tupleCardinality > 0 && tupleCardinality < TupleType.RestPosition;
+		}
+
+		static ImmutableArray<string> GetTupleElementNames(ICustomAttributeProvider attributeProvider, int tupleTypeIndex, int tupleCardinality)
+		{
+			if (attributeProvider == null || !attributeProvider.HasCustomAttributes)
+				return default(ImmutableArray<string>);
+			foreach (CustomAttribute a in attributeProvider.CustomAttributes) {
+				TypeReference type = a.AttributeType;
+				if (type.Name == "TupleElementNamesAttribute" && type.Namespace == "System.Runtime.CompilerServices") {
+					if (a.ConstructorArguments.Count == 1) {
+						CustomAttributeArgument[] values = a.ConstructorArguments[0].Value as CustomAttributeArgument[];
+						if (values != null) {
+							string[] extractedValues = new string[tupleCardinality];
+							for (int i = 0; i < tupleCardinality; i++) {
+								if (tupleTypeIndex + i < values.Length) {
+									extractedValues[i] = values[tupleTypeIndex + i].Value as string;
+								}
+							}
+							return extractedValues.ToImmutableArray();
+						}
+					}
+				}
+			}
+			return default(ImmutableArray<string>);
+		}
+
 		IAssemblyReference GetAssemblyReference(IMetadataScope scope)
 		{
 			if (scope == null || scope == currentModule)
@@ -827,7 +897,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			foreach (var cecilAttribute in attributes) {
 				TypeReference type = cecilAttribute.AttributeType;
 				if (type.Namespace == "System.Runtime.CompilerServices") {
-					if (type.Name == "DynamicAttribute" || type.Name == "ExtensionAttribute" || type.Name == "DecimalConstantAttribute")
+					if (type.Name == "ExtensionAttribute" || type.Name == "DecimalConstantAttribute")
+						continue;
+					if (UseDynamicType && type.Name == "DynamicAttribute")
+						continue;
+					if (UseTupleTypes && type.Name == "TupleElementNamesAttribute")
 						continue;
 				} else if (type.Name == "ParamArrayAttribute" && type.Namespace == "System") {
 					continue;

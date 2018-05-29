@@ -107,6 +107,7 @@
     <Compile Include="CSharp\Syntax\Expressions\StackAllocExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThisReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThrowExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\TupleExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeOfExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\UnaryOperatorExpression.cs" />
@@ -178,6 +179,7 @@
     <Compile Include="CSharp\Syntax\SyntaxTree.cs" />
     <Compile Include="CSharp\Syntax\TextLocation.cs" />
     <Compile Include="CSharp\Syntax\TokenRole.cs" />
+    <Compile Include="CSharp\Syntax\TupleAstType.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\Accessor.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\ConstructorDeclaration.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\DestructorDeclaration.cs" />
@@ -303,6 +305,7 @@
     <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
+    <Compile Include="IL\Transforms\TupleTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
@@ -323,6 +326,9 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Semantics\TupleResolveResult.cs" />
+    <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />

@@ -178,7 +178,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll"))
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
+					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location)
 			};
 		});
 		

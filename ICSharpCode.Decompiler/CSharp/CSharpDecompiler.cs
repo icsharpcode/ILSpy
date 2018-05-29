@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public CSharpDecompiler(ModuleDefinition module, DecompilerSettings settings)
-			: this(new DecompilerTypeSystem(module), settings)
+			: this(new DecompilerTypeSystem(module, settings), settings)
 		{
 		}
 
@@ -1373,6 +1373,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						BaseType = ConvertType(gType.GenericArguments[0], typeAttributes, ref typeIndex, options),
 						HasNullableSpecifier = true
 					};
+				}
+				if (CecilLoader.IsValueTuple(gType, out int tupleCardinality) && tupleCardinality > 1 && tupleCardinality < TupleType.RestPosition) {
+					var tupleType = new TupleAstType();
+					foreach (var typeArgument in gType.GenericArguments) {
+						typeIndex++;
+						tupleType.Elements.Add(new TupleTypeElement {
+							Type = ConvertType(typeArgument, typeAttributes, ref typeIndex, options)
+						});
+					}
+					return tupleType;
 				}
 				AstType baseType = ConvertType(gType.ElementType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 				List<AstType> typeArguments = new List<AstType>();

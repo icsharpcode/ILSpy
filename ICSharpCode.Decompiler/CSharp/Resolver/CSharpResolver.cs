@@ -1996,7 +1996,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				} else {
 					// argument might be a lambda or delegate type, so we have to try to guess the delegate type
 					IType type = arguments[i].Type;
-					if (type.Kind == TypeKind.Null || type.Kind == TypeKind.Unknown) {
+					if (type.Kind == TypeKind.Null || type.Kind == TypeKind.None) {
 						list.Add(new DefaultParameter(compilation.FindType(KnownTypeCode.Object), argumentNames[i]));
 					} else {
 						list.Add(new DefaultParameter(type, argumentNames[i]));
@@ -2353,7 +2353,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		bool HasType(ResolveResult r)
 		{
-			return r.Type.Kind != TypeKind.Unknown && r.Type.Kind != TypeKind.Null;
+			return r.Type.Kind != TypeKind.None && r.Type.Kind != TypeKind.Null;
 		}
 		#endregion
 		
