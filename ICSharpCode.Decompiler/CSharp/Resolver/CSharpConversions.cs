@@ -110,6 +110,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (c != Conversion.None) return c;
 				}
 			} else {
+				if (allowTuple && resolveResult is TupleResolveResult tupleRR) {
+					c = TupleConversion(tupleRR, toType, isExplicit: false);
+					if (c != Conversion.None)
+						return c;
+				}
 				if (allowUserDefined && allowTuple) {
 					// if allowUserDefined and allowTuple are true, we might as well use the cache
 					c = ImplicitConversion(resolveResult.Type, toType);
@@ -244,6 +249,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
 				return c;
+			if (resolveResult is TupleResolveResult tupleRR) {
+				c = TupleConversion(tupleRR, toType, isExplicit: true);
+				if (c != Conversion.None)
+					return c;
+			}
 			c = ExplicitConversionImpl(resolveResult.Type, toType);
 			if (c != Conversion.None)
 				return c;
@@ -1127,6 +1137,27 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 
 		#region Tuple Conversion
+		Conversion TupleConversion(TupleResolveResult fromRR, IType toType, bool isExplicit)
+		{
+			var fromElements = fromRR.Elements;
+			var toElements = TupleType.GetTupleElementTypes(toType);
+			if (toElements.IsDefault || fromElements.Length != toElements.Length)
+				return Conversion.None;
+			Conversion[] elementConversions = new Conversion[fromElements.Length];
+			for (int i = 0; i < elementConversions.Length; i++) {
+				Conversion c;
+				if (isExplicit) {
+					c = ExplicitConversion(fromElements[i], toElements[i]);
+				} else {
+					c = ImplicitConversion(fromElements[i], toElements[i]);
+				}
+				if (!c.IsValid)
+					return Conversion.None;
+				elementConversions[i] = c;
+			}
+			return Conversion.TupleConversion(elementConversions.ToImmutableArray());
+		}
+
 		Conversion TupleConversion(IType fromType, IType toType, bool isExplicit)
 		{
 			var fromElements = TupleType.GetTupleElementTypes(fromType);

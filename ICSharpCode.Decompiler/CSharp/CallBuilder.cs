@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -57,17 +58,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				return HandleDelegateConstruction(newobj);
 			}
 			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements.Length >= 2) {
-				var tupleType = TupleType.FromUnderlyingType(typeSystem.Compilation, inst.Method.DeclaringType);
-				Debug.Assert(tupleType != null, "MatchTupleConstruction should not success unless we got a valid tuple type.");
-				Debug.Assert(tupleType.ElementTypes.Length == tupleElements.Length);
+				var elementTypes = TupleType.GetTupleElementTypes(inst.Method.DeclaringType);
+				Debug.Assert(!elementTypes.IsDefault, "MatchTupleConstruction should not success unless we got a valid tuple type.");
+				Debug.Assert(elementTypes.Length == tupleElements.Length);
 				var tuple = new TupleExpression();
-				foreach (var (element, elementType) in tupleElements.Zip(tupleType.ElementTypes)) {
-					tuple.Elements.Add(
-						expressionBuilder.Translate(element, elementType)
-							.ConvertTo(elementType, expressionBuilder)
-					);
+				var elementRRs = new List<ResolveResult>();
+				foreach (var (element, elementType) in tupleElements.Zip(elementTypes)) {
+					var translatedElement = expressionBuilder.Translate(element, elementType)
+						.ConvertTo(elementType, expressionBuilder, allowImplicitConversion: true);
+					tuple.Elements.Add(translatedElement.Expression);
+					elementRRs.Add(translatedElement.ResolveResult);
 				}
-				return tuple.WithRR(new ResolveResult(tupleType)).WithILInstruction(inst);
+				return tuple.WithRR(new TupleResolveResult(
+					expressionBuilder.compilation,
+					elementRRs.ToImmutableArray()
+				)).WithILInstruction(inst);
 			}
 			return Build(inst.OpCode, inst.Method, inst.Arguments, inst.ConstrainedTo).WithILInstruction(inst);
 		}

@@ -81,6 +81,54 @@
 
   } // end of class OverloadResolution
 
+  .class auto ansi serializable sealed nested private beforefieldinit '<>c'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' '<>9'
+    .field public static class [mscorlib]System.Action '<>9__45_0'
+    .field public static class [mscorlib]System.Action '<>9__47_0'
+    .method private hidebysig specialname rtspecialname static 
+            void  .cctor() cil managed
+    {
+      // Code size       11 (0xb)
+      .maxstack  8
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::.ctor()
+      IL_0005:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
+      IL_000a:  ret
+    } // end of method '<>c'::.cctor
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  nop
+      IL_0007:  ret
+    } // end of method '<>c'::.ctor
+
+    .method assembly hidebysig instance void 
+            '<get_TargetTyping>b__45_0'() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method '<>c'::'<get_TargetTyping>b__45_0'
+
+    .method assembly hidebysig instance void 
+            '<get_NotTargetTyping>b__47_0'() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method '<>c'::'<get_NotTargetTyping>b__47_0'
+
+  } // end of class '<>c'
+
   .field public valuetype [mscorlib]System.ValueTuple VT0
   .field public valuetype [mscorlib]System.ValueTuple`1<int32> VT1
   .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple> VT7EmptyRest
@@ -310,6 +358,57 @@
     IL_0019:  ret
   } // end of method TupleTests::get_AccessRest
 
+  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action> 
+          get_TargetTyping() cil managed
+  {
+    // Code size       44 (0x2c)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ldc.i4.1
+    IL_0002:  box        [mscorlib]System.Int32
+    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__45_0'
+    IL_000c:  dup
+    IL_000d:  brtrue.s   IL_0026
+
+    IL_000f:  pop
+    IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_TargetTyping>b__45_0'()
+    IL_001b:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                      native int)
+    IL_0020:  dup
+    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__45_0'
+    IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
+                                                                                                                                   !1,
+                                                                                                                                   !2)
+    IL_002b:  ret
+  } // end of method TupleTests::get_TargetTyping
+
+  .method public hidebysig specialname instance object 
+          get_NotTargetTyping() cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ldc.i4.1
+    IL_0002:  box        [mscorlib]System.Int32
+    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__47_0'
+    IL_000c:  dup
+    IL_000d:  brtrue.s   IL_0026
+
+    IL_000f:  pop
+    IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_NotTargetTyping>b__47_0'()
+    IL_001b:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                      native int)
+    IL_0020:  dup
+    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__47_0'
+    IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
+                                                                                                                                   !1,
+                                                                                                                                   !2)
+    IL_002b:  box        valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
+    IL_0030:  ret
+  } // end of method TupleTests::get_NotTargetTyping
+
   .method public hidebysig instance void 
           UseDict() cil managed
   {
@@ -424,6 +523,15 @@
   {
     .get instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_AccessRest()
   } // end of property TupleTests::AccessRest
+  .property instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
+          TargetTyping()
+  {
+    .get instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_TargetTyping()
+  } // end of property TupleTests::TargetTyping
+  .property instance object NotTargetTyping()
+  {
+    .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_NotTargetTyping()
+  } // end of property TupleTests::NotTargetTyping
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests
 
 
