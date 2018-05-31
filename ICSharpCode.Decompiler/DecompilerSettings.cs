@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler
 				expressionTrees = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
-				// * dynamic (not supported yet)
+				dynamicExpressions = false;
 				// * named and optional arguments (not supported yet)
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
@@ -167,6 +167,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (awaitInCatchFinally != value) {
 					awaitInCatchFinally = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool dynamicExpressions = true;
+
+		/// <summary>
+		/// Decompile expressions that use dynamic types.
+		/// </summary>
+		public bool DynamicExpressions {
+			get { return dynamicExpressions; }
+			set {
+				if (dynamicExpressions != value) {
+					dynamicExpressions = value;
 					OnPropertyChanged();
 				}
 			}

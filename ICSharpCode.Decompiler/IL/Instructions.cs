@@ -183,6 +183,28 @@ namespace ICSharpCode.Decompiler.IL
 		StringToInt,
 		/// <summary>ILAst representation of Expression.Convert.</summary>
 		ExpressionTreeCast,
+		/// <summary>ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).</summary>
+		DynamicBinaryOperatorInstruction,
+		/// <summary>ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).</summary>
+		DynamicUnaryOperatorInstruction,
+		/// <summary>ILAst representation of a cast inside a dynamic expression (maps to Binder.Convert).</summary>
+		DynamicConvertInstruction,
+		/// <summary>ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).</summary>
+		DynamicGetMemberInstruction,
+		/// <summary>ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).</summary>
+		DynamicSetMemberInstruction,
+		/// <summary>ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).</summary>
+		DynamicGetIndexInstruction,
+		/// <summary>ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).</summary>
+		DynamicSetIndexInstruction,
+		/// <summary>ILAst representation of a method call inside a dynamic expression (maps to Binder.InvokeMember).</summary>
+		DynamicInvokeMemberInstruction,
+		/// <summary>ILAst representation of a constuctor invocation inside a dynamic expression (maps to Binder.InvokeConstructor).</summary>
+		DynamicInvokeConstructorInstruction,
+		/// <summary>ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).</summary>
+		DynamicInvokeInstruction,
+		/// <summary>ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.</summary>
+		DynamicIsEventInstruction,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -465,6 +487,26 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Instruction representing a dynamic call site.</summary>
+	public abstract partial class DynamicInstruction : ILInstruction
+	{
+		protected DynamicInstruction(OpCode opCode) : base(opCode)
+		{
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
@@ -4701,6 +4743,886 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).</summary>
+	public sealed partial class DynamicBinaryOperatorInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		ILInstruction left;
+		public ILInstruction Left {
+			get { return this.left; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.left, value, 0);
+			}
+		}
+		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
+		ILInstruction right;
+		public ILInstruction Right {
+			get { return this.right; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.right, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.left;
+				case 1:
+					return this.right;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Left = value;
+					break;
+				case 1:
+					this.Right = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftSlot;
+				case 1:
+					return RightSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicBinaryOperatorInstruction)ShallowClone();
+			clone.Left = this.left.Clone();
+			clone.Right = this.right.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | left.Flags | right.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicBinaryOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicBinaryOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicBinaryOperatorInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicBinaryOperatorInstruction;
+			return o != null && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).</summary>
+	public sealed partial class DynamicUnaryOperatorInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo OperandSlot = new SlotInfo("Operand", canInlineInto: true);
+		ILInstruction operand;
+		public ILInstruction Operand {
+			get { return this.operand; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.operand, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.operand;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Operand = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return OperandSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicUnaryOperatorInstruction)ShallowClone();
+			clone.Operand = this.operand.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | operand.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicUnaryOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicUnaryOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicUnaryOperatorInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicUnaryOperatorInstruction;
+			return o != null && this.operand.PerformMatch(o.operand, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a cast inside a dynamic expression (maps to Binder.Convert).</summary>
+	public sealed partial class DynamicConvertInstruction : DynamicInstruction
+	{
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		ILInstruction argument;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.argument, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicConvertInstruction)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | argument.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicConvertInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicConvertInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicConvertInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicConvertInstruction;
+			return o != null && type.Equals(o.type) && this.argument.PerformMatch(o.argument, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(argument.ResultType == StackType.O);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).</summary>
+	public sealed partial class DynamicGetMemberInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.target, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicGetMemberInstruction)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | target.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicGetMemberInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicGetMemberInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicGetMemberInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicGetMemberInstruction;
+			return o != null && this.target.PerformMatch(o.target, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(target.ResultType == StackType.O);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).</summary>
+	public sealed partial class DynamicSetMemberInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.target, value, 0);
+			}
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				case 1:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				case 1:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicSetMemberInstruction)ShallowClone();
+			clone.Target = this.target.Clone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | target.Flags | value.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicSetMemberInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicSetMemberInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicSetMemberInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicSetMemberInstruction;
+			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(target.ResultType == StackType.O);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).</summary>
+	public sealed partial class DynamicGetIndexInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicGetIndexInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicGetIndexInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicGetIndexInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicGetIndexInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicGetIndexInstruction;
+			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).</summary>
+	public sealed partial class DynamicSetIndexInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicSetIndexInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicSetIndexInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicSetIndexInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicSetIndexInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicSetIndexInstruction;
+			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a method call inside a dynamic expression (maps to Binder.InvokeMember).</summary>
+	public sealed partial class DynamicInvokeMemberInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicInvokeMemberInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicInvokeMemberInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicInvokeMemberInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicInvokeMemberInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicInvokeMemberInstruction;
+			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a constuctor invocation inside a dynamic expression (maps to Binder.InvokeConstructor).</summary>
+	public sealed partial class DynamicInvokeConstructorInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicInvokeConstructorInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicInvokeConstructorInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicInvokeConstructorInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicInvokeConstructorInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicInvokeConstructorInstruction;
+			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).</summary>
+	public sealed partial class DynamicInvokeInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicInvokeInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicInvokeInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicInvokeInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicInvokeInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicInvokeInstruction;
+			return o != null && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.</summary>
+	public sealed partial class DynamicIsEventInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		ILInstruction argument;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.argument, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicIsEventInstruction)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | argument.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicIsEventInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicIsEventInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicIsEventInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicIsEventInstruction;
+			return o != null && this.argument.PerformMatch(o.argument, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(argument.ResultType == StackType.O);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -5355,6 +6277,50 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicConvertInstruction(DynamicConvertInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicIsEventInstruction(DynamicIsEventInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
 		{
 			Default(inst);
@@ -5670,6 +6636,50 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitExpressionTreeCast(ExpressionTreeCast inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicConvertInstruction(DynamicConvertInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicIsEventInstruction(DynamicIsEventInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -5991,6 +7001,50 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicConvertInstruction(DynamicConvertInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicIsEventInstruction(DynamicIsEventInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
 		{
 			return Default(inst, context);
@@ -6088,6 +7142,17 @@ namespace ICSharpCode.Decompiler.IL
 			"array.to.pointer",
 			"string.to.int",
 			"expression.tree.cast",
+			"dynamic.binary.operator",
+			"dynamic.unary.operator",
+			"dynamic.convert",
+			"dynamic.getmember",
+			"dynamic.setmember",
+			"dynamic.getindex",
+			"dynamic.setindex",
+			"dynamic.invokemember",
+			"dynamic.invokeconstructor",
+			"dynamic.invoke",
+			"dynamic.isevent",
 			"mkrefany",
 			"refanytype",
 			"refanyval",
