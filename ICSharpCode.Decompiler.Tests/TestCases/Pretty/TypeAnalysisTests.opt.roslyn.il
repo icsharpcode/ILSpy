@@ -584,6 +584,19 @@
     IL_0016:  ret
   } // end of method TypeAnalysisTests::EnumInConditionalOperator
 
+  .method public hidebysig instance bool 
+          MethodCallOnEnumConstant() cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  8
+    IL_0000:  ldc.i4     0x7fff
+    IL_0005:  box        [mscorlib]System.AttributeTargets
+    IL_000a:  ldc.i4.1
+    IL_000b:  box        [mscorlib]System.AttributeTargets
+    IL_0010:  call       instance bool [mscorlib]System.Enum::HasFlag(class [mscorlib]System.Enum)
+    IL_0015:  ret
+  } // end of method TypeAnalysisTests::MethodCallOnEnumConstant
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {

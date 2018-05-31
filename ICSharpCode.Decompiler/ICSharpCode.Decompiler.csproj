@@ -107,6 +107,7 @@
     <Compile Include="CSharp\Syntax\Expressions\StackAllocExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThisReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThrowExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\TupleExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeOfExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\UnaryOperatorExpression.cs" />
@@ -178,6 +179,7 @@
     <Compile Include="CSharp\Syntax\SyntaxTree.cs" />
     <Compile Include="CSharp\Syntax\TextLocation.cs" />
     <Compile Include="CSharp\Syntax\TokenRole.cs" />
+    <Compile Include="CSharp\Syntax\TupleAstType.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\Accessor.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\ConstructorDeclaration.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\DestructorDeclaration.cs" />
@@ -234,7 +236,6 @@
     <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
-    <Compile Include="CSharp\TypeSystem\ConstantValues.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
@@ -280,8 +281,6 @@
     <Compile Include="DotNetCore\LightJson\JsonValueType.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\JsonParseException.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonSerializationException.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonWriter.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\TextPosition.cs" />
     <Compile Include="DotNetCore\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
@@ -306,6 +305,7 @@
     <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
+    <Compile Include="IL\Transforms\TupleTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
@@ -326,6 +326,9 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Semantics\TupleResolveResult.cs" />
+    <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
@@ -441,7 +444,6 @@
     <Compile Include="TypeSystem\CecilLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
-    <Compile Include="TypeSystem\DefaultSolutionSnapshot.cs" />
     <Compile Include="TypeSystem\DomRegion.cs" />
     <Compile Include="TypeSystem\Error.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
@@ -516,9 +518,7 @@
     <Compile Include="TypeSystem\IntersectionType.cs" />
     <Compile Include="TypeSystem\IParameter.cs" />
     <Compile Include="TypeSystem\IParameterizedMember.cs" />
-    <Compile Include="TypeSystem\IProjectContent.cs" />
     <Compile Include="TypeSystem\IProperty.cs" />
-    <Compile Include="TypeSystem\ISolutionSnapshot.cs" />
     <Compile Include="TypeSystem\ISupportsInterning.cs" />
     <Compile Include="TypeSystem\ISymbol.cs" />
     <Compile Include="TypeSystem\IType.cs" />

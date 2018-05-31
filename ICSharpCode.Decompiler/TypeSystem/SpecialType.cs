@@ -36,7 +36,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The null type is used as type of the null literal. It is a reference type without any members; and it is a subtype of all reference types.
 		/// </summary>
 		public readonly static SpecialType NullType = new SpecialType(TypeKind.Null, "null", isReferenceType: true);
-		
+
+		/// <summary>
+		/// Used for expressions without type, e.g. method groups or lambdas.
+		/// </summary>
+		public readonly static SpecialType NoType = new SpecialType(TypeKind.None, "?", isReferenceType: null);
+
 		/// <summary>
 		/// Type representing the C# 'dynamic' type.
 		/// </summary>
@@ -62,11 +67,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.kind = kind;
 			this.name = name;
 			this.isReferenceType = isReferenceType;
-		}
-		
-		public override ITypeReference ToTypeReference()
-		{
-			return this;
 		}
 		
 		public override string Name {

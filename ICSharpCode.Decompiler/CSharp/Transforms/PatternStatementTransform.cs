@@ -257,6 +257,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
 			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
+			if (itemVariable == null || indexVariable == null || arrayVariable == null)
+				return null;
 			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
@@ -391,7 +393,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!m.Success) break;
 				if (upperBounds == null) {
 					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
-					if (!(collection.Type is Decompiler.TypeSystem.ArrayType arrayType))
+					if (!(collection?.Type is Decompiler.TypeSystem.ArrayType arrayType))
 						break;
 					upperBounds = new IL.ILVariable[arrayType.Dimensions];
 				} else {
@@ -414,7 +416,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			statementsToDelete.Add(stmt);
 			statementsToDelete.Add(stmt.GetNextStatement());
 			var itemVariable = foreachVariable.GetILVariable();
-			if (!itemVariable.IsSingleDefinition
+			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
@@ -509,6 +511,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
 				property.Getter.Body = null;
 				property.Setter.Body = null;
+
+				// Add C# 7.3 attributes on backing field:
+				var attributes = fieldInfo.Attributes
+					.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
+					.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
+				if (attributes.Length > 0) {
+					var section = new AttributeSection {
+						AttributeTarget = "field"
+					};
+					section.Attributes.AddRange(attributes);
+					property.Attributes.Add(section);
+				}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
@@ -668,10 +682,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Left = new IdentifierExpressionBackreference("var1"),
 							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
 								"CompareExchange",
-								new AstType[] { new AnyNode("type") }), // type argument+
+								new AstType[] { new Repeat(new AnyNode()) }), // optional type arguments
 								new Expression[] { // arguments
 									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
-									new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
+									new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
 									new IdentifierExpressionBackreference("var1")
 								}
 							)
@@ -704,6 +718,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
 			"System.Diagnostics.DebuggerBrowsableAttribute",
 			"System.Runtime.CompilerServices.MethodImplAttribute"
+		};
+
+		static readonly string[] attributeTypesToRemoveFromAutoProperties = new[] {
+			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
 		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)

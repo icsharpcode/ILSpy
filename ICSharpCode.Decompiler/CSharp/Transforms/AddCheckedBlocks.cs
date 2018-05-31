@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
@@ -106,6 +107,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override string ToString()
 			{
 				return string.Format("[{0} + {1}]", Blocks, Expressions);
+			}
+
+			/// <summary>
+			/// Gets the new cost if an expression with this cost is wrapped in a checked/unchecked expression.
+			/// </summary>
+			/// <returns></returns>
+			internal Cost WrapInCheckedExpr()
+			{
+				if (Expressions == 0) {
+					return new Cost(Blocks, 1);
+				} else {
+					// hack: penalize multiple layers of nested expressions
+					// This doesn't really fit into the original idea of minimizing the number of block+expressions;
+					// but tends to produce better-looking results due to less nesting.
+					return new Cost(Blocks, Expressions + 2);
+				}
 			}
 		}
 		#endregion
@@ -324,11 +341,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// We cannot use checked/unchecked for top-level-expressions.
 				} else if (expr.Role.IsValid(Expression.Null)) {
 					// We use '<' so that expressions are introduced on the deepest level possible (goal 3)
-					if (result.CostInCheckedContext + new Cost(0, 1) < result.CostInUncheckedContext) {
-						result.CostInUncheckedContext = result.CostInCheckedContext + new Cost(0, 1);
+					var costIfWrapWithChecked = result.CostInCheckedContext.WrapInCheckedExpr();
+					var costIfWrapWithUnchecked = result.CostInUncheckedContext.WrapInCheckedExpr();
+					if (costIfWrapWithChecked < result.CostInUncheckedContext) {
+						result.CostInUncheckedContext = costIfWrapWithChecked;
 						result.NodesToInsertInUncheckedContext = result.NodesToInsertInCheckedContext + new InsertedExpression(expr, true);
-					} else if (result.CostInUncheckedContext + new Cost(0, 1) < result.CostInCheckedContext) {
-						result.CostInCheckedContext = result.CostInUncheckedContext + new Cost(0, 1);
+					} else if (costIfWrapWithUnchecked < result.CostInCheckedContext) {
+						result.CostInCheckedContext = costIfWrapWithUnchecked;
 						result.NodesToInsertInCheckedContext = result.NodesToInsertInUncheckedContext + new InsertedExpression(expr, false);
 					}
 				}

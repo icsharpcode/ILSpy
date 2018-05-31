@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2018 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,26 +16,36 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ICSharpCode.Decompiler.TypeSystem
+using System;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	/// <summary>
-	/// Represents a snapshot of the whole solution (multiple compilations).
-	/// </summary>
-	public interface ISolutionSnapshot
+	public class TupleExpression : Expression
 	{
-		/// <summary>
-		/// Gets the project content with the specified file name.
-		/// Returns null if no such project exists in the solution.
-		/// </summary>
-		/// <remarks>
-		/// This method is used by the <see cref="ProjectReference"/> class.
-		/// </remarks>
-		IProjectContent GetProjectContent(string projectFileName);
-		
-		/// <summary>
-		/// Gets the compilation for the specified project.
-		/// The project must be a part of the solution (passed to the solution snapshot's constructor).
-		/// </summary>
-		ICompilation GetCompilation(IProjectContent project);
+		public AstNodeCollection<Expression> Elements {
+			get { return GetChildrenByRole(Roles.Expression); }
+		}
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{
+			visitor.VisitTupleExpression(this);
+		}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitTupleExpression(this);
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitTupleExpression(this, data);
+		}
+
+		protected internal override bool DoMatch(AstNode other, Match match)
+		{
+			return other is TupleExpression tuple
+				&& Elements.DoMatch(tuple.Elements, match);
+		}
 	}
 }

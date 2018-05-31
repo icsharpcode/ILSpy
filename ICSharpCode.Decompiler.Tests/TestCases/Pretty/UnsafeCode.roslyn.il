@@ -1053,37 +1053,35 @@
           FixedMemberAccess(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m,
                             int32 i) cil managed
   {
-    // Code size       44 (0x2c)
+    // Code size       42 (0x2a)
     .maxstack  4
     .locals init (float64 V_0)
     IL_0000:  nop
     IL_0001:  ldarg.1
     IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
     IL_0007:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
-    IL_000c:  conv.u
-    IL_000d:  ldarg.2
-    IL_000e:  conv.i
-    IL_000f:  ldc.i4.4
-    IL_0010:  mul
-    IL_0011:  add
-    IL_0012:  ldind.i4
-    IL_0013:  conv.r8
-    IL_0014:  ldarg.1
-    IL_0015:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Doubles
-    IL_001a:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer'::FixedElementField
-    IL_001f:  conv.u
-    IL_0020:  ldarg.2
-    IL_0021:  conv.i
-    IL_0022:  ldc.i4.8
-    IL_0023:  mul
+    IL_000c:  ldarg.2
+    IL_000d:  conv.i
+    IL_000e:  ldc.i4.4
+    IL_000f:  mul
+    IL_0010:  add
+    IL_0011:  ldind.i4
+    IL_0012:  conv.r8
+    IL_0013:  ldarg.1
+    IL_0014:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Doubles
+    IL_0019:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer'::FixedElementField
+    IL_001e:  ldarg.2
+    IL_001f:  conv.i
+    IL_0020:  ldc.i4.8
+    IL_0021:  mul
+    IL_0022:  add
+    IL_0023:  ldind.r8
     IL_0024:  add
-    IL_0025:  ldind.r8
-    IL_0026:  add
-    IL_0027:  stloc.0
-    IL_0028:  br.s       IL_002a
+    IL_0025:  stloc.0
+    IL_0026:  br.s       IL_0028
 
-    IL_002a:  ldloc.0
-    IL_002b:  ret
+    IL_0028:  ldloc.0
+    IL_0029:  ret
   } // end of method UnsafeCode::FixedMemberAccess
 
   .method public hidebysig instance float64* 
@@ -1123,7 +1121,7 @@
   .method public hidebysig instance void 
           UseFixedMemberAsReference(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m) cil managed
   {
-    // Code size       42 (0x2a)
+    // Code size       41 (0x29)
     .maxstack  8
     IL_0000:  nop
     IL_0001:  ldarg.0
@@ -1137,12 +1135,11 @@
     IL_0015:  ldarg.1
     IL_0016:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
     IL_001b:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
-    IL_0020:  conv.u
-    IL_0021:  ldc.i4.4
-    IL_0022:  add
-    IL_0023:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
-    IL_0028:  nop
-    IL_0029:  ret
+    IL_0020:  ldc.i4.4
+    IL_0021:  add
+    IL_0022:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
+    IL_0027:  nop
+    IL_0028:  ret
   } // end of method UnsafeCode::UseFixedMemberAsReference
 
   .method public hidebysig instance void 
@@ -1151,7 +1148,7 @@
     // Code size       30 (0x1e)
     .maxstack  2
     .locals init (int32* V_0,
-             int32*& pinned V_1)
+             int32& pinned V_1)
     IL_0000:  nop
     IL_0001:  ldarg.1
     IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers

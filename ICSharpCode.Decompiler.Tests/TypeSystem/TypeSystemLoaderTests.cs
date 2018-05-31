@@ -42,16 +42,21 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 				return new CecilLoader().LoadAssemblyFile(typeof(System.Linq.Enumerable).Assembly.Location);
 			});
 
+		static readonly Lazy<IUnresolvedAssembly> testAssembly = new Lazy<IUnresolvedAssembly>(
+			delegate {
+				return new CecilLoader { IncludeInternalMembers = true }.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
+			});
+
 		public static IUnresolvedAssembly Mscorlib { get { return mscorlib.Value; } }
 		public static IUnresolvedAssembly SystemCore { get { return systemCore.Value; } }
+		public static IUnresolvedAssembly TestAssembly { get { return testAssembly.Value; } }
 
 		[OneTimeSetUp]
 		public void FixtureSetUp()
 		{
 			// use "IncludeInternalMembers" so that Cecil results match C# parser results
 			CecilLoader loader = new CecilLoader() { IncludeInternalMembers = true };
-			IUnresolvedAssembly asm = loader.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
-			compilation = new SimpleCompilation(asm, Mscorlib);
+			compilation = new SimpleCompilation(TestAssembly, Mscorlib);
 		}
 
 		protected ICompilation compilation;

@@ -52,7 +52,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return type.VisitChildren(this);
 		}
-		
+
+		public virtual IType VisitTupleType(TupleType type)
+		{
+			return type.VisitChildren(this);
+		}
+
 		public virtual IType VisitOtherType(IType type)
 		{
 			return type.VisitChildren(this);

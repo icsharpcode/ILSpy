@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -25,6 +26,7 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -198,8 +200,31 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
-			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void) {
+			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
+			}
+			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
+				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)
+			{
+				// Conversion of a tuple literal: convert element-wise
+				var newTupleExpr = new TupleExpression();
+				var newElementRRs = new List<ResolveResult>();
+				foreach (var (elementExpr, elementTargetType) in tupleExpr.Elements.Zip(targetTupleType.ElementTypes)) {
+					var newElementExpr = new TranslatedExpression(elementExpr.Detach())
+						.ConvertTo(elementTargetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+					newTupleExpr.Elements.Add(newElementExpr.Expression);
+					newElementRRs.Add(newElementExpr.ResolveResult);
+				}
+				return newTupleExpr.WithILInstruction(this.ILInstructions)
+					.WithRR(new TupleResolveResult(expressionBuilder.compilation, newElementRRs.ToImmutableArray()));
+			}
+			var compilation = expressionBuilder.compilation;
+			var conversions = Resolver.CSharpConversions.Get(compilation);
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 && conv.Conversion.IsBoxingConversion && conversions.IsBoxingConversion(conv.Input.Type, targetType)) {
+				var unwrapped = this.UnwrapChild(cast2.Expression);
+				if (allowImplicitConversion)
+					return unwrapped;
+				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
 			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true) {
 				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
@@ -208,7 +233,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
 				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
 			}
-			var compilation = expressionBuilder.compilation;
 			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
 			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
 			IType targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
@@ -350,8 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
-			var conversions = Resolver.CSharpConversions.Get(compilation);
-			if (allowImplicitConversion && conversions.ImplicitConversion(type, targetType).IsValid) {
+			if (allowImplicitConversion && conversions.ImplicitConversion(ResolveResult, targetType).IsValid) {
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);

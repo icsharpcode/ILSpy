@@ -158,11 +158,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return genericType as ITypeDefinition;
 		}
 		
-		public ITypeReference ToTypeReference()
-		{
-			return new ParameterizedTypeReference(genericType.ToTypeReference(), typeArguments.Select(t => t.ToTypeReference()));
-		}
-		
 		/// <summary>
 		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
 		/// of this parameterized type.
@@ -276,6 +271,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public bool Equals(IType other)
 		{
+			if (this == other)
+				return true;
 			ParameterizedType c = other as ParameterizedType;
 			if (c == null || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
 				return false;

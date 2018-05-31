@@ -207,22 +207,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 		
-		#region Import
-		/// <summary>
-		/// Imports a type from another compilation.
-		/// </summary>
-		public static ITypeDefinition Import(this ICompilation compilation, ITypeDefinition typeDefinition)
-		{
-			if (compilation == null)
-				throw new ArgumentNullException("compilation");
-			if (typeDefinition == null)
-				return null;
-			if (typeDefinition.Compilation == compilation)
-				return typeDefinition;
-			return typeDefinition.ToTypeReference().Resolve(compilation.TypeResolveContext).GetDefinition();
-		}
-		#endregion
-		
 		#region GetDelegateInvokeMethod
 		/// <summary>
 		/// Gets the invoke method for a delegate type.

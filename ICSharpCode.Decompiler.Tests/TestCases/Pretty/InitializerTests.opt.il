@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -15,7 +13,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly n52bfodk
+.assembly InitializerTests.opt
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -25,15 +23,13 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module n52bfodk.dll
-// MVID: {2B30E2AC-D797-4A69-ACEC-93251C343504}
+.module InitializerTests.opt.dll
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x037A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -657,6 +653,68 @@
     IL_0025:  ldloc.0
     IL_0026:  ret
   } // end of method InitializerTests::Test4
+
+  .method public hidebysig static void  InvalidIndices(int32 a) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.1
+    IL_0009:  ldarg.0
+    IL_000a:  stelem.i4
+    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0010:  ldloc.0
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0016:  ret
+  } // end of method InitializerTests::InvalidIndices
+
+  .method public hidebysig static void  InvalidIndices2(int32 a) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.m1
+    IL_0009:  ldarg.0
+    IL_000a:  stelem.i4
+    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0010:  ldloc.0
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_0016:  ret
+  } // end of method InitializerTests::InvalidIndices2
+
+  .method public hidebysig static void  IndicesInWrongOrder(int32 a,
+                                                            int32 b) cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.5
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.2
+    IL_0009:  ldarg.1
+    IL_000a:  stelem.i4
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.1
+    IL_000d:  ldarg.0
+    IL_000e:  stelem.i4
+    IL_000f:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::Y()
+    IL_0014:  ldloc.0
+    IL_0015:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::X(object,
+                                                                                                object)
+    IL_001a:  ret
+  } // end of method InitializerTests::IndicesInWrongOrder
 
   .method public hidebysig static void  CollectionInitializerList() cil managed
   {
@@ -1304,4 +1362,3 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\InitializerTests.opt.res

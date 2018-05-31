@@ -244,5 +244,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return string.Equals("", "", b ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
 		}
+
+		public bool MethodCallOnEnumConstant()
+		{
+			return AttributeTargets.All.HasFlag(AttributeTargets.Assembly);
+		}
 	}
 }

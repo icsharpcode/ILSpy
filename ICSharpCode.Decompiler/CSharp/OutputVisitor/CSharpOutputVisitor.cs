@@ -24,6 +24,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using Attribute = ICSharpCode.Decompiler.CSharp.Syntax.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -444,6 +445,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			foreach (CSharpModifierToken modifier in modifierTokens) {
 				modifier.AcceptVisitor(this);
+				Space();
 			}
 		}
 		
@@ -1061,7 +1063,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			throwExpression.Expression.AcceptVisitor(this);
 			EndNode(throwExpression);
 		}
-		
+
+		public virtual void VisitTupleExpression(TupleExpression tupleExpression)
+		{
+			Debug.Assert(tupleExpression.Elements.Count >= 2);
+			StartNode(tupleExpression);
+			LPar();
+			WriteCommaSeparatedList(tupleExpression.Elements);
+			RPar();
+			EndNode(tupleExpression);
+		}
+
 		public virtual void VisitTypeOfExpression(TypeOfExpression typeOfExpression)
 		{
 			StartNode(typeOfExpression);
@@ -2269,7 +2281,28 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteTypeArguments(memberType.TypeArguments);
 			EndNode(memberType);
 		}
-		
+
+		public virtual void VisitTupleType(TupleAstType tupleType)
+		{
+			Debug.Assert(tupleType.Elements.Count >= 2);
+			StartNode(tupleType);
+			LPar();
+			WriteCommaSeparatedList(tupleType.Elements);
+			RPar();
+			EndNode(tupleType);
+		}
+
+		public virtual void VisitTupleTypeElement(TupleTypeElement tupleTypeElement)
+		{
+			StartNode(tupleTypeElement);
+			tupleTypeElement.Type.AcceptVisitor(this);
+			if (!tupleTypeElement.NameToken.IsNull) {
+				Space();
+				tupleTypeElement.NameToken.AcceptVisitor(this);
+			}
+			EndNode(tupleTypeElement);
+		}
+
 		public virtual void VisitComposedType(ComposedType composedType)
 		{
 			StartNode(composedType);

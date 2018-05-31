@@ -172,5 +172,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If this member is already specialized, the new substitution is composed with the existing substition.
 		/// </summary>
 		IMember Specialize(TypeParameterSubstitution substitution);
+
+		/// <summary>
+		/// Gets whether the members are considered equal when applying the specified type normalization.
+		/// </summary>
+		bool Equals(IMember obj, TypeVisitor typeNormalization);
 	}
 }

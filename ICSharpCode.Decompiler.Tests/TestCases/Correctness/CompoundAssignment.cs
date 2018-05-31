@@ -31,6 +31,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			UnsignedShiftRightInstanceField();
 			UnsignedShiftRightStaticProperty();
 			DivideByBigValue();
+			Overflow();
 		}
 
 		static void Test(int a, int b)
@@ -77,9 +78,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-		static ushort shortField;
+		static short shortField;
 
-		public static ushort ShortProperty {
+		public static short ShortProperty {
 			get {
 				Console.WriteLine("In get_ShortProperty");
 				return shortField;
@@ -87,6 +88,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			set {
 				Console.WriteLine("In set_ShortProperty, value={0}", value);
 				shortField = value;
+			}
+		}
+
+		static byte byteField;
+
+		public static byte ByteProperty {
+			get {
+				Console.WriteLine("In get_ByteProperty");
+				return byteField;
+			}
+			set {
+				Console.WriteLine("In set_ByteProperty, value={0}", value);
+				byteField = value;
 			}
 		}
 
@@ -144,15 +158,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void UnsignedShiftRightStaticProperty()
 		{
+			Console.WriteLine("UnsignedShiftRightStaticProperty:");
 			StaticProperty = -15;
 			Test(X(), StaticProperty = (int)((uint)StaticProperty >> 2));
+
+			ShortProperty = -20;
+			ShortProperty = (short)((uint)StaticProperty >> 2);
+
+			ShortProperty = -30;
+			ShortProperty = (short)((ushort)StaticProperty >> 2);
 		}
-		
+
 		static void DivideByBigValue()
 		{
-			ShortProperty = 5;
-			// can't use "ShortProperty /= (ushort)(ushort.MaxValue + 3)" because that would be division by 2.
-			ShortProperty = (ushort)(ShortProperty / (ushort.MaxValue + 3));
+			Console.WriteLine("DivideByBigValue:");
+			ByteProperty = 5;
+			// can't use "ByteProperty /= (byte)(byte.MaxValue + 3)" because that would be division by 2.
+			ByteProperty = (byte)(ByteProperty / (byte.MaxValue + 3));
+
+			ByteProperty = 200;
+			ByteProperty = (byte)(ByteProperty / Id(byte.MaxValue + 3));
+
+			ShortProperty = short.MaxValue;
+			ShortProperty = (short)(ShortProperty / (short.MaxValue + 3));
+		}
+
+		static void Overflow()
+		{
+			Console.WriteLine("Overflow:");
+			ByteProperty = 0;
+			ByteProperty = (byte)checked(ByteProperty + 300);
+			try {
+				ByteProperty = checked((byte)(ByteProperty + 300));
+			} catch (OverflowException) {
+				Console.WriteLine("Overflow OK");
+			}
+
+			ByteProperty = 200;
+			ByteProperty = (byte)checked(ByteProperty + 100);
+			ByteProperty = 201;
+			try {
+				ByteProperty = checked((byte)(ByteProperty + 100));
+			} catch (OverflowException) {
+				Console.WriteLine("Overflow OK");
+			}
+		}
+
+		static T Id<T>(T val)
+		{
+			return val;
 		}
 	}
 }

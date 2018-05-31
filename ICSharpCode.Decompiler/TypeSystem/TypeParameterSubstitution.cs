@@ -96,8 +96,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return result;
 		}
 		#endregion
-		
+
 		#region Equals and GetHashCode implementation
+		public bool Equals(TypeParameterSubstitution other, TypeVisitor normalization)
+		{
+			if (other == null)
+				return false;
+			return TypeListEquals(classTypeArguments, other.classTypeArguments, normalization)
+				&& TypeListEquals(methodTypeArguments, other.methodTypeArguments, normalization);
+		}
+
 		public override bool Equals(object obj)
 		{
 			TypeParameterSubstitution other = obj as TypeParameterSubstitution;
@@ -128,7 +136,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return true;
 		}
-		
+
+		static bool TypeListEquals(IReadOnlyList<IType> a, IReadOnlyList<IType> b, TypeVisitor normalization)
+		{
+			if (a == b)
+				return true;
+			if (a == null || b == null)
+				return false;
+			if (a.Count != b.Count)
+				return false;
+			for (int i = 0; i < a.Count; i++) {
+				var an = a[i].AcceptVisitor(normalization);
+				var bn = b[i].AcceptVisitor(normalization);
+				if (!an.Equals(bn))
+					return false;
+			}
+			return true;
+		}
+
 		static int TypeListHashCode(IReadOnlyList<IType> obj)
 		{
 			if (obj == null)

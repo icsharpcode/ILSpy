@@ -163,6 +163,14 @@ namespace ICSharpCode.Decompiler.IL
 					return new TypeSystem.ByReferenceType(ldflda.Field.Type);
 				case LdsFlda ldsflda:
 					return new TypeSystem.ByReferenceType(ldsflda.Field.Type);
+				case LdElema ldelema:
+					if (ldelema.Array.InferType() is TypeSystem.ArrayType arrayType) {
+						var refType = new TypeSystem.ByReferenceType(arrayType.ElementType);
+						if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType, ldelema.Type)) {
+							return refType;
+						}
+					}
+					return new TypeSystem.ByReferenceType(ldelema.Type);
 				default:
 					return SpecialType.UnknownType;
 			}

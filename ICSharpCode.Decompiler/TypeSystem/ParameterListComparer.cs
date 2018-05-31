@@ -34,27 +34,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public sealed class ParameterListComparer : IEqualityComparer<IReadOnlyList<IParameter>>
 	{
 		public static readonly ParameterListComparer Instance = new ParameterListComparer();
-		
-		sealed class NormalizeTypeVisitor : TypeVisitor
-		{
-			public override IType VisitTypeParameter(ITypeParameter type)
-			{
-				if (type.OwnerType == SymbolKind.Method) {
-					return DummyTypeParameter.GetMethodTypeParameter(type.Index);
-				} else {
-					return base.VisitTypeParameter(type);
-				}
-			}
-			
-			public override IType VisitTypeDefinition(ITypeDefinition type)
-			{
-				if (type.KnownTypeCode == KnownTypeCode.Object)
-					return SpecialType.Dynamic;
-				return base.VisitTypeDefinition(type);
-			}
-		}
-		
-		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor();
+
+		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = false,
+			ReplaceMethodTypeParametersWithDummy = true,
+			DynamicAndObject = true,
+			TupleToUnderlyingType = true,
+		};
 		
 		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
 		{

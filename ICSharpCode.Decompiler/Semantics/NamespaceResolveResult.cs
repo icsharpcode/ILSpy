@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Semantics
 	{
 		readonly INamespace ns;
 		
-		public NamespaceResolveResult(INamespace ns) : base(SpecialType.UnknownType)
+		public NamespaceResolveResult(INamespace ns) : base(SpecialType.NoType)
 		{
 			this.ns = ns;
 		}

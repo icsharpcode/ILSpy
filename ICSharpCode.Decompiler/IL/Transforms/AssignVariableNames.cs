@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			loopCounters = CollectLoopCounters(function);
 			foreach (var f in function.Descendants.OfType<ILFunction>()) {
 				if (f.Method != null) {
-					if (f.Method.IsAccessor && f.Method.Parameters.Count > 0) {
+					if (IsSetOrEventAccessor(f.Method) && f.Method.Parameters.Count > 0) {
 						for (int i = 0; i < f.Method.Parameters.Count - 1; i++) {
 							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
 						}
@@ -119,6 +119,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
 				PerformAssignment(f);
 			}
+		}
+
+		bool IsSetOrEventAccessor(IMethod method)
+		{
+			if (method.AccessorOwner is IProperty p)
+				return p.Setter == method;
+			if (method.AccessorOwner is IEvent e)
+				return e.InvokeAccessor != method;
+			return false;
 		}
 
 		void PerformAssignment(ILFunction function)

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.Semantics;
@@ -37,15 +38,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	{
 		readonly ConcurrentDictionary<TypePair, Conversion> implicitConversionCache = new ConcurrentDictionary<TypePair, Conversion>();
 		readonly ICompilation compilation;
-		readonly IType objectType;
 		
 		public CSharpConversions(ICompilation compilation)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
 			this.compilation = compilation;
-			this.objectType = compilation.FindType(KnownTypeCode.Object);
-			this.dynamicErasure = new DynamicErasure(this);
 		}
 		
 		/// <summary>
@@ -97,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region ImplicitConversion
-		private Conversion ImplicitConversion(ResolveResult resolveResult, IType toType, bool allowUserDefined)
+		private Conversion ImplicitConversion(ResolveResult resolveResult, IType toType, bool allowUserDefined, bool allowTuple)
 		{
 			Conversion c;
 			if (resolveResult.IsCompileTimeConstant) {
@@ -105,18 +103,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (c.IsValid) return c;
 				if (ImplicitConstantExpressionConversion(resolveResult, toType))
 					return Conversion.ImplicitConstantExpressionConversion;
-				c = StandardImplicitConversion(resolveResult.Type, toType);
+				c = StandardImplicitConversion(resolveResult.Type, toType, allowTuple);
 				if (c != Conversion.None) return c;
 				if (allowUserDefined) {
 					c = UserDefinedImplicitConversion(resolveResult, resolveResult.Type, toType);
 					if (c != Conversion.None) return c;
 				}
 			} else {
-				if (allowUserDefined) {
-					// if allowUserDefined is true, we might as well use the cache
+				if (allowTuple && resolveResult is TupleResolveResult tupleRR) {
+					c = TupleConversion(tupleRR, toType, isExplicit: false);
+					if (c != Conversion.None)
+						return c;
+				}
+				if (allowUserDefined && allowTuple) {
+					// if allowUserDefined and allowTuple are true, we might as well use the cache
 					c = ImplicitConversion(resolveResult.Type, toType);
 				} else {
-					c = ImplicitConversion(resolveResult.Type, toType, allowUserDefined);
+					c = ImplicitConversion(resolveResult.Type, toType, allowUserDefined, allowTuple);
 				}
 				if (c != Conversion.None) return c;
 			}
@@ -128,10 +131,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return c;
 		}
 		
-		private Conversion ImplicitConversion(IType fromType, IType toType, bool allowUserDefined)
+		private Conversion ImplicitConversion(IType fromType, IType toType, bool allowUserDefined, bool allowTuple)
 		{
 			// C# 4.0 spec: §6.1
-			var c = StandardImplicitConversion(fromType, toType);
+			var c = StandardImplicitConversion(fromType, toType, allowTuple);
 			if (c == Conversion.None && allowUserDefined) {
 				c = UserDefinedImplicitConversion(null, fromType, toType);
 			}
@@ -142,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (resolveResult == null)
 				throw new ArgumentNullException("resolveResult");
-			return ImplicitConversion(resolveResult, toType, allowUserDefined: true);
+			return ImplicitConversion(resolveResult, toType, allowUserDefined: true, allowTuple: true);
 		}
 
 		public Conversion ImplicitConversion(IType fromType, IType toType)
@@ -157,18 +160,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (implicitConversionCache.TryGetValue(pair, out c))
 				return c;
 
-			c = ImplicitConversion(fromType, toType, allowUserDefined: true);
+			c = ImplicitConversion(fromType, toType, allowUserDefined: true, allowTuple: true);
 
 			implicitConversionCache[pair] = c;
 			return c;
 		}
-		
+
 		public Conversion StandardImplicitConversion(IType fromType, IType toType)
 		{
 			if (fromType == null)
 				throw new ArgumentNullException("fromType");
 			if (toType == null)
 				throw new ArgumentNullException("toType");
+			return StandardImplicitConversion(fromType, toType, allowTupleConversion: true);
+		}
+
+		Conversion StandardImplicitConversion(IType fromType, IType toType, bool allowTupleConversion)
+		{
 			// C# 4.0 spec: §6.3.1
 			if (IdentityConversion(fromType, toType))
 				return Conversion.IdentityConversion;
@@ -190,9 +198,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			if (ImplicitPointerConversion(fromType, toType))
 				return Conversion.ImplicitPointerConversion;
+			if (allowTupleConversion) {
+				c = TupleConversion(fromType, toType, isExplicit: false);
+				if (c != Conversion.None)
+					return c;
+			}
 			return Conversion.None;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type 'fromType' is convertible to 'toType'
 		/// using one of the conversions allowed when satisying constraints (§4.4.4)
@@ -233,9 +246,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ExplicitDynamicConversion;
-			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false);
+			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
 				return c;
+			if (resolveResult is TupleResolveResult tupleRR) {
+				c = TupleConversion(tupleRR, toType, isExplicit: true);
+				if (c != Conversion.None)
+					return c;
+			}
 			c = ExplicitConversionImpl(resolveResult.Type, toType);
 			if (c != Conversion.None)
 				return c;
@@ -249,7 +267,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (toType == null)
 				throw new ArgumentNullException("toType");
 			
-			Conversion c = ImplicitConversion(fromType, toType, allowUserDefined: false);
+			Conversion c = ImplicitConversion(fromType, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
 				return c;
 			c = ExplicitConversionImpl(fromType, toType);
@@ -278,10 +296,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return c;
 			if (ExplicitPointerConversion(fromType, toType))
 				return Conversion.ExplicitPointerConversion;
-			return Conversion.None;
+			return TupleConversion(fromType, toType, isExplicit: true);
 		}
 		#endregion
-		
+
 		#region Identity Conversion
 		/// <summary>
 		/// Gets whether there is an identity conversion from <paramref name="fromType"/> to <paramref name="toType"/>
@@ -289,27 +307,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public bool IdentityConversion(IType fromType, IType toType)
 		{
 			// C# 4.0 spec: §6.1.1
-			return fromType.AcceptVisitor(dynamicErasure).Equals(toType.AcceptVisitor(dynamicErasure));
-		}
-		
-		readonly DynamicErasure dynamicErasure;
-		
-		sealed class DynamicErasure : TypeVisitor
-		{
-			readonly IType objectType;
-			
-			public DynamicErasure(CSharpConversions conversions)
-			{
-				this.objectType = conversions.objectType;
-			}
-			
-			public override IType VisitOtherType(IType type)
-			{
-				if (type.Kind == TypeKind.Dynamic)
-					return objectType;
-				else
-					return base.VisitOtherType(type);
-			}
+			fromType = fromType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			toType = toType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			return fromType.Equals(toType);
 		}
 		#endregion
 		
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		bool IsSubtypeOf(IType s, IType t, int subtypeCheckNestingDepth)
 		{
 			// conversion to dynamic + object are always possible
-			if (t.Kind == TypeKind.Dynamic || t.Equals(objectType))
+			if (t.Kind == TypeKind.Dynamic || t.IsKnownType(KnownTypeCode.Object))
 				return true;
 			if (subtypeCheckNestingDepth > 10) {
 				// Subtyping in C# is undecidable
@@ -856,7 +856,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		Conversion UserDefinedExplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
 		{
-			// C# 4.0 spec §6.4.5 User-defined implicit conversions
+			// C# 4.0 spec §6.4.5 User-defined explicit conversions
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, true);
 			if (operators.Count > 0) {
 				IType mostSpecificSource;
@@ -1135,7 +1135,53 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				|| IsImplicitReferenceConversion(m.ReturnType, invoke.ReturnType);
 		}
 		#endregion
-		
+
+		#region Tuple Conversion
+		Conversion TupleConversion(TupleResolveResult fromRR, IType toType, bool isExplicit)
+		{
+			var fromElements = fromRR.Elements;
+			var toElements = TupleType.GetTupleElementTypes(toType);
+			if (toElements.IsDefault || fromElements.Length != toElements.Length)
+				return Conversion.None;
+			Conversion[] elementConversions = new Conversion[fromElements.Length];
+			for (int i = 0; i < elementConversions.Length; i++) {
+				Conversion c;
+				if (isExplicit) {
+					c = ExplicitConversion(fromElements[i], toElements[i]);
+				} else {
+					c = ImplicitConversion(fromElements[i], toElements[i]);
+				}
+				if (!c.IsValid)
+					return Conversion.None;
+				elementConversions[i] = c;
+			}
+			return Conversion.TupleConversion(elementConversions.ToImmutableArray());
+		}
+
+		Conversion TupleConversion(IType fromType, IType toType, bool isExplicit)
+		{
+			var fromElements = TupleType.GetTupleElementTypes(fromType);
+			if (fromElements.IsDefaultOrEmpty)
+				return Conversion.None;
+			var toElements = TupleType.GetTupleElementTypes(toType);
+			if (toElements.IsDefault || fromElements.Length != toElements.Length)
+				return Conversion.None;
+			Conversion[] elementConversions = new Conversion[fromElements.Length];
+			for (int i = 0; i < elementConversions.Length; i++) {
+				Conversion c;
+				if (isExplicit) {
+					c = ExplicitConversion(fromElements[i], toElements[i]);
+				} else {
+					c = ImplicitConversion(fromElements[i], toElements[i]);
+				}
+				if (!c.IsValid)
+					return Conversion.None;
+				elementConversions[i] = c;
+			}
+			return Conversion.TupleConversion(elementConversions.ToImmutableArray());
+		}
+		#endregion
+
 		#region BetterConversion
 		/// <summary>
 		/// Gets the better conversion (C# 4.0 spec, §7.5.3.3)

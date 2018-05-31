@@ -1,6 +1,4 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -10,7 +8,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly mu5mxl5m
+.assembly TypeAnalysisTests
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +18,13 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module mu5mxl5m.dll
-// MVID: {DBFE6CB1-ED58-473D-986E-A633C15C8AEE}
+.module TypeAnalysisTests.dll
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04E10000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -848,6 +844,25 @@
     IL_001c:  ret
   } // end of method TypeAnalysisTests::EnumInConditionalOperator
 
+  .method public hidebysig instance bool 
+          MethodCallOnEnumConstant() cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4     0x7fff
+    IL_0006:  box        [mscorlib]System.AttributeTargets
+    IL_000b:  ldc.i4.1
+    IL_000c:  box        [mscorlib]System.AttributeTargets
+    IL_0011:  call       instance bool [mscorlib]System.Enum::HasFlag(class [mscorlib]System.Enum)
+    IL_0016:  stloc.0
+    IL_0017:  br.s       IL_0019
+
+    IL_0019:  ldloc.0
+    IL_001a:  ret
+  } // end of method TypeAnalysisTests::MethodCallOnEnumConstant
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -864,4 +879,3 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\TypeAnalysisTests.res

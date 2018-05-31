@@ -188,6 +188,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-
+		public void ThrowInFinally()
+		{
+			try {
+			} finally {
+				throw new Exception();
+			}
+		}
 	}
 }

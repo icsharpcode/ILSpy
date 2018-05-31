@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// CecilLoader used for converting cecil type references to ITypeReference.
 		/// May only be accessed within lock(typeReferenceCecilLoader).
 		/// </summary>
-		readonly CecilLoader typeReferenceCecilLoader = new CecilLoader();
+		readonly CecilLoader typeReferenceCecilLoader;
 
 		/// <summary>
 		/// Dictionary for NRefactory->Cecil lookup.
@@ -35,13 +35,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Dictionary<PropertyReference, IProperty> propertyLookupCache = new Dictionary<PropertyReference, IProperty>();
 		Dictionary<MethodReference, IMethod> methodLookupCache = new Dictionary<MethodReference, IMethod>();
 		Dictionary<EventReference, IEvent> eventLookupCache = new Dictionary<EventReference, IEvent>();
-		
-		public DecompilerTypeSystem(ModuleDefinition moduleDefinition)
+
+		public DecompilerTypeSystem(ModuleDefinition moduleDefinition) : this(moduleDefinition, new DecompilerSettings())
+		{
+		}
+
+		public DecompilerTypeSystem(ModuleDefinition moduleDefinition, DecompilerSettings settings)
 		{
 			if (moduleDefinition == null)
 				throw new ArgumentNullException(nameof(moduleDefinition));
+			if (settings == null)
+				throw new ArgumentNullException(nameof(settings));
 			this.moduleDefinition = moduleDefinition;
-			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			typeReferenceCecilLoader = new CecilLoader {
+				UseDynamicType = settings.Dynamic,
+				UseTupleTypes = settings.TupleTypes,
+			};
+			CecilLoader cecilLoader = new CecilLoader {
+				IncludeInternalMembers = true,
+				LazyLoad = true,
+				OnEntityLoaded = StoreMemberReference,
+				ShortenInterfaceImplNames = false,
+				UseDynamicType = settings.Dynamic,
+				UseTupleTypes = settings.TupleTypes,
+			};
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -294,11 +311,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return CreateFakeMethod(methodReference);
 		}
-		
+
+		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = true,
+			ReplaceMethodTypeParametersWithDummy = true,
+		};
+
 		static bool CompareTypes(IType a, IType b)
 		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			IType type1 = a.AcceptVisitor(normalizeTypeVisitor);
+			IType type2 = b.AcceptVisitor(normalizeTypeVisitor);
 			return type1.Equals(type2);
 		}
 		

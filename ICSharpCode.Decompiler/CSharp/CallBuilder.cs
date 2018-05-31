@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -56,6 +57,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.IsDelegateConstruction(newobj, true)) {
 				return HandleDelegateConstruction(newobj);
 			}
+			if (settings.TupleTypes && TupleTransform.MatchTupleConstruction(inst as NewObj, out var tupleElements) && tupleElements.Length >= 2) {
+				var elementTypes = TupleType.GetTupleElementTypes(inst.Method.DeclaringType);
+				Debug.Assert(!elementTypes.IsDefault, "MatchTupleConstruction should not success unless we got a valid tuple type.");
+				Debug.Assert(elementTypes.Length == tupleElements.Length);
+				var tuple = new TupleExpression();
+				var elementRRs = new List<ResolveResult>();
+				foreach (var (element, elementType) in tupleElements.Zip(elementTypes)) {
+					var translatedElement = expressionBuilder.Translate(element, elementType)
+						.ConvertTo(elementType, expressionBuilder, allowImplicitConversion: true);
+					tuple.Elements.Add(translatedElement.Expression);
+					elementRRs.Add(translatedElement.ResolveResult);
+				}
+				return tuple.WithRR(new TupleResolveResult(
+					expressionBuilder.compilation,
+					elementRRs.ToImmutableArray()
+				)).WithILInstruction(inst);
+			}
 			return Build(inst.OpCode, inst.Method, inst.Arguments, inst.ConstrainedTo).WithILInstruction(inst);
 		}
 
@@ -70,9 +88,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
 			} else {
-				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call, constrainedTo);
-				if (callOpCode == OpCode.CallVirt
-					&& constrainedTo == null
+				target = expressionBuilder.TranslateTarget(
+					callArguments.FirstOrDefault(),
+					nonVirtualInvocation: callOpCode == OpCode.Call,
+					memberStatic: method.IsStatic,
+					memberDeclaringType: constrainedTo ?? method.DeclaringType);
+				if (constrainedTo == null
 					&& target.Expression is CastExpression cast
 					&& target.ResolveResult is ConversionResolveResult conversion
 					&& target.Type.IsKnownType(KnownTypeCode.Object)
@@ -117,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 									expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
 							}
 						}
-						if (IsUnambiguousCall(expectedTargetDetails, method, target.ResolveResult, Empty<IType>.Array, expandedArguments) == OverloadResolutionErrors.None) {
+						if (IsUnambiguousCall(expectedTargetDetails, method, target.ResolveResult, Empty<IType>.Array, expandedArguments, out _) == OverloadResolutionErrors.None) {
 							isExpandedForm = true;
 							expectedParameters = expandedParameters;
 							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
@@ -156,9 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var argumentResolveResults = arguments.Select(arg => arg.ResolveResult).ToList();
 
-			ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm);
-
 			if (callOpCode == OpCode.NewObj) {
+				ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm);
 				if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType()) {
 					var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
 					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
@@ -176,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return atce
 						.WithRR(rr);
 				} else {
-					if (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array, arguments) != OverloadResolutionErrors.None) {
+					if (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array, arguments, out _) != OverloadResolutionErrors.None) {
 						for (int i = 0; i < arguments.Count; i++) {
 							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
 								if (arguments[i].Expression is LambdaExpression lambda) {
@@ -195,10 +215,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList());
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
-					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithRR(rr);
+					return new InvocationExpression(target, arguments.Select(arg => arg.Expression))
+						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm));
 				} else if (IsDelegateEqualityComparison(method, arguments)) {
 					return HandleDelegateEqualityComparison(method, arguments)
-						.WithRR(rr);
+						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm));
 				} else if (method.IsOperator && method.Name == "op_Implicit" && arguments.Count == 1) {
 					return HandleImplicitConversion(method, arguments[0]);
 				} else {
@@ -209,15 +230,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						if (method.IsStatic)
 							requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
+						else if (method.Name == ".ctor")
+							requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
+						else if (target.Expression is BaseReferenceExpression)
+							requireTarget = (callOpCode != OpCode.CallVirt && method.IsVirtual);
 						else
-							requireTarget = !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression) || method.Name == ".ctor";
+							requireTarget = !(target.Expression is ThisReferenceExpression);
 					}
 					bool targetCasted = false;
 					bool argumentsCasted = false;
 					IType[] typeArguments = Empty<IType>.Array;
 					var targetResolveResult = requireTarget ? target.ResolveResult : null;
+					IParameterizedMember foundMethod;
 					OverloadResolutionErrors errors;
-					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments)) != OverloadResolutionErrors.None) {
+					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments, out foundMethod)) != OverloadResolutionErrors.None) {
 						switch (errors) {
 							case OverloadResolutionErrors.TypeInferenceFailed:
 							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
@@ -254,8 +280,12 @@ namespace ICSharpCode.Decompiler.CSharp
 								}
 								continue;
 						}
+						// We've given up.
+						foundMethod = method;
 						break;
 					}
+					// Note: after this loop, 'method' and 'foundMethod' may differ,
+					// but as far as allowed by IsAppropriateCallTarget().
 
 					Expression targetExpr;
 					string methodName = method.Name;
@@ -279,7 +309,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (requireTypeArguments && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 						typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
-					return new InvocationExpression(targetExpr, argumentExpressions).WithRR(rr);
+					return new InvocationExpression(targetExpr, argumentExpressions)
+						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod, argumentResolveResults, isExpandedForm: isExpandedForm));
 				}
 			}
 		}
@@ -349,8 +380,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ResolveResult target, IType[] typeArguments, IList<TranslatedExpression> arguments)
+			ResolveResult target, IType[] typeArguments, IList<TranslatedExpression> arguments,
+			out IParameterizedMember foundMember)
 		{
+			foundMember = null;
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
 			if (expectedTargetDetails.CallOpCode == OpCode.NewObj) {
@@ -372,7 +405,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
 				return or.BestCandidateErrors;
-			if (!IsAppropriateCallTarget(expectedTargetDetails, method, or.GetBestCandidateWithSubstitutedTypeArguments()))
+			if (or.IsAmbiguous)
+				return OverloadResolutionErrors.AmbiguousMatch;
+			foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
+			if (!IsAppropriateCallTarget(expectedTargetDetails, method, foundMember))
 				return OverloadResolutionErrors.AmbiguousMatch;
 			return OverloadResolutionErrors.None;
 		}
@@ -395,16 +431,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
-		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method)
+		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, out IMember foundMember)
 		{
+			foundMember = null;
+			MemberResolveResult result;
 			if (target == null) {
-				var result = resolver.ResolveSimpleName(method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
-				return !(result == null || result.IsError || !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, result.Member));
+				result = resolver.ResolveSimpleName(method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
 			} else {
 				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-				var result = lookup.Lookup(target, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
-				return !(result == null || result.IsError || !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, result.Member));
+				if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer) {
+					// TODO: use OR here, etc.
+					result = null;
+					foreach (var methodList in lookup.LookupIndexers(target)) {
+						foreach (var indexer in methodList) {
+							if (IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, indexer)) {
+								foundMember = indexer;
+								return true;
+							}
+						}
+					}
+				} else {
+					result = lookup.Lookup(target, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
+				}
 			}
+			foundMember = result?.Member;
+			return !(result == null || result.IsError || !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, result.Member));
 		}
 
 		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method, TranslatedExpression target, IList<TranslatedExpression> arguments)
@@ -414,7 +465,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
-			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method)) {
+			IMember foundMember;
+			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method, out foundMember)) {
 				if (!requireTarget) {
 					requireTarget = true;
 					targetResolveResult = target.ResolveResult;
@@ -423,11 +475,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					target = target.ConvertTo(method.AccessorOwner.DeclaringType, expressionBuilder);
 					targetResolveResult = target.ResolveResult;
 				} else {
+					foundMember = method.AccessorOwner;
 					break;
 				}
 			}
 			
-			var rr = new MemberResolveResult(target.ResolveResult, method.AccessorOwner);
+			var rr = new MemberResolveResult(target.ResolveResult, foundMember);
 
 			if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
 				var value = arguments.Last();
@@ -472,14 +525,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		bool IsAppropriateCallTarget(ExpectedTargetDetails expectedTargetDetails, IMember expectedTarget, IMember actualTarget)
 		{
-			if (expectedTarget.Equals(actualTarget))
+			if (expectedTarget.Equals(actualTarget, NormalizeTypeVisitor.TypeErasure))
 				return true;
 
 			if (expectedTargetDetails.CallOpCode == OpCode.CallVirt && actualTarget.IsOverride) {
 				if (expectedTargetDetails.NeedsBoxingConversion && actualTarget.DeclaringType.IsReferenceType != true)
 					return false;
 				foreach (var possibleTarget in InheritanceHelper.GetBaseMembers(actualTarget, false)) {
-					if (expectedTarget.Equals(possibleTarget))
+					if (expectedTarget.Equals(possibleTarget, NormalizeTypeVisitor.TypeErasure))
 						return true;
 					if (!possibleTarget.IsOverride)
 						break;
@@ -513,7 +566,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				requireTarget = true;
 			} else {
 				targetType = method.DeclaringType;
-				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+				target = expressionBuilder.TranslateTarget(inst.Arguments[0],
+					nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
+					memberStatic: method.IsStatic,
+					memberDeclaringType: method.DeclaringType);
 				target = ExpressionBuilder.UnwrapBoxingConversion(target);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));

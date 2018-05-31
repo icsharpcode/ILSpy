@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		static bool IsValidType(IType type)
 		{
-			return type.Kind != TypeKind.Unknown && type.Kind != TypeKind.Null;
+			return type.Kind != TypeKind.Unknown && type.Kind != TypeKind.Null && type.Kind != TypeKind.None;
 		}
 		
 		bool PhaseTwo()
@@ -593,8 +593,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return;
 			}
 			// Handle parameterized type:
-			ParameterizedType pU = U as ParameterizedType;
-			ParameterizedType pV = V as ParameterizedType;
+			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
+			ParameterizedType pV = V.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			if (pU != null && pV != null
 			    && object.Equals(pU.GenericType, pV.GenericType)
 			    && pU.TypeParameterCount == pV.TypeParameterCount)
@@ -644,7 +644,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
 			ArrayType arrV = V as ArrayType;
-			ParameterizedType pV = V as ParameterizedType;
+			ParameterizedType pV = V.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			if (arrU != null && arrV != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
@@ -656,7 +656,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (pV != null) {
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseU in U.GetAllBaseTypes()) {
-					ParameterizedType pU = baseU as ParameterizedType;
+					ParameterizedType pU = baseU.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 					if (pU != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pU;
@@ -730,7 +730,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
 			ArrayType arrV = V as ArrayType;
-			ParameterizedType pU = U as ParameterizedType;
+			ParameterizedType pU = U.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 			if (arrV != null && arrU != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
@@ -742,7 +742,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (pU != null) {
 				ParameterizedType uniqueBaseType = null;
 				foreach (IType baseV in V.GetAllBaseTypes()) {
-					ParameterizedType pV = baseV as ParameterizedType;
+					ParameterizedType pV = baseV.TupleUnderlyingTypeOrSelf() as ParameterizedType;
 					if (pV != null && object.Equals(pU.GenericType, pV.GenericType) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
 							uniqueBaseType = pV;
@@ -818,7 +818,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (expressions == null)
 				throw new ArgumentNullException("expressions");
 			if (expressions.Count == 1) {
-				success = (expressions[0].Type.Kind != TypeKind.Unknown);
+				success = IsValidType(expressions[0].Type);
 				return expressions[0].Type;
 			}
 			Log.WriteCollection("GetBestCommonType() for ", expressions);

@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public CSharpDecompiler(ModuleDefinition module, DecompilerSettings settings)
-			: this(new DecompilerTypeSystem(module), settings)
+			: this(new DecompilerTypeSystem(module, settings), settings)
 		{
 		}
 
@@ -229,6 +229,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
+				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+					return true;
 			}
 
 			FieldDefinition field = member as FieldDefinition;
@@ -244,11 +246,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				// event-fields are not [CompilerGenerated]
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
 					return true;
-				// HACK : only hide fields starting with '__StaticArrayInit'
 				if (settings.ArrayInitializers && field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
+					// hide fields starting with '__StaticArrayInit'
 					if (field.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 						return true;
 					if (field.FieldType.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
+						return true;
+					// hide fields starting with '$$method'
+					if (field.Name.StartsWith("$$method", StringComparison.Ordinal))
 						return true;
 				}
 			}
@@ -1368,6 +1373,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						BaseType = ConvertType(gType.GenericArguments[0], typeAttributes, ref typeIndex, options),
 						HasNullableSpecifier = true
 					};
+				}
+				if (CecilLoader.IsValueTuple(gType, out int tupleCardinality) && tupleCardinality > 1 && tupleCardinality < TupleType.RestPosition) {
+					var tupleType = new TupleAstType();
+					foreach (var typeArgument in gType.GenericArguments) {
+						typeIndex++;
+						tupleType.Elements.Add(new TupleTypeElement {
+							Type = ConvertType(typeArgument, typeAttributes, ref typeIndex, options)
+						});
+					}
+					return tupleType;
 				}
 				AstType baseType = ConvertType(gType.ElementType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 				List<AstType> typeArguments = new List<AstType>();

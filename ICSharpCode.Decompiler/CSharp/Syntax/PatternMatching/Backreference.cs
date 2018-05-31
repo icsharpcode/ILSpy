@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			var last = match.Get (referencedGroupName).Last ();
+			var last = match.Get (referencedGroupName).LastOrDefault();
 			if (last == null && other == null)
 				return true;
 			return last.IsMatch(other);

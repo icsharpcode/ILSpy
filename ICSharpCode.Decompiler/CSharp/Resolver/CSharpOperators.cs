@@ -255,6 +255,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				b.Append(')');
 				return b.ToString();
 			}
+
+			bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+			{
+				return this == obj;
+			}
 		}
 		#endregion
 		
@@ -1055,13 +1060,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				: base((IMethod)nonLiftedMethod.MemberDefinition, nonLiftedMethod.Substitution)
 			{
 				this.nonLiftedOperator = nonLiftedMethod;
-				var substitution = new MakeNullableVisitor(nonLiftedMethod.Compilation, nonLiftedMethod.Substitution);
-				this.Parameters = base.CreateParameters(substitution);
+				var compilation = nonLiftedMethod.Compilation;
+				var substitution = nonLiftedMethod.Substitution;
+				this.Parameters = base.CreateParameters(
+					type => NullableType.Create(compilation, type.AcceptVisitor(substitution)));
 				// Comparison operators keep the 'bool' return type even when lifted.
 				if (IsComparisonOperator(nonLiftedMethod))
 					this.ReturnType = nonLiftedMethod.ReturnType;
 				else
-					this.ReturnType = nonLiftedMethod.ReturnType.AcceptVisitor(substitution);
+					this.ReturnType = NullableType.Create(compilation, nonLiftedMethod.ReturnType.AcceptVisitor(substitution));
 			}
 
 			public IReadOnlyList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;
@@ -1076,38 +1083,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			public override int GetHashCode()
 			{
 				return nonLiftedOperator.GetHashCode() ^ 0x7191254;
-			}
-		}
-
-		sealed class MakeNullableVisitor : TypeVisitor
-		{
-			readonly ICompilation compilation;
-			readonly TypeParameterSubstitution typeParameterSubstitution;
-
-			public MakeNullableVisitor(ICompilation compilation, TypeParameterSubstitution typeParameterSubstitution)
-			{
-				this.compilation = compilation;
-				this.typeParameterSubstitution = typeParameterSubstitution;
-			}
-
-			public override IType VisitTypeDefinition(ITypeDefinition type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-
-			public override IType VisitTypeParameter(ITypeParameter type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-
-			public override IType VisitParameterizedType(ParameterizedType type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-
-			public override IType VisitOtherType(IType type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
 			}
 		}
 		#endregion

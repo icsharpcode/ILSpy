@@ -258,6 +258,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return baseMember.Specialize(TypeParameterSubstitution.Compose(newSubstitution, this.substitution));
 		}
 
+		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			SpecializedMember other = obj as SpecializedMember;
+			if (other == null)
+				return false;
+			return this.baseMember.Equals(other.baseMember, typeNormalization)
+				&& this.substitution.Equals(other.substitution, typeNormalization);
+		}
+
 		public override bool Equals(object obj)
 		{
 			SpecializedMember other = obj as SpecializedMember;
@@ -303,7 +312,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (result != null)
 					return result;
 				else
-					return LazyInit.GetOrSet(ref this.parameters, CreateParameters(this.Substitution));
+					return LazyInit.GetOrSet(ref this.parameters, CreateParameters(t => t.AcceptVisitor(this.Substitution)));
 			}
 			protected set {
 				// This setter is used for LiftedUserDefinedOperator, a special case of specialized member
@@ -315,7 +324,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		protected IParameter[] CreateParameters(TypeVisitor substitution)
+		protected IParameter[] CreateParameters(Func<IType, IType> substitution)
 		{
 			var paramDefs = ((IParameterizedMember)this.baseMember).Parameters;
 			if (paramDefs.Count == 0) {
@@ -324,7 +333,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var parameters = new IParameter[paramDefs.Count];
 				for (int i = 0; i < parameters.Length; i++) {
 					var p = paramDefs[i];
-					IType newType = p.Type.AcceptVisitor(substitution);
+					IType newType = substitution(p.Type);
 					parameters[i] = new DefaultParameter(
 						newType, p.Name, this,
 						p.Attributes, p.IsRef, p.IsOut,

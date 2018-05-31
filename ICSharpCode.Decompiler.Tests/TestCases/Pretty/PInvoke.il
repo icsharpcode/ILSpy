@@ -7,7 +7,7 @@
 	)
 	.ver 4:0:0:0
 }
-.assembly c0d101lq
+.assembly PInvoke
 {
 	.custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = (
 		01 00 08 00 00 00 00 00
@@ -26,7 +26,6 @@
 }
 
 .module PInvoke
-// MVID: {F608732B-D0A2-45AE-9706-B0B2379F8AAE}
 .corflags 0x00000001 // ILOnly
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = (
 	01 00 00 00

@@ -252,8 +252,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			yield return asm;
 
-			string requiredAssemblyFullName = asm.FullName;
-
 			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
 
 			foreach (var assembly in assemblies) {
@@ -262,10 +260,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				var module = assembly.GetModuleDefinitionOrNull();
 				if (module == null)
 					continue;
+				var resolver = assembly.GetAssemblyResolver();
 				foreach (var reference in module.AssemblyReferences) {
-					if (requiredAssemblyFullName == reference.FullName) {
-						found = true;
-						break;
+					using (LoadedAssembly.DisableAssemblyLoad()) {
+						if (resolver.Resolve(reference) == asm) {
+							found = true;
+							break;
+						}
 					}
 				}
 				if (found && AssemblyReferencesScopeType(module.Assembly))

@@ -12,6 +12,26 @@ namespace ICSharpCode.Decompiler.Util
 			value = pair.Value;
 		}
 
+		public static IEnumerable<(A, B)> Zip<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
+		{
+			return input1.Zip(input2, (a, b) => (a, b));
+		}
+
+		public static IEnumerable<T> Slice<T>(this IReadOnlyList<T> input, int offset, int length)
+		{
+			for (int i = offset; i < offset + length; i++) {
+				yield return input[i];
+			}
+		}
+
+		public static IEnumerable<T> Slice<T>(this IReadOnlyList<T> input, int offset)
+		{
+			int length = input.Count;
+			for (int i = offset; i < length; i++) {
+				yield return input[i];
+			}
+		}
+
 		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
 			return new HashSet<T>(input);

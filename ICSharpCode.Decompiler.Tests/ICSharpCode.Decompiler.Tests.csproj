@@ -37,8 +37,8 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="1.0.0.55" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.7.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.8.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
     <PackageReference Include="NUnit" Version="3.9.0" />
@@ -62,13 +62,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Semantics\ConversionTests.cs" />
+    <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\Pretty\Issue1080.cs" />
     <Compile Include="TestCases\Pretty\QualifierTests.cs" />
     <Compile Include="TestCases\Pretty\RefLocalsAndReturns.cs" />
+    <Compile Include="TestCases\Pretty\TupleTests.cs" />
     <Compile Include="TestCases\Pretty\WellKnownConstants.cs" />
+    <Compile Include="TypeSystem\TypeSystemHelper.cs" />
     <Compile Include="TypeSystem\TypeSystemLoaderTests.cs" />
     <Compile Include="TypeSystem\TypeSystemTestCase.cs" />
     <Compile Include="VBPrettyTestRunner.cs" />
@@ -81,6 +85,7 @@
     <Compile Include="TestCases\ILPretty\Issue1038.cs" />
     <None Include="TestCases\ILPretty\Issue1038.il" />
     <Compile Include="TestCases\Ugly\NoArrayInitializers.cs" />
+    <None Include="TestCases\ILPretty\Issue1145.il" />
     <None Include="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
     <None Include="TestCases\ILPretty\Issue1047.cs" />
     <Compile Include="TestCases\Correctness\NullPropagation.cs" />
