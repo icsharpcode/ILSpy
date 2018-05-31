@@ -326,7 +326,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitNumericCompoundAssign(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
 					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
-		}
+				}
 			}
 		}
 		#endregion

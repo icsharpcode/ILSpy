@@ -87,6 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
+				new DynamicCallSiteTransform(),
 				new SwitchDetection(),
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),

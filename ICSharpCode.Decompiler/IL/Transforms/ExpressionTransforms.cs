@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -329,6 +330,57 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (new NullableLiftingTransform(context).Run(inst))
 				return;
+
+			if (TransformDynamicAddAssignOrRemoveAssign(inst))
+				return;
+		}
+
+		/// <summary>
+		/// if (logic.not(dynamic.isevent (ldloc a))) Block IL_0045 {
+		///     dynamic.setmember.compound Setter2(ldloc a, dynamic.binary.operator AddAssign(dynamic.getmember Setter2(ldloc a), ldc.i4 5))
+		/// } else Block IL_0144 {
+		///     dynamic.invokemember.invokespecial.discard add_Setter2(ldloc a, ldc.i4 5)
+		/// }
+		/// =>
+		/// dynamic.setmember.compound Setter2(ldloc a, dynamic.binary.operator AddAssign(dynamic.getmember Setter2(ldloc a), ldc.i4 5))
+		/// </summary>
+		bool TransformDynamicAddAssignOrRemoveAssign(IfInstruction inst)
+		{
+			if (!inst.Condition.MatchLogicNot(out var possibleIsEvent))
+				return false;
+			if (!(possibleIsEvent is DynamicIsEventInstruction isEvent))
+				return false;
+			var trueInst = Block.Unwrap(inst.TrueInst);
+			var falseInst = Block.Unwrap(inst.FalseInst);
+			if (!(trueInst is DynamicSetMemberInstruction dynamicSetMember
+				&& dynamicSetMember.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment)
+				&& isEvent.Argument.Match(dynamicSetMember.Target).Success
+				&& dynamicSetMember.Value is DynamicBinaryOperatorInstruction binaryOp
+				&& binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember
+				&& dynamicGetMember.Target.Match(dynamicSetMember.Target).Success
+				&& dynamicSetMember.Name == dynamicGetMember.Name
+				&& falseInst is DynamicInvokeMemberInstruction invokeMember
+				&& invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName)
+				&& invokeMember.Arguments.Count == 2 && invokeMember.Arguments[0].Match(dynamicGetMember.Target).Success)
+			) {
+				return false;
+			}
+			switch (binaryOp.Operation) {
+				case ExpressionType.AddAssign:
+					if (invokeMember.Name != "add_" + dynamicGetMember.Name)
+						return false;
+					break;
+				case ExpressionType.SubtractAssign:
+					if (invokeMember.Name != "remove_" + dynamicGetMember.Name)
+						return false;
+					break;
+				default:
+					return false;
+			}
+			if (!binaryOp.Right.Match(invokeMember.Arguments[1]).Success)
+				return false;
+			inst.ReplaceWith(trueInst);
+			return true;
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)

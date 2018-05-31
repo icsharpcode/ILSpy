@@ -2333,6 +2333,95 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ResolveResult(NullableType.GetUnderlyingType(arg.Type)));
 		}
 
+		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst, TranslationContext context)
+		{
+			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked);
+		}
+
+		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)
+		{
+			var target = Translate(inst.Arguments[0], SpecialType.Dynamic);
+			return new IndexerExpression(target, inst.Arguments.Skip(1).Select(arg => Translate(arg, SpecialType.Dynamic).Expression))
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(SpecialType.Dynamic));
+		}
+
+		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, TranslationContext context)
+		{
+			var target = Translate(inst.Target, SpecialType.Dynamic);
+			return new MemberReferenceExpression(target, inst.Name)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(SpecialType.Dynamic));
+		}
+
+		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
+		{
+			IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType);
+			return new ObjectCreateExpression(ConvertType(constructorType), inst.Arguments.Skip(1).Select(arg => Translate(arg, SpecialType.Dynamic).Expression))
+				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
+		}
+
+		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
+		{
+			TranslatedExpression target;
+			if (!IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var callTargetType))
+				target = Translate(inst.Arguments[0], SpecialType.Dynamic);
+			else
+				target = new TypeReferenceExpression(ConvertType(callTargetType))
+					.WithoutILInstruction()
+					.WithRR(new TypeResolveResult(callTargetType));
+			return new InvocationExpression(new MemberReferenceExpression(target, inst.Name, inst.TypeArguments.Select(ConvertType)), inst.Arguments.Skip(1).Select(arg => Translate(arg, SpecialType.Dynamic).Expression))
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(SpecialType.Dynamic));
+		}
+
+		protected internal override TranslatedExpression VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst, TranslationContext context)
+		{
+			Debug.Assert(inst.Arguments.Count >= 3);
+			var target = Translate(inst.Arguments[0], SpecialType.Dynamic);
+			var value = Translate(inst.Arguments.Last(), SpecialType.Dynamic);
+			return Assignment(
+				new IndexerExpression(target, inst.Arguments.Skip(1).Take(inst.Arguments.Count - 2).Select(arg => Translate(arg, SpecialType.Dynamic).Expression)).WithoutILInstruction().WithRR(new ResolveResult(SpecialType.Dynamic)),
+				value
+			).WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, TranslationContext context)
+		{
+			var target = Translate(inst.Target, SpecialType.Dynamic);
+			var value = Translate(inst.Value, SpecialType.Dynamic);
+			return Assignment(
+				new MemberReferenceExpression(target, inst.Name).WithoutILInstruction().WithRR(new ResolveResult(SpecialType.Dynamic)),
+				value
+			).WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst, TranslationContext context)
+		{
+			switch (inst.Operation) {
+				case ExpressionType.Add:
+					return CreateArithmeticBinaryOperator(BinaryOperatorType.Add);
+				case ExpressionType.Subtract:
+					return CreateArithmeticBinaryOperator(BinaryOperatorType.Subtract);
+				case ExpressionType.Multiply:
+					return CreateArithmeticBinaryOperator(BinaryOperatorType.Multiply);
+				case ExpressionType.Divide:
+					return CreateArithmeticBinaryOperator(BinaryOperatorType.Divide);
+				case ExpressionType.Modulo:
+					return CreateArithmeticBinaryOperator(BinaryOperatorType.Modulus);
+				default:
+					return base.VisitDynamicBinaryOperatorInstruction(inst, context);
+			}
+
+			TranslatedExpression CreateArithmeticBinaryOperator(BinaryOperatorType operatorType)
+			{
+				var left = Translate(inst.Left);
+				var right = Translate(inst.Right);
+				return new BinaryOperatorExpression(left.Expression, operatorType, right.Expression)
+					.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
+			}
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";
