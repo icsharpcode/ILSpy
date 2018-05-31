@@ -30,7 +30,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly TypeDefinition typeDefinition;
 		readonly SRM.TypeDefinition td;
 
 		public TypeTreeNode(TypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
@@ -38,12 +37,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (typeDefinition.IsNil)
 				throw new ArgumentNullException(nameof(typeDefinition));
 			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
-			this.typeDefinition = typeDefinition;
+			this.TypeDefinition = typeDefinition;
 			this.td = typeDefinition.Module.Metadata.GetTypeDefinition(typeDefinition.Handle);
 			this.LazyLoading = true;
 		}
 
-		public TypeDefinition TypeDefinition => typeDefinition;
+		public TypeDefinition TypeDefinition { get; }
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 

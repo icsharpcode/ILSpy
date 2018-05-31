@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		ShortVariable
 	}
 
-	static partial class ILOpCodeExtensions
+	public static partial class ILOpCodeExtensions
 	{
 		public static OperandType GetOperandType(this ILOpCode opCode)
 		{

@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.Dom;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -24,8 +24,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	{
 		private readonly string name;
 
-		public AnalyzedPropertyAccessorTreeNode(MethodDefinition analyzedMethod, string name)
-			: base(analyzedMethod)
+		public AnalyzedPropertyAccessorTreeNode(Decompiler.Metadata.PEFile module, MethodDefinitionHandle analyzedMethod, string name)
+			: base(module, analyzedMethod)
 		{
 			this.name = name;
 		}

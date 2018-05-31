@@ -20,40 +20,46 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.Dom;
-
+using ICSharpCode.Decompiler.TypeSystem;
 using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedFieldAccessTreeNode : AnalyzerSearchTreeNode
+	sealed class AnalyzedFieldAccessTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly bool showWrites; // true: show writes; false: show read access
-		private readonly FieldDefinition analyzedField;
-		private Lazy<Hashtable> foundMethods;
-		private readonly object hashLock = new object();
+		readonly bool showWrites; // true: show writes; false: show read access
+		readonly Decompiler.Metadata.PEFile module;
+		readonly FieldDefinitionHandle analyzedField;
+		readonly FullTypeName analyzedTypeName;
+		readonly string analyzedFieldName;
+		Lazy<HashSet<Decompiler.Metadata.MethodDefinition>> foundMethods;
+		readonly object hashLock = new object();
 
-		public AnalyzedFieldAccessTreeNode(FieldDefinition analyzedField, bool showWrites)
+		public AnalyzedFieldAccessTreeNode(Decompiler.Metadata.PEFile module, FieldDefinitionHandle analyzedField, bool showWrites)
 		{
 			if (analyzedField.IsNil)
 				throw new ArgumentNullException(nameof(analyzedField));
 
+			this.module = module;
 			this.analyzedField = analyzedField;
+			var fd = module.Metadata.GetFieldDefinition(analyzedField);
+			this.analyzedTypeName = fd.GetDeclaringType().GetFullTypeName(module.Metadata);
+			this.analyzedFieldName = module.Metadata.GetString(fd.Name);
 			this.showWrites = showWrites;
 		}
 
-		public override object Text
-		{
-			get { return showWrites ? "Assigned By" : "Read By"; }
-		}
+		public override object Text => showWrites ? "Assigned By" : "Read By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			foundMethods = new Lazy<Hashtable>(LazyThreadSafetyMode.ExecutionAndPublication);
+			foundMethods = new Lazy<HashSet<Decompiler.Metadata.MethodDefinition>>(LazyThreadSafetyMode.ExecutionAndPublication);
 
-			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedField, FindReferencesInType);
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(module, analyzedField, provideTypeSystem: false, FindReferencesInType);
 			foreach (var child in analyzer.PerformAnalysis(ct).OrderBy(n => n.Text)) {
 				yield return child;
 			}
@@ -61,35 +67,46 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			foundMethods = null;
 		}
 
-		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, IDecompilerTypeSystem typeSystem)
 		{
-			string name = analyzedField.Name;
-
-			foreach (MethodDefinition method in type.Methods) {
+			var td = module.Metadata.GetTypeDefinition(type);
+			foreach (var h in td.GetMethods()) {
 				bool found = false;
-				if (!method.HasBody)
+
+				var method = module.Metadata.GetMethodDefinition(h);
+				if (!method.HasBody())
 					continue;
-				var blob = method.Body.GetILReader();
-				while (blob.RemainingBytes > 0) {
-					var opCode = ILParser.DecodeOpCode(ref blob);
+
+				var blob = module.Reader.GetMethodBody(method.RelativeVirtualAddress).GetILReader();
+				while (!found && blob.RemainingBytes > 0) {
+					var opCode = blob.DecodeOpCode();
 					if (!CanBeReference(opCode)) {
-						ILParser.SkipOperand(ref blob, opCode);
+						blob.SkipOperand(opCode);
 						continue;
 					}
-					var field = ILParser.DecodeMemberToken(ref blob, method.Module);
-					if (field == null || field.Name != name)
-						continue;
-					var definition = field.GetDefinition() as FieldDefinition?;
-					if (definition?.DeclaringType.FullName != analyzedField.DeclaringType.FullName)
-						continue;
-					found = true;
-					break;
+					var member = MetadataTokens.EntityHandle(blob.ReadInt32());
+					switch (member.Kind) {
+						case HandleKind.FieldDefinition:
+							// check whether we're looking at the defining assembly
+							found = member == analyzedField && module == this.module;
+							break;
+						case HandleKind.MemberReference:
+							var mr = module.Metadata.GetMemberReference((MemberReferenceHandle)member);
+							// safety-check: should always be a field
+							if (mr.GetKind() != MemberReferenceKind.Field)
+								break;
+							if (!module.Metadata.StringComparer.Equals(mr.Name, analyzedFieldName))
+								break;
+							var typeName = mr.Parent.GetFullTypeName(module.Metadata);
+							found = typeName == analyzedTypeName;
+							break;
+					}
 				}
 
 				if (found) {
-					MethodDefinition? codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition?;
-					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation.Value)) {
-						var node = new AnalyzedMethodTreeNode(codeLocation.Value);
+					var md = new Decompiler.Metadata.MethodDefinition(module, h);
+					if (IsNewResult(md)) {
+						var node = new AnalyzedMethodTreeNode(module, h);
 						node.Language = this.Language;
 						yield return node;
 					}
@@ -97,7 +114,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private bool CanBeReference(ILOpCode code)
+		bool CanBeReference(ILOpCode code)
 		{
 			switch (code) {
 				case ILOpCode.Ldfld:
@@ -114,14 +131,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private bool HasAlreadyBeenFound(MethodDefinition method)
+		bool IsNewResult(Decompiler.Metadata.MethodDefinition method)
 		{
-			Hashtable hashtable = foundMethods.Value;
+			var hashtable = foundMethods.Value;
 			lock (hashLock) {
 				if (hashtable.Contains(method)) {
 					return true;
 				} else {
-					hashtable.Add(method, null);
+					hashtable.Add(method);
 					return false;
 				}
 			}

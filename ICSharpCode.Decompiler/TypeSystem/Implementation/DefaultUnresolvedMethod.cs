@@ -223,6 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				Accessibility = typeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public,
 				IsSynthetic = true,
 				HasBody = true,
+				MetadataToken = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(0), // initialize with properly typed nil token, to avoid InvalidCastExceptions
 				ReturnType = KnownTypeReference.Void
 			};
 		}

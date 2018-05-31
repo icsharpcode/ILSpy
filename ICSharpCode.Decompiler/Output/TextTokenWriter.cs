@@ -106,15 +106,15 @@ namespace ICSharpCode.Decompiler
 					var definition = type.GetDefinition();
 					if (definition == null)
 						return null;
-					return new TypeDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.TypeDefinitionHandle)definition.MetadataToken);
+					return new TypeDefinition(typeSystem.GetModuleDefinition(definition.ParentAssembly), (System.Reflection.Metadata.TypeDefinitionHandle)definition.MetadataToken);
 				case IMethod method:
-					return new MethodDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.MethodDefinitionHandle)method.MetadataToken);
+					return new MethodDefinition(typeSystem.GetModuleDefinition(method.ParentAssembly), (System.Reflection.Metadata.MethodDefinitionHandle)method.MetadataToken);
 				case IProperty property:
-					return new PropertyDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.PropertyDefinitionHandle)property.MetadataToken);
+					return new PropertyDefinition(typeSystem.GetModuleDefinition(property.ParentAssembly), (System.Reflection.Metadata.PropertyDefinitionHandle)property.MetadataToken);
 				case IEvent @event:
-					return new EventDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.EventDefinitionHandle)@event.MetadataToken);
+					return new EventDefinition(typeSystem.GetModuleDefinition(@event.ParentAssembly), (System.Reflection.Metadata.EventDefinitionHandle)@event.MetadataToken);
 				case IField field:
-					return new FieldDefinition(typeSystem.ModuleDefinition, (System.Reflection.Metadata.FieldDefinitionHandle)field.MetadataToken);
+					return new FieldDefinition(typeSystem.GetModuleDefinition(field.ParentAssembly), (System.Reflection.Metadata.FieldDefinitionHandle)field.MetadataToken);
 				default:
 					return null;
 			}

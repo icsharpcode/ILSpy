@@ -40,6 +40,7 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using System.Reflection;
+using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.ILSpy
 {
@@ -601,7 +602,17 @@ namespace ICSharpCode.ILSpy
 				convertTypeOptions |= ConvertTypeOptions.IncludeOuterTypeName;
 			var metadata = method.Module.Metadata;
 			var md = metadata.GetMethodDefinition(method.Handle);
-			var name = (md.IsConstructor(metadata)) ? TypeToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace: includeNamespace) : metadata.GetString(md.Name);
+			string name;
+			if (md.IsConstructor(metadata)) {
+				name = TypeToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace: includeNamespace);
+			} else {
+				if (includeTypeName) {
+					name = TypeToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace: includeNamespace) + ".";
+				} else {
+					name = "";
+				}
+				name += metadata.GetString(md.Name);
+			}
 			var signature = md.DecodeSignature(new AstTypeBuilder(convertTypeOptions), new GenericContext(method));
 
 			int i = 0;
@@ -692,16 +703,6 @@ namespace ICSharpCode.ILSpy
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member.Module, member.Handle, new DecompilationOptions().DecompilerSettings);
 		}
 
-		/*
-		public override IMetadataEntity GetOriginalCodeLocation(IMetadataEntity member)
-		{
-			if (showAllMembers || !new DecompilationOptions().DecompilerSettings.AnonymousMethods)
-				return member;
-			else
-				return TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);
-		}
-		*/
-
 		public override string GetTooltip(Entity entity)
 		{
 			var decompilerTypeSystem = new DecompilerTypeSystem(entity.Module);
@@ -732,6 +733,59 @@ namespace ICSharpCode.ILSpy
 			}
 			var flags = ConversionFlags.All & ~ConversionFlags.ShowBody;
 			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(symbol);
+		}
+
+		public override CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
+		{
+			var declaringType = member.GetDeclaringType(module.Metadata);
+
+			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition) {
+				declaringType = (TypeDefinitionHandle)member;
+			}
+
+			var info = new CodeMappingInfo(this, module, declaringType);
+
+			var td = module.Metadata.GetTypeDefinition(declaringType);
+
+			foreach (var method in td.GetMethods()) {
+				var parent = method;
+				var part = method;
+
+				var connectedMethods = new Queue<MethodDefinitionHandle>();
+				connectedMethods.Enqueue(part);
+
+				while (connectedMethods.Count > 0) {
+					part = connectedMethods.Dequeue();
+					var md = module.Metadata.GetMethodDefinition(part);
+
+					if (!md.HasBody()) {
+						info.AddMapping(parent, part);
+					} else {
+						// TODO : async and yield fsms
+
+						// deal with ldftn instructions, i.e., lambdas
+						var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+						while (blob.RemainingBytes > 0) {
+							var code = blob.DecodeOpCode();
+							if (code == ILOpCode.Ldftn) {
+								var token = MetadataTokens.EntityHandle(blob.ReadInt32());
+								if (token.Kind == HandleKind.MethodDefinition) {
+									if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
+										connectedMethods.Enqueue((MethodDefinitionHandle)token);
+								}
+							} else {
+								blob.SkipOperand(code);
+							}
+						}
+
+						info.AddMapping(parent, part);
+					}
+				}
+
+
+			}
+
+			return info;
 		}
 	}
 

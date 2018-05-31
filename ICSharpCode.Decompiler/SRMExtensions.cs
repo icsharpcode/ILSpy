@@ -134,6 +134,29 @@ namespace ICSharpCode.Decompiler
 			return accessors.Raiser;
 		}
 
+		public static TypeDefinitionHandle GetDeclaringType(this EntityHandle entity, MetadataReader metadata)
+		{
+			switch (entity.Kind) {
+				case HandleKind.TypeDefinition:
+					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)entity);
+					return td.GetDeclaringType();
+				case HandleKind.FieldDefinition:
+					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)entity);
+					return fd.GetDeclaringType();
+				case HandleKind.MethodDefinition:
+					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)entity);
+					return md.GetDeclaringType();
+				case HandleKind.EventDefinition:
+					var ed = metadata.GetEventDefinition((EventDefinitionHandle)entity);
+					return metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+				case HandleKind.PropertyDefinition:
+					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)entity);
+					return metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+
 		public static TypeReferenceHandle GetDeclaringType(this TypeReference tr)
 		{
 			switch (tr.ResolutionScope.Kind) {

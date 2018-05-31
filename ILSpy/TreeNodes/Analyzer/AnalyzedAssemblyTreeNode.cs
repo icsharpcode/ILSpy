@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -42,6 +42,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			//this.Children.Add(new AnalyzedAssemblyReferencedByTreeNode(analyzedAssembly));
 		}
 
-		public override IMemberReference Member => null;
+		public override IMetadataEntity Member => null;
 	}
 }

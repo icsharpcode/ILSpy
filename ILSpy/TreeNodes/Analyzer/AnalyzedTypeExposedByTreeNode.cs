@@ -21,13 +21,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly TypeDefinition analyzedType;
+		private readonly Decompiler.Metadata.TypeDefinition analyzedType;
 
 		public AnalyzedTypeExposedByTreeNode(TypeDefinition analyzedType)
 		{
@@ -100,7 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(PropertyDefinition property)
+		private bool TypeIsExposedBy(Decompiler.Metadata.PropertyDefinition property)
 		{
 			if (IsPrivate(property))
 				return false;
@@ -111,7 +110,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(EventDefinition eventDef)
+		private bool TypeIsExposedBy(Decompiler.Metadata.EventDefinition eventDef)
 		{
 			if (IsPrivate(eventDef))
 				return false;
@@ -122,7 +121,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(MethodDefinition method)
+		private bool TypeIsExposedBy(Decompiler.Metadata.MethodDefinition method)
 		{
 			// if the method has overrides, it is probably an explicit interface member
 			// and should be considered part of the public API even though it is marked private.
@@ -152,21 +151,21 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private static bool IsPrivate(PropertyDefinition property)
+		private static bool IsPrivate(Decompiler.Metadata.PropertyDefinition property)
 		{
 			bool isGetterPublic = (!property.GetMethod.IsNil && !property.GetMethod.IsPrivate);
 			bool isSetterPublic = (!property.SetMethod.IsNil && !property.SetMethod.IsPrivate);
 			return !(isGetterPublic || isSetterPublic);
 		}
 
-		private static bool IsPrivate(EventDefinition eventDef)
+		private static bool IsPrivate(Decompiler.Metadata.EventDefinition eventDef)
 		{
 			bool isAdderPublic = (eventDef.AddMethod != null && !eventDef.AddMethod.IsPrivate);
 			bool isRemoverPublic = (eventDef.RemoveMethod != null && !eventDef.RemoveMethod.IsPrivate);
 			return !(isAdderPublic || isRemoverPublic);
 		}
 
-		public static bool CanShow(TypeDefinition type)
+		public static bool CanShow(Decompiler.Metadata.TypeDefinition type)
 		{
 			return true;
 		}

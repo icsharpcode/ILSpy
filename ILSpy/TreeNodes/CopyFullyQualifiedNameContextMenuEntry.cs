@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -17,7 +18,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public void Execute(TextViewContext context)
 		{
 			var member = GetMemberNodeFromContext(context)?.Member;
-			if (member == null) return;
+			if (member == null || member.IsNil) return;
 			Clipboard.SetText(GetFullyQualifiedName(member));
 		}
 
@@ -31,14 +32,46 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		private string GetFullyQualifiedName(IMetadataEntity member)
 		{
-			/*if (member.DeclaringType != null) {
-				if (member is TypeReference)
-					return GetFullyQualifiedName(member.DeclaringType) + "+" + member.Name;
-				else
-					return GetFullyQualifiedName(member.DeclaringType) + "." + member.Name;
+			string name;
+			System.Reflection.Metadata.TypeDefinitionHandle declaringType;
+			switch (member.Handle.Kind) {
+				case System.Reflection.Metadata.HandleKind.TypeDefinition:
+					return ((System.Reflection.Metadata.TypeDefinitionHandle)member.Handle).GetFullTypeName(member.Module.Metadata).ToString();
+				case System.Reflection.Metadata.HandleKind.FieldDefinition:
+					name = "";
+					declaringType = member.Handle.GetDeclaringType(member.Module.Metadata);
+					var fd = member.Module.Metadata.GetFieldDefinition((System.Reflection.Metadata.FieldDefinitionHandle)member.Handle);
+					if (!declaringType.IsNil) {
+						name = declaringType.GetFullTypeName(member.Module.Metadata) + ".";
+					}
+					return name + member.Module.Metadata.GetString(fd.Name);
+				case System.Reflection.Metadata.HandleKind.MethodDefinition:
+					name = "";
+					declaringType = member.Handle.GetDeclaringType(member.Module.Metadata);
+					var md = member.Module.Metadata.GetMethodDefinition((System.Reflection.Metadata.MethodDefinitionHandle)member.Handle);
+					if (!declaringType.IsNil) {
+						name = declaringType.GetFullTypeName(member.Module.Metadata) + ".";
+					}
+					return name + member.Module.Metadata.GetString(md.Name);
+				case System.Reflection.Metadata.HandleKind.EventDefinition:
+					name = "";
+					declaringType = member.Handle.GetDeclaringType(member.Module.Metadata);
+					var ed = member.Module.Metadata.GetEventDefinition((System.Reflection.Metadata.EventDefinitionHandle)member.Handle);
+					if (!declaringType.IsNil) {
+						name = declaringType.GetFullTypeName(member.Module.Metadata) + ".";
+					}
+					return name + member.Module.Metadata.GetString(ed.Name);
+				case System.Reflection.Metadata.HandleKind.PropertyDefinition:
+					name = "";
+					declaringType = member.Handle.GetDeclaringType(member.Module.Metadata);
+					var pd = member.Module.Metadata.GetPropertyDefinition((System.Reflection.Metadata.PropertyDefinitionHandle)member.Handle);
+					if (!declaringType.IsNil) {
+						name = declaringType.GetFullTypeName(member.Module.Metadata) + ".";
+					}
+					return name + member.Module.Metadata.GetString(pd.Name);
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
-			return (member is TypeReference t ? t.Namespace + "." : "") + member.Name;*/
-			throw new NotImplementedException();
 		}
 	}
 }

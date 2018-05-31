@@ -76,6 +76,11 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (resolved is MethodDefinition m)
 						return m;
 					return default;
+				case HandleKind.MethodSpecification:
+					resolved = ((MethodSpecificationHandle)handle).Resolve(context);
+					if (resolved is MethodDefinition m2)
+						return m2;
+					return default;
 			}
 			throw new NotImplementedException();
 		}
@@ -155,7 +160,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			var currentNamespace = metadata.GetNamespaceDefinitionRoot();
 			for (int i = 0; i < namespaceParts.Length; i++) {
 				string identifier = namespaceParts[i];
-				var next = currentNamespace.NamespaceDefinitions.FirstOrDefault(ns => metadata.GetString(metadata.GetNamespaceDefinition(ns).Name) == identifier);
+				var next = currentNamespace.NamespaceDefinitions.FirstOrDefault(ns => metadata.StringComparer.Equals(ns, identifier));
 				if (next.IsNil)
 					return null;
 				currentNamespace = metadata.GetNamespaceDefinition(next);
@@ -166,8 +171,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		static TypeDefinitionHandle FindTypeInNamespace(MetadataReader metadata, NamespaceDefinition @namespace, string name)
 		{
 			foreach (var type in @namespace.TypeDefinitions) {
-				var typeName = metadata.GetString(metadata.GetTypeDefinition(type).Name);
-				if (name == typeName)
+				if (metadata.StringComparer.Equals(metadata.GetTypeDefinition(type).Name, name))
 					return type;
 			}
 			return default;
@@ -223,7 +227,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (candidates.Count == 0)
 						throw new NotSupportedException();
 					foreach (var (method, signature) in candidates) {
-						if (SignatureBlobComparer.EqualsMethodSignature(targetMetadata.GetBlobReader(signature), metadata.GetBlobReader(mr.Signature), new SimpleMetadataResolveContext(targetModule, context), context))
+						if (SignatureBlobComparer.EqualsMethodSignature(targetMetadata.GetBlobReader(signature), metadata.GetBlobReader(mr.Signature), targetMetadata, metadata))
 							return new MethodDefinition(targetModule, method);
 					}
 					throw new NotSupportedException();
@@ -244,6 +248,13 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					throw new NotImplementedException();
 			}
+		}
+
+		public static MethodDefinition Resolve(this MethodSpecificationHandle handle, IMetadataResolveContext context)
+		{
+			var metadata = context.CurrentModule.Metadata;
+			var ms = metadata.GetMethodSpecification(handle);
+			return ResolveAsMethod(ms.Method, context);
 		}
 
 		class Unspecializer : ISignatureTypeProvider<EntityHandle, Unit>
@@ -322,12 +333,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public static class SignatureBlobComparer
 	{
-		public static bool EqualsMethodSignature(BlobReader a, BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
+		public static bool EqualsMethodSignature(BlobReader a, BlobReader b, MetadataReader contextForA, MetadataReader contextForB)
 		{
 			return EqualsMethodSignature(ref a, ref b, contextForA, contextForB);
 		}
 
-		static bool EqualsMethodSignature(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
+		static bool EqualsMethodSignature(ref BlobReader a, ref BlobReader b, MetadataReader contextForA, MetadataReader contextForB)
 		{
 			SignatureHeader header;
 			// compare signature headers
@@ -349,6 +360,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			for (; i < totalParameterCount; i++) {
 				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 					return false;
+				//
 				if (typeCode == 65)
 					break;
 				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
@@ -365,50 +377,50 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static bool IsSameCompressedInteger(ref BlobReader a, ref BlobReader b, out int value)
 		{
-			return a.TryReadCompressedInteger(out value) == b.TryReadCompressedInteger(out int otherValue) && value == otherValue;
+			return a.TryReadCompressedInteger(out value) && b.TryReadCompressedInteger(out int otherValue) && value == otherValue;
 		}
 
 		static bool IsSameCompressedSignedInteger(ref BlobReader a, ref BlobReader b, out int value)
 		{
-			return a.TryReadCompressedSignedInteger(out value) == b.TryReadCompressedSignedInteger(out int otherValue) && value == otherValue;
+			return a.TryReadCompressedSignedInteger(out value) && b.TryReadCompressedSignedInteger(out int otherValue) && value == otherValue;
 		}
 
-		static bool TypesAreEqual(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB, int typeCode)
+		static bool TypesAreEqual(ref BlobReader a, ref BlobReader b, MetadataReader contextForA, MetadataReader contextForB, int typeCode)
 		{
 			switch (typeCode) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-				case 14:
-				case 22:
-				case 24:
-				case 25:
-				case 28: // primitive types
+				case 0x1: // ELEMENT_TYPE_VOID
+				case 0x2: // ELEMENT_TYPE_BOOLEAN 
+				case 0x3: // ELEMENT_TYPE_CHAR 
+				case 0x4: // ELEMENT_TYPE_I1 
+				case 0x5: // ELEMENT_TYPE_U1
+				case 0x6: // ELEMENT_TYPE_I2
+				case 0x7: // ELEMENT_TYPE_U2
+				case 0x8: // ELEMENT_TYPE_I4
+				case 0x9: // ELEMENT_TYPE_U4
+				case 0xA: // ELEMENT_TYPE_I8
+				case 0xB: // ELEMENT_TYPE_U8
+				case 0xC: // ELEMENT_TYPE_R4
+				case 0xD: // ELEMENT_TYPE_R8
+				case 0xE: // ELEMENT_TYPE_STRING
+				case 0x16: // ELEMENT_TYPE_TYPEDBYREF
+				case 0x18: // ELEMENT_TYPE_I
+				case 0x19: // ELEMENT_TYPE_U
+				case 0x1C: // ELEMENT_TYPE_OBJECT
 					return true;
-				case 15: // pointer type
-				case 16: // byref type
-				case 69: // pinned type
-				case 29: // szarray type
+				case 0xF: // ELEMENT_TYPE_PTR 
+				case 0x10: // ELEMENT_TYPE_BYREF 
+				case 0x45: // ELEMENT_TYPE_PINNED
+				case 0x1D: // ELEMENT_TYPE_SZARRAY
 					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 						return false;
 					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
 						return false;
 					return true;
-				case 27:
+				case 0x1B: // ELEMENT_TYPE_FNPTR 
 					if (!EqualsMethodSignature(ref a, ref b, contextForA, contextForB))
 						return false;
 					return true;
-				case 20: // array type
+				case 0x14: // ELEMENT_TYPE_ARRAY 
 					// element type
 					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 						return false;
@@ -424,7 +436,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						if (!IsSameCompressedInteger(ref a, ref b, out _))
 							return false;
 					}
-					// lowerBounds
+					// lower bounds
 					if (!IsSameCompressedInteger(ref a, ref b, out int numOfLowerBounds))
 						return false;
 					for (int i = 0; i < numOfLowerBounds; i++) {
@@ -432,8 +444,8 @@ namespace ICSharpCode.Decompiler.Metadata
 							return false;
 					}
 					return true;
-				case 31: // mod-req type
-				case 32: // mod-opt type
+				case 0x1F: // ELEMENT_TYPE_CMOD_REQD 
+				case 0x20: // ELEMENT_TYPE_CMOD_OPT 
 					// modifier
 					if (!TypeHandleEquals(ref a, ref b, contextForA, contextForB))
 						return false;
@@ -443,7 +455,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))
 						return false;
 					return true;
-				case 21: // generic instance type
+				case 0x15: // ELEMENT_TYPE_GENERICINST 
 					// generic type
 					if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 						return false;
@@ -458,14 +470,14 @@ namespace ICSharpCode.Decompiler.Metadata
 							return false;
 					}
 					return true;
-				case 19: // type parameter
-				case 30: // method type parameter
+				case 0x13: // ELEMENT_TYPE_VAR
+				case 0x1E: // ELEMENT_TYPE_MVAR 
 					// index
 					if (!IsSameCompressedInteger(ref a, ref b, out _))
 						return false;
 					return true;
-				case 17:
-				case 18:
+				case 0x11: // ELEMENT_TYPE_VALUETYPE
+				case 0x12: // ELEMENT_TYPE_CLASS
 					if (!TypeHandleEquals(ref a, ref b, contextForA, contextForB))
 						return false;
 					return true;
@@ -474,21 +486,13 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		static bool TypeHandleEquals(ref BlobReader a, ref BlobReader b, IMetadataResolveContext contextForA, IMetadataResolveContext contextForB)
+		static bool TypeHandleEquals(ref BlobReader a, ref BlobReader b, MetadataReader contextForA, MetadataReader contextForB)
 		{
 			var typeA = a.ReadTypeHandle();
 			var typeB = b.ReadTypeHandle();
 			if (typeA.IsNil || typeB.IsNil)
 				return false;
-			var resolvedA = MetadataResolver.ResolveType(typeA, contextForA);
-			var resolvedB = MetadataResolver.ResolveType(typeB, contextForB);
-			if (resolvedA.IsNil || resolvedB.IsNil)
-				return false;
-			if (resolvedA.Handle != resolvedB.Handle)
-				return false;
-			if (resolvedA.Module.FullName != resolvedB.Module.FullName)
-				return false;
-			return true;
+			return typeA.GetFullTypeName(contextForA) == typeB.GetFullTypeName(contextForB);
 		}
 	}
 }

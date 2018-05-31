@@ -632,6 +632,17 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 					return null;
+				case MethodSpecification ms:
+					resolvedMember = ms.Handle.Resolve(new SimpleMetadataResolveContext(ms.Module));
+					if (!resolvedMember.IsNil) {
+						switch (resolvedMember) {
+							case MethodDefinition md:
+								return assemblyListTreeNode.FindMethodNode(md);
+							default:
+								throw new NotSupportedException();
+						}
+					}
+					return null;
 				default:
 					return null;
 			}
@@ -655,7 +666,7 @@ namespace ICSharpCode.ILSpy
 			ILSpyTreeNode treeNode = FindTreeNode(reference);
 			if (treeNode != null) {
 				SelectNode(treeNode);
-			} else if (reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo opCode) {
+			} else if (reference is Decompiler.Disassembler.OpCodeInfo opCode) {
 				OpenLink(opCode.Link);
 			}
 			return decompilationTask;

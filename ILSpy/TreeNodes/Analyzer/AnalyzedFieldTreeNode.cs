@@ -17,40 +17,37 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.Dom;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
+	class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly FieldDefinition analyzedField;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly FieldDefinitionHandle analyzedField;
 
-		public AnalyzedFieldTreeNode(FieldDefinition analyzedField)
+		public AnalyzedFieldTreeNode(Decompiler.Metadata.PEFile module, FieldDefinitionHandle analyzedField)
 		{
 			if (analyzedField.IsNil)
 				throw new ArgumentNullException(nameof(analyzedField));
+			this.module = module;
 			this.analyzedField = analyzedField;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
+		public override object Icon => FieldTreeNode.GetIcon(new Decompiler.Metadata.FieldDefinition(module, analyzedField));
 
-		public override object Text
-		{
-			get
-			{
-				return Language.TypeToString(analyzedField.DeclaringType, true) +
-					"." + analyzedField.Name + " : " + this.Language.TypeToString(analyzedField.FieldType, false, analyzedField);
-			}
-		}
+		public override object Text => Language.FieldToString(new Decompiler.Metadata.FieldDefinition(module, analyzedField), true, true);
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new AnalyzedFieldAccessTreeNode(analyzedField, false));
-			if (!analyzedField.IsLiteral)
-				this.Children.Add(new AnalyzedFieldAccessTreeNode(analyzedField, true));
+			this.Children.Add(new AnalyzedFieldAccessTreeNode(module, analyzedField, false));
+			var fd = module.Metadata.GetFieldDefinition(analyzedField);
+			if (!fd.HasFlag(System.Reflection.FieldAttributes.Literal))
+				this.Children.Add(new AnalyzedFieldAccessTreeNode(module, analyzedField, true));
 		}
 
-		public override IMemberReference Member => analyzedField;
+		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.FieldDefinition(module, analyzedField);
 	}
 }

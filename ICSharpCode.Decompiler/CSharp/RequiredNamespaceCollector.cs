@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (handle.Kind.IsTypeKind())
 							CollectNamespacesForTypeReference(typeSystem.ResolveAsType(handle), namespaces);
 						else
-							CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), namespaces);
+							CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), typeSystem, namespaces);
 						break;
 					default:
 						instructions.SkipOperand(opCode);
@@ -183,15 +183,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static void CollectNamespacesForMemberReference(IMember member, HashSet<string> namespaces)
+		static void CollectNamespacesForMemberReference(IMember member, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
 			switch (member) {
 				case IField field:
-					CollectNamespacesForTypeReference(field.DeclaringType, namespaces);
+					if (field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						CollectNamespaces(field, typeSystem, namespaces);
+					else
+						CollectNamespacesForTypeReference(field.DeclaringType, namespaces);
 					CollectNamespacesForTypeReference(field.ReturnType, namespaces);
 					break;
 				case IMethod method:
-					CollectNamespacesForTypeReference(method.DeclaringType, namespaces);
+					if (method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						CollectNamespaces(method, typeSystem, namespaces);
+					else
+						CollectNamespacesForTypeReference(method.DeclaringType, namespaces);
 					CollectNamespacesForTypeReference(method.ReturnType, namespaces);
 					foreach (var param in method.Parameters)
 						CollectNamespacesForTypeReference(param.Type, namespaces);

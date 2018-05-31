@@ -18,10 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 using System.Threading;
-using ICSharpCode.Decompiler.Disassembler;
-using Dom = ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {

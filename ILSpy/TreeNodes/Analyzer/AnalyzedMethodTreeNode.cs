@@ -18,43 +18,37 @@
 
 using System;
 using System.Reflection;
-using ICSharpCode.Decompiler.Dom;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly MethodDefinition analyzedMethod;
-		private readonly string prefix;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly MethodDefinitionHandle analyzedMethod;
+		readonly string prefix;
 
-		public AnalyzedMethodTreeNode(MethodDefinition analyzedMethod, string prefix = "")
+		public AnalyzedMethodTreeNode(Decompiler.Metadata.PEFile module, MethodDefinitionHandle analyzedMethod, string prefix = "")
 		{
 			if (analyzedMethod.IsNil)
 				throw new ArgumentNullException(nameof(analyzedMethod));
+			this.module = module;
 			this.analyzedMethod = analyzedMethod;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return MethodTreeNode.GetIcon(analyzedMethod); }
-		}
+		public override object Icon => MethodTreeNode.GetIcon(new Decompiler.Metadata.MethodDefinition(module, analyzedMethod));
 
-		public override object Text
-		{
-			get
-			{
-				return prefix + Language.TypeToString(analyzedMethod.DeclaringType, true) + "." + MethodTreeNode.GetText(analyzedMethod, Language);
-			}
-		}
+		public override object Text => prefix + Language.MethodToString(new Decompiler.Metadata.MethodDefinition(module, analyzedMethod), true, true);
 
 		protected override void LoadChildren()
 		{
-			if (analyzedMethod.HasBody)
-				this.Children.Add(new AnalyzedMethodUsesTreeNode(analyzedMethod));
+			if (analyzedMethod.HasBody(module.Metadata))
+				this.Children.Add(new AnalyzedMethodUsesTreeNode(module, analyzedMethod));
 
-			if (analyzedMethod.HasFlag(MethodAttributes.Virtual) && !(analyzedMethod.HasFlag(MethodAttributes.NewSlot) && analyzedMethod.HasFlag(MethodAttributes.Final)))
+			/*if (analyzedMethod.HasFlag(MethodAttributes.Virtual) && !(analyzedMethod.HasFlag(MethodAttributes.NewSlot) && analyzedMethod.HasFlag(MethodAttributes.Final)))
 				this.Children.Add(new AnalyzedVirtualMethodUsedByTreeNode(analyzedMethod));
 			else
 				this.Children.Add(new AnalyzedMethodUsedByTreeNode(analyzedMethod));
@@ -63,9 +57,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedMethodOverridesTreeNode(analyzedMethod));
 
 			if (AnalyzedInterfaceMethodImplementedByTreeNode.CanShow(analyzedMethod))
-				this.Children.Add(new AnalyzedInterfaceMethodImplementedByTreeNode(analyzedMethod));
+				this.Children.Add(new AnalyzedInterfaceMethodImplementedByTreeNode(analyzedMethod));*/
 		}
 
-		public override IMemberReference Member => analyzedMethod;
+		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.MethodDefinition(module, analyzedMethod);
 	}
 }

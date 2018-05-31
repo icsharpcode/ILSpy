@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Util;
@@ -270,7 +269,17 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(method));
 			var metadata = method.Module.Metadata;
 			var md = metadata.GetMethodDefinition(method.Handle);
-			var name = metadata.GetString(md.Name);
+			string name;
+			if (includeTypeName) {
+				if (includeNamespace) {
+					name = md.GetDeclaringType().GetFullTypeName(metadata) + ".";
+				} else {
+					name = md.GetDeclaringType().GetFullTypeName(metadata).Name + ".";
+				}
+				name += metadata.GetString(md.Name);
+			} else {
+				name = metadata.GetString(md.Name);
+			}
 			var signature = md.DecodeSignature(includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace, new GenericContext(method));
 
 			int i = 0;
@@ -348,12 +357,18 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		/// <summary>
-		/// Used by the analyzer to map compiler generated code back to the original code's location
-		/// </summary>
-		public virtual IMetadataEntity GetOriginalCodeLocation(IMetadataEntity member)
+		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
 		{
-			return member;
+			var parts = new Dictionary<SRM.MethodDefinitionHandle, SRM.MethodDefinitionHandle[]>();
+			var locations = new Dictionary<SRM.EntityHandle, SRM.MethodDefinitionHandle>();
+
+			var declaringType = member.GetDeclaringType(module.Metadata);
+
+			if (declaringType.IsNil && member.Kind == SRM.HandleKind.TypeDefinition) {
+				declaringType = (SRM.TypeDefinitionHandle)member;
+			}
+
+			return new CodeMappingInfo(this, module, declaringType);
 		}
 
 		public static string GetPlatformDisplayName(PEFile module)
@@ -380,152 +395,6 @@ namespace ICSharpCode.ILSpy
 		public static string GetRuntimeDisplayName(PEFile module)
 		{
 			return module.Metadata.MetadataVersion;
-		}
-	}
-
-	class ILSignatureProvider : SRM.ISignatureTypeProvider<string, GenericContext>
-	{
-		public static readonly ILSignatureProvider WithoutNamespace = new ILSignatureProvider(false);
-		public static readonly ILSignatureProvider WithNamespace = new ILSignatureProvider(true);
-
-		bool includeNamespace;
-
-		public ILSignatureProvider(bool includeNamespace)
-		{
-			this.includeNamespace = includeNamespace;
-		}
-
-		public string GetArrayType(string elementType, SRM.ArrayShape shape)
-		{
-			string printedShape = "";
-			for (int i = 0; i < shape.Rank; i++) {
-				if (i > 0)
-					printedShape += ", ";
-				if (i < shape.LowerBounds.Length || i < shape.Sizes.Length) {
-					int lower = 0;
-					if (i < shape.LowerBounds.Length) {
-						lower = shape.LowerBounds[i];
-						printedShape += lower.ToString();
-					}
-					printedShape += "...";
-					if (i < shape.Sizes.Length)
-						printedShape += (lower + shape.Sizes[i] - 1).ToString();
-				}
-			}
-			return $"{elementType}[{printedShape}]";
-		}
-
-		public string GetByReferenceType(string elementType)
-		{
-			return elementType + "&";
-		}
-
-		public string GetFunctionPointerType(SRM.MethodSignature<string> signature)
-		{
-			return "method " + signature.ReturnType + " *(" + string.Join(", ", signature.ParameterTypes) + ")";
-		}
-
-		public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
-		{
-			return genericType + "<" + string.Join(", ", typeArguments) + ">";
-		}
-
-		public string GetGenericMethodParameter(GenericContext genericContext, int index)
-		{
-			return "!!" + genericContext.GetGenericMethodTypeParameterName(index);
-		}
-
-		public string GetGenericTypeParameter(GenericContext genericContext, int index)
-		{
-			return "!" + genericContext.GetGenericTypeParameterName(index);
-		}
-
-		public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
-		{
-			string modifierKeyword = isRequired ? "modreq" : "modopt";
-			return $"{unmodifiedType} {modifierKeyword}({modifier})";
-		}
-
-		public string GetPinnedType(string elementType)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetPointerType(string elementType)
-		{
-			return elementType + "*";
-		}
-
-		public string GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
-		{
-			switch (typeCode) {
-				case SRM.PrimitiveTypeCode.Boolean:
-					return "bool";
-				case SRM.PrimitiveTypeCode.Byte:
-					return "uint8";
-				case SRM.PrimitiveTypeCode.SByte:
-					return "int8";
-				case SRM.PrimitiveTypeCode.Char:
-					return "char";
-				case SRM.PrimitiveTypeCode.Int16:
-					return "int16";
-				case SRM.PrimitiveTypeCode.UInt16:
-					return "uint16";
-				case SRM.PrimitiveTypeCode.Int32:
-					return "int32";
-				case SRM.PrimitiveTypeCode.UInt32:
-					return "uint32";
-				case SRM.PrimitiveTypeCode.Int64:
-					return "int64";
-				case SRM.PrimitiveTypeCode.UInt64:
-					return "uint64";
-				case SRM.PrimitiveTypeCode.Single:
-					return "float32";
-				case SRM.PrimitiveTypeCode.Double:
-					return "float64";
-				case SRM.PrimitiveTypeCode.IntPtr:
-					return "native int";
-				case SRM.PrimitiveTypeCode.UIntPtr:
-					return "native uint";
-				case SRM.PrimitiveTypeCode.Object:
-					return "object";
-				case SRM.PrimitiveTypeCode.String:
-					return "string";
-				case SRM.PrimitiveTypeCode.TypedReference:
-					return "typedref";
-				case SRM.PrimitiveTypeCode.Void:
-					return "void";
-				default:
-					throw new NotImplementedException();
-			}
-		}
-
-		public string GetSZArrayType(string elementType)
-		{
-			return elementType + "[]";
-		}
-
-		public string GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
-		{
-			if (!includeNamespace) {
-				return Decompiler.Disassembler.DisassemblerHelpers.Escape(handle.GetFullTypeName(reader).Name);
-			}
-
-			return handle.GetFullTypeName(reader).ToILNameString();
-		}
-
-		public string GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
-		{
-			if (!includeNamespace) {
-				return Decompiler.Disassembler.DisassemblerHelpers.Escape(handle.GetFullTypeName(reader).Name);
-			}
-
-			return handle.GetFullTypeName(reader).ToILNameString();
-		}
-
-		public string GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
-		{
-			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}
 	}
 }

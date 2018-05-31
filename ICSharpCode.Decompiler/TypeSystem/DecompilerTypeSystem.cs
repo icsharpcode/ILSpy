@@ -32,6 +32,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
 		Dictionary<SRM.EntityHandle, IMethod> methodLookupCache = new Dictionary<SRM.EntityHandle, IMethod>();
 		Dictionary<SRM.EntityHandle, IEvent> eventLookupCache = new Dictionary<SRM.EntityHandle, IEvent>();
+
+		Dictionary<IUnresolvedAssembly, Metadata.PEFile> moduleLookup = new Dictionary<IUnresolvedAssembly, Metadata.PEFile>();
 		
 		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition)
 		{
@@ -52,7 +54,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null) {
-					referencedAssemblies.Add(cecilLoader.LoadModule(asm));
+					IUnresolvedAssembly unresolvedAsm = cecilLoader.LoadModule(asm);
+					referencedAssemblies.Add(unresolvedAsm);
+					moduleLookup.Add(unresolvedAsm, asm);
 					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes) {
 						var forwarder = metadata.GetExportedType(h);
@@ -84,6 +88,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public SRM.MetadataReader GetMetadata() => moduleDefinition.Metadata;
+
+		public Metadata.PEFile GetModuleDefinition(IAssembly assembly)
+		{
+			if (assembly == MainAssembly)
+				return ModuleDefinition;
+			if (!moduleLookup.TryGetValue(assembly.UnresolvedAssembly, out var file))
+				return null;
+			return file;
+		}
 
 		public IType ResolveFromSignature(ITypeReference typeReference)
 		{

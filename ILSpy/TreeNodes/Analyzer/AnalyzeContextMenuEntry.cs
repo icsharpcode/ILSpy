@@ -16,8 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -29,24 +30,29 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
 				return false;
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is MemberReference;
+				return context.Reference != null && IsValidReference(context.Reference.Reference);
 			return context.SelectedTreeNodes.All(n => n is IMemberTreeNode);
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is MemberReference;
+				return context.Reference != null && context.Reference.Reference is IMetadataEntity;
 			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
-				if (!(node.Member is TypeDefinition
-				      || node.Member is FieldDefinition
-				      || node.Member is MethodDefinition
-				      || AnalyzedPropertyTreeNode.CanShow(node.Member)
-				      || AnalyzedEventTreeNode.CanShow(node.Member)))
+				if (!IsValidReference(node.Member))
 					return false;
 			}
 
 			return true;
+		}
+
+		bool IsValidReference(object reference)
+		{
+			return reference is IMetadataEntity
+				|| reference is MemberReference
+				|| reference is MethodSpecification
+				|| reference is TypeReference
+				|| reference is TypeSpecification;
 		}
 
 		public void Execute(TextViewContext context)
@@ -55,37 +61,76 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
 					Analyze(node.Member);
 				}
-			} else if (context.Reference != null && context.Reference.Reference is MemberReference) {
-				if (context.Reference.Reference is MemberReference)
-					Analyze((MemberReference)context.Reference.Reference);
-				// TODO: implement support for other references: ParameterReference, etc.
+			} else if (context.Reference != null && IsValidReference(context.Reference.Reference)) {
+				Analyze(context.Reference.Reference);
 			}
 		}
 
-		public static void Analyze(IMemberReference member)
+		public static void Analyze(object member)
 		{
-			var definition = member.GetDefinition();
-			if (definition == null) return;
-			switch (definition) {
-				case TypeDefinition td:
-					if (!td.IsNil)
-						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(td));
+			switch (member) {
+				case IMetadataEntity entity:
+					switch (entity) {
+						case TypeDefinition td:
+							if (!td.IsNil)
+								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(td));
+							break;
+						case FieldDefinition fd:
+							//if (!fd.IsNil)
+							//	AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+							break;
+						case MethodDefinition md:
+							if (!md.IsNil)
+								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md.Module, md.Handle));
+							break;
+						case PropertyDefinition pd:
+							//if (!pd.IsNil)
+							//	AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+							break;
+						case EventDefinition ed:
+							//if (!ed.IsNil)
+							//	AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
+							break;
+						default:
+							throw new NotSupportedException();
+					}
 					break;
-				case FieldDefinition fd:
-					if (!fd.IsNil)
-						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+				case TypeReference tr:
+					var resolved = tr.Handle.Resolve(new SimpleMetadataResolveContext(tr.Module));
+					if (!resolved.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(resolved));
 					break;
-				case MethodDefinition md:
-					if (!md.IsNil)
-						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md));
+				case TypeSpecification ts:
+					resolved = ts.Handle.Resolve(new SimpleMetadataResolveContext(ts.Module));
+					if (!resolved.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(resolved));
 					break;
-				case PropertyDefinition pd:
-					if (!pd.IsNil)
-						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+				case MemberReference mr:
+					var resolvedMember = mr.Handle.Resolve(new SimpleMetadataResolveContext(mr.Module));
+					if (!resolvedMember.IsNil) {
+						switch (resolvedMember) {
+							case FieldDefinition fd:
+								//AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+								break;
+							case MethodDefinition md:
+								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md.Module, md.Handle));
+								break;
+							default:
+								throw new NotSupportedException();
+						}
+					}
 					break;
-				case EventDefinition ed:
-					if (!ed.IsNil)
-						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
+				case MethodSpecification ms:
+					resolvedMember = ms.Handle.Resolve(new SimpleMetadataResolveContext(ms.Module));
+					if (!resolvedMember.IsNil) {
+						switch (resolvedMember) {
+							case MethodDefinition md:
+								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md.Module, md.Handle));
+								break;
+							default:
+								throw new NotSupportedException();
+						}
+					}
 					break;
 			}
 		}

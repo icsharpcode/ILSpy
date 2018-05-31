@@ -18,39 +18,35 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.Decompiler.Dom;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly EventDefinition analyzedEvent;
-		private readonly string prefix;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly EventDefinitionHandle analyzedEvent;
+		readonly string prefix;
 
-		public AnalyzedEventTreeNode(EventDefinition analyzedEvent, string prefix = "")
+		public AnalyzedEventTreeNode(Decompiler.Metadata.PEFile module, EventDefinitionHandle analyzedEvent, string prefix = "")
 		{
 			if (analyzedEvent == null)
 				throw new ArgumentNullException(nameof(analyzedEvent));
+			this.module = module;
 			this.analyzedEvent = analyzedEvent;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override IMemberReference Member => analyzedEvent;
+		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.EventDefinition(module, analyzedEvent);
 
 		public override object Icon
 		{
-			get { return EventTreeNode.GetIcon(analyzedEvent); }
+			get { return EventTreeNode.GetIcon(new Decompiler.Metadata.EventDefinition(module, analyzedEvent)); }
 		}
 
-		public override object Text
-		{
-			get
-			{
-				// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-				return prefix + Language.TypeToString(analyzedEvent.DeclaringType, true) + "." + EventTreeNode.GetText(analyzedEvent, Language);
-			}
-		}
+		// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
+		public override object Text => prefix + Language.EventToString(new Decompiler.Metadata.EventDefinition(module, analyzedEvent), includeTypeName: true, includeNamespace: true);
 
 		protected override void LoadChildren()
 		{
@@ -73,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedInterfaceEventImplementedByTreeNode(analyzedEvent));
 		}
 
-		public static AnalyzerTreeNode TryCreateAnalyzer(MemberReference member)
+		/*public static AnalyzerTreeNode TryCreateAnalyzer(MemberReference member)
 		{
 			if (CanShow(member))
 				return new AnalyzedEventTreeNode(member as EventDefinition);
@@ -88,6 +84,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			return !MainWindow.Instance.CurrentLanguage.ShowMember(eventDef.GetAccessors().First().Method)
 				|| AnalyzedEventOverridesTreeNode.CanShow(eventDef);
-		}
+		}*/
 	}
 }

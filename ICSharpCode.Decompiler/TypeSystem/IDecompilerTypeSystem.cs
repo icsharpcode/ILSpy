@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		MetadataReader GetMetadata();
 		PEFile ModuleDefinition { get; }
+		PEFile GetModuleDefinition(IAssembly assembly);
 
 		/// <summary>
 		/// Gets a type system instance that automatically specializes the results

@@ -17,57 +17,54 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedPropertyTreeNode : AnalyzerEntityTreeNode
+	sealed class AnalyzedPropertyTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly PropertyDefinition analyzedProperty;
-		private readonly bool isIndexer;
-		private readonly string prefix;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly PropertyDefinitionHandle analyzedProperty;
+		readonly bool isIndexer;
+		readonly string prefix;
 
-		public AnalyzedPropertyTreeNode(PropertyDefinition analyzedProperty, string prefix = "")
+		public AnalyzedPropertyTreeNode(Decompiler.Metadata.PEFile module, PropertyDefinitionHandle analyzedProperty, string prefix = "")
 		{
 			if (analyzedProperty == null)
 				throw new ArgumentNullException(nameof(analyzedProperty));
-			this.isIndexer = analyzedProperty.IsIndexer;
+			using (LoadedAssembly.DisableAssemblyLoad()) {
+				this.isIndexer = analyzedProperty.HasMatchingDefaultMemberAttribute(module, out _);
+			}
+			this.module = module;
 			this.analyzedProperty = analyzedProperty;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return PropertyTreeNode.GetIcon(analyzedProperty, isIndexer); }
-		}
+		public override object Icon => PropertyTreeNode.GetIcon(new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty), isIndexer);
 
-		public override object Text
-		{
-			get
-			{
-				// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-				return prefix + Language.TypeToString(analyzedProperty.DeclaringType, true) + "." + PropertyTreeNode.GetText(analyzedProperty, Language, isIndexer);
-			}
-		}
+		// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
+		public override object Text => prefix + Language.PropertyToString(new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty), includeNamespace: true, includeTypeName: true, isIndexer: isIndexer);
 
 		protected override void LoadChildren()
 		{
-			if (!analyzedProperty.GetMethod.IsNil)
-				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(analyzedProperty.GetMethod, "get"));
-			if (!analyzedProperty.SetMethod.IsNil)
-				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(analyzedProperty.SetMethod, "set"));
-			foreach (var accessor in analyzedProperty.OtherMethods)
-				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
+			var accessors = module.Metadata.GetPropertyDefinition(analyzedProperty).GetAccessors();
+			if (!accessors.Getter.IsNil)
+				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(module, accessors.Getter, "get"));
+			if (!accessors.Setter.IsNil)
+				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(module, accessors.Setter, "set"));
+			//foreach (var accessor in analyzedProperty.OtherMethods)
+			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
 
-			if (AnalyzedPropertyOverridesTreeNode.CanShow(analyzedProperty))
+			/*if (AnalyzedPropertyOverridesTreeNode.CanShow(analyzedProperty))
 				this.Children.Add(new AnalyzedPropertyOverridesTreeNode(analyzedProperty));
 			if (AnalyzedInterfacePropertyImplementedByTreeNode.CanShow(analyzedProperty))
-				this.Children.Add(new AnalyzedInterfacePropertyImplementedByTreeNode(analyzedProperty));
+				this.Children.Add(new AnalyzedInterfacePropertyImplementedByTreeNode(analyzedProperty));*/
 		}
 
-		public static AnalyzerTreeNode TryCreateAnalyzer(IMemberReference member)
+		/*public static AnalyzerTreeNode TryCreateAnalyzer(IMemberReference member)
 		{
 			if (CanShow(member))
 				return new AnalyzedPropertyTreeNode((PropertyDefinition)member);
@@ -82,8 +79,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			return !MainWindow.Instance.CurrentLanguage.ShowMember(property.GetMethod.IsNil ? property.SetMethod : property.GetMethod)
 			    || AnalyzedPropertyOverridesTreeNode.CanShow(property);
-		}
+		}*/
 
-		public override IMemberReference Member => analyzedProperty;
+		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty);
 	}
 }

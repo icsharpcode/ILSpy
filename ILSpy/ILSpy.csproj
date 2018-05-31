@@ -111,6 +111,7 @@
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
     <Compile Include="ILSpyTraceListener.cs" />
+    <Compile Include="Languages\CodeMappingInfo.cs" />
     <Compile Include="Languages\CSharpILMixedLanguage.cs" />
     <Compile Include="Languages\CSharpLanguage.cs" />
     <Compile Include="DecompilationOptions.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="ISmartTextOutput.cs" />
     <Compile Include="Images\Images.cs" />
     <Compile Include="Languages\ILLanguage.cs" />
+    <Compile Include="Languages\ILSignatureProvider.cs" />
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
@@ -186,8 +188,23 @@
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedFieldAccessTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedFieldTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedMethodTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedMethodUsesTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyAccessorTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeInstantiationsTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeUsedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerEntityTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzerSearchTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\Extensions.cs" />
+    <Compile Include="TreeNodes\Analyzer\RemoveAnalyzeContextMenuEntry.cs" />
+    <Compile Include="TreeNodes\Analyzer\ScopedWhereUsedAnalyzer.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
     <Compile Include="TreeNodes\CopyFullyQualifiedNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />

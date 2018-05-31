@@ -17,53 +17,48 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Metadata;
+
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly TypeDefinition analyzedType;
+		readonly TypeDefinition analyzedType;
+		readonly SRM.TypeDefinition td;
 
 		public AnalyzedTypeTreeNode(TypeDefinition analyzedType)
 		{
 			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 			this.analyzedType = analyzedType;
+			this.td = analyzedType.Module.Metadata.GetTypeDefinition(analyzedType.Handle);
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return TypeTreeNode.GetIcon(analyzedType); }
-		}
+		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
 
-		public override object Text
-		{
-			get
-			{
-				return Language.TypeToString(analyzedType, true);
-			}
-		}
+		public override object Text => Language.TypeToString(analyzedType, includeNamespace: true);
 
 		protected override void LoadChildren()
 		{
-			if (AnalyzedAttributeAppliedToTreeNode.CanShow(analyzedType))
-				this.Children.Add(new AnalyzedAttributeAppliedToTreeNode(analyzedType));
+			//if (AnalyzedAttributeAppliedToTreeNode.CanShow(analyzedType))
+			//	this.Children.Add(new AnalyzedAttributeAppliedToTreeNode(analyzedType));
 
-			if (AnalyzedTypeInstantiationsTreeNode.CanShow(analyzedType))
-				this.Children.Add(new AnalyzedTypeInstantiationsTreeNode(analyzedType));
-
-			if (AnalyzedTypeUsedByTreeNode.CanShow(analyzedType))
-				this.Children.Add(new AnalyzedTypeUsedByTreeNode(analyzedType));
-
-			if (AnalyzedTypeExposedByTreeNode.CanShow(analyzedType))
+			if (AnalyzedTypeInstantiationsTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
+				this.Children.Add(new AnalyzedTypeInstantiationsTreeNode(analyzedType.Module, analyzedType.Handle));
+			
+			if (AnalyzedTypeUsedByTreeNode.CanShow(analyzedType.Module, analyzedType.Handle))
+				this.Children.Add(new AnalyzedTypeUsedByTreeNode(analyzedType.Module, analyzedType.Handle));
+/*
+			if (AnalyzedTypeExposedByTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
 				this.Children.Add(new AnalyzedTypeExposedByTreeNode(analyzedType));
 
-			if (AnalyzedTypeExtensionMethodsTreeNode.CanShow(analyzedType))
-				this.Children.Add(new AnalyzedTypeExtensionMethodsTreeNode(analyzedType));
+			if (AnalyzedTypeExtensionMethodsTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
+				this.Children.Add(new AnalyzedTypeExtensionMethodsTreeNode(analyzedType));*/
 		}
 
-		public override IMemberReference Member => analyzedType;
+		public override IMetadataEntity Member => analyzedType;
 	}
 }

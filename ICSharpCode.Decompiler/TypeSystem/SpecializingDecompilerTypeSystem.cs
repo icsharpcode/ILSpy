@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -98,6 +99,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (member != null)
 				member = member.Specialize(substitution);
 			return member;
+		}
+
+		public PEFile GetModuleDefinition(IAssembly assembly)
+		{
+			return context.GetModuleDefinition(assembly);
 		}
 	}
 }

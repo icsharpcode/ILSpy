@@ -20,9 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
@@ -31,49 +32,57 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// <summary>
 	/// Determines the accessibility domain of a member for where-used analysis.
 	/// </summary>
-	internal class ScopedWhereUsedAnalyzer<T>
+	class ScopedWhereUsedAnalyzer<T>
 	{
-		private readonly PEFile assemblyScope;
-		private TypeDefinition typeScope;
-		private static readonly TypeSystemAttributeTypeProvider typeProvider = TypeSystemAttributeTypeProvider.CreateDefault();
+		readonly Decompiler.Metadata.PEFile assemblyScope;
+		readonly bool provideTypeSystem;
+		TypeDefinitionHandle typeScopeHandle;
+		TypeDefinition typeScope;
+		static readonly TypeSystemAttributeTypeProvider typeProvider = TypeSystemAttributeTypeProvider.CreateDefault();
 
-		private readonly Accessibility memberAccessibility = Accessibility.Public;
-		private Accessibility typeAccessibility = Accessibility.Public;
-		private readonly Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction;
+		readonly Accessibility memberAccessibility = Accessibility.Public;
+		Accessibility typeAccessibility = Accessibility.Public;
+		readonly Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction;
 
-		public ScopedWhereUsedAnalyzer(TypeDefinition type, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
 		{
-			this.typeScope = type;
-			this.assemblyScope = type.Module;
+			this.typeScopeHandle = type;
+			this.assemblyScope = module;
+			this.typeScope = module.Metadata.GetTypeDefinition(typeScopeHandle);
+			this.provideTypeSystem = provideTypeSystem;
 			this.typeAnalysisFunction = typeAnalysisFunction;
 		}
 
-		public ScopedWhereUsedAnalyzer(MethodDefinition method, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
-			: this(method.DeclaringType, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, MethodDefinitionHandle method, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(module, method.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
-			this.memberAccessibility = GetMethodAccessibility(method);
+			this.memberAccessibility = GetMethodAccessibility(module.Metadata, method);
 		}
 
-		public ScopedWhereUsedAnalyzer(PropertyDefinition property, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
-			: this(property.DeclaringType, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, PropertyDefinitionHandle property, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(module, property.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
-			Accessibility getterAccessibility = (property.GetMethod.IsNil) ? Accessibility.Private : GetMethodAccessibility(property.GetMethod);
-			Accessibility setterAccessibility = (property.SetMethod.IsNil) ? Accessibility.Private : GetMethodAccessibility(property.SetMethod);
+			var pd = module.Metadata.GetPropertyDefinition(property);
+			var accessors = pd.GetAccessors();
+			Accessibility getterAccessibility = (accessors.Getter.IsNil) ? Accessibility.Private : GetMethodAccessibility(module.Metadata, accessors.Getter);
+			Accessibility setterAccessibility = (accessors.Setter.IsNil) ? Accessibility.Private : GetMethodAccessibility(module.Metadata, accessors.Setter);
 			this.memberAccessibility = (Accessibility)Math.Max((int)getterAccessibility, (int)setterAccessibility);
 		}
 
-		public ScopedWhereUsedAnalyzer(EventDefinition eventDef, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
-			: this(eventDef.DeclaringType, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, EventDefinitionHandle eventDef, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(module, eventDef.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
 			// we only have to check the accessibility of the the get method
 			// [CLS Rule 30: The accessibility of an event and of its accessors shall be identical.]
-			this.memberAccessibility = GetMethodAccessibility(eventDef.AddMethod);
+			var ed = module.Metadata.GetEventDefinition(eventDef);
+			this.memberAccessibility = GetMethodAccessibility(module.Metadata, ed.GetAccessors().Adder);
 		}
 
-		public ScopedWhereUsedAnalyzer(FieldDefinition field, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
-			: this(field.DeclaringType, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, FieldDefinitionHandle field, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(module, field.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
-			switch (field.Attributes & FieldAttributes.FieldAccessMask) {
+			var fd = module.Metadata.GetFieldDefinition(field);
+			switch (fd.Attributes & FieldAttributes.FieldAccessMask) {
 				case FieldAttributes.Private:
 				default:
 					memberAccessibility = Accessibility.Private;
@@ -96,10 +105,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private Accessibility GetMethodAccessibility(MethodDefinition method)
+		Accessibility GetMethodAccessibility(MetadataReader metadata, MethodDefinitionHandle method)
 		{
 			Accessibility accessibility;
-			switch (method.Attributes & MethodAttributes.MemberAccessMask) {
+			var methodInfo = metadata.GetMethodDefinition(method);
+			switch (methodInfo.Attributes & MethodAttributes.MemberAccessMask) {
 				case MethodAttributes.Private:
 				default:
 					accessibility = Accessibility.Private;
@@ -144,25 +154,26 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return FindReferencesGlobal(ct);
 		}
 		
-		private void DetermineTypeAccessibility()
+		void DetermineTypeAccessibility()
 		{
-			while (!typeScope.DeclaringType.IsNil) {
+			while (!typeScope.GetDeclaringType().IsNil) {
 				Accessibility accessibility = GetNestedTypeAccessibility(typeScope);
 				if ((int)typeAccessibility > (int)accessibility) {
 					typeAccessibility = accessibility;
 					if (typeAccessibility == Accessibility.Private)
 						return;
 				}
-				typeScope = typeScope.DeclaringType;
+				typeScopeHandle = typeScope.GetDeclaringType();
+				typeScope = assemblyScope.Metadata.GetTypeDefinition(typeScopeHandle);
 			}
 
-			if (typeScope.IsNotPublic &&
+			if ((typeScope.Attributes & TypeAttributes.VisibilityMask) == TypeAttributes.NotPublic &&
 				((int)typeAccessibility > (int)Accessibility.Internal)) {
 				typeAccessibility = Accessibility.Internal;
 			}
 		}
 
-		private static Accessibility GetNestedTypeAccessibility(TypeDefinition type)
+		static Accessibility GetNestedTypeAccessibility(TypeDefinition type)
 		{
 			Accessibility result;
 			switch (type.Attributes & TypeAttributes.VisibilityMask) {
@@ -193,7 +204,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		/// <summary>
 		/// The effective accessibility of a member
 		/// </summary>
-		private enum Accessibility
+		enum Accessibility
 		{
 			Private,
 			FamilyAndInternal,
@@ -203,7 +214,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			Public
 		}
 
-		private IEnumerable<T> FindReferencesInAssemblyAndFriends(CancellationToken ct)
+		IEnumerable<T> FindReferencesInAssemblyAndFriends(CancellationToken ct)
 		{
 			var assemblies = GetAssemblyAndAnyFriends(assemblyScope, ct);
 
@@ -211,7 +222,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return assemblies.AsParallel().WithCancellation(ct).SelectMany(a => FindReferencesInAssembly(a, ct));
 		}
 
-		private IEnumerable<T> FindReferencesGlobal(CancellationToken ct)
+		IEnumerable<T> FindReferencesGlobal(CancellationToken ct)
 		{
 			var assemblies = GetReferencingAssemblies(assemblyScope, ct);
 
@@ -219,42 +230,49 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return assemblies.AsParallel().WithCancellation(ct).SelectMany(asm => FindReferencesInAssembly(asm, ct));
 		}
 
-		private IEnumerable<T> FindReferencesInAssembly(PEFile asm, CancellationToken ct)
+		IEnumerable<T> FindReferencesInAssembly(Decompiler.Metadata.PEFile module, CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.TypeDefinitions, t => t.NestedTypes)) {
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(module) : null;
+			var metadata = module.Metadata;
+			foreach (var type in TreeTraversal.PreOrder(metadata.TypeDefinitions, t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(type)) {
+				foreach (var result in typeAnalysisFunction(module, type, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}
 			}
 		}
 
-		private IEnumerable<T> FindReferencesInTypeScope(CancellationToken ct)
+		IEnumerable<T> FindReferencesInTypeScope(CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
+			foreach (var type in TreeTraversal.PreOrder(typeScopeHandle, t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(type)) {
+				foreach (var result in typeAnalysisFunction(assemblyScope, type, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}
 			}
 		}
 
-		private IEnumerable<T> FindReferencesInEnclosingTypeScope(CancellationToken ct)
+		IEnumerable<T> FindReferencesInEnclosingTypeScope(CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(typeScope.DeclaringType, t => t.NestedTypes)) {
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
+			foreach (var type in TreeTraversal.PreOrder(typeScope.GetDeclaringType(), t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(type)) {
+				foreach (var result in typeAnalysisFunction(assemblyScope, type, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}
 			}
 		}
 
-		private IEnumerable<PEFile> GetReferencingAssemblies(PEFile asm, CancellationToken ct)
+		IEnumerable<Decompiler.Metadata.PEFile> GetReferencingAssemblies(Decompiler.Metadata.PEFile asm, CancellationToken ct)
 		{
 			yield return asm;
+
+			string typeScopeNamespace = asm.Metadata.GetString(typeScope.Namespace);
+			string typeScopeName = asm.Metadata.GetString(typeScope.Name);
 
 			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetPEFileOrNull()?.IsAssembly == true);
 
@@ -265,7 +283,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				if (module == null)
 					continue;
 				var resolver = assembly.GetAssemblyResolver();
-				var metadata = module.GetMetadataReader();
+				var metadata = module.Metadata;
 				foreach (var reference in module.AssemblyReferences) {
 					using (LoadedAssembly.DisableAssemblyLoad()) {
 						if (resolver.Resolve(reference) == asm) {
@@ -274,17 +292,20 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 						}
 					}
 				}
-				if (found && AssemblyReferencesScopeType(module))
+				if (found && AssemblyReferencesScopeType(metadata, typeScopeName, typeScopeNamespace))
 					yield return module;
 			}
 		}
 
-		private IEnumerable<PEFile> GetAssemblyAndAnyFriends(PEFile asm, CancellationToken ct)
+		IEnumerable<Decompiler.Metadata.PEFile> GetAssemblyAndAnyFriends(Decompiler.Metadata.PEFile asm, CancellationToken ct)
 		{
 			yield return asm;
-			var reader = asm.GetMetadataReader();
+			var metadata = asm.Metadata;
 
-			var attributes = reader.CustomAttributes.Select(h => reader.GetCustomAttribute(h)).Where(ca => ca.GetAttributeType(asm).FullName.ToString() == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
+			string typeScopeNamespace = metadata.GetString(typeScope.Namespace);
+			string typeScopeName = metadata.GetString(typeScope.Name);
+
+			var attributes = metadata.CustomAttributes.Select(h => metadata.GetCustomAttribute(h)).Where(ca => ca.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 			var friendAssemblies = new HashSet<string>();
 			foreach (var attribute in attributes) {
 				string assemblyName = attribute.DecodeValue(typeProvider).FixedArguments[0].Value as string;
@@ -301,18 +322,19 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 						var module = assembly.GetPEFileOrNull();
 						if (module == null)
 							continue;
-						if (AssemblyReferencesScopeType(module))
+						if (AssemblyReferencesScopeType(module.Metadata, typeScopeName, typeScopeNamespace))
 							yield return module;
 					}
 				}
 			}
 		}
 
-		private bool AssemblyReferencesScopeType(PEFile asm)
+		bool AssemblyReferencesScopeType(MetadataReader metadata, string typeScopeName, string typeScopeNamespace)
 		{
 			bool hasRef = false;
-			foreach (var typeRef in asm.TypeReferences) {
-				if (typeRef.Name == typeScope.Name && typeRef.Namespace == typeScope.Namespace) {
+			foreach (var h in metadata.TypeReferences) {
+				var typeRef = metadata.GetTypeReference(h);
+				if (metadata.StringComparer.Equals(typeRef.Name, typeScopeName) && metadata.StringComparer.Equals(typeRef.Namespace, typeScopeNamespace)) {
 					hasRef = true;
 					break;
 				}
