@@ -149,15 +149,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				arguments.Add(arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true));
 
-				if (parameter.IsOut && arguments[i].Expression is DirectionExpression dirExpr && arguments[i].ResolveResult is ByReferenceResolveResult brrr) {
-					dirExpr.FieldDirection = FieldDirection.Out;
-					dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
-					if (brrr.ElementResult == null)
-						brrr = new ByReferenceResolveResult(brrr.ElementType, isOut: true);
-					else
-						brrr = new ByReferenceResolveResult(brrr.ElementResult, isOut: true);
-					dirExpr.AddAnnotation(brrr);
-					arguments[i] = new TranslatedExpression(dirExpr);
+				if (parameter.IsOut) { 
+					arguments[i] = ExpressionBuilder.ChangeDirectionExpressionToOut(arguments[i]);
 				}
 			}
 
