@@ -6,6 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	internal class DynamicTests
 	{
 		private static dynamic field;
+		private static object objectField;
 		public dynamic Property {
 			get;
 			set;
@@ -31,6 +32,52 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a.Index[a.Number] = 5;
 			a.Setter = new DynamicTests();
 			a.Setter2 = 5;
+		}
+
+		private static void RequiredCasts()
+		{
+			((dynamic)objectField).A = 5;
+			((dynamic)objectField).B += 5;
+			((dynamic)objectField).Call();
+			((object)field).ToString();
+			field.Call("Hello World");
+			field.Call((object)"Hello World");
+			field.Call((dynamic)"Hello World");
+		}
+
+		private static void DynamicCallWithString()
+		{
+			field.Call("Hello World");
+		}
+
+		private static void DynamicCallWithNamedArgs()
+		{
+			field.Call(a: "Hello World");
+		}
+
+		private static void DynamicCallWithRefOutArg(int a, out int b)
+		{
+			field.Call(ref a, out b);
+		}
+
+		private static void DynamicCallWithStringCastToObj()
+		{
+			field.Call((object)"Hello World");
+		}
+
+		private static void DynamicCallWithStringCastToDynamic()
+		{
+			field.Call((dynamic)"Hello World");
+		}
+
+		private static void DynamicCallWithStringCastToDynamic2()
+		{
+			field.Call((dynamic)"Hello World", (int)5, null);
+		}
+
+		private static void DynamicCallWithStringCastToDynamic3()
+		{
+			field.Call((dynamic)"Hello World", 5u, (dynamic)null);
 		}
 
 		private static void Invocation(dynamic a, dynamic b)

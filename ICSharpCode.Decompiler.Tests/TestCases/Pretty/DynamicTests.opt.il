@@ -72,252 +72,339 @@
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site13'
   } // end of class '<MemberAccess>o__SiteContainer2'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<Invocation>o__SiteContainer14'
+  .class abstract auto ansi sealed nested private beforefieldinit '<RequiredCasts>o__SiteContainer14'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site15'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site16'
-  } // end of class '<Invocation>o__SiteContainer14'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site15'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site16'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site17'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site18'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site19'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site1a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>> '<>p__Site1b'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> '<>p__Site1c'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site1d'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site1e'
+  } // end of class '<RequiredCasts>o__SiteContainer14'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<Test1>o__SiteContainer17'
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithString>o__SiteContainer1f'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site18'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site19'
-  } // end of class '<Test1>o__SiteContainer17'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> '<>p__Site20'
+  } // end of class '<DynamicCallWithString>o__SiteContainer1f'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<Test2>o__SiteContainer1a'
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithNamedArgs>o__SiteContainer21'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site1b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site1c'
-  } // end of class '<Test2>o__SiteContainer1a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> '<>p__Site22'
+  } // end of class '<DynamicCallWithNamedArgs>o__SiteContainer21'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<ArithmeticBinaryOperators>o__SiteContainer1d'
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithRefOutArg>o__SiteContainer23'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site1e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site1f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site20'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site21'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site22'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site23'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site24'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site25'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site26'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site27'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site28'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site29'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site2a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site2b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site2c'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site2d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site2e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site2f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site30'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site31'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site32'
+    .class auto ansi sealed nested public '<>q__SiteDelegate24'
+           extends [mscorlib]System.MulticastDelegate
+    {
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor(object 'object',
+                                   native int 'method') runtime managed
+      {
+      } // end of method '<>q__SiteDelegate24'::.ctor
+
+      .method public hidebysig newslot virtual 
+              instance void  Invoke(class [System.Core]System.Runtime.CompilerServices.CallSite param0,
+                                    object param1,
+                                    int32& param2,
+                                    [out] int32& param3) runtime managed
+      {
+        .param [2]
+        .custom instance void [System.Core]System.Runtime.CompilerServices.DynamicAttribute::.ctor() = ( 01 00 00 00 ) 
+      } // end of method '<>q__SiteDelegate24'::Invoke
+
+    } // end of class '<>q__SiteDelegate24'
+
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'> '<>p__Site25'
+  } // end of class '<DynamicCallWithRefOutArg>o__SiteContainer23'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithStringCastToObj>o__SiteContainer26'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site27'
+  } // end of class '<DynamicCallWithStringCastToObj>o__SiteContainer26'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithStringCastToDynamic>o__SiteContainer28'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site29'
+  } // end of class '<DynamicCallWithStringCastToDynamic>o__SiteContainer28'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>> '<>p__Site2b'
+  } // end of class '<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>> '<>p__Site2d'
+  } // end of class '<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<Invocation>o__SiteContainer2e'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site2f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site30'
+  } // end of class '<Invocation>o__SiteContainer2e'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<Test1>o__SiteContainer31'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site32'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site33'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site34'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site35'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site36'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site37'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site38'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site39'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site3b'
-  } // end of class '<ArithmeticBinaryOperators>o__SiteContainer1d'
+  } // end of class '<Test1>o__SiteContainer31'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<RelationalOperators>o__SiteContainer3c'
+  .class abstract auto ansi sealed nested private beforefieldinit '<Test2>o__SiteContainer34'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site3e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site40'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site41'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site42'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site43'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site44'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site45'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site46'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site47'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site48'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site49'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site4a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site4c'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site4e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site50'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site51'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site52'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site53'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site54'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site55'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site56'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site35'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site36'
+  } // end of class '<Test2>o__SiteContainer34'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<ArithmeticBinaryOperators>o__SiteContainer37'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site38'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site39'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site3b'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3c'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site3d'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site3e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site3f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site40'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site41'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site42'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site43'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site44'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site45'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site46'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site47'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site48'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site49'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site4b'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4c'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site4d'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site4e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site4f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site50'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site51'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site52'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site53'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site54'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site55'
+  } // end of class '<ArithmeticBinaryOperators>o__SiteContainer37'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<RelationalOperators>o__SiteContainer56'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site57'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site58'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site58'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site59'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site5a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site5a'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site5b'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site5c'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site5d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site5e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site5e'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site5f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site60'
-  } // end of class '<RelationalOperators>o__SiteContainer3c'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<Casts>o__SiteContainer61'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> '<>p__Site62'
-  } // end of class '<Casts>o__SiteContainer61'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<CompoundAssignment>o__SiteContainer63'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site64'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site65'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site60'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site61'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site62'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site63'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site64'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site65'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site66'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site67'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site68'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site69'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site6a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site6b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site6c'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site6d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site6e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site6f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site70'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site71'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site72'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site73'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site74'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site75'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site67'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site68'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site69'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site6a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site6b'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site6c'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site6d'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site6e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site6f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site70'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site71'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site72'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site73'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site74'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site75'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site76'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site77'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site78'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site79'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site77'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site78'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site79'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site7a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site7b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site7c'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site7d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site7e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site7f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site80'
+  } // end of class '<RelationalOperators>o__SiteContainer56'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<Casts>o__SiteContainer7b'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> '<>p__Site7c'
+  } // end of class '<Casts>o__SiteContainer7b'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<CompoundAssignment>o__SiteContainer7d'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site7e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site7f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site80'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site81'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site82'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site83'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site84'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site82'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site83'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site84'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site85'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site86'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site87'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site88'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site89'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site8a'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site86'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site87'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site88'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site89'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site8a'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site8b'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site8c'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site8d'
-  } // end of class '<CompoundAssignment>o__SiteContainer63'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<InlineCompoundAssignment>o__SiteContainer8e'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site8f'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site90'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site91'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site92'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site93'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site94'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site95'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site96'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site97'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site98'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site8e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site8f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site90'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site91'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site92'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site93'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site94'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site95'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site96'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site97'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site98'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site99'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site9a'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site9b'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site9c'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site9d'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site9e'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Site9f'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site9b'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Site9c'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Site9d'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Site9e'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Site9f'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Sitea0'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitea1'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitea2'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitea3'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitea4'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitea5'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitea3'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Sitea4'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Sitea5'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitea6'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitea7'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitea8'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitea7'
+  } // end of class '<CompoundAssignment>o__SiteContainer7d'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<InlineCompoundAssignment>o__SiteContainera8'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitea9'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Siteaa'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteab'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteac'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteab'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteac'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitead'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteae'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Siteaf'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb0'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb1'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteb2'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Siteb3'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb4'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb5'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteb6'
-  } // end of class '<InlineCompoundAssignment>o__SiteContainer8e'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<UnaryOperators>o__SiteContainerb7'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Siteb0'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteb1'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteb2'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb3'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteb4'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Siteb5'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteb6'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteb7'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteb8'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteb9'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Siteba'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitebb'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitebc'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitebd'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitebe'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitebf'
-  } // end of class '<UnaryOperators>o__SiteContainerb7'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<Loops>o__SiteContainerc0'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> '<>p__Sitec1'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitec2'
-  } // end of class '<Loops>o__SiteContainerc0'
-
-  .class abstract auto ansi sealed nested private beforefieldinit '<If>o__SiteContainerc3'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Siteb9'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__Siteba'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitebb'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitebc'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitebd'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitebe'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitebf'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec0'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec1'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitec2'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitec3'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitec4'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec5'
-  } // end of class '<If>o__SiteContainerc3'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec6'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec7'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitec8'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitec9'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteca'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitecb'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sitecc'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitecd'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitece'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitecf'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited0'
+  } // end of class '<InlineCompoundAssignment>o__SiteContainera8'
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<If2>o__SiteContainerc6'
+  .class abstract auto ansi sealed nested private beforefieldinit '<UnaryOperators>o__SiteContainerd1'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitec7'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitec8'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitec9'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Siteca'
-    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitecb'
-  } // end of class '<If2>o__SiteContainerc6'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited2'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited3'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited4'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited5'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sited6'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited7'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sited8'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__Sited9'
+  } // end of class '<UnaryOperators>o__SiteContainerd1'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<Loops>o__SiteContainerda'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> '<>p__Sitedb'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> '<>p__Sitedc'
+  } // end of class '<Loops>o__SiteContainerda'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<If>o__SiteContainerdd'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitede'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitedf'
+  } // end of class '<If>o__SiteContainerdd'
+
+  .class abstract auto ansi sealed nested private beforefieldinit '<If2>o__SiteContainere0'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitee1'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitee2'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> '<>p__Sitee3'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitee4'
+    .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> '<>p__Sitee5'
+  } // end of class '<If2>o__SiteContainere0'
 
   .field private static object 'field'
   .custom instance void [System.Core]System.Runtime.CompilerServices.DynamicAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private static object objectField
   .field private object '<Property>k__BackingField'
   .custom instance void [System.Core]System.Runtime.CompilerServices.DynamicAttribute::.ctor() = ( 01 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1141,6 +1228,783 @@
     IL_066a:  ret
   } // end of method DynamicTests::MemberAccess
 
+  .method private hidebysig static void  RequiredCasts() cil managed
+  {
+    // Code size       935 (0x3a7)
+    .maxstack  12
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0,
+             object V_1,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_2,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_3,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_4,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_5,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_6,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_7,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_8,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_9)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site15'
+    IL_0005:  brtrue.s   IL_0042
+
+    IL_0007:  ldc.i4.0
+    IL_0008:  ldstr      "A"
+    IL_000d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0012:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0017:  ldc.i4.2
+    IL_0018:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_001d:  stloc.0
+    IL_001e:  ldloc.0
+    IL_001f:  ldc.i4.0
+    IL_0020:  ldc.i4.0
+    IL_0021:  ldnull
+    IL_0022:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0027:  stelem.ref
+    IL_0028:  ldloc.0
+    IL_0029:  ldc.i4.1
+    IL_002a:  ldc.i4.3
+    IL_002b:  ldnull
+    IL_002c:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0031:  stelem.ref
+    IL_0032:  ldloc.0
+    IL_0033:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                              string,
+                                                                                                                                                              class [mscorlib]System.Type,
+                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0038:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_003d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site15'
+    IL_0042:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site15'
+    IL_0047:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
+    IL_004c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site15'
+    IL_0051:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::objectField
+    IL_0056:  ldc.i4.5
+    IL_0057:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
+                                                                                                                                                            !1,
+                                                                                                                                                            !2)
+    IL_005c:  pop
+    IL_005d:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::objectField
+    IL_0062:  stloc.1
+    IL_0063:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site16'
+    IL_0068:  brtrue.s   IL_0089
+
+    IL_006a:  ldc.i4.0
+    IL_006b:  ldstr      "B"
+    IL_0070:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0075:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_007a:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::IsEvent(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                            string,
+                                                                                                                                                            class [mscorlib]System.Type)
+    IL_007f:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0084:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site16'
+    IL_0089:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site16'
+    IL_008e:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
+    IL_0093:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site16'
+    IL_0098:  ldloc.1
+    IL_0099:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
+                                                                                                                                                    !1)
+    IL_009e:  brtrue     IL_01a5
+
+    IL_00a3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site19'
+    IL_00a8:  brtrue.s   IL_00e9
+
+    IL_00aa:  ldc.i4     0x80
+    IL_00af:  ldstr      "B"
+    IL_00b4:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_00b9:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00be:  ldc.i4.2
+    IL_00bf:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_00c4:  stloc.2
+    IL_00c5:  ldloc.2
+    IL_00c6:  ldc.i4.0
+    IL_00c7:  ldc.i4.0
+    IL_00c8:  ldnull
+    IL_00c9:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_00ce:  stelem.ref
+    IL_00cf:  ldloc.2
+    IL_00d0:  ldc.i4.1
+    IL_00d1:  ldc.i4.0
+    IL_00d2:  ldnull
+    IL_00d3:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_00d8:  stelem.ref
+    IL_00d9:  ldloc.2
+    IL_00da:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                              string,
+                                                                                                                                                              class [mscorlib]System.Type,
+                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_00df:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_00e4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site19'
+    IL_00e9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site19'
+    IL_00ee:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
+    IL_00f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site19'
+    IL_00f8:  ldloc.1
+    IL_00f9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site18'
+    IL_00fe:  brtrue.s   IL_0138
+
+    IL_0100:  ldc.i4.0
+    IL_0101:  ldc.i4.s   63
+    IL_0103:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0108:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_010d:  ldc.i4.2
+    IL_010e:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0113:  stloc.3
+    IL_0114:  ldloc.3
+    IL_0115:  ldc.i4.0
+    IL_0116:  ldc.i4.0
+    IL_0117:  ldnull
+    IL_0118:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_011d:  stelem.ref
+    IL_011e:  ldloc.3
+    IL_011f:  ldc.i4.1
+    IL_0120:  ldc.i4.3
+    IL_0121:  ldnull
+    IL_0122:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0127:  stelem.ref
+    IL_0128:  ldloc.3
+    IL_0129:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::BinaryOperation(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                    valuetype [System.Core]System.Linq.Expressions.ExpressionType,
+                                                                                                                                                                    class [mscorlib]System.Type,
+                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_012e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0133:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site18'
+    IL_0138:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site18'
+    IL_013d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
+    IL_0142:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site18'
+    IL_0147:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1a'
+    IL_014c:  brtrue.s   IL_0182
+
+    IL_014e:  ldc.i4.0
+    IL_014f:  ldstr      "B"
+    IL_0154:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0159:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_015e:  ldc.i4.1
+    IL_015f:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0164:  stloc.s    V_4
+    IL_0166:  ldloc.s    V_4
+    IL_0168:  ldc.i4.0
+    IL_0169:  ldc.i4.0
+    IL_016a:  ldnull
+    IL_016b:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0170:  stelem.ref
+    IL_0171:  ldloc.s    V_4
+    IL_0173:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::GetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                              string,
+                                                                                                                                                              class [mscorlib]System.Type,
+                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0178:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_017d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1a'
+    IL_0182:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1a'
+    IL_0187:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
+    IL_018c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1a'
+    IL_0191:  ldloc.1
+    IL_0192:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
+                                                                                                                                                      !1)
+    IL_0197:  ldc.i4.5
+    IL_0198:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
+                                                                                                                                                            !1,
+                                                                                                                                                            !2)
+    IL_019d:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
+                                                                                                                                                             !1,
+                                                                                                                                                             !2)
+    IL_01a2:  pop
+    IL_01a3:  br.s       IL_0207
+
+    IL_01a5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site17'
+    IL_01aa:  brtrue.s   IL_01f0
+
+    IL_01ac:  ldc.i4     0x104
+    IL_01b1:  ldstr      "add_B"
+    IL_01b6:  ldnull
+    IL_01b7:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_01bc:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_01c1:  ldc.i4.2
+    IL_01c2:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_01c7:  stloc.s    V_5
+    IL_01c9:  ldloc.s    V_5
+    IL_01cb:  ldc.i4.0
+    IL_01cc:  ldc.i4.0
+    IL_01cd:  ldnull
+    IL_01ce:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_01d3:  stelem.ref
+    IL_01d4:  ldloc.s    V_5
+    IL_01d6:  ldc.i4.1
+    IL_01d7:  ldc.i4.3
+    IL_01d8:  ldnull
+    IL_01d9:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_01de:  stelem.ref
+    IL_01df:  ldloc.s    V_5
+    IL_01e1:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_01e6:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_01eb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site17'
+    IL_01f0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site17'
+    IL_01f5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
+    IL_01fa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site17'
+    IL_01ff:  ldloc.1
+    IL_0200:  ldc.i4.5
+    IL_0201:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
+                                                                                                                                                            !1,
+                                                                                                                                                            !2)
+    IL_0206:  pop
+    IL_0207:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1b'
+    IL_020c:  brtrue.s   IL_0247
+
+    IL_020e:  ldc.i4     0x100
+    IL_0213:  ldstr      "Call"
+    IL_0218:  ldnull
+    IL_0219:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_021e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0223:  ldc.i4.1
+    IL_0224:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0229:  stloc.s    V_6
+    IL_022b:  ldloc.s    V_6
+    IL_022d:  ldc.i4.0
+    IL_022e:  ldc.i4.0
+    IL_022f:  ldnull
+    IL_0230:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0235:  stelem.ref
+    IL_0236:  ldloc.s    V_6
+    IL_0238:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_023d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0242:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1b'
+    IL_0247:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1b'
+    IL_024c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>>::Target
+    IL_0251:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1b'
+    IL_0256:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::objectField
+    IL_025b:  callvirt   instance void class [mscorlib]System.Action`2<class [System.Core]System.Runtime.CompilerServices.CallSite,object>::Invoke(!0,
+                                                                                                                                                   !1)
+    IL_0260:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_0265:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_026a:  pop
+    IL_026b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1c'
+    IL_0270:  brtrue.s   IL_02b6
+
+    IL_0272:  ldc.i4     0x100
+    IL_0277:  ldstr      "Call"
+    IL_027c:  ldnull
+    IL_027d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0282:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0287:  ldc.i4.2
+    IL_0288:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_028d:  stloc.s    V_7
+    IL_028f:  ldloc.s    V_7
+    IL_0291:  ldc.i4.0
+    IL_0292:  ldc.i4.0
+    IL_0293:  ldnull
+    IL_0294:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0299:  stelem.ref
+    IL_029a:  ldloc.s    V_7
+    IL_029c:  ldc.i4.1
+    IL_029d:  ldc.i4.3
+    IL_029e:  ldnull
+    IL_029f:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_02a4:  stelem.ref
+    IL_02a5:  ldloc.s    V_7
+    IL_02a7:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_02ac:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_02b1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1c'
+    IL_02b6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1c'
+    IL_02bb:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Target
+    IL_02c0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1c'
+    IL_02c5:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_02ca:  ldstr      "Hello World"
+    IL_02cf:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_02d4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1d'
+    IL_02d9:  brtrue.s   IL_031f
+
+    IL_02db:  ldc.i4     0x100
+    IL_02e0:  ldstr      "Call"
+    IL_02e5:  ldnull
+    IL_02e6:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_02eb:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_02f0:  ldc.i4.2
+    IL_02f1:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_02f6:  stloc.s    V_8
+    IL_02f8:  ldloc.s    V_8
+    IL_02fa:  ldc.i4.0
+    IL_02fb:  ldc.i4.0
+    IL_02fc:  ldnull
+    IL_02fd:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0302:  stelem.ref
+    IL_0303:  ldloc.s    V_8
+    IL_0305:  ldc.i4.1
+    IL_0306:  ldc.i4.1
+    IL_0307:  ldnull
+    IL_0308:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_030d:  stelem.ref
+    IL_030e:  ldloc.s    V_8
+    IL_0310:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0315:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_031a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1d'
+    IL_031f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1d'
+    IL_0324:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
+    IL_0329:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1d'
+    IL_032e:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_0333:  ldstr      "Hello World"
+    IL_0338:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_033d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1e'
+    IL_0342:  brtrue.s   IL_0388
+
+    IL_0344:  ldc.i4     0x100
+    IL_0349:  ldstr      "Call"
+    IL_034e:  ldnull
+    IL_034f:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0354:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0359:  ldc.i4.2
+    IL_035a:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_035f:  stloc.s    V_9
+    IL_0361:  ldloc.s    V_9
+    IL_0363:  ldc.i4.0
+    IL_0364:  ldc.i4.0
+    IL_0365:  ldnull
+    IL_0366:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_036b:  stelem.ref
+    IL_036c:  ldloc.s    V_9
+    IL_036e:  ldc.i4.1
+    IL_036f:  ldc.i4.0
+    IL_0370:  ldnull
+    IL_0371:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0376:  stelem.ref
+    IL_0377:  ldloc.s    V_9
+    IL_0379:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_037e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0383:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1e'
+    IL_0388:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1e'
+    IL_038d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
+    IL_0392:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RequiredCasts>o__SiteContainer14'::'<>p__Site1e'
+    IL_0397:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_039c:  ldstr      "Hello World"
+    IL_03a1:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_03a6:  ret
+  } // end of method DynamicTests::RequiredCasts
+
+  .method private hidebysig static void  DynamicCallWithString() cil managed
+  {
+    // Code size       102 (0x66)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithString>o__SiteContainer1f'::'<>p__Site20'
+    IL_0005:  brtrue.s   IL_0047
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.2
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.3
+    IL_0030:  ldnull
+    IL_0031:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0036:  stelem.ref
+    IL_0037:  ldloc.0
+    IL_0038:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_003d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0042:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithString>o__SiteContainer1f'::'<>p__Site20'
+    IL_0047:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithString>o__SiteContainer1f'::'<>p__Site20'
+    IL_004c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Target
+    IL_0051:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithString>o__SiteContainer1f'::'<>p__Site20'
+    IL_0056:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_005b:  ldstr      "Hello World"
+    IL_0060:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_0065:  ret
+  } // end of method DynamicTests::DynamicCallWithString
+
+  .method private hidebysig static void  DynamicCallWithNamedArgs() cil managed
+  {
+    // Code size       106 (0x6a)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithNamedArgs>o__SiteContainer21'::'<>p__Site22'
+    IL_0005:  brtrue.s   IL_004b
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.2
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.7
+    IL_0030:  ldstr      "a"
+    IL_0035:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_003a:  stelem.ref
+    IL_003b:  ldloc.0
+    IL_003c:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0041:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0046:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithNamedArgs>o__SiteContainer21'::'<>p__Site22'
+    IL_004b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithNamedArgs>o__SiteContainer21'::'<>p__Site22'
+    IL_0050:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>>::Target
+    IL_0055:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithNamedArgs>o__SiteContainer21'::'<>p__Site22'
+    IL_005a:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_005f:  ldstr      "Hello World"
+    IL_0064:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_0069:  ret
+  } // end of method DynamicTests::DynamicCallWithNamedArgs
+
+  .method private hidebysig static void  DynamicCallWithRefOutArg(int32 a,
+                                                                  [out] int32& b) cil managed
+  {
+    // Code size       112 (0x70)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'::'<>p__Site25'
+    IL_0005:  brtrue.s   IL_0053
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.3
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.s   9
+    IL_0031:  ldnull
+    IL_0032:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0037:  stelem.ref
+    IL_0038:  ldloc.0
+    IL_0039:  ldc.i4.2
+    IL_003a:  ldc.i4.s   17
+    IL_003c:  ldnull
+    IL_003d:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0042:  stelem.ref
+    IL_0043:  ldloc.0
+    IL_0044:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0049:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_004e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'::'<>p__Site25'
+    IL_0053:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'::'<>p__Site25'
+    IL_0058:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'>::Target
+    IL_005d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'::'<>p__Site25'
+    IL_0062:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_0067:  ldarga.s   a
+    IL_0069:  ldarg.1
+    IL_006a:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithRefOutArg>o__SiteContainer23'/'<>q__SiteDelegate24'::Invoke(class [System.Core]System.Runtime.CompilerServices.CallSite,
+                                                                                                                                                                               object,
+                                                                                                                                                                               int32&,
+                                                                                                                                                                               int32&)
+    IL_006f:  ret
+  } // end of method DynamicTests::DynamicCallWithRefOutArg
+
+  .method private hidebysig static void  DynamicCallWithStringCastToObj() cil managed
+  {
+    // Code size       102 (0x66)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToObj>o__SiteContainer26'::'<>p__Site27'
+    IL_0005:  brtrue.s   IL_0047
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.2
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.1
+    IL_0030:  ldnull
+    IL_0031:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0036:  stelem.ref
+    IL_0037:  ldloc.0
+    IL_0038:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_003d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0042:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToObj>o__SiteContainer26'::'<>p__Site27'
+    IL_0047:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToObj>o__SiteContainer26'::'<>p__Site27'
+    IL_004c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
+    IL_0051:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToObj>o__SiteContainer26'::'<>p__Site27'
+    IL_0056:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_005b:  ldstr      "Hello World"
+    IL_0060:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_0065:  ret
+  } // end of method DynamicTests::DynamicCallWithStringCastToObj
+
+  .method private hidebysig static void  DynamicCallWithStringCastToDynamic() cil managed
+  {
+    // Code size       102 (0x66)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic>o__SiteContainer28'::'<>p__Site29'
+    IL_0005:  brtrue.s   IL_0047
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.2
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.0
+    IL_0030:  ldnull
+    IL_0031:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0036:  stelem.ref
+    IL_0037:  ldloc.0
+    IL_0038:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_003d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0042:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic>o__SiteContainer28'::'<>p__Site29'
+    IL_0047:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic>o__SiteContainer28'::'<>p__Site29'
+    IL_004c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
+    IL_0051:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic>o__SiteContainer28'::'<>p__Site29'
+    IL_0056:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_005b:  ldstr      "Hello World"
+    IL_0060:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
+                                                                                                                                                          !1,
+                                                                                                                                                          !2)
+    IL_0065:  ret
+  } // end of method DynamicTests::DynamicCallWithStringCastToDynamic
+
+  .method private hidebysig static void  DynamicCallWithStringCastToDynamic2() cil managed
+  {
+    // Code size       124 (0x7c)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'::'<>p__Site2b'
+    IL_0005:  brtrue.s   IL_005b
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.4
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.0
+    IL_0030:  ldnull
+    IL_0031:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0036:  stelem.ref
+    IL_0037:  ldloc.0
+    IL_0038:  ldc.i4.2
+    IL_0039:  ldc.i4.3
+    IL_003a:  ldnull
+    IL_003b:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0040:  stelem.ref
+    IL_0041:  ldloc.0
+    IL_0042:  ldc.i4.3
+    IL_0043:  ldc.i4.2
+    IL_0044:  ldnull
+    IL_0045:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_004a:  stelem.ref
+    IL_004b:  ldloc.0
+    IL_004c:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0051:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0056:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'::'<>p__Site2b'
+    IL_005b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'::'<>p__Site2b'
+    IL_0060:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>>::Target
+    IL_0065:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic2>o__SiteContainer2a'::'<>p__Site2b'
+    IL_006a:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_006f:  ldstr      "Hello World"
+    IL_0074:  ldc.i4.5
+    IL_0075:  ldnull
+    IL_0076:  callvirt   instance void class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,int32,object>::Invoke(!0,
+                                                                                                                                                                       !1,
+                                                                                                                                                                       !2,
+                                                                                                                                                                       !3,
+                                                                                                                                                                       !4)
+    IL_007b:  ret
+  } // end of method DynamicTests::DynamicCallWithStringCastToDynamic2
+
+  .method private hidebysig static void  DynamicCallWithStringCastToDynamic3() cil managed
+  {
+    // Code size       124 (0x7c)
+    .maxstack  8
+    .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0)
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'::'<>p__Site2d'
+    IL_0005:  brtrue.s   IL_005b
+
+    IL_0007:  ldc.i4     0x100
+    IL_000c:  ldstr      "Call"
+    IL_0011:  ldnull
+    IL_0012:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
+    IL_0017:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_001c:  ldc.i4.4
+    IL_001d:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0022:  stloc.0
+    IL_0023:  ldloc.0
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.0
+    IL_0026:  ldnull
+    IL_0027:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_002c:  stelem.ref
+    IL_002d:  ldloc.0
+    IL_002e:  ldc.i4.1
+    IL_002f:  ldc.i4.0
+    IL_0030:  ldnull
+    IL_0031:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0036:  stelem.ref
+    IL_0037:  ldloc.0
+    IL_0038:  ldc.i4.2
+    IL_0039:  ldc.i4.3
+    IL_003a:  ldnull
+    IL_003b:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_0040:  stelem.ref
+    IL_0041:  ldloc.0
+    IL_0042:  ldc.i4.3
+    IL_0043:  ldc.i4.2
+    IL_0044:  ldnull
+    IL_0045:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+                                                                                                                                                                               string)
+    IL_004a:  stelem.ref
+    IL_004b:  ldloc.0
+    IL_004c:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::InvokeMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+                                                                                                                                                                 string,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [mscorlib]System.Type>,
+                                                                                                                                                                 class [mscorlib]System.Type,
+                                                                                                                                                                 class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
+    IL_0051:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0056:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'::'<>p__Site2d'
+    IL_005b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'::'<>p__Site2d'
+    IL_0060:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>>::Target
+    IL_0065:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<DynamicCallWithStringCastToDynamic3>o__SiteContainer2c'::'<>p__Site2d'
+    IL_006a:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
+    IL_006f:  ldstr      "Hello World"
+    IL_0074:  ldc.i4.5
+    IL_0075:  ldnull
+    IL_0076:  callvirt   instance void class [mscorlib]System.Action`5<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,uint32,object>::Invoke(!0,
+                                                                                                                                                                        !1,
+                                                                                                                                                                        !2,
+                                                                                                                                                                        !3,
+                                                                                                                                                                        !4)
+    IL_007b:  ret
+  } // end of method DynamicTests::DynamicCallWithStringCastToDynamic3
+
   .method private hidebysig static void  Invocation(object a,
                                                     object b) cil managed
   {
@@ -1152,7 +2016,7 @@
     .maxstack  12
     .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_1)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site15'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site2f'
     IL_0005:  brtrue.s   IL_004b
 
     IL_0007:  ldc.i4     0x100
@@ -1187,13 +2051,13 @@
                                                                                                                                                            class [mscorlib]System.Type,
                                                                                                                                                            class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0041:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0046:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site15'
-    IL_004b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site15'
+    IL_0046:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site2f'
+    IL_004b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site2f'
     IL_0050:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0055:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site15'
+    IL_0055:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site2f'
     IL_005a:  ldarg.0
     IL_005b:  ldnull
-    IL_005c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site16'
+    IL_005c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site30'
     IL_0061:  brtrue.s   IL_0095
 
     IL_0063:  ldc.i4.0
@@ -1218,10 +2082,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_008b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0090:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site16'
-    IL_0095:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site16'
+    IL_0090:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site30'
+    IL_0095:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site30'
     IL_009a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_009f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer14'::'<>p__Site16'
+    IL_009f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Invocation>o__SiteContainer2e'::'<>p__Site30'
     IL_00a4:  ldarg.1
     IL_00a5:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -1244,7 +2108,7 @@
     .locals init (object V_0,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_1,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_2)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site18'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site32'
     IL_0005:  brtrue.s   IL_0038
 
     IL_0007:  ldc.i4.0
@@ -1267,15 +2131,15 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_002e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0033:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site18'
-    IL_0038:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site18'
+    IL_0033:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site32'
+    IL_0038:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site32'
     IL_003d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0042:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site18'
+    IL_0042:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site32'
     IL_0047:  ldarg.0
     IL_0048:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_004d:  stloc.0
-    IL_004e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site19'
+    IL_004e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site33'
     IL_0053:  brtrue.s   IL_008b
 
     IL_0055:  ldc.i4.0
@@ -1303,10 +2167,10 @@
                                                                                                                                                              class [mscorlib]System.Type,
                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0081:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0086:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site19'
-    IL_008b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site19'
+    IL_0086:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site33'
+    IL_008b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site33'
     IL_0090:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0095:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer17'::'<>p__Site19'
+    IL_0095:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test1>o__SiteContainer31'::'<>p__Site33'
     IL_009a:  ldloc.0
     IL_009b:  ldc.i4.0
     IL_009c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -1326,7 +2190,7 @@
     .maxstack  9
     .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_1)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1b'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site35'
     IL_0005:  brtrue.s   IL_003d
 
     IL_0007:  ldc.i4.0
@@ -1354,11 +2218,11 @@
                                                                                                                                                              class [mscorlib]System.Type,
                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0033:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0038:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1b'
-    IL_003d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1b'
+    IL_0038:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site35'
+    IL_003d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site35'
     IL_0042:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0047:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1b'
-    IL_004c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1c'
+    IL_0047:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site35'
+    IL_004c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site36'
     IL_0051:  brtrue.s   IL_0085
 
     IL_0053:  ldc.i4.s   64
@@ -1381,10 +2245,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_007b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0080:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1c'
-    IL_0085:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1c'
+    IL_0080:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site36'
+    IL_0085:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site36'
     IL_008a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_008f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer1a'::'<>p__Site1c'
+    IL_008f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Test2>o__SiteContainer34'::'<>p__Site36'
     IL_0094:  ldarg.0
     IL_0095:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -1434,7 +2298,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_27,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_28,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_29)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1e'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site38'
     IL_0005:  brtrue.s   IL_0048
 
     IL_0007:  ldc.i4     0x100
@@ -1466,13 +2330,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_003e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1e'
-    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1e'
+    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site38'
+    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site38'
     IL_004d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1e'
+    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site38'
     IL_0057:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_005c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1f'
+    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site39'
     IL_0066:  brtrue.s   IL_009f
 
     IL_0068:  ldc.i4.0
@@ -1502,10 +2366,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0095:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_009a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1f'
-    IL_009f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1f'
+    IL_009a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site39'
+    IL_009f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site39'
     IL_00a4:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_00a9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site1f'
+    IL_00a9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site39'
     IL_00ae:  ldarg.0
     IL_00af:  ldarg.1
     IL_00b0:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -1514,7 +2378,7 @@
     IL_00b5:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_00ba:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site20'
+    IL_00ba:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3a'
     IL_00bf:  brtrue.s   IL_0102
 
     IL_00c1:  ldc.i4     0x100
@@ -1546,13 +2410,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00f8:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00fd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site20'
-    IL_0102:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site20'
+    IL_00fd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3a'
+    IL_0102:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3a'
     IL_0107:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_010c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site20'
+    IL_010c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3a'
     IL_0111:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0116:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_011b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site21'
+    IL_011b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3b'
     IL_0120:  brtrue.s   IL_0159
 
     IL_0122:  ldc.i4.0
@@ -1582,10 +2446,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_014f:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0154:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site21'
-    IL_0159:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site21'
+    IL_0154:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3b'
+    IL_0159:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3b'
     IL_015e:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0163:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site21'
+    IL_0163:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3b'
     IL_0168:  ldarg.0
     IL_0169:  ldc.i4.1
     IL_016a:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -1594,7 +2458,7 @@
     IL_016f:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0174:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site22'
+    IL_0174:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3c'
     IL_0179:  brtrue.s   IL_01c0
 
     IL_017b:  ldc.i4     0x100
@@ -1626,13 +2490,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_01b6:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_01bb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site22'
-    IL_01c0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site22'
+    IL_01bb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3c'
+    IL_01c0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3c'
     IL_01c5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_01ca:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site22'
+    IL_01ca:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3c'
     IL_01cf:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_01d4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_01d9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site23'
+    IL_01d9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3d'
     IL_01de:  brtrue.s   IL_021b
 
     IL_01e0:  ldc.i4.0
@@ -1662,10 +2526,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0211:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0216:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site23'
-    IL_021b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site23'
+    IL_0216:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3d'
+    IL_021b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3d'
     IL_0220:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0225:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site23'
+    IL_0225:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3d'
     IL_022a:  ldarg.0
     IL_022b:  ldnull
     IL_022c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -1674,7 +2538,7 @@
     IL_0231:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0236:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site24'
+    IL_0236:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3e'
     IL_023b:  brtrue.s   IL_0282
 
     IL_023d:  ldc.i4     0x100
@@ -1706,13 +2570,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0278:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_027d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site24'
-    IL_0282:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site24'
+    IL_027d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3e'
+    IL_0282:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3e'
     IL_0287:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_028c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site24'
+    IL_028c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3e'
     IL_0291:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0296:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_029b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site25'
+    IL_029b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3f'
     IL_02a0:  brtrue.s   IL_02de
 
     IL_02a2:  ldc.i4.0
@@ -1742,10 +2606,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_02d4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_02d9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site25'
-    IL_02de:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site25'
+    IL_02d9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3f'
+    IL_02de:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3f'
     IL_02e3:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_02e8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site25'
+    IL_02e8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site3f'
     IL_02ed:  ldarg.0
     IL_02ee:  ldarg.1
     IL_02ef:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -1754,7 +2618,7 @@
     IL_02f4:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_02f9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site26'
+    IL_02f9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site40'
     IL_02fe:  brtrue.s   IL_0345
 
     IL_0300:  ldc.i4     0x100
@@ -1786,13 +2650,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_033b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0340:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site26'
-    IL_0345:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site26'
+    IL_0340:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site40'
+    IL_0345:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site40'
     IL_034a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_034f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site26'
+    IL_034f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site40'
     IL_0354:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0359:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_035e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site27'
+    IL_035e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site41'
     IL_0363:  brtrue.s   IL_03a1
 
     IL_0365:  ldc.i4.0
@@ -1822,10 +2686,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0397:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_039c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site27'
-    IL_03a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site27'
+    IL_039c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site41'
+    IL_03a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site41'
     IL_03a6:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_03ab:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site27'
+    IL_03ab:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site41'
     IL_03b0:  ldarg.0
     IL_03b1:  ldc.i4.1
     IL_03b2:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -1834,7 +2698,7 @@
     IL_03b7:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_03bc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site28'
+    IL_03bc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site42'
     IL_03c1:  brtrue.s   IL_0408
 
     IL_03c3:  ldc.i4     0x100
@@ -1866,13 +2730,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_03fe:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0403:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site28'
-    IL_0408:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site28'
+    IL_0403:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site42'
+    IL_0408:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site42'
     IL_040d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0412:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site28'
+    IL_0412:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site42'
     IL_0417:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_041c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0421:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site29'
+    IL_0421:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site43'
     IL_0426:  brtrue.s   IL_0464
 
     IL_0428:  ldc.i4.0
@@ -1902,10 +2766,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_045a:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_045f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site29'
-    IL_0464:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site29'
+    IL_045f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site43'
+    IL_0464:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site43'
     IL_0469:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_046e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site29'
+    IL_046e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site43'
     IL_0473:  ldarg.0
     IL_0474:  ldnull
     IL_0475:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -1914,7 +2778,7 @@
     IL_047a:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_047f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2a'
+    IL_047f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site44'
     IL_0484:  brtrue.s   IL_04cb
 
     IL_0486:  ldc.i4     0x100
@@ -1946,13 +2810,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_04c1:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_04c6:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2a'
-    IL_04cb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2a'
+    IL_04c6:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site44'
+    IL_04cb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site44'
     IL_04d0:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_04d5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2a'
+    IL_04d5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site44'
     IL_04da:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_04df:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_04e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2b'
+    IL_04e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site45'
     IL_04e9:  brtrue.s   IL_0527
 
     IL_04eb:  ldc.i4.0
@@ -1982,10 +2846,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_051d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0522:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2b'
-    IL_0527:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2b'
+    IL_0522:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site45'
+    IL_0527:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site45'
     IL_052c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0531:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2b'
+    IL_0531:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site45'
     IL_0536:  ldarg.0
     IL_0537:  ldarg.1
     IL_0538:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -1994,7 +2858,7 @@
     IL_053d:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0542:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2c'
+    IL_0542:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site46'
     IL_0547:  brtrue.s   IL_058e
 
     IL_0549:  ldc.i4     0x100
@@ -2026,13 +2890,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0584:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0589:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2c'
-    IL_058e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2c'
+    IL_0589:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site46'
+    IL_058e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site46'
     IL_0593:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0598:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2c'
+    IL_0598:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site46'
     IL_059d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_05a2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_05a7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2d'
+    IL_05a7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site47'
     IL_05ac:  brtrue.s   IL_05ea
 
     IL_05ae:  ldc.i4.0
@@ -2062,10 +2926,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_05e0:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_05e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2d'
-    IL_05ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2d'
+    IL_05e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site47'
+    IL_05ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site47'
     IL_05ef:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_05f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2d'
+    IL_05f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site47'
     IL_05f9:  ldarg.0
     IL_05fa:  ldc.i4.1
     IL_05fb:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -2074,7 +2938,7 @@
     IL_0600:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0605:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2e'
+    IL_0605:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site48'
     IL_060a:  brtrue.s   IL_0651
 
     IL_060c:  ldc.i4     0x100
@@ -2106,13 +2970,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0647:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_064c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2e'
-    IL_0651:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2e'
+    IL_064c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site48'
+    IL_0651:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site48'
     IL_0656:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_065b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2e'
+    IL_065b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site48'
     IL_0660:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0665:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_066a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2f'
+    IL_066a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site49'
     IL_066f:  brtrue.s   IL_06ad
 
     IL_0671:  ldc.i4.0
@@ -2142,10 +3006,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_06a3:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_06a8:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2f'
-    IL_06ad:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2f'
+    IL_06a8:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site49'
+    IL_06ad:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site49'
     IL_06b2:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_06b7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site2f'
+    IL_06b7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site49'
     IL_06bc:  ldarg.0
     IL_06bd:  ldnull
     IL_06be:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2154,7 +3018,7 @@
     IL_06c3:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_06c8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site30'
+    IL_06c8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4a'
     IL_06cd:  brtrue.s   IL_0714
 
     IL_06cf:  ldc.i4     0x100
@@ -2186,13 +3050,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_070a:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_070f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site30'
-    IL_0714:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site30'
+    IL_070f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4a'
+    IL_0714:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4a'
     IL_0719:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_071e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site30'
+    IL_071e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4a'
     IL_0723:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0728:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_072d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site31'
+    IL_072d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4b'
     IL_0732:  brtrue.s   IL_0770
 
     IL_0734:  ldc.i4.0
@@ -2222,10 +3086,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0766:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_076b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site31'
-    IL_0770:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site31'
+    IL_076b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4b'
+    IL_0770:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4b'
     IL_0775:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_077a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site31'
+    IL_077a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4b'
     IL_077f:  ldarg.0
     IL_0780:  ldarg.1
     IL_0781:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2234,7 +3098,7 @@
     IL_0786:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_078b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site32'
+    IL_078b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4c'
     IL_0790:  brtrue.s   IL_07d7
 
     IL_0792:  ldc.i4     0x100
@@ -2266,13 +3130,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_07cd:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_07d2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site32'
-    IL_07d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site32'
+    IL_07d2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4c'
+    IL_07d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4c'
     IL_07dc:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_07e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site32'
+    IL_07e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4c'
     IL_07e6:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_07eb:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_07f0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site33'
+    IL_07f0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4d'
     IL_07f5:  brtrue.s   IL_0833
 
     IL_07f7:  ldc.i4.0
@@ -2302,10 +3166,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0829:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_082e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site33'
-    IL_0833:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site33'
+    IL_082e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4d'
+    IL_0833:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4d'
     IL_0838:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_083d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site33'
+    IL_083d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4d'
     IL_0842:  ldarg.0
     IL_0843:  ldc.i4.1
     IL_0844:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -2314,7 +3178,7 @@
     IL_0849:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_084e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site34'
+    IL_084e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4e'
     IL_0853:  brtrue.s   IL_089a
 
     IL_0855:  ldc.i4     0x100
@@ -2346,13 +3210,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0890:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0895:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site34'
-    IL_089a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site34'
+    IL_0895:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4e'
+    IL_089a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4e'
     IL_089f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_08a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site34'
+    IL_08a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4e'
     IL_08a9:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_08ae:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_08b3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site35'
+    IL_08b3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4f'
     IL_08b8:  brtrue.s   IL_08f6
 
     IL_08ba:  ldc.i4.0
@@ -2382,10 +3246,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_08ec:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_08f1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site35'
-    IL_08f6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site35'
+    IL_08f1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4f'
+    IL_08f6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4f'
     IL_08fb:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0900:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site35'
+    IL_0900:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site4f'
     IL_0905:  ldarg.0
     IL_0906:  ldnull
     IL_0907:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2394,7 +3258,7 @@
     IL_090c:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0911:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site36'
+    IL_0911:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site50'
     IL_0916:  brtrue.s   IL_095d
 
     IL_0918:  ldc.i4     0x100
@@ -2426,13 +3290,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0953:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0958:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site36'
-    IL_095d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site36'
+    IL_0958:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site50'
+    IL_095d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site50'
     IL_0962:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0967:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site36'
+    IL_0967:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site50'
     IL_096c:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0971:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0976:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site37'
+    IL_0976:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site51'
     IL_097b:  brtrue.s   IL_09b9
 
     IL_097d:  ldc.i4.0
@@ -2462,10 +3326,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_09af:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_09b4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site37'
-    IL_09b9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site37'
+    IL_09b4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site51'
+    IL_09b9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site51'
     IL_09be:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_09c3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site37'
+    IL_09c3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site51'
     IL_09c8:  ldarg.0
     IL_09c9:  ldarg.1
     IL_09ca:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2474,7 +3338,7 @@
     IL_09cf:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_09d4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site38'
+    IL_09d4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site52'
     IL_09d9:  brtrue.s   IL_0a20
 
     IL_09db:  ldc.i4     0x100
@@ -2506,13 +3370,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a16:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a1b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site38'
-    IL_0a20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site38'
+    IL_0a1b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site52'
+    IL_0a20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site52'
     IL_0a25:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0a2a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site38'
+    IL_0a2a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site52'
     IL_0a2f:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0a34:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a39:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site39'
+    IL_0a39:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site53'
     IL_0a3e:  brtrue.s   IL_0a7c
 
     IL_0a40:  ldc.i4.0
@@ -2542,10 +3406,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a72:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a77:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site39'
-    IL_0a7c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site39'
+    IL_0a77:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site53'
+    IL_0a7c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site53'
     IL_0a81:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0a86:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site39'
+    IL_0a86:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site53'
     IL_0a8b:  ldarg.0
     IL_0a8c:  ldc.i4.1
     IL_0a8d:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -2554,7 +3418,7 @@
     IL_0a92:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0a97:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3a'
+    IL_0a97:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site54'
     IL_0a9c:  brtrue.s   IL_0ae3
 
     IL_0a9e:  ldc.i4     0x100
@@ -2586,13 +3450,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0ad9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ade:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3a'
-    IL_0ae3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3a'
+    IL_0ade:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site54'
+    IL_0ae3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site54'
     IL_0ae8:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0aed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3a'
+    IL_0aed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site54'
     IL_0af2:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0af7:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0afc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3b'
+    IL_0afc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site55'
     IL_0b01:  brtrue.s   IL_0b3f
 
     IL_0b03:  ldc.i4.0
@@ -2622,10 +3486,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b35:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0b3a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3b'
-    IL_0b3f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3b'
+    IL_0b3a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site55'
+    IL_0b3f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site55'
     IL_0b44:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0b49:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer1d'::'<>p__Site3b'
+    IL_0b49:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<ArithmeticBinaryOperators>o__SiteContainer37'::'<>p__Site55'
     IL_0b4e:  ldarg.0
     IL_0b4f:  ldnull
     IL_0b50:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2682,7 +3546,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_33,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_34,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_35)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3d'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site57'
     IL_0005:  brtrue.s   IL_0048
 
     IL_0007:  ldc.i4     0x100
@@ -2714,13 +3578,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_003e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3d'
-    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3d'
+    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site57'
+    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site57'
     IL_004d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3d'
+    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site57'
     IL_0057:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_005c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3e'
+    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site58'
     IL_0066:  brtrue.s   IL_00a0
 
     IL_0068:  ldc.i4.0
@@ -2750,10 +3614,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0096:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_009b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3e'
-    IL_00a0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3e'
+    IL_009b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site58'
+    IL_00a0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site58'
     IL_00a5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_00aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3e'
+    IL_00aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site58'
     IL_00af:  ldarg.0
     IL_00b0:  ldarg.1
     IL_00b1:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2762,7 +3626,7 @@
     IL_00b6:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_00bb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3f'
+    IL_00bb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site59'
     IL_00c0:  brtrue.s   IL_0103
 
     IL_00c2:  ldc.i4     0x100
@@ -2794,13 +3658,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00f9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00fe:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3f'
-    IL_0103:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3f'
+    IL_00fe:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site59'
+    IL_0103:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site59'
     IL_0108:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_010d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site3f'
+    IL_010d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site59'
     IL_0112:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0117:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_011c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site40'
+    IL_011c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5a'
     IL_0121:  brtrue.s   IL_015b
 
     IL_0123:  ldc.i4.0
@@ -2830,10 +3694,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0151:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0156:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site40'
-    IL_015b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site40'
+    IL_0156:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5a'
+    IL_015b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5a'
     IL_0160:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0165:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site40'
+    IL_0165:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5a'
     IL_016a:  ldarg.0
     IL_016b:  ldc.i4.1
     IL_016c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -2842,7 +3706,7 @@
     IL_0171:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0176:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site41'
+    IL_0176:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5b'
     IL_017b:  brtrue.s   IL_01c2
 
     IL_017d:  ldc.i4     0x100
@@ -2874,13 +3738,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_01b8:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_01bd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site41'
-    IL_01c2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site41'
+    IL_01bd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5b'
+    IL_01c2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5b'
     IL_01c7:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_01cc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site41'
+    IL_01cc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5b'
     IL_01d1:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_01d6:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_01db:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site42'
+    IL_01db:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5c'
     IL_01e0:  brtrue.s   IL_021e
 
     IL_01e2:  ldc.i4.0
@@ -2910,10 +3774,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0214:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0219:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site42'
-    IL_021e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site42'
+    IL_0219:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5c'
+    IL_021e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5c'
     IL_0223:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0228:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site42'
+    IL_0228:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5c'
     IL_022d:  ldarg.0
     IL_022e:  ldnull
     IL_022f:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -2922,7 +3786,7 @@
     IL_0234:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0239:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site43'
+    IL_0239:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5d'
     IL_023e:  brtrue.s   IL_0285
 
     IL_0240:  ldc.i4     0x100
@@ -2954,13 +3818,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_027b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0280:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site43'
-    IL_0285:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site43'
+    IL_0280:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5d'
+    IL_0285:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5d'
     IL_028a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_028f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site43'
+    IL_028f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5d'
     IL_0294:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0299:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_029e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site44'
+    IL_029e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5e'
     IL_02a3:  brtrue.s   IL_02e1
 
     IL_02a5:  ldc.i4.0
@@ -2990,10 +3854,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_02d7:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_02dc:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site44'
-    IL_02e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site44'
+    IL_02dc:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5e'
+    IL_02e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5e'
     IL_02e6:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_02eb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site44'
+    IL_02eb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5e'
     IL_02f0:  ldarg.0
     IL_02f1:  ldarg.1
     IL_02f2:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3002,7 +3866,7 @@
     IL_02f7:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_02fc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site45'
+    IL_02fc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5f'
     IL_0301:  brtrue.s   IL_0348
 
     IL_0303:  ldc.i4     0x100
@@ -3034,13 +3898,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_033e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0343:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site45'
-    IL_0348:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site45'
+    IL_0343:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5f'
+    IL_0348:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5f'
     IL_034d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0352:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site45'
+    IL_0352:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site5f'
     IL_0357:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_035c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0361:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site46'
+    IL_0361:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site60'
     IL_0366:  brtrue.s   IL_03a4
 
     IL_0368:  ldc.i4.0
@@ -3070,10 +3934,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_039a:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_039f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site46'
-    IL_03a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site46'
+    IL_039f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site60'
+    IL_03a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site60'
     IL_03a9:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_03ae:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site46'
+    IL_03ae:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site60'
     IL_03b3:  ldarg.0
     IL_03b4:  ldc.i4.1
     IL_03b5:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -3082,7 +3946,7 @@
     IL_03ba:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_03bf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site47'
+    IL_03bf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site61'
     IL_03c4:  brtrue.s   IL_040b
 
     IL_03c6:  ldc.i4     0x100
@@ -3114,13 +3978,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0401:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0406:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site47'
-    IL_040b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site47'
+    IL_0406:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site61'
+    IL_040b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site61'
     IL_0410:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0415:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site47'
+    IL_0415:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site61'
     IL_041a:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_041f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0424:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site48'
+    IL_0424:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site62'
     IL_0429:  brtrue.s   IL_0467
 
     IL_042b:  ldc.i4.0
@@ -3150,10 +4014,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_045d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0462:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site48'
-    IL_0467:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site48'
+    IL_0462:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site62'
+    IL_0467:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site62'
     IL_046c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0471:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site48'
+    IL_0471:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site62'
     IL_0476:  ldarg.0
     IL_0477:  ldnull
     IL_0478:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3162,7 +4026,7 @@
     IL_047d:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0482:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site49'
+    IL_0482:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site63'
     IL_0487:  brtrue.s   IL_04ce
 
     IL_0489:  ldc.i4     0x100
@@ -3194,13 +4058,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_04c4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_04c9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site49'
-    IL_04ce:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site49'
+    IL_04c9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site63'
+    IL_04ce:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site63'
     IL_04d3:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_04d8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site49'
+    IL_04d8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site63'
     IL_04dd:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_04e2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_04e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4a'
+    IL_04e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site64'
     IL_04ec:  brtrue.s   IL_052a
 
     IL_04ee:  ldc.i4.0
@@ -3230,10 +4094,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0520:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0525:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4a'
-    IL_052a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4a'
+    IL_0525:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site64'
+    IL_052a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site64'
     IL_052f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0534:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4a'
+    IL_0534:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site64'
     IL_0539:  ldarg.0
     IL_053a:  ldarg.1
     IL_053b:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3242,7 +4106,7 @@
     IL_0540:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0545:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4b'
+    IL_0545:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site65'
     IL_054a:  brtrue.s   IL_0591
 
     IL_054c:  ldc.i4     0x100
@@ -3274,13 +4138,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0587:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_058c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4b'
-    IL_0591:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4b'
+    IL_058c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site65'
+    IL_0591:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site65'
     IL_0596:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_059b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4b'
+    IL_059b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site65'
     IL_05a0:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_05a5:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_05aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4c'
+    IL_05aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site66'
     IL_05af:  brtrue.s   IL_05ed
 
     IL_05b1:  ldc.i4.0
@@ -3310,10 +4174,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_05e3:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_05e8:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4c'
-    IL_05ed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4c'
+    IL_05e8:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site66'
+    IL_05ed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site66'
     IL_05f2:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_05f7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4c'
+    IL_05f7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site66'
     IL_05fc:  ldarg.0
     IL_05fd:  ldc.i4.1
     IL_05fe:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -3322,7 +4186,7 @@
     IL_0603:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0608:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4d'
+    IL_0608:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site67'
     IL_060d:  brtrue.s   IL_0654
 
     IL_060f:  ldc.i4     0x100
@@ -3354,13 +4218,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_064a:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_064f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4d'
-    IL_0654:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4d'
+    IL_064f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site67'
+    IL_0654:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site67'
     IL_0659:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_065e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4d'
+    IL_065e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site67'
     IL_0663:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0668:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_066d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4e'
+    IL_066d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site68'
     IL_0672:  brtrue.s   IL_06b0
 
     IL_0674:  ldc.i4.0
@@ -3390,10 +4254,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_06a6:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_06ab:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4e'
-    IL_06b0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4e'
+    IL_06ab:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site68'
+    IL_06b0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site68'
     IL_06b5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_06ba:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4e'
+    IL_06ba:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site68'
     IL_06bf:  ldarg.0
     IL_06c0:  ldnull
     IL_06c1:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3402,7 +4266,7 @@
     IL_06c6:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_06cb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4f'
+    IL_06cb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site69'
     IL_06d0:  brtrue.s   IL_0717
 
     IL_06d2:  ldc.i4     0x100
@@ -3434,13 +4298,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_070d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0712:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4f'
-    IL_0717:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4f'
+    IL_0712:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site69'
+    IL_0717:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site69'
     IL_071c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0721:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site4f'
+    IL_0721:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site69'
     IL_0726:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_072b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0730:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site50'
+    IL_0730:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6a'
     IL_0735:  brtrue.s   IL_0773
 
     IL_0737:  ldc.i4.0
@@ -3470,10 +4334,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0769:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_076e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site50'
-    IL_0773:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site50'
+    IL_076e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6a'
+    IL_0773:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6a'
     IL_0778:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_077d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site50'
+    IL_077d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6a'
     IL_0782:  ldarg.0
     IL_0783:  ldarg.1
     IL_0784:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3482,7 +4346,7 @@
     IL_0789:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_078e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site51'
+    IL_078e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6b'
     IL_0793:  brtrue.s   IL_07da
 
     IL_0795:  ldc.i4     0x100
@@ -3514,13 +4378,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_07d0:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_07d5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site51'
-    IL_07da:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site51'
+    IL_07d5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6b'
+    IL_07da:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6b'
     IL_07df:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_07e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site51'
+    IL_07e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6b'
     IL_07e9:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_07ee:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_07f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site52'
+    IL_07f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6c'
     IL_07f8:  brtrue.s   IL_0836
 
     IL_07fa:  ldc.i4.0
@@ -3550,10 +4414,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_082c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0831:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site52'
-    IL_0836:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site52'
+    IL_0831:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6c'
+    IL_0836:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6c'
     IL_083b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0840:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site52'
+    IL_0840:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6c'
     IL_0845:  ldarg.0
     IL_0846:  ldc.i4.1
     IL_0847:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -3562,7 +4426,7 @@
     IL_084c:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0851:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site53'
+    IL_0851:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6d'
     IL_0856:  brtrue.s   IL_089d
 
     IL_0858:  ldc.i4     0x100
@@ -3594,13 +4458,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0893:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0898:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site53'
-    IL_089d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site53'
+    IL_0898:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6d'
+    IL_089d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6d'
     IL_08a2:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_08a7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site53'
+    IL_08a7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6d'
     IL_08ac:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_08b1:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_08b6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site54'
+    IL_08b6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6e'
     IL_08bb:  brtrue.s   IL_08f9
 
     IL_08bd:  ldc.i4.0
@@ -3630,10 +4494,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_08ef:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_08f4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site54'
-    IL_08f9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site54'
+    IL_08f4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6e'
+    IL_08f9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6e'
     IL_08fe:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0903:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site54'
+    IL_0903:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6e'
     IL_0908:  ldarg.0
     IL_0909:  ldnull
     IL_090a:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3642,7 +4506,7 @@
     IL_090f:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0914:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site55'
+    IL_0914:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6f'
     IL_0919:  brtrue.s   IL_0960
 
     IL_091b:  ldc.i4     0x100
@@ -3674,13 +4538,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0956:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_095b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site55'
-    IL_0960:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site55'
+    IL_095b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6f'
+    IL_0960:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6f'
     IL_0965:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_096a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site55'
+    IL_096a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site6f'
     IL_096f:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0974:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0979:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site56'
+    IL_0979:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site70'
     IL_097e:  brtrue.s   IL_09bc
 
     IL_0980:  ldc.i4.0
@@ -3710,10 +4574,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_09b2:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_09b7:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site56'
-    IL_09bc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site56'
+    IL_09b7:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site70'
+    IL_09bc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site70'
     IL_09c1:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_09c6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site56'
+    IL_09c6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site70'
     IL_09cb:  ldarg.0
     IL_09cc:  ldarg.1
     IL_09cd:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3722,7 +4586,7 @@
     IL_09d2:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_09d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site57'
+    IL_09d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site71'
     IL_09dc:  brtrue.s   IL_0a23
 
     IL_09de:  ldc.i4     0x100
@@ -3754,13 +4618,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a19:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a1e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site57'
-    IL_0a23:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site57'
+    IL_0a1e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site71'
+    IL_0a23:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site71'
     IL_0a28:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0a2d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site57'
+    IL_0a2d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site71'
     IL_0a32:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0a37:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a3c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site58'
+    IL_0a3c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site72'
     IL_0a41:  brtrue.s   IL_0a7f
 
     IL_0a43:  ldc.i4.0
@@ -3790,10 +4654,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a75:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a7a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site58'
-    IL_0a7f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site58'
+    IL_0a7a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site72'
+    IL_0a7f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site72'
     IL_0a84:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0a89:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site58'
+    IL_0a89:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site72'
     IL_0a8e:  ldarg.0
     IL_0a8f:  ldc.i4.1
     IL_0a90:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -3802,7 +4666,7 @@
     IL_0a95:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0a9a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site59'
+    IL_0a9a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site73'
     IL_0a9f:  brtrue.s   IL_0ae6
 
     IL_0aa1:  ldc.i4     0x100
@@ -3834,13 +4698,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0adc:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ae1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site59'
-    IL_0ae6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site59'
+    IL_0ae1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site73'
+    IL_0ae6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site73'
     IL_0aeb:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0af0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site59'
+    IL_0af0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site73'
     IL_0af5:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0afa:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0aff:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5a'
+    IL_0aff:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site74'
     IL_0b04:  brtrue.s   IL_0b42
 
     IL_0b06:  ldc.i4.0
@@ -3870,10 +4734,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b38:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0b3d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5a'
-    IL_0b42:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5a'
+    IL_0b3d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site74'
+    IL_0b42:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site74'
     IL_0b47:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0b4c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5a'
+    IL_0b4c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site74'
     IL_0b51:  ldarg.0
     IL_0b52:  ldnull
     IL_0b53:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3882,7 +4746,7 @@
     IL_0b58:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0b5d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5b'
+    IL_0b5d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site75'
     IL_0b62:  brtrue.s   IL_0ba9
 
     IL_0b64:  ldc.i4     0x100
@@ -3914,13 +4778,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b9f:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ba4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5b'
-    IL_0ba9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5b'
+    IL_0ba4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site75'
+    IL_0ba9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site75'
     IL_0bae:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0bb3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5b'
+    IL_0bb3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site75'
     IL_0bb8:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0bbd:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0bc2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5c'
+    IL_0bc2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site76'
     IL_0bc7:  brtrue.s   IL_0c05
 
     IL_0bc9:  ldc.i4.0
@@ -3950,10 +4814,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0bfb:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0c00:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5c'
-    IL_0c05:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5c'
+    IL_0c00:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site76'
+    IL_0c05:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site76'
     IL_0c0a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0c0f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5c'
+    IL_0c0f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site76'
     IL_0c14:  ldarg.0
     IL_0c15:  ldarg.1
     IL_0c16:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -3962,7 +4826,7 @@
     IL_0c1b:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0c20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5d'
+    IL_0c20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site77'
     IL_0c25:  brtrue.s   IL_0c6c
 
     IL_0c27:  ldc.i4     0x100
@@ -3994,13 +4858,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0c62:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0c67:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5d'
-    IL_0c6c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5d'
+    IL_0c67:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site77'
+    IL_0c6c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site77'
     IL_0c71:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0c76:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5d'
+    IL_0c76:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site77'
     IL_0c7b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0c80:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0c85:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5e'
+    IL_0c85:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site78'
     IL_0c8a:  brtrue.s   IL_0cc8
 
     IL_0c8c:  ldc.i4.0
@@ -4030,10 +4894,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0cbe:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0cc3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5e'
-    IL_0cc8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5e'
+    IL_0cc3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site78'
+    IL_0cc8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site78'
     IL_0ccd:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0cd2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5e'
+    IL_0cd2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site78'
     IL_0cd7:  ldarg.0
     IL_0cd8:  ldc.i4.1
     IL_0cd9:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -4042,7 +4906,7 @@
     IL_0cde:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0ce3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5f'
+    IL_0ce3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site79'
     IL_0ce8:  brtrue.s   IL_0d2f
 
     IL_0cea:  ldc.i4     0x100
@@ -4074,13 +4938,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d25:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d2a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5f'
-    IL_0d2f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5f'
+    IL_0d2a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site79'
+    IL_0d2f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site79'
     IL_0d34:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0d39:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site5f'
+    IL_0d39:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site79'
     IL_0d3e:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0d43:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0d48:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site60'
+    IL_0d48:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site7a'
     IL_0d4d:  brtrue.s   IL_0d8b
 
     IL_0d4f:  ldc.i4.0
@@ -4110,10 +4974,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d81:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d86:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site60'
-    IL_0d8b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site60'
+    IL_0d86:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site7a'
+    IL_0d8b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site7a'
     IL_0d90:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0d95:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer3c'::'<>p__Site60'
+    IL_0d95:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<RelationalOperators>o__SiteContainer56'::'<>p__Site7a'
     IL_0d9a:  ldarg.0
     IL_0d9b:  ldnull
     IL_0d9c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -4141,7 +5005,7 @@
 
     IL_000b:  ret
 
-    IL_000c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer61'::'<>p__Site62'
+    IL_000c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer7b'::'<>p__Site7c'
     IL_0011:  brtrue.s   IL_0038
 
     IL_0013:  ldc.i4.s   16
@@ -4153,10 +5017,10 @@
                                                                                                                                                             class [mscorlib]System.Type,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_002e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0033:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer61'::'<>p__Site62'
-    IL_0038:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer61'::'<>p__Site62'
+    IL_0033:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer7b'::'<>p__Site7c'
+    IL_0038:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer7b'::'<>p__Site7c'
     IL_003d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>>::Target
-    IL_0042:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer61'::'<>p__Site62'
+    IL_0042:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Casts>o__SiteContainer7b'::'<>p__Site7c'
     IL_0047:  ldarg.0
     IL_0048:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32>::Invoke(!0,
                                                                                                                                                      !1)
@@ -4212,7 +5076,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_35,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_36,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_37)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site64'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7e'
     IL_0005:  brtrue.s   IL_0026
 
     IL_0007:  ldc.i4.0
@@ -4223,16 +5087,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_001c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0021:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site64'
-    IL_0026:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site64'
+    IL_0021:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7e'
+    IL_0026:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7e'
     IL_002b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0030:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site64'
+    IL_0030:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7e'
     IL_0035:  ldarg.0
     IL_0036:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_003b:  brtrue     IL_013f
 
-    IL_0040:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site67'
+    IL_0040:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site81'
     IL_0045:  brtrue.s   IL_0086
 
     IL_0047:  ldc.i4     0x80
@@ -4262,12 +5126,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_007c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0081:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site67'
-    IL_0086:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site67'
+    IL_0081:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site81'
+    IL_0086:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site81'
     IL_008b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0090:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site67'
+    IL_0090:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site81'
     IL_0095:  ldarg.0
-    IL_0096:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site66'
+    IL_0096:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site80'
     IL_009b:  brtrue.s   IL_00d5
 
     IL_009d:  ldc.i4.0
@@ -4297,11 +5161,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00cb:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00d0:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site66'
-    IL_00d5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site66'
+    IL_00d0:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site80'
+    IL_00d5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site80'
     IL_00da:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_00df:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site66'
-    IL_00e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site68'
+    IL_00df:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site80'
+    IL_00e4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site82'
     IL_00e9:  brtrue.s   IL_011c
 
     IL_00eb:  ldc.i4.0
@@ -4324,10 +5188,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0112:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0117:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site68'
-    IL_011c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site68'
+    IL_0117:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site82'
+    IL_011c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site82'
     IL_0121:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0126:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site68'
+    IL_0126:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site82'
     IL_012b:  ldarg.0
     IL_012c:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -4341,7 +5205,7 @@
     IL_013c:  pop
     IL_013d:  br.s       IL_019d
 
-    IL_013f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site65'
+    IL_013f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7f'
     IL_0144:  brtrue.s   IL_0186
 
     IL_0146:  ldc.i4     0x104
@@ -4373,17 +5237,17 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_017c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0181:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site65'
-    IL_0186:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site65'
+    IL_0181:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7f'
+    IL_0186:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7f'
     IL_018b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0190:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site65'
+    IL_0190:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site7f'
     IL_0195:  ldarg.0
     IL_0196:  ldc.i4.5
     IL_0197:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
                                                                                                                                                             !1,
                                                                                                                                                             !2)
     IL_019c:  pop
-    IL_019d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site69'
+    IL_019d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site83'
     IL_01a2:  brtrue.s   IL_01c3
 
     IL_01a4:  ldc.i4.0
@@ -4394,16 +5258,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_01b9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_01be:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site69'
-    IL_01c3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site69'
+    IL_01be:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site83'
+    IL_01c3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site83'
     IL_01c8:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_01cd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site69'
+    IL_01cd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site83'
     IL_01d2:  ldarg.0
     IL_01d3:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_01d8:  brtrue     IL_02e7
 
-    IL_01dd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6c'
+    IL_01dd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site86'
     IL_01e2:  brtrue.s   IL_0227
 
     IL_01e4:  ldc.i4     0x80
@@ -4433,12 +5297,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_021d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0222:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6c'
-    IL_0227:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6c'
+    IL_0222:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site86'
+    IL_0227:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site86'
     IL_022c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0231:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6c'
+    IL_0231:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site86'
     IL_0236:  ldarg.0
-    IL_0237:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6b'
+    IL_0237:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site85'
     IL_023c:  brtrue.s   IL_027a
 
     IL_023e:  ldc.i4.0
@@ -4468,11 +5332,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0270:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0275:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6b'
-    IL_027a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6b'
+    IL_0275:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site85'
+    IL_027a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site85'
     IL_027f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0284:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6b'
-    IL_0289:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6d'
+    IL_0284:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site85'
+    IL_0289:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site87'
     IL_028e:  brtrue.s   IL_02c4
 
     IL_0290:  ldc.i4.0
@@ -4495,10 +5359,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_02ba:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_02bf:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6d'
-    IL_02c4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6d'
+    IL_02bf:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site87'
+    IL_02c4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site87'
     IL_02c9:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_02ce:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6d'
+    IL_02ce:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site87'
     IL_02d3:  ldarg.0
     IL_02d4:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -4512,7 +5376,7 @@
     IL_02e4:  pop
     IL_02e5:  br.s       IL_0349
 
-    IL_02e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6a'
+    IL_02e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site84'
     IL_02ec:  brtrue.s   IL_0332
 
     IL_02ee:  ldc.i4     0x104
@@ -4544,17 +5408,17 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0328:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_032d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6a'
-    IL_0332:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6a'
+    IL_032d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site84'
+    IL_0332:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site84'
     IL_0337:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_033c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6a'
+    IL_033c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site84'
     IL_0341:  ldarg.0
     IL_0342:  ldc.i4.1
     IL_0343:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
                                                                                                                                                             !1,
                                                                                                                                                             !2)
     IL_0348:  pop
-    IL_0349:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6f'
+    IL_0349:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site89'
     IL_034e:  brtrue.s   IL_0393
 
     IL_0350:  ldc.i4     0x80
@@ -4584,12 +5448,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0389:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_038e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6f'
-    IL_0393:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6f'
+    IL_038e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site89'
+    IL_0393:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site89'
     IL_0398:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_039d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6f'
+    IL_039d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site89'
     IL_03a2:  ldarg.0
-    IL_03a3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6e'
+    IL_03a3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site88'
     IL_03a8:  brtrue.s   IL_03e6
 
     IL_03aa:  ldc.i4.0
@@ -4619,11 +5483,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_03dc:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_03e1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6e'
-    IL_03e6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6e'
+    IL_03e1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site88'
+    IL_03e6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site88'
     IL_03eb:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_03f0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site6e'
-    IL_03f5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site70'
+    IL_03f0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site88'
+    IL_03f5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8a'
     IL_03fa:  brtrue.s   IL_0430
 
     IL_03fc:  ldc.i4.0
@@ -4646,10 +5510,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0426:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_042b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site70'
-    IL_0430:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site70'
+    IL_042b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8a'
+    IL_0430:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8a'
     IL_0435:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_043a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site70'
+    IL_043a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8a'
     IL_043f:  ldarg.0
     IL_0440:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -4661,7 +5525,7 @@
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_0450:  pop
-    IL_0451:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site72'
+    IL_0451:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8c'
     IL_0456:  brtrue.s   IL_049b
 
     IL_0458:  ldc.i4     0x80
@@ -4691,12 +5555,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0491:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0496:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site72'
-    IL_049b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site72'
+    IL_0496:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8c'
+    IL_049b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8c'
     IL_04a0:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_04a5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site72'
+    IL_04a5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8c'
     IL_04aa:  ldarg.0
-    IL_04ab:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site71'
+    IL_04ab:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8b'
     IL_04b0:  brtrue.s   IL_04ee
 
     IL_04b2:  ldc.i4.0
@@ -4726,11 +5590,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_04e4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_04e9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site71'
-    IL_04ee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site71'
+    IL_04e9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8b'
+    IL_04ee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8b'
     IL_04f3:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_04f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site71'
-    IL_04fd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site73'
+    IL_04f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8b'
+    IL_04fd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8d'
     IL_0502:  brtrue.s   IL_0538
 
     IL_0504:  ldc.i4.0
@@ -4753,10 +5617,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_052e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0533:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site73'
-    IL_0538:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site73'
+    IL_0533:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8d'
+    IL_0538:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8d'
     IL_053d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0542:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site73'
+    IL_0542:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8d'
     IL_0547:  ldarg.0
     IL_0548:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -4768,7 +5632,7 @@
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_0558:  pop
-    IL_0559:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site74'
+    IL_0559:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8e'
     IL_055e:  brtrue.s   IL_057f
 
     IL_0560:  ldc.i4.0
@@ -4779,16 +5643,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0575:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_057a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site74'
-    IL_057f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site74'
+    IL_057a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8e'
+    IL_057f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8e'
     IL_0584:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0589:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site74'
+    IL_0589:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8e'
     IL_058e:  ldarg.0
     IL_058f:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_0594:  brtrue     IL_06a3
 
-    IL_0599:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site77'
+    IL_0599:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site91'
     IL_059e:  brtrue.s   IL_05e3
 
     IL_05a0:  ldc.i4     0x80
@@ -4818,12 +5682,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_05d9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_05de:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site77'
-    IL_05e3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site77'
+    IL_05de:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site91'
+    IL_05e3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site91'
     IL_05e8:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_05ed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site77'
+    IL_05ed:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site91'
     IL_05f2:  ldarg.0
-    IL_05f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site76'
+    IL_05f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site90'
     IL_05f8:  brtrue.s   IL_0636
 
     IL_05fa:  ldc.i4.0
@@ -4853,11 +5717,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_062c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0631:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site76'
-    IL_0636:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site76'
+    IL_0631:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site90'
+    IL_0636:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site90'
     IL_063b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0640:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site76'
-    IL_0645:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site78'
+    IL_0640:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site90'
+    IL_0645:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site92'
     IL_064a:  brtrue.s   IL_0680
 
     IL_064c:  ldc.i4.0
@@ -4880,10 +5744,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0676:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_067b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site78'
-    IL_0680:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site78'
+    IL_067b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site92'
+    IL_0680:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site92'
     IL_0685:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_068a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site78'
+    IL_068a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site92'
     IL_068f:  ldarg.0
     IL_0690:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -4897,7 +5761,7 @@
     IL_06a0:  pop
     IL_06a1:  br.s       IL_0705
 
-    IL_06a3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site75'
+    IL_06a3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8f'
     IL_06a8:  brtrue.s   IL_06ee
 
     IL_06aa:  ldc.i4     0x104
@@ -4929,17 +5793,17 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_06e4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_06e9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site75'
-    IL_06ee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site75'
+    IL_06e9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8f'
+    IL_06ee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8f'
     IL_06f3:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_06f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site75'
+    IL_06f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site8f'
     IL_06fd:  ldarg.0
     IL_06fe:  ldarg.1
     IL_06ff:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_0704:  pop
-    IL_0705:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site79'
+    IL_0705:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site93'
     IL_070a:  brtrue.s   IL_072b
 
     IL_070c:  ldc.i4.0
@@ -4950,16 +5814,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0721:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0726:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site79'
-    IL_072b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site79'
+    IL_0726:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site93'
+    IL_072b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site93'
     IL_0730:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0735:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site79'
+    IL_0735:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site93'
     IL_073a:  ldarg.0
     IL_073b:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_0740:  brtrue     IL_084f
 
-    IL_0745:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7c'
+    IL_0745:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site96'
     IL_074a:  brtrue.s   IL_078f
 
     IL_074c:  ldc.i4     0x80
@@ -4989,12 +5853,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0785:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_078a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7c'
-    IL_078f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7c'
+    IL_078a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site96'
+    IL_078f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site96'
     IL_0794:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0799:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7c'
+    IL_0799:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site96'
     IL_079e:  ldarg.0
-    IL_079f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7b'
+    IL_079f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site95'
     IL_07a4:  brtrue.s   IL_07e2
 
     IL_07a6:  ldc.i4.0
@@ -5024,11 +5888,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_07d8:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_07dd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7b'
-    IL_07e2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7b'
+    IL_07dd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site95'
+    IL_07e2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site95'
     IL_07e7:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_07ec:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7b'
-    IL_07f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7d'
+    IL_07ec:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site95'
+    IL_07f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site97'
     IL_07f6:  brtrue.s   IL_082c
 
     IL_07f8:  ldc.i4.0
@@ -5051,10 +5915,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0822:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0827:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7d'
-    IL_082c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7d'
+    IL_0827:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site97'
+    IL_082c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site97'
     IL_0831:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0836:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7d'
+    IL_0836:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site97'
     IL_083b:  ldarg.0
     IL_083c:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5068,7 +5932,7 @@
     IL_084c:  pop
     IL_084d:  br.s       IL_08b1
 
-    IL_084f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7a'
+    IL_084f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site94'
     IL_0854:  brtrue.s   IL_089a
 
     IL_0856:  ldc.i4     0x104
@@ -5100,17 +5964,17 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0890:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0895:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7a'
-    IL_089a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7a'
+    IL_0895:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site94'
+    IL_089a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site94'
     IL_089f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_08a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7a'
+    IL_08a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site94'
     IL_08a9:  ldarg.0
     IL_08aa:  ldarg.1
     IL_08ab:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_08b0:  pop
-    IL_08b1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7f'
+    IL_08b1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site99'
     IL_08b6:  brtrue.s   IL_08fb
 
     IL_08b8:  ldc.i4     0x80
@@ -5140,12 +6004,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_08f1:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_08f6:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7f'
-    IL_08fb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7f'
+    IL_08f6:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site99'
+    IL_08fb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site99'
     IL_0900:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0905:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7f'
+    IL_0905:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site99'
     IL_090a:  ldarg.0
-    IL_090b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7e'
+    IL_090b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site98'
     IL_0910:  brtrue.s   IL_094e
 
     IL_0912:  ldc.i4.0
@@ -5175,11 +6039,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0944:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0949:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7e'
-    IL_094e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7e'
+    IL_0949:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site98'
+    IL_094e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site98'
     IL_0953:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0958:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site7e'
-    IL_095d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site80'
+    IL_0958:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site98'
+    IL_095d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9a'
     IL_0962:  brtrue.s   IL_0998
 
     IL_0964:  ldc.i4.0
@@ -5202,10 +6066,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_098e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0993:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site80'
-    IL_0998:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site80'
+    IL_0993:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9a'
+    IL_0998:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9a'
     IL_099d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_09a2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site80'
+    IL_09a2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9a'
     IL_09a7:  ldarg.0
     IL_09a8:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5217,7 +6081,7 @@
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_09b8:  pop
-    IL_09b9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site82'
+    IL_09b9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9c'
     IL_09be:  brtrue.s   IL_0a03
 
     IL_09c0:  ldc.i4     0x80
@@ -5247,12 +6111,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_09f9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_09fe:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site82'
-    IL_0a03:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site82'
+    IL_09fe:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9c'
+    IL_0a03:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9c'
     IL_0a08:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0a0d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site82'
+    IL_0a0d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9c'
     IL_0a12:  ldarg.0
-    IL_0a13:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site81'
+    IL_0a13:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9b'
     IL_0a18:  brtrue.s   IL_0a56
 
     IL_0a1a:  ldc.i4.0
@@ -5282,11 +6146,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a4c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a51:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site81'
-    IL_0a56:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site81'
+    IL_0a51:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9b'
+    IL_0a56:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9b'
     IL_0a5b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0a60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site81'
-    IL_0a65:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site83'
+    IL_0a60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9b'
+    IL_0a65:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9d'
     IL_0a6a:  brtrue.s   IL_0aa0
 
     IL_0a6c:  ldc.i4.0
@@ -5309,10 +6173,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a96:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a9b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site83'
-    IL_0aa0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site83'
+    IL_0a9b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9d'
+    IL_0aa0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9d'
     IL_0aa5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0aaa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site83'
+    IL_0aaa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9d'
     IL_0aaf:  ldarg.0
     IL_0ab0:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5326,7 +6190,7 @@
     IL_0ac0:  pop
     IL_0ac1:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
     IL_0ac6:  stloc.s    V_28
-    IL_0ac8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site84'
+    IL_0ac8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9e'
     IL_0acd:  brtrue.s   IL_0aee
 
     IL_0acf:  ldc.i4.0
@@ -5337,16 +6201,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0ae4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ae9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site84'
-    IL_0aee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site84'
+    IL_0ae9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9e'
+    IL_0aee:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9e'
     IL_0af3:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0af8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site84'
+    IL_0af8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9e'
     IL_0afd:  ldloc.s    V_28
     IL_0aff:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_0b04:  brtrue     IL_0c15
 
-    IL_0b09:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site87'
+    IL_0b09:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea1'
     IL_0b0e:  brtrue.s   IL_0b53
 
     IL_0b10:  ldc.i4     0x80
@@ -5376,12 +6240,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b49:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0b4e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site87'
-    IL_0b53:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site87'
+    IL_0b4e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea1'
+    IL_0b53:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea1'
     IL_0b58:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0b5d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site87'
+    IL_0b5d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea1'
     IL_0b62:  ldloc.s    V_28
-    IL_0b64:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site86'
+    IL_0b64:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea0'
     IL_0b69:  brtrue.s   IL_0ba7
 
     IL_0b6b:  ldc.i4.0
@@ -5411,11 +6275,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b9d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ba2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site86'
-    IL_0ba7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site86'
+    IL_0ba2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea0'
+    IL_0ba7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea0'
     IL_0bac:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0bb1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site86'
-    IL_0bb6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site88'
+    IL_0bb1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea0'
+    IL_0bb6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea2'
     IL_0bbb:  brtrue.s   IL_0bf1
 
     IL_0bbd:  ldc.i4.0
@@ -5438,10 +6302,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0be7:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0bec:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site88'
-    IL_0bf1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site88'
+    IL_0bec:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea2'
+    IL_0bf1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea2'
     IL_0bf6:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0bfb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site88'
+    IL_0bfb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea2'
     IL_0c00:  ldloc.s    V_28
     IL_0c02:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5455,7 +6319,7 @@
     IL_0c12:  pop
     IL_0c13:  br.s       IL_0c78
 
-    IL_0c15:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site85'
+    IL_0c15:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9f'
     IL_0c1a:  brtrue.s   IL_0c60
 
     IL_0c1c:  ldc.i4     0x104
@@ -5487,10 +6351,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0c56:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0c5b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site85'
-    IL_0c60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site85'
+    IL_0c5b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9f'
+    IL_0c60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9f'
     IL_0c65:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0c6a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site85'
+    IL_0c6a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Site9f'
     IL_0c6f:  ldloc.s    V_28
     IL_0c71:  ldc.i4.5
     IL_0c72:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -5499,7 +6363,7 @@
     IL_0c77:  pop
     IL_0c78:  ldsfld     object ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests::'field'
     IL_0c7d:  stloc.s    V_33
-    IL_0c7f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site89'
+    IL_0c7f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea3'
     IL_0c84:  brtrue.s   IL_0ca5
 
     IL_0c86:  ldc.i4.0
@@ -5510,16 +6374,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0c9b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ca0:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site89'
-    IL_0ca5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site89'
+    IL_0ca0:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea3'
+    IL_0ca5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea3'
     IL_0caa:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0caf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site89'
+    IL_0caf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea3'
     IL_0cb4:  ldloc.s    V_33
     IL_0cb6:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_0cbb:  brtrue     IL_0dcb
 
-    IL_0cc0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8c'
+    IL_0cc0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea6'
     IL_0cc5:  brtrue.s   IL_0d0a
 
     IL_0cc7:  ldc.i4     0x80
@@ -5549,12 +6413,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d00:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d05:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8c'
-    IL_0d0a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8c'
+    IL_0d05:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea6'
+    IL_0d0a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea6'
     IL_0d0f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0d14:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8c'
+    IL_0d14:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea6'
     IL_0d19:  ldloc.s    V_33
-    IL_0d1b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8b'
+    IL_0d1b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea5'
     IL_0d20:  brtrue.s   IL_0d5e
 
     IL_0d22:  ldc.i4.0
@@ -5584,11 +6448,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d54:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d59:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8b'
-    IL_0d5e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8b'
+    IL_0d59:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea5'
+    IL_0d5e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea5'
     IL_0d63:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0d68:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8b'
-    IL_0d6d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8d'
+    IL_0d68:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea5'
+    IL_0d6d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea7'
     IL_0d72:  brtrue.s   IL_0da8
 
     IL_0d74:  ldc.i4.0
@@ -5611,10 +6475,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d9e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0da3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8d'
-    IL_0da8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8d'
+    IL_0da3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea7'
+    IL_0da8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea7'
     IL_0dad:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0db2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8d'
+    IL_0db2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea7'
     IL_0db7:  ldloc.s    V_33
     IL_0db9:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5628,7 +6492,7 @@
     IL_0dc9:  pop
     IL_0dca:  ret
 
-    IL_0dcb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8a'
+    IL_0dcb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea4'
     IL_0dd0:  brtrue.s   IL_0e16
 
     IL_0dd2:  ldc.i4     0x104
@@ -5660,10 +6524,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0e0c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0e11:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8a'
-    IL_0e16:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8a'
+    IL_0e11:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea4'
+    IL_0e16:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea4'
     IL_0e1b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0e20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer63'::'<>p__Site8a'
+    IL_0e20:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<CompoundAssignment>o__SiteContainer7d'::'<>p__Sitea4'
     IL_0e25:  ldloc.s    V_33
     IL_0e27:  ldc.i4.5
     IL_0e28:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -5718,7 +6582,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_33,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_34,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_35)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site8f'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitea9'
     IL_0005:  brtrue.s   IL_0048
 
     IL_0007:  ldc.i4     0x100
@@ -5750,13 +6614,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_003e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site8f'
-    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site8f'
+    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitea9'
+    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitea9'
     IL_004d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site8f'
+    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitea9'
     IL_0057:  ldtoken    [mscorlib]System.Console
     IL_005c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site90'
+    IL_0061:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaa'
     IL_0066:  brtrue.s   IL_0087
 
     IL_0068:  ldc.i4.0
@@ -5767,16 +6631,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_007d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0082:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site90'
-    IL_0087:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site90'
+    IL_0082:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaa'
+    IL_0087:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaa'
     IL_008c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0091:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site90'
+    IL_0091:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaa'
     IL_0096:  ldarg.0
     IL_0097:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_009c:  brtrue     IL_019f
 
-    IL_00a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site93'
+    IL_00a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitead'
     IL_00a6:  brtrue.s   IL_00e7
 
     IL_00a8:  ldc.i4     0x80
@@ -5806,12 +6670,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00dd:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00e2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site93'
-    IL_00e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site93'
+    IL_00e2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitead'
+    IL_00e7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitead'
     IL_00ec:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_00f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site93'
+    IL_00f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitead'
     IL_00f6:  ldarg.0
-    IL_00f7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site92'
+    IL_00f7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteac'
     IL_00fc:  brtrue.s   IL_0136
 
     IL_00fe:  ldc.i4.0
@@ -5841,11 +6705,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_012c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0131:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site92'
-    IL_0136:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site92'
+    IL_0131:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteac'
+    IL_0136:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteac'
     IL_013b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0140:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site92'
-    IL_0145:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site94'
+    IL_0140:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteac'
+    IL_0145:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteae'
     IL_014a:  brtrue.s   IL_017d
 
     IL_014c:  ldc.i4.0
@@ -5868,10 +6732,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0173:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0178:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site94'
-    IL_017d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site94'
+    IL_0178:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteae'
+    IL_017d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteae'
     IL_0182:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0187:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site94'
+    IL_0187:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteae'
     IL_018c:  ldarg.0
     IL_018d:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -5884,7 +6748,7 @@
                                                                                                                                                              !2)
     IL_019d:  br.s       IL_0200
 
-    IL_019f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site91'
+    IL_019f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteab'
     IL_01a4:  brtrue.s   IL_01ea
 
     IL_01a6:  ldc.i4     0x104
@@ -5916,10 +6780,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_01e0:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_01e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site91'
-    IL_01ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site91'
+    IL_01e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteab'
+    IL_01ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteab'
     IL_01ef:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_01f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site91'
+    IL_01f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteab'
     IL_01f9:  ldarg.0
     IL_01fa:  ldc.i4.5
     IL_01fb:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -5928,7 +6792,7 @@
     IL_0200:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0205:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site95'
+    IL_0205:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaf'
     IL_020a:  brtrue.s   IL_0251
 
     IL_020c:  ldc.i4     0x100
@@ -5960,13 +6824,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0247:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_024c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site95'
-    IL_0251:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site95'
+    IL_024c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaf'
+    IL_0251:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaf'
     IL_0256:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_025b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site95'
+    IL_025b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteaf'
     IL_0260:  ldtoken    [mscorlib]System.Console
     IL_0265:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_026a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site96'
+    IL_026a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb0'
     IL_026f:  brtrue.s   IL_0290
 
     IL_0271:  ldc.i4.0
@@ -5977,16 +6841,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0286:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_028b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site96'
-    IL_0290:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site96'
+    IL_028b:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb0'
+    IL_0290:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb0'
     IL_0295:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_029a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site96'
+    IL_029a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb0'
     IL_029f:  ldarg.0
     IL_02a0:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_02a5:  brtrue     IL_03b3
 
-    IL_02aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site99'
+    IL_02aa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb3'
     IL_02af:  brtrue.s   IL_02f4
 
     IL_02b1:  ldc.i4     0x80
@@ -6016,12 +6880,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_02ea:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_02ef:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site99'
-    IL_02f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site99'
+    IL_02ef:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb3'
+    IL_02f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb3'
     IL_02f9:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_02fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site99'
+    IL_02fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb3'
     IL_0303:  ldarg.0
-    IL_0304:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site98'
+    IL_0304:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb2'
     IL_0309:  brtrue.s   IL_0347
 
     IL_030b:  ldc.i4.0
@@ -6051,11 +6915,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_033d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0342:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site98'
-    IL_0347:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site98'
+    IL_0342:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb2'
+    IL_0347:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb2'
     IL_034c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0351:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site98'
-    IL_0356:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9a'
+    IL_0351:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb2'
+    IL_0356:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb4'
     IL_035b:  brtrue.s   IL_0391
 
     IL_035d:  ldc.i4.0
@@ -6078,10 +6942,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0387:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_038c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9a'
-    IL_0391:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9a'
+    IL_038c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb4'
+    IL_0391:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb4'
     IL_0396:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_039b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9a'
+    IL_039b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb4'
     IL_03a0:  ldarg.0
     IL_03a1:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6094,7 +6958,7 @@
                                                                                                                                                              !2)
     IL_03b1:  br.s       IL_0414
 
-    IL_03b3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site97'
+    IL_03b3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb1'
     IL_03b8:  brtrue.s   IL_03fe
 
     IL_03ba:  ldc.i4     0x104
@@ -6126,10 +6990,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_03f4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_03f9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site97'
-    IL_03fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site97'
+    IL_03f9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb1'
+    IL_03fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb1'
     IL_0403:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0408:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site97'
+    IL_0408:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb1'
     IL_040d:  ldarg.0
     IL_040e:  ldc.i4.1
     IL_040f:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>::Invoke(!0,
@@ -6138,7 +7002,7 @@
     IL_0414:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0419:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9b'
+    IL_0419:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb5'
     IL_041e:  brtrue.s   IL_0465
 
     IL_0420:  ldc.i4     0x100
@@ -6170,13 +7034,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_045b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0460:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9b'
-    IL_0465:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9b'
+    IL_0460:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb5'
+    IL_0465:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb5'
     IL_046a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_046f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9b'
+    IL_046f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb5'
     IL_0474:  ldtoken    [mscorlib]System.Console
     IL_0479:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_047e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9d'
+    IL_047e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb7'
     IL_0483:  brtrue.s   IL_04c8
 
     IL_0485:  ldc.i4     0x80
@@ -6206,12 +7070,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_04be:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_04c3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9d'
-    IL_04c8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9d'
+    IL_04c3:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb7'
+    IL_04c8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb7'
     IL_04cd:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_04d2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9d'
+    IL_04d2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb7'
     IL_04d7:  ldarg.0
-    IL_04d8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9c'
+    IL_04d8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb6'
     IL_04dd:  brtrue.s   IL_051b
 
     IL_04df:  ldc.i4.0
@@ -6241,11 +7105,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0511:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0516:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9c'
-    IL_051b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9c'
+    IL_0516:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb6'
+    IL_051b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb6'
     IL_0520:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0525:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9c'
-    IL_052a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9e'
+    IL_0525:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb6'
+    IL_052a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb8'
     IL_052f:  brtrue.s   IL_0565
 
     IL_0531:  ldc.i4.0
@@ -6268,10 +7132,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_055b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0560:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9e'
-    IL_0565:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9e'
+    IL_0560:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb8'
+    IL_0565:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb8'
     IL_056a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_056f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9e'
+    IL_056f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb8'
     IL_0574:  ldarg.0
     IL_0575:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6285,7 +7149,7 @@
     IL_0585:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_058a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9f'
+    IL_058a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb9'
     IL_058f:  brtrue.s   IL_05d6
 
     IL_0591:  ldc.i4     0x100
@@ -6317,13 +7181,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_05cc:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_05d1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9f'
-    IL_05d6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9f'
+    IL_05d1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb9'
+    IL_05d6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb9'
     IL_05db:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_05e0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Site9f'
+    IL_05e0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteb9'
     IL_05e5:  ldtoken    [mscorlib]System.Console
     IL_05ea:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_05ef:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea1'
+    IL_05ef:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebb'
     IL_05f4:  brtrue.s   IL_0639
 
     IL_05f6:  ldc.i4     0x80
@@ -6353,12 +7217,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_062f:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0634:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea1'
-    IL_0639:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea1'
+    IL_0634:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebb'
+    IL_0639:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebb'
     IL_063e:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0643:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea1'
+    IL_0643:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebb'
     IL_0648:  ldarg.0
-    IL_0649:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea0'
+    IL_0649:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteba'
     IL_064e:  brtrue.s   IL_068c
 
     IL_0650:  ldc.i4.0
@@ -6388,11 +7252,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0682:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0687:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea0'
-    IL_068c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea0'
+    IL_0687:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteba'
+    IL_068c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteba'
     IL_0691:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0696:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea0'
-    IL_069b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea2'
+    IL_0696:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteba'
+    IL_069b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebc'
     IL_06a0:  brtrue.s   IL_06d6
 
     IL_06a2:  ldc.i4.0
@@ -6415,10 +7279,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_06cc:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_06d1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea2'
-    IL_06d6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea2'
+    IL_06d1:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebc'
+    IL_06d6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebc'
     IL_06db:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_06e0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea2'
+    IL_06e0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebc'
     IL_06e5:  ldarg.0
     IL_06e6:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6432,7 +7296,7 @@
     IL_06f6:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_06fb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea3'
+    IL_06fb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebd'
     IL_0700:  brtrue.s   IL_0747
 
     IL_0702:  ldc.i4     0x100
@@ -6464,13 +7328,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_073d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0742:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea3'
-    IL_0747:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea3'
+    IL_0742:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebd'
+    IL_0747:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebd'
     IL_074c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0751:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea3'
+    IL_0751:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebd'
     IL_0756:  ldtoken    [mscorlib]System.Console
     IL_075b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0760:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea4'
+    IL_0760:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebe'
     IL_0765:  brtrue.s   IL_0786
 
     IL_0767:  ldc.i4.0
@@ -6481,16 +7345,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_077c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0781:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea4'
-    IL_0786:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea4'
+    IL_0781:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebe'
+    IL_0786:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebe'
     IL_078b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_0790:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea4'
+    IL_0790:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebe'
     IL_0795:  ldarg.0
     IL_0796:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_079b:  brtrue     IL_08a9
 
-    IL_07a0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea7'
+    IL_07a0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec1'
     IL_07a5:  brtrue.s   IL_07ea
 
     IL_07a7:  ldc.i4     0x80
@@ -6520,12 +7384,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_07e0:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_07e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea7'
-    IL_07ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea7'
+    IL_07e5:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec1'
+    IL_07ea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec1'
     IL_07ef:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_07f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea7'
+    IL_07f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec1'
     IL_07f9:  ldarg.0
-    IL_07fa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea6'
+    IL_07fa:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec0'
     IL_07ff:  brtrue.s   IL_083d
 
     IL_0801:  ldc.i4.0
@@ -6555,11 +7419,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0833:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0838:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea6'
-    IL_083d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea6'
+    IL_0838:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec0'
+    IL_083d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec0'
     IL_0842:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0847:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea6'
-    IL_084c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea8'
+    IL_0847:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec0'
+    IL_084c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec2'
     IL_0851:  brtrue.s   IL_0887
 
     IL_0853:  ldc.i4.0
@@ -6582,10 +7446,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_087d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0882:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea8'
-    IL_0887:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea8'
+    IL_0882:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec2'
+    IL_0887:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec2'
     IL_088c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0891:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea8'
+    IL_0891:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec2'
     IL_0896:  ldarg.0
     IL_0897:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6598,7 +7462,7 @@
                                                                                                                                                              !2)
     IL_08a7:  br.s       IL_090a
 
-    IL_08a9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea5'
+    IL_08a9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebf'
     IL_08ae:  brtrue.s   IL_08f4
 
     IL_08b0:  ldc.i4     0x104
@@ -6630,10 +7494,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_08ea:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_08ef:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea5'
-    IL_08f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea5'
+    IL_08ef:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebf'
+    IL_08f4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebf'
     IL_08f9:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_08fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea5'
+    IL_08fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitebf'
     IL_0903:  ldarg.0
     IL_0904:  ldarg.1
     IL_0905:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -6642,7 +7506,7 @@
     IL_090a:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_090f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea9'
+    IL_090f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec3'
     IL_0914:  brtrue.s   IL_095b
 
     IL_0916:  ldc.i4     0x100
@@ -6674,13 +7538,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0951:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0956:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea9'
-    IL_095b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea9'
+    IL_0956:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec3'
+    IL_095b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec3'
     IL_0960:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0965:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitea9'
+    IL_0965:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec3'
     IL_096a:  ldtoken    [mscorlib]System.Console
     IL_096f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0974:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaa'
+    IL_0974:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec4'
     IL_0979:  brtrue.s   IL_099a
 
     IL_097b:  ldc.i4.0
@@ -6691,16 +7555,16 @@
                                                                                                                                                             string,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0990:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0995:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaa'
-    IL_099a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaa'
+    IL_0995:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec4'
+    IL_099a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec4'
     IL_099f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_09a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaa'
+    IL_09a4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec4'
     IL_09a9:  ldarg.0
     IL_09aa:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_09af:  brtrue     IL_0abd
 
-    IL_09b4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitead'
+    IL_09b4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec7'
     IL_09b9:  brtrue.s   IL_09fe
 
     IL_09bb:  ldc.i4     0x80
@@ -6730,12 +7594,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_09f4:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_09f9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitead'
-    IL_09fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitead'
+    IL_09f9:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec7'
+    IL_09fe:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec7'
     IL_0a03:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0a08:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Sitead'
+    IL_0a08:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec7'
     IL_0a0d:  ldarg.0
-    IL_0a0e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteac'
+    IL_0a0e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec6'
     IL_0a13:  brtrue.s   IL_0a51
 
     IL_0a15:  ldc.i4.0
@@ -6765,11 +7629,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a47:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a4c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteac'
-    IL_0a51:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteac'
+    IL_0a4c:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec6'
+    IL_0a51:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec6'
     IL_0a56:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0a5b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteac'
-    IL_0a60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteae'
+    IL_0a5b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec6'
+    IL_0a60:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec8'
     IL_0a65:  brtrue.s   IL_0a9b
 
     IL_0a67:  ldc.i4.0
@@ -6792,10 +7656,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0a91:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0a96:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteae'
-    IL_0a9b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteae'
+    IL_0a96:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec8'
+    IL_0a9b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec8'
     IL_0aa0:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0aa5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteae'
+    IL_0aa5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec8'
     IL_0aaa:  ldarg.0
     IL_0aab:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6808,7 +7672,7 @@
                                                                                                                                                              !2)
     IL_0abb:  br.s       IL_0b1e
 
-    IL_0abd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteab'
+    IL_0abd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec5'
     IL_0ac2:  brtrue.s   IL_0b08
 
     IL_0ac4:  ldc.i4     0x104
@@ -6840,10 +7704,10 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0afe:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0b03:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteab'
-    IL_0b08:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteab'
+    IL_0b03:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec5'
+    IL_0b08:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec5'
     IL_0b0d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0b12:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteab'
+    IL_0b12:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec5'
     IL_0b17:  ldarg.0
     IL_0b18:  ldarg.1
     IL_0b19:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -6852,7 +7716,7 @@
     IL_0b1e:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0b23:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaf'
+    IL_0b23:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec9'
     IL_0b28:  brtrue.s   IL_0b6f
 
     IL_0b2a:  ldc.i4     0x100
@@ -6884,13 +7748,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0b65:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0b6a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaf'
-    IL_0b6f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaf'
+    IL_0b6a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec9'
+    IL_0b6f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec9'
     IL_0b74:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0b79:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteaf'
+    IL_0b79:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitec9'
     IL_0b7e:  ldtoken    [mscorlib]System.Console
     IL_0b83:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b88:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb1'
+    IL_0b88:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecb'
     IL_0b8d:  brtrue.s   IL_0bd2
 
     IL_0b8f:  ldc.i4     0x80
@@ -6920,12 +7784,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0bc8:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0bcd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb1'
-    IL_0bd2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb1'
+    IL_0bcd:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecb'
+    IL_0bd2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecb'
     IL_0bd7:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0bdc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb1'
+    IL_0bdc:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecb'
     IL_0be1:  ldarg.0
-    IL_0be2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb0'
+    IL_0be2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteca'
     IL_0be7:  brtrue.s   IL_0c25
 
     IL_0be9:  ldc.i4.0
@@ -6955,11 +7819,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0c1b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0c20:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb0'
-    IL_0c25:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb0'
+    IL_0c20:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteca'
+    IL_0c25:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteca'
     IL_0c2a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0c2f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb0'
-    IL_0c34:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb2'
+    IL_0c2f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Siteca'
+    IL_0c34:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecc'
     IL_0c39:  brtrue.s   IL_0c6f
 
     IL_0c3b:  ldc.i4.0
@@ -6982,10 +7846,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0c65:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0c6a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb2'
-    IL_0c6f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb2'
+    IL_0c6a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecc'
+    IL_0c6f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecc'
     IL_0c74:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0c79:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb2'
+    IL_0c79:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecc'
     IL_0c7e:  ldarg.0
     IL_0c7f:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -6999,7 +7863,7 @@
     IL_0c8f:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_0c94:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb3'
+    IL_0c94:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecd'
     IL_0c99:  brtrue.s   IL_0ce0
 
     IL_0c9b:  ldc.i4     0x100
@@ -7031,13 +7895,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0cd6:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0cdb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb3'
-    IL_0ce0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb3'
+    IL_0cdb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecd'
+    IL_0ce0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecd'
     IL_0ce5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0cea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb3'
+    IL_0cea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecd'
     IL_0cef:  ldtoken    [mscorlib]System.Console
     IL_0cf4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0cf9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb5'
+    IL_0cf9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecf'
     IL_0cfe:  brtrue.s   IL_0d43
 
     IL_0d00:  ldc.i4     0x80
@@ -7067,12 +7931,12 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d39:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d3e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb5'
-    IL_0d43:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb5'
+    IL_0d3e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecf'
+    IL_0d43:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecf'
     IL_0d48:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0d4d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb5'
+    IL_0d4d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitecf'
     IL_0d52:  ldarg.0
-    IL_0d53:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb4'
+    IL_0d53:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitece'
     IL_0d58:  brtrue.s   IL_0d96
 
     IL_0d5a:  ldc.i4.0
@@ -7102,11 +7966,11 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0d8c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0d91:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb4'
-    IL_0d96:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb4'
+    IL_0d91:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitece'
+    IL_0d96:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitece'
     IL_0d9b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0da0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb4'
-    IL_0da5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb6'
+    IL_0da0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sitece'
+    IL_0da5:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sited0'
     IL_0daa:  brtrue.s   IL_0de0
 
     IL_0dac:  ldc.i4.0
@@ -7129,10 +7993,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0dd6:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0ddb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb6'
-    IL_0de0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb6'
+    IL_0ddb:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sited0'
+    IL_0de0:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sited0'
     IL_0de5:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0dea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainer8e'::'<>p__Siteb6'
+    IL_0dea:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<InlineCompoundAssignment>o__SiteContainera8'::'<>p__Sited0'
     IL_0def:  ldarg.0
     IL_0df0:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -7167,7 +8031,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_9)
     IL_0000:  ldarg.0
     IL_0001:  stloc.0
-    IL_0002:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb8'
+    IL_0002:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited2'
     IL_0007:  brtrue.s   IL_0037
 
     IL_0009:  ldc.i4.0
@@ -7190,17 +8054,17 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_002d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0032:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb8'
-    IL_0037:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb8'
+    IL_0032:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited2'
+    IL_0037:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited2'
     IL_003c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0041:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb8'
+    IL_0041:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited2'
     IL_0046:  ldloc.0
     IL_0047:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_004c:  starg.s    a
     IL_004e:  ldarg.0
     IL_004f:  stloc.2
-    IL_0050:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb9'
+    IL_0050:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited3'
     IL_0055:  brtrue.s   IL_0085
 
     IL_0057:  ldc.i4.0
@@ -7223,15 +8087,15 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_007b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0080:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb9'
-    IL_0085:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb9'
+    IL_0080:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited3'
+    IL_0085:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited3'
     IL_008a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_008f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteb9'
+    IL_008f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited3'
     IL_0094:  ldloc.2
     IL_0095:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_009a:  starg.s    a
-    IL_009c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteba'
+    IL_009c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited4'
     IL_00a1:  brtrue.s   IL_00d4
 
     IL_00a3:  ldc.i4.0
@@ -7254,15 +8118,15 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00ca:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00cf:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteba'
-    IL_00d4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteba'
+    IL_00cf:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited4'
+    IL_00d4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited4'
     IL_00d9:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_00de:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Siteba'
+    IL_00de:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited4'
     IL_00e3:  ldarg.0
     IL_00e4:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_00e9:  starg.s    a
-    IL_00eb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebb'
+    IL_00eb:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited5'
     IL_00f0:  brtrue.s   IL_0123
 
     IL_00f2:  ldc.i4.0
@@ -7285,15 +8149,15 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0119:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_011e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebb'
-    IL_0123:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebb'
+    IL_011e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited5'
+    IL_0123:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited5'
     IL_0128:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_012d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebb'
+    IL_012d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited5'
     IL_0132:  ldarg.0
     IL_0133:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_0138:  starg.s    a
-    IL_013a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebc'
+    IL_013a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited6'
     IL_013f:  brtrue.s   IL_0186
 
     IL_0141:  ldc.i4     0x100
@@ -7325,13 +8189,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_017c:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0181:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebc'
-    IL_0186:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebc'
+    IL_0181:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited6'
+    IL_0186:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited6'
     IL_018b:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0190:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebc'
+    IL_0190:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited6'
     IL_0195:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_019a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_019f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebd'
+    IL_019f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited7'
     IL_01a4:  brtrue.s   IL_01d7
 
     IL_01a6:  ldc.i4.0
@@ -7354,17 +8218,17 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_01cd:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_01d2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebd'
-    IL_01d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebd'
+    IL_01d2:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited7'
+    IL_01d7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited7'
     IL_01dc:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_01e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebd'
+    IL_01e1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited7'
     IL_01e6:  ldarg.0
     IL_01e7:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
     IL_01ec:  callvirt   instance void class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>::Invoke(!0,
                                                                                                                                                                                !1,
                                                                                                                                                                                !2)
-    IL_01f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebe'
+    IL_01f1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited8'
     IL_01f6:  brtrue.s   IL_023d
 
     IL_01f8:  ldc.i4     0x100
@@ -7396,13 +8260,13 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0233:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0238:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebe'
-    IL_023d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebe'
+    IL_0238:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited8'
+    IL_023d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited8'
     IL_0242:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-    IL_0247:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebe'
+    IL_0247:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited8'
     IL_024c:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
     IL_0251:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0256:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebf'
+    IL_0256:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited9'
     IL_025b:  brtrue.s   IL_028e
 
     IL_025d:  ldc.i4.0
@@ -7425,10 +8289,10 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0284:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0289:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebf'
-    IL_028e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebf'
+    IL_0289:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited9'
+    IL_028e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited9'
     IL_0293:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0298:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerb7'::'<>p__Sitebf'
+    IL_0298:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<UnaryOperators>o__SiteContainerd1'::'<>p__Sited9'
     IL_029d:  ldarg.0
     IL_029e:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -7448,7 +8312,7 @@
              class [mscorlib]System.Collections.IEnumerator V_1,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_2,
              class [mscorlib]System.IDisposable V_3)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec1'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedb'
     IL_0005:  brtrue.s   IL_002b
 
     IL_0007:  ldc.i4.0
@@ -7460,10 +8324,10 @@
                                                                                                                                                             class [mscorlib]System.Type,
                                                                                                                                                             class [mscorlib]System.Type)
     IL_0021:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0026:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec1'
-    IL_002b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec1'
+    IL_0026:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedb'
+    IL_002b:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedb'
     IL_0030:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>>::Target
-    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec1'
+    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedb'
     IL_003a:  ldarg.0
     IL_003b:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,class [mscorlib]System.Collections.IEnumerable>::Invoke(!0,
                                                                                                                                                                                               !1)
@@ -7476,7 +8340,7 @@
       IL_0048:  ldloc.1
       IL_0049:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
       IL_004e:  stloc.0
-      IL_004f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec2'
+      IL_004f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedc'
       IL_0054:  brtrue.s   IL_0097
 
       IL_0056:  ldc.i4     0x100
@@ -7508,10 +8372,10 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
       IL_008d:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-      IL_0092:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec2'
-      IL_0097:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec2'
+      IL_0092:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedc'
+      IL_0097:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedc'
       IL_009c:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>>::Target
-      IL_00a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerc0'::'<>p__Sitec2'
+      IL_00a1:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Action`3<class [System.Core]System.Runtime.CompilerServices.CallSite,class [mscorlib]System.Type,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<Loops>o__SiteContainerda'::'<>p__Sitedc'
       IL_00a6:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests
       IL_00ab:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
       IL_00b0:  ldloc.0
@@ -7551,7 +8415,7 @@
     .maxstack  9
     .locals init (class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_0,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_1)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec4'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitede'
     IL_0005:  brtrue.s   IL_0035
 
     IL_0007:  ldc.i4.0
@@ -7574,11 +8438,11 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_002b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0030:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec4'
-    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec4'
+    IL_0030:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitede'
+    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitede'
     IL_003a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_003f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec4'
-    IL_0044:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec5'
+    IL_003f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitede'
+    IL_0044:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitedf'
     IL_0049:  brtrue.s   IL_0083
 
     IL_004b:  ldc.i4.0
@@ -7608,10 +8472,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0079:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_007e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec5'
-    IL_0083:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec5'
+    IL_007e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitedf'
+    IL_0083:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitedf'
     IL_0088:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerc3'::'<>p__Sitec5'
+    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If>o__SiteContainerdd'::'<>p__Sitedf'
     IL_0092:  ldarg.0
     IL_0093:  ldarg.1
     IL_0094:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
@@ -7641,7 +8505,7 @@
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_3,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_4,
              class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_5)
-    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec7'
+    IL_0000:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee1'
     IL_0005:  brtrue.s   IL_0035
 
     IL_0007:  ldc.i4.0
@@ -7664,11 +8528,11 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_002b:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0030:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec7'
-    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec7'
+    IL_0030:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee1'
+    IL_0035:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee1'
     IL_003a:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_003f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec7'
-    IL_0044:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec8'
+    IL_003f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee1'
+    IL_0044:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee2'
     IL_0049:  brtrue.s   IL_0083
 
     IL_004b:  ldc.i4.0
@@ -7698,17 +8562,17 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0079:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_007e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec8'
-    IL_0083:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec8'
+    IL_007e:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee2'
+    IL_0083:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee2'
     IL_0088:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec8'
+    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee2'
     IL_0092:  ldarg.0
     IL_0093:  ldnull
     IL_0094:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
     IL_0099:  stloc.2
-    IL_009a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec9'
+    IL_009a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee3'
     IL_009f:  brtrue.s   IL_00cf
 
     IL_00a1:  ldc.i4.0
@@ -7731,16 +8595,16 @@
                                                                                                                                                                    class [mscorlib]System.Type,
                                                                                                                                                                    class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00c5:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00ca:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec9'
-    IL_00cf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec9'
+    IL_00ca:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee3'
+    IL_00cf:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee3'
     IL_00d4:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>>::Target
-    IL_00d9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitec9'
+    IL_00d9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee3'
     IL_00de:  ldloc.2
     IL_00df:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,bool>::Invoke(!0,
                                                                                                                                                     !1)
     IL_00e4:  brtrue     IL_019c
 
-    IL_00e9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Siteca'
+    IL_00e9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee4'
     IL_00ee:  brtrue.s   IL_012c
 
     IL_00f0:  ldc.i4.8
@@ -7770,12 +8634,12 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0122:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0127:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Siteca'
-    IL_012c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Siteca'
+    IL_0127:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee4'
+    IL_012c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee4'
     IL_0131:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0136:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Siteca'
+    IL_0136:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee4'
     IL_013b:  ldloc.2
-    IL_013c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitecb'
+    IL_013c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee5'
     IL_0141:  brtrue.s   IL_017f
 
     IL_0143:  ldc.i4.0
@@ -7805,10 +8669,10 @@
                                                                                                                                                                     class [mscorlib]System.Type,
                                                                                                                                                                     class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0175:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_017a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitecb'
-    IL_017f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitecb'
+    IL_017a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee5'
+    IL_017f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee5'
     IL_0184:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0189:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainerc6'::'<>p__Sitecb'
+    IL_0189:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DynamicTests/'<If2>o__SiteContainere0'::'<>p__Sitee5'
     IL_018e:  ldarg.1
     IL_018f:  ldnull
     IL_0190:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
