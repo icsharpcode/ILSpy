@@ -299,6 +299,7 @@
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Instructions\ExpressionTreeCast.cs" />
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
+    <Compile Include="IL\Transforms\IntroduceDynamicTypeOnLocals.cs" />
     <Compile Include="IL\Transforms\NullPropagationTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
