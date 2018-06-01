@@ -248,7 +248,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var typeArgs = call.Method.TypeArguments.ToArray();
 			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
 			var resolver = new CSharp.Resolver.CSharpResolver(resolveContext);
-			return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(resolver, call.Method, typeArgs, targetType, paramTypes);
+			return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
+				resolver, call.Method, typeArgs, targetType, paramTypes, argumentNames: null);
 		}
 
 		static bool IsGetter(IMethod method)

@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				expr.ReplaceWith(clone);
 			}
 			block.Instructions.RemoveAt(i);
-			int c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
+			int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
 			i -= c + 1;
 		}
 	}

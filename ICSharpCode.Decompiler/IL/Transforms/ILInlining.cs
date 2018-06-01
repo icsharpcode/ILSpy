@@ -23,6 +23,14 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	[Flags]
+	public enum InliningOptions
+	{
+		None = 0,
+		Aggressive = 1,
+		IntroduceNamedArguments = 2,
+	}
+
 	/// <summary>
 	/// Performs inlining transformations.
 	/// </summary>
@@ -44,7 +52,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, aggressive: IsCatchWhenBlock(block), context: context);
+			InliningOptions options = InliningOptions.None;
+			if (IsCatchWhenBlock(block))
+				options |= InliningOptions.Aggressive;
+			if (context.Settings.NamedArguments)
+				options |= InliningOptions.IntroduceNamedArguments;
+			InlineOneIfPossible(block, pos, options, context: context);
 		}
 
 		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
@@ -58,14 +71,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool modified = false;
 			var instructions = block.Instructions;
 			for (int i = 0; i < instructions.Count;) {
-				if (instructions[i] is StLoc inst
-					&& InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst, ref ctorCallStart), context: context)) {
-					modified = true;
-					i = Math.Max(0, i - 1);
-					// Go back one step
-				} else {
-					i++;
+				if (instructions[i] is StLoc inst) {
+					InliningOptions options = InliningOptions.None;
+					if (IsCatchWhenBlock(block) || IsInConstructorInitializer(function, inst, ref ctorCallStart))
+						options = InliningOptions.Aggressive;
+					if (InlineOneIfPossible(block, i, options, context)) {
+						modified = true;
+						i = Math.Max(0, i - 1);
+						// Go back one step
+						continue;
+					}
 				}
+				i++;
 			}
 			return modified;
 		}
@@ -100,13 +117,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Inlines instructions before pos into block.Instructions[pos].
 		/// </summary>
 		/// <returns>The number of instructions that were inlined.</returns>
-		public static int InlineInto(Block block, int pos, bool aggressive, ILTransformContext context)
+		public static int InlineInto(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			if (pos >= block.Instructions.Count)
 				return 0;
 			int count = 0;
 			while (--pos >= 0) {
-				if (InlineOneIfPossible(block, pos, aggressive, context))
+				if (InlineOneIfPossible(block, pos, options, context))
 					count++;
 				else
 					break;
@@ -119,13 +136,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public static bool InlineIfPossible(Block block, int pos, ILTransformContext context)
 		{
-			return InlineOneIfPossible(block, pos, true, context);
+			return InlineOneIfPossible(block, pos, InliningOptions.Aggressive, context);
 		}
 
 		/// <summary>
 		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction, if possible.
 		/// </summary>
-		public static bool InlineOneIfPossible(Block block, int pos, bool aggressive, ILTransformContext context)
+		public static bool InlineOneIfPossible(Block block, int pos, InliningOptions options, ILTransformContext context)
 		{
 			context.CancellationToken.ThrowIfCancellationRequested();
 			StLoc stloc = block.Instructions[pos] as StLoc;
@@ -141,7 +158,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// but we can't avoid it this easily without breaking lots of tests.
 			//if (v.Type.IsSmallIntegerType())
 			//	return false; // stloc might perform implicit truncation
-			return InlineOne(stloc, aggressive, context);
+			return InlineOne(stloc, options, context);
 		}
 		
 		/// <summary>
@@ -150,12 +167,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note that this method does not check whether 'v' has only one use;
 		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		public static bool InlineOne(StLoc stloc, bool aggressive, ILTransformContext context)
+		public static bool InlineOne(StLoc stloc, InliningOptions options, ILTransformContext context)
 		{
 			ILVariable v = stloc.Variable;
 			Block block = (Block)stloc.Parent;
 			int pos = stloc.ChildIndex;
-			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), aggressive, context)) {
+			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), options, context)) {
 				// Assign the ranges of the stloc instruction:
 				stloc.Value.AddILRange(stloc.ILRange);
 				// Remove the stloc instruction:
@@ -188,7 +205,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note that this method does not check whether 'v' has only one use;
 		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive, ILTransformContext context)
+		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, InliningOptions options, ILTransformContext context)
 		{
 			var r = FindLoadInNext(next, v, inlinedExpression, out var loadInst);
 			if (r == FindResult.Found) {
@@ -197,8 +214,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				} else {
 					Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
-					if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression, v))
+					bool aggressive = (options & InliningOptions.Aggressive) != 0;
+					if (!aggressive && v.Kind != VariableKind.StackSlot
+						&& !NonAggressiveInlineInto(next, loadInst, inlinedExpression, v)) {
 						return false;
+					}
 				}
 
 				context.Step($"Inline variable '{v.Name}'", inlinedExpression);
@@ -213,10 +233,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					loadInst.ReplaceWith(inlinedExpression);
 				}
 				return true;
-			} else if (r == FindResult.NamedArgument && context.Settings.NamedArguments) {
+			} else if (r == FindResult.NamedArgument && (options & InliningOptions.IntroduceNamedArguments) != 0) {
 				Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
-				//if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression, v))
-				//	return false;
 				context.Step($"Introduce named argument '{v.Name}'", inlinedExpression);
 				var call = (CallInstruction)loadInst.Parent;
 				if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs) {
@@ -484,6 +502,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (type.Kind == TypeKind.Delegate || type.IsAnonymousType())
 					return FindResult.Stop;
 			}
+			if (call.Method.Parameters.Any(p => string.IsNullOrEmpty(p.Name)))
+				return FindResult.Stop; // cannot use named arguments
 			for (int i = child.ChildIndex; i < call.Arguments.Count; i++) {
 				if (call.Arguments[i] is LdLoc ldloc && ldloc.Variable == v) {
 					loadInst = ldloc;

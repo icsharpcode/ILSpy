@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("NullCoalescingTransform (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, false, context);
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
 			}
 			return false;
