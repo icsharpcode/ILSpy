@@ -214,6 +214,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void DynamicTests([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void ExpressionTrees([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
