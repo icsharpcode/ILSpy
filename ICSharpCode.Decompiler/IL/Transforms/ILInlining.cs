@@ -235,6 +235,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			} else if (r == FindResult.NamedArgument && (options & InliningOptions.IntroduceNamedArguments) != 0) {
 				Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
+				StLoc originalStore = (StLoc)inlinedExpression.Parent;
+				if ((options & InliningOptions.Aggressive) == 0 && originalStore.ILStackWasEmpty)
+					return false;
 				context.Step($"Introduce named argument '{v.Name}'", inlinedExpression);
 				var call = (CallInstruction)loadInst.Parent;
 				if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs) {
@@ -254,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 				v.Kind = VariableKind.NamedArgument;
-				namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, new StLoc(v, inlinedExpression));
+				namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, originalStore);
 				return true;
 			}
 			return false;
