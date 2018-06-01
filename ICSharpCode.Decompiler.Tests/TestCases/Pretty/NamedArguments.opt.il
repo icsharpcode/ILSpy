@@ -32,6 +32,48 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.NamedArguments
        extends [mscorlib]System.Object
 {
+  .class auto ansi nested private beforefieldinit ClassWithNamedArgCtor
+         extends [mscorlib]System.Object
+  {
+    .method assembly hidebysig specialname rtspecialname 
+            instance void  .ctor([opt] bool arg1,
+                                 [opt] bool arg2) cil managed
+    {
+      .param [1] = bool(false)
+      .param [2] = bool(false)
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method ClassWithNamedArgCtor::.ctor
+
+    .method assembly hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       30 (0x1e)
+      .maxstack  3
+      .locals init (bool V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldc.i4.1
+      IL_0002:  call       int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NamedArguments::Get(int32)
+      IL_0007:  ldc.i4.1
+      IL_0008:  ceq
+      IL_000a:  ldc.i4.0
+      IL_000b:  ceq
+      IL_000d:  stloc.0
+      IL_000e:  ldc.i4.2
+      IL_000f:  call       int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NamedArguments::Get(int32)
+      IL_0014:  ldc.i4.2
+      IL_0015:  ceq
+      IL_0017:  ldloc.0
+      IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NamedArguments/ClassWithNamedArgCtor::.ctor(bool,
+                                                                                                                                   bool)
+      IL_001d:  ret
+    } // end of method ClassWithNamedArgCtor::.ctor
+
+  } // end of class ClassWithNamedArgCtor
+
   .method public hidebysig instance void 
           Use(int32 a,
               int32 b,

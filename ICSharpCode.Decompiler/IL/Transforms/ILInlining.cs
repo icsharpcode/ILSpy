@@ -52,12 +52,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
+			InlineOneIfPossible(block, pos, OptionsForBlock(block), context: context);
+		}
+
+		internal static InliningOptions OptionsForBlock(Block block)
+		{
 			InliningOptions options = InliningOptions.None;
 			if (IsCatchWhenBlock(block))
 				options |= InliningOptions.Aggressive;
-			if (context.Settings.NamedArguments)
-				options |= InliningOptions.IntroduceNamedArguments;
-			InlineOneIfPossible(block, pos, options, context: context);
+			return options;
 		}
 
 		public static bool InlineAllInBlock(ILFunction function, Block block, ILTransformContext context)
@@ -234,31 +237,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return true;
 			} else if (r == FindResult.NamedArgument && (options & InliningOptions.IntroduceNamedArguments) != 0) {
-				Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
-				StLoc originalStore = (StLoc)inlinedExpression.Parent;
-				if ((options & InliningOptions.Aggressive) == 0 && originalStore.ILStackWasEmpty)
-					return false;
-				context.Step($"Introduce named argument '{v.Name}'", inlinedExpression);
-				var call = (CallInstruction)loadInst.Parent;
-				if (!(call.Parent is Block namedArgBlock) || namedArgBlock.Kind != BlockKind.CallWithNamedArgs) {
-					// create namedArgBlock:
-					namedArgBlock = new Block(BlockKind.CallWithNamedArgs);
-					call.ReplaceWith(namedArgBlock);
-					namedArgBlock.FinalInstruction = call;
-					if (call.IsInstanceCall) {
-						IType thisVarType = call.Method.DeclaringType;
-						if (CallInstruction.ExpectedTypeForThisPointer(thisVarType) == StackType.Ref) {
-							thisVarType = new ByReferenceType(thisVarType);
-						}
-						var function = call.Ancestors.OfType<ILFunction>().First();
-						var thisArgVar = function.RegisterVariable(VariableKind.NamedArgument, thisVarType, "this_arg");
-						namedArgBlock.Instructions.Add(new StLoc(thisArgVar, call.Arguments[0]));
-						call.Arguments[0] = new LdLoc(thisArgVar);
-					}
-				}
-				v.Kind = VariableKind.NamedArgument;
-				namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, originalStore);
-				return true;
+				return NamedArgumentTransform.DoInline(v, (StLoc)inlinedExpression.Parent, (LdLoc)loadInst,
+					options, context);
 			}
 			return false;
 		}
@@ -400,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return FindLoadInNext(expr, v, expressionBeingMoved, out _) == FindResult.Found;
 		}
 
-		enum FindResult
+		internal enum FindResult
 		{
 			/// <summary>
 			/// Found a load; inlining is possible.
@@ -427,7 +407,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Finds the position to inline to.
 		/// </summary>
 		/// <returns>true = found; false = cannot continue search; null = not found</returns>
-		static FindResult FindLoadInNext(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
+		internal static FindResult FindLoadInNext(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
 		{
 			loadInst = null;
 			if (expr == null)
@@ -449,7 +429,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// If FindLoadInNext() returns null, we still can't continue searching
 						// because we can't inline over the remainder of the block.
 					case BlockKind.CallWithNamedArgs:
-						return CanExtendNamedArgument(block, v, expressionBeingMoved, out loadInst);
+						return NamedArgumentTransform.CanExtendNamedArgument(block, v, expressionBeingMoved, out loadInst);
 					default:
 						return FindResult.Stop;
 				}
@@ -472,7 +452,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				FindResult r = FindLoadInNext(child, v, expressionBeingMoved, out loadInst);
 				if (r != FindResult.Continue) {
 					if (r == FindResult.Stop && expr is CallInstruction call)
-						return CanIntroduceNamedArgument(call, child, v, out loadInst);
+						return NamedArgumentTransform.CanIntroduceNamedArgument(call, child, v, out loadInst);
 					return r;
 				}
 			}
@@ -488,67 +468,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop;
 			else
 				return findResult;
-		}
-
-		private static FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child, ILVariable v, out ILInstruction loadInst)
-		{
-			loadInst = null;
-			Debug.Assert(child.Parent == call);
-			if (call.IsInstanceCall && child.ChildIndex == 0)
-				return FindResult.Stop; // cannot use named arg to move expressionBeingMoved before this pointer
-			if (call.Method.IsOperator || call.Method.IsAccessor)
-				return FindResult.Stop; // cannot use named arg for operators or accessors
-			if (call.Method is VarArgInstanceMethod)
-				return FindResult.Stop; // CallBuilder doesn't support named args when using varargs
-			if (call.Method.IsConstructor) {
-				IType type = call.Method.DeclaringType;
-				if (type.Kind == TypeKind.Delegate || type.IsAnonymousType())
-					return FindResult.Stop;
-			}
-			if (call.Method.Parameters.Any(p => string.IsNullOrEmpty(p.Name)))
-				return FindResult.Stop; // cannot use named arguments
-			for (int i = child.ChildIndex; i < call.Arguments.Count; i++) {
-				if (call.Arguments[i] is LdLoc ldloc && ldloc.Variable == v) {
-					loadInst = ldloc;
-					return FindResult.NamedArgument;
-				}
-			}
-			return FindResult.Stop;
-		}
-
-		private static FindResult CanExtendNamedArgument(Block block, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
-		{
-			Debug.Assert(block.Kind == BlockKind.CallWithNamedArgs);
-			var firstArg = ((StLoc)block.Instructions[0]).Value;
-			var r = FindLoadInNext(firstArg, v, expressionBeingMoved, out loadInst);
-			if (r == FindResult.Found || r == FindResult.NamedArgument) {
-				return r; // OK, inline into first instruction of block
-			}
-			var call = (CallInstruction)block.FinalInstruction;
-			if (call.IsInstanceCall) {
-				// For instance calls, block.Instructions[0] is the argument
-				// for the 'this' pointer. We can only insert at position 1.
-				if (r == FindResult.Stop) {
-					// error: can't move expressionBeingMoved after block.Instructions[0]
-					return FindResult.Stop;
-				}
-				// Because we always ensure block.Instructions[0] is the 'this' argument,
-				// it's possible that the place we actually need to inline into
-				// is within block.Instructions[1]:
-				if (block.Instructions.Count > 1) {
-					r = FindLoadInNext(block.Instructions[1], v, expressionBeingMoved, out loadInst);
-					if (r == FindResult.Found || r == FindResult.NamedArgument) {
-						return r; // OK, inline into block.Instructions[1]
-					}
-				}
-			}
-			foreach (var arg in call.Arguments) {
-				if (arg.MatchLdLoc(v)) {
-					loadInst = arg;
-					return FindResult.NamedArgument;
-				}
-			}
-			return FindResult.Stop;
 		}
 
 		/// <summary>

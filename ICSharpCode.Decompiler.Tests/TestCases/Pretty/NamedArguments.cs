@@ -20,6 +20,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class NamedArguments
 	{
+		private class ClassWithNamedArgCtor
+		{
+			internal ClassWithNamedArgCtor(bool arg1 = false, bool arg2 = false)
+			{
+			}
+
+			internal ClassWithNamedArgCtor()
+				: this(arg2: Get(1) != 1, arg1: Get(2) == 2)
+			{
+			}
+		}
+
 		public void Use(int a, int b, int c)
 		{
 		}
