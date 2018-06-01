@@ -277,7 +277,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (callVirt.Arguments.Count != 1)
 					return false;
-				return target.MatchLdLocRef(objVar) || (boxedValue && target.MatchLdLoc(objVar)) || (usingNull && callVirt.Arguments[0].MatchLdNull());
+				return target.MatchLdLocRef(objVar)
+					|| (boxedValue && target.MatchLdLoc(objVar))
+					|| (usingNull && callVirt.Arguments[0].MatchLdNull())
+					|| (target.MatchIsInst(out var arg, out var type2) && arg.MatchLdLoc(objVar) && type2.IsKnownType(KnownTypeCode.IDisposable));
 			}
 		}
 	}
