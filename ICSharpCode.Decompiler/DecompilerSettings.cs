@@ -60,6 +60,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
 				dynamic = false;
+				namedArguments = false;
 				// * named and optional arguments (not supported yet)
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
@@ -630,6 +631,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (tupleComparisons != value) {
 					tupleComparisons = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool namedArguments = false;
+
+		/// <summary>
+		/// Gets/Sets whether named arguments should be used.
+		/// </summary>
+		public bool NamedArguments {
+			get { return namedArguments; }
+			set {
+				if (namedArguments != value) {
+					namedArguments = value;
 					OnPropertyChanged();
 				}
 			}
