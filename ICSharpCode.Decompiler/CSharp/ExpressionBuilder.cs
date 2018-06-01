@@ -2527,12 +2527,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					return CreateUnaryOperator(UnaryOperatorType.Plus);
 				case ExpressionType.IsTrue:
 					var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
-					if (IfInstruction.IsInConditionSlot(inst)) {
-						// TODO
+					Expression expr;
+					if (inst.SlotInfo == IfInstruction.ConditionSlot) {
+						// We rely on the context implicitly invoking "operator true".
+						expr = new UnaryOperatorExpression(UnaryOperatorType.IsTrue, operand);
+					} else {
+						// Create a dummy conditional to ensure "operator true" will be invoked.
+						expr = new ConditionalExpression(operand, new PrimitiveExpression(true), new PrimitiveExpression(false));
 					}
-					return new ConditionalExpression(operand.Expression, new PrimitiveExpression(true), new PrimitiveExpression(false))
-							.WithILInstruction(inst)
-							.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+					return expr.WithILInstruction(inst)
+						.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 				default:
 					return base.VisitDynamicUnaryOperatorInstruction(inst, context);
 			}

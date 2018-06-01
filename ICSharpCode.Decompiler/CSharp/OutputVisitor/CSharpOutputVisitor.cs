@@ -1102,7 +1102,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
-			} else if (!IsPostfixOperator(opType) && opType != UnaryOperatorType.NullConditionalRewrap) {
+			} else if (!IsPostfixOperator(opType) && opSymbol != null) {
 				WriteToken(opSymbol);
 			}
 			unaryOperatorExpression.Expression.AcceptVisitor(this);
