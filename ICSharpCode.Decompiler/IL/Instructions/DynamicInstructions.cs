@@ -93,6 +93,8 @@ namespace ICSharpCode.Decompiler.IL
 			if ((BinderFlags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0)
 				output.Write(".compound");
 		}
+
+		public abstract CSharpArgumentInfo GetArgumentInfoOfChild(int index);
 	}
 
 	partial class DynamicConvertInstruction
@@ -124,6 +126,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType => type.GetStackType();
 
 		public bool IsChecked => (BinderFlags & CSharpBinderFlags.CheckedContext) != 0;
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			return default(CSharpArgumentInfo);
+		}
 	}
 
 	partial class DynamicInvokeMemberInstruction
@@ -175,6 +182,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index < 0 || index >= ArgumentInfo.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return ArgumentInfo[index];
+		}
 	}
 
 	partial class DynamicGetMemberInstruction
@@ -203,6 +217,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index != 0)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return TargetArgumentInfo;
+		}
 	}
 
 	partial class DynamicSetMemberInstruction
@@ -236,6 +257,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetArgumentInfo;
+				case 1:
+					return ValueArgumentInfo;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(index));
+			}
+		}
 	}
 
 	partial class DynamicGetIndexInstruction
@@ -269,6 +302,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index < 0 || index >= ArgumentInfo.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return ArgumentInfo[index];
+		}
 	}
 
 	partial class DynamicSetIndexInstruction
@@ -302,6 +342,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index < 0 || index >= ArgumentInfo.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return ArgumentInfo[index];
+		}
 	}
 
 	partial class DynamicInvokeConstructorInstruction
@@ -335,6 +382,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index < 0 || index >= ArgumentInfo.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return ArgumentInfo[index];
+		}
 	}
 
 	partial class DynamicBinaryOperatorInstruction
@@ -368,6 +422,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftArgumentInfo;
+				case 1:
+					return RightArgumentInfo;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(index));
+			}
+		}
 	}
 
 	partial class DynamicUnaryOperatorInstruction
@@ -406,6 +472,16 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 		}
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return OperandArgumentInfo;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(index));
+			}
+		}
 	}
 
 	partial class DynamicInvokeInstruction
@@ -438,6 +514,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			if (index < 0 || index >= ArgumentInfo.Count)
+				throw new ArgumentOutOfRangeException(nameof(index));
+			return ArgumentInfo[index];
+		}
 	}
 
 	partial class DynamicIsEventInstruction
@@ -463,5 +546,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.I4;
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			throw new ArgumentOutOfRangeException(nameof(index));
+		}
 	}
 }
