@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -304,12 +305,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// The value must be either ldnull (no type arguments) or an array initializer pattern.
 					if (!binderCall.Arguments[2].MatchLdLoc(out variable))
 						return false;
-					if (!callSiteInitBlock.Instructions[2].MatchStLoc(variable, out value))
+					if (!callSiteInitBlock.Instructions[2].MatchStLoc(out var variableOrTemporary, out value))
 						return false;
 					int numberOfTypeArguments = 0;
 					if (!value.MatchLdNull()) {
 						if (value is NewArr typeArgsNewArr && typeArgsNewArr.Type.IsKnownType(KnownTypeCode.Type) && typeArgsNewArr.Indices.Count == 1 && typeArgsNewArr.Indices[0].MatchLdcI4(out numberOfTypeArguments)) {
-							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 3, variable, typeArgsNewArr.Type, numberOfTypeArguments, out var typeArguments, out _))
+							if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 3, variableOrTemporary, typeArgsNewArr.Type, numberOfTypeArguments, out var typeArguments, out _))
 								return false;
 							int i = 0;
 							callSiteInfo.TypeArguments = new IType[numberOfTypeArguments];
@@ -323,10 +324,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						}
 					}
+					int typeArgumentsOffset = numberOfTypeArguments;
+					// Special case for csc array initializers:
+					if (variableOrTemporary != variable) {
+						// store temporary from array initializer in variable
+						if (!callSiteInitBlock.Instructions[3 + typeArgumentsOffset].MatchStLoc(variable, out value))
+							return false;
+						if (!value.MatchLdLoc(variableOrTemporary))
+							return false;
+						typeArgumentsOffset++;
+					}
 					// Fourth argument: context type
 					if (!binderCall.Arguments[3].MatchLdLoc(out variable))
 						return false;
-					if (!callSiteInitBlock.Instructions[3 + numberOfTypeArguments].MatchStLoc(variable, out value))
+					if (!callSiteInitBlock.Instructions[3 + typeArgumentsOffset].MatchStLoc(variable, out value))
 						return false;
 					if (!TransformExpressionTrees.MatchGetTypeFromHandle(value, out contextType))
 						return false;
@@ -334,9 +345,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Fifth argument: call parameter info
 					if (!binderCall.Arguments[4].MatchLdLoc(out variable))
 						return false;
-					if (!callSiteInitBlock.Instructions[4 + numberOfTypeArguments].MatchStLoc(variable, out value))
+					if (!callSiteInitBlock.Instructions[4 + typeArgumentsOffset].MatchStLoc(variable, out value))
 						return false;
-					if (!ExtractArgumentInfo(value, ref callSiteInfo, 5 + numberOfTypeArguments, variable))
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 5 + typeArgumentsOffset, variable))
 						return false;
 					return true;
 				case "GetMember":
@@ -477,6 +488,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
+			var compileTimeTypes = callSiteInfo.DelegateType.GetDelegateInvokeMethod().Parameters.SelectArray(p => p.Type);
 			foreach (var arg in arguments) {
 				if (!(arg is Call createCall))
 					return false;
@@ -488,7 +500,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!createCall.Arguments[1].MatchLdStr(out argumentName))
 					if (!createCall.Arguments[1].MatchLdNull())
 						return false;
-				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = callSiteInfo.DelegateType.TypeArguments[i + 1] };
+				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = compileTimeTypes[i + 1] };
 				i++;
 			}
 			return true;

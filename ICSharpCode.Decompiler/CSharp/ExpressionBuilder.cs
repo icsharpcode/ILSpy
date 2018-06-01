@@ -2413,9 +2413,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (info.Flags.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
 				typeHint = info.CompileTimeType;
 			}
-			if (info.Flags.HasFlag(CSharpArgumentInfoFlags.IsRef) || info.Flags.HasFlag(CSharpArgumentInfoFlags.IsOut)) {
-				typeHint = new ByReferenceType(typeHint);
-			}
 			var translatedExpression = Translate(argument, typeHint);
 			if (!(typeHint.Equals(SpecialType.Dynamic) && translatedExpression.Type.Equals(SpecialType.NullType)))
 				translatedExpression = translatedExpression.ConvertTo(typeHint, this);
