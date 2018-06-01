@@ -446,6 +446,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// but a base reference is not valid in this context.
 			if (collectionExpr is BaseReferenceExpression) {
 				collectionExpr = new ThisReferenceExpression().CopyAnnotationsFrom(collectionExpr);
+			} else if (IsDynamicCastToIEnumerable(collectionExpr, out var dynamicExpr)) {
+				collectionExpr = dynamicExpr.Detach();
 			}
 			// Handle explicit casts:
 			// This is the case if an explicit type different from the collection-item-type was used.
@@ -524,6 +526,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 			return foreachStmt;
+		}
+
+		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
+		{
+			if (!(expr is CastExpression cast)) {
+				dynamicExpr = null;
+				return false;
+			}
+			dynamicExpr = cast.Expression;
+			if (!(expr.GetResolveResult() is ConversionResolveResult crr))
+				return false;
+			if (!crr.Type.IsKnownType(KnownTypeCode.IEnumerable))
+				return false;
+			return crr.Input.Type.Kind == TypeKind.Dynamic;
 		}
 
 		/// <summary>
