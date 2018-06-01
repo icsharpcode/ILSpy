@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					callSiteInitBlock = trueBlock;
 					targetBlockAfterInit = branchAfterInit.TargetBlock;
 				}
-				if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, out var callSiteInfo, out var blockAfterInit))
+				if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, callSiteDelegate, out var callSiteInfo, out var blockAfterInit))
 					continue;
 				if (targetBlockAfterInit != blockAfterInit)
 					continue;
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			throw new NotImplementedException();
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
+		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
 		{
 			callSiteInfo = default(CallSiteInfo);
 			blockAfterInit = null;
@@ -243,6 +243,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(createBinderCall.Arguments[0] is Call binderCall) || binderCall.Method.DeclaringType.FullName != CSharpBinderTypeName || binderCall.Method.DeclaringType.TypeParameterCount != 0)
 				return false;
+			callSiteInfo.DelegateType = callSiteDelegateType;
 			callSiteInfo.InitBlock = callSiteInitBlock;
 			switch (binderCall.Method.Name) {
 				case "IsEvent":
@@ -335,26 +336,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[4 + numberOfTypeArguments].MatchStLoc(variable, out value))
 						return false;
-					if (value is NewArr newArr && newArr.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr.Indices.Count == 1 && newArr.Indices[0].MatchLdcI4(out int numberOfArguments)) {
-						if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 5 + numberOfTypeArguments, variable, newArr.Type, numberOfArguments, out var arguments, out _))
-							return false;
-						int i = 0;
-						callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-						foreach (var arg in arguments) {
-							if (!(arg is Call createCall))
-								return false;
-							if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
-								return false;
-							if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
-								return false;
-							string argumentName = null;
-							if (!createCall.Arguments[1].MatchLdStr(out argumentName))
-								if (!createCall.Arguments[1].MatchLdNull())
-									return false;
-							callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName };
-							i++;
-						}
-					}
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 5 + numberOfTypeArguments, variable))
+						return false;
 					return true;
 				case "GetMember":
 				case "SetMember":
@@ -392,26 +375,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[3].MatchStLoc(variable, out value))
 						return false;
-					if (value is NewArr newArr2 && newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out numberOfArguments)) {
-						if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 4, variable, newArr2.Type, numberOfArguments, out var arguments, out _))
-							return false;
-						int i = 0;
-						callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-						foreach (var arg in arguments) {
-							if (!(arg is Call createCall))
-								return false;
-							if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
-								return false;
-							if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
-								return false;
-							string argumentName = null;
-							if (!createCall.Arguments[1].MatchLdStr(out argumentName))
-								if (!createCall.Arguments[1].MatchLdNull())
-									return false;
-							callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName };
-							i++;
-						}
-					}
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable))
+						return false;
 					return true;
 				case "GetIndex":
 				case "SetIndex":
@@ -457,26 +422,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[2].MatchStLoc(variable, out value))
 						return false;
-					if (value is NewArr newArr3 && newArr3.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr3.Indices.Count == 1 && newArr3.Indices[0].MatchLdcI4(out numberOfArguments)) {
-						if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 3, variable, newArr3.Type, numberOfArguments, out var arguments, out _))
-							return false;
-						int i = 0;
-						callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-						foreach (var arg in arguments) {
-							if (!(arg is Call createCall))
-								return false;
-							if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
-								return false;
-							if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
-								return false;
-							string argumentName = null;
-							if (!createCall.Arguments[1].MatchLdStr(out argumentName))
-								if (!createCall.Arguments[1].MatchLdNull())
-									return false;
-							callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName };
-							i++;
-						}
-					}
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 3, variable))
+						return false;
 					return true;
 				case "UnaryOperation":
 				case "BinaryOperation":
@@ -514,30 +461,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[3].MatchStLoc(variable, out value))
 						return false;
-					if (value is NewArr newArr4 && newArr4.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr4.Indices.Count == 1 && newArr4.Indices[0].MatchLdcI4(out numberOfArguments)) {
-						if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInitBlock, 4, variable, newArr4.Type, numberOfArguments, out var arguments, out _))
-							return false;
-						int i = 0;
-						callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-						foreach (var arg in arguments) {
-							if (!(arg is Call createCall))
-								return false;
-							if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
-								return false;
-							if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
-								return false;
-							string argumentName = null;
-							if (!createCall.Arguments[1].MatchLdStr(out argumentName))
-								if (!createCall.Arguments[1].MatchLdNull())
-									return false;
-							callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName };
-							i++;
-						}
-					}
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable))
+						return false;
 					return true;
 				default:
 					return false;
 			}
+		}
+
+		bool ExtractArgumentInfo(ILInstruction value, ref CallSiteInfo callSiteInfo, int instructionOffset, ILVariable variable)
+		{
+			if (!(value is NewArr newArr2 && newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out var numberOfArguments)))
+				return false;
+			if (!TransformArrayInitializers.HandleSimpleArrayInitializer(callSiteInfo.InitBlock, instructionOffset, variable, newArr2.Type, numberOfArguments, out var arguments, out _))
+				return false;
+			int i = 0;
+			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
+			foreach (var arg in arguments) {
+				if (!(arg is Call createCall))
+					return false;
+				if (!(createCall.Method.Name == "Create" && createCall.Method.DeclaringType.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && createCall.Arguments.Count == 2))
+					return false;
+				if (!createCall.Arguments[0].MatchLdcI4(out var argumentInfoFlags))
+					return false;
+				string argumentName = null;
+				if (!createCall.Arguments[1].MatchLdStr(out argumentName))
+					if (!createCall.Arguments[1].MatchLdNull())
+						return false;
+				callSiteInfo.ArgumentInfos[i] = new CSharpArgumentInfo { Flags = (CSharpArgumentInfoFlags)argumentInfoFlags, Name = argumentName, CompileTimeType = callSiteInfo.DelegateType.TypeArguments[i + 1] };
+				i++;
+			}
+			return true;
 		}
 
 		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
