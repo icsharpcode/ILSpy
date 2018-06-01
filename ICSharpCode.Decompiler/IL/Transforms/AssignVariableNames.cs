@@ -369,7 +369,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = "array";
 			} else if (type is PointerType) {
 				name = "ptr";
-			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown) {
+			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown || type.Kind == TypeKind.Dynamic) {
 				name = "val";
 			} else if (type.Kind == TypeKind.ByReference) {
 				name = "reference";
