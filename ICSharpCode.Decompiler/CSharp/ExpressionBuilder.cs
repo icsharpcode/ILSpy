@@ -2375,7 +2375,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
 		{
-			return base.VisitDynamicInvokeInstruction(inst, context);
+			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			return new InvocationExpression(target, arguments)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(SpecialType.Dynamic));
 		}
 
 		TranslatedExpression TranslateDynamicTarget(ILInstruction inst, CSharpArgumentInfo argumentInfo)
@@ -2485,6 +2489,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					return CreateBinaryOperator(BinaryOperatorType.GreaterThan);
 				case ExpressionType.GreaterThanOrEqual:
 					return CreateBinaryOperator(BinaryOperatorType.GreaterThanOrEqual);
+				case ExpressionType.Or:
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseOr);
+				case ExpressionType.And:
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseAnd);
+				case ExpressionType.ExclusiveOr:
+					return CreateBinaryOperator(BinaryOperatorType.ExclusiveOr);
+				case ExpressionType.LeftShift:
+					return CreateBinaryOperator(BinaryOperatorType.ShiftLeft);
+				case ExpressionType.RightShift:
+					return CreateBinaryOperator(BinaryOperatorType.ShiftRight);
 				default:
 					return base.VisitDynamicBinaryOperatorInstruction(inst, context);
 			}
@@ -2494,6 +2508,39 @@ namespace ICSharpCode.Decompiler.CSharp
 				var left = TranslateDynamicArgument(inst.Left, inst.LeftArgumentInfo);
 				var right = TranslateDynamicArgument(inst.Right, inst.RightArgumentInfo);
 				return new BinaryOperatorExpression(left.Expression, operatorType, right.Expression)
+					.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
+			}
+		}
+
+		protected internal override TranslatedExpression VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst, TranslationContext context)
+		{
+			switch (inst.Operation) {
+				case ExpressionType.Not:
+					return CreateUnaryOperator(UnaryOperatorType.Not);
+				case ExpressionType.Decrement:
+					return CreateUnaryOperator(UnaryOperatorType.Decrement);
+				case ExpressionType.Increment:
+					return CreateUnaryOperator(UnaryOperatorType.Increment);
+				case ExpressionType.Negate:
+					return CreateUnaryOperator(UnaryOperatorType.Minus);
+				case ExpressionType.UnaryPlus:
+					return CreateUnaryOperator(UnaryOperatorType.Plus);
+				case ExpressionType.IsTrue:
+					var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
+					if (IfInstruction.IsInConditionSlot(inst)) {
+						// TODO
+					}
+					return new ConditionalExpression(operand.Expression, new PrimitiveExpression(true), new PrimitiveExpression(false))
+							.WithILInstruction(inst)
+							.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+				default:
+					return base.VisitDynamicUnaryOperatorInstruction(inst, context);
+			}
+
+			TranslatedExpression CreateUnaryOperator(UnaryOperatorType operatorType)
+			{
+				var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
+				return new UnaryOperatorExpression(operatorType, operand.Expression)
 					.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 			}
 		}
