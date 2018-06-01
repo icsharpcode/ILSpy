@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 			TransformAssignment.HandleCompoundAssign(inst, context);
-			}
+		}
 
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
@@ -336,51 +336,81 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// if (logic.not(dynamic.isevent (ldloc a))) Block IL_0045 {
-		///     dynamic.setmember.compound Setter2(ldloc a, dynamic.binary.operator AddAssign(dynamic.getmember Setter2(ldloc a), ldc.i4 5))
-		/// } else Block IL_0144 {
-		///     dynamic.invokemember.invokespecial.discard add_Setter2(ldloc a, ldc.i4 5)
+		/// op is either add or remove/subtract:
+		/// if (dynamic.isevent (target)) {
+		///     dynamic.invokemember.invokespecial.discard op_Name(target, value)
+		/// } else {
+		///     dynamic.compound.op (dynamic.getmember Name(target), value)
 		/// }
 		/// =>
-		/// dynamic.setmember.compound Setter2(ldloc a, dynamic.binary.operator AddAssign(dynamic.getmember Setter2(ldloc a), ldc.i4 5))
+		/// dynamic.compound.op (dynamic.getmember Name(target), value)
 		/// </summary>
 		bool TransformDynamicAddAssignOrRemoveAssign(IfInstruction inst)
 		{
-			if (!inst.Condition.MatchLogicNot(out var possibleIsEvent))
+			if (!inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return false;
-			if (!(possibleIsEvent is DynamicIsEventInstruction isEvent))
+			if (!(condition is DynamicIsEventInstruction isEvent))
 				return false;
-			var trueInst = Block.Unwrap(inst.TrueInst);
-			var falseInst = Block.Unwrap(inst.FalseInst);
-			if (!(trueInst is DynamicSetMemberInstruction dynamicSetMember
-				&& dynamicSetMember.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment)
-				&& isEvent.Argument.Match(dynamicSetMember.Target).Success
-				&& dynamicSetMember.Value is DynamicBinaryOperatorInstruction binaryOp
-				&& binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember
-				&& dynamicGetMember.Target.Match(dynamicSetMember.Target).Success
-				&& dynamicSetMember.Name == dynamicGetMember.Name
-				&& falseInst is DynamicInvokeMemberInstruction invokeMember
-				&& invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName)
-				&& invokeMember.Arguments.Count == 2 && invokeMember.Arguments[0].Match(dynamicGetMember.Target).Success)
-			) {
+			trueInst = Block.Unwrap(trueInst);
+			falseInst = Block.Unwrap(falseInst);
+			if (!(falseInst is DynamicCompoundAssign dynamicCompoundAssign))
 				return false;
-			}
-			switch (binaryOp.Operation) {
+			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))
+				return false;
+			if (!isEvent.Argument.Match(getMember.Target).Success)
+				return false;
+			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
+				return false;
+			if (!(invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName) && invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.ResultDiscarded)))
+				return false;
+			switch (dynamicCompoundAssign.Operation) {
 				case ExpressionType.AddAssign:
-					if (invokeMember.Name != "add_" + dynamicGetMember.Name)
+					if (invokeMember.Name != "add_" + getMember.Name)
 						return false;
 					break;
 				case ExpressionType.SubtractAssign:
-					if (invokeMember.Name != "remove_" + dynamicGetMember.Name)
+					if (invokeMember.Name != "remove_" + getMember.Name)
 						return false;
 					break;
 				default:
 					return false;
 			}
-			if (!binaryOp.Right.Match(invokeMember.Arguments[1]).Success)
+			if (!dynamicCompoundAssign.Value.Match(invokeMember.Arguments[1]).Success)
 				return false;
-			inst.ReplaceWith(trueInst);
+			if (!invokeMember.Arguments[0].Match(getMember.Target).Success)
+				return false;
+			inst.ReplaceWith(dynamicCompoundAssign);
 			return true;
+		}
+
+		/// <summary>
+		/// dynamic.setmember.compound Name(target, dynamic.binary.operator AddAssign(dynamic.getmember Name(target), value))
+		/// =>
+		/// dynamic.compound.op (dynamic.getmember Name(target), value)
+		/// </summary>
+		protected internal override void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
+		{
+			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment)) {
+				base.VisitDynamicSetMemberInstruction(inst);
+				return;
+			}
+			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp)) {
+				base.VisitDynamicSetMemberInstruction(inst);
+				return;
+			}
+			if (!(binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember)) {
+				base.VisitDynamicSetMemberInstruction(inst);
+				return;
+			}
+			if (!dynamicGetMember.Target.Match(inst.Target).Success) {
+				base.VisitDynamicSetMemberInstruction(inst);
+				return;
+			}
+			if (inst.Name != dynamicGetMember.Name || !DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation)) {
+				base.VisitDynamicSetMemberInstruction(inst);
+				return;
+			}
+			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
