@@ -49,6 +49,8 @@ namespace ICSharpCode.Decompiler.IL
 		NumericCompoundAssign,
 		/// <summary>Common instruction for user-defined compound assignments.</summary>
 		UserDefinedCompoundAssign,
+		/// <summary>Common instruction for dynamic compound assignments.</summary>
+		DynamicCompoundAssign,
 		/// <summary>Bitwise NOT</summary>
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
@@ -497,26 +499,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
-namespace ICSharpCode.Decompiler.IL
-{
-	/// <summary>Instruction representing a dynamic call site.</summary>
-	public abstract partial class DynamicInstruction : ILInstruction
-	{
-		protected DynamicInstruction(OpCode opCode) : base(opCode)
-		{
-		}
-
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			}
-		}
-	}
-}
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
 	/// <summary>Base class for pattern matching in ILAst.</summary>
@@ -615,6 +597,26 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			this.value.WriteTo(output, options);
 			output.Write(')');
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Instruction representing a dynamic call site.</summary>
+	public abstract partial class DynamicInstruction : ILInstruction
+	{
+		protected DynamicInstruction(OpCode opCode) : base(opCode)
+		{
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
 		}
 	}
 }
@@ -1085,6 +1087,40 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as UserDefinedCompoundAssign;
 			return o != null && this.Method.Equals(o.Method) && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Common instruction for dynamic compound assignments.</summary>
+	public sealed partial class DynamicCompoundAssign : CompoundAssignmentInstruction
+	{
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicCompoundAssign(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicCompoundAssign(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicCompoundAssign(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicCompoundAssign;
+			return o != null && this.CompoundAssignmentType == o.CompoundAssignmentType && Target.PerformMatch(o.Target, ref match) && Value.PerformMatch(o.Value, ref match);
 		}
 	}
 }
@@ -6091,6 +6127,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitDynamicCompoundAssign(DynamicCompoundAssign inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitBitNot(BitNot inst)
 		{
 			Default(inst);
@@ -6454,6 +6494,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicCompoundAssign(DynamicCompoundAssign inst)
 		{
 			return Default(inst);
 		}
@@ -6823,6 +6867,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitDynamicCompoundAssign(DynamicCompoundAssign inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitBitNot(BitNot inst, C context)
 		{
 			return Default(inst, context);
@@ -7154,6 +7202,7 @@ namespace ICSharpCode.Decompiler.IL
 			"binary",
 			"numeric.compound",
 			"user.compound",
+			"dynamic.compound",
 			"bit.not",
 			"arglist",
 			"br",

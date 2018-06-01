@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public string Name { get; set; }
 		public CSharpArgumentInfoFlags Flags { get; set; }
+		public IType CompileTimeType { get; set; }
 	}
 
 	partial class DynamicInstruction
@@ -164,6 +165,9 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var arg in Arguments) {
 				if (j > 0)
 					output.Write(", ");
+				output.Write("[flags: ");
+				output.Write(ArgumentInfo[j].Flags.ToString());
+				output.Write(", name: " + ArgumentInfo[j].Name + "] ");
 				arg.WriteTo(output, options);
 				j++;
 			}
