@@ -467,7 +467,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Handle the required foreach-variable transformation:
 			switch (transformation) {
 				case RequiredGetCurrentTransformation.UseExistingVariable:
-					foreachVariable.Type = type;
+					if (foreachVariable.Type.Kind != TypeKind.Dynamic)
+						foreachVariable.Type = type;
 					foreachVariable.Kind = VariableKind.ForeachLocal;
 					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), foreachVariable);
 					break;
