@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -119,6 +120,7 @@ namespace ICSharpCode.Decompiler.IL
 					foreach (var inst in Instructions) {
 						var stloc = inst as StLoc;
 						Debug.Assert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
+						Debug.Assert(stloc.Variable.Kind == VariableKind.NamedArgument);
 						Debug.Assert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
 						Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
 					}
@@ -151,6 +153,8 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.Write("Block ");
 			output.WriteDefinition(Label, this);
+			if (Kind != BlockKind.ControlFlow)
+				output.Write($" ({Kind})");
 			if (Parent is BlockContainer)
 				output.Write(" (incoming: {0})", IncomingEdgeCount);
 			output.Write(' ');

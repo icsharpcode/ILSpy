@@ -230,11 +230,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							thisVarType = new ByReferenceType(thisVarType);
 						}
 						var function = call.Ancestors.OfType<ILFunction>().First();
-						var thisArgVar = function.RegisterVariable(VariableKind.StackSlot, thisVarType, "this_arg");
+						var thisArgVar = function.RegisterVariable(VariableKind.NamedArgument, thisVarType, "this_arg");
 						namedArgBlock.Instructions.Add(new StLoc(thisArgVar, call.Arguments[0]));
 						call.Arguments[0] = new LdLoc(thisArgVar);
 					}
 				}
+				v.Kind = VariableKind.NamedArgument;
 				namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, new StLoc(v, inlinedExpression));
 				return true;
 			}
@@ -476,6 +477,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindResult.Stop; // cannot use named arg to move expressionBeingMoved before this pointer
 			if (call.Method.IsOperator || call.Method.IsAccessor)
 				return FindResult.Stop; // cannot use named arg for operators or accessors
+			if (call.Method is VarArgInstanceMethod)
+				return FindResult.Stop; // CallBuilder doesn't support named args when using varargs
+			if (call.Method.IsConstructor) {
+				IType type = call.Method.DeclaringType;
+				if (type.Kind == TypeKind.Delegate || type.IsAnonymousType())
+					return FindResult.Stop;
+			}
 			for (int i = child.ChildIndex; i < call.Arguments.Count; i++) {
 				if (call.Arguments[i] is LdLoc ldloc && ldloc.Variable == v) {
 					loadInst = ldloc;

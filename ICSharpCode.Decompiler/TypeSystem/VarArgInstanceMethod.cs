@@ -44,7 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			this.parameters = paramList.ToArray();
 		}
-		
+
+		public IMethod BaseMethod => baseMethod;
+
 		public int RegularParameterCount {
 			get { return baseMethod.Parameters.Count - 1; }
 		}

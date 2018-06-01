@@ -1933,6 +1933,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslatePostfixOperator(block);
 				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
+				case BlockKind.CallWithNamedArgs:
+					return WrapInRef(
+						new CallBuilder(this, typeSystem, settings).CallWithNamedArgs(block),
+						((CallInstruction)block.FinalInstruction).Method.ReturnType);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Kind);
 			}

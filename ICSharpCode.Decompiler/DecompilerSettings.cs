@@ -636,7 +636,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool namedArguments = false;
+		bool namedArguments = true;
 
 		/// <summary>
 		/// Gets/Sets whether named arguments should be used.
