@@ -746,6 +746,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseOr, ExpressionType.Or);
 		}
 
+		protected internal override TranslatedExpression VisitThrow(Throw inst, TranslationContext context)
+		{
+			return new ThrowExpression(Translate(inst.Argument))
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(SpecialType.NoType));
+		}
+
 		TranslatedExpression HandleThreeValuedLogic(BinaryInstruction inst, BinaryOperatorType op, ExpressionType eop)
 		{
 			var left = Translate(inst.Left);
@@ -2181,7 +2188,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult, fallback.ResolveResult);
 			if (rr.IsError) {
 				IType targetType;
-				if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
+				if (fallback.Expression is ThrowExpression && fallback.Type.Equals(SpecialType.NoType)) {
+					targetType = value.Type;
+				} else if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
 					targetType = compilation.FindType(inst.UnderlyingResultType.ToKnownTypeCode());
 				} else {
 					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;

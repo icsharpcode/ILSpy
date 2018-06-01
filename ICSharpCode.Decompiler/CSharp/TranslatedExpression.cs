@@ -203,6 +203,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (targetType.Kind == TypeKind.Unknown || targetType.Kind == TypeKind.Void || targetType.Kind == TypeKind.None) {
 				return this; // don't attempt to insert cast to '?' or 'void' as these are not valid.
 			}
+			if (Expression is ThrowExpression) {
+				return this; // Throw expressions have no type and are implicitly convertible to any type
+			}
 			if (Expression is TupleExpression tupleExpr && targetType is TupleType targetTupleType
 				&& tupleExpr.Elements.Count == targetTupleType.ElementTypes.Length)
 			{
