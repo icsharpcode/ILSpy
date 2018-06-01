@@ -286,6 +286,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void NamedArguments([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void Issue1080([ValueSource(nameof(roslynOnlyOptions))] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
