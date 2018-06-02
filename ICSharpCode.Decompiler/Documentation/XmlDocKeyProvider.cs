@@ -241,6 +241,14 @@ namespace ICSharpCode.Decompiler.Documentation
 					type = type.NestedTypes.FirstOrDefault(t => t.Name == name);
 				}
 			}
+			if (type == null && module.HasExportedTypes) {
+				foreach (var exportedType in module.ExportedTypes) {
+					if (exportedType.Name == name && exportedType.Namespace == ns) {
+						type = exportedType.Resolve();
+						break;
+					}
+				}
+			}
 			return type;
 		}
 		#endregion
