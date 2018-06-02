@@ -1987,7 +1987,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
-				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type);
+				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, allowDictionaryInitializer: settings.DictionaryInitializers);
 				if (info.Kind == IL.Transforms.AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
 					currentPath = info.Path;
