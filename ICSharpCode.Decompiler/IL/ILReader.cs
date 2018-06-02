@@ -57,7 +57,6 @@ namespace ICSharpCode.Decompiler.IL
 		MethodSignature<ITypeReference> methodSignature;
 		StackType methodReturnStackType;
 		BlobReader reader;
-		int currentInstructionOffset;
 		ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
@@ -210,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstructionOffset, message));
+			Warnings.Add(string.Format("IL_{0:x4}: {1}", reader.Offset, message));
 		}
 
 		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
