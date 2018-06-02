@@ -14,6 +14,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			event Action Event;
 		}
 
+		private abstract class BaseClass
+		{
+			public abstract event EventHandler ThisIsAnAbstractEvent;
+		}
+
+		private class OtherClass : BaseClass
+		{
+			public override event EventHandler ThisIsAnAbstractEvent;
+		}
+
 		private class Impl : IBase
 		{
 			int IBase.Test {

@@ -601,16 +601,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		#region Automatic Events
+		static readonly Expression fieldReferencePattern = new Choice {
+			new IdentifierExpression(Pattern.AnyString),
+			new MemberReferenceExpression {
+				Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
+				MemberName = Pattern.AnyString
+			}
+		};
+
 		static readonly Accessor automaticEventPatternV2 = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
 				new AssignmentExpression {
-					Left = new NamedNode(
-						"field",
-						new MemberReferenceExpression {
-							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
-							MemberName = Pattern.AnyString
-						}),
+					Left = new NamedNode("field", fieldReferencePattern),
 					Operator = AssignmentOperatorType.Assign,
 					Right = new CastExpression(
 						new AnyNode("type"),
@@ -626,12 +629,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
-					Right = new NamedNode(
-						"field",
-						new MemberReferenceExpression {
-							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
-							MemberName = Pattern.AnyString
-						})
+					Right = new NamedNode("field", fieldReferencePattern)
 				},
 				new DoWhileStatement {
 					EmbeddedStatement = new BlockStatement {
@@ -704,7 +702,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!m.Success)
 				return false;
-			if (m.Get<MemberReferenceExpression>("field").Single().MemberName != ev.Name)
+			Expression fieldExpression = m.Get<Expression>("field").Single();
+			if (fieldExpression is IdentifierExpression identifier && identifier.Identifier != ev.Name
+				&& fieldExpression is MemberReferenceExpression memberRef && memberRef.MemberName != ev.Name)
 				return false; // field name must match event name
 			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
 				return false; // variable types must match event type
@@ -763,9 +763,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
-			Match m1, m2;
-			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
-				return null;
+			if (!ev.Modifiers.HasFlag(Modifiers.Abstract)) {
+				Match m1, m2;
+				if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
+					return null;
+			}
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
