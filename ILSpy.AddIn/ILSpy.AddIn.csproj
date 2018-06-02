@@ -105,6 +105,7 @@
 
   <ItemGroup>
     <None Include="ILSpyAddIn.vsct" />
+    <None Include="source.extension.vsixmanifest.template" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
