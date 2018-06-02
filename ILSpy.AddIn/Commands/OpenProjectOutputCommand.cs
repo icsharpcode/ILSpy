@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -13,11 +14,21 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 		}
 
+		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
+		{
+			if (sender is OleMenuCommand menuItem) {
+				menuItem.Visible = false;
+
+				var selectedItem = owner.DTE.SelectedItems.Item(1);
+				menuItem.Visible = (ProjectItemForILSpy.Detect(owner, selectedItem) != null);
+			}
+		}
+
 		protected override void OnExecute(object sender, EventArgs e)
 		{
 			if (owner.DTE.SelectedItems.Count != 1)
 				return;
-			var projectItemWrapper = ProjectItemForILSpy.Detect(owner.DTE.SelectedItems.Item(1));
+			var projectItemWrapper = ProjectItemForILSpy.Detect(owner, owner.DTE.SelectedItems.Item(1));
 			if (projectItemWrapper != null) {
 				OpenAssembliesInILSpy(projectItemWrapper.GetILSpyParameters(owner));
 			}

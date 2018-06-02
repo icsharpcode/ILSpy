@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EnvDTE;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -14,9 +10,13 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 	class ProjectItemForILSpy
 	{
 		SelectedItem item;
+		Project project;
+		Microsoft.CodeAnalysis.Project roslynProject;
 
-		ProjectItemForILSpy(SelectedItem item)
+		ProjectItemForILSpy(Project project, Microsoft.CodeAnalysis.Project roslynProject, SelectedItem item)
 		{
+			this.project = project;
+			this.roslynProject = roslynProject;
 			this.item = item;
 		}
 
@@ -25,30 +25,24 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="item">Selected item to check.</param>
 		/// <returns><see cref="ProjectItemForILSpy"/> instance or <c>null</c>, if item is not a supported project.</returns>
-		public static ProjectItemForILSpy Detect(SelectedItem item)
+		public static ProjectItemForILSpy Detect(ILSpyAddInPackage package, SelectedItem item)
 		{
-			return new ProjectItemForILSpy(item);
+			var project = item.Project;
+			var roslynProject = package.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
+			if (roslynProject == null)
+				return null;
+
+			return new ProjectItemForILSpy(project, roslynProject, item);
 		}
 
 		/// <summary>
 		/// If possible retrieves parameters to use for launching ILSpy instance.
 		/// </summary>
-		/// <param name="owner">Package instance.</param>
+		/// <param name="package">Package instance.</param>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters(ILSpyAddInPackage owner)
+		public ILSpyParameters GetILSpyParameters(ILSpyAddInPackage package)
 		{
-			var project = item.Project;
-			var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
-			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
-
-			// Get the directory path based on the project file.
-			string projectPath = Path.GetDirectoryName(project.FullName);
-
-			// Get the output path based on the active configuration
-			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
-
-			// Combine the project path and output path to get the bin path
-			return new ILSpyParameters(new[] { Path.Combine(projectPath, projectOutputPath, outputFileName) });
+			return new ILSpyParameters(new[] { Utils.GetProjectOutputAssembly(project, roslynProject) });
 		}
 	}
 }

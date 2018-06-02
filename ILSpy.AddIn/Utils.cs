@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using EnvDTE;
+using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -160,6 +166,71 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 
 			return result;
+		}
+
+		public static ITextSelection GetSelectionInCurrentView(IServiceProvider serviceProvider, Func<string, bool> predicate)
+		{
+			IWpfTextViewHost viewHost = GetCurrentViewHost(serviceProvider, predicate);
+			if (viewHost == null)
+				return null;
+
+			return viewHost.TextView.Selection;
+		}
+
+		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider, Func<string, bool> predicate)
+		{
+			IWpfTextViewHost viewHost = GetCurrentViewHost(serviceProvider);
+			if (viewHost == null)
+				return null;
+
+			ITextDocument textDocument = viewHost.GetTextDocument();
+			if (textDocument == null || !predicate(textDocument.FilePath))
+				return null;
+
+			return viewHost;
+		}
+
+		public static IWpfTextViewHost GetCurrentViewHost(IServiceProvider serviceProvider)
+		{
+			IVsTextManager txtMgr = (IVsTextManager)serviceProvider.GetService(typeof(SVsTextManager));
+			IVsTextView vTextView = null;
+			int mustHaveFocus = 1;
+			txtMgr.GetActiveView(mustHaveFocus, null, out vTextView);
+			IVsUserData userData = vTextView as IVsUserData;
+			if (userData == null)
+				return null;
+
+			object holder;
+			Guid guidViewHost = DefGuidList.guidIWpfTextViewHost;
+			userData.GetData(ref guidViewHost, out holder);
+
+			return holder as IWpfTextViewHost;
+		}
+
+		public static ITextDocument GetTextDocument(this IWpfTextViewHost viewHost)
+		{
+			ITextDocument textDocument = null;
+			viewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
+			return textDocument;
+		}
+
+		public static VisualStudioWorkspace GetWorkspace(IServiceProvider serviceProvider)
+		{
+			return (VisualStudioWorkspace)serviceProvider.GetService(typeof(VisualStudioWorkspace));
+		}
+
+		public static string GetProjectOutputAssembly(Project project, Microsoft.CodeAnalysis.Project roslynProject)
+		{
+			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
+
+			// Get the directory path based on the project file.
+			string projectPath = Path.GetDirectoryName(project.FullName);
+
+			// Get the output path based on the active configuration
+			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
+
+			// Combine the project path and output path to get the bin path
+			return Path.Combine(projectPath, projectOutputPath, outputFileName);
 		}
 	}
 }
