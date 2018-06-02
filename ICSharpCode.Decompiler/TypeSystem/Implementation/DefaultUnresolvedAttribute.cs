@@ -30,7 +30,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	public sealed class DefaultUnresolvedAttribute : AbstractFreezable, IUnresolvedAttribute, IFreezable, ISupportsInterning
 	{
 		ITypeReference attributeType;
-		DomRegion region;
 		IList<ITypeReference> constructorParameterTypes;
 		IList<IConstantValue> positionalArguments;
 		IList<KeyValuePair<IMemberReference, IConstantValue>> namedArguments;
@@ -64,14 +63,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public ITypeReference AttributeType {
 			get { return attributeType; }
-		}
-		
-		public DomRegion Region {
-			get { return region; }
-			set {
-				FreezableHelper.ThrowIfFrozen(this);
-				region = value;
-			}
 		}
 		
 		public IList<ITypeReference> ConstructorParameterTypes {
@@ -211,10 +202,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			
 			public IType AttributeType {
 				get { return attributeType; }
-			}
-			
-			public DomRegion Region {
-				get { return unresolved.Region; }
 			}
 			
 			public IMethod Constructor {

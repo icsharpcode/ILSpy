@@ -59,13 +59,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		IList<string> conditionalSymbols = null;
 
-		List<Error> errors = new List<Error> ();
-		
-		public List<Error> Errors {
-			get { return errors; }
-		}
-
-
 		/// <summary>
 		/// Gets the conditional symbols used to parse the source file. Note that this list contains
 		/// the conditional symbols at the start of the first token in the file - including the ones defined

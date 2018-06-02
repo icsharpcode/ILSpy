@@ -456,8 +456,6 @@
     <Compile Include="TypeSystem\MetadataLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
-    <Compile Include="TypeSystem\DomRegion.cs" />
-    <Compile Include="TypeSystem\Error.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
     <Compile Include="TypeSystem\IAmbience.cs" />
     <Compile Include="TypeSystem\IAssembly.cs" />
@@ -537,7 +535,6 @@
     <Compile Include="TypeSystem\ITypeDefinition.cs" />
     <Compile Include="TypeSystem\ITypeParameter.cs" />
     <Compile Include="TypeSystem\ITypeReference.cs" />
-    <Compile Include="TypeSystem\IUnresolvedFile.cs" />
     <Compile Include="TypeSystem\IVariable.cs" />
     <Compile Include="TypeSystem\KnownTypeReference.cs" />
     <Compile Include="TypeSystem\NullableType.cs" />

@@ -194,24 +194,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return child.EndLocation;
 			}
 		}
-
-		public DomRegion Region {
-			get {
-				return new DomRegion (StartLocation, EndLocation);
-			}
-		}
-		
-		/// <summary>
-		/// Gets the region from StartLocation to EndLocation for this node.
-		/// The file name of the region is set based on the parent SyntaxTree's file name.
-		/// If this node is not connected to a whole compilation, the file name will be null.
-		/// </summary>
-		public DomRegion GetRegion()
-		{
-			var syntaxTree = (this.Ancestors.LastOrDefault() ?? this) as SyntaxTree;
-			string fileName = (syntaxTree != null ? syntaxTree.FileName : null);
-			return new DomRegion(fileName, this.StartLocation, this.EndLocation);
-		}
 		
 		public AstNode Parent {
 			get { return parent; }
@@ -310,40 +292,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IEnumerable<AstNode> DescendantsAndSelf {
 			get { return GetDescendantsImpl(true); }
 		}
-
-		static bool IsInsideRegion(DomRegion region, AstNode pos)
-		{
-			if (region.IsEmpty)
-				return true;
-			var nodeRegion = pos.Region;
-			return region.IntersectsWith(nodeRegion) || region.OverlapsWith(nodeRegion);
-		}
-
+		
 		public IEnumerable<AstNode> DescendantNodes (Func<AstNode, bool> descendIntoChildren = null)
 		{
-			return GetDescendantsImpl(false, new DomRegion (), descendIntoChildren);
+			return GetDescendantsImpl(false, descendIntoChildren);
 		}
-
-		public IEnumerable<AstNode> DescendantNodes (DomRegion region, Func<AstNode, bool> descendIntoChildren = null)
-		{
-			return GetDescendantsImpl(false, region, descendIntoChildren);
-		}
-
+		
 		public IEnumerable<AstNode> DescendantNodesAndSelf (Func<AstNode, bool> descendIntoChildren = null)
 		{
-			return GetDescendantsImpl(true, new DomRegion (), descendIntoChildren);
+			return GetDescendantsImpl(true, descendIntoChildren);
 		}
+		
 
-		public IEnumerable<AstNode> DescendantNodesAndSelf (DomRegion region, Func<AstNode, bool> descendIntoChildren = null)
-		{
-			return GetDescendantsImpl(true, region, descendIntoChildren);
-		}
-
-		IEnumerable<AstNode> GetDescendantsImpl(bool includeSelf, DomRegion region = new DomRegion (), Func<AstNode, bool> descendIntoChildren = null)
+		IEnumerable<AstNode> GetDescendantsImpl(bool includeSelf, Func<AstNode, bool> descendIntoChildren = null)
 		{
 			if (includeSelf) {
-				if (IsInsideRegion (region, this))
-					yield return this;
+				yield return this;
 				if (descendIntoChildren != null && !descendIntoChildren(this))
 					yield break;
 			}
@@ -356,8 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				// This allows removing/replacing nodes while iterating through the list.
 				if (pos.nextSibling != null)
 					nextStack.Push(pos.nextSibling);
-				if (IsInsideRegion(region, pos))
-					yield return pos;
+				yield return pos;
 				if (pos.firstChild != null && (descendIntoChildren == null || descendIntoChildren(pos)))
 					pos = pos.firstChild;
 				else

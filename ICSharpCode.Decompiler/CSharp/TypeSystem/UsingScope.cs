@@ -33,7 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 	public class UsingScope : AbstractFreezable
 	{
 		readonly UsingScope parent;
-		DomRegion region;
 		string shortName = "";
 		IList<TypeOrNamespaceReference> usings;
 		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
@@ -77,14 +76,6 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		
 		public UsingScope Parent {
 			get { return parent; }
-		}
-		
-		public DomRegion Region {
-			get { return region; }
-			set {
-				FreezableHelper.ThrowIfFrozen(this);
-				region = value;
-			}
 		}
 		
 		public string ShortNamespaceName {

@@ -129,10 +129,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.index = index;
 		}
 		
-		DomRegion IUnresolvedAttribute.Region {
-			get { return DomRegion.Empty; }
-		}
-		
 		IAttribute IUnresolvedAttribute.CreateResolvedAttribute(ITypeResolveContext context)
 		{
 			return secDecl.Resolve(context.CurrentAssembly)[index];

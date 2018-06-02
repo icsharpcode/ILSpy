@@ -52,10 +52,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.blob = blob;
 		}
 		
-		DomRegion IUnresolvedAttribute.Region {
-			get { return DomRegion.Empty; }
-		}
-		
 		public IAttribute CreateResolvedAttribute(ITypeResolveContext context)
 		{
 			if (context.CurrentAssembly == null)

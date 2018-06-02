@@ -227,15 +227,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		#region GetType/Member
 		/// <summary>
-		/// Gets all unresolved type definitions from the file.
-		/// For partial classes, each part is returned.
-		/// </summary>
-		public static IEnumerable<IUnresolvedTypeDefinition> GetAllTypeDefinitions (this IUnresolvedFile file)
-		{
-			return TreeTraversal.PreOrder(file.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
-		/// <summary>
 		/// Gets all unresolved type definitions from the assembly.
 		/// For partial classes, each part is returned.
 		/// </summary>
@@ -265,24 +256,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
 		{
 			return compilation.Assemblies.SelectMany(a => a.TopLevelTypeDefinitions);
-		}
-		
-		/// <summary>
-		/// Gets the type (potentially a nested type) defined at the specified location.
-		/// Returns null if no type is defined at that location.
-		/// </summary>
-		public static IUnresolvedTypeDefinition GetInnermostTypeDefinition (this IUnresolvedFile file, int line, int column)
-		{
-			return file.GetInnermostTypeDefinition (new TextLocation (line, column));
-		}
-		
-		/// <summary>
-		/// Gets the member defined at the specified location.
-		/// Returns null if no member is defined at that location.
-		/// </summary>
-		public static IUnresolvedMember GetMember (this IUnresolvedFile file, int line, int column)
-		{
-			return file.GetMember (new TextLocation (line, column));
 		}
 		#endregion
 		
