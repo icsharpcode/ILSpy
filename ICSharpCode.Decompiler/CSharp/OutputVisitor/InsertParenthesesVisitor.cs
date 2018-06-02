@@ -70,11 +70,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (expr is CastExpression)
 				return Unary;
-			if (expr is PrimitiveExpression) {
-				var value = ((PrimitiveExpression)expr).Value;
-				if (value is int && (int)value < 0)
+			if (expr is PrimitiveExpression primitive) {
+				var value = primitive.Value;
+				if (value is int i && i < 0)
 					return Unary;
-				if (value is long && (long)value < 0)
+				if (value is long l && l < 0)
+					return Unary;
+				if (value is float f && f < 0)
+					return Unary;
+				if (value is double d && d < 0)
+					return Unary;
+				if (value is decimal de && de < 0)
 					return Unary;
 			}
 			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
