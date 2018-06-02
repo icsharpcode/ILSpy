@@ -703,9 +703,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return false;
 			Expression fieldExpression = m.Get<Expression>("field").Single();
-			if (fieldExpression is IdentifierExpression identifier && identifier.Identifier != ev.Name
-				&& fieldExpression is MemberReferenceExpression memberRef && memberRef.MemberName != ev.Name)
-				return false; // field name must match event name
+			// field name must match event name
+			switch (fieldExpression) {
+				case IdentifierExpression identifier:
+					if (identifier.Identifier != ev.Name)
+						return false;
+					break;
+				case MemberReferenceExpression memberRef:
+					if (memberRef.MemberName != ev.Name)
+						return false;
+					break;
+				default:
+					return false;
+			}
 			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
 				return false; // variable types must match event type
 			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
