@@ -50,11 +50,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(module, analyzedType, provideTypeSystem: false, FindReferencesInType);
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(this.Language, module, analyzedType, provideTypeSystem: false, FindReferencesInType);
 			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, IDecompilerTypeSystem typeSystem)
+		IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, CodeMappingInfo codeMapping, IDecompilerTypeSystem typeSystem)
 		{
 			var td = module.Metadata.GetTypeDefinition(type);
 			foreach (var h in td.GetMethods()) {

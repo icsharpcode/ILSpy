@@ -30,6 +30,9 @@ using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
+	/// <summary>
+	/// Finds methods where this field is read or written.
+	/// </summary>
 	sealed class AnalyzedFieldAccessTreeNode : AnalyzerSearchTreeNode
 	{
 		readonly bool showWrites; // true: show writes; false: show read access
@@ -59,7 +62,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			foundMethods = new Lazy<HashSet<Decompiler.Metadata.MethodDefinition>>(LazyThreadSafetyMode.ExecutionAndPublication);
 
-			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(module, analyzedField, provideTypeSystem: false, FindReferencesInType);
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(this.Language, module, analyzedField, provideTypeSystem: false, FindReferencesInType);
 			foreach (var child in analyzer.PerformAnalysis(ct).OrderBy(n => n.Text)) {
 				yield return child;
 			}
@@ -67,7 +70,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			foundMethods = null;
 		}
 
-		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, IDecompilerTypeSystem typeSystem)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, CodeMappingInfo codeMapping, IDecompilerTypeSystem typeSystem)
 		{
 			var td = module.Metadata.GetTypeDefinition(type);
 			foreach (var h in td.GetMethods()) {

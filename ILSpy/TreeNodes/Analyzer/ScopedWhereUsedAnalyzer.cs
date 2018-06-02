@@ -34,6 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// </summary>
 	class ScopedWhereUsedAnalyzer<T>
 	{
+		readonly Language language;
 		readonly Decompiler.Metadata.PEFile assemblyScope;
 		readonly bool provideTypeSystem;
 		TypeDefinitionHandle typeScopeHandle;
@@ -42,10 +43,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		readonly Accessibility memberAccessibility = Accessibility.Public;
 		Accessibility typeAccessibility = Accessibility.Public;
-		readonly Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction;
+		readonly Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction;
 
-		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Language language, Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
 		{
+			this.language = language;
 			this.typeScopeHandle = type;
 			this.assemblyScope = module;
 			this.typeScope = module.Metadata.GetTypeDefinition(typeScopeHandle);
@@ -53,14 +55,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.typeAnalysisFunction = typeAnalysisFunction;
 		}
 
-		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, MethodDefinitionHandle method, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
-			: this(module, method.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Language language, Decompiler.Metadata.PEFile module, MethodDefinitionHandle method, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(language, module, method.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
 			this.memberAccessibility = GetMethodAccessibility(module.Metadata, method);
 		}
 
-		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, PropertyDefinitionHandle property, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
-			: this(module, property.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Language language, Decompiler.Metadata.PEFile module, PropertyDefinitionHandle property, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(language, module, property.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
 			var pd = module.Metadata.GetPropertyDefinition(property);
 			var accessors = pd.GetAccessors();
@@ -69,8 +71,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.memberAccessibility = (Accessibility)Math.Max((int)getterAccessibility, (int)setterAccessibility);
 		}
 
-		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, EventDefinitionHandle eventDef, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
-			: this(module, eventDef.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Language language, Decompiler.Metadata.PEFile module, EventDefinitionHandle eventDef, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(language, module, eventDef.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
 			// we only have to check the accessibility of the the get method
 			// [CLS Rule 30: The accessibility of an event and of its accessors shall be identical.]
@@ -78,8 +80,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.memberAccessibility = GetMethodAccessibility(module.Metadata, ed.GetAccessors().Adder);
 		}
 
-		public ScopedWhereUsedAnalyzer(Decompiler.Metadata.PEFile module, FieldDefinitionHandle field, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
-			: this(module, field.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
+		public ScopedWhereUsedAnalyzer(Language language, Decompiler.Metadata.PEFile module, FieldDefinitionHandle field, bool provideTypeSystem, Func<Decompiler.Metadata.PEFile, TypeDefinitionHandle, CodeMappingInfo, IDecompilerTypeSystem, IEnumerable<T>> typeAnalysisFunction)
+			: this(language, module, field.GetDeclaringType(module.Metadata), provideTypeSystem, typeAnalysisFunction)
 		{
 			var fd = module.Metadata.GetFieldDefinition(field);
 			switch (fd.Attributes & FieldAttributes.FieldAccessMask) {
@@ -236,7 +238,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			var metadata = module.Metadata;
 			foreach (var type in TreeTraversal.PreOrder(metadata.TypeDefinitions, t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(module, type, ts)) {
+				var codeMappingInfo = language.GetCodeMappingInfo(assemblyScope, type);
+				foreach (var result in typeAnalysisFunction(module, type, codeMappingInfo, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}
@@ -248,7 +251,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
 			foreach (var type in TreeTraversal.PreOrder(typeScopeHandle, t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(assemblyScope, type, ts)) {
+				var codeMappingInfo = language.GetCodeMappingInfo(assemblyScope, type);
+				foreach (var result in typeAnalysisFunction(assemblyScope, type, codeMappingInfo, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}
@@ -258,9 +262,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		IEnumerable<T> FindReferencesInEnclosingTypeScope(CancellationToken ct)
 		{
 			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
+			var codeMappingInfo = language.GetCodeMappingInfo(assemblyScope, typeScope.GetDeclaringType());
 			foreach (var type in TreeTraversal.PreOrder(typeScope.GetDeclaringType(), t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
-				foreach (var result in typeAnalysisFunction(assemblyScope, type, ts)) {
+				foreach (var result in typeAnalysisFunction(assemblyScope, type, codeMappingInfo, ts)) {
 					ct.ThrowIfCancellationRequested();
 					yield return result;
 				}

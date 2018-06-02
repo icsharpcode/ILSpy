@@ -294,6 +294,7 @@
     <Compile Include="Metadata\LightJson\Serialization\TextPosition.cs" />
     <Compile Include="Metadata\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="Metadata\OperandType.cs" />
+    <Compile Include="Metadata\SignatureBlobComparer.cs" />
     <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
     <Compile Include="Metadata\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\PointerArithmeticOffset.cs" />
