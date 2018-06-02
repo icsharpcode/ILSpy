@@ -75,7 +75,12 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// C# 'as' cast.
 		/// </summary>
 		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
-		
+
+		/// <summary>
+		/// C# 7 throw expression being converted to an arbitrary type.
+		/// </summary>
+		public static readonly Conversion ThrowExpressionConversion = new BuiltinConversion(true, 10);
+
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
 			if (operatorMethod == null)
@@ -227,6 +232,10 @@ namespace ICSharpCode.Decompiler.Semantics
 			public override bool IsTryCast {
 				get { return type == 9; }
 			}
+
+			public override bool IsThrowExpressionConversion {
+				get { return type == 10; }
+			}
 			
 			public override string ToString()
 			{
@@ -257,6 +266,8 @@ namespace ICSharpCode.Decompiler.Semantics
 						return "unboxing conversion";
 					case 9:
 						return "try cast";
+					case 10:
+						return "throw-expression conversion";
 				}
 				return (isImplicit ? "implicit " : "explicit ") + name + " conversion";
 			}
@@ -443,7 +454,11 @@ namespace ICSharpCode.Decompiler.Semantics
 		public virtual bool IsTryCast {
 			get { return false; }
 		}
-		
+
+		public virtual bool IsThrowExpressionConversion {
+			get { return false; }
+		}
+
 		public virtual bool IsIdentityConversion {
 			get { return false; }
 		}

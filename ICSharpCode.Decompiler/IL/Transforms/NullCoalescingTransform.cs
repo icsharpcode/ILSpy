@@ -83,52 +83,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return false;
 		}
-
-		/// <summary>
-		/// Handles NullCoalescingInstruction case 1: reference types.
-		/// 
-		/// stloc s(valueInst)
-		/// if (comp(ldloc s == ldnull)) {
-		///		stloc s(fallbackInst)
-		/// }
-		/// =>
-		/// stloc s(if.notnull(valueInst, fallbackInst))
-		/// 
-		/// -------------------
-		/// 
-		/// stloc obj(valueInst)
-		///	if (comp(ldloc obj == ldnull)) {
-		///		throw(...)
-		///	}
-		///	=>
-		///	stloc obj(if.notnull(valueInst, throw(...)))
-		/// </summary>
-		bool TransformRefTypesA(Block block, int pos, StatementTransformContext context)
-		{
-			if (!(block.Instructions[pos] is StLoc stloc))
-				return false;
-			if (stloc.Variable.Kind != VariableKind.StackSlot)
-				return false;
-			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
-				return false;
-			if (!(condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()))
-				return false;
-			trueInst = Block.Unwrap(trueInst);
-			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)) {
-				context.Step("NullCoalescingTransform (reference types)", stloc);
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
-				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, false, context);
-				return true;
-			} else if (trueInst is Throw throwInst) {
-				context.Step("NullCoalescingTransform (throw expression)", stloc);
-				throwInst.resultType = StackType.O;
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
-				block.Instructions.RemoveAt(pos + 1); // remove if instruction
-				ILInlining.InlineOneIfPossible(block, pos, false, context);
-				return true;
-			}
-			return false;
-		}
 	}
 }
