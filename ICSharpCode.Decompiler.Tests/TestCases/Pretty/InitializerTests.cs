@@ -197,6 +197,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return c;
 		}
 
+		public static void InvalidIndices(int a)
+		{
+			int[] array = new int[1];
+			array[1] = a;
+			X(Y(), array);
+		}
+
+		public static void InvalidIndices2(int a)
+		{
+			int[] array = new int[1];
+			array[-1] = a;
+			X(Y(), array);
+		}
+
+		public static void IndicesInWrongOrder(int a, int b)
+		{
+			int[] array = new int[5];
+			array[2] = b;
+			array[1] = a;
+			X(Y(), array);
+		}
 
 		public static void CollectionInitializerList()
 		{

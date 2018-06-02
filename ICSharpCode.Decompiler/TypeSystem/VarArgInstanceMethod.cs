@@ -44,7 +44,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			this.parameters = paramList.ToArray();
 		}
-		
+
+		public IMethod BaseMethod => baseMethod;
+
 		public int RegularParameterCount {
 			get { return baseMethod.Parameters.Count - 1; }
 		}
@@ -63,7 +65,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return baseMethod.GetHashCode();
 		}
-		
+
+		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			VarArgInstanceMethod other = obj as VarArgInstanceMethod;
+			return other != null && baseMethod.Equals(other.baseMethod, typeNormalization);
+		}
+
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder("[");

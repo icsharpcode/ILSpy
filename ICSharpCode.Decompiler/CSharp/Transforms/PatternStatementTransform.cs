@@ -255,6 +255,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
 			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
+			if (itemVariable == null || indexVariable == null || arrayVariable == null)
+				return null;
 			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
@@ -504,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
 				propertyDeclaration.Getter.Body = null;
 				propertyDeclaration.Setter.Body = null;
-			}
+
 			// Add C# 7.3 attributes on backing field:
 			var attributes = field.Attributes
 				.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
@@ -515,6 +517,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				};
 				section.Attributes.AddRange(attributes);
 				propertyDeclaration.Attributes.Add(section);
+			}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
@@ -674,10 +677,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Left = new IdentifierExpressionBackreference("var1"),
 							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
 								"CompareExchange",
-								new AstType[] { new AnyNode("type") }), // type argument+
+								new AstType[] { new Repeat(new AnyNode()) }), // optional type arguments
 								new Expression[] { // arguments
 									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
-									new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
+									new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
 									new IdentifierExpressionBackreference("var1")
 								}
 							)

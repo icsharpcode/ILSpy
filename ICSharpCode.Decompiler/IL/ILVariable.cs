@@ -57,7 +57,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Variable created from stack slot.
 		/// </summary>
-		StackSlot
+		StackSlot,
+		/// <summary>
+		/// Variable in BlockKind.CallWithNamedArgs
+		/// </summary>
+		NamedArgument,
 	}
 
 	public class ILVariable
@@ -308,6 +312,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case VariableKind.UsingLocal:
 					output.Write("using ");
+					break;
+				case VariableKind.NamedArgument:
+					output.Write("named_arg ");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();

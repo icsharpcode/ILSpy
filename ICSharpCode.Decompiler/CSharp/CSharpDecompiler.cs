@@ -136,7 +136,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							new NullPropagationStatementTransform(),
 							new TransformArrayInitializers(),
 							new TransformCollectionAndObjectInitializers(),
-							new TransformExpressionTrees()
+							new TransformExpressionTrees(),
+							new NamedArgumentTransform()
 						),
 					}
 				},
@@ -195,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public CSharpDecompiler(Metadata.PEFile module, DecompilerSettings settings)
-			: this(new DecompilerTypeSystem(module), settings)
+			: this(new DecompilerTypeSystem(module, settings), settings)
 		{
 		}
 

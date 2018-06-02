@@ -6,9 +6,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	class RemoveCompilerAttribute : DepthFirstAstVisitor<object, object>, IAstTransform
+	class RemoveCompilerAttribute : DepthFirstAstVisitor, IAstTransform
 	{
-		public override object VisitAttribute(CSharp.Syntax.Attribute attribute, object data)
+		public override void VisitAttribute(CSharp.Syntax.Attribute attribute)
 		{
 			var section = (AttributeSection)attribute.Parent;
 			SimpleType type = attribute.Type as SimpleType;
@@ -25,16 +25,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (section.Attributes.Count == 0)
 					section.Remove();
 			}
-			return null;
 		}
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			rootNode.AcceptVisitor(this, null);
+			rootNode.AcceptVisitor(this);
 		}
 	}
 
-	public class RemoveEmbeddedAtttributes : DepthFirstAstVisitor<object, object>, IAstTransform
+	public class RemoveEmbeddedAtttributes : DepthFirstAstVisitor, IAstTransform
 	{
 		HashSet<string> attributeNames = new HashSet<string>() {
 			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
@@ -42,21 +41,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
 		};
 
-		public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
+		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
 			var typeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
 			if (typeDefinition == null || !attributeNames.Contains(typeDefinition.FullName))
-				return null;
+				return;
 			if (typeDeclaration.Parent is NamespaceDeclaration ns && ns.Members.Count == 1)
 				ns.Remove();
 			else
 				typeDeclaration.Remove();
-			return null;
 		}
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			rootNode.AcceptVisitor(this, null);
+			rootNode.AcceptVisitor(this);
 		}
 	}
 }

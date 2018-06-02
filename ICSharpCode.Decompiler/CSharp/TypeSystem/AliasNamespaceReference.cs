@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 		public override IType ResolveType(CSharpResolver resolver)
 		{
 			// alias cannot refer to types
-			return SpecialType.UnknownType;
+			return SpecialType.NoType;
 		}
 		
 		public override string ToString()

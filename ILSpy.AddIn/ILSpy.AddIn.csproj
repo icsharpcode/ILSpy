@@ -51,7 +51,7 @@
     <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" Version="15.6.27413" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.3.25407" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta7" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
     <PackageReference Include="VSLangProj" Version="7.0.3301" />
   </ItemGroup>
 

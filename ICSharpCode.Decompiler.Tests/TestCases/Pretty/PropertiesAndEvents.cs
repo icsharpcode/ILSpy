@@ -32,10 +32,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		[NonSerialized]
+		private int someField;
+
 		public int Value {
 			get;
 			private set;
 		}
+
+#if ROSLYN
+		public int NotAnAutoProperty => someField;
+#else
+		public int NotAnAutoProperty {
+			get {
+				return someField;
+			}
+		}
+#endif
 
 		public event EventHandler AutomaticEvent;
 

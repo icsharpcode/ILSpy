@@ -49,6 +49,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IncludeInternalMembers { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether to use the <c>dynamic</c> type.
+		/// </summary>
+		public bool UseDynamicType { get; set; } = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use the tuple types.
+		/// </summary>
+		public bool UseTupleTypes { get; set; } = true;
+
+		/// <summary>
 		/// Gets/Sets the cancellation token used by the assembly loader.
 		/// </summary>
 		public CancellationToken CancellationToken { get; set; }

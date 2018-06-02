@@ -231,15 +231,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ConvertType(typeWithElementType.ElementType);
 				}
 			}
-			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null) {
+			if (type is ParameterizedType pt) {
 				if (pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
-			ITypeDefinition typeDef = type as ITypeDefinition;
-			if (typeDef != null) {
+			if (type is TupleType tuple) {
+				var astType = new TupleAstType();
+				foreach (var (etype, ename) in tuple.ElementTypes.Zip(tuple.ElementNames)) {
+					astType.Elements.Add(new TupleTypeElement {
+						Type = ConvertType(etype),
+						Name = ename
+					});
+				}
+				return astType;
+			}
+			if (type is ITypeDefinition typeDef) {
 				if (typeDef.TypeParameterCount > 0) {
 					// Unbound type
 					IType[] typeArguments = new IType[typeDef.TypeParameterCount];
@@ -430,7 +438,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				attr.Arguments.Add(ConvertConstantValue(arg));
 			}
 			foreach (var pair in attribute.NamedArguments) {
-				attr.Arguments.Add(new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value)));
+				NamedExpression namedArgument = new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value));
+				if (AddResolveResultAnnotations)
+					namedArgument.AddAnnotation(new MemberResolveResult(new InitializedObjectResolveResult(attribute.AttributeType), pair.Key));
+				attr.Arguments.Add(namedArgument);
 			}
 			return attr;
 		}
@@ -660,8 +671,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ITypeDefinition enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			foreach (IField field in enumDefinition.Fields) {
-				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val))
-					return new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val)) {
+					MemberReferenceExpression mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+					if (AddResolveResultAnnotations)
+						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
+					return mre;
+				}
 			}
 			if (IsFlagsEnum(enumDefinition)) {
 				long enumValue = val;

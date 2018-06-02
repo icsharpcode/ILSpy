@@ -59,7 +59,8 @@ namespace ICSharpCode.Decompiler
 				expressionTrees = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
-				// * dynamic (not supported yet)
+				dynamic = false;
+				namedArguments = false;
 				// * named and optional arguments (not supported yet)
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
@@ -74,6 +75,8 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
+				tupleTypes = false;
+				tupleConversions = false;
 				discards = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
@@ -81,7 +84,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				//introduceUnmanagedTypeConstraint = false;
-				//...
+				tupleComparisons = false;
 			}
 		}
 
@@ -140,6 +143,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (yieldReturn != value) {
 					yieldReturn = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool dynamic = true;
+
+		/// <summary>
+		/// Decompile use of the 'dynamic' type.
+		/// </summary>
+		public bool Dynamic {
+			get { return dynamic; }
+			set {
+				if (dynamic != value) {
+					dynamic = value;
 					OnPropertyChanged();
 				}
 			}
@@ -566,6 +584,68 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceRefAndReadonlyModifiersOnStructs != value) {
 					introduceRefAndReadonlyModifiersOnStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool tupleTypes = true;
+
+		/// <summary>
+		/// Gets/Sets whether tuple type syntax <c>(int, string)</c>
+		/// should be used for <c>System.ValueTuple</c>.
+		/// </summary>
+		public bool TupleTypes {
+			get { return tupleTypes; }
+			set {
+				if (tupleTypes != value) {
+					tupleTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool tupleConversions = true;
+
+		/// <summary>
+		/// Gets/Sets whether implicit conversions between tuples
+		/// should be used in the decompiled output.
+		/// </summary>
+		public bool TupleConversions {
+			get { return tupleConversions; }
+			set {
+				if (tupleConversions != value) {
+					tupleConversions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool tupleComparisons = true;
+
+		/// <summary>
+		/// Gets/Sets whether tuple comparisons should be detected.
+		/// </summary>
+		public bool TupleComparisons {
+			get { return tupleComparisons; }
+			set {
+				if (tupleComparisons != value) {
+					tupleComparisons = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool namedArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether named arguments should be used.
+		/// </summary>
+		public bool NamedArguments {
+			get { return namedArguments; }
+			set {
+				if (namedArguments != value) {
+					namedArguments = value;
 					OnPropertyChanged();
 				}
 			}

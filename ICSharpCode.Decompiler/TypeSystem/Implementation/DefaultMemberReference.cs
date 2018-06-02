@@ -57,7 +57,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ITypeReference DeclaringTypeReference {
 			get { return typeReference; }
 		}
-		
+
+		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor();
+
 		public IMember Resolve(ITypeResolveContext context)
 		{
 			IType type = typeReference.Resolve(context);
@@ -85,8 +87,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				} else if (parameterTypes.Count == parameterizedMember.Parameters.Count) {
 					bool signatureMatches = true;
 					for (int i = 0; i < parameterTypes.Count; i++) {
-						IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(resolvedParameterTypes[i]);
-						IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(parameterizedMember.Parameters[i].Type);
+						IType type1 = resolvedParameterTypes[i].AcceptVisitor(normalizeTypeVisitor);
+						IType type2 = parameterizedMember.Parameters[i].Type.AcceptVisitor(normalizeTypeVisitor);
 						if (!type1.Equals(type2)) {
 							signatureMatches = false;
 							break;

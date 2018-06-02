@@ -66,6 +66,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
+		/// Gets whether this is an instance call (i.e. whether the first argument is the 'this' pointer).
+		/// </summary>
+		public bool IsInstanceCall {
+			get { return !(Method.IsStatic || OpCode == OpCode.NewObj); }
+		}
+
+		/// <summary>
 		/// Gets the parameter for the argument with the specified index.
 		/// Returns null for the <c>this</c> parameter.
 		/// </summary>

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </summary>
 	public abstract class LambdaResolveResult : ResolveResult
 	{
-		protected LambdaResolveResult() : base(SpecialType.UnknownType)
+		protected LambdaResolveResult() : base(SpecialType.NoType)
 		{
 		}
 		

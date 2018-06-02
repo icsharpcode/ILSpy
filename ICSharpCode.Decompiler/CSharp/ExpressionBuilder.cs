@@ -194,7 +194,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction targetInstruction = null)
 		{
-			var target = TranslateTarget(field, targetInstruction, true);
+			var target = TranslateTarget(targetInstruction,
+				nonVirtualInvocation: true,
+				memberStatic: field.IsStatic,
+				memberDeclaringType: field.DeclaringType);
 			bool requireTarget = HidesVariableWithName(field.Name)
 				|| (field.IsStatic ? !IsCurrentOrContainingType(field.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression));
 			bool targetCasted = false;
@@ -204,11 +207,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (targetResolveResult == null) {
 					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field));
+					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
-					return !(result == null || result.IsError || !result.Member.Equals(field));
+					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				}
 			}
 
@@ -1610,20 +1613,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		internal TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation, IType constrainedTo = null)
+		internal TranslatedExpression TranslateTarget(ILInstruction target, bool nonVirtualInvocation,
+			bool memberStatic, IType memberDeclaringType)
 		{
 			// If references are missing member.IsStatic might not be set correctly.
 			// Additionally check target for null, in order to avoid a crash.
-			if (!member.IsStatic && target != null) {
-				if (nonVirtualInvocation && target.MatchLdThis() && member.DeclaringTypeDefinition != resolver.CurrentTypeDefinition) {
+			if (!memberStatic && target != null) {
+				if (nonVirtualInvocation && target.MatchLdThis() && memberDeclaringType.GetDefinition() != resolver.CurrentTypeDefinition) {
 					return new BaseReferenceExpression()
 						.WithILInstruction(target)
-						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
+						.WithRR(new ThisResolveResult(memberDeclaringType, nonVirtualInvocation));
 				} else {
-					var translatedTarget = Translate(target, constrainedTo ?? member.DeclaringType);
-					if (CallInstruction.ExpectedTypeForThisPointer(constrainedTo ?? member.DeclaringType) == StackType.Ref && translatedTarget.Type.GetStackType().IsIntegerType()) {
+					var translatedTarget = Translate(target, memberDeclaringType);
+					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref && translatedTarget.Type.GetStackType().IsIntegerType()) {
 						// when accessing members on value types, ensure we use a reference and not a pointer
-						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? member.DeclaringType), this);
+						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
 					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						// (ref x).member => x.member
@@ -1642,9 +1646,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return translatedTarget;
 				}
 			} else {
-				return new TypeReferenceExpression(ConvertType(member.DeclaringType))
+				return new TypeReferenceExpression(ConvertType(memberDeclaringType))
 					.WithoutILInstruction()
-					.WithRR(new TypeResolveResult(member.DeclaringType));
+					.WithRR(new TypeResolveResult(memberDeclaringType));
 			}
 		}
 		
@@ -1752,7 +1756,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					return result;
 				}
 			}
-			var expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
+			TranslatedExpression expr;
+			if (TupleTransform.MatchTupleFieldAccess(inst, out IType underlyingTupleType, out var target, out int position)) {
+				var translatedTarget = TranslateTarget(target,
+					nonVirtualInvocation: true,
+					memberStatic: false,
+					memberDeclaringType: underlyingTupleType);
+				if (translatedTarget.Type is TupleType tupleType && tupleType.UnderlyingType.Equals(underlyingTupleType) && position <= tupleType.ElementNames.Length) {
+					string elementName = tupleType.ElementNames[position - 1];
+					if (elementName == null) {
+						elementName = "Item" + position;
+					}
+					expr = new MemberReferenceExpression(translatedTarget, elementName)
+						.WithRR(new MemberResolveResult(translatedTarget.ResolveResult, inst.Field))
+						.WithILInstruction(inst);
+				} else {
+					expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
+				}
+			} else {
+				expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
+			}
 			if (inst.ResultType == StackType.I) {
 				// ldflda producing native pointer
 				return new UnaryOperatorExpression(UnaryOperatorType.AddressOf, expr)
@@ -1760,7 +1783,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				// ldflda producing managed pointer
 				return new DirectionExpression(FieldDirection.Ref, expr)
-					.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.Type, isOut: false));
+					.WithoutILInstruction().WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
 			}
 		}
 		
@@ -1910,6 +1933,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslatePostfixOperator(block);
 				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
+				case BlockKind.CallWithNamedArgs:
+					return WrapInRef(
+						new CallBuilder(this, typeSystem, settings).CallWithNamedArgs(block),
+						((CallInstruction)block.FinalInstruction).Method.ReturnType);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Kind);
 			}

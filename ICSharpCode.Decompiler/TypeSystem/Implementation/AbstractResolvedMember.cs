@@ -111,6 +111,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return TypeParameterSubstitution.Identity; }
 		}
 
+		public virtual bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			return Equals(obj);
+		}
+
 		public abstract IMember Specialize(TypeParameterSubstitution substitution);
 		
 		internal IMethod GetAccessor(ref IMethod accessorField, IUnresolvedMethod unresolvedAccessor)

@@ -170,18 +170,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructionsToRemove = 0;
 			values = null;
 			values = new ILInstruction[length];
-			int index = 0;
+			int nextMinimumIndex = 0;
 			int elementCount = 0;
 			for (int i = pos; i < block.Instructions.Count; i++) {
-				if (index >= length)
+				if (nextMinimumIndex >= length)
 					break;
 				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
 				var ldelem = target as LdElema;
-				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out index))
+				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out int index))
 					break;
-				values[index] = value;
-				index++;
+				// index must be in range [0..length[ and must be greater than or equal to nextMinimumIndex
+				// to avoid running out of bounds or accidentally reordering instructions or overwriting previous instructions.
+				// However, leaving array slots empty is allowed, as those are filled with default values when the
+				// initializer block is generated.
+				if (index < 0 || index >= length || index < nextMinimumIndex)
+					return false;
+				nextMinimumIndex = index;
+				values[nextMinimumIndex] = value;
+				nextMinimumIndex++;
 				elementCount++;
 				instructionsToRemove++;
 			}
@@ -281,24 +288,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			block.FinalInstruction = new LdLoc(v);
 			return block;
-		}
-		
-		static bool CompareTypes(IType a, IType b)
-		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
-			return type1.Equals(type2);
-		}
-		
-		static bool CompareSignatures(IList<IParameter> parameters, IList<IParameter> otherParameters)
-		{
-			if (otherParameters.Count != parameters.Count)
-				return false;
-			for (int i = 0; i < otherParameters.Count; i++) {
-				if (!CompareTypes(otherParameters[i].Type, parameters[i].Type))
-					return false;
-			}
-			return true;
 		}
 		
 		internal static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)

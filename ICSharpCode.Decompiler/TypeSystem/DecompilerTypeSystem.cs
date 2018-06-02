@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// CecilLoader used for converting cecil type references to ITypeReference.
 		/// May only be accessed within lock(typeReferenceCecilLoader).
 		/// </summary>
-		readonly MetadataLoader typeReferenceCecilLoader = new MetadataLoader();
+		readonly MetadataLoader typeReferenceCecilLoader;
 
 		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
@@ -35,12 +35,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		Dictionary<IUnresolvedAssembly, Metadata.PEFile> moduleLookup = new Dictionary<IUnresolvedAssembly, Metadata.PEFile>();
 		
-		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition)
+		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition) : this(moduleDefinition, new DecompilerSettings())
 		{
-			if (moduleDefinition == null)
-				throw new ArgumentNullException(nameof(moduleDefinition));
+		}
+
+		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition, DecompilerSettings settings)
+		{
+			if (settings == null)
+				throw new ArgumentNullException(nameof(settings));
 			this.moduleDefinition = moduleDefinition;
-			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, ShortenInterfaceImplNames = false };
+			typeReferenceCecilLoader = new MetadataLoader {
+				UseDynamicType = settings.Dynamic,
+				UseTupleTypes = settings.TupleTypes,
+			};
+			MetadataLoader cecilLoader = new MetadataLoader {
+				IncludeInternalMembers = true,
+				LazyLoad = true,
+				ShortenInterfaceImplNames = false,
+				UseDynamicType = settings.Dynamic,
+				UseTupleTypes = settings.TupleTypes,
+			};
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -357,10 +371,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		
+		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = true,
+			ReplaceMethodTypeParametersWithDummy = true,
+		};
+
 		static bool CompareTypes(IType a, IType b)
 		{
-			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
-			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			IType type1 = a.AcceptVisitor(normalizeTypeVisitor);
+			IType type2 = b.AcceptVisitor(normalizeTypeVisitor);
 			return type1.Equals(type2);
 		}
 		

@@ -147,7 +147,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				accessorOwner = value;
 			}
 		}
-		
+
+		public override bool Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			SpecializedMethod other = obj as SpecializedMethod;
+			if (other == null)
+				return false;
+			return this.baseMember.Equals(other.baseMember, typeNormalization)
+				&& this.substitutionWithoutSpecializedTypeParameters.Equals(other.substitutionWithoutSpecializedTypeParameters, typeNormalization);
+		}
+
 		public override bool Equals(object obj)
 		{
 			SpecializedMethod other = obj as SpecializedMethod;

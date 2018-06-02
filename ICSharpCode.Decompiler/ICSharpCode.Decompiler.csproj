@@ -110,6 +110,7 @@
     <Compile Include="CSharp\Syntax\Expressions\StackAllocExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThisReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThrowExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\TupleExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeOfExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\UnaryOperatorExpression.cs" />
@@ -181,6 +182,7 @@
     <Compile Include="CSharp\Syntax\SyntaxTree.cs" />
     <Compile Include="CSharp\Syntax\TextLocation.cs" />
     <Compile Include="CSharp\Syntax\TokenRole.cs" />
+    <Compile Include="CSharp\Syntax\TupleAstType.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\Accessor.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\ConstructorDeclaration.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\DestructorDeclaration.cs" />
@@ -305,6 +307,7 @@
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\ExpressionTreeCast.cs" />
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
+    <Compile Include="IL\Transforms\NamedArgumentTransform.cs" />
     <Compile Include="IL\Transforms\NullPropagationTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
@@ -313,6 +316,7 @@
     <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
+    <Compile Include="IL\Transforms\TupleTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
@@ -336,6 +340,9 @@
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
+    <Compile Include="Semantics\TupleResolveResult.cs" />
+    <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />

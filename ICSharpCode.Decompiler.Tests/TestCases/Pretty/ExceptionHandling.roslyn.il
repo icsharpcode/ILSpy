@@ -831,6 +831,29 @@
     IL_0021:  ret
   } // end of method ExceptionHandling::NoUsingStatementBecauseTheVariableIsAssignedTo
 
+  .method public hidebysig instance void 
+          ThrowInFinally() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  1
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  nop
+      IL_0003:  leave.s    IL_000c
+
+    }  // end .try
+    finally
+    {
+      IL_0005:  nop
+      IL_0006:  newobj     instance void [mscorlib]System.Exception::.ctor()
+      IL_000b:  throw
+
+    }  // end handler
+    IL_000c:  br.s       IL_000c
+  } // end of method ExceptionHandling::ThrowInFinally
+
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {

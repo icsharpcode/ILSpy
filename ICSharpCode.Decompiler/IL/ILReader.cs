@@ -1158,7 +1158,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Stloc(int v)
 		{
-			return new StLoc(localVariables[v], Pop(localVariables[v].StackType));
+			return new StLoc(localVariables[v], Pop(localVariables[v].StackType)) {
+				ILStackWasEmpty = currentStack.IsEmpty
+			};
 		}
 		
 		private ILInstruction LdElem(IType type)

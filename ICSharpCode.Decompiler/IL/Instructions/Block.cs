@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -114,6 +115,22 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockKind.CallInlineAssign:
 					Debug.Assert(MatchInlineAssignBlock(out _, out _));
 					break;
+				case BlockKind.CallWithNamedArgs:
+					Debug.Assert(finalInstruction is CallInstruction);
+					foreach (var inst in Instructions) {
+						var stloc = inst as StLoc;
+						Debug.Assert(stloc != null, "Instructions in CallWithNamedArgs must be assignments");
+						Debug.Assert(stloc.Variable.Kind == VariableKind.NamedArgument);
+						Debug.Assert(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1);
+						Debug.Assert(stloc.Variable.LoadInstructions.Single().Parent == finalInstruction);
+					}
+					var call = (CallInstruction)finalInstruction;
+					if (call.IsInstanceCall) {
+						// special case: with instance calls, Instructions[0] must be for the this parameter
+						ILVariable v = ((StLoc)Instructions[0]).Variable;
+						Debug.Assert(call.Arguments[0].MatchLdLoc(v));
+					}
+					break;
 			}
 		}
 		
@@ -136,6 +153,8 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.Write("Block ");
 			output.WriteDefinition(Label, this);
+			if (Kind != BlockKind.ControlFlow)
+				output.Write($" ({Kind})");
 			if (Parent is BlockContainer)
 				output.Write(" (incoming: {0})", IncomingEdgeCount);
 			output.Write(' ');
@@ -311,6 +330,23 @@ namespace ICSharpCode.Decompiler.IL
 		///   final: ldloc s
 		/// }
 		/// </example>
-		CallInlineAssign
+		CallInlineAssign,
+		/// <summary>
+		/// Call using named arguments.
+		/// </summary>
+		/// <remarks>
+		/// Each instruction is assigning to a new local.
+		/// The final instruction is a call.
+		/// The locals for this block have exactly one store and
+		/// exactly one load, which must be an immediate argument to the call.
+		/// </remarks>
+		/// <example>
+		/// Block {
+		///   stloc arg0 = ...
+		///   stloc arg1 = ...
+		///   final: call M(..., arg1, arg0, ...)
+		/// }
+		/// </example>
+		CallWithNamedArgs,
 	}
 }
