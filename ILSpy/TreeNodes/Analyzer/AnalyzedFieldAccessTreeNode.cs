@@ -133,14 +133,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		bool IsNewResult(Decompiler.Metadata.MethodDefinition method)
 		{
-			var hashtable = foundMethods.Value;
+			var hashSet = foundMethods.Value;
 			lock (hashLock) {
-				if (hashtable.Contains(method)) {
-					return true;
-				} else {
-					hashtable.Add(method);
-					return false;
-				}
+				return hashSet.Add(method);
 			}
 		}
 	}

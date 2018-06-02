@@ -189,7 +189,6 @@
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedFieldAccessTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedFieldTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedMethodTreeNode.cs" />

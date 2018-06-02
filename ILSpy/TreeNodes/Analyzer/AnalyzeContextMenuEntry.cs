@@ -76,8 +76,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(td));
 							break;
 						case FieldDefinition fd:
-							//if (!fd.IsNil)
-							//	AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+							if (!fd.IsNil)
+								AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd.Module, fd.Handle));
 							break;
 						case MethodDefinition md:
 							if (!md.IsNil)

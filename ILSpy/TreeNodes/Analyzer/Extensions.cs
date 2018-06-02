@@ -8,8 +8,8 @@ using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-    public static class Extensions
-    {
+	public static class Extensions
+	{
 		public static TypeDefinitionHandle GetDeclaringType(this MethodDefinitionHandle method, MetadataReader metadata)
 		{
 			if (method.IsNil)
