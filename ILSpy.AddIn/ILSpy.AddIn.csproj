@@ -63,6 +63,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Commands\AssemblyReferenceForILSpy.cs" />
+    <Compile Include="Commands\NuGetReferenceForILSpy.cs" />
+    <Compile Include="Commands\ProjectItemForILSpy.cs" />
+    <Compile Include="Commands\ProjectReferenceForILSpy.cs" />
     <Compile Include="Commands\OpenCodeItemCommand.cs" />
     <Compile Include="Commands\OpenILSpyCommand.cs" />
     <Compile Include="Commands\OpenProjectOutputCommand.cs" />
@@ -100,6 +104,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="ILSpyAddIn.vsct" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>

@@ -51,6 +51,10 @@
       <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyCodeItemGroup" priority="0x0200">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
       </Group>
+
+      <Group guid="guidILSpyAddInCmdSet" id="OpenILSpyRefGroup" priority="0x0200">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_REFERENCE"/>
+      </Group>
     </Groups>
     
     <!--Buttons section. -->
@@ -83,13 +87,13 @@
         </Strings>
       </Button>
 
-      <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenCodeItemInILSpy" priority="0x0600" type="Button">
+      <!--<Button guid="guidILSpyAddInCmdSet" id="cmdidOpenCodeItemInILSpy" priority="0x0600" type="Button">
         <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyCodeItemGroup" />
         <Icon guid="guidImages" id="bmpLogo" />
         <Strings>
           <ButtonText>Open code in ILSpy</ButtonText>
         </Strings>
-      </Button>
+      </Button>-->
 
       <Button guid="guidILSpyAddInCmdSet" id="cmdidOpenILSpy" priority="0x0600" type="Button">
         <Parent guid="guidILSpyAddInCmdSet" id="OpenILSpyGroup" />
@@ -111,19 +115,6 @@
       <Bitmap guid="guidImages" href="Resources\Images.png" usedList="bmpLogo, bmpPic1, bmpPic2, bmpPicX, bmpPicArrows"/>
     </Bitmaps>
   </Commands>
-
-  <CommandPlacements>
-    <!--
-    <CommandPlacement guid="guidILSpyAddInCmdSet" id="cmdidOpenReferenceInILSpy" priority="0x0600">
-      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_REFERENCE"/>
-    </CommandPlacement>
-    -->
-    <!-- HACK : since there is no special ID for the new .NET Standard 2.0 reference nodes,
-    use the ITEM_OPEN id and hide the item if not applicable. -->
-    <CommandPlacement guid="guidILSpyAddInCmdSet" id="cmdidOpenReferenceInILSpy" priority="0x0600">
-      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_ITEM_OPEN"/>
-    </CommandPlacement>
-  </CommandPlacements>
 
   <Symbols>
     <!-- This is the package guid. -->

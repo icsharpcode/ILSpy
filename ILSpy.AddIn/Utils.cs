@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using EnvDTE;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -109,6 +112,53 @@ namespace ICSharpCode.ILSpy.AddIn
 			for (int i = 0; i < hex.Length / 2; i++) {
 				result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
 			}
+			return result;
+		}
+
+		public static bool TryGetProjectFileName(dynamic referenceObject, out string fileName)
+		{
+			try {
+				fileName = referenceObject.Project.FileName;
+				return true;
+			} catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
+				fileName = null;
+				return false;
+			}
+		}
+
+		public static object[] GetProperties(Properties properties, params string[] names)
+		{
+			var values = new object[names.Length];
+			foreach (object p in properties) {
+				try {
+					if (p is Property property) {
+						for (int i = 0; i < names.Length; i++) {
+							if (names[i] == property.Name) {
+								values[i] = property.Value;
+								break;
+							}
+						}
+					}
+				} catch {
+					continue;
+				}
+			}
+			return values;
+		}
+
+		public static List<(string, object)> GetAllProperties(Properties properties)
+		{
+			var result = new List<(string, object)>();
+			for (int i = 0; i < properties.Count; i++) {
+				try {
+					if (properties.Item(i) is Property p) {
+						result.Add((p.Name, p.Value));
+					}
+				} catch {
+					continue;
+				}
+			}
+
 			return result;
 		}
 	}

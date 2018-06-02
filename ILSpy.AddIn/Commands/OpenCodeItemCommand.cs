@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (symbol == null)
 				return;
 			var refs = GetReferences(roslynDocument.Project).Select(fn => fn.Value).Where(f => File.Exists(f)).ToArray();
-			OpenAssembliesInILSpy(refs, "/navigateTo:" + symbol.GetDocumentationCommentId());
+			OpenAssembliesInILSpy(new ILSpyParameters(refs, "/navigateTo:" + symbol.GetDocumentationCommentId()));
 		}
 
 		internal static void Register(ILSpyAddInPackage owner)

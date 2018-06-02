@@ -11,6 +11,18 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
+	public class ILSpyParameters
+	{
+		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
+		{
+			this.AssemblyFileNames = assemblyFileNames;
+			this.Arguments = arguments;
+		}
+
+		public IEnumerable<string> AssemblyFileNames { get; private set; }
+		public string[] Arguments { get; private set; }
+	}
+
 	abstract class ILSpyCommand
 	{
 		protected ILSpyAddInPackage owner;
@@ -36,18 +48,21 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			return Path.Combine(basePath, "ILSpy.exe");
 		}
 
-		protected void OpenAssembliesInILSpy(IEnumerable<string> assemblyFileNames, params string[] arguments)
+		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
 		{
-			foreach (string assemblyFileName in assemblyFileNames) {
+			if (parameters == null)
+				return;
+
+			foreach (string assemblyFileName in parameters.AssemblyFileNames) {
 				if (!File.Exists(assemblyFileName)) {
 					owner.ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
 					return;
 				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileNames.ToArray());
-			if (arguments != null) {
-				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
+			string commandLineArguments = Utils.ArgumentArrayToCommandLine(parameters.AssemblyFileNames.ToArray());
+			if (parameters.Arguments != null) {
+				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(parameters.Arguments));
 			}
 
 			System.Diagnostics.Process.Start(GetILSpyPath(), commandLineArguments);
