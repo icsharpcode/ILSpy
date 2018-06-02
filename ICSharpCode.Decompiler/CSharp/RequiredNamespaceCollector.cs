@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
+		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)
 		{
 			if (entity == null)
 				return;
@@ -44,23 +44,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 
 					foreach (var nestedType in td.NestedTypes) {
-						CollectNamespaces(nestedType, typeSystem, namespaces);
+						CollectNamespaces(nestedType, typeSystem, namespaces, scanningFullType: true);
 					}
 
 					foreach (var field in td.Fields) {
-						CollectNamespaces(field, typeSystem, namespaces);
+						CollectNamespaces(field, typeSystem, namespaces, scanningFullType: true);
 					}
 
 					foreach (var property in td.Properties) {
-						CollectNamespaces(property, typeSystem, namespaces);
+						CollectNamespaces(property, typeSystem, namespaces, scanningFullType: true);
 					}
 
 					foreach (var @event in td.Events) {
-						CollectNamespaces(@event, typeSystem, namespaces);
+						CollectNamespaces(@event, typeSystem, namespaces, scanningFullType: true);
 					}
 
 					foreach (var method in td.Methods) {
-						CollectNamespaces(method, typeSystem, namespaces);
+						CollectNamespaces(method, typeSystem, namespaces, scanningFullType: true);
 					}
 					break;
 				case IField field:
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						var reader = typeSystem.ModuleDefinition.Reader;
 						var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 						var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-						CollectNamespacesFromMethodBody(body, reader, typeSystem, namespaces);
+						CollectNamespacesFromMethodBody(body, reader, typeSystem, namespaces, scanningFullType: scanningFullType);
 					}
 					break;
 				case IProperty property:
@@ -126,7 +126,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static void CollectNamespaces(EntityHandle entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
-			CollectNamespaces(entity.Kind.IsTypeKind() ? (IEntity)typeSystem.ResolveAsType(entity).GetDefinition() : typeSystem.ResolveAsMember(entity), typeSystem, namespaces);
+			if (entity.Kind.IsTypeKind()) {
+				CollectNamespaces(typeSystem.ResolveAsType(entity).GetDefinition(), typeSystem, namespaces);
+			} else {
+				CollectNamespaces(typeSystem.ResolveAsMember(entity), typeSystem, namespaces);
+			}
 		}
 
 		static void HandleAttributes(IEnumerable<IAttribute> attributes, HashSet<string> namespaces)
@@ -146,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static void CollectNamespacesFromMethodBody(MethodBodyBlock method, PEReader reader, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
+		static void CollectNamespacesFromMethodBody(MethodBodyBlock method, PEReader reader, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)
 		{
 			var instructions = method.GetILReader();
 			var metadata = reader.GetMetadataReader();
@@ -174,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (handle.Kind.IsTypeKind())
 							CollectNamespacesForTypeReference(typeSystem.ResolveAsType(handle), namespaces);
 						else
-							CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), typeSystem, namespaces);
+							CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), typeSystem, namespaces, scanningFullType: scanningFullType);
 						break;
 					default:
 						instructions.SkipOperand(opCode);
@@ -183,18 +187,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static void CollectNamespacesForMemberReference(IMember member, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
+		static void CollectNamespacesForMemberReference(IMember member, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)
 		{
 			switch (member) {
 				case IField field:
-					if (field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+					if (!scanningFullType && field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						CollectNamespaces(field, typeSystem, namespaces);
 					else
 						CollectNamespacesForTypeReference(field.DeclaringType, namespaces);
 					CollectNamespacesForTypeReference(field.ReturnType, namespaces);
 					break;
 				case IMethod method:
-					if (method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+					if (!scanningFullType && method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						CollectNamespaces(method, typeSystem, namespaces);
 					else
 						CollectNamespacesForTypeReference(method.DeclaringType, namespaces);
