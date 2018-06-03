@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			// switch contains case null: 
 			if (currentCaseBlock != defaultOrNullBlock) {
-				values.Add((null, defaultOrNullBlock));
+				values.Add((null, new Branch(defaultOrNullBlock)));
 			}
 
 			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = b.Item2 }));
