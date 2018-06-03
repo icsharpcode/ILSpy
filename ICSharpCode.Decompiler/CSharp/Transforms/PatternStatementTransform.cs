@@ -488,6 +488,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
+			if (!property.PrivateImplementationType.IsNull)
+				return null;
 			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
 			if (cecilProperty == null || cecilProperty.GetMethod == null)
 				return null;
@@ -735,37 +737,34 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Diagnostics.DebuggerBrowsableAttribute"
 		};
 
-		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV4(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
 		}
 
-		bool CheckAutomaticEventV2(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV2(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
 		}
 
-		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev)
 		{
-			addMatch = removeMatch = default(Match);
-			addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
+			Match addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
 			if (!CheckAutomaticEventMatch(addMatch, ev, true))
 				return false;
-			removeMatch = automaticEventPatternV4MCS.Match(ev.RemoveAccessor);
+			Match removeMatch = automaticEventPatternV4MCS.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
 				return false;
 			return true;
@@ -773,9 +772,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
+			if (!ev.PrivateImplementationType.IsNull)
+				return null;
 			if (!ev.Modifiers.HasFlag(Modifiers.Abstract)) {
-				Match m1, m2;
-				if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
+				if (!CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;
 			}
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);

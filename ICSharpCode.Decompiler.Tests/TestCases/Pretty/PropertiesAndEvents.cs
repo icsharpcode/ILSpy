@@ -42,6 +42,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private interface IChange
+		{
+			int Property {
+				get;
+				set;
+			}
+
+			event EventHandler Changed;
+		}
+
+		private class Change : IChange
+		{
+			private EventHandler Changed;
+
+			private int backingField;
+
+			int IChange.Property {
+				get {
+					return backingField;
+				}
+				set {
+					backingField = value;
+				}
+			}
+
+			event EventHandler IChange.Changed {
+				add {
+					Changed = (EventHandler)Delegate.Combine(Changed, value);
+				}
+				remove {
+					Changed = (EventHandler)Delegate.Remove(Changed, value);
+				}
+			}
+		}
+
 		[NonSerialized]
 		private int someField;
 
