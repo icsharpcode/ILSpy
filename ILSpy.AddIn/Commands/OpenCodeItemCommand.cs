@@ -93,7 +93,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 
 			var refs = refsmap.Select(fn => fn.Value).Where(f => File.Exists(f));
-			OpenAssembliesInILSpy(new ILSpyParameters(refs, "/navigateTo:" + symbol.GetDocumentationCommentId()));
+			OpenAssembliesInILSpy(new ILSpyParameters(refs, "/navigateTo:" + 
+				(symbol.OriginalDefinition ?? symbol).GetDocumentationCommentId()));
 		}
 
 		ISymbol GetSymbolResolvableByILSpy(SemanticModel model, SyntaxNode node)
