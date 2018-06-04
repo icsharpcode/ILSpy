@@ -488,8 +488,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
-			if (!property.PrivateImplementationType.IsNull)
-				return null;
 			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
 			if (cecilProperty == null || cecilProperty.GetMethod == null)
 				return null;
