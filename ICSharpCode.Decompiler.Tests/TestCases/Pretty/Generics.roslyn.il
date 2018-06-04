@@ -231,6 +231,20 @@
     IL_000a:  ret
   } // end of method Generics::New
 
+  .method public hidebysig instance !!T  NotNew<T>() cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  call       !!0 [mscorlib]System.Activator::CreateInstance<!!0>()
+    IL_0006:  stloc.0
+    IL_0007:  br.s       IL_0009
+
+    IL_0009:  ldloc.0
+    IL_000a:  ret
+  } // end of method Generics::NotNew
+
   .method public hidebysig instance bool 
           IsNull<T>(!!T t) cil managed
   {

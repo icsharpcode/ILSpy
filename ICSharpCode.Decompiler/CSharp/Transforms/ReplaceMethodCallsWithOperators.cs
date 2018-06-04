@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					break;
 				case "System.Activator.CreateInstance":
-					if (method.TypeArguments.Count == 1 && arguments.Length == 0 && method.TypeArguments[0].Kind == TypeKind.TypeParameter) {
+					if (arguments.Length == 0 && method.TypeArguments.Count == 1 && IsInstantiableTypeParameter(method.TypeArguments[0])) {
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
 					}
 					break;
@@ -199,6 +199,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			return;
+		}
+
+		bool IsInstantiableTypeParameter(IType type)
+		{
+			return type is ITypeParameter tp && tp.HasDefaultConstructorConstraint;
 		}
 
 		Expression WrapInParens(Expression expression)
