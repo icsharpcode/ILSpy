@@ -338,11 +338,14 @@
     <Compile Include="Pdb\PortablePdbWriter.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
+    <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
     <Compile Include="TypeSystem\TupleType.cs" />
+    <Compile Include="TypeSystem\TypeProvider.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />

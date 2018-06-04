@@ -586,7 +586,7 @@ namespace ICSharpCode.ILSpy
 
 			var st = new SyntaxTree();
 			st.AddChild(astType, Roles.Type);
-			st.AcceptVisitor(new InsertDynamicTypeVisitor(metadata, customAttributes));
+			//st.AcceptVisitor(new InsertDynamicTypeVisitor(metadata, customAttributes));
 			st.FirstChild.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			return w.ToString();
 		}
@@ -786,43 +786,6 @@ namespace ICSharpCode.ILSpy
 			}
 
 			return info;
-		}
-	}
-
-	class InsertDynamicTypeVisitor : DepthFirstAstVisitor
-	{
-		bool isDynamic;
-		bool[] mapping;
-		int typeIndex;
-
-		public InsertDynamicTypeVisitor(MetadataReader metadata, CustomAttributeHandleCollection? customAttributes)
-		{
-			isDynamic = DynamicTypeReference.HasDynamicAttribute(customAttributes, metadata, out mapping);
-		}
-
-		public override void VisitComposedType(ComposedType composedType)
-		{
-			typeIndex++;
-			base.VisitComposedType(composedType);
-		}
-
-		public override void VisitPrimitiveType(PrimitiveType primitiveType)
-		{
-			if (isDynamic && primitiveType.KnownTypeCode == KnownTypeCode.Object && (mapping == null || typeIndex >= mapping.Length || mapping[typeIndex])) {
-				primitiveType.ReplaceWith(new SimpleType("dynamic"));
-			} else {
-				base.VisitPrimitiveType(primitiveType);
-			}
-		}
-
-		public override void VisitMemberType(MemberType memberType)
-		{
-			base.VisitMemberType(memberType);
-		}
-
-		public override void VisitSimpleType(SimpleType simpleType)
-		{
-			base.VisitSimpleType(simpleType);
 		}
 	}
 }

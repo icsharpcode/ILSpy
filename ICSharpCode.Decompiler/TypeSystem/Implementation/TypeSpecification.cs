@@ -23,6 +23,7 @@ using SRM = System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -81,111 +82,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return ElementType.Resolve(context);
 		}
 	}
-
-	public sealed class DynamicTypeReference : TypeVisitor, ITypeReference
-	{
-		readonly ITypeReference reference;
-		readonly bool[] dynamicInfo;
-		int typeIndex;
-
-		static readonly ITypeResolveContext minimalCorlibContext = new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation());
-
-		public static ITypeReference Create(ITypeReference reference, SRM.CustomAttributeHandleCollection? customAttributes, SRM.MetadataReader metadata)
-		{
-			if (HasDynamicAttribute(customAttributes, metadata, out var dynamicInfo))
-				return new DynamicTypeReference(reference, dynamicInfo);
-			return reference;
-		}
-
-		public static bool HasDynamicAttribute(SRM.CustomAttributeHandleCollection? attributes, SRM.MetadataReader metadata, out bool[] mapping)
-		{
-			mapping = null;
-			if (attributes == null)
-				return false;
-
-			foreach (var handle in attributes) {
-				var a = metadata.GetCustomAttribute(handle);
-				var type = a.GetAttributeType(metadata);
-				if (type.GetFullTypeName(metadata).ToString() == "System.Runtime.CompilerServices.DynamicAttribute") {
-					var ctor = a.DecodeValue(new TypeSystemAttributeTypeProvider(minimalCorlibContext));
-					if (ctor.FixedArguments.Length == 1) {
-						var arg = ctor.FixedArguments[0];
-						if (arg.Type.ReflectionName == "System.Boolean[]" && arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values) {
-							mapping = values.SelectArray(v => (bool)v.Value);
-							return true;
-						}
-					}
-					return true;
-				}
-			}
-			return false;
-		}
-
-		DynamicTypeReference(ITypeReference reference, bool[] dynamicInfo)
-		{
-			this.reference = reference;
-			this.dynamicInfo = dynamicInfo;
-		}
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return reference.Resolve(context).AcceptVisitor(this);
-		}
-
-		public override IType VisitPointerType(PointerType type)
-		{
-			typeIndex++;
-			return base.VisitPointerType(type);
-		}
-
-		public override IType VisitArrayType(ArrayType type)
-		{
-			typeIndex++;
-			return base.VisitArrayType(type);
-		}
-
-		public override IType VisitByReferenceType(ByReferenceType type)
-		{
-			typeIndex++;
-			return base.VisitByReferenceType(type);
-		}
-
-		public override IType VisitParameterizedType(ParameterizedType type)
-		{
-			var genericType = type.GenericType.AcceptVisitor(this);
-			bool changed = type.GenericType != genericType;
-			var arguments = new IType[type.TypeArguments.Count];
-			for (int i = 0; i < type.TypeArguments.Count; i++) {
-				typeIndex++;
-				arguments[i] = type.TypeArguments[i].AcceptVisitor(this);
-				changed = changed || arguments[i] != type.TypeArguments[i];
-			}
-			if (!changed)
-				return type;
-			return new ParameterizedType(genericType, arguments);
-		}
-
-		public override IType VisitTypeDefinition(ITypeDefinition type)
-		{
-			if (type.KnownTypeCode == KnownTypeCode.Object) {
-				if (dynamicInfo == null || typeIndex >= dynamicInfo.Length)
-					return SpecialType.Dynamic;
-				if (dynamicInfo[typeIndex])
-					return SpecialType.Dynamic;
-				return type;
-			}
-			return type;
-		}
-	}
-
+	
 	sealed class TypeDefTokenTypeReference : ITypeReference
 	{
-		readonly SRM.EntityHandle token;
+		readonly SRM.TypeDefinitionHandle token;
 
-		public TypeDefTokenTypeReference(SRM.EntityHandle token)
+		public TypeDefTokenTypeReference(SRM.TypeDefinitionHandle token)
 		{
-			if (token.Kind != SRM.HandleKind.TypeDefinition)
-				throw new ArgumentException(nameof(token), "must be TypeDef token");
 			this.token = token;
 		}
 
@@ -195,6 +98,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (td != null)
 				return td;
 			return SpecialType.UnknownType;
+		}
+	}
+
+	sealed class TypeSpecTypeReference : ITypeReference
+	{
+		readonly SRM.TypeSpecification typeSpec;
+
+		public TypeSpecTypeReference(SRM.TypeSpecification typeSpec)
+		{
+			this.typeSpec = typeSpec;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return typeSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
 		}
 	}
 
@@ -277,62 +195,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return reader.GetTypeSpecification(handle)
 				.DecodeSignature(this, default);
-		}
-	}
-
-	public class TypeSystemAttributeTypeProvider : SRM.ICustomAttributeTypeProvider<IType>
-	{
-		readonly ITypeResolveContext context;
-
-		public static TypeSystemAttributeTypeProvider CreateDefault() => new TypeSystemAttributeTypeProvider(new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation()));
-
-		public TypeSystemAttributeTypeProvider(ITypeResolveContext context)
-		{
-			this.context = context;
-		}
-
-		public IType GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
-		{
-			return context.Compilation.FindType(typeCode.ToKnownTypeCode());
-		}
-
-		public IType GetSystemType()
-		{
-			return context.Compilation.FindType(KnownTypeCode.Type);
-		}
-
-		public IType GetSZArrayType(IType elementType)
-		{
-			return new ArrayType(context.Compilation, elementType);
-		}
-
-		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
-		{
-			var type = reader.GetTypeDefinition(handle);
-			return new DefaultUnresolvedTypeDefinition(type.GetFullTypeName(reader).ToString()).Resolve(context);
-		}
-
-		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
-		{
-			return new DefaultUnresolvedTypeDefinition(handle.GetFullTypeName(reader).ToString()).Resolve(context);
-		}
-
-		public IType GetTypeFromSerializedName(string name)
-		{
-			return new GetClassTypeReference(new FullTypeName(name)).Resolve(context);
-		}
-
-		public SRM.PrimitiveTypeCode GetUnderlyingEnumType(IType type)
-		{
-			var def = type.GetEnumUnderlyingType().GetDefinition();
-			if (def == null)
-				throw new InvalidOperationException();
-			return def.KnownTypeCode.ToPrimtiveTypeCode();
-		}
-
-		public bool IsSystemType(IType type)
-		{
-			return type.IsKnownType(KnownTypeCode.Type);
 		}
 	}
 }

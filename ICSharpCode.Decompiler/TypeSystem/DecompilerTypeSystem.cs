@@ -7,6 +7,7 @@ using ICSharpCode.Decompiler.Util;
 
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using System.Diagnostics;
+using System.Collections.Immutable;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -21,12 +22,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly Metadata.PEFile moduleDefinition;
 		readonly ICompilation compilation;
 		readonly ITypeResolveContext context;
-
-		/// <summary>
-		/// CecilLoader used for converting cecil type references to ITypeReference.
-		/// May only be accessed within lock(typeReferenceCecilLoader).
-		/// </summary>
-		readonly MetadataLoader typeReferenceCecilLoader;
+		readonly TypeAttributeOptions typeAttributeOptions;
 
 		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
@@ -44,19 +40,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
 			this.moduleDefinition = moduleDefinition;
-			typeReferenceCecilLoader = new MetadataLoader {
-				UseDynamicType = settings.Dynamic,
-				UseTupleTypes = settings.TupleTypes,
-			};
-			MetadataLoader cecilLoader = new MetadataLoader {
+			typeAttributeOptions = TypeAttributeOptions.None;
+			if (settings.Dynamic)
+				typeAttributeOptions |= TypeAttributeOptions.Dynamic;
+			if (settings.TupleTypes)
+				typeAttributeOptions |= TypeAttributeOptions.Tuple;
+			MetadataLoader loader = new MetadataLoader {
 				IncludeInternalMembers = true,
-				LazyLoad = true,
 				ShortenInterfaceImplNames = false,
 				UseDynamicType = settings.Dynamic,
 				UseTupleTypes = settings.TupleTypes,
 			};
-			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
-			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
+			IUnresolvedAssembly mainAssembly = loader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
@@ -68,7 +63,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null) {
-					IUnresolvedAssembly unresolvedAsm = cecilLoader.LoadModule(asm);
+					IUnresolvedAssembly unresolvedAsm = loader.LoadModule(asm);
 					referencedAssemblies.Add(unresolvedAsm);
 					moduleLookup.Add(unresolvedAsm, asm);
 					var metadata = asm.Metadata;
@@ -111,12 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return null;
 			return file;
 		}
-
-		public IType ResolveFromSignature(ITypeReference typeReference)
-		{
-			return typeReference.Resolve(context);
-		}
-
+		
 		public IMember ResolveAsMember(SRM.EntityHandle memberReference)
 		{
 			switch (memberReference.Kind) {
@@ -147,14 +137,37 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region Resolve Type
 		public IType ResolveAsType(SRM.EntityHandle typeReference)
 		{
-			if (typeReference.IsNil)
-				return SpecialType.UnknownType;
-			ITypeReference typeRef;
-			lock (typeReferenceCecilLoader)
-				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
-			return typeRef.Resolve(context);
+			return MetadataTypeReference.Resolve(
+				typeReference,
+				moduleDefinition.Metadata,
+				context,
+				typeAttributes: null,
+				typeAttributeOptions 
+			);
 		}
 		#endregion
+		
+		public SRM.MethodSignature<IType> DecodeMethodSignature(SRM.StandaloneSignatureHandle handle)
+		{
+			var standaloneSignature = moduleDefinition.Metadata.GetStandaloneSignature(handle);
+			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.Method)
+				throw new InvalidOperationException("Expected Method signature");
+			return standaloneSignature.DecodeMethodSignature(
+				new TypeProvider(compilation.MainAssembly),
+				context
+			);
+		}
+
+		public ImmutableArray<IType> DecodeLocalSignature(SRM.StandaloneSignatureHandle handle)
+		{
+			var standaloneSignature = moduleDefinition.Metadata.GetStandaloneSignature(handle);
+			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.LocalVariables)
+				throw new InvalidOperationException("Expected Local signature");
+			return standaloneSignature.DecodeLocalSignature(
+				new TypeProvider(compilation.MainAssembly),
+				context
+			);
+		}
 
 		#region Resolve Field
 		public IField ResolveAsField(SRM.EntityHandle fieldReference)
@@ -171,9 +184,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					ITypeReference returnType;
 					switch (fieldReference.Kind) {
 						case SRM.HandleKind.FieldDefinition:
-							var fieldDef = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)fieldReference);
+							var fieldDefHandle = (SRM.FieldDefinitionHandle)fieldReference;
+							var fieldDef = metadata.GetFieldDefinition(fieldDefHandle);
 							declaringType = ResolveAsType(fieldDef.GetDeclaringType());
-							returnType = DynamicTypeReference.Create(fieldDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default), fieldDef.GetCustomAttributes(), metadata);
+							returnType = new FieldTypeReference(fieldDefHandle, metadata, typeAttributeOptions);
 							var declaringTypeDefinition = declaringType.GetDefinition();
 							if (declaringTypeDefinition == null)
 								field = CreateFakeField(declaringType, metadata.GetString(fieldDef.Name), returnType);
@@ -412,14 +426,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			m.ReturnType = signature.ReturnType;
 			m.IsStatic = !signature.Header.IsInstance;
 			
-			lock (typeReferenceCecilLoader) {
-				var metadata = moduleDefinition.Metadata;
-				for (int i = 0; i < signature.GenericParameterCount; i++) {
-					m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, ""));
-				}
-				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-					m.Parameters.Add(new DefaultUnresolvedParameter(signature.ParameterTypes[i], ""));
-				}
+			var metadata = moduleDefinition.Metadata;
+			for (int i = 0; i < signature.GenericParameterCount; i++) {
+				m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, ""));
+			}
+			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
+				m.Parameters.Add(new DefaultUnresolvedParameter(signature.ParameterTypes[i], ""));
 			}
 			return new ResolvedFakeMethod(m, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
 		}

@@ -156,9 +156,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var metadata = reader.GetMetadataReader();
 
 			if (!method.LocalSignature.IsNil) {
-				var localSignature = metadata.GetStandaloneSignature(method.LocalSignature).DecodeLocalSignature(TypeReferenceSignatureDecoder.Instance, default);
+				var localSignature = typeSystem.DecodeLocalSignature(method.LocalSignature);
 				foreach (var type in localSignature)
-					CollectNamespacesForTypeReference(typeSystem.ResolveFromSignature(type), namespaces);
+					CollectNamespacesForTypeReference(type, namespaces);
 			}
 
 			foreach (var region in method.ExceptionRegions) {

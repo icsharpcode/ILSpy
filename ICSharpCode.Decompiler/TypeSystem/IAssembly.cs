@@ -122,6 +122,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type definition from the metadata token, or null if not found.
 		/// </summary>
-		ITypeDefinition ResolveTypeDefToken(EntityHandle token);
+		ITypeDefinition ResolveTypeDefToken(TypeDefinitionHandle token);
 	}
 }

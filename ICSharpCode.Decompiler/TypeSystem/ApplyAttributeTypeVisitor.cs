@@ -1,0 +1,202 @@
+﻿// Copyright (c) 2018 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
+using ICSharpCode.Decompiler.Util;
+using SRM = System.Reflection.Metadata;
+
+namespace ICSharpCode.Decompiler.TypeSystem
+{
+	/// <summary>
+	/// Options for converting builtin
+	/// </summary>
+	[Flags]
+	enum TypeAttributeOptions
+	{
+		None = 0,
+		Dynamic = 1,
+		Tuple = 2,
+		Default = Dynamic | Tuple
+	}
+	
+	/// <summary>
+	/// Introduces 'dynamic' and tuple types based on attribute values.
+	/// </summary>
+    class ApplyAttributeTypeVisitor : TypeVisitor
+	{
+		public static IType ApplyAttributesToType(
+			IType inputType,
+			ICompilation compilation,
+			SRM.CustomAttributeHandleCollection? attributes,
+			SRM.MetadataReader metadata,
+			TypeAttributeOptions options)
+		{
+			if (options == TypeAttributeOptions.None) {
+				return inputType;
+			}
+			bool hasDynamicAttribute = false;
+			bool[] dynamicAttributeData = null;
+			bool useTupleTypes = (options & TypeAttributeOptions.Tuple) != 0;
+			string[] tupleElementNames = null;
+			if (attributes != null) {
+				foreach (var attrHandle in attributes.Value) {
+					var attr = metadata.GetCustomAttribute(attrHandle);
+					var attrType = attr.GetAttributeType(metadata);
+					if ((options & TypeAttributeOptions.Dynamic) != 0
+						&& attrType.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "DynamicAttribute")) {
+						hasDynamicAttribute = true;
+						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+						if (ctor.FixedArguments.Length == 1) {
+							var arg = ctor.FixedArguments[0];
+							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+								&& values.All(v => v.Value is bool)) {
+								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
+							}
+						}
+					} else if (useTupleTypes && attrType.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "TupleElementNamesAttribute")) {
+						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
+						if (ctor.FixedArguments.Length == 1) {
+							var arg = ctor.FixedArguments[0];
+							if (arg.Value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> values
+								&& values.All(v => v.Value is string || v.Value == null)) {
+								tupleElementNames = values.SelectArray(v => (string)v.Value);
+							}
+						}
+					}
+				}
+			}
+			if (hasDynamicAttribute || useTupleTypes) {
+				return inputType.AcceptVisitor(new ApplyAttributeTypeVisitor(
+					compilation, hasDynamicAttribute, dynamicAttributeData, useTupleTypes, tupleElementNames
+				));
+			} else {
+				return inputType;
+			}
+		}
+
+		readonly ICompilation compilation;
+		readonly bool hasDynamicAttribute;
+		readonly bool[] dynamicAttributeData;
+		readonly bool useTupleTypes;
+		readonly string[] tupleElementNames;
+		int dynamicTypeIndex = 0;
+		int tupleTypeIndex = 0;
+
+		public ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, bool useTupleTypes, string[] tupleElementNames)
+		{
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+			this.hasDynamicAttribute = hasDynamicAttribute;
+			this.dynamicAttributeData = dynamicAttributeData;
+			this.useTupleTypes = useTupleTypes;
+			this.tupleElementNames = tupleElementNames;
+		}
+
+		public override IType VisitPointerType(PointerType type)
+		{
+			dynamicTypeIndex++;
+			return base.VisitPointerType(type);
+		}
+
+		public override IType VisitArrayType(ArrayType type)
+		{
+			dynamicTypeIndex++;
+			return base.VisitArrayType(type);
+		}
+
+		public override IType VisitByReferenceType(ByReferenceType type)
+		{
+			dynamicTypeIndex++;
+			return base.VisitByReferenceType(type);
+		}
+
+		public override IType VisitParameterizedType(ParameterizedType type)
+		{
+			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality)) {
+				if (tupleCardinality > 1) {
+					var valueTupleAssembly = type.GetDefinition()?.ParentAssembly;
+					ImmutableArray<string> elementNames = default;
+					if (tupleElementNames != null && tupleTypeIndex < tupleElementNames.Length) {
+						string[] extractedValues = new string[tupleCardinality];
+						Array.Copy(tupleElementNames, tupleTypeIndex, extractedValues, 0,
+							Math.Min(tupleCardinality, tupleElementNames.Length - tupleTypeIndex));
+						elementNames = ImmutableArray.CreateRange(extractedValues);
+					}
+					tupleTypeIndex += tupleCardinality;
+					var elementTypes = ImmutableArray.CreateBuilder<IType>(tupleCardinality);
+					do {
+						int normalArgCount = Math.Min(type.TypeArguments.Count, TupleType.RestPosition - 1);
+						for (int i = 0; i < normalArgCount; i++) {
+							dynamicTypeIndex++;
+							elementTypes.Add(type.TypeArguments[i].AcceptVisitor(this));
+						}
+						if (type.TypeArguments.Count == TupleType.RestPosition) {
+							type = type.TypeArguments.Last() as ParameterizedType;
+							dynamicTypeIndex++;
+							if (type != null && TupleType.IsTupleCompatible(type, out int nestedCardinality)) {
+								tupleTypeIndex += nestedCardinality;
+							} else {
+								Debug.Fail("TRest should be another value tuple");
+								type = null;
+							}
+						} else {
+							type = null;
+						}
+					} while (type != null);
+					Debug.Assert(elementTypes.Count == tupleCardinality);
+					return new TupleType(
+						compilation,
+						elementTypes.ToImmutable(),
+						elementNames,
+						valueTupleAssembly
+					);
+				} else {
+					// C# doesn't have syntax for tuples of cardinality <= 1
+					tupleTypeIndex += tupleCardinality;
+				}
+			}
+			// Visit generic type and type arguments.
+			// Like base implementation, except that it increments typeIndex.
+			var genericType = type.GenericType.AcceptVisitor(this);
+			bool changed = type.GenericType != genericType;
+			var arguments = new IType[type.TypeArguments.Count];
+			for (int i = 0; i < type.TypeArguments.Count; i++) {
+				dynamicTypeIndex++;
+				arguments[i] = type.TypeArguments[i].AcceptVisitor(this);
+				changed = changed || arguments[i] != type.TypeArguments[i];
+			}
+			if (!changed)
+				return type;
+			return new ParameterizedType(genericType, arguments);
+		}
+
+		public override IType VisitTypeDefinition(ITypeDefinition type)
+		{
+			if (type.KnownTypeCode == KnownTypeCode.Object && hasDynamicAttribute) {
+				if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
+					return SpecialType.Dynamic;
+				if (dynamicAttributeData[dynamicTypeIndex])
+					return SpecialType.Dynamic;
+				return type;
+			}
+			return type;
+		}
+	}
+}
