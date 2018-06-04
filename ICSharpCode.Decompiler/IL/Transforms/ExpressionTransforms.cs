@@ -379,12 +379,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!invokeMember.Arguments[0].Match(getMember.Target).Success)
 				return false;
+			context.Step("+= / -= dynamic.isevent pattern -> dynamic.compound.op", inst);
 			inst.ReplaceWith(dynamicCompoundAssign);
+			if (getMember.Target.MatchLdLoc(out var v) && v.Kind == VariableKind.Local && v.IsSingleDefinition && v.LoadCount == 1 && v.StoreInstructions[0] is StLoc initStore) {
+				if (ILInlining.CanInlineInto(dynamicCompoundAssign, v, initStore.Value)) {
+					// HACK: if inlining is possible, we can 'cheat' a bit and change the variable kind to StackSlot
+					// so inlining or copy propagation will take care of the extra compiler-generated local.
+					v.Kind = VariableKind.StackSlot;
+				}
+			}
 			return true;
 		}
 
 		/// <summary>
-		/// dynamic.setmember.compound Name(target, dynamic.binary.operator AddAssign(dynamic.getmember Name(target), value))
+		/// dynamic.setmember.compound Name(target, dynamic.binary.operator op(dynamic.getmember Name(target), value))
 		/// =>
 		/// dynamic.compound.op (dynamic.getmember Name(target), value)
 		/// </summary>
@@ -410,6 +418,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitDynamicSetMemberInstruction(inst);
 				return;
 			}
+			context.Step("dynamic.setmember.compound -> dynamic.compound.op", inst);
 			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
