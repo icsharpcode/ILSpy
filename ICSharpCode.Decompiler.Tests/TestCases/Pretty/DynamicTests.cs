@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -12,12 +11,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set;
 		}
 
-		private static void Main(string[] args)
+		private static void InvokeConstructor()
 		{
-			IComparable comparable = 1;
-			DynamicTests dynamicTests = new DynamicTests();
-			dynamicTests.Property = 1;
-			dynamicTests.Property += (dynamic)1;
+			dynamic val = new DynamicTests();
+			val.Test(new UnauthorizedAccessException());
+		}
+
+		private static void DynamicThrow()
+		{
+			try {
+				throw (Exception)field;
+			} catch (Exception ex) {
+				Console.WriteLine(ex.ToString());
+				throw;
+			}
 		}
 
 		private static void MemberAccess(dynamic a)
@@ -72,12 +79,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void DynamicCallWithStringCastToDynamic2()
 		{
-			field.Call((dynamic)"Hello World", (int)5, null);
+			field.Call((dynamic)"Hello World", 5, null);
 		}
 
 		private static void DynamicCallWithStringCastToDynamic3()
 		{
-			field.Call((dynamic)"Hello World", 5u, (dynamic)null);
+			field.Call((dynamic)"Hello World", 5u, null);
 		}
 
 		private static void Invocation(dynamic a, dynamic b)
@@ -87,8 +94,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static dynamic Test1(dynamic a)
 		{
-			dynamic p = a.IndexedProperty;
-			return p[0];
+			dynamic val = a.IndexedProperty;
+			return val[0];
 		}
 
 		private static dynamic Test2(dynamic a)
@@ -140,9 +147,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static void Casts(dynamic a)
 		{
 			Console.WriteLine();
-			int b = 5;
-			if (b < 0)
-				return;
 			MemberAccess((int)a);
 		}
 
@@ -174,35 +178,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void UnaryOperators(dynamic a)
 		{
-			a--;
-			a++;
-			--a;
-			++a;
-			Casts(-a);
-			Casts(+a);
+			// TODO : beautify inc/dec on locals
+			//a--;
+			//a++;
+			//--a;
+			//++a;
+			DynamicTests.Casts(-a);
+			DynamicTests.Casts(+a);
 		}
 
 		private static void Loops(dynamic list)
 		{
 			foreach (dynamic item in list) {
-				UnaryOperators(item);
+				DynamicTests.UnaryOperators(item);
 			}
 		}
 
 		private static void If(dynamic a, dynamic b)
 		{
-			if (a == b)
-			{
+			if (a == b) {
 				Console.WriteLine("Equal");
 			}
 		}
 
 		private static void If2(dynamic a, dynamic b)
 		{
-			if (a == null || b == null)
-			{
-				Console.WriteLine("Equal");
-			}
+			// TODO : beautify complex conditions
+			//if (a == null || b == null) {
+			//	Console.WriteLine("Equal");
+			//}
 		}
 	}
 }
