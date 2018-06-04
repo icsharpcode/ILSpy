@@ -259,7 +259,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switchValueVar = switchValueVarCopy;
 			int conditionOffset = 1;
 			Block currentCaseBlock = isInternedBlock;
-			List<(string, Block)> values = new List<(string, Block)>();
+			var values = new List<(string, ILInstruction)>();
+
+			if (!switchValueVarCopy.IsSingleDefinition)
+				return false;
 
 			// each case starts with:
 			// if (comp(ldloc switchValueVar == ldstr "case label")) br caseBlock
@@ -274,20 +277,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				if (!right.MatchLdStr(out string value))
 					break;
-				if (!caseBlockJump.MatchBranch(out var caseBlock))
+				if (!(caseBlockJump.MatchBranch(out var caseBlock) || caseBlockJump.MatchLeave((BlockContainer)currentCaseBlock.Parent)))
 					break;
 				if (!currentCaseBlock.Instructions[conditionOffset + 1].MatchBranch(out currentCaseBlock))
 					break;
 				conditionOffset = 0;
-				values.Add((value, caseBlock));
+				values.Add((value, caseBlockJump.Clone()));
 			}
+
+			if (values.Count != switchValueVarCopy.LoadCount)
+				return false;
 
 			// switch contains case null: 
 			if (currentCaseBlock != defaultOrNullBlock) {
-				values.Add((null, defaultOrNullBlock));
+				values.Add((null, new Branch(defaultOrNullBlock)));
 			}
 
-			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
+			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = b.Item2 }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
 			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
 			var inst = new SwitchInstruction(stringToInt);

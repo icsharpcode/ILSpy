@@ -1935,6 +1935,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslatePostfixOperator(block);
 				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
+				case BlockKind.CallWithNamedArgs:
+					return WrapInRef(
+						new CallBuilder(this, typeSystem, settings).CallWithNamedArgs(block),
+						((CallInstruction)block.FinalInstruction).Method.ReturnType);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Kind);
 			}
@@ -1985,7 +1989,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
-				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type);
+				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, allowDictionaryInitializer: settings.DictionaryInitializers);
 				if (info.Kind == IL.Transforms.AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
 					currentPath = info.Path;

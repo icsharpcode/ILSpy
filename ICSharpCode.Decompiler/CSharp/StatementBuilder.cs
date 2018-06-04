@@ -734,6 +734,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitBlock(Block block)
 		{
+			if (block.Kind != BlockKind.ControlFlow)
+				return Default(block);
 			// Block without container
 			BlockStatement blockStatement = new BlockStatement();
 			foreach (var inst in block.Instructions) {

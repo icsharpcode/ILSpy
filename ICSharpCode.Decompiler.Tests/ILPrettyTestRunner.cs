@@ -112,6 +112,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 		}
 
+		[Test]
+		public void Issue1157()
+		{
+			Run();
+		}
+
 		[Test, Ignore("?")]
 		public void FSharpLoops_Debug()
 		{

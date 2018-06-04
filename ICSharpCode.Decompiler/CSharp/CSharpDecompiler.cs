@@ -134,7 +134,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							new NullPropagationStatementTransform(),
 							new TransformArrayInitializers(),
 							new TransformCollectionAndObjectInitializers(),
-							new TransformExpressionTrees()
+							new TransformExpressionTrees(),
+							new NamedArgumentTransform()
 						),
 					}
 				},

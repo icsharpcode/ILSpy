@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, possibleIndexVariables);
+			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, possibleIndexVariables, allowDictionaryInitializer: context.Settings.DictionaryInitializers);
 			if (kind == AccessPathKind.Invalid || target != targetVariable)
 				return false;
 			// Treat last element separately:
@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public override string ToString() => $"[{Member}, {Indices}]";
 
 		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(
-			ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
+			ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null, bool allowDictionaryInitializer = false)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
 			ILVariable target = null;
@@ -259,6 +259,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							var property = method.AccessorOwner as IProperty;
 							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
+							if (indices.Length > 0 && !allowDictionaryInitializer) goto default;
 							if (possibleIndexVariables != null) {
 								// Mark all index variables as used
 								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {

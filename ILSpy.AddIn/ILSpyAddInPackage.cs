@@ -13,6 +13,7 @@ using System.Linq;
 using ICSharpCode.ILSpy.AddIn.Commands;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
+using EnvDTE;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -84,7 +85,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			OpenILSpyCommand.Register(this);
 			OpenProjectOutputCommand.Register(this);
 			OpenReferenceCommand.Register(this);
-			//OpenCodeItemCommand.Register(this);
+			OpenCodeItemCommand.Register(this);
 		}
 		#endregion
 
@@ -108,6 +109,17 @@ namespace ICSharpCode.ILSpy.AddIn
 					out result
 				)
 			);
+		}
+
+		public IEnumerable<T> GetSelectedItemsData<T>()
+		{
+			if (DTE.ToolWindows.SolutionExplorer.SelectedItems is IEnumerable<UIHierarchyItem> hierarchyItems) {
+				foreach (var item in hierarchyItems) {
+					if (item.Object is T typedItem) {
+						yield return typedItem;
+					}
+				}
+			}
 		}
 	}
 }

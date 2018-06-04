@@ -50,7 +50,7 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta7" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
@@ -299,6 +299,7 @@
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Instructions\ExpressionTreeCast.cs" />
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
+    <Compile Include="IL\Transforms\NamedArgumentTransform.cs" />
     <Compile Include="IL\Transforms\IntroduceDynamicTypeOnLocals.cs" />
     <Compile Include="IL\Transforms\NullPropagationTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />

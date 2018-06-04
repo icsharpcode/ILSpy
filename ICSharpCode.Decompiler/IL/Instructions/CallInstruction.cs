@@ -18,10 +18,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -60,22 +58,18 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool ILStackWasEmpty;
 
-		/// <summary>
-		/// Gets the mapping of arguments to method parameters. Must be a 1-to-1 mapping.
-		/// Normally this is index == value for static calls and newobj, and value + 1 == index for instance method calls.
-		/// |ArgumentToParameterMap|  == |Arguments|.
-		/// </summary>
-		public int[] ArgumentToParameterMap;
-
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
 			Debug.Assert(method != null);
 			this.Method = method;
-			int firstParameter = OpCode != OpCode.NewObj && !Method.IsStatic ? 1 : 0;
-			this.ArgumentToParameterMap = new int[method.Parameters.Count + firstParameter];
-			for (int i = 0; i < ArgumentToParameterMap.Length; i++)
-				ArgumentToParameterMap[i] = -firstParameter + i;
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+		}
+
+		/// <summary>
+		/// Gets whether this is an instance call (i.e. whether the first argument is the 'this' pointer).
+		/// </summary>
+		public bool IsInstanceCall {
+			get { return !(Method.IsStatic || OpCode == OpCode.NewObj); }
 		}
 
 		/// <summary>
@@ -126,24 +120,13 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
-			Debug.Assert(Method.Parameters.Count + firstArgument == ArgumentToParameterMap.Length);
 			if (firstArgument == 1) {
 				Debug.Assert(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType),
 					$"Stack type mismatch in 'this' argument in call to {Method.Name}()");
-				Debug.Assert(ArgumentToParameterMap[0] == -1, "'this' argument must always be mapped at position 0");
 			}
-			int paramCount = Method.Parameters.Count;
-			if (paramCount > 0) {
-				BitSet bitSet = new BitSet(paramCount);
-				for (int i = 0; i < paramCount; ++i) {
-					int mappedTo = ArgumentToParameterMap[firstArgument + i];
-					Debug.Assert(mappedTo >= 0 && mappedTo < paramCount, $"mapping out of [0..{paramCount}[, was: {mappedTo}");
-					Debug.Assert(!bitSet[mappedTo], $"argument {mappedTo} is already mapped to a different parameter");
-					bitSet.Set(mappedTo);
-					Debug.Assert(Arguments[firstArgument + i].ResultType == Method.Parameters[mappedTo].Type.GetStackType(),
-						$"Stack type mismatch in parameter {mappedTo} (argument {firstArgument + i}) in call to {Method.Name}()");
-				}
-				Debug.Assert(bitSet.All(0, paramCount - 1), "Not all arguments are mapped to a parameter");
+			for (int i = 0; i < Method.Parameters.Count; ++i) {
+				Debug.Assert(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType(),
+					$"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
 		}
 
@@ -161,12 +144,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
-			int firstIndex = (OpCode != OpCode.NewObj && !Method.IsStatic) ? -1 : 0;
 			for (int i = 0; i < Arguments.Count; i++) {
 				if (i > 0)
 					output.Write(", ");
-				if (ArgumentToParameterMap[i] != firstIndex + i)
-					output.Write($"{ArgumentToParameterMap[i]}: ");
 				Arguments[i].WriteTo(output, options);
 			}
 			output.Write(')');
@@ -177,8 +157,7 @@ namespace ICSharpCode.Decompiler.IL
 			CallInstruction o = other as CallInstruction;
 			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
 				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
-				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match)
-				&& ArgumentToParameterMap.SequenceEqual(o.ArgumentToParameterMap);
+				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
 
