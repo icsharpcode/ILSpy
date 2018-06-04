@@ -194,21 +194,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool dynamicExpressions = true;
-
-		/// <summary>
-		/// Decompile expressions that use dynamic types.
-		/// </summary>
-		public bool DynamicExpressions {
-			get { return dynamicExpressions; }
-			set {
-				if (dynamicExpressions != value) {
-					dynamicExpressions = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		bool fixedBuffers = true;
 
 		/// <summary>

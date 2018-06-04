@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			if (!context.Settings.DynamicExpressions)
+			if (!context.Settings.Dynamic)
 				return;
 
 			this.context = context;
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				if (block.Instructions.Count < 2) continue;
-				// Check if, we deal with callsite cache field null check:
+				// Check if, we deal with a callsite cache field null check:
 				// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
 				// br IL_002b
 				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst)) continue;
