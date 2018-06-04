@@ -169,8 +169,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				arg = arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true);
 
-				if (parameter.IsOut) { 
-					arguments[i] = ExpressionBuilder.ChangeDirectionExpressionToOut(arguments[i]);
+				if (parameter.IsOut) {
+					arg = ExpressionBuilder.ChangeDirectionExpressionToOut(arg);
 				}
 
 				arguments.Add(arg);
