@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -95,6 +94,27 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public abstract CSharpArgumentInfo GetArgumentInfoOfChild(int index);
+
+		protected void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, params (ILInstruction, CSharpArgumentInfo)[] arguments)
+		{
+			WriteArgumentList(output, options, (IEnumerable<(ILInstruction, CSharpArgumentInfo)>)arguments);
+		}
+
+		protected void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, IEnumerable<(ILInstruction, CSharpArgumentInfo)> arguments)
+		{
+			output.Write('(');
+			int j = 0;
+			foreach (var (arg, info) in arguments) {
+				if (j > 0)
+					output.Write(", ");
+				output.Write("[flags: ");
+				output.Write(info.Flags.ToString());
+				output.Write(", name: " + info.Name + "] ");
+				arg.WriteTo(output, options);
+				j++;
+			}
+			output.Write(')');
+		}
 	}
 
 	partial class DynamicConvertInstruction
@@ -167,18 +187,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				output.Write('>');
 			}
-			output.Write('(');
-			int j = 0;
-			foreach (var arg in Arguments) {
-				if (j > 0)
-					output.Write(", ");
-				output.Write("[flags: ");
-				output.Write(ArgumentInfo[j].Flags.ToString());
-				output.Write(", name: " + ArgumentInfo[j].Name + "] ");
-				arg.WriteTo(output, options);
-				j++;
-			}
-			output.Write(')');
+			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -211,9 +220,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write(Name);
-			output.Write('(');
-			Target.WriteTo(output, options);
-			output.Write(')');
+			WriteArgumentList(output, options, (Target, TargetArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -249,11 +256,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write(Name);
-			output.Write('(');
-			Target.WriteTo(output, options);
-			output.Write(", ");
-			Value.WriteTo(output, options);
-			output.Write(')');
+			WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -290,15 +293,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write("get_Item");
-			output.Write('(');
-			int j = 0;
-			foreach (var arg in Arguments) {
-				if (j > 0)
-					output.Write(", ");
-				arg.WriteTo(output, options);
-				j++;
-			}
-			output.Write(')');
+			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -330,15 +325,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write("set_Item");
-			output.Write('(');
-			int j = 0;
-			foreach (var arg in Arguments) {
-				if (j > 0)
-					output.Write(", ");
-				arg.WriteTo(output, options);
-				j++;
-			}
-			output.Write(')');
+			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -370,15 +357,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write(".ctor");
-			output.Write('(');
-			int j = 0;
-			foreach (var arg in Arguments) {
-				if (j > 0)
-					output.Write(", ");
-				arg.WriteTo(output, options);
-				j++;
-			}
-			output.Write(')');
+			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -414,11 +393,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write(Operation.ToString());
-			output.Write('(');
-			Left.WriteTo(output, options);
-			output.Write(", ");
-			Right.WriteTo(output, options);
-			output.Write(')');
+			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
@@ -456,9 +431,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteBinderFlags(output, options);
 			output.Write(' ');
 			output.Write(Operation.ToString());
-			output.Write('(');
-			Operand.WriteTo(output, options);
-			output.Write(')');
+			WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
 		}
 
 		public override StackType ResultType {
@@ -502,15 +475,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			WriteBinderFlags(output, options);
 			output.Write(' ');
-			output.Write('(');
-			int j = 0;
-			foreach (var arg in Arguments) {
-				if (j > 0)
-					output.Write(", ");
-				arg.WriteTo(output, options);
-				j++;
-			}
-			output.Write(')');
+			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
 		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
