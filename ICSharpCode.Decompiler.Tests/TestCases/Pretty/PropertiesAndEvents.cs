@@ -56,15 +56,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			private EventHandler Changed;
 
-			private int backingField;
-
 			int IChange.Property {
-				get {
-					return backingField;
-				}
-				set {
-					backingField = value;
-				}
+				get;
+				set;
 			}
 
 			event EventHandler IChange.Changed {
