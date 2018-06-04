@@ -231,6 +231,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
+					if (settings.Dynamic && type.IsDelegate() && type.Name.StartsWith("<>A{", StringComparison.Ordinal))
+						return true;
 				}
 				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 					return true;
