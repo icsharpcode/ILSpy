@@ -233,12 +233,14 @@ namespace ICSharpCode.Decompiler.IL
 		public ExpressionType Operation { get; }
 		public CSharpArgumentInfo TargetArgumentInfo { get; }
 		public CSharpArgumentInfo ValueArgumentInfo { get; }
+		public CSharpBinderFlags BinderFlags { get; }
 
-		public DynamicCompoundAssign(ExpressionType op, ILInstruction target, CSharpArgumentInfo targetArgumentInfo, ILInstruction value, CSharpArgumentInfo valueArgumentInfo)
+		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags, ILInstruction target, CSharpArgumentInfo targetArgumentInfo, ILInstruction value, CSharpArgumentInfo valueArgumentInfo)
 			: base(OpCode.DynamicCompoundAssign, CompoundAssignmentTypeFromOperation(op), target, value)
 		{
 			if (!IsExpressionTypeSupported(op))
 				throw new ArgumentOutOfRangeException("op");
+			this.BinderFlags = binderFlags;
 			this.Operation = op;
 			this.TargetArgumentInfo = targetArgumentInfo;
 			this.ValueArgumentInfo = valueArgumentInfo;
@@ -249,16 +251,13 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write("." + Operation.ToString().ToLower());
+			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
 				output.Write(".new");
 			else
 				output.Write(".old");
 			output.Write(' ');
-			output.Write('(');
-			this.Target.WriteTo(output, options);
-			output.Write(", ");
-			this.Value.WriteTo(output, options);
-			output.Write(')');
+			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
 
 		internal static bool IsExpressionTypeSupported(ExpressionType type)

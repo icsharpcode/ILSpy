@@ -73,34 +73,39 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected void WriteBinderFlags(ITextOutput output, ILAstWritingOptions options)
 		{
-			if ((BinderFlags & CSharpBinderFlags.BinaryOperationLogical) != 0)
+			WriteBinderFlags(BinderFlags, output, options);
+		}
+
+		internal static void WriteBinderFlags(CSharpBinderFlags flags, ITextOutput output, ILAstWritingOptions options)
+		{
+			if ((flags & CSharpBinderFlags.BinaryOperationLogical) != 0)
 				output.Write(".logic");
-			if ((BinderFlags & CSharpBinderFlags.CheckedContext) != 0)
+			if ((flags & CSharpBinderFlags.CheckedContext) != 0)
 				output.Write(".checked");
-			if ((BinderFlags & CSharpBinderFlags.ConvertArrayIndex) != 0)
+			if ((flags & CSharpBinderFlags.ConvertArrayIndex) != 0)
 				output.Write(".arrayindex");
-			if ((BinderFlags & CSharpBinderFlags.ConvertExplicit) != 0)
+			if ((flags & CSharpBinderFlags.ConvertExplicit) != 0)
 				output.Write(".explicit");
-			if ((BinderFlags & CSharpBinderFlags.InvokeSimpleName) != 0)
+			if ((flags & CSharpBinderFlags.InvokeSimpleName) != 0)
 				output.Write(".invokesimple");
-			if ((BinderFlags & CSharpBinderFlags.InvokeSpecialName) != 0)
+			if ((flags & CSharpBinderFlags.InvokeSpecialName) != 0)
 				output.Write(".invokespecial");
-			if ((BinderFlags & CSharpBinderFlags.ResultDiscarded) != 0)
+			if ((flags & CSharpBinderFlags.ResultDiscarded) != 0)
 				output.Write(".discard");
-			if ((BinderFlags & CSharpBinderFlags.ResultIndexed) != 0)
+			if ((flags & CSharpBinderFlags.ResultIndexed) != 0)
 				output.Write(".resultindexed");
-			if ((BinderFlags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0)
+			if ((flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0)
 				output.Write(".compound");
 		}
 
 		public abstract CSharpArgumentInfo GetArgumentInfoOfChild(int index);
 
-		protected void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, params (ILInstruction, CSharpArgumentInfo)[] arguments)
+		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, params (ILInstruction, CSharpArgumentInfo)[] arguments)
 		{
 			WriteArgumentList(output, options, (IEnumerable<(ILInstruction, CSharpArgumentInfo)>)arguments);
 		}
 
-		protected void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, IEnumerable<(ILInstruction, CSharpArgumentInfo)> arguments)
+		internal static void WriteArgumentList(ITextOutput output, ILAstWritingOptions options, IEnumerable<(ILInstruction, CSharpArgumentInfo)> arguments)
 		{
 			output.Write('(');
 			int j = 0;
@@ -147,6 +152,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool IsChecked => (BinderFlags & CSharpBinderFlags.CheckedContext) != 0;
 
+		public bool IsExplicit => (BinderFlags & CSharpBinderFlags.ConvertExplicit) != 0;
+
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			return default(CSharpArgumentInfo);
@@ -190,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -223,7 +230,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Target, TargetArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -259,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -296,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -328,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -360,7 +367,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -396,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -441,7 +448,7 @@ namespace ICSharpCode.Decompiler.IL
 					case ExpressionType.IsTrue:
 						return StackType.I4; // bool
 					default:
-						return SpecialType.Dynamic.GetStackType();
+						return StackType.O;
 				}
 			}
 		}
@@ -478,7 +485,7 @@ namespace ICSharpCode.Decompiler.IL
 			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 		}
 
-		public override StackType ResultType => SpecialType.Dynamic.GetStackType();
+		public override StackType ResultType => StackType.O;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{

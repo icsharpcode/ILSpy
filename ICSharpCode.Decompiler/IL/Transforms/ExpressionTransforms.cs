@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 			context.Step("dynamic.setmember.compound -> dynamic.compound.op", inst);
-			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
+			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)

@@ -297,7 +297,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!IsMatchingCompoundLoad(dynamicBinaryOp.Left, compoundStore, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				context.Step($"Compound assignment (dynamic binary)", compoundStore);
-				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.Left, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo);
+				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, dynamicBinaryOp.Left, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo);
 			} else {
 				return false;
 			}

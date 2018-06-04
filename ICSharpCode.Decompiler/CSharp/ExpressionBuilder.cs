@@ -2341,7 +2341,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst, TranslationContext context)
 		{
-			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked);
+			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked, allowImplicitConversion: !inst.IsExplicit);
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)
@@ -2471,47 +2471,70 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			switch (inst.Operation) {
 				case ExpressionType.Add:
-					return CreateBinaryOperator(BinaryOperatorType.Add);
+				case ExpressionType.AddAssign:
+					return CreateBinaryOperator(BinaryOperatorType.Add, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+				case ExpressionType.AddChecked:
+				case ExpressionType.AddAssignChecked:
+					return CreateBinaryOperator(BinaryOperatorType.Add, isChecked: true);
 				case ExpressionType.Subtract:
-					return CreateBinaryOperator(BinaryOperatorType.Subtract);
+				case ExpressionType.SubtractAssign:
+					return CreateBinaryOperator(BinaryOperatorType.Subtract, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+				case ExpressionType.SubtractChecked:
+				case ExpressionType.SubtractAssignChecked:
+					return CreateBinaryOperator(BinaryOperatorType.Subtract, isChecked: true);
 				case ExpressionType.Multiply:
-					return CreateBinaryOperator(BinaryOperatorType.Multiply);
+				case ExpressionType.MultiplyAssign:
+					return CreateBinaryOperator(BinaryOperatorType.Multiply, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+				case ExpressionType.MultiplyChecked:
+				case ExpressionType.MultiplyAssignChecked:
+					return CreateBinaryOperator(BinaryOperatorType.Multiply, isChecked: true);
 				case ExpressionType.Divide:
-					return CreateBinaryOperator(BinaryOperatorType.Divide);
+				case ExpressionType.DivideAssign:
+					return CreateBinaryOperator(BinaryOperatorType.Divide, isChecked: false);
 				case ExpressionType.Modulo:
-					return CreateBinaryOperator(BinaryOperatorType.Modulus);
+				case ExpressionType.ModuloAssign:
+					return CreateBinaryOperator(BinaryOperatorType.Modulus, isChecked: false);
 				case ExpressionType.Equal:
-					return CreateBinaryOperator(BinaryOperatorType.Equality);
+					return CreateBinaryOperator(BinaryOperatorType.Equality, isChecked: false);
 				case ExpressionType.NotEqual:
-					return CreateBinaryOperator(BinaryOperatorType.InEquality);
+					return CreateBinaryOperator(BinaryOperatorType.InEquality, isChecked: false);
 				case ExpressionType.LessThan:
-					return CreateBinaryOperator(BinaryOperatorType.LessThan);
+					return CreateBinaryOperator(BinaryOperatorType.LessThan, isChecked: false);
 				case ExpressionType.LessThanOrEqual:
-					return CreateBinaryOperator(BinaryOperatorType.LessThanOrEqual);
+					return CreateBinaryOperator(BinaryOperatorType.LessThanOrEqual, isChecked: false);
 				case ExpressionType.GreaterThan:
-					return CreateBinaryOperator(BinaryOperatorType.GreaterThan);
+					return CreateBinaryOperator(BinaryOperatorType.GreaterThan, isChecked: false);
 				case ExpressionType.GreaterThanOrEqual:
-					return CreateBinaryOperator(BinaryOperatorType.GreaterThanOrEqual);
-				case ExpressionType.Or:
-					return CreateBinaryOperator(BinaryOperatorType.BitwiseOr);
+					return CreateBinaryOperator(BinaryOperatorType.GreaterThanOrEqual, isChecked: false);
 				case ExpressionType.And:
-					return CreateBinaryOperator(BinaryOperatorType.BitwiseAnd);
+				case ExpressionType.AndAssign:
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseAnd, isChecked: false);
+				case ExpressionType.Or:
+				case ExpressionType.OrAssign:
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseOr, isChecked: false);
 				case ExpressionType.ExclusiveOr:
-					return CreateBinaryOperator(BinaryOperatorType.ExclusiveOr);
+				case ExpressionType.ExclusiveOrAssign:
+					return CreateBinaryOperator(BinaryOperatorType.ExclusiveOr, isChecked: false);
 				case ExpressionType.LeftShift:
-					return CreateBinaryOperator(BinaryOperatorType.ShiftLeft);
+				case ExpressionType.LeftShiftAssign:
+					return CreateBinaryOperator(BinaryOperatorType.ShiftLeft, isChecked: false);
 				case ExpressionType.RightShift:
-					return CreateBinaryOperator(BinaryOperatorType.ShiftRight);
+				case ExpressionType.RightShiftAssign:
+					return CreateBinaryOperator(BinaryOperatorType.ShiftRight, isChecked: false);
 				default:
 					return base.VisitDynamicBinaryOperatorInstruction(inst, context);
 			}
 
-			TranslatedExpression CreateBinaryOperator(BinaryOperatorType operatorType)
+			TranslatedExpression CreateBinaryOperator(BinaryOperatorType operatorType, bool isChecked)
 			{
 				var left = TranslateDynamicArgument(inst.Left, inst.LeftArgumentInfo);
 				var right = TranslateDynamicArgument(inst.Right, inst.RightArgumentInfo);
-				return new BinaryOperatorExpression(left.Expression, operatorType, right.Expression)
-					.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
+				var boe = new BinaryOperatorExpression(left.Expression, operatorType, right.Expression);
+				if (isChecked)
+					boe.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				else
+					boe.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				return boe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 			}
 		}
 
@@ -2519,15 +2542,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			switch (inst.Operation) {
 				case ExpressionType.Not:
-					return CreateUnaryOperator(UnaryOperatorType.Not);
+					return CreateUnaryOperator(UnaryOperatorType.Not, isChecked: false);
 				case ExpressionType.Decrement:
-					return CreateUnaryOperator(UnaryOperatorType.Decrement);
+					return CreateUnaryOperator(UnaryOperatorType.Decrement, isChecked: false);
 				case ExpressionType.Increment:
-					return CreateUnaryOperator(UnaryOperatorType.Increment);
+					return CreateUnaryOperator(UnaryOperatorType.Increment, isChecked: false);
 				case ExpressionType.Negate:
-					return CreateUnaryOperator(UnaryOperatorType.Minus);
+					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+				case ExpressionType.NegateChecked:
+					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: true);
 				case ExpressionType.UnaryPlus:
-					return CreateUnaryOperator(UnaryOperatorType.Plus);
+					return CreateUnaryOperator(UnaryOperatorType.Plus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.IsTrue:
 					var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
 					Expression expr;
@@ -2540,15 +2565,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					return expr.WithILInstruction(inst)
 						.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+				case ExpressionType.IsFalse:
+					operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
+					// Create a dummy conditional to ensure "operator false" will be invoked.
+					expr = new ConditionalExpression(operand, new PrimitiveExpression(false), new PrimitiveExpression(true));
+					return expr.WithILInstruction(inst)
+						.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 				default:
 					return base.VisitDynamicUnaryOperatorInstruction(inst, context);
 			}
 
-			TranslatedExpression CreateUnaryOperator(UnaryOperatorType operatorType)
+			TranslatedExpression CreateUnaryOperator(UnaryOperatorType operatorType, bool isChecked)
 			{
 				var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
-				return new UnaryOperatorExpression(operatorType, operand.Expression)
-					.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
+				var uoe = new UnaryOperatorExpression(operatorType, operand.Expression);
+				if (isChecked)
+					uoe.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+				else
+					uoe.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				return uoe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 			}
 		}
 
@@ -2557,8 +2592,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 
-			return new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation), value)
-				.WithILInstruction(inst)
+			var ae = new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation), value);
+			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext))
+				ae.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+			else
+				ae.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+			return ae.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(SpecialType.Dynamic, inst.Operation, new[] { target.ResolveResult, value.ResolveResult }));
 		}
 
