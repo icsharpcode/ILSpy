@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!callSiteInitBlock.Instructions[instCount - 1].MatchBranch(out blockAfterInit))
 				return false;
-			if (!callSiteInitBlock.Instructions[instCount - 2].MatchStsFld(out var field, out var value) || field != callSiteCacheField)
+			if (!callSiteInitBlock.Instructions[instCount - 2].MatchStsFld(out var field, out var value) || !field.Equals(callSiteCacheField))
 				return false;
 			if (!(value is Call createBinderCall) || createBinderCall.Method.TypeArguments.Count != 0 || createBinderCall.Arguments.Count != 1 || createBinderCall.Method.Name != "Create" || createBinderCall.Method.DeclaringType.FullName != CallSiteTypeName || createBinderCall.Method.DeclaringType.TypeArguments.Count != 1)
 				return false;
