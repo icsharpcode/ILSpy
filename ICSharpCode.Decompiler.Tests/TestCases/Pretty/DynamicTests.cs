@@ -11,10 +11,48 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			set;
 		}
 
+		public DynamicTests()
+		{
+		}
+
+		public DynamicTests(dynamic test)
+		{
+		}
+
+		public DynamicTests(DynamicTests test)
+		{
+		}
+
 		private static void InvokeConstructor()
 		{
+			DynamicTests dynamicTests = new DynamicTests();
 			dynamic val = new DynamicTests();
 			val.Test(new UnauthorizedAccessException());
+			dynamic val2 = new DynamicTests(val);
+			val2.Get(new DynamicTests((DynamicTests)val));
+			val2.Call(new DynamicTests((dynamic)dynamicTests));
+		}
+
+		private static dynamic InlineAssign(object a, out dynamic b)
+		{
+			return b = ((dynamic)a).Test;
+		}
+
+		private static dynamic SelfReference(dynamic d)
+		{
+			return d[d, d] = d;
+		}
+
+		private static dynamic LongArgumentListFunc(dynamic d)
+		{
+			// Func`13
+			return d(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+		}
+
+		private static void LongArgumentListAction(dynamic d)
+		{
+			// Action`13
+			d(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 		}
 
 		private static void DynamicThrow()
