@@ -2363,8 +2363,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
 		{
-			IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType);
-			return new ObjectCreateExpression(ConvertType(constructorType), inst.Arguments.Skip(1).Select(arg => Translate(arg, SpecialType.Dynamic).Expression))
+			if (!(inst.ArgumentInfo[0].Flags.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
+				throw new NotSupportedException();
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			return new ObjectCreateExpression(ConvertType(constructorType), arguments)
 				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
 		}
 
