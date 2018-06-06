@@ -1083,10 +1083,11 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst = Pop();
 			switch (inst.ResultType) {
 				case StackType.I4:
+				case StackType.I8:
+				case StackType.Unknown:
 					return new Conv(inst, PrimitiveType.I, false, Sign.None);
 				case StackType.I:
 				case StackType.Ref:
-				case StackType.Unknown:
 					return inst;
 				default:
 					Warn("Expected native int or pointer, but got " + inst.ResultType);
@@ -1484,13 +1485,24 @@ namespace ICSharpCode.Decompiler.IL
 			var left = Pop();
 			if (@operator != BinaryNumericOperator.ShiftLeft && @operator != BinaryNumericOperator.ShiftRight) {
 				// make the implicit I4->I conversion explicit:
-				if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
-					left = new Conv(left, PrimitiveType.I, false, Sign.None);
-				} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
-					right = new Conv(right, PrimitiveType.I, false, Sign.None);
-				}
+				MakeExplicitConversion(sourceType: StackType.I4, targetType: StackType.I, conversionType: PrimitiveType.I);
+				// I4->I8 conversion:
+				MakeExplicitConversion(sourceType: StackType.I4, targetType: StackType.I8, conversionType: PrimitiveType.I8);
+				// I->I8 conversion:
+				MakeExplicitConversion(sourceType: StackType.I, targetType: StackType.I8, conversionType: PrimitiveType.I8);
+				// F4->F8 conversion:
+				MakeExplicitConversion(sourceType: StackType.F4, targetType: StackType.F8, conversionType: PrimitiveType.R8);
 			}
 			return Push(new BinaryNumericInstruction(@operator, left, right, checkForOverflow, sign));
+
+			void MakeExplicitConversion(StackType sourceType, StackType targetType, PrimitiveType conversionType)
+			{
+				if (left.ResultType == sourceType && right.ResultType == targetType) {
+					left = new Conv(left, conversionType, false, Sign.None);
+				} else if (left.ResultType == targetType && right.ResultType == sourceType) {
+					right = new Conv(right, conversionType, false, Sign.None);
+				}
+			}
 		}
 
 		ILInstruction DecodeJmp()
