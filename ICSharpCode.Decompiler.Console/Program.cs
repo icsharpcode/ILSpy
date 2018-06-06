@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.Console
 			var inputAssemblyFileName = app.Argument("Assembly filename name", "The assembly that is being decompiled. This argument is mandatory.");
 			var projectOption = app.Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.", CommandOptionType.NoValue);
 			var outputOption = app.Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue);
-			var typeOption = app.Option("-t|--type <type-name>", "The FQN of the type to decompile.", CommandOptionType.SingleValue);
+			var typeOption = app.Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue);
 			var listOption = app.Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue);
 			app.ExtendedHelpText = Environment.NewLine + "-o is valid with every option and required when using -p.";
 
