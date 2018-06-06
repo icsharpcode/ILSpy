@@ -76,6 +76,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				callsites.Add(callSiteCacheField, callSiteInfo);
 			}
 
+			var storesToRemove = new List<StLoc>();
+
 			foreach (var invokeCall in function.Descendants.OfType<CallVirt>()) {
 				if (invokeCall.Method.DeclaringType.Kind != TypeKind.Delegate || invokeCall.Method.Name != "Invoke" || invokeCall.Arguments.Count == 0)
 					continue;
@@ -109,13 +111,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (stLoc.Parent is Block storeParentBlock) {
 							var value = stLoc.Value;
 							if (value.MatchLdsFld(out var cacheFieldCopy) && cacheFieldCopy.Equals(cacheField))
-								storeParentBlock.Instructions.RemoveAt(stLoc.ChildIndex);
+								storesToRemove.Add(stLoc);
 							if (value.MatchLdFld(out cacheFieldLoad, out var targetFieldCopy) && cacheFieldLoad.MatchLdsFld(out cacheFieldCopy) && cacheField.Equals(cacheFieldCopy) && targetField.Equals(targetFieldCopy))
-								storeParentBlock.Instructions.RemoveAt(stLoc.ChildIndex);
+								storesToRemove.Add(stLoc);
 						}
 					}
 				}
 				modifiedContainers.Add((BlockContainer)block.Parent);
+			}
+
+			foreach (var inst in storesToRemove) {
+				Block parentBlock = (Block)inst.Parent;
+				parentBlock.Instructions.RemoveAt(inst.ChildIndex);
 			}
 
 			foreach (var container in modifiedContainers)
