@@ -145,12 +145,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					);
 				case BinderMethodKind.Convert:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
-					return new DynamicConvertInstruction(
+					ILInstruction result = new DynamicConvertInstruction(
 						binderFlags: callsite.Flags,
 						context: callsite.Context,
 						type: callsite.ConvertTargetType,
 						argument: targetInvokeCall.Arguments[2]
 					);
+					if (result.ResultType == StackType.Unknown) {
+						// if references are missing, we need to coerce the primitive type to None.
+						// Otherwise we will get loads of assertions.
+						result = new Conv(result, PrimitiveType.None, ((DynamicConvertInstruction)result).IsChecked, Sign.None);
+					}
+					return result;
 				case BinderMethodKind.GetIndex:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
 					return new DynamicGetIndexInstruction(
