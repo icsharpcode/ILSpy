@@ -89,6 +89,7 @@
     <Compile Include="Controls\CustomDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Controls\GridViewColumnAutoSize.cs" />
     <Compile Include="Controls\MarkupExtensions.cs" />
     <Compile Include="Controls\ResourceObjectTable.xaml.cs">
       <DependentUpon>ResourceObjectTable.xaml</DependentUpon>
