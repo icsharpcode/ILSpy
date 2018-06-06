@@ -2341,16 +2341,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst, TranslationContext context)
 		{
-			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked, allowImplicitConversion: !inst.IsExplicit);
+			// TODO : make conversions implicit, if !inst.IsExplicit
+			// currently this leads to stack type mismatch assertions, if the expected type is not O
+			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked, allowImplicitConversion: false);
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
-			return new IndexerExpression(target, arguments)
+			return new IndexerExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(SpecialType.Dynamic));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, TranslationContext context)
@@ -2366,7 +2368,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(inst.ArgumentInfo[0].Flags.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
 				throw new NotSupportedException();
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
-			return new ObjectCreateExpression(ConvertType(constructorType), arguments)
+			//var names = inst.ArgumentInfo.Skip(1).Select(a => a.Name).ToArray();
+			return new ObjectCreateExpression(ConvertType(constructorType), arguments.Select(a => a.Expression))
 				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
 		}
 
@@ -2374,18 +2377,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
-			return new InvocationExpression(new MemberReferenceExpression(target, inst.Name, inst.TypeArguments.Select(ConvertType)), arguments)
+			return new InvocationExpression(new MemberReferenceExpression(target, inst.Name, inst.TypeArguments.Select(ConvertType)), arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(SpecialType.Dynamic));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
-			return new InvocationExpression(target, arguments)
+			return new InvocationExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(SpecialType.Dynamic));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		TranslatedExpression TranslateDynamicTarget(ILInstruction inst, CSharpArgumentInfo argumentInfo)
@@ -2405,10 +2408,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Translate(inst, targetType).ConvertTo(targetType, this);
 		}
 
-		IEnumerable<Expression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 			foreach (var (argument, info) in arguments.Zip(argumentInfo))
-				yield return TranslateDynamicArgument(argument, info).Expression;
+				yield return TranslateDynamicArgument(argument, info);
 		}
 
 		TranslatedExpression TranslateDynamicArgument(ILInstruction argument, CSharpArgumentInfo info)
@@ -2447,24 +2450,23 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst, TranslationContext context)
 		{
 			Debug.Assert(inst.Arguments.Count >= 3);
-			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]).Expression;
+			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
 			var value = new TranslatedExpression(arguments.Last());
-			var indexer = new IndexerExpression(target, arguments.Take(inst.Arguments.Count - 2));
-			return Assignment(
-				indexer.WithoutILInstruction().WithRR(new ResolveResult(SpecialType.Dynamic)),
-				value
-			).WithILInstruction(inst);
+			var indexer = new IndexerExpression(target, arguments.Take(inst.Arguments.Count - 2).Select(a => a.Expression))
+				.WithoutILInstruction()
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Take(inst.Arguments.Count - 2).Select(a => a.ResolveResult).ToArray()));
+			return Assignment(indexer, value).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
-			return Assignment(
-				new MemberReferenceExpression(target, inst.Name).WithoutILInstruction().WithRR(new ResolveResult(SpecialType.Dynamic)),
-				value
-			).WithILInstruction(inst);
+			var member = new MemberReferenceExpression(target, inst.Name)
+				.WithoutILInstruction()
+				.WithRR(new ResolveResult(SpecialType.Dynamic));
+			return Assignment(member, value).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitDynamicBinaryOperatorInstruction(DynamicBinaryOperatorInstruction inst, TranslationContext context)
