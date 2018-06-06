@@ -39,7 +39,7 @@
 		<ListView Grid.Row="1" BorderThickness="0,0,0,0" HorizontalContentAlignment="Stretch" KeyDown="ListBox_KeyDown"
 				MouseDoubleClick="ListBox_MouseDoubleClick" Name="listBox" SelectionMode="Single" controls:SortableGridViewColumn.SortMode="Automatic" controls:GridViewColumnAutoSize.AutoWidth="50%;50%">
 			<ListView.View>
-				<GridView>
+				<GridView AllowsColumnReorder="False">
 					<controls:SortableGridViewColumn Header="Name" SortBy="Name">
 						<controls:SortableGridViewColumn.CellTemplate>
 							<DataTemplate>
