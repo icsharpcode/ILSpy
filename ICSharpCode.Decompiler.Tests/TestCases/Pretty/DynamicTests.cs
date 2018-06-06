@@ -4,6 +4,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class DynamicTests
 	{
+		private class Base
+		{
+			public Base(object baseObj)
+			{
+			}
+		}
+
+		private class Derived : Base
+		{
+			public Derived(dynamic d)
+				: base((object)d)
+			{
+			}
+		}
+
 		private static dynamic field;
 		private static object objectField;
 		public dynamic Property {
@@ -160,6 +175,48 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			DynamicTests.MemberAccess(a % null);
 		}
 
+		private static void CheckedArithmeticBinaryOperators(dynamic a, dynamic b)
+		{
+			checked {
+				DynamicTests.MemberAccess(a + b);
+				DynamicTests.MemberAccess(a + 1);
+				DynamicTests.MemberAccess(a + null);
+				DynamicTests.MemberAccess(a - b);
+				DynamicTests.MemberAccess(a - 1);
+				DynamicTests.MemberAccess(a - null);
+				DynamicTests.MemberAccess(a * b);
+				DynamicTests.MemberAccess(a * 1);
+				DynamicTests.MemberAccess(a * null);
+			}
+			DynamicTests.MemberAccess(a / b);
+			DynamicTests.MemberAccess(a / 1);
+			DynamicTests.MemberAccess(a / null);
+			DynamicTests.MemberAccess(a % b);
+			DynamicTests.MemberAccess(a % 1);
+			DynamicTests.MemberAccess(a % null);
+		}
+
+		private static void UncheckedArithmeticBinaryOperators(dynamic a, dynamic b)
+		{
+			checked {
+				DynamicTests.MemberAccess(a + b);
+				DynamicTests.MemberAccess(a + 1);
+				DynamicTests.MemberAccess(a + null);
+				DynamicTests.MemberAccess(unchecked(a - b));
+				DynamicTests.MemberAccess(a - 1);
+				DynamicTests.MemberAccess(a - null);
+				DynamicTests.MemberAccess(unchecked(a * b));
+				DynamicTests.MemberAccess(a * 1);
+				DynamicTests.MemberAccess(a * null);
+			}
+			DynamicTests.MemberAccess(a / b);
+			DynamicTests.MemberAccess(a / 1);
+			DynamicTests.MemberAccess(a / null);
+			DynamicTests.MemberAccess(a % b);
+			DynamicTests.MemberAccess(a % 1);
+			DynamicTests.MemberAccess(a % null);
+		}
+
 		private static void RelationalOperators(dynamic a, dynamic b)
 		{
 			DynamicTests.MemberAccess(a == b);
@@ -186,6 +243,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine();
 			MemberAccess((int)a);
+			MemberAccess(checked((int)a));
 		}
 
 		private static void CompoundAssignment(dynamic a, dynamic b)
