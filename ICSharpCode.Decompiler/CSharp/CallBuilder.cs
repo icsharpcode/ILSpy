@@ -109,6 +109,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					expectedTargetDetails.NeedsBoxingConversion = true;
 				}
 			}
+			
+			// Special case to deal with implicit dynamic conversions:
+			bool allowDynamicDispatch = true;
+			// If the current call is a constructor initializer, dynamic dispatch is not allowed.
+			if (callOpCode != OpCode.NewObj && method.IsConstructor && resolver.CurrentMember.SymbolKind == SymbolKind.Constructor) {
+				var ctorBaseType = resolver.CurrentTypeDefinition.DirectBaseTypes.FirstOrDefault();
+				if (ctorBaseType != null && (method.DeclaringType.Equals(ctorBaseType) || method.DeclaringType.Equals(resolver.CurrentMember.DeclaringType)))
+					allowDynamicDispatch = false;
+			}
 
 			int firstParamIndex = (method.IsStatic || callOpCode == OpCode.NewObj) ? 0 : 1;
 			Debug.Assert(firstParamIndex == 0 || argumentToParameterMap == null
@@ -167,8 +176,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				arg = arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true);
-
+				if (!allowDynamicDispatch && arg.Type.Kind == TypeKind.Dynamic) {
+					IType type = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
+					var conversions = CSharpConversions.Get(expressionBuilder.compilation);
+					var objectType = expressionBuilder.ConvertType(type);
+					var castExpression = new CastExpression(objectType, arg.Expression);
+					var castRR = new CastResolveResult(type, arg.ResolveResult, conversions.ExplicitConversion(arg.ResolveResult, type), checkForOverflow: false);
+					arg = castExpression.WithoutILInstruction().WithRR(castRR);
+				} else {
+					arg = arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true);
+				}
 				if (parameter.IsOut) {
 					arg = ExpressionBuilder.ChangeDirectionExpressionToOut(arg);
 				}
