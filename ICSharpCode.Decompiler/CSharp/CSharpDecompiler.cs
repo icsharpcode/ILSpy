@@ -341,12 +341,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes) {
 				decompileRun.Namespaces.Add(a.AttributeType.Namespace);
-				if (a.AttributeType.FullName == typeof(System.Runtime.CompilerServices.TypeForwardedToAttribute).FullName) {
-					decompileRun.Namespaces.Add(((TypeOfResolveResult)a.PositionalArguments[0]).ReferencedType.Namespace);
-				} else {
-					decompileRun.Namespaces.AddRange(a.PositionalArguments.Select(pa => pa.Type.Namespace));
-					decompileRun.Namespaces.AddRange(a.NamedArguments.Select(na => na.Value.Type.Namespace));
-				}
+				decompileRun.Namespaces.AddRange(a.PositionalArguments.Select(pa => pa.Type.Namespace));
+				decompileRun.Namespaces.AddRange(a.PositionalArguments.OfType<TypeOfResolveResult>().Select(pa => pa.ReferencedType.Namespace));
+				decompileRun.Namespaces.AddRange(a.NamedArguments.Select(na => na.Value.Type.Namespace));
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
@@ -539,6 +536,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								CollectNamespacesForDecompilation(new[] { tr.ResolveWithinSameModule() }, namespaces, visited);
 						}
 					}
+					namespaces.AddRange(ca.Properties.Select(pro => pro.Argument.Type.Namespace));
 				}
 			}
 
