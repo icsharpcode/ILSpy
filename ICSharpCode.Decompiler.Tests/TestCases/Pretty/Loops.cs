@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			item = null;
 		}
 
-		private static void Operation(ref int item)
+		private static void Operation(ref int i)
 		{
 		}
 
@@ -417,11 +417,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			foreach (int item in items) {
 #if ROSLYN && OPT
 				// The variable name differs based on whether roslyn optimizes out the 'item' variable
-				int current = item;
-				Operation(ref current);
+				int i = item;
+				Operation(ref i);
 #else
-				int num = item;
-				Operation(ref num);
+				int i = item;
+				Operation(ref i);
 #endif
 			}
 		}

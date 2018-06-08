@@ -92,8 +92,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CallMethodWithInOutParameter()
 		{
-			int num = 0;
-			ioctlsocket(IntPtr.Zero, 0, ref num);
+			int argp = 0;
+			ioctlsocket(IntPtr.Zero, 0, ref argp);
 		}
 	}
 }

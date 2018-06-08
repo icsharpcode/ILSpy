@@ -694,7 +694,7 @@
     IL_0004:  ret
   } // end of method Loops::TryGetItem
 
-  .method private hidebysig static void  Operation(int32& item) cil managed
+  .method private hidebysig static void  Operation(int32& i) cil managed
   {
     // Code size       2 (0x2)
     .maxstack  8
