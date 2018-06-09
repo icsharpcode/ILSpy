@@ -422,6 +422,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case BlockKind.ArrayInitializer:
 					case BlockKind.CollectionInitializer:
 					case BlockKind.ObjectInitializer:
+					case BlockKind.CallInlineAssign:
 						// Allow inlining into the first instruction of the block
 						if (block.Instructions.Count == 0)
 							return FindResult.Stop;
