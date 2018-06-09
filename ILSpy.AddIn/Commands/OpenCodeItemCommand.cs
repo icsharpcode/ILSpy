@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
@@ -70,31 +72,78 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var model = await roslynDocument.GetSemanticModelAsync().ConfigureAwait(false);
 			var node = ast.FindNode(new TextSpan(caretPosition.Position, 0), false, true);
 			if (node == null) {
-				owner.ShowMessage("Can't show ILSpy for this code element!");
+				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
 				return;
 			}
 
 			var symbol = GetSymbolResolvableByILSpy(model, node);
 			if (symbol == null) {
-				owner.ShowMessage("Can't show ILSpy for this code element!");
+				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
 				return;
 			}
 
-
 			var roslynProject = roslynDocument.Project;
 			var refsmap = GetReferences(roslynProject);
+			var symbolAssemblyName = symbol.ContainingAssembly?.Identity?.Name;
 
 			// Add our own project as well (not among references)
 			var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>()
 				.FirstOrDefault(p => p.FileName == roslynProject.FilePath);
-			if (project != null) {
-				string projectOutputPath = GetProjectOutputPath(project, roslynProject);
-				refsmap.Add(roslynDocument.Project.AssemblyName, projectOutputPath);
+			if (project == null) {
+				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
+				return;
 			}
 
-			var refs = refsmap.Select(fn => fn.Value).Where(f => File.Exists(f));
-			OpenAssembliesInILSpy(new ILSpyParameters(refs, "/navigateTo:" + 
+			string assemblyName = roslynDocument.Project.AssemblyName;
+			string projectOutputPath = Utils.GetProjectOutputAssembly(project, roslynProject);
+			refsmap.Add(assemblyName, new DetectedReference(assemblyName, projectOutputPath, true));
+
+			// Divide into valid and invalid (= not found) referenced assemblies
+			CheckAssemblies(refsmap, out var validRefs, out var invalidRefs);
+			var invalidSymbolReference = invalidRefs.FirstOrDefault(r => r.IsProjectReference && (r.Name == symbolAssemblyName));
+			if (invalidSymbolReference != null) {
+				if (string.IsNullOrEmpty(invalidSymbolReference.AssemblyFile)) {
+					// No assembly file given at all. This has been seen while project is still loading after opening...
+					owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING,
+						"Symbol can't be opened. This might happen while project is loading.",
+						Environment.NewLine, invalidSymbolReference.AssemblyFile);
+				}
+				if (invalidSymbolReference.IsProjectReference) {
+					// Some project references don't have assemblies, maybe not compiled yet?
+					if (owner.ShowMessage(
+						OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_WARNING,
+						"The project output for '{0}' could not be found for analysis. Would you like to rebuild the solution?",
+						symbolAssemblyName) == (int)MessageButtonResult.IDYES) {
+						owner.DTE.ExecuteCommand("Build.BuildSolution");
+					}
+				} else {
+					// External assembly is missing, we should abort
+					owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING,
+						"Referenced assembly{0}{0}'{1}'{0}{0} could not be found.",
+						Environment.NewLine, invalidSymbolReference.AssemblyFile);
+				}
+
+				return;
+			}
+
+			OpenAssembliesInILSpy(new ILSpyParameters(validRefs.Select(r => r.AssemblyFile), "/navigateTo:" +
 				(symbol.OriginalDefinition ?? symbol).GetDocumentationCommentId()));
+		}
+
+		void CheckAssemblies(Dictionary<string, DetectedReference> inputReferenceList,
+			out List<DetectedReference> validRefs,
+			out List<DetectedReference> invalidRefs)
+		{
+			validRefs = new List<DetectedReference>();
+			invalidRefs = new List<DetectedReference>();
+
+			foreach (var reference in inputReferenceList.Select(r => r.Value)) {
+				if ((reference.AssemblyFile == null) || !File.Exists(reference.AssemblyFile)) {
+					invalidRefs.Add(reference);
+				} else {
+					validRefs.Add(reference);
+				}
+			}
 		}
 
 		ISymbol GetSymbolResolvableByILSpy(SemanticModel model, SyntaxNode node)

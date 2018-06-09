@@ -34,10 +34,10 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		/// </summary>
 		/// <param name="projectReferences">List of current project's references.</param>
 		/// <returns>Parameters object or <c>null, if not applicable.</c></returns>
-		public ILSpyParameters GetILSpyParameters(Dictionary<string, string> projectReferences)
+		public ILSpyParameters GetILSpyParameters(Dictionary<string, DetectedReference> projectReferences)
 		{
-			if (projectReferences.TryGetValue(reference.Name, out var path))
-				return new ILSpyParameters(new[] { path });
+			if (projectReferences.TryGetValue(reference.Name, out var refentry))
+				return new ILSpyParameters(new[] { refentry.AssemblyFile });
 
 			return null;
 		}

@@ -73,7 +73,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				if (!string.IsNullOrEmpty(fileName)) {
 					var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == fileName);
 					var references = GetReferences(roslynProject);
-					if (references.TryGetValue(projectItem.Name, out string path)) {
+					if (references.TryGetValue(projectItem.Name, out DetectedReference path)) {
 						OpenAssembliesInILSpy(projectRefItem.GetILSpyParameters(references));
 						return;
 					}

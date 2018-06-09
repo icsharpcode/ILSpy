@@ -14,8 +14,22 @@ using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
+	public enum MessageButtonResult : int
+	{
+		IDOK = 1,
+		IDCANCEL = 2,
+		IDABORT = 3,
+		IDRETRY = 4,
+		IDIGNORE = 5,
+		IDYES = 6,
+		IDNO = 7,
+		IDTRYAGAIN = 10,
+		IDCONTINUE = 11,
+	}
+
 	static class Utils
 	{
+
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1060:MovePInvokesToNativeMethodsClass")]
 		[DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
 		static extern unsafe char** CommandLineToArgvW([MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine, out int pNumArgs);
@@ -230,7 +244,10 @@ namespace ICSharpCode.ILSpy.AddIn
 			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
 
 			// Combine the project path and output path to get the bin path
-			return Path.Combine(projectPath, projectOutputPath, outputFileName);
+			if ((projectPath != null) && (projectOutputPath != null) && (outputFileName != null))
+				return Path.Combine(projectPath, projectOutputPath, outputFileName);
+
+			return null;
 		}
 	}
 }

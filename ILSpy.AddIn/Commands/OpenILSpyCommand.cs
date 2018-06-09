@@ -23,6 +23,20 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public string[] Arguments { get; private set; }
 	}
 
+	public class DetectedReference
+	{
+		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
+		{
+			this.Name = name;
+			this.AssemblyFile = assemblyFile;
+			this.IsProjectReference = isProjectReference;
+		}
+
+		public string Name { get; private set; }
+		public string AssemblyFile { get; private set; }
+		public bool IsProjectReference { get; private set; }
+	}
+
 	abstract class ILSpyCommand
 	{
 		protected ILSpyAddInPackage owner;
@@ -68,26 +82,18 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			System.Diagnostics.Process.Start(GetILSpyPath(), commandLineArguments);
 		}
 
-		protected string GetProjectOutputPath(EnvDTE.Project project, Microsoft.CodeAnalysis.Project roslynProject)
+		protected Dictionary<string, DetectedReference> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
 		{
-			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
-			//get the directory path based on the project file.
-			string projectPath = Path.GetDirectoryName(project.FullName);
-			//get the output path based on the active configuration
-			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
-			//combine the project path and output path to get the bin path
-			return Path.Combine(projectPath, projectOutputPath, outputFileName);
-		}
-
-		protected Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
-		{
-			var dict = new Dictionary<string, string>();
+			var dict = new Dictionary<string, DetectedReference>();
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
+					string assemblyName = assemblyDef.Name.Name;
 					if (IsReferenceAssembly(assemblyDef)) {
-						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(assemblyDef.Name));
+						dict.Add(assemblyName, 
+							new DetectedReference(assemblyName, GacInterop.FindAssemblyInNetGac(assemblyDef.Name), false));
 					} else {
-						dict.Add(assemblyDef.Name.Name, reference.Display);
+						dict.Add(assemblyName, 
+							new DetectedReference(assemblyName, reference.Display, false));
 					}
 				}
 			}
@@ -95,7 +101,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
 				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
 				if (roslynProject != null && project != null)
-					dict.Add(roslynProject.AssemblyName, GetProjectOutputPath(project, roslynProject));
+					dict.Add(roslynProject.AssemblyName, 
+						new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
 			}
 			return dict;
 		}
