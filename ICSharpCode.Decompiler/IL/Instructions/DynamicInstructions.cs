@@ -57,6 +57,8 @@ namespace ICSharpCode.Decompiler.IL
 		public string Name { get; set; }
 		public CSharpArgumentInfoFlags Flags { get; set; }
 		public IType CompileTimeType { get; set; }
+
+		public bool HasFlag(CSharpArgumentInfoFlags flag) => (Flags & flag) != 0;
 	}
 
 	partial class DynamicInstruction
@@ -521,7 +523,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
-			throw new ArgumentOutOfRangeException(nameof(index));
+			return default(CSharpArgumentInfo);
 		}
 	}
 }

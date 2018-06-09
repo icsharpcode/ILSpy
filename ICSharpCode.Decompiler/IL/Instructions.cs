@@ -4910,11 +4910,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | left.Flags | right.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | left.Flags | right.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -4990,11 +4990,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | operand.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | operand.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5076,11 +5076,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | argument.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | argument.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5161,11 +5161,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | target.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | target.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5263,11 +5263,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | target.Flags | value.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | target.Flags | value.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5336,11 +5336,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5404,11 +5404,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5472,11 +5472,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5540,11 +5540,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5608,11 +5608,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -5688,11 +5688,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | argument.Flags;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect | argument.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)

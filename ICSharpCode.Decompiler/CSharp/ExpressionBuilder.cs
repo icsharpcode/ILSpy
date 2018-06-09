@@ -2349,7 +2349,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new IndexerExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
 				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray()));
@@ -2360,14 +2360,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			return new MemberReferenceExpression(target, inst.Name)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(SpecialType.Dynamic));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
 		{
-			if (!(inst.ArgumentInfo[0].Flags.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
-				throw new NotSupportedException();
-			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
+				return ErrorExpression("Could not detect static type for DynamicInvokeConstructorInstruction");
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			//var names = inst.ArgumentInfo.Skip(1).Select(a => a.Name).ToArray();
 			return new ObjectCreateExpression(ConvertType(constructorType), arguments.Select(a => a.Expression))
 				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
@@ -2376,7 +2376,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(new MemberReferenceExpression(target, inst.Name, inst.TypeArguments.Select(ConvertType)), arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
 				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
@@ -2385,7 +2385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
 		{
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
 				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
@@ -2393,43 +2393,57 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression TranslateDynamicTarget(ILInstruction inst, CSharpArgumentInfo argumentInfo)
 		{
-			Debug.Assert(!argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.NamedArgument));
-			Debug.Assert(!argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.IsOut));
-			Debug.Assert(!argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.IsRef));
-			Debug.Assert(!argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.Constant));
+			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.NamedArgument));
+			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsOut));
+			Debug.Assert(!argumentInfo.HasFlag(CSharpArgumentInfoFlags.Constant));
 
-			if (argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType))
+			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst, out var callTargetType)) {
 				return new TypeReferenceExpression(ConvertType(callTargetType))
 					.WithoutILInstruction()
 					.WithRR(new TypeResolveResult(callTargetType));
+			}
+
 			IType targetType = SpecialType.Dynamic;
-			if (argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType))
+			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
 				targetType = argumentInfo.CompileTimeType;
-			return Translate(inst, targetType).ConvertTo(targetType, this);
+			}
+
+			var translatedTarget = Translate(inst, targetType).ConvertTo(targetType, this);
+
+			if (argumentInfo.HasFlag(CSharpArgumentInfoFlags.IsRef) && translatedTarget.Expression is DirectionExpression) {
+				// (ref x).member => x.member
+				translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
+			}
+
+			return translatedTarget;
 		}
 
 		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			foreach (var (argument, info) in arguments.Zip(argumentInfo))
+			foreach (var (argument, info) in arguments.Zip(argumentInfo)) {
 				yield return TranslateDynamicArgument(argument, info);
+			}
 		}
 
 		TranslatedExpression TranslateDynamicArgument(ILInstruction argument, CSharpArgumentInfo info)
 		{
-			Debug.Assert(!info.Flags.HasFlag(CSharpArgumentInfoFlags.IsStaticType));
+			Debug.Assert(!info.HasFlag(CSharpArgumentInfoFlags.IsStaticType));
 
 			IType typeHint = SpecialType.Dynamic;
-			if (info.Flags.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
+			if (info.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
 				typeHint = info.CompileTimeType;
 			}
 			var translatedExpression = Translate(argument, typeHint);
-			if (!(typeHint.Equals(SpecialType.Dynamic) && translatedExpression.Type.Equals(SpecialType.NullType)))
+			if (!(typeHint.Equals(SpecialType.Dynamic) && translatedExpression.Type.Equals(SpecialType.NullType))) {
 				translatedExpression = translatedExpression.ConvertTo(typeHint, this);
-			if (info.Flags.HasFlag(CSharpArgumentInfoFlags.IsOut)) {
+			}
+			if (info.HasFlag(CSharpArgumentInfoFlags.IsOut)) {
 				translatedExpression = ChangeDirectionExpressionToOut(translatedExpression);
 			}
-			if (info.Flags.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name))
+			if (info.HasFlag(CSharpArgumentInfoFlags.NamedArgument) && !string.IsNullOrWhiteSpace(info.Name)) {
 				translatedExpression = new TranslatedExpression(new NamedArgumentExpression(info.Name, translatedExpression.Expression));
+			}
+
 			return translatedExpression;
 		}
 
@@ -2451,11 +2465,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(inst.Arguments.Count >= 3);
 			var target = TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
-			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1));
+			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			var value = new TranslatedExpression(arguments.Last());
-			var indexer = new IndexerExpression(target, arguments.Take(inst.Arguments.Count - 2).Select(a => a.Expression))
+			var indexer = new IndexerExpression(target, arguments.SkipLast(1).Select(a => a.Expression))
 				.WithoutILInstruction()
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Take(inst.Arguments.Count - 2).Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray()));
 			return Assignment(indexer, value).WithILInstruction(inst);
 		}
 
@@ -2465,7 +2479,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 			var member = new MemberReferenceExpression(target, inst.Name)
 				.WithoutILInstruction()
-				.WithRR(new ResolveResult(SpecialType.Dynamic));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
 			return Assignment(member, value).WithILInstruction(inst);
 		}
 
@@ -2492,49 +2506,49 @@ namespace ICSharpCode.Decompiler.CSharp
 					return CreateBinaryOperator(BinaryOperatorType.Multiply, isChecked: true);
 				case ExpressionType.Divide:
 				case ExpressionType.DivideAssign:
-					return CreateBinaryOperator(BinaryOperatorType.Divide, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.Divide);
 				case ExpressionType.Modulo:
 				case ExpressionType.ModuloAssign:
-					return CreateBinaryOperator(BinaryOperatorType.Modulus, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.Modulus);
 				case ExpressionType.Equal:
-					return CreateBinaryOperator(BinaryOperatorType.Equality, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.Equality);
 				case ExpressionType.NotEqual:
-					return CreateBinaryOperator(BinaryOperatorType.InEquality, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.InEquality);
 				case ExpressionType.LessThan:
-					return CreateBinaryOperator(BinaryOperatorType.LessThan, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.LessThan);
 				case ExpressionType.LessThanOrEqual:
-					return CreateBinaryOperator(BinaryOperatorType.LessThanOrEqual, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.LessThanOrEqual);
 				case ExpressionType.GreaterThan:
-					return CreateBinaryOperator(BinaryOperatorType.GreaterThan, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.GreaterThan);
 				case ExpressionType.GreaterThanOrEqual:
-					return CreateBinaryOperator(BinaryOperatorType.GreaterThanOrEqual, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.GreaterThanOrEqual);
 				case ExpressionType.And:
 				case ExpressionType.AndAssign:
-					return CreateBinaryOperator(BinaryOperatorType.BitwiseAnd, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseAnd);
 				case ExpressionType.Or:
 				case ExpressionType.OrAssign:
-					return CreateBinaryOperator(BinaryOperatorType.BitwiseOr, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.BitwiseOr);
 				case ExpressionType.ExclusiveOr:
 				case ExpressionType.ExclusiveOrAssign:
-					return CreateBinaryOperator(BinaryOperatorType.ExclusiveOr, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.ExclusiveOr);
 				case ExpressionType.LeftShift:
 				case ExpressionType.LeftShiftAssign:
-					return CreateBinaryOperator(BinaryOperatorType.ShiftLeft, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.ShiftLeft);
 				case ExpressionType.RightShift:
 				case ExpressionType.RightShiftAssign:
-					return CreateBinaryOperator(BinaryOperatorType.ShiftRight, isChecked: false);
+					return CreateBinaryOperator(BinaryOperatorType.ShiftRight);
 				default:
 					return base.VisitDynamicBinaryOperatorInstruction(inst, context);
 			}
 
-			TranslatedExpression CreateBinaryOperator(BinaryOperatorType operatorType, bool isChecked)
+			TranslatedExpression CreateBinaryOperator(BinaryOperatorType operatorType, bool? isChecked = null)
 			{
 				var left = TranslateDynamicArgument(inst.Left, inst.LeftArgumentInfo);
 				var right = TranslateDynamicArgument(inst.Right, inst.RightArgumentInfo);
 				var boe = new BinaryOperatorExpression(left.Expression, operatorType, right.Expression);
-				if (isChecked)
+				if (isChecked == true)
 					boe.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
-				else
+				else if (isChecked == false)
 					boe.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 				return boe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 			}
@@ -2544,11 +2558,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			switch (inst.Operation) {
 				case ExpressionType.Not:
-					return CreateUnaryOperator(UnaryOperatorType.Not, isChecked: false);
+					return CreateUnaryOperator(UnaryOperatorType.Not);
 				case ExpressionType.Decrement:
-					return CreateUnaryOperator(UnaryOperatorType.Decrement, isChecked: false);
+					return CreateUnaryOperator(UnaryOperatorType.Decrement, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.Increment:
-					return CreateUnaryOperator(UnaryOperatorType.Increment, isChecked: false);
+					return CreateUnaryOperator(UnaryOperatorType.Increment, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.Negate:
 					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
 				case ExpressionType.NegateChecked:
@@ -2577,13 +2591,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					return base.VisitDynamicUnaryOperatorInstruction(inst, context);
 			}
 
-			TranslatedExpression CreateUnaryOperator(UnaryOperatorType operatorType, bool isChecked)
+			TranslatedExpression CreateUnaryOperator(UnaryOperatorType operatorType, bool? isChecked = null)
 			{
 				var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
 				var uoe = new UnaryOperatorExpression(operatorType, operand.Expression);
-				if (isChecked)
+				if (isChecked == true)
 					uoe.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
-				else
+				else if (isChecked == false)
 					uoe.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 				return uoe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
 			}
@@ -2594,7 +2608,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateDynamicArgument(inst.Target, inst.TargetArgumentInfo);
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 
-			var ae = new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation), value);
+			var ae = new AssignmentExpression(target, AssignmentExpression.GetAssignmentOperatorTypeFromExpressionType(inst.Operation).Value, value);
 			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext))
 				ae.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
 			else

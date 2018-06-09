@@ -84,8 +84,8 @@
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("dynamic.compound", "Common instruction for dynamic compound assignments.",
-			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor,
-			MayThrow, SideEffect, CustomWriteTo, ResultType("O"),
+			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"),
+			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("O"),
 			MatchCondition("this.CompoundAssignmentType == o.CompoundAssignmentType"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
@@ -280,27 +280,27 @@
 			MatchCondition("this.IsChecked == o.IsChecked")),
 
 		new OpCode("dynamic.binary.operator", "ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).",
-			CustomClassName("DynamicBinaryOperatorInstruction"), BaseClass("DynamicInstruction"), CustomArguments(("left", null), ("right", null)), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicBinaryOperatorInstruction"), Dynamic, CustomArguments(("left", null), ("right", null)), CustomWriteTo),
 		new OpCode("dynamic.unary.operator", "ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).",
-			CustomClassName("DynamicUnaryOperatorInstruction"), BaseClass("DynamicInstruction"), CustomArguments(("operand", null)), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicUnaryOperatorInstruction"), Dynamic, CustomArguments(("operand", null)), CustomWriteTo),
 		new OpCode("dynamic.convert", "ILAst representation of a cast inside a dynamic expression (maps to Binder.Convert).",
-			CustomClassName("DynamicConvertInstruction"), BaseClass("DynamicInstruction"), HasTypeOperand, MayThrow, CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicConvertInstruction"), Dynamic, HasTypeOperand, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
 		new OpCode("dynamic.getmember", "ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).",
-			CustomClassName("DynamicGetMemberInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomArguments(("target", new[] { "O" })), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicGetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" })), CustomConstructor, CustomWriteTo),
 		new OpCode("dynamic.setmember", "ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).",
-			CustomClassName("DynamicSetMemberInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomArguments(("target", new[] { "O" }), ("value", null)), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicSetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" }), ("value", null)), CustomWriteTo),
 		new OpCode("dynamic.getindex", "ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).",
-			CustomClassName("DynamicGetIndexInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicGetIndexInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.setindex", "ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).",
-			CustomClassName("DynamicSetIndexInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicSetIndexInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.invokemember", "ILAst representation of a method call inside a dynamic expression (maps to Binder.InvokeMember).",
-			CustomClassName("DynamicInvokeMemberInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicInvokeMemberInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.invokeconstructor", "ILAst representation of a constuctor invocation inside a dynamic expression (maps to Binder.InvokeConstructor).",
-			CustomClassName("DynamicInvokeConstructorInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicInvokeConstructorInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.invoke", "ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).",
-			CustomClassName("DynamicInvokeInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicInvokeInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.isevent", "ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.",
-			CustomClassName("DynamicIsEventInstruction"), BaseClass("DynamicInstruction"), MayThrow, CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
 
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
@@ -1118,4 +1118,6 @@ protected override void Disconnected()
 		opCode.GenerateMatch = false;
 		opCode.GeneratePerformMatch = false;
 	};
+
+	static Action<OpCode> Dynamic = BaseClass("DynamicInstruction") + MayThrow + SideEffect + CustomConstructor;
 #>

@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public static AssignmentOperatorType GetAssignmentOperatorTypeFromExpressionType(ExpressionType expressionType)
+		public static AssignmentOperatorType? GetAssignmentOperatorTypeFromExpressionType(ExpressionType expressionType)
 		{
 			switch (expressionType) {
 				case ExpressionType.AddAssign:
@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case ExpressionType.SubtractAssignChecked:
 					return AssignmentOperatorType.Subtract;
 				default:
-					throw new NotSupportedException($"ExpressionType.{expressionType} not supported!");
+					return null;
 			}
 		}
 	}
