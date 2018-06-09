@@ -359,6 +359,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!isEvent.Argument.Match(getMember.Target).Success)
 				return false;
+			if (!SemanticHelper.IsPure(isEvent.Argument.Flags))
+				return false;
 			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
 				return false;
 			if (!(invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName) && invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.ResultDiscarded)))
@@ -381,13 +383,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("+= / -= dynamic.isevent pattern -> dynamic.compound.op", inst);
 			inst.ReplaceWith(dynamicCompoundAssign);
-			if (getMember.Target.MatchLdLoc(out var v) && v.Kind == VariableKind.Local && v.IsSingleDefinition && v.LoadCount == 1 && v.StoreInstructions[0] is StLoc initStore) {
-				if (ILInlining.CanInlineInto(dynamicCompoundAssign, v, initStore.Value)) {
-					// HACK: if inlining is possible, we can 'cheat' a bit and change the variable kind to StackSlot
-					// so inlining or copy propagation will take care of the extra compiler-generated local.
-					v.Kind = VariableKind.StackSlot;
-				}
-			}
 			return true;
 		}
 
@@ -398,27 +393,51 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		protected internal override void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
 		{
-			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment)) {
-				base.VisitDynamicSetMemberInstruction(inst);
+			base.VisitDynamicSetMemberInstruction(inst);
+
+			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
 				return;
-			}
-			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp)) {
-				base.VisitDynamicSetMemberInstruction(inst);
+			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp))
 				return;
-			}
-			if (!(binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember)) {
-				base.VisitDynamicSetMemberInstruction(inst);
+			if (!(binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember))
 				return;
-			}
-			if (!dynamicGetMember.Target.Match(inst.Target).Success) {
-				base.VisitDynamicSetMemberInstruction(inst);
+			if (!dynamicGetMember.Target.Match(inst.Target).Success)
 				return;
-			}
-			if (inst.Name != dynamicGetMember.Name || !DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation)) {
-				base.VisitDynamicSetMemberInstruction(inst);
+			if (!SemanticHelper.IsPure(dynamicGetMember.Target.Flags))
 				return;
-			}
+			if (inst.Name != dynamicGetMember.Name || !DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
+				return;
 			context.Step("dynamic.setmember.compound -> dynamic.compound.op", inst);
+			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
+		}
+
+		/// <summary>
+		/// dynamic.setindex.compound(target, index, dynamic.binary.operator op(dynamic.getindex(target, index), value))
+		/// =>
+		/// dynamic.compound.op (dynamic.getindex(target, index), value)
+		/// </summary>
+		protected internal override void VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst)
+		{
+			base.VisitDynamicSetIndexInstruction(inst);
+
+			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
+				return;
+			if (!(inst.Arguments.LastOrDefault() is DynamicBinaryOperatorInstruction binaryOp))
+				return;
+			if (!(binaryOp.Left is DynamicGetIndexInstruction dynamicGetIndex))
+				return;
+			if (inst.Arguments.Count != dynamicGetIndex.Arguments.Count + 1)
+				return;
+			// Ensure that same arguments are passed to dynamicGetIndex and inst:
+			for (int j = 0; j < dynamicGetIndex.Arguments.Count; j++) {
+				if (!SemanticHelper.IsPure(dynamicGetIndex.Arguments[j].Flags))
+					return;
+				if (!dynamicGetIndex.Arguments[j].Match(dynamicGetIndex.Arguments[j]).Success)
+					return;
+			}
+			if (!DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
+				return;
+			context.Step("dynamic.setindex.compound -> dynamic.compound.op", inst);
 			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
