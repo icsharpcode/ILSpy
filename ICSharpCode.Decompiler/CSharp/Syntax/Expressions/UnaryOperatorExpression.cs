@@ -117,6 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case UnaryOperatorType.NullConditional:
 					return NullConditionalRole;
 				case UnaryOperatorType.NullConditionalRewrap:
+				case UnaryOperatorType.IsTrue:
 					return null; // no syntax
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
@@ -193,5 +194,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This has no syntax in C#, but the node is used to ensure parentheses are inserted where necessary.
 		/// </summary>
 		NullConditionalRewrap,
+		/// <summary>
+		/// Implicit call of "operator true".
+		/// </summary>
+		IsTrue,
 	}
 }

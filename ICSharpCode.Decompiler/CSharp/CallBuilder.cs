@@ -167,16 +167,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				arg = arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true);
-				if (parameter.IsOut && arg.Expression is DirectionExpression dirExpr && arg.ResolveResult is ByReferenceResolveResult brrr) {
-					dirExpr.FieldDirection = FieldDirection.Out;
-					dirExpr.RemoveAnnotations<ByReferenceResolveResult>();
-					if (brrr.ElementResult == null)
-						brrr = new ByReferenceResolveResult(brrr.ElementType, isOut: true);
-					else
-						brrr = new ByReferenceResolveResult(brrr.ElementResult, isOut: true);
-					dirExpr.AddAnnotation(brrr);
-					arg = new TranslatedExpression(dirExpr);
+				IType parameterType;
+				if (parameter.Type.Kind == TypeKind.Dynamic) {
+					parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
+				} else {
+					parameterType = parameter.Type;
+				}
+
+				arg = arg.ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: arg.Type.Kind != TypeKind.Dynamic);
+
+				if (parameter.IsOut) {
+					arg = ExpressionBuilder.ChangeDirectionExpressionToOut(arg);
 				}
 
 				arguments.Add(arg);
@@ -222,15 +223,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(rr);
 				} else {
 					if (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array, arguments, argumentNames, out _) != OverloadResolutionErrors.None) {
-						for (int i = 0; i < arguments.Count; i++) {
-							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
-								if (arguments[i].Expression is LambdaExpression lambda) {
-									ModifyReturnTypeOfLambda(lambda);
-								}
-							} else {
-								arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
-							}
-						}
+						CastArguments(arguments, expectedParameters);
 					}
 					return new ObjectCreateExpression(
 						expressionBuilder.ConvertType(method.DeclaringType),
@@ -285,15 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
 								if (!argumentsCasted) {
 									argumentsCasted = true;
-									for (int i = 0; i < arguments.Count; i++) {
-										if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
-											if (arguments[i].Expression is LambdaExpression lambda) {
-												ModifyReturnTypeOfLambda(lambda);
-											}
-										} else {
-											arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
-										}
-									}
+									CastArguments(arguments, expectedParameters);
 								} else if (!requireTarget) {
 									requireTarget = true;
 									targetResolveResult = target.ResolveResult;
@@ -340,6 +325,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					var argumentExpressions = GetArgumentExpressions(arguments, argumentNames);
 					return new InvocationExpression(targetExpr, argumentExpressions)
 						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod, argumentResolveResults, isExpandedForm: isExpandedForm));
+				}
+			}
+		}
+
+		private void CastArguments(List<TranslatedExpression> arguments, List<IParameter> expectedParameters)
+		{
+			for (int i = 0; i < arguments.Count; i++) {
+				if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
+					if (arguments[i].Expression is LambdaExpression lambda) {
+						ModifyReturnTypeOfLambda(lambda);
+					}
+				} else {
+					IType parameterType;
+					if (expectedParameters[i].Type.Kind == TypeKind.Dynamic) {
+						parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
+					} else {
+						parameterType = expectedParameters[i].Type;
+					}
+
+					arguments[i] = arguments[i].ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: false);
 				}
 			}
 		}

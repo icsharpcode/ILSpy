@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy
 					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
-				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
+				reader.WriteTypedIL(method.Body, typeSystem.Resolve(method), output, options.CancellationToken);
 			}
 		}
 

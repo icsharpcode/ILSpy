@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -212,6 +213,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
+			
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
 				output.Write(".new");
 			else
@@ -223,6 +225,71 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			this.Value.WriteTo(output, options);
 			output.Write(')');
+		}
+	}
+
+	public partial class DynamicCompoundAssign : CompoundAssignmentInstruction
+	{
+		public ExpressionType Operation { get; }
+		public CSharpArgumentInfo TargetArgumentInfo { get; }
+		public CSharpArgumentInfo ValueArgumentInfo { get; }
+		public CSharpBinderFlags BinderFlags { get; }
+
+		public DynamicCompoundAssign(ExpressionType op, CSharpBinderFlags binderFlags, ILInstruction target, CSharpArgumentInfo targetArgumentInfo, ILInstruction value, CSharpArgumentInfo valueArgumentInfo)
+			: base(OpCode.DynamicCompoundAssign, CompoundAssignmentTypeFromOperation(op), target, value)
+		{
+			if (!IsExpressionTypeSupported(op))
+				throw new ArgumentOutOfRangeException("op");
+			this.BinderFlags = binderFlags;
+			this.Operation = op;
+			this.TargetArgumentInfo = targetArgumentInfo;
+			this.ValueArgumentInfo = valueArgumentInfo;
+		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write("." + Operation.ToString().ToLower());
+			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
+			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
+				output.Write(".new");
+			else
+				output.Write(".old");
+			output.Write(' ');
+			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
+		}
+
+		internal static bool IsExpressionTypeSupported(ExpressionType type)
+		{
+			return type == ExpressionType.AddAssign
+				|| type == ExpressionType.AddAssignChecked
+				|| type == ExpressionType.AndAssign
+				|| type == ExpressionType.DivideAssign
+				|| type == ExpressionType.ExclusiveOrAssign
+				|| type == ExpressionType.LeftShiftAssign
+				|| type == ExpressionType.ModuloAssign
+				|| type == ExpressionType.MultiplyAssign
+				|| type == ExpressionType.MultiplyAssignChecked
+				|| type == ExpressionType.OrAssign
+				|| type == ExpressionType.PostDecrementAssign
+				|| type == ExpressionType.PostIncrementAssign
+				|| type == ExpressionType.PreDecrementAssign
+				|| type == ExpressionType.PreIncrementAssign
+				|| type == ExpressionType.RightShiftAssign
+				|| type == ExpressionType.SubtractAssign
+				|| type == ExpressionType.SubtractAssignChecked;
+		}
+
+		static CompoundAssignmentType CompoundAssignmentTypeFromOperation(ExpressionType op)
+		{
+			switch (op) {
+				case ExpressionType.PostIncrementAssign:
+				case ExpressionType.PostDecrementAssign:
+					return CompoundAssignmentType.EvaluatesToOldValue;
+				default:
+					return CompoundAssignmentType.EvaluatesToNewValue;
+			}
 		}
 	}
 }

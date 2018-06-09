@@ -87,6 +87,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
+				new DynamicCallSiteTransform(),
 				new SwitchDetection(),
 				new SwitchOnStringTransform(),
 				new SwitchOnNullableTransform(),
@@ -141,6 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ProxyCallReplacer(),
 				new DelegateConstruction(),
 				new HighLevelLoopTransform(),
+				new IntroduceDynamicTypeOnLocals(),
 				new AssignVariableNames(),
 			};
 		}
@@ -228,6 +230,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.ArrayInitializers && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
+						return true;
+					if (settings.Dynamic && type.IsDelegate() && (type.Name.StartsWith("<>A", StringComparison.Ordinal) || type.Name.StartsWith("<>F", StringComparison.Ordinal)))
 						return true;
 				}
 				if (settings.ArrayInitializers && settings.SwitchStatementOnString && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))

@@ -1034,7 +1034,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
+		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
 		{
 			type = null;
 			return inst is CallInstruction getTypeCall

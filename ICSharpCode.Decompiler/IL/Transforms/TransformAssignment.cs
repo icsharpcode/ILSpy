@@ -293,6 +293,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step($"Compound assignment (user-defined binary)", compoundStore);
 				newInst = new UserDefinedCompoundAssign(operatorCall.Method, CompoundAssignmentType.EvaluatesToNewValue,
 					operatorCall.Arguments[0], rhs);
+			} else if (setterValue is DynamicBinaryOperatorInstruction dynamicBinaryOp) {
+				if (!IsMatchingCompoundLoad(dynamicBinaryOp.Left, compoundStore, forbiddenVariable: storeInSetter?.Variable))
+					return false;
+				context.Step($"Compound assignment (dynamic binary)", compoundStore);
+				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, dynamicBinaryOp.Left, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo);
 			} else {
 				return false;
 			}

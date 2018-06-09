@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		Indexing,
 
 		/// <summary>
-		/// The invocation is an object creation ( 'new a(b)' ). Also used when invoking a base constructor ( ' : base(a) ' ) and chaining constructors ( ' : this(a) ').
+		/// The invocation is an object creation ( 'new a(b)' ).
 		/// </summary>
 		ObjectCreation,
 	}

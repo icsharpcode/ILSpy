@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.compilation = typeSystem.Compilation;
 		}
 
+		IMethod method;
 		Cil.MethodBody body;
 		Cil.MethodDebugInformation debugInfo;
 		StackType methodReturnStackType;
@@ -67,11 +68,12 @@ namespace ICSharpCode.Decompiler.IL
 		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		
-		void Init(Cil.MethodBody body)
+		void Init(Cil.MethodBody body, IMethod method)
 		{
 			if (body == null)
 				throw new ArgumentNullException(nameof(body));
 			this.body = body;
+			this.method = method;
 			this.debugInfo = body.Method.DebugInformation;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;
@@ -167,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL
 					parameterType = typeSystem.Resolve(p.ParameterType, isFromSignature: true);
 				}
 			} else {
-				parameterType = typeSystem.Resolve(p.ParameterType, isFromSignature: true);
+				parameterType = method.Parameters[p.Index].Type;
 			}
 			Debug.Assert(!parameterType.IsUnbound());
 			if (parameterType.IsUnbound()) {
@@ -379,9 +381,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
 		/// </summary>
-		public void WriteTypedIL(Cil.MethodBody body, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
+		public void WriteTypedIL(Cil.MethodBody body, IMethod method, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Init(body);
+			Init(body, method);
 			ReadInstructions(cancellationToken);
 			foreach (var inst in instructionBuilder) {
 				if (inst is StLoc stloc && stloc.IsStackAdjustment) {
@@ -422,11 +424,11 @@ namespace ICSharpCode.Decompiler.IL
 		public ILFunction ReadIL(Cil.MethodBody body, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			Init(body);
+			var method = typeSystem.Resolve(body.Method);
+			Init(body, method);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var method = typeSystem.Resolve(body.Method);
 			var function = new ILFunction(method, body.Method, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);

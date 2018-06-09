@@ -257,5 +257,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return t?.Int();
 		}
+
+		private static dynamic DynamicNullProp(dynamic a)
+		{
+			return a?.b.c(1)?.d[10];
+		}
 	}
 }

@@ -208,18 +208,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
-					for (int i = 1; i < call.Arguments.Count; ++i) {
-						if (call.Arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
-							return false;
-						}
-					}
+					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
+						return false;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
+				} else if (inst is DynamicGetMemberInstruction dynGetMember) {
+					inst = dynGetMember.Target;
+				} else if (inst is DynamicInvokeMemberInstruction dynInvokeMember) {
+					inst = dynInvokeMember.Arguments[0];
+					if (ArgumentsAfterFirstMayUnwrapNull(dynInvokeMember.Arguments))
+						return false;
+				} else if (inst is DynamicGetIndexInstruction dynGetIndex) {
+					inst = dynGetIndex.Arguments[0];
+					if (ArgumentsAfterFirstMayUnwrapNull(dynGetIndex.Arguments))
+						return false;
 				} else {
 					// unknown node -> invalid chain
 					return false;
 				}
 				chainLength++;
+			}
+
+			bool ArgumentsAfterFirstMayUnwrapNull(InstructionCollection<ILInstruction> arguments)
+			{
+				// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
+				for (int i = 1; i < arguments.Count; ++i) {
+					if (arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			bool IsValidEndOfChain()
