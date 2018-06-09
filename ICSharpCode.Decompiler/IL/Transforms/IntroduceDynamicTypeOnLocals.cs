@@ -40,9 +40,7 @@ namespace ICSharpCode.Decompiler.IL
 				foreach (var load in variable.LoadInstructions) {
 					if (load.Parent is DynamicInstruction dynamicInstruction) {
 						var argumentInfo = dynamicInstruction.GetArgumentInfoOfChild(load.ChildIndex);
-						if (argumentInfo.Flags.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
-							variable.Type = argumentInfo.CompileTimeType;
-						} else {
+						if (!argumentInfo.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType)) {
 							variable.Type = SpecialType.Dynamic;
 						}
 					}
