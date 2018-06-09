@@ -2,8 +2,17 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal static class Extension
+	{
+		public static dynamic ToDynamic(this int i, dynamic info)
+		{
+			throw null;
+		}
+	}
+
 	internal class DynamicTests
 	{
+
 		private class Base
 		{
 			public Base(object baseObj)
@@ -16,6 +25,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public Derived(dynamic d)
 				: base((object)d)
 			{
+			}
+		}
+
+		private struct MyValueType
+		{
+			private readonly dynamic _getOnlyProperty;
+			public dynamic Field;
+#if CS60
+			public dynamic GetOnlyProperty => _getOnlyProperty;
+#else
+			public dynamic GetOnlyProperty {
+				get {
+					return _getOnlyProperty;
+				}
+			}
+#endif
+
+			public dynamic Property {
+				get;
+				set;
+			}
+
+			public void Method(dynamic a)
+			{
+
 			}
 		}
 
@@ -90,8 +124,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a.Test5(a, a.Number, a.String);
 			a[0] = 3;
 			a.Index[a.Number] = 5;
+			a.Index[a.Number] += 5;
 			a.Setter = new DynamicTests();
 			a.Setter2 = 5;
+		}
+
+		private static void StructMemberAccess(MyValueType valueType)
+		{
+			valueType.Field = 0;
+			valueType.Field += 5;
+			valueType.Field[1] = 5;
+			valueType.Field.CallMe();
+			DynamicTests.Casts(valueType.GetOnlyProperty);
+			valueType.GetOnlyProperty.CallMe();
+			valueType.Property = 0;
+			valueType.Property += 5;
+			valueType.Property[1] = 5;
+			valueType.Property.CallMe(5.ToDynamic((object)valueType.Property.Call()));
+			valueType.Method(valueType.GetOnlyProperty + valueType.Field);
 		}
 
 		private static void RequiredCasts()
@@ -187,13 +237,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				DynamicTests.MemberAccess(a * b);
 				DynamicTests.MemberAccess(a * 1);
 				DynamicTests.MemberAccess(a * null);
+				DynamicTests.MemberAccess(a / b);
+				DynamicTests.MemberAccess(a / 1);
+				DynamicTests.MemberAccess(a / null);
+				DynamicTests.MemberAccess(a % b);
+				DynamicTests.MemberAccess(a % 1);
+				DynamicTests.MemberAccess(a % null);
 			}
-			DynamicTests.MemberAccess(a / b);
-			DynamicTests.MemberAccess(a / 1);
-			DynamicTests.MemberAccess(a / null);
-			DynamicTests.MemberAccess(a % b);
-			DynamicTests.MemberAccess(a % 1);
-			DynamicTests.MemberAccess(a % null);
 		}
 
 		private static void UncheckedArithmeticBinaryOperators(dynamic a, dynamic b)
@@ -208,13 +258,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				DynamicTests.MemberAccess(unchecked(a * b));
 				DynamicTests.MemberAccess(a * 1);
 				DynamicTests.MemberAccess(a * null);
+				DynamicTests.MemberAccess(a / b);
+				DynamicTests.MemberAccess(a / 1);
+				DynamicTests.MemberAccess(a / null);
+				DynamicTests.MemberAccess(a % b);
+				DynamicTests.MemberAccess(a % 1);
+				DynamicTests.MemberAccess(a % null);
 			}
-			DynamicTests.MemberAccess(a / b);
-			DynamicTests.MemberAccess(a / 1);
-			DynamicTests.MemberAccess(a / null);
-			DynamicTests.MemberAccess(a % b);
-			DynamicTests.MemberAccess(a % 1);
-			DynamicTests.MemberAccess(a % null);
 		}
 
 		private static void RelationalOperators(dynamic a, dynamic b)
@@ -246,6 +296,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			MemberAccess(checked((int)a));
 		}
 
+		private static void M(object o)
+		{
+		}
+
+		private static void M2(dynamic d)
+		{
+		}
+
+		private static void M3(int i)
+		{
+		}
+
+		private static void NotDynamicDispatch(dynamic d)
+		{
+			DynamicTests.M(d);
+			M((object)d);
+			DynamicTests.M2(d);
+			M2((object)d);
+		}
+
 		private static void CompoundAssignment(dynamic a, dynamic b)
 		{
 			a.Setter2 += 5;
@@ -274,7 +344,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void UnaryOperators(dynamic a)
 		{
-			// TODO : beautify inc/dec on locals
+			// TODO : beautify inc/dec on locals and fields
 			//a--;
 			//a++;
 			//--a;
