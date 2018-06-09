@@ -337,7 +337,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						ModifyReturnTypeOfLambda(lambda);
 					}
 				} else {
-					arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
+					IType parameterType;
+					if (expectedParameters[i].Type.Kind == TypeKind.Dynamic) {
+						parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
+					} else {
+						parameterType = expectedParameters[i].Type;
+					}
+
+					arguments[i] = arguments[i].ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: false);
 				}
 			}
 		}
