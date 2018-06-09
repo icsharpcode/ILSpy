@@ -261,7 +261,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
 				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
-					.Select(arg => arg.Parent is CallInstruction c ? GetNameFromParameter(c.GetParameter(arg.ChildIndex)) : null)
+					.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
 					.Where(arg => !string.IsNullOrWhiteSpace(arg))
 					.Except(currentFieldNames).ToList();
 				if (proposedNameForAddress.Count > 0) {
@@ -308,20 +308,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return proposedName;
 			}
-		}
-
-		static readonly FullTypeName DllImportAttributeName = new TopLevelTypeName("System.Runtime.InteropServices", "DllImportAttribute");
-
-		static string GetNameFromParameter(IParameter param)
-		{
-			if (param == null || !(param.Owner is IMethod method))
-				return string.Empty;
-			string name = param.Name;
-			// Special case for DllImports:
-			if (name.Length > 1 && name.StartsWith("p", StringComparison.Ordinal) && method.GetAttribute(DllImportAttributeName) != null) {
-				return name.Substring(1);
-			}
-			return name;
 		}
 
 		static string GetNameFromInstruction(ILInstruction inst)
