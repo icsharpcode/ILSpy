@@ -112,8 +112,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					// Some project references don't have assemblies, maybe not compiled yet?
 					if (owner.ShowMessage(
 						OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_WARNING,
-						"The project output for '{0}' could not be found for analysis. Would you like to rebuild the solution?",
-						symbolAssemblyName) == (int)MessageButtonResult.IDYES) {
+						"The project output for '{1}' could not be found for analysis.{0}{0}Expected path:{0}{0}{2}{0}{0}Would you like to build the solution?",
+						Environment.NewLine, symbolAssemblyName, invalidSymbolReference.AssemblyFile
+						) == (int)MessageButtonResult.IDYES) {
 						owner.DTE.ExecuteCommand("Build.BuildSolution");
 					}
 				} else {
