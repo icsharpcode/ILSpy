@@ -417,7 +417,10 @@
     </ItemGroup>
     <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
+
+  <Import Project="$(DevEnvDir)\..\..\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.props" />
+  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="editbin /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
+    <Exec Command="&quot;$(DevEnvDir)\..\..\VC\Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
   </Target>
 </Project>
