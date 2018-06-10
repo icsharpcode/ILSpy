@@ -417,4 +417,7 @@
     </ItemGroup>
     <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="editbin /stack:16777216 &quot;$(TargetPath)&quot;&#xD;&#xA;EXIT 0" />
+  </Target>
 </Project>
