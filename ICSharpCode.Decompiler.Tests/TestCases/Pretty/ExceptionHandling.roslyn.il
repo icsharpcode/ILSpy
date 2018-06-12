@@ -854,6 +854,366 @@
     IL_000c:  br.s       IL_000c
   } // end of method ExceptionHandling::ThrowInFinally
 
+  .method public hidebysig instance bool 
+          EarlyExitInLoopTry() cil managed
+  {
+    // Code size       45 (0x2d)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  br.s       IL_0027
+
+    IL_0003:  nop
+    .try
+    {
+      IL_0004:  nop
+      IL_0005:  ldarg.0
+      IL_0006:  ldc.i4.0
+      IL_0007:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_000c:  ldc.i4.0
+      IL_000d:  ceq
+      IL_000f:  stloc.0
+      IL_0010:  ldloc.0
+      IL_0011:  brfalse.s  IL_0018
+
+      IL_0013:  nop
+      IL_0014:  ldc.i4.0
+      IL_0015:  stloc.1
+      IL_0016:  leave.s    IL_002b
+
+      IL_0018:  call       void [mscorlib]System.Console::WriteLine()
+      IL_001d:  nop
+      IL_001e:  nop
+      IL_001f:  leave.s    IL_0026
+
+    }  // end .try
+    catch [mscorlib]System.Object 
+    {
+      IL_0021:  pop
+      IL_0022:  nop
+      IL_0023:  nop
+      IL_0024:  leave.s    IL_0026
+
+    }  // end handler
+    IL_0026:  nop
+    IL_0027:  ldc.i4.1
+    IL_0028:  stloc.2
+    IL_0029:  br.s       IL_0003
+
+    IL_002b:  ldloc.1
+    IL_002c:  ret
+  } // end of method ExceptionHandling::EarlyExitInLoopTry
+
+  .method public hidebysig instance bool 
+          ComplexConditionalReturnInThrow() cil managed
+  {
+    // Code size       327 (0x147)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4,
+             bool V_5)
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  ldarg.0
+      IL_0003:  ldc.i4.0
+      IL_0004:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_0009:  stloc.0
+      IL_000a:  ldloc.0
+      IL_000b:  brfalse.s  IL_0065
+
+      IL_000d:  nop
+      IL_000e:  ldarg.0
+      IL_000f:  ldc.i4.1
+      IL_0010:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_0015:  stloc.1
+      IL_0016:  ldloc.1
+      IL_0017:  brfalse.s  IL_0032
+
+      IL_0019:  nop
+      IL_001a:  ldstr      "0 && 1"
+      IL_001f:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0024:  nop
+      IL_0025:  ldarg.0
+      IL_0026:  ldc.i4.2
+      IL_0027:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_002c:  stloc.2
+      IL_002d:  leave      IL_0145
+
+      IL_0032:  ldarg.0
+      IL_0033:  ldc.i4.3
+      IL_0034:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_0039:  stloc.3
+      IL_003a:  ldloc.3
+      IL_003b:  brfalse.s  IL_0059
+
+      IL_003d:  nop
+      IL_003e:  ldstr      "0 && 3"
+      IL_0043:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0048:  nop
+      IL_0049:  ldarg.0
+      IL_004a:  ldc.i4.2
+      IL_004b:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+      IL_0050:  ldc.i4.0
+      IL_0051:  ceq
+      IL_0053:  stloc.2
+      IL_0054:  leave      IL_0145
+
+      IL_0059:  ldstr      "0"
+      IL_005e:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0063:  nop
+      IL_0064:  nop
+      IL_0065:  ldstr      "End Try"
+      IL_006a:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_006f:  nop
+      IL_0070:  nop
+      IL_0071:  leave      IL_0141
+
+    }  // end .try
+    catch [mscorlib]System.Object 
+    {
+      IL_0076:  pop
+      IL_0077:  nop
+      .try
+      {
+        .try
+        {
+          IL_0078:  nop
+          .try
+          {
+            IL_0079:  nop
+            IL_007a:  ldarg.0
+            IL_007b:  ldc.i4.0
+            IL_007c:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_0081:  brtrue.s   IL_008c
+
+            IL_0083:  ldarg.0
+            IL_0084:  ldc.i4.1
+            IL_0085:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_008a:  brfalse.s  IL_0095
+
+            IL_008c:  ldarg.0
+            IL_008d:  ldc.i4.2
+            IL_008e:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_0093:  brtrue.s   IL_009e
+
+            IL_0095:  ldarg.0
+            IL_0096:  ldc.i4.3
+            IL_0097:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_009c:  br.s       IL_009f
+
+            IL_009e:  ldc.i4.1
+            IL_009f:  stloc.s    V_4
+            IL_00a1:  ldloc.s    V_4
+            IL_00a3:  brfalse.s  IL_00c2
+
+            IL_00a5:  nop
+            IL_00a6:  ldarg.0
+            IL_00a7:  ldc.i4.4
+            IL_00a8:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00ad:  brfalse.s  IL_00bb
+
+            IL_00af:  ldarg.0
+            IL_00b0:  ldc.i4.5
+            IL_00b1:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00b6:  ldc.i4.0
+            IL_00b7:  ceq
+            IL_00b9:  br.s       IL_00bc
+
+            IL_00bb:  ldc.i4.0
+            IL_00bc:  stloc.2
+            IL_00bd:  leave      IL_0145
+
+            IL_00c2:  ldarg.0
+            IL_00c3:  ldc.i4.6
+            IL_00c4:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00c9:  brtrue.s   IL_00d4
+
+            IL_00cb:  ldarg.0
+            IL_00cc:  ldc.i4.7
+            IL_00cd:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00d2:  br.s       IL_00d5
+
+            IL_00d4:  ldc.i4.1
+            IL_00d5:  stloc.s    V_5
+            IL_00d7:  ldloc.s    V_5
+            IL_00d9:  brfalse.s  IL_00f3
+
+            IL_00db:  nop
+            IL_00dc:  ldarg.0
+            IL_00dd:  ldc.i4.8
+            IL_00de:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00e3:  brtrue.s   IL_00ef
+
+            IL_00e5:  ldarg.0
+            IL_00e6:  ldc.i4.s   9
+            IL_00e8:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+            IL_00ed:  br.s       IL_00f0
+
+            IL_00ef:  ldc.i4.1
+            IL_00f0:  stloc.2
+            IL_00f1:  leave.s    IL_0145
+
+            IL_00f3:  nop
+            IL_00f4:  leave.s    IL_0106
+
+          }  // end .try
+          catch [mscorlib]System.Object 
+          {
+            IL_00f6:  pop
+            IL_00f7:  nop
+            IL_00f8:  ldstr      "Catch2"
+            IL_00fd:  call       void [mscorlib]System.Console::WriteLine(string)
+            IL_0102:  nop
+            IL_0103:  nop
+            IL_0104:  leave.s    IL_0106
+
+          }  // end handler
+          IL_0106:  ldarg.0
+          IL_0107:  ldc.i4.s   10
+          IL_0109:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+          IL_010e:  brfalse.s  IL_011a
+
+          IL_0110:  ldarg.0
+          IL_0111:  ldc.i4.s   11
+          IL_0113:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling::B(int32)
+          IL_0118:  br.s       IL_011b
+
+          IL_011a:  ldc.i4.0
+          IL_011b:  stloc.2
+          IL_011c:  leave.s    IL_0145
+
+        }  // end .try
+        catch [mscorlib]System.Object 
+        {
+          IL_011e:  pop
+          IL_011f:  nop
+          IL_0120:  ldstr      "Catch"
+          IL_0125:  call       void [mscorlib]System.Console::WriteLine(string)
+          IL_012a:  nop
+          IL_012b:  nop
+          IL_012c:  leave.s    IL_012e
+
+        }  // end handler
+        IL_012e:  leave.s    IL_013e
+
+      }  // end .try
+      finally
+      {
+        IL_0130:  nop
+        IL_0131:  ldstr      "Finally"
+        IL_0136:  call       void [mscorlib]System.Console::WriteLine(string)
+        IL_013b:  nop
+        IL_013c:  nop
+        IL_013d:  endfinally
+      }  // end handler
+      IL_013e:  nop
+      IL_013f:  leave.s    IL_0141
+
+    }  // end handler
+    IL_0141:  ldc.i4.0
+    IL_0142:  stloc.2
+    IL_0143:  br.s       IL_0145
+
+    IL_0145:  ldloc.2
+    IL_0146:  ret
+  } // end of method ExceptionHandling::ComplexConditionalReturnInThrow
+
+  .method public hidebysig instance void 
+          AppropriateLockExit() cil managed
+  {
+    // Code size       112 (0x70)
+    .maxstack  2
+    .locals init (int32 V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4,
+             bool V_5)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  ldarg.0
+    IL_0004:  stloc.1
+    IL_0005:  ldc.i4.0
+    IL_0006:  stloc.2
+    .try
+    {
+      IL_0007:  ldloc.1
+      IL_0008:  ldloca.s   V_2
+      IL_000a:  call       void [mscorlib]System.Threading.Monitor::Enter(object,
+                                                                          bool&)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  ldloc.0
+      IL_0012:  ldc.i4     0x100
+      IL_0017:  cgt
+      IL_0019:  ldc.i4.0
+      IL_001a:  ceq
+      IL_001c:  stloc.3
+      IL_001d:  ldloc.3
+      IL_001e:  brfalse.s  IL_002b
+
+      IL_0020:  nop
+      IL_0021:  ldc.i4.0
+      IL_0022:  call       void [mscorlib]System.Console::WriteLine(int32)
+      IL_0027:  nop
+      IL_0028:  nop
+      IL_0029:  br.s       IL_0061
+
+      IL_002b:  ldloc.0
+      IL_002c:  ldc.i4     0x400
+      IL_0031:  cgt
+      IL_0033:  ldc.i4.0
+      IL_0034:  ceq
+      IL_0036:  stloc.s    V_4
+      IL_0038:  ldloc.s    V_4
+      IL_003a:  brfalse.s  IL_0047
+
+      IL_003c:  nop
+      IL_003d:  ldc.i4.1
+      IL_003e:  call       void [mscorlib]System.Console::WriteLine(int32)
+      IL_0043:  nop
+      IL_0044:  nop
+      IL_0045:  br.s       IL_0061
+
+      IL_0047:  ldloc.0
+      IL_0048:  ldc.i4     0x4000
+      IL_004d:  cgt
+      IL_004f:  ldc.i4.0
+      IL_0050:  ceq
+      IL_0052:  stloc.s    V_5
+      IL_0054:  ldloc.s    V_5
+      IL_0056:  brfalse.s  IL_0061
+
+      IL_0058:  nop
+      IL_0059:  ldc.i4.2
+      IL_005a:  call       void [mscorlib]System.Console::WriteLine(int32)
+      IL_005f:  nop
+      IL_0060:  nop
+      IL_0061:  nop
+      IL_0062:  leave.s    IL_006f
+
+    }  // end .try
+    finally
+    {
+      IL_0064:  ldloc.2
+      IL_0065:  brfalse.s  IL_006e
+
+      IL_0067:  ldloc.1
+      IL_0068:  call       void [mscorlib]System.Threading.Monitor::Exit(object)
+      IL_006d:  nop
+      IL_006e:  endfinally
+    }  // end handler
+    IL_006f:  ret
+  } // end of method ExceptionHandling::AppropriateLockExit
+
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
