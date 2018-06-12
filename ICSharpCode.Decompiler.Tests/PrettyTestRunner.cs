@@ -106,7 +106,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public void ExceptionHandling([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				NullPropagation = false
+				NullPropagation = false,
+				RemoveDeadCode = !cscOptions.HasFlag(CSharpCompilerOptions.UseRoslyn)
 			});
 		}
 
@@ -161,7 +162,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Loops([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				RemoveDeadCode = !cscOptions.HasFlag(CSharpCompilerOptions.Optimize)
+			});
 		}
 
 		[Test]
