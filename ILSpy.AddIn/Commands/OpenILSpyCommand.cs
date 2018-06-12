@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;
 
@@ -89,8 +90,9 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					string assemblyName = assemblyDef.Name.Name;
 					if (IsReferenceAssembly(assemblyDef)) {
+						string resolvedAssemblyFile = GacInterop.FindAssemblyInNetGac(assemblyDef.Name);
 						dict.Add(assemblyName, 
-							new DetectedReference(assemblyName, GacInterop.FindAssemblyInNetGac(assemblyDef.Name), false));
+							new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 					} else {
 						dict.Add(assemblyName, 
 							new DetectedReference(assemblyName, reference.Display, false));
@@ -99,12 +101,31 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 			foreach (var projectReference in parentProject.ProjectReferences) {
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
+				var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 				if (roslynProject != null && project != null)
 					dict.Add(roslynProject.AssemblyName, 
 						new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
 			}
 			return dict;
+		}
+
+		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
+		{
+			foreach (var project in projects) {
+				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder) {
+					// This is a solution folder -> search in sub-projects
+					var subProject = FindProject(
+						project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(), 
+						projectFile);
+					if (subProject != null)
+						return subProject;
+				} else {
+					if (project.FileName == projectFile)
+						return project;
+				}
+			}
+
+			return null;
 		}
 
 		protected bool IsReferenceAssembly(AssemblyDefinition assemblyDef)

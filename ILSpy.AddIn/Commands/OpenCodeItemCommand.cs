@@ -87,8 +87,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			var symbolAssemblyName = symbol.ContainingAssembly?.Identity?.Name;
 
 			// Add our own project as well (not among references)
-			var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>()
-				.FirstOrDefault(p => p.FileName == roslynProject.FilePath);
+			var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 			if (project == null) {
 				owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, "Can't show ILSpy for this code element!");
 				return;
