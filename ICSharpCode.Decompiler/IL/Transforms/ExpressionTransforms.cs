@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		internal StatementTransformContext context;
 
-		public static void RunOnSingleStatment(ILInstruction statement, ILTransformContext context)
+		public static void RunOnSingleStatement(ILInstruction statement, ILTransformContext context)
 		{
 			if (statement == null)
 				throw new ArgumentNullException(nameof(statement));
