@@ -75,13 +75,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ifInstruction.Condition = Comp.LogicNot(ifInstruction.Condition);
 			ifInstruction.FalseInst = ifInstruction.TrueInst;
 			//move the rest of the body into a new block
-			loopBody = ConditionDetection.ExtractBlock(loop.EntryPoint, 1, loop.EntryPoint.Instructions.Count - 1);
+			loopBody = ConditionDetection.ExtractBlock(loop.EntryPoint, 1, loop.EntryPoint.Instructions.Count);
 			loop.Blocks.Insert(1, loopBody);
 			if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
 				loopBody.Instructions.Add(new Leave(loop));
 
 			ifInstruction.TrueInst = new Branch(loopBody);
-			ExpressionTransforms.RunOnSingleStatment(ifInstruction, context);
+			ExpressionTransforms.RunOnSingleStatement(ifInstruction, context);
 			
 			// Analyze conditions and decide whether to move some of them out of the condition block:
 			/*var conditions = new List<ILInstruction>();
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				returnCondition.Condition = Comp.LogicNot(returnCondition.Condition);
 				returnCondition.TrueInst = leaveFunction;
 				// simplify the condition:
-				ExpressionTransforms.RunOnSingleStatment(returnCondition, context);
+				ExpressionTransforms.RunOnSingleStatement(returnCondition, context);
 				topLevelBlock.Instructions.RemoveAt(returnCondition.ChildIndex + 1);
 				topLevelBlock.Instructions.AddRange(originalBlock.Instructions);
 				originalBlock = topLevelBlock;
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// insert the combined conditions into the condition block:
 			conditionBlock.Instructions.Add(condition);
 			// simplify the condition:
-			ExpressionTransforms.RunOnSingleStatment(condition, context);
+			ExpressionTransforms.RunOnSingleStatement(condition, context);
 			// transform complete
 			loop.Kind = ContainerKind.DoWhile;
 			return true;
@@ -388,11 +388,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("Transform to for loop", loop);
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
-				ExpressionTransforms.RunOnSingleStatment(forCondition, context);
+				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
 					IfInstruction inst;
 					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
-					ExpressionTransforms.RunOnSingleStatment(inst, context);
+					ExpressionTransforms.RunOnSingleStatement(inst, context);
 				}
 				// create a new increment block and add it at the end:
 				int secondToLastIndex = secondToLast.ChildIndex;

@@ -107,7 +107,8 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				NullPropagation = false,
-				RemoveDeadCode = !cscOptions.HasFlag(CSharpCompilerOptions.UseRoslyn)
+				// legacy csc generates a dead store in debug builds
+				RemoveDeadCode = (cscOptions == CSharpCompilerOptions.None)
 			});
 		}
 
@@ -163,7 +164,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public void Loops([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				RemoveDeadCode = !cscOptions.HasFlag(CSharpCompilerOptions.Optimize)
+				// legacy csc generates a dead store in debug builds
+				RemoveDeadCode = (cscOptions == CSharpCompilerOptions.None)
 			});
 		}
 

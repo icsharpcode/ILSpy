@@ -150,10 +150,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (exitInst is Branch branch
 			    && branch.TargetBlock.Parent == currentContainer
-			    && branch.TargetBlock.IncomingEdgeCount == 1
-			    && branch.TargetBlock.FinalInstruction is Nop) {
+			    && branch.TargetBlock.IncomingEdgeCount == 1) {
 				// if the incoming edge count is 1, then this must be the sole branch, and dominance is already ensured
 				Debug.Assert(cfgNode.Dominates(context.ControlFlowGraph.GetNode(branch.TargetBlock)));
+				// can't have "final instructions" in control flow blocks
+				Debug.Assert(branch.TargetBlock.FinalInstruction is Nop);
 				return true;
 			}
 
@@ -174,6 +175,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// if there are any exits from the then branch, then the else is redundant and shouldn't exist
 			Debug.Assert(IsEmpty(ifInst.FalseInst));
+			Debug.Assert(ifInst.Parent == block);
 			var elseExits = new List<ILInstruction>();
 			int falseInstIndex = block.Instructions.IndexOf(ifInst) + 1;
 			AddExits(block, falseInstIndex, elseExits);
@@ -182,9 +184,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// find the common exit with the highest block exit priority
 			ILInstruction commonExit = null;
-			foreach (var exit in commonExits)
+			foreach (var exit in commonExits) {
 				if (commonExit == null || CompareBlockExitPriority(exit, commonExit) > 0)
 					commonExit = exit;
+			}
 			
 			if (commonExit == null)
 				return;
@@ -208,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (ifInst != block.Instructions.SecondToLastOrDefault()) {
 				context.Step("Embed else-block for goto removal", ifInst);
 				Debug.Assert(IsEmpty(ifInst.FalseInst));
-				ifInst.FalseInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count - 2);
+				ifInst.FalseInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count - 1);
 			}
 			
 			// if (...) { ...; goto blockExit; } blockExit;
@@ -234,10 +237,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 
 			exits.Add(exitInst);
-			if (searchInst is Block block)
-				for (int i = startIndex; i < block.Instructions.Count; i++)
+			if (searchInst is Block block) {
+				for (int i = startIndex; i < block.Instructions.Count; i++) {
 					if (block.Instructions[i] is IfInstruction ifInst)
 						AddExits(ifInst.TrueInst, 0, exits);
+				}
+			}
 		}
 
 		/// <summary>
@@ -275,14 +280,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (DetectExitPoints.CompatibleExitInstruction(exitInst, targetExit))
 				return true;
 
-			if (searchInst is Block block)
-				for (int i = startIndex; i < block.Instructions.Count; i++)
+			if (searchInst is Block block) {
+				for (int i = startIndex; i < block.Instructions.Count; i++) {
 					if (block.Instructions[i] is IfInstruction ifInst && ProduceExit(ifInst.TrueInst, 0, targetExit)) {
 						InvertIf(block, ifInst);
 						Debug.Assert(DetectExitPoints.CompatibleExitInstruction(GetExit(block), targetExit));
 						return true;
 					}
-			
+				}
+			}
+
 			return false;
 		}
 
@@ -310,8 +317,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// find the host if statement
 			var elseIfInst = elseExit;
-			while (elseIfInst.Parent != block)
+			while (elseIfInst.Parent != block) {
 				elseIfInst = elseIfInst.Parent;
+			}
 			
 			return block.Instructions.IndexOf(elseIfInst) == block.Instructions.IndexOf(ifInst) + 1 
 			       && ThenInstIsSingleExit(elseIfInst);
@@ -320,8 +328,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		///   if (cond) { then... }
 		///   else...;
+		///   exit;
 		/// ->
-		///   if (!cond) { else... }
+		///   if (!cond) { else...; exit }
 		///   then...;
 		/// 
 		/// Assumes ifInst does not have an else block
@@ -339,22 +348,27 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(IsEmpty(ifInst.FalseInst));
 
 			//save a copy
-			var trueInst = ifInst.TrueInst;
+			var thenInst = ifInst.TrueInst;
 			
 			if (ifInst != block.Instructions.SecondToLastOrDefault()) {
-				ifInst.TrueInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count - 1);
+				// extract "else...; exit".
+				// Note that this will only extract instructions that were previously inlined from another block
+				// (via InlineExitBranch), so the instructions are already fully-transformed.
+				// So it's OK to move them into a nested block again (which hides them from the following block transforms).
+				ifInst.TrueInst = ExtractBlock(block, block.Instructions.IndexOf(ifInst) + 1, block.Instructions.Count);
 			} else {
 				block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				ifInst.TrueInst = exitInst;
 			}
 
-			if (trueInst is Block trueBlock) {
-				block.Instructions.AddRange(trueBlock.Instructions);
-			} else
-				block.Instructions.Add(trueInst);
+			if (thenInst is Block thenBlock) {
+				block.Instructions.AddRange(thenBlock.Instructions);
+			} else {
+				block.Instructions.Add(thenInst);
+			}
 
 			ifInst.Condition = Comp.LogicNot(ifInst.Condition);
-			ExpressionTransforms.RunOnSingleStatment(ifInst, context);
+			ExpressionTransforms.RunOnSingleStatement(ifInst, context);
 		}
 
 		/// <summary>
@@ -446,7 +460,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private int CompareBlockExitPriority(ILInstruction exit1, ILInstruction exit2, bool strongly = false)
 		{
 			// keywords have lower priority than non-keywords
-			bool isKeyword1 = IsKeywordExit(exit1, out var keyword1), isKeyword2 = IsKeywordExit(exit2, out var keyword2);
+			bool isKeyword1 = IsKeywordExit(exit1, out var keyword1);
+			bool isKeyword2 = IsKeywordExit(exit2, out var keyword2);
 			if (isKeyword1 != isKeyword2)
 				return isKeyword1 ? -1 : 1;
 
@@ -468,8 +483,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						return keyword1 == Keyword.Continue ? 1 : -1;
 				}
 			} else {// for non-keywords (only Branch or Leave)
-				// branches have lower priority than non-keyword leaves
-				bool isBranch1 = exit1 is Branch, isBranch2 = exit2 is Branch;
+					// branches have lower priority than non-keyword leaves
+				bool isBranch1 = exit1 is Branch;
+				bool isBranch2 = exit2 is Branch;
 				if (isBranch1 != isBranch2)
 					return isBranch1 ? -1 : 1;
 
@@ -587,16 +603,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Removes a subrange of instructions from a block and returns them in a new Block
 		/// </summary>
-		internal static Block ExtractBlock(Block block, int firstInstIndex, int lastInstIndex)
+		internal static Block ExtractBlock(Block block, int startIndex, int endIndex)
 		{
 			var extractedBlock = new Block();
-			for (int i = firstInstIndex; i <=  lastInstIndex; i++) {
-				var inst = block.Instructions[firstInstIndex];
-				block.Instructions.RemoveAt(firstInstIndex);
-
+			for (int i = startIndex; i < endIndex; i++) {
+				var inst = block.Instructions[i];
 				extractedBlock.Instructions.Add(inst);
 				extractedBlock.AddILRange(inst.ILRange);
 			}
+			block.Instructions.RemoveRange(startIndex, endIndex - startIndex);
 
 			return extractedBlock;
 		}
