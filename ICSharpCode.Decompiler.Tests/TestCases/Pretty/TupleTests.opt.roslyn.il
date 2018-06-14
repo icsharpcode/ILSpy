@@ -438,6 +438,161 @@
     IL_005f:  ret
   } // end of method TupleTests::UseDict
 
+  .method public hidebysig instance void 
+          Issue1174() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  3
+    .locals init (valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32> V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  ldc.i4.2
+    IL_0002:  ldc.i4.3
+    IL_0003:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
+                                                                                                         !1,
+                                                                                                         !2)
+    IL_0008:  stloc.0
+    IL_0009:  ldloca.s   V_0
+    IL_000b:  constrained. valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>
+    IL_0011:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
+    IL_0016:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001b:  ret
+  } // end of method TupleTests::Issue1174
+
+  .method public hidebysig instance void 
+          LocalVariables(valuetype [mscorlib]System.ValueTuple`2<int32,int32> a) cil managed
+  {
+    // Code size       73 (0x49)
+    .maxstack  4
+    .locals init (valuetype [mscorlib]System.ValueTuple`2<int32,int32> V_0)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  ldarg.1
+    IL_0003:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item1
+    IL_0008:  ldarg.1
+    IL_0009:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item2
+    IL_000e:  add
+    IL_000f:  ldarg.1
+    IL_0010:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item1
+    IL_0015:  ldarg.1
+    IL_0016:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item2
+    IL_001b:  mul
+    IL_001c:  call       instance void valuetype [mscorlib]System.ValueTuple`2<int32,int32>::.ctor(!0,
+                                                                                                   !1)
+    IL_0021:  ldloca.s   V_0
+    IL_0023:  constrained. valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+    IL_0029:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0033:  ldloc.0
+    IL_0034:  box        valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+    IL_0039:  call       instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+    IL_003e:  callvirt   instance string [mscorlib]System.Type::get_FullName()
+    IL_0043:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0048:  ret
+  } // end of method TupleTests::LocalVariables
+
+  .method public hidebysig instance void 
+          Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> input) cil managed
+  {
+    .param [1]
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 05 49 6E 64 65 78 04 44 61 74   // .......Index.Dat
+                                                                                                                    61 00 00 )                                        // a..
+    // Code size       71 (0x47)
+    .maxstack  3
+    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> V_0,
+             int32 V_1,
+             string V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::GetEnumerator()
+    IL_0006:  stloc.0
+    .try
+    {
+      IL_0007:  br.s       IL_0032
+
+      IL_0009:  ldloc.0
+      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::get_Current()
+      IL_000f:  dup
+      IL_0010:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0015:  stloc.1
+      IL_0016:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item2
+      IL_001b:  stloc.2
+      IL_001c:  ldstr      "{0}: {1}"
+      IL_0021:  ldloc.1
+      IL_0022:  box        [mscorlib]System.Int32
+      IL_0027:  ldloc.2
+      IL_0028:  call       string [mscorlib]System.String::Format(string,
+                                                                  object,
+                                                                  object)
+      IL_002d:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0032:  ldloc.0
+      IL_0033:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0038:  brtrue.s   IL_0009
+
+      IL_003a:  leave.s    IL_0046
+
+    }  // end .try
+    finally
+    {
+      IL_003c:  ldloc.0
+      IL_003d:  brfalse.s  IL_0045
+
+      IL_003f:  ldloc.0
+      IL_0040:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0045:  endfinally
+    }  // end handler
+    IL_0046:  ret
+  } // end of method TupleTests::Foreach
+
+  .method public hidebysig instance void 
+          ForeachNamedElements(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> input) cil managed
+  {
+    .param [1]
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 05 49 6E 64 65 78 04 44 61 74   // .......Index.Dat
+                                                                                                                    61 00 00 )                                        // a..
+    // Code size       71 (0x47)
+    .maxstack  3
+    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> V_0,
+             int32 V_1,
+             string V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::GetEnumerator()
+    IL_0006:  stloc.0
+    .try
+    {
+      IL_0007:  br.s       IL_0032
+
+      IL_0009:  ldloc.0
+      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::get_Current()
+      IL_000f:  dup
+      IL_0010:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0015:  stloc.1
+      IL_0016:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item2
+      IL_001b:  stloc.2
+      IL_001c:  ldstr      "{0}: {1}"
+      IL_0021:  ldloc.1
+      IL_0022:  box        [mscorlib]System.Int32
+      IL_0027:  ldloc.2
+      IL_0028:  call       string [mscorlib]System.String::Format(string,
+                                                                  object,
+                                                                  object)
+      IL_002d:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0032:  ldloc.0
+      IL_0033:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0038:  brtrue.s   IL_0009
+
+      IL_003a:  leave.s    IL_0046
+
+    }  // end .try
+    finally
+    {
+      IL_003c:  ldloc.0
+      IL_003d:  brfalse.s  IL_0045
+
+      IL_003f:  ldloc.0
+      IL_0040:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0045:  endfinally
+    }  // end handler
+    IL_0046:  ret
+  } // end of method TupleTests::ForeachNamedElements
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
