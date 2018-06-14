@@ -269,6 +269,68 @@
     IL_00b8:  ret
   } // end of method Switch::SparseIntegerSwitch
 
+  .method public hidebysig static void  SparseIntegerSwitch2(int32 i) cil managed
+  {
+    // Code size       67 (0x43)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   21
+    IL_0003:  bgt.s      IL_0021
+
+    IL_0005:  ldarg.0
+    IL_0006:  ldc.i4.s   11
+    IL_0008:  bgt.s      IL_0016
+
+    IL_000a:  ldarg.0
+    IL_000b:  ldc.i4.4
+    IL_000c:  beq.s      IL_003d
+
+    IL_000e:  ldarg.0
+    IL_000f:  ldc.i4.s   10
+    IL_0011:  sub
+    IL_0012:  ldc.i4.1
+    IL_0013:  ble.un.s   IL_003d
+
+    IL_0015:  ret
+
+    IL_0016:  ldarg.0
+    IL_0017:  ldc.i4.s   13
+    IL_0019:  beq.s      IL_003d
+
+    IL_001b:  ldarg.0
+    IL_001c:  ldc.i4.s   21
+    IL_001e:  beq.s      IL_003d
+
+    IL_0020:  ret
+
+    IL_0021:  ldarg.0
+    IL_0022:  ldc.i4.s   33
+    IL_0024:  bgt.s      IL_0031
+
+    IL_0026:  ldarg.0
+    IL_0027:  ldc.i4.s   29
+    IL_0029:  beq.s      IL_003d
+
+    IL_002b:  ldarg.0
+    IL_002c:  ldc.i4.s   33
+    IL_002e:  beq.s      IL_003d
+
+    IL_0030:  ret
+
+    IL_0031:  ldarg.0
+    IL_0032:  ldc.i4.s   49
+    IL_0034:  sub
+    IL_0035:  ldc.i4.1
+    IL_0036:  ble.un.s   IL_003d
+
+    IL_0038:  ldarg.0
+    IL_0039:  ldc.i4.s   55
+    IL_003b:  bne.un.s   IL_0042
+
+    IL_003d:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0042:  ret
+  } // end of method Switch::SparseIntegerSwitch2
+
   .method public hidebysig static string 
           SwitchOverNullableInt(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
   {

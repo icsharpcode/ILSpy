@@ -3,6 +3,7 @@ using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -38,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public bool ContainsILSwitch { get; private set; }
 
 		/// <summary>
-		/// Gets the sections that were detected by the previoous AnalyzeBlock() call.
+		/// Gets the sections that were detected by the previous AnalyzeBlock() call.
 		/// </summary>
 		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
 
@@ -230,15 +231,36 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return inst.MatchLdLoc(out switchVar);
 		}
 
+		bool MatchSwitchVar(ILInstruction inst, out long sub)
+		{
+			if (inst.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub, out var left, out var right) && right.MatchLdcI(out sub))
+				return MatchSwitchVar(left);
+
+			sub = 0;
+			return MatchSwitchVar(inst);
+		}
+		/// <summary>
+		/// Shifts a LongInterval, treating long.MinValue and long.MaxValue like float.Positive/NegativeInfinity
+		/// </summary>
+		LongInterval ShiftInterval(LongInterval interval, long offset)
+		{
+			return new LongInterval(
+				interval.Start == long.MinValue ? long.MinValue : interval.Start + offset,
+				interval.End == long.MinValue ? long.MinValue : interval.End + offset);
+		}
+
 		/// <summary>
 		/// Analyzes the boolean condition, returning the set of values of the interesting
 		/// variable for which the condition evaluates to true.
 		/// </summary>
 		private bool AnalyzeCondition(ILInstruction condition, out LongSet trueValues)
 		{
-			if (condition is Comp comp && MatchSwitchVar(comp.Left) && comp.Right.MatchLdcI(out long val)) {
+			if (condition is Comp comp && MatchSwitchVar(comp.Left, out var sub) && comp.Right.MatchLdcI(out long val)) {
 				// if (comp(V OP val))
 				trueValues = MakeSetWhereComparisonIsTrue(comp.Kind, val, comp.Sign);
+				if (sub != 0)
+					trueValues = new LongSet(trueValues.Intervals.Select(i => ShiftInterval(i, sub)));
+
 				return true;
 			} else if (MatchSwitchVar(condition)) {
 				// if (ldloc V) --> branch for all values except 0

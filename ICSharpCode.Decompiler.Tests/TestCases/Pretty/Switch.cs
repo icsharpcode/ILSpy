@@ -105,6 +105,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void SparseIntegerSwitch2(int i)
+		{
+			switch (i) {
+				case 4:
+				case 10:
+				case 11:
+				case 13:
+				case 21:
+				case 29:
+				case 33:
+				case 49:
+				case 50:
+				case 55:
+					Console.WriteLine();
+					break;
+			}
+		}
+
 		public static string SwitchOverNullableInt(int? i)
 		{
 			switch (i) {
