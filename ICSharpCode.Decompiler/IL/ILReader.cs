@@ -1485,6 +1485,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			if (@operator != BinaryNumericOperator.Add && @operator != BinaryNumericOperator.Sub) {
+				// we are treating all Refs as I, make the conversion explicit
+				if (left.ResultType == StackType.Ref) {
+					left = new Conv(left, PrimitiveType.I, false, Sign.None);
+				}
+				if (right.ResultType == StackType.Ref) {
+					right = new Conv(right, PrimitiveType.I, false, Sign.None);
+				}
+			}
 			if (@operator != BinaryNumericOperator.ShiftLeft && @operator != BinaryNumericOperator.ShiftRight) {
 				// make the implicit I4->I conversion explicit:
 				MakeExplicitConversion(sourceType: StackType.I4, targetType: StackType.I, conversionType: PrimitiveType.I);
