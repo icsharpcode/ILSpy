@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler
 				anonymousMethods = false;
 				liftNullables = false;
 				yieldReturn = false;
+				useImplicitMethodGroupConversion = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
 				anonymousTypes = false;
@@ -61,7 +62,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
 				dynamic = false;
 				namedArguments = false;
-				// * named and optional arguments (not supported yet)
+				// * optional arguments (not supported yet)
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
 				asyncAwait = false;
