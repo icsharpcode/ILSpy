@@ -115,14 +115,13 @@ namespace ICSharpCode.ILSpy
 								return false;
 						}
 						break;
+					case '~':
+						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term.Substring(1).ToLower()))
+							return false;
+						break;
 					default:
-						if (term.Length > 2 && term.StartsWith(NoncontiguousSearchPrefix, StringComparison.OrdinalIgnoreCase)) {
-							if (!IsNoncontiguousMatch(text.ToLower(), term.Substring(2).ToLower()))
-								return false;
-						} else {
-							if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
-								return false;
-						}
+						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+							return false;
 						break;
 				}
 			}
@@ -138,20 +137,22 @@ namespace ICSharpCode.ILSpy
 			if (searchTerm.Length > textLength) {
 				return false;
 			}
-			var index = 0;
-			foreach (char c in searchTerm) {
-				while (index != textLength) {
-					if (text[index] == c) {
-						index++;
+			var i = 0;
+			for (int searchIndex = 0; searchIndex < searchTerm.Length;) {
+				while (i != textLength) {
+					if (text[i] == searchTerm[searchIndex]) {
+						// Check if all characters in searchTerm have been matched
+						if (searchTerm.Length == ++searchIndex)
+							return true;
+						i++;
 						break;
 					}
-					index++;
-				} 
-				// Check if we reached end of text without matching the full search string
-				if (index == textLength)
+					i++;
+				}
+				if (i == textLength)
 					return false;
 			}
-			return true;
+			return false;
 		}
 
 		string GetLanguageSpecificName(Language language, IMemberDefinition member, bool fullName = false)
