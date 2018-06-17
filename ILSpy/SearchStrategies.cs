@@ -14,8 +14,6 @@ namespace ICSharpCode.ILSpy
 {
 	abstract class AbstractSearchStrategy
 	{
-		private const string NoncontiguousSearchPrefix = "s:";
-
 		protected string[] searchTerm;
 		protected Regex regex;
 		protected bool fullNameSearch;
