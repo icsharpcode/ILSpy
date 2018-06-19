@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 	sealed class FieldTypeReference : ITypeReference
 	{
-		readonly SRM.FieldDefinitionHandle fieldHandle;
+		readonly SRM.EntityHandle fieldHandle;
 		readonly SRM.MetadataReader metadata;
 		readonly TypeAttributeOptions attributeOptions;
 
@@ -95,10 +95,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.metadata = metadata;
 			this.attributeOptions = attributeOptions;
 		}
-		
+
+		public FieldTypeReference(SRM.MemberReferenceHandle fieldReferenceHandle,
+			SRM.MetadataReader metadata,
+			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+		{
+			this.fieldHandle = fieldReferenceHandle;
+			this.metadata = metadata;
+			this.attributeOptions = attributeOptions;
+		}
+
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
-			return Resolve(fieldHandle, metadata, context, attributeOptions);
+			if (fieldHandle.Kind == SRM.HandleKind.FieldDefinition) {
+				return Resolve((SRM.FieldDefinitionHandle)fieldHandle, metadata, context, attributeOptions);
+			} else {
+				var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldHandle);
+				IType ty = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), context);
+				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
+					memberRef.GetCustomAttributes(), metadata, attributeOptions);
+				return ty;
+			}
 		}
 
 		public static IType Resolve(SRM.FieldDefinitionHandle fieldHandle,

@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				ShortenInterfaceImplNames = false,
 				UseDynamicType = settings.Dynamic,
 				UseTupleTypes = settings.TupleTypes,
+				UseExtensionMethods = settings.ExtensionMethods,
 			};
 			IUnresolvedAssembly mainAssembly = loader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -209,10 +210,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							}
 							break;
 						case SRM.HandleKind.MemberReference:
-							var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldReference);
+							var memberRefHandle = (SRM.MemberReferenceHandle)fieldReference;
+							var memberRef = metadata.GetMemberReference(memberRefHandle);
 							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Field);
 							declaringType = ResolveDeclaringType(memberRef.Parent);
-							field = FindNonGenericField(metadata, memberRef, declaringType);
+							field = FindNonGenericField(metadata, memberRefHandle, declaringType);
 							break;
 						default:
 							throw new NotSupportedException();
@@ -226,11 +228,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		IField FindNonGenericField(SRM.MetadataReader metadata, SRM.MemberReference memberRef, IType declaringType)
+		IField FindNonGenericField(SRM.MetadataReader metadata, SRM.MemberReferenceHandle memberRefHandle, IType declaringType)
 		{
+			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			string name = metadata.GetString(memberRef.Name);
 			ITypeDefinition typeDef = declaringType.GetDefinition();
-			ITypeReference returnType = memberRef.DecodeFieldSignature(TypeReferenceSignatureDecoder.Instance, default);
+			ITypeReference returnType = new FieldTypeReference(memberRefHandle, metadata, typeAttributeOptions);
 
 			if (typeDef == null)
 				return CreateFakeField(declaringType, name, returnType);
@@ -299,9 +302,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.MethodSpecification:
 							var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
 							method = FindNonGenericMethod(metadata, methodSpec.Method, out declaringType);
-							var typeArguments = methodSpec.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
+							var typeArguments = methodSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), default);
 							if (typeArguments.Length > 0) {
-								methodTypeArguments = typeArguments.SelectArray(arg => arg.Resolve(context));
+								methodTypeArguments = typeArguments;
 							}
 							break;
 						default:

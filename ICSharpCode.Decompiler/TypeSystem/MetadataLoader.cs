@@ -60,6 +60,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool UseTupleTypes { get; set; } = true;
 
 		/// <summary>
+		/// Gets/Sets whether to use extension methods.
+		/// </summary>
+		public bool UseExtensionMethods { get; set; } = true;
+
+		/// <summary>
 		/// Gets/Sets the cancellation token used by the assembly loader.
 		/// </summary>
 		public CancellationToken CancellationToken { get; set; }
@@ -133,6 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.ShortenInterfaceImplNames = loader.ShortenInterfaceImplNames;
 			this.UseDynamicType = loader.UseDynamicType;
 			this.UseTupleTypes = loader.UseTupleTypes;
+			this.UseExtensionMethods = loader.UseExtensionMethods;
 			this.currentModule = loader.currentModule;
 			this.currentMetadata = loader.currentMetadata;
 			this.currentAssembly = loader.currentAssembly;
@@ -693,7 +699,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case "TupleElementNamesAttribute":
 							return UseTupleTypes;
 						case "ExtensionAttribute":
-							return true; // TODO: shouldn't we disable extension methods in C# 2.0 mode?
+							return UseExtensionMethods;
 						case "DecimalConstantAttribute":
 							return true;
 						default:
@@ -821,7 +827,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				foreach (FieldDefinitionHandle h in typeDefinition.GetFields()) {
 					var enumField = currentMetadata.GetFieldDefinition(h);
 					if (!enumField.HasFlag(FieldAttributes.Static)) {
-						baseTypes.Add(enumField.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
+						baseTypes.Add(new FieldTypeReference(h, currentMetadata, TypeAttributeOptions.None));
 						break;
 					}
 				}
@@ -1040,7 +1046,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				loader.InitTypeParameterConstraints(td, typeParameters);
 
 				loader.AddAttributes(td, this);
-				flags[FlagHasExtensionMethods] = HasExtensionAttribute(metadata, td.GetCustomAttributes());
+				flags[FlagHasExtensionMethods] = loader.HasExtensionAttribute(metadata, td.GetCustomAttributes());
 
 				this.ApplyInterningProvider(loader.interningProvider);
 				this.Freeze();
@@ -1346,12 +1352,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				=> SignatureTypeCode.TypeHandle;
 		}
 		
-		static bool HasExtensionAttribute(MetadataReader metadata, CustomAttributeHandleCollection attributes)
+		bool HasExtensionAttribute(MetadataReader metadata, CustomAttributeHandleCollection attributes)
 		{
+			if (!UseExtensionMethods)
+				return false;
 			foreach (var h in attributes) {
 				var attr = metadata.GetCustomAttribute(h);
-				var type = attr.GetAttributeType(metadata);
-				if (type.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "ExtensionAttribute"))
+				if (attr.IsAttributeType(metadata, "System.Runtime.CompilerServices", "ExtensionAttribute"))
 					return true;
 			}
 			return false;
