@@ -297,10 +297,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return lookup;
 		}
 
-		internal IUnresolvedTypeDefinition GetTypeDefByToken(System.Reflection.Metadata.EntityHandle token)
+		internal IUnresolvedTypeDefinition GetTypeDefByToken(System.Reflection.Metadata.TypeDefinitionHandle token)
 		{
-			if (token.Kind != System.Reflection.Metadata.HandleKind.TypeDefinition)
-				throw new ArgumentException("Token must be typedef-token.");
 			var lookup = LazyInit.VolatileRead(ref allTypesByMetadata);
 			if (lookup == null) {
 				lookup = LazyInit.GetOrSet(ref allTypesByMetadata, BuildMetadataLookup());
@@ -445,7 +443,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
-			public ITypeDefinition ResolveTypeDefToken(System.Reflection.Metadata.EntityHandle token)
+			public ITypeDefinition ResolveTypeDefToken(System.Reflection.Metadata.TypeDefinitionHandle token)
 			{
 				var td = unresolvedAssembly.GetTypeDefByToken(token);
 				if (td != null)

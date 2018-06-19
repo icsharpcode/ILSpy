@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore("tuple type support not yet implemented for SRM")]
+		[Test]
 		public void TupleTests([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

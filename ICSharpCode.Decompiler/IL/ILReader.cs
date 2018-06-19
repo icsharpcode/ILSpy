@@ -54,7 +54,6 @@ namespace ICSharpCode.Decompiler.IL
 		IMethod method;
 		MethodBodyBlock body;
 		Metadata.IDebugInfoProvider debugInfo;
-		MethodSignature<ITypeReference> methodSignature;
 		StackType methodReturnStackType;
 		BlobReader reader;
 		ImmutableStack<ILVariable> currentStack;
@@ -78,14 +77,13 @@ namespace ICSharpCode.Decompiler.IL
 			this.metadata = module.Metadata;
 			this.method = typeSystem.ResolveAsMethod(methodDefinitionHandle);
 			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
-			this.methodSignature = methodDefinition.DecodeSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default); 
 			this.body = body;
 			this.reader = body.GetILReader();
 			this.debugInfo = module.DebugInfo;
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
-			this.methodReturnStackType = typeSystem.ResolveFromSignature(TypeSystem.Implementation.DynamicTypeReference.Create(methodSignature.ReturnType, methodDefinition.GetCustomAttributes(), metadata)).GetStackType();
+			this.methodReturnStackType = method.ReturnType.GetStackType();
 			InitParameterVariables();
 			localVariables = InitLocalVariables();
 			if (body.LocalVariablesInitialized) {
@@ -126,12 +124,10 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable[] InitLocalVariables()
 		{
 			if (body.LocalSignature.IsNil) return Empty<ILVariable>.Array;
-			var standaloneSignature = metadata.GetStandaloneSignature(body.LocalSignature);
-			Debug.Assert(standaloneSignature.GetKind() == StandaloneSignatureKind.LocalVariables);
-			var variableTypes = standaloneSignature.DecodeLocalSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
+			var variableTypes = typeSystem.DecodeLocalSignature(body.LocalSignature);
 			var localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
-				localVariables[index] = CreateILVariable(index, typeSystem.ResolveFromSignature(type));
+				localVariables[index] = CreateILVariable(index, type);
 			}
 			return localVariables;
 		}
@@ -144,14 +140,16 @@ namespace ICSharpCode.Decompiler.IL
 			if (method.Parameters.LastOrDefault()?.Type == SpecialType.ArgList)
 				popCount--;
 			parameterVariables = new ILVariable[popCount];
-			int paramIndex = 0; int offset = 0;
-			if (methodSignature.Header.IsInstance) {
+			int paramIndex = 0;
+			int offset = 0;
+			if (!method.IsStatic) {
 				offset = 1;
 				parameterVariables[paramIndex++] = CreateILVariable(-1, method.DeclaringType, "this");
 			}
 			while (paramIndex < parameterVariables.Length) {
-				var type = typeSystem.ResolveFromSignature(methodSignature.ParameterTypes[paramIndex - offset]);
-				parameterVariables[paramIndex] = CreateILVariable(paramIndex - offset, type, method.Parameters[paramIndex - offset].Name);
+				IType type = method.Parameters[paramIndex - offset].Type;
+				string name = method.Parameters[paramIndex - offset].Name;
+				parameterVariables[paramIndex] = CreateILVariable(paramIndex - offset, type, name);
 				paramIndex++;
 			}
 			Debug.Assert(paramIndex == parameterVariables.Length);
@@ -181,15 +179,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
-			ITypeDefinition def = parameterType.GetDefinition();
-			if (def != null && index < 0 && def.IsReferenceType == false) {
-				parameterType = new ByReferenceType(parameterType);
-			}
 			Debug.Assert(!parameterType.IsUnbound());
 			if (parameterType.IsUnbound()) {
 				// parameter types should not be unbound, the only known cause for these is a Cecil bug:
 				Debug.Assert(index < 0); // cecil bug occurs only for "this"
 				parameterType = new ParameterizedType(parameterType.GetDefinition(), parameterType.TypeArguments);
+			}
+			ITypeDefinition def = parameterType.GetDefinition();
+			if (def != null && index < 0 && def.IsReferenceType == false) {
+				parameterType = new ByReferenceType(parameterType);
 			}
 			var ilVar = new ILVariable(VariableKind.Parameter, parameterType, index);
 			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument
@@ -1289,21 +1287,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeCallIndirect()
 		{
-			var standaloneSignature = metadata.GetStandaloneSignature((StandaloneSignatureHandle)ReadAndDecodeMetadataToken());
-			Debug.Assert(standaloneSignature.GetKind() == StandaloneSignatureKind.Method);
-			var signature = standaloneSignature.DecodeMethodSignature(TypeSystem.Implementation.TypeReferenceSignatureDecoder.Instance, default);
+			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
+			var signature = typeSystem.DecodeMethodSignature(signatureHandle);
 			var functionPointer = Pop(StackType.I);
 			Debug.Assert(!signature.Header.IsInstance);
-			var parameterTypes = new IType[signature.ParameterTypes.Length];
-			var arguments = new ILInstruction[parameterTypes.Length];
+			var arguments = new ILInstruction[signature.ParameterTypes.Length];
 			for (int i = signature.ParameterTypes.Length - 1; i >= 0; i--) {
-				parameterTypes[i] = typeSystem.ResolveFromSignature(signature.ParameterTypes[i]);
-				arguments[i] = Pop(parameterTypes[i].GetStackType());
+				arguments[i] = Pop(signature.ParameterTypes[i].GetStackType());
 			}
 			var call = new CallIndirect(
 				signature.Header.CallingConvention,
-				typeSystem.ResolveFromSignature(signature.ReturnType),
-				parameterTypes.ToImmutableArray(),
+				signature.ReturnType,
+				signature.ParameterTypes,
 				arguments,
 				functionPointer
 			);

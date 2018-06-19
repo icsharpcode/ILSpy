@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -28,7 +29,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation Compilation { get; }
 
-		IType ResolveFromSignature(ITypeReference typeReference);
+		MethodSignature<IType> DecodeMethodSignature(StandaloneSignatureHandle standaloneSignatureHandle);
+		ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle standaloneSignatureHandle);
+
 		IType ResolveAsType(EntityHandle typeReference);
 		IField ResolveAsField(EntityHandle fieldReference);
 		IMethod ResolveAsMethod(EntityHandle methodReference);

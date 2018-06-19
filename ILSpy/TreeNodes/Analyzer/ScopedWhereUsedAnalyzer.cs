@@ -39,7 +39,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		readonly bool provideTypeSystem;
 		TypeDefinitionHandle typeScopeHandle;
 		TypeDefinition typeScope;
-		static readonly TypeSystemAttributeTypeProvider typeProvider = TypeSystemAttributeTypeProvider.CreateDefault();
 
 		readonly Accessibility memberAccessibility = Accessibility.Public;
 		Accessibility typeAccessibility = Accessibility.Public;
@@ -310,6 +309,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			string typeScopeNamespace = metadata.GetString(typeScope.Namespace);
 			string typeScopeName = metadata.GetString(typeScope.Name);
 
+			var typeProvider = Decompiler.Metadata.MetadataExtensions.MinimalAttributeTypeProvider;
 			var attributes = metadata.CustomAttributes.Select(h => metadata.GetCustomAttribute(h)).Where(ca => ca.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 			var friendAssemblies = new HashSet<string>();
 			foreach (var attribute in attributes) {

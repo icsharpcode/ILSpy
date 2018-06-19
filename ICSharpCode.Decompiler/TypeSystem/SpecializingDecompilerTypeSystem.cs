@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -53,18 +55,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public TypeParameterSubstitution Substitution {
 			get { return substitution; }
 		}
-
-		public IType ResolveFromSignature(ITypeReference typeReference)
-		{
-			return context.ResolveFromSignature(typeReference).AcceptVisitor(substitution);
-		}
-
-		public IType ResolveAsType(System.Reflection.Metadata.EntityHandle typeReference)
+		
+		public IType ResolveAsType(EntityHandle typeReference)
 		{
 			return context.ResolveAsType(typeReference).AcceptVisitor(substitution);
 		}
 
-		public IField ResolveAsField(System.Reflection.Metadata.EntityHandle fieldReference)
+		public IField ResolveAsField(EntityHandle fieldReference)
 		{
 			IField field = context.ResolveAsField(fieldReference);
 			if (field != null)
@@ -72,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return field;
 		}
 
-		public IMethod ResolveAsMethod(System.Reflection.Metadata.EntityHandle methodReference)
+		public IMethod ResolveAsMethod(EntityHandle methodReference)
 		{
 			IMethod method = context.ResolveAsMethod(methodReference);
 			if (method != null)
@@ -88,12 +85,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return context.GetSpecializingTypeSystem(newSubstitution);
 		}
 
-		public System.Reflection.Metadata.MetadataReader GetMetadata()
+		public MetadataReader GetMetadata()
 		{
 			return context.GetMetadata();
 		}
 
-		public IMember ResolveAsMember(System.Reflection.Metadata.EntityHandle memberReference)
+		public IMember ResolveAsMember(EntityHandle memberReference)
 		{
 			IMember member = context.ResolveAsMember(memberReference);
 			if (member != null)
@@ -104,6 +101,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public PEFile GetModuleDefinition(IAssembly assembly)
 		{
 			return context.GetModuleDefinition(assembly);
+		}
+		
+		MethodSignature<IType> IDecompilerTypeSystem.DecodeMethodSignature(StandaloneSignatureHandle standaloneSignatureHandle)
+		{
+			var sig = context.DecodeMethodSignature(standaloneSignatureHandle);
+			return new MethodSignature<IType>(
+				sig.Header,
+				sig.ReturnType.AcceptVisitor(substitution),
+				sig.RequiredParameterCount,
+				sig.GenericParameterCount,
+				ImmutableArray.CreateRange(
+					sig.ParameterTypes, t => t.AcceptVisitor(substitution)
+				)
+			);
+		}
+
+		ImmutableArray<IType> IDecompilerTypeSystem.DecodeLocalSignature(StandaloneSignatureHandle standaloneSignatureHandle)
+		{
+			var sig = context.DecodeLocalSignature(standaloneSignatureHandle);
+			return ImmutableArray.CreateRange(
+				sig, t => t.AcceptVisitor(substitution)
+			);
 		}
 	}
 }

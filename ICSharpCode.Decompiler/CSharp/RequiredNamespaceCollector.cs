@@ -118,6 +118,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				case PointerType pointerType:
 					CollectNamespacesForTypeReference(pointerType.ElementType, namespaces);
 					break;
+				case TupleType tupleType:
+					foreach (var elementType in tupleType.ElementTypes) {
+						CollectNamespacesForTypeReference(elementType, namespaces);
+					}
+					break;
 				default:
 					namespaces.Add(type.Namespace);
 					break;
@@ -156,9 +161,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var metadata = reader.GetMetadataReader();
 
 			if (!method.LocalSignature.IsNil) {
-				var localSignature = metadata.GetStandaloneSignature(method.LocalSignature).DecodeLocalSignature(TypeReferenceSignatureDecoder.Instance, default);
+				var localSignature = typeSystem.DecodeLocalSignature(method.LocalSignature);
 				foreach (var type in localSignature)
-					CollectNamespacesForTypeReference(typeSystem.ResolveFromSignature(type), namespaces);
+					CollectNamespacesForTypeReference(type, namespaces);
 			}
 
 			foreach (var region in method.ExceptionRegions) {

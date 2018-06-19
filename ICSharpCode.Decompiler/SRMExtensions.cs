@@ -183,6 +183,16 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		public static bool IsTopLevelType(this EntityHandle handle, MetadataReader reader, string namespaceName, string name, int typeParameterCount = 0)
+		{
+			return GetFullTypeName(handle, reader) == new TopLevelTypeName(namespaceName, name, typeParameterCount);
+		}
+
+		public static bool IsAttributeType(this CustomAttribute attr, MetadataReader reader, string namespaceName, string name)
+		{
+			return attr.GetAttributeType(reader).IsTopLevelType(reader, namespaceName, name);
+		}
+
 		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader)
 		{
 			if (handle.IsNil)
@@ -362,24 +372,13 @@ namespace ICSharpCode.Decompiler
 		}
 		#endregion
 
-		public static byte[] GetInitialValue(this FieldDefinition field, PEReader pefile)
+		public static unsafe BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile)
 		{
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
-				return Empty<byte>.Array;
+				return default;
 			int rva = field.GetRelativeVirtualAddress();
 			int size = field.DecodeSignature(new FieldValueSizeDecoder(), default);
-			var headers = pefile.PEHeaders;
-			int index = headers.GetContainingSectionIndex(rva);
-			var sectionHeader = headers.SectionHeaders[index];
-			var sectionData = pefile.GetEntireImage();
-			int totalOffset = rva + sectionHeader.PointerToRawData - sectionHeader.VirtualAddress;
-			var reader = sectionData.GetReader();
-			reader.Offset += totalOffset;
-			int offset = field.GetOffset();
-			if (offset > 0)
-				reader.Offset += offset;
-			return reader.ReadBytes(size);
-
+			return pefile.GetSectionData(rva).GetReader(0, size);
 		}
 
 		class FieldValueSizeDecoder : ISignatureTypeProvider<int, Unit>
@@ -387,14 +386,14 @@ namespace ICSharpCode.Decompiler
 			public int GetArrayType(int elementType, ArrayShape shape) => elementType;
 			public int GetByReferenceType(int elementType) => elementType;
 			public int GetFunctionPointerType(MethodSignature<int> signature) => IntPtr.Size;
-			public int GetGenericInstantiation(int genericType, ImmutableArray<int> typeArguments) => throw new NotSupportedException();
-			public int GetGenericMethodParameter(Unit genericContext, int index) => throw new NotSupportedException();
-			public int GetGenericTypeParameter(Unit genericContext, int index) => throw new NotSupportedException();
+			public int GetGenericInstantiation(int genericType, ImmutableArray<int> typeArguments) => genericType;
+			public int GetGenericMethodParameter(Unit genericContext, int index) => 0;
+			public int GetGenericTypeParameter(Unit genericContext, int index) => 0;
 			public int GetModifiedType(int modifier, int unmodifiedType, bool isRequired) => unmodifiedType;
 			public int GetPinnedType(int elementType) => elementType;
 			public int GetPointerType(int elementType) => elementType;
 
-			public int GetPrimitiveType(PrimitiveTypeCode typeCode)
+			public int GetPrimitiveType(PrimitiveTypeCode typeCode) 
 			{
 				switch (typeCode) {
 					case PrimitiveTypeCode.Boolean:
@@ -421,7 +420,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 
-			public int GetSZArrayType(int elementType) => throw new NotSupportedException();
+			public int GetSZArrayType(int elementType) => 0;
 
 			public int GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 			{
@@ -431,12 +430,12 @@ namespace ICSharpCode.Decompiler
 
 			public int GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
-				throw new NotImplementedException();
+				return 0;
 			}
 
 			public int GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 			{
-				throw new NotImplementedException();
+				return 0;
 			}
 		}
 	}

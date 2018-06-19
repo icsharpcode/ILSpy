@@ -198,12 +198,12 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
 			{
-				throw new NotImplementedException();
+				return unmodifiedType;
 			}
 
 			public string GetPinnedType(string elementType)
 			{
-				throw new NotImplementedException();
+				return elementType;
 			}
 
 			public string GetPointerType(string elementType)

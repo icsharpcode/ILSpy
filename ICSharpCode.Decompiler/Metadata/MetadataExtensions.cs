@@ -170,7 +170,16 @@ namespace ICSharpCode.Decompiler.Metadata
 			return type.GetDefaultMemberName(reader, out var attr);
 		}
 
-		static readonly ITypeResolveContext minimalCorlibContext = new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation());
+		internal static readonly TypeProvider minimalCorlibTypeProvider =
+			new TypeProvider(MinimalCorlib.Instance.CreateCompilation().MainAssembly);
+
+		/// <summary>
+		/// An attribute type provider that can be used to decode attribute signatures
+		/// that only mention built-in types.
+		/// </summary>
+		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
+			get => minimalCorlibTypeProvider;
+		}
 
 		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader, out CustomAttributeHandle defaultMemberAttribute)
 		{
@@ -178,8 +187,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			foreach (var h in td.GetCustomAttributes()) {
 				var ca = reader.GetCustomAttribute(h);
-				if (ca.GetAttributeType(reader).ToString() == "System.Reflection.DefaultMemberAttribute") {
-					var decodedValues = ca.DecodeValue(new TypeSystemAttributeTypeProvider(minimalCorlibContext));
+				if (ca.GetAttributeType(reader).IsTopLevelType(reader, "System.Reflection", "DefaultMemberAttribute")) {
+					var decodedValues = ca.DecodeValue(minimalCorlibTypeProvider);
 					if (decodedValues.FixedArguments.Length == 1 && decodedValues.FixedArguments[0].Value is string value) {
 						defaultMemberAttribute = h;
 						return value;
@@ -190,7 +199,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			defaultMemberAttribute = default(CustomAttributeHandle);
 			return null;
 		}
-
+		
 		public static bool HasOverrides(this MethodDefinitionHandle handle, MetadataReader reader)
 		{
 			for (int row = 1; row <= reader.GetTableRowCount(TableIndex.MethodImpl); row++) {
@@ -214,7 +223,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return false;
 		}
 
-		public static PrimitiveTypeCode ToPrimtiveTypeCode(this KnownTypeCode typeCode)
+		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
 			switch (typeCode) {
 				case KnownTypeCode.Object:
