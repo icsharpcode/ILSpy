@@ -4,7 +4,7 @@
     <Identity Id="a9120dbe-164a-4891-842f-fb7829273838" Version="$INSERTVERSION$" Language="en-US" Publisher="ic#code" />
     <DisplayName>ILSpy</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
-    <MoreInfo>http://www.ilspy.net</MoreInfo>
+    <MoreInfo>https://ilspy.net</MoreInfo>
     <License>license.txt</License>
     <Icon>ILSpy-Large.ico</Icon>
   </Metadata>

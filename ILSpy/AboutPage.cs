@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 			Display(decompilerTextView);
 		}
 		
-		static readonly Uri UpdateUrl = new Uri("http://www.ilspy.net/updates.xml");
+		static readonly Uri UpdateUrl = new Uri("https://ilspy.net/updates.xml");
 		const string band = "stable";
 		
 		static AvailableVersionInfo latestAvailableVersion;
