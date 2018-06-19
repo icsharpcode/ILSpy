@@ -174,7 +174,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					context.Pop();
 				}
 			}
-			
+
+			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+			{
+				if (methodDeclaration.GetSymbol() is IMethod method && CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+					var previousContext = context.Peek();
+					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly);
+					context.Push(currentContext);
+					try {
+						astBuilder = CreateAstBuilder(currentContext);
+						base.VisitMethodDeclaration(methodDeclaration);
+					} finally {
+						astBuilder = CreateAstBuilder(previousContext);
+						context.Pop();
+					}
+				} else {
+					base.VisitMethodDeclaration(methodDeclaration);
+				}
+			}
+
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;

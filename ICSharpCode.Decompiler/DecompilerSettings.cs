@@ -383,6 +383,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysCastTargetsOfExplicitInterfaceImplementationCalls = false;
+
+		/// <summary>
+		/// Gets/Sets whether to always cast targets to explicitly implemented methods.
+		/// true: <c>((ISupportInitialize)pictureBox1).BeginInit();</c>
+		/// false: <c>pictureBox1.BeginInit();</c>
+		/// default: false
+		/// </summary>
+		public bool AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
+			get { return alwaysCastTargetsOfExplicitInterfaceImplementationCalls; }
+			set {
+				if (alwaysCastTargetsOfExplicitInterfaceImplementationCalls != value) {
+					alwaysCastTargetsOfExplicitInterfaceImplementationCalls = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool fullyQualifyAmbiguousTypeNames = true;
 
 		public bool FullyQualifyAmbiguousTypeNames {

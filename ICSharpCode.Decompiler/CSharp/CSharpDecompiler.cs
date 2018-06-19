@@ -1146,6 +1146,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return methodDecl;
 		}
 
+		internal static bool IsWindowsFormsInitializeComponentMethod(IMethod method)
+		{
+			return method.ReturnType.Kind == TypeKind.Void && method.Name == "InitializeComponent" && method.DeclaringTypeDefinition.GetNonInterfaceBaseTypes().Any(t => t.FullName == "System.Windows.Forms.Control");
+		}
+
 		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			try {
@@ -1165,7 +1170,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 
-				var context = new ILTransformContext(function, specializingTypeSystem, settings) {
+				var localSettings = settings.Clone();
+				if (IsWindowsFormsInitializeComponentMethod(method)) {
+					localSettings.UseImplicitMethodGroupConversion = false;
+					localSettings.UsingDeclarations = false;
+					localSettings.FullyQualifyAmbiguousTypeNames = true;
+					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
+				}
+
+				var context = new ILTransformContext(function, specializingTypeSystem, localSettings) {
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
@@ -1176,15 +1189,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					// When decompiling definitions only, we can cancel decompilation of all steps
 					// after yield and async detection, because only those are needed to properly set
 					// IsAsync/IsIterator flags on ILFunction.
-					if (!settings.DecompileMemberBodies && transform is AsyncAwaitDecompiler)
+					if (!localSettings.DecompileMemberBodies && transform is AsyncAwaitDecompiler)
 						break;
 				}
 
 				var body = BlockStatement.Null;
 				// Generate C# AST only if bodies should be displayed.
-				if (settings.DecompileMemberBodies) {
+				if (localSettings.DecompileMemberBodies) {
 					AddDefinesForConditionalAttributes(function, decompileRun, decompilationContext);
-					var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
+					var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, localSettings, CancellationToken);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
 					Comment prev = null;
