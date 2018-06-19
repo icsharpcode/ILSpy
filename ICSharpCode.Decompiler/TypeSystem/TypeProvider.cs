@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Allows decoding signatures using decompiler types.
 	/// </summary>
-	class TypeProvider : SRM.ISignatureTypeProvider<IType, ITypeResolveContext>, SRM.ICustomAttributeTypeProvider<IType>
+	sealed class TypeProvider : SRM.ISignatureTypeProvider<IType, ITypeResolveContext>, SRM.ICustomAttributeTypeProvider<IType>
 	{
 		readonly IAssembly assembly;
 		readonly ICompilation compilation;

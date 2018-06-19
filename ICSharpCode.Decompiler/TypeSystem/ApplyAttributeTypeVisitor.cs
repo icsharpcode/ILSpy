@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Introduces 'dynamic' and tuple types based on attribute values.
 	/// </summary>
-    class ApplyAttributeTypeVisitor : TypeVisitor
+	sealed class ApplyAttributeTypeVisitor : TypeVisitor
 	{
 		public static IType ApplyAttributesToType(
 			IType inputType,

@@ -674,14 +674,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			foreach (var handle in attributes) {
 				var attribute = currentMetadata.GetCustomAttribute(handle);
 				var typeHandle = attribute.GetAttributeType(currentMetadata);
-				switch (typeHandle.GetFullTypeName(currentMetadata).ReflectionName) {
-					case "System.Runtime.CompilerServices.DynamicAttribute":
-					case "System.Runtime.CompilerServices.ExtensionAttribute":
-					case "System.Runtime.CompilerServices.DecimalConstantAttribute":
-					case "System.ParamArrayAttribute":
-						continue;
+				if (IgnoreAttribute(typeHandle.GetFullTypeName(currentMetadata))) {
+					continue;
 				}
 				targetCollection.Add(ReadAttribute(handle));
+			}
+		}
+
+		bool IgnoreAttribute(FullTypeName typeName)
+		{
+			if (typeName.IsNested || typeName.TopLevelTypeName.TypeParameterCount != 0)
+				return false;
+			switch (typeName.TopLevelTypeName.Namespace) {
+				case "System.Runtime.CompilerServices":
+					switch (typeName.Name) {
+						case "DynamicAttribute":
+							return UseDynamicType;
+						case "TupleElementNamesAttribute":
+							return UseTupleTypes;
+						case "ExtensionAttribute":
+							return true; // TODO: shouldn't we disable extension methods in C# 2.0 mode?
+						case "DecimalConstantAttribute":
+							return true;
+						default:
+							return false;
+					}
+				case "System":
+					return typeName.Name == "ParamArrayAttribute";
+				default:
+					return false;
 			}
 		}
 

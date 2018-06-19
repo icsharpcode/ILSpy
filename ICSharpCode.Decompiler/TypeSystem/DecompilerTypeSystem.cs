@@ -145,6 +145,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeAttributeOptions 
 			);
 		}
+
+		IType ResolveDeclaringType(SRM.EntityHandle declaringTypeReference)
+		{
+			// resolve without substituting dynamic/tuple types
+			return MetadataTypeReference.Resolve(
+				declaringTypeReference,
+				moduleDefinition.Metadata,
+				context,
+				typeAttributes: null,
+				attributeOptions: TypeAttributeOptions.None
+			);
+		}
 		#endregion
 		
 		public SRM.MethodSignature<IType> DecodeMethodSignature(SRM.StandaloneSignatureHandle handle)
@@ -186,7 +198,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.FieldDefinition:
 							var fieldDefHandle = (SRM.FieldDefinitionHandle)fieldReference;
 							var fieldDef = metadata.GetFieldDefinition(fieldDefHandle);
-							declaringType = ResolveAsType(fieldDef.GetDeclaringType());
+							declaringType = ResolveDeclaringType(fieldDef.GetDeclaringType());
 							returnType = new FieldTypeReference(fieldDefHandle, metadata, typeAttributeOptions);
 							var declaringTypeDefinition = declaringType.GetDefinition();
 							if (declaringTypeDefinition == null)
@@ -199,7 +211,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.HandleKind.MemberReference:
 							var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldReference);
 							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Field);
-							declaringType = ResolveAsType(memberRef.Parent);
+							declaringType = ResolveDeclaringType(memberRef.Parent);
 							field = FindNonGenericField(metadata, memberRef, declaringType);
 							break;
 						default:
@@ -318,7 +330,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			switch (methodReference.Kind) {
 				case SRM.HandleKind.MethodDefinition:
 					var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
-					declaringType = ResolveAsType(methodDef.GetDeclaringType());
+					declaringType = ResolveDeclaringType(methodDef.GetDeclaringType());
 					declaringTypeDefinition = declaringType.GetDefinition();
 					if (declaringTypeDefinition == null) {
 						return CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
@@ -343,7 +355,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							FindNonGenericMethod(metadata, memberRef.Parent, out declaringType);
 							break;
 						default:
-							declaringType = ResolveAsType(memberRef.Parent);
+							declaringType = ResolveDeclaringType(memberRef.Parent);
 							break;
 					}
 					declaringTypeDefinition = declaringType.GetDefinition();
@@ -480,7 +492,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var propertyDefinition = metadata.GetPropertyDefinition(handle);
 			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			ITypeDefinition typeDef = ResolveAsType(declaringType).GetDefinition();
+			ITypeDefinition typeDef = ResolveDeclaringType(declaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
 			foreach (IProperty property in typeDef.Properties) {
@@ -518,7 +530,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var eventDefinition = metadata.GetEventDefinition(handle);
 			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			ITypeDefinition typeDef = ResolveAsType(declaringType).GetDefinition();
+			ITypeDefinition typeDef = ResolveDeclaringType(declaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
 			var returnType = ResolveAsType(eventDefinition.Type);

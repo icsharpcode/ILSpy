@@ -118,6 +118,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				case PointerType pointerType:
 					CollectNamespacesForTypeReference(pointerType.ElementType, namespaces);
 					break;
+				case TupleType tupleType:
+					foreach (var elementType in tupleType.ElementTypes) {
+						CollectNamespacesForTypeReference(elementType, namespaces);
+					}
+					break;
 				default:
 					namespaces.Add(type.Namespace);
 					break;
