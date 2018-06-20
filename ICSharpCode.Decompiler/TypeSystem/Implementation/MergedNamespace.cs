@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			foreach (var ns in namespaces) {
 				ITypeDefinition typeDef = ns.GetTypeDefinition(name, typeParameterCount);
 				if (typeDef != null) {
-					if (typeDef.IsPublic) {
+					if (typeDef.Accessibility == Accessibility.Public) {
 						// Prefer accessible types over non-accessible types.
 						return typeDef;
 						// || (typeDef.IsInternal && typeDef.ParentAssembly.InternalsVisibleTo(...))

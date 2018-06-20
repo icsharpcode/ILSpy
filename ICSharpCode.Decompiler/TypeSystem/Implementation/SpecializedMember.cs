@@ -111,10 +111,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.MemberDefinition; }
 		}
 		
-		public IUnresolvedMember UnresolvedMember {
-			get { return baseMember.UnresolvedMember; }
-		}
-		
 		public IType ReturnType {
 			get {
 				var result = LazyInit.VolatileRead(ref this.returnType);
@@ -199,34 +195,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public bool IsShadowing {
 			get { return baseMember.IsShadowing; }
-		}
-		
-		public bool IsSynthetic {
-			get { return baseMember.IsSynthetic; }
-		}
-		
-		public bool IsPrivate {
-			get { return baseMember.IsPrivate; }
-		}
-		
-		public bool IsPublic {
-			get { return baseMember.IsPublic; }
-		}
-		
-		public bool IsProtected {
-			get { return baseMember.IsProtected; }
-		}
-		
-		public bool IsInternal {
-			get { return baseMember.IsInternal; }
-		}
-		
-		public bool IsProtectedOrInternal {
-			get { return baseMember.IsProtectedOrInternal; }
-		}
-		
-		public bool IsProtectedAndInternal {
-			get { return baseMember.IsProtectedAndInternal; }
 		}
 		
 		public string FullName {

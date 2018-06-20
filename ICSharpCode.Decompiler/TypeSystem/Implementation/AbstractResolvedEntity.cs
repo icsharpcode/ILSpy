@@ -64,7 +64,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAbstract { get { return unresolved.IsAbstract; } }
 		public bool IsSealed { get { return unresolved.IsSealed; } }
 		public bool IsShadowing { get { return unresolved.IsShadowing; } }
-		public bool IsSynthetic { get { return unresolved.IsSynthetic; } }
 		
 		public ICompilation Compilation {
 			get { return parentContext.Compilation; }
@@ -76,13 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string Namespace { get { return unresolved.Namespace; } }
 		
 		public virtual Accessibility Accessibility { get { return unresolved.Accessibility; } }
-		public bool IsPrivate { get { return Accessibility == Accessibility.Private; } }
-		public bool IsPublic { get { return Accessibility == Accessibility.Public; } }
-		public bool IsProtected { get { return Accessibility == Accessibility.Protected; } }
-		public bool IsInternal { get { return Accessibility == Accessibility.Internal; } }
-		public bool IsProtectedOrInternal { get { return Accessibility == Accessibility.ProtectedOrInternal; } }
-		public bool IsProtectedAndInternal { get { return Accessibility == Accessibility.ProtectedAndInternal; } }
-		
+
 		public override string ToString()
 		{
 			return "[" + this.SymbolKind.ToString() + " " + this.ReflectionName + "]";

@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					baseMembers = baseType.GetMembers(m => m.Name == member.Name && !m.IsExplicitInterfaceImplementation, GetMemberOptions.IgnoreInheritedMembers);
 				}
 				foreach (IMember baseMember in baseMembers) {
-					if (baseMember.IsPrivate) {
+					if (baseMember.Accessibility == Accessibility.Private) {
 						// skip private base members; 
 						continue;
 					}

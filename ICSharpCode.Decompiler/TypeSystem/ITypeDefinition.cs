@@ -96,12 +96,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface ITypeDefinition : IType, IEntity
 	{
-		/// <summary>
-		/// Returns all parts that contribute to this type definition.
-		/// Non-partial classes have a single part that represents the whole class.
-		/// </summary>
-		IReadOnlyList<IUnresolvedTypeDefinition> Parts { get; }
-
 		IReadOnlyList<ITypeDefinition> NestedTypes { get; }
 		IReadOnlyList<IMember> Members { get; }
 		

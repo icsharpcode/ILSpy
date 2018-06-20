@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						result.Add(member);
 				}
 				return result.ToArray();
-			} else if (unresolved.IsStatic || !unresolved.IsPublic || DeclaringTypeDefinition == null || DeclaringTypeDefinition.Kind == TypeKind.Interface) {
+			} else if (unresolved.IsStatic || unresolved.Accessibility != Accessibility.Public || DeclaringTypeDefinition == null || DeclaringTypeDefinition.Kind == TypeKind.Interface) {
 				return EmptyList<IMember>.Instance;
 			} else {
 				// TODO: implement interface member mappings correctly

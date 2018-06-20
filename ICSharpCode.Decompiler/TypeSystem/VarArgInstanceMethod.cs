@@ -181,10 +181,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.MemberDefinition; }
 		}
 
-		public IUnresolvedMember UnresolvedMember {
-			get { return baseMethod.UnresolvedMember; }
-		}
-
 		public IType ReturnType {
 			get { return baseMethod.ReturnType; }
 		}
@@ -261,10 +257,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.IsShadowing; }
 		}
 
-		public bool IsSynthetic {
-			get { return baseMethod.IsSynthetic; }
-		}
-
 		#endregion
 
 		#region IHasAccessibility implementation
@@ -272,31 +264,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public Accessibility Accessibility {
 			get { return baseMethod.Accessibility; }
 		}
-
-		public bool IsPrivate {
-			get { return baseMethod.IsPrivate; }
-		}
-
-		public bool IsPublic {
-			get { return baseMethod.IsPublic; }
-		}
-
-		public bool IsProtected {
-			get { return baseMethod.IsProtected; }
-		}
-
-		public bool IsInternal {
-			get { return baseMethod.IsInternal; }
-		}
-
-		public bool IsProtectedOrInternal {
-			get { return baseMethod.IsProtectedOrInternal; }
-		}
-
-		public bool IsProtectedAndInternal {
-			get { return baseMethod.IsProtectedAndInternal; }
-		}
-
+		
 		#endregion
 
 		#region INamedElement implementation

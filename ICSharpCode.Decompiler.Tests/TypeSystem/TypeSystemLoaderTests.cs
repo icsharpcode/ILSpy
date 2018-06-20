@@ -804,16 +804,16 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(true, p.IsAbstract);
 			Assert.AreEqual(true, p.IsOverridable);
 			Assert.AreEqual(false, p.IsOverride);
-			Assert.AreEqual(true, p.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Accessibility);
 			Assert.AreEqual(true, p.Getter.IsAbstract);
 			Assert.AreEqual(true, p.Getter.IsOverridable);
 			Assert.AreEqual(false, p.Getter.IsOverride);
-			Assert.AreEqual(true, p.Getter.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Getter.Accessibility);
 			Assert.AreEqual(false, p.Getter.HasBody);
 			Assert.AreEqual(true, p.Setter.IsAbstract);
 			Assert.AreEqual(true, p.Setter.IsOverridable);
 			Assert.AreEqual(false, p.Setter.IsOverride);
-			Assert.AreEqual(true, p.Setter.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Setter.Accessibility);
 			Assert.AreEqual(false, p.Setter.HasBody);
 
 			type = GetTypeDefinition(typeof(IInterfaceWithIndexers));
@@ -822,37 +822,37 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.AreEqual(true, p.IsAbstract);
 			Assert.AreEqual(true, p.IsOverridable);
 			Assert.AreEqual(false, p.IsOverride);
-			Assert.AreEqual(true, p.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Accessibility);
 			Assert.AreEqual(true, p.Getter.IsAbstract);
 			Assert.AreEqual(true, p.Getter.IsOverridable);
 			Assert.AreEqual(false, p.Getter.IsOverride);
-			Assert.AreEqual(true, p.Getter.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Getter.Accessibility);
 			Assert.AreEqual(true, p.Setter.IsAbstract);
 			Assert.AreEqual(true, p.Setter.IsOverridable);
 			Assert.AreEqual(false, p.Setter.IsOverride);
-			Assert.AreEqual(true, p.Setter.IsPublic);
+			Assert.AreEqual(Accessibility.Public, p.Setter.Accessibility);
 
 			type = GetTypeDefinition(typeof(IHasEvent));
 			var e = type.Events.Single();
 			Assert.AreEqual(true, e.IsAbstract);
 			Assert.AreEqual(true, e.IsOverridable);
 			Assert.AreEqual(false, e.IsOverride);
-			Assert.AreEqual(true, e.IsPublic);
+			Assert.AreEqual(Accessibility.Public, e.Accessibility);
 			Assert.AreEqual(true, e.AddAccessor.IsAbstract);
 			Assert.AreEqual(true, e.AddAccessor.IsOverridable);
 			Assert.AreEqual(false, e.AddAccessor.IsOverride);
-			Assert.AreEqual(true, e.AddAccessor.IsPublic);
+			Assert.AreEqual(Accessibility.Public, e.AddAccessor.Accessibility);
 			Assert.AreEqual(true, e.RemoveAccessor.IsAbstract);
 			Assert.AreEqual(true, e.RemoveAccessor.IsOverridable);
 			Assert.AreEqual(false, e.RemoveAccessor.IsOverride);
-			Assert.AreEqual(true, e.RemoveAccessor.IsPublic);
+			Assert.AreEqual(Accessibility.Public, e.RemoveAccessor.Accessibility);
 
 			type = GetTypeDefinition(typeof(IDisposable));
 			var m = type.Methods.Single();
 			Assert.AreEqual(true, m.IsAbstract);
 			Assert.AreEqual(true, m.IsOverridable);
 			Assert.AreEqual(false, m.IsOverride);
-			Assert.AreEqual(true, m.IsPublic);
+			Assert.AreEqual(Accessibility.Public, m.Accessibility);
 		}
 
 		[Test]

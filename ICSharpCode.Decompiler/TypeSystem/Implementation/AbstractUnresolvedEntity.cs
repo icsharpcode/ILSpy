@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal const ushort FlagSealed    = 0x0002;
 		internal const ushort FlagAbstract  = 0x0004;
 		internal const ushort FlagShadowing = 0x0008;
-		internal const ushort FlagSynthetic = 0x0010;
+		//internal const ushort FlagSynthetic = 0x0010;
 		internal const ushort FlagStatic    = 0x0020;
 		// flags for DefaultUnresolvedTypeDefinition/LazyCecilTypeDefinition
 		internal const ushort FlagAddDefaultConstructorIfRequired = 0x0040;
@@ -233,38 +233,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				ThrowIfFrozen();
 				flags[FlagShadowing] = value;
 			}
-		}
-		
-		public bool IsSynthetic {
-			get { return flags[FlagSynthetic]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagSynthetic] = value;
-			}
-		}
-		
-		bool IHasAccessibility.IsPrivate {
-			get { return accessibility == Accessibility.Private; }
-		}
-		
-		bool IHasAccessibility.IsPublic {
-			get { return accessibility == Accessibility.Public; }
-		}
-		
-		bool IHasAccessibility.IsProtected {
-			get { return accessibility == Accessibility.Protected; }
-		}
-		
-		bool IHasAccessibility.IsInternal {
-			get { return accessibility == Accessibility.Internal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedOrInternal {
-			get { return accessibility == Accessibility.ProtectedOrInternal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedAndInternal {
-			get { return accessibility == Accessibility.ProtectedAndInternal; }
 		}
 		
 		public override string ToString()

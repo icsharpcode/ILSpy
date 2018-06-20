@@ -32,7 +32,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IUnresolvedTypeDefinition[] parts;
 		Accessibility accessibility = Accessibility.Internal;
 		bool isAbstract, isSealed, isShadowing;
-		bool isSynthetic = true; // true if all parts are synthetic
 		
 		public DefaultResolvedTypeDefinition(ITypeResolveContext parentContext, params IUnresolvedTypeDefinition[] parts)
 		{
@@ -47,7 +46,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				isAbstract  |= part.IsAbstract;
 				isSealed    |= part.IsSealed;
 				isShadowing |= part.IsShadowing;
-				isSynthetic &= part.IsSynthetic; // true if all parts are synthetic
 				
 				// internal is the default, so use another part's accessibility until we find a non-internal accessibility
 				if (accessibility == Accessibility.Internal)
@@ -108,10 +106,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IReadOnlyList<IUnresolvedTypeDefinition> Parts {
-			get { return parts; }
-		}
-
 		public System.Reflection.Metadata.EntityHandle MetadataToken => parts[0].MetadataToken;
 
 		public SymbolKind SymbolKind {
@@ -569,34 +563,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAbstract  { get { return isAbstract; } }
 		public bool IsSealed    { get { return isSealed; } }
 		public bool IsShadowing { get { return isShadowing; } }
-		public bool IsSynthetic { get { return isSynthetic; } }
 		
 		public Accessibility Accessibility {
 			get { return accessibility; }
-		}
-		
-		bool IHasAccessibility.IsPrivate {
-			get { return accessibility == Accessibility.Private; }
-		}
-		
-		bool IHasAccessibility.IsPublic {
-			get { return accessibility == Accessibility.Public; }
-		}
-		
-		bool IHasAccessibility.IsProtected {
-			get { return accessibility == Accessibility.Protected; }
-		}
-		
-		bool IHasAccessibility.IsInternal {
-			get { return accessibility == Accessibility.Internal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedOrInternal {
-			get { return accessibility == Accessibility.ProtectedOrInternal; }
-		}
-		
-		bool IHasAccessibility.IsProtectedAndInternal {
-			get { return accessibility == Accessibility.ProtectedAndInternal; }
 		}
 		#endregion
 		

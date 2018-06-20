@@ -1531,7 +1531,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		
 		bool TopLevelTypeDefinitionIsAccessible(ITypeDefinition typeDef)
 		{
-			if (typeDef.IsInternal) {
+			if (typeDef.Accessibility == Accessibility.Internal) {
 				return typeDef.ParentAssembly.InternalsVisibleTo(compilation.MainAssembly);
 			}
 			return true;

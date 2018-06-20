@@ -130,10 +130,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return this; }
 			}
 			
-			IUnresolvedMember IMember.UnresolvedMember {
-				get { return null; }
-			}
-
 			IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers {
 				get { return EmptyList<IMember>.Instance; }
 			}
@@ -158,7 +154,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return EmptyList<IAttribute>.Instance; }
 			}
 			
-			Accessibility IHasAccessibility.Accessibility {
+			Accessibility IEntity.Accessibility {
 				get { return Accessibility.Public; }
 			}
 			
@@ -175,34 +171,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			
 			bool IEntity.IsShadowing {
-				get { return false; }
-			}
-			
-			bool IEntity.IsSynthetic {
-				get { return true; }
-			}
-			
-			bool IHasAccessibility.IsPrivate {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsPublic {
-				get { return true; }
-			}
-			
-			bool IHasAccessibility.IsProtected {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsInternal {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsProtectedOrInternal {
-				get { return false; }
-			}
-			
-			bool IHasAccessibility.IsProtectedAndInternal {
 				get { return false; }
 			}
 			
