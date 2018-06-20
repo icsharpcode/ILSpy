@@ -171,10 +171,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters, IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
 		{
-			if (!context.Function.Method.IsStatic) {
-				var thisParam = context.Function.Variables[0];
-				parameterVariables.Add(new ILVariable(VariableKind.Parameter, thisParam.Type, -1) { Name = "this" });
-			}
 			switch (initializer) {
 				case Block initializerBlock:
 					if (initializerBlock.Kind != BlockKind.ArrayInitializer)
