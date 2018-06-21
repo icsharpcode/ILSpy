@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else if (typeWithElementType is ByReferenceType) {
 					return ConvertType(typeWithElementType.ElementType).MakeRefType();
 				} else {
-					// e.g. ByReferenceType; not supported as type in C#
+					// not supported as type in C#
 					return ConvertType(typeWithElementType.ElementType);
 				}
 			}
@@ -324,9 +324,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				// Handle top-level types
 				if (string.IsNullOrEmpty(genericType.Namespace)) {
 					result.Target = new SimpleType("global");
+					if (AddResolveResultAnnotations)
+						result.Target.AddAnnotation(new NamespaceResolveResult(resolver.Compilation.RootNamespace));
 					result.IsDoubleColon = true;
 				} else {
-					result.Target = ConvertNamespace(genericType.Namespace);
+					result.Target = ConvertNamespace(genericType.Namespace, out _);
 				}
 			}
 			result.MemberName = genericType.Name;
@@ -377,16 +379,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		public AstType ConvertNamespace(string namespaceName)
+		public AstType ConvertNamespace(string namespaceName, out NamespaceResolveResult nrr)
 		{
 			if (resolver != null) {
 				// Look if there's an alias to the target namespace
 				if (UseAliases) {
 					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
 						foreach (var pair in usingScope.UsingAliases) {
-							NamespaceResolveResult nrr = pair.Value as NamespaceResolveResult;
-							if (nrr != null && nrr.NamespaceName == namespaceName)
-								return new SimpleType(pair.Key);
+							nrr = pair.Value as NamespaceResolveResult;
+							if (nrr != null && nrr.NamespaceName == namespaceName) {
+								var ns = new SimpleType(pair.Key);
+								if (AddResolveResultAnnotations)
+									ns.AddAnnotation(nrr);
+								return ns;
+							}
 						}
 					}
 				}
@@ -394,30 +400,52 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			
 			int pos = namespaceName.LastIndexOf('.');
 			if (pos < 0) {
-				if (IsValidNamespace(namespaceName)) {
-					return new SimpleType(namespaceName);
+				if (IsValidNamespace(namespaceName, out nrr)) {
+					var ns = new SimpleType(namespaceName);
+					if (AddResolveResultAnnotations && nrr != null)
+						ns.AddAnnotation(nrr);
+					return ns;
 				} else {
-					return new MemberType {
-						Target = new SimpleType("global"),
+					var target = new SimpleType("global");
+					if (AddResolveResultAnnotations)
+						target.AddAnnotation(new NamespaceResolveResult(resolver.Compilation.RootNamespace));
+					var ns = new MemberType {
+						Target = target,
 						IsDoubleColon = true,
 						MemberName = namespaceName
 					};
+					if (AddResolveResultAnnotations) {
+						var @namespace = resolver.Compilation.RootNamespace.GetChildNamespace(namespaceName);
+						if (@namespace != null)
+							ns.AddAnnotation(nrr = new NamespaceResolveResult(@namespace));
+					}
+					return ns;
 				}
 			} else {
 				string parentNamespace = namespaceName.Substring(0, pos);
 				string localNamespace = namespaceName.Substring(pos + 1);
-				return new MemberType {
-					Target = ConvertNamespace(parentNamespace),
+				var parentNS = ConvertNamespace(parentNamespace, out var parentNRR);
+				var ns = new MemberType {
+					Target = parentNS,
 					MemberName = localNamespace
 				};
+				nrr = null;
+				if (AddResolveResultAnnotations && parentNRR != null) {
+					var newNamespace = parentNRR.Namespace.GetChildNamespace(localNamespace);
+					if (newNamespace != null) {
+						ns.AddAnnotation(nrr = new NamespaceResolveResult(newNamespace));
+					}
+				}
+				return ns;
 			}
 		}
 		
-		bool IsValidNamespace(string firstNamespacePart)
+		bool IsValidNamespace(string firstNamespacePart, out NamespaceResolveResult nrr)
 		{
+			nrr = null;
 			if (resolver == null)
 				return true; // just assume namespaces are valid if we don't have a resolver
-			NamespaceResolveResult nrr = resolver.ResolveSimpleName(firstNamespacePart, EmptyList<IType>.Instance) as NamespaceResolveResult;
+			nrr = resolver.ResolveSimpleName(firstNamespacePart, EmptyList<IType>.Instance) as NamespaceResolveResult;
 			return nrr != null && !nrr.IsError && nrr.NamespaceName == firstNamespacePart;
 		}
 		#endregion
@@ -444,6 +472,70 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				attr.Arguments.Add(namedArgument);
 			}
 			return attr;
+		}
+		#endregion
+
+		#region Convert Attribute Type
+		public AstType ConvertAttributeType(IType type)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+			AstType astType = ConvertTypeHelper(type);
+
+			string shortName = null;
+			if (type.Name.Length > 9 && type.Name.EndsWith("Attribute", StringComparison.Ordinal)) {
+				shortName = type.Name.Remove(type.Name.Length - 9);
+			}
+			switch (astType) {
+				case SimpleType st:
+					ResolveResult shortRR = null;
+					ResolveResult withExtraAttrSuffix = resolver.LookupSimpleNameOrTypeName(type.Name + "Attribute", EmptyList<IType>.Instance, NameLookupMode.Type);
+					if (shortName != null) {
+						shortRR = resolver.LookupSimpleNameOrTypeName(shortName, EmptyList<IType>.Instance, NameLookupMode.Type);
+					}
+					// short type is either unknown or not an attribute type -> we can use the short name.
+					if (shortRR != null && (shortRR is UnknownIdentifierResolveResult || !IsAttributeType(shortRR))) {
+						st.Identifier = shortName;
+					} else if (IsAttributeType(withExtraAttrSuffix)) {
+						// typeName + "Attribute" is an attribute type -> we cannot use long type name, add '@' to disable implicit "Attribute" suffix.
+						st.Identifier = '@' + st.Identifier;
+					}
+					break;
+				case MemberType mt:
+					if (type.DeclaringType != null) {
+						var declaringTypeDef = type.DeclaringType.GetDefinition();
+						if (declaringTypeDef != null) {
+							if (shortName != null && !declaringTypeDef.GetNestedTypes(t => t.TypeParameterCount == 0 && t.Name == shortName).Any(IsAttributeType)) {
+								mt.MemberName = shortName;
+							} else if (declaringTypeDef.GetNestedTypes(t => t.TypeParameterCount == 0 && t.Name == type.Name + "Attribute").Any(IsAttributeType)) {
+								mt.MemberName = '@' + mt.MemberName;
+							}
+						}
+					} else if (mt.Target.GetResolveResult() is NamespaceResolveResult nrr) {
+						if (shortName != null && !IsAttributeType(nrr.Namespace.GetTypeDefinition(shortName, 0))) {
+							mt.MemberName = shortName;
+						} else if (IsAttributeType(nrr.Namespace.GetTypeDefinition(type.Name + "Attribute", 0))) {
+							mt.MemberName = '@' + mt.MemberName;
+						}
+					}
+					break;
+			}
+
+			if (AddTypeReferenceAnnotations)
+				astType.AddAnnotation(type);
+			if (AddResolveResultAnnotations)
+				astType.AddAnnotation(new TypeResolveResult(type));
+			return astType;
+		}
+
+		private bool IsAttributeType(IType type)
+		{
+			return type != null && type.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute));
+		}
+
+		private bool IsAttributeType(ResolveResult rr)
+		{
+			return rr is TypeResolveResult trr && IsAttributeType(trr.Type);
 		}
 		#endregion
 

@@ -200,11 +200,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitSimpleType(simpleType);
 					return;
 				}
-				// HACK : ignore type names in attributes (TypeSystemAstBuilder doesn't handle them correctly)
-				if (simpleType.Parent is Syntax.Attribute) {
-					base.VisitSimpleType(simpleType);
-					return;
-				}
 				astBuilder.NameLookupMode = simpleType.GetNameLookupMode();
 				if (astBuilder.NameLookupMode == NameLookupMode.Type) {
 					AstType outermostType = simpleType;
@@ -217,7 +212,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						astBuilder.NameLookupMode = NameLookupMode.Expression;
 					}
 				}
-				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				if (simpleType.Parent is Syntax.Attribute) {
+					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
+				} else {
+					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				}
 			}
 		}
 	}
