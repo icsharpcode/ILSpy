@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class ILPrettyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/ILPretty";
+		static readonly string TestCasePath = Tester.TestCasePath + "/ILPretty";
 
 		[Test]
 		public void AllFilesHaveTests()

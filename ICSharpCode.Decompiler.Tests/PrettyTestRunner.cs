@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class PrettyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Pretty";
+		static readonly string TestCasePath = Tester.TestCasePath + "/Pretty";
 
 		[Test]
 		public void AllFilesHaveTests()
@@ -304,6 +304,24 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void Issue1080([ValueSource(nameof(roslynOnlyOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void AssemblyCustomAttributes([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomAttributes([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomAttributeSamples([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

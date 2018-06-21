@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class CorrectnessTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Correctness";
+		static readonly string TestCasePath = Tester.TestCasePath + "/Correctness";
 
 		[Test]
 		public void AllFilesHaveTests()

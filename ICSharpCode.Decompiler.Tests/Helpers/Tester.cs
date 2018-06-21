@@ -63,6 +63,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public static partial class Tester
 	{
+		public static readonly string TestCasePath = Path.Combine(
+	Path.GetDirectoryName(typeof(Tester).Assembly.Location),
+	"../../../TestCases");
+
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");

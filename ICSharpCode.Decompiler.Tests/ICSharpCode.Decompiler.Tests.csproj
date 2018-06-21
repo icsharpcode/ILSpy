@@ -169,11 +169,9 @@
     <Compile Include="Util\BitSetTests.cs" />
     <Compile Include="Util\IntervalTests.cs" />
     <Compile Include="Util\LongSetTests.cs" />
-    <Compile Include="CustomAttributes\CustomAttributeTests.cs" />
-    <Compile Include="CustomAttributes\S_AssemblyCustomAttribute.cs" />
-    <Compile Include="CustomAttributes\S_CustomAttributeSamples.cs" />
-    <Compile Include="CustomAttributes\S_CustomAttributes.cs" />
-    <Compile Include="DecompilerTestBase.cs" />
+    <Compile Include="TestCases\Pretty\AssemblyCustomAttributes.cs" />
+    <Compile Include="TestCases\Pretty\CustomAttributeSamples.cs" />
+    <Compile Include="TestCases\Pretty\CustomAttributes.cs" />
     <Compile Include="CodeSampleFileParser.cs" />
   </ItemGroup>
 
