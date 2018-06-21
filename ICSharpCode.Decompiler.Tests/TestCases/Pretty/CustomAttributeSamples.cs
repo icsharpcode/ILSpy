@@ -16,48 +16,45 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-//$CS
 using System;
-//$CE
 
-//$$ TargetModule (ignored)
-//[module: CLSCompliantAttribute(false)]
-//$$ ParameterlessAttributeUsage
-namespace ParameterLessAttributeUsage
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 {
+	[Obsolete("reason")]
+	public delegate int AppliedToDelegate();
+
+	[Obsolete("reason")]
+	public interface AppliedToInterface
+	{
+	}
+
+	[Obsolete("reason")]
+	public struct AppliedToStruct
+	{
+		public int Field;
+	}
+
 	[Flags]
 	public enum EnumWithFlagsAttribute
 	{
 		None = 0x0
 	}
-}
-//$$ AttributeWithEnumArgument
-namespace AttributeWithEnumArgument
-{
+
 	[AttributeUsage(AttributeTargets.All)]
 	public class MyAttributeAttribute : Attribute
 	{
 	}
-}
-//$$ AttributeWithEnumExpressionArgument
-namespace AttributeWithEnumExpressionArgument
-{
+
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
-	public class MyAttributeAttribute : Attribute
+	public class MyMethodOrInterfaceAttributeAttribute : Attribute
 	{
 	}
-}
-//$$ AttributeWithStringExpressionArgument
-namespace AttributeWithStringExpressionArgument
-{
+
 	[Obsolete("message")]
-	public class ObsoletedClass
+	public class ObsoleteClass
 	{
 	}
-}
-//$$ AttributeWithTypeArgument
-namespace AttributeWithTypeArgument
-{
+
 	[AttributeUsage(AttributeTargets.All)]
 	public class MyTypeAttribute : Attribute
 	{
@@ -70,255 +67,125 @@ namespace AttributeWithTypeArgument
 	public class SomeClass
 	{
 	}
-}
-//$$ AppliedToEvent
-namespace AppliedToEvent
-{
-	[AttributeUsage(AttributeTargets.Event)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class TestClass
-	{
-		[MyAttribute]
-		public event EventHandler MyEvent;
-	}
-}
-//$$ AppliedToEventMethods
-namespace AppliedToEventMethods
-{
-	[AttributeUsage(AttributeTargets.Method)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class TestClass
-	{
-		[method: MyAttribute]
-		public event EventHandler MyEvent;
-	}
-}
-//$$ AppliedToField
-namespace AppliedToField
-{
-	[AttributeUsage(AttributeTargets.Field)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
+
 	public class TestClass
 	{
 		[MyAttribute]
 		public int Field;
-	}
-}
-//$$ AppliedToProperty
-namespace AppliedToProperty
-{
-	public class TestClass
-	{
+
 		[Obsolete("reason")]
-		public int Property
-		{
-			get
-			{
+		public int Property {
+			get {
 				return 0;
 			}
 		}
-	}
-}
-//$$ AppliedToPropertyGet
-namespace AppliedToPropertyGet
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class TestClass
-	{
-		public int Property
-		{
+
+		public int PropertyAttributeOnGetter {
 			[MyAttribute]
-			get
-			{
+			get {
 				return 0;
 			}
 		}
-	}
-}
-//$$ AppliedToPropertySet
-namespace AppliedToPropertySet
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class TestClass
-	{
-		public int Property
-		{
-			get
-			{
+
+		public int PropertyAttributeOnSetter {
+			get {
 				return 3;
 			}
 			[MyAttribute]
-			set
-			{
+			set {
 			}
 		}
-	}
-}
-//$$ AppliedToIndexer
-namespace AppliedToIndexer
-{
-	public class TestClass
-	{
+
 		[Obsolete("reason")]
-		public int this[int i]
-		{
-			get
-			{
+		public int this[int i] {
+			get {
 				return 0;
 			}
 		}
-	}
-}
-//$$ AppliedToDelegate
-[Obsolete("reason")]
-public delegate int AppliedToDelegate();
-//$$ AppliedToMethod
-namespace AppliedToMethod
-{
-	[AttributeUsage(AttributeTargets.Method)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class TestClass
-	{
+
+		[MyAttribute]
+		public event EventHandler MyEvent;
+
+		[method: MyAttribute]
+		public event EventHandler MyEvent2;
+
 		[MyAttribute]
 		public void Method()
 		{
 		}
-	}
-}
-//$$ AppliedToInterface
-[Obsolete("reason")]
-public interface AppliedToInterface
-{
-}
-//$$ AppliedToStruct
-[Obsolete("reason")]
-public struct AppliedToStruct
-{
-	public int Field;
-}
-//$$ AppliedToParameter
-namespace AppliedToParameter
-{
-	[AttributeUsage(AttributeTargets.Parameter)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class MyClass
-	{
+
 		public void Method([MyAttribute] int val)
 		{
 		}
 	}
-}
-//$$ NamedInitializerProperty
-namespace NamedInitializerProperty
-{
+
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeWithNamedArgumentAppliedAttribute : Attribute
 	{
 	}
-}
-//$$ NamedInitializerPropertyString
-namespace NamedInitializerPropertyString
-{
+
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeWithCustomPropertyAttribute : Attribute
 	{
-		public string Prop
-		{
-			get
-			{
+		public string Prop {
+			get {
 				return "";
 			}
-			set
-			{
+			set {
 			}
 		}
 	}
-	[MyAttribute(Prop = "value")]
+
+	[MyAttributeWithCustomProperty(Prop = "value")]
 	public class MyClass
 	{
 	}
-}
-//$$ NamedInitializerPropertyType
-namespace NamedInitializerPropertyType
-{
+
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeWithNamedInitializerPropertyTypeAttribute : Attribute
 	{
-		public Type Prop
-		{
-			get
-			{
+		public Type Prop {
+			get {
 				return null;
 			}
-			set
-			{
+			set {
 			}
 		}
 	}
-	[MyAttribute(Prop = typeof(Enum))]
-	public class MyClass
+
+	[MyAttributeWithNamedInitializerPropertyType(Prop = typeof(Enum))]
+	public class MyClass2
 	{
 	}
-}
-//$$ NamedInitializerPropertyEnum
-namespace NamedInitializerPropertyEnum
-{
+
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeNamedInitializerPropertyEnumAttribute : Attribute
 	{
-		public AttributeTargets Prop
-		{
-			get
-			{
+		public AttributeTargets Prop {
+			get {
 				return AttributeTargets.All;
 			}
-			set
-			{
+			set {
 			}
 		}
 	}
-	[MyAttribute(Prop = (AttributeTargets.Class | AttributeTargets.Method))]
-	public class MyClass
+
+	[MyAttributeNamedInitializerPropertyEnum(Prop = (AttributeTargets.Class | AttributeTargets.Method))]
+	public class MyClass3
 	{
 	}
-}
-//$$ NamedInitializerFieldEnum
-namespace NamedInitializerFieldEnum
-{
+
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeNamedInitializerFieldEnumAttribute : Attribute
 	{
 		public AttributeTargets Field;
 	}
-	[MyAttribute(Field = (AttributeTargets.Class | AttributeTargets.Method))]
-	public class MyClass
+	[MyAttributeNamedInitializerFieldEnum(Field = (AttributeTargets.Class | AttributeTargets.Method))]
+	public class MyClass4
 	{
 	}
-}
-//$$ TargetReturn
-namespace TargetReturn
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	public class MyClass
+
+	public class MyClass5
 	{
 		[return: MyAttribute]
 		public int MyMethod()
@@ -326,183 +193,111 @@ namespace TargetReturn
 			return 5;
 		}
 	}
-}
-//$$ TargetPropertyGetReturn
-namespace TargetPropertyGetReturn
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+
+	public class MyClass6
 	{
-	}
-	public class MyClass
-	{
-		public int Prop
-		{
+		public int Prop {
 			[return: MyAttribute]
-			get
-			{
+			get {
 				return 3;
 			}
 		}
 	}
-}
-//$$ TargetPropertySetParam
-namespace TargetPropertySetParam
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+	public class MyClass7
 	{
-	}
-	public class MyClass
-	{
-		public int Prop
-		{
+		public int Prop {
 			[param: MyAttribute]
-			set
-			{
+			set {
 			}
 		}
 	}
-}
-//$$ TargetPropertySetReturn
-namespace TargetPropertySetReturn
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+
+	public class MyClass8
 	{
-	}
-	public class MyClass
-	{
-		public int Prop
-		{
-			get
-			{
+		public int Prop {
+			get {
 				return 3;
 			}
 			[return: MyAttribute]
-			set
-			{
+			set {
 			}
 		}
 	}
-}
-//$$ TargetPropertyIndexGetReturn
-namespace TargetPropertyIndexGetReturn
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+
+	public class MyClass9
 	{
-	}
-	public class MyClass
-	{
-		public int this[string s]
-		{
+		public int this[string s] {
 			[return: MyAttribute]
-			get
-			{
+			get {
 				return 3;
 			}
 		}
 	}
-}
-//$$ TargetPropertyIndexParamOnlySet
-namespace TargetPropertyIndexParamOnlySet
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+
+	public class MyClass10
 	{
-	}
-	public class MyClass
-	{
-		public int this[[MyAttribute] string s]
-		{
-			set
-			{
+		public int this[[MyAttribute] string s] {
+			set {
 			}
 		}
 	}
-}
-//$$ TargetPropertyIndexParamOnlyGet
-namespace TargetPropertyIndexParamOnlyGet
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+
+	public class MyClass11
 	{
-	}
-	public class MyClass
-	{
-		public int this[[MyAttribute] string s]
-		{
-			get
-			{
+		public int this[[MyAttribute] string s] {
+			get {
 				return 3;
 			}
 		}
 	}
-}
-//$$ TargetPropertyIndexSetReturn
-namespace TargetPropertyIndexSetReturn
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+
+	public class MyClass12
 	{
-	}
-	public class MyClass
-	{
-		public string this[int index]
-		{
-			get
-			{
+		public string this[int index] {
+			get {
 				return "";
 			}
 			[return: MyAttribute]
-			set
-			{
+			set {
 			}
 		}
 	}
-}
-//$$ TargetPropertyIndexSetMultiParam
-namespace TargetPropertyIndexSetMultiParam
-{
+
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeTargetPropertyIndexSetMultiParamAttribute : Attribute
 	{
 		public int Field;
 	}
-	public class MyClass
+	public class MyClass13
 	{
-		public string this[[MyAttribute(Field = 2)] int index1, [MyAttribute(Field = 3)] int index2]
-		{
-			get
-			{
+		public string this[[MyAttributeTargetPropertyIndexSetMultiParam(Field = 2)] int index1, [MyAttributeTargetPropertyIndexSetMultiParam(Field = 3)] int index2] {
+			get {
 				return "";
 			}
 			[param: MyAttribute]
-			set
-			{
+			set {
 			}
 		}
 	}
-}
-//$$ ClassAttributeOnTypeParameter
-namespace ClassAttributeOnTypeParameter
-{
 	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
+	public class MyAttributeOnReturnTypeOfDelegateAttribute : Attribute
 	{
 	}
-	public class MyClass<[MyAttribute] T>
-	{
-	}
-}
-//$$ AttributeOnReturnTypeOfDelegate
-namespace AttributeOnReturnTypeOfDelegate
-{
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeAttribute : Attribute
-	{
-	}
-	[return: MyAttribute]
+	[return: MyAttributeOnReturnTypeOfDelegate]
 	public delegate void Test();
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyClassAttributeOnTypeParameterAttribute : Attribute
+	{
+	}
+
+	public class MyClass<[MyClassAttributeOnTypeParameter] T>
+	{
+	}
 }

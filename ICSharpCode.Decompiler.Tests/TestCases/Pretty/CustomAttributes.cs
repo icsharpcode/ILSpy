@@ -91,10 +91,8 @@ namespace CustomAttributes
 		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
 		[My(EnumWithFlag.All)]
-		public static string Property
-		{
-			get
-			{
+		public static string Property {
+			get {
 				return "aa";
 			}
 		}
@@ -104,7 +102,7 @@ namespace CustomAttributes
 		}
 		// No Boxing
 		[My(new StringComparison[] {
-			StringComparison.Ordinal, 
+			StringComparison.Ordinal,
 			StringComparison.CurrentCulture
 		})]
 		public static void EnumArray()
@@ -112,7 +110,7 @@ namespace CustomAttributes
 		}
 		// Boxing of each array element
 		[My(new object[] {
-			StringComparison.Ordinal, 
+			StringComparison.Ordinal,
 			StringComparison.CurrentCulture
 		})]
 		public static void BoxedEnumArray()

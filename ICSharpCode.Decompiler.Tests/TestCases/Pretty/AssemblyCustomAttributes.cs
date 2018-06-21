@@ -19,3 +19,4 @@
 using System;
 
 [assembly: CLSCompliant(false)]
+//[module: CLSCompliant(false)]
