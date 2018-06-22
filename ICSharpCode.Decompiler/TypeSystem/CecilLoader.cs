@@ -1505,6 +1505,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (ShortenInterfaceImplNames)
 					m.Name = method.Name.Substring(lastDot + 1);
 				m.IsExplicitInterfaceImplementation = true;
+				m.Accessibility = Accessibility.None;
 				foreach (var or in method.Overrides) {
 					m.ExplicitInterfaceImplementations.Add(new DefaultMemberReference(
 						accessorOwner != null ? SymbolKind.Accessor : SymbolKind.Method,
@@ -1793,6 +1794,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (ShortenInterfaceImplNames)
 					p.Name = property.Name.Substring(property.Name.LastIndexOf('.') + 1);
 				p.IsExplicitInterfaceImplementation = true;
+				p.Accessibility = Accessibility.None;
 				foreach (var mr in accessor.ExplicitInterfaceImplementations) {
 					p.ExplicitInterfaceImplementations.Add(new AccessorOwnerMemberReference(mr));
 				}
@@ -1826,6 +1828,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (ShortenInterfaceImplNames)
 					e.Name = ev.Name.Substring(ev.Name.LastIndexOf('.') + 1);
 				e.IsExplicitInterfaceImplementation = true;
+				e.Accessibility = Accessibility.None;
 				foreach (var mr in accessor.ExplicitInterfaceImplementations) {
 					e.ExplicitInterfaceImplementations.Add(new AccessorOwnerMemberReference(mr));
 				}
