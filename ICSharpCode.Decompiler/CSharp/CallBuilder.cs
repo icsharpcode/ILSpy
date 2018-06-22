@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					Debug.Assert(argumentToParameterMap == null && argumentNames == null);
-					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList());
+					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList(), argumentNames);
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
 					return new InvocationExpression(target, GetArgumentExpressions(arguments, argumentNames))
 						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm));
@@ -289,7 +289,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			All = 3
 		}
 
-		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method, ref TranslatedExpression target, List<TranslatedExpression> arguments, string[] argumentNames, List<IParameter> expectedParameters, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
+		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
+			ref TranslatedExpression target, List<TranslatedExpression> arguments, string[] argumentNames,
+			List<IParameter> expectedParameters, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
 		{
 			CallTransformation transform = CallTransformation.None;
 			bool requireTarget;
@@ -360,7 +362,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return transform;
 		}
 
-		private void CastArguments(List<TranslatedExpression> arguments, List<IParameter> expectedParameters)
+		private void CastArguments(IList<TranslatedExpression> arguments, IReadOnlyList<IParameter> expectedParameters)
 		{
 			for (int i = 0; i < arguments.Count; i++) {
 				if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
@@ -516,43 +518,71 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
-		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, out IMember foundMember)
+		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method,
+			IList<TranslatedExpression> arguments, string[] argumentNames, out IMember foundMember)
 		{
 			foundMember = null;
-			MemberResolveResult result;
 			if (target == null) {
-				result = resolver.ResolveSimpleName(method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
+				var result = resolver.ResolveSimpleName(method.AccessorOwner.Name,
+					EmptyList<IType>.Instance,
+					isInvocationTarget: false) as MemberResolveResult;
+				if (result == null || result.IsError)
+					return false;
+				foundMember = result.Member;
 			} else {
 				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 				if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer) {
-					// TODO: use OR here, etc.
-					result = null;
-					foreach (var methodList in lookup.LookupIndexers(target)) {
-						foreach (var indexer in methodList) {
-							if (IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, indexer)) {
-								foundMember = indexer;
-								return true;
-							}
-						}
-					}
+					var or = new OverloadResolution(resolver.Compilation,
+						arguments.SelectArray(a => a.ResolveResult),
+						argumentNames: argumentNames,
+						typeArguments: Empty<IType>.Array,
+						conversions: expressionBuilder.resolver.conversions);
+					or.AddMethodLists(lookup.LookupIndexers(target));
+					if (or.BestCandidateErrors != OverloadResolutionErrors.None)
+						return false;
+					if (or.IsAmbiguous)
+						return false;
+					foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
 				} else {
-					result = lookup.Lookup(target, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
+					var result = lookup.Lookup(target,
+						method.AccessorOwner.Name,
+						EmptyList<IType>.Instance,
+						isInvocation: false) as MemberResolveResult;
+					if (result == null || result.IsError)
+						return false;
+					foundMember = result.Member;
 				}
 			}
-			foundMember = result?.Member;
-			return !(result == null || result.IsError || !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, result.Member));
+			return foundMember != null && IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, foundMember);
 		}
 
-		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method, TranslatedExpression target, IList<TranslatedExpression> arguments)
+		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
+			TranslatedExpression target, IList<TranslatedExpression> arguments, string[] argumentNames)
 		{
-			bool requireTarget = expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name)
-				|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
+			bool requireTarget;
+			if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
+				requireTarget = true;
+			else if (method.IsStatic)
+				requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition);
+			else
+				requireTarget = !(target.Expression is ThisReferenceExpression);
 			bool targetCasted = false;
+			bool isSetter = method.ReturnType.IsKnownType(KnownTypeCode.Void);
+			bool argumentsCasted = (isSetter && method.Parameters.Count == 1) || (!isSetter && method.Parameters.Count == 0);
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
+			TranslatedExpression value = default(TranslatedExpression);
+			if (isSetter) {
+				value = arguments.Last();
+				arguments.Remove(value);
+			}
+
 			IMember foundMember;
-			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method, out foundMember)) {
-				if (!requireTarget) {
+			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method, arguments, argumentNames, out foundMember)) {
+				if (!argumentsCasted) {
+					argumentsCasted = true;
+					CastArguments(arguments, method.Parameters);
+				} else if(!requireTarget) {
 					requireTarget = true;
 					targetResolveResult = target.ResolveResult;
 				} else if (!targetCasted) {
@@ -567,9 +597,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			var rr = new MemberResolveResult(target.ResolveResult, foundMember);
 
-			if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
-				var value = arguments.Last();
-				arguments.Remove(value);
+			if (isSetter) {
 				TranslatedExpression expr;
 
 				if (arguments.Count != 0) {
