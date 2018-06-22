@@ -339,6 +339,9 @@ namespace ICSharpCode.ILSpy
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
+#if DEBUG
+			this.Title = $"ILSpy {RevisionClass.FullVersion}";
+#endif
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)
