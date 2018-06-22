@@ -2012,7 +2012,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind) {
 					case IL.Transforms.AccessPathKind.Adder:
-						elementsStack.Peek().Add(MakeInitializerElements(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values));
+						elementsStack.Peek().Add(new CallBuilder(this, typeSystem, settings).BuildCollectionInitializerExpression(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values));
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
 						if (lastElement.Indices?.Length > 0) {
@@ -2060,19 +2060,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				return new NamedExpression(member.Member.Name, value);
 			}
-		}
-
-		Expression MakeInitializerElements(OpCode opCode, IMethod method, ResolveResult targetResolveResult, List<ILInstruction> values)
-		{
-			int firstParameterOffset = method.IsExtensionMethod ? 1 : 0;
-			if (values.Count == 1) {
-				return Translate(values[0], typeHint: method.Parameters[firstParameterOffset].Type).ConvertTo(method.Parameters[0].Type, this);
-			}
-			var expressions = new Expression[values.Count];
-			for (int i = 0; i < values.Count; i++) {
-				expressions[i] = Translate(values[i], typeHint: method.Parameters[i + firstParameterOffset].Type).ConvertTo(method.Parameters[i + firstParameterOffset].Type, this);
-			}
-			return new ArrayInitializerExpression(expressions);
 		}
 
 		TranslatedExpression TranslateArrayInitializer(Block block)

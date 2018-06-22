@@ -51,6 +51,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			{
 				new Dictionary<string, Type>().Add(name, typeof(T2));
 			}
+
+			public void Add(params int[] ints)
+			{
+			}
 		}
 
 		public class C
@@ -247,19 +251,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), array);
 		}
 
-		public static CustomList<int> ExtensionMethodInCollectionInitializer()
+		public static void ExtensionMethodInCollectionInitializer()
 		{
 #if CS60
-			return new CustomList<int> {
+			X(Y(), new CustomList<int> {
 				{
 					1,
 					2
 				}
-			};
+			});
 #else
 			CustomList<int> customList = new CustomList<int>();
 			customList.Add(1, 2);
-			return customList;
+			X(Y(), customList);
 #endif
 		}
 
@@ -268,6 +272,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			CustomList<int> customList = new CustomList<int>();
 			customList.Add<int>("int");
 			Console.WriteLine(customList);
+		}
+
+		public static void CollectionInitializerWithParamsMethod()
+		{
+			X(Y(), new CustomList<int> {
+				{
+					1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					7,
+					8,
+					9,
+					10
+				}
+			});
 		}
 
 		public static void CollectionInitializerList()
@@ -577,6 +599,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			NoOp(new Guid?[1] {
 				Guid.Empty
+			});
+		}
+
+
+		private void Issue907_Test3(string text)
+		{
+			X(Y(), new Dictionary<string, object> {
+				{
+					"",
+					text
+				}
 			});
 		}
 	}
