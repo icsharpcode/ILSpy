@@ -245,66 +245,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else if (method.IsOperator && method.Name == "op_Implicit" && arguments.Count == 1) {
 					return HandleImplicitConversion(method, arguments[0]);
 				} else {
-					bool requireTypeArguments = false;
-					bool requireTarget;
-					if (expressionBuilder.HidesVariableWithName(method.Name)) {
-						requireTarget = true;
-					} else {
-						if (method.IsStatic)
-							requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
-						else if (method.Name == ".ctor")
-							requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
-						else if (target.Expression is BaseReferenceExpression)
-							requireTarget = (callOpCode != OpCode.CallVirt && method.IsVirtual);
-						else
-							requireTarget = !(target.Expression is ThisReferenceExpression);
-					}
-					bool targetCasted = false;
-					bool argumentsCasted = false;
-					IType[] typeArguments = Empty<IType>.Array;
-					var targetResolveResult = requireTarget ? target.ResolveResult : null;
-					IParameterizedMember foundMethod;
-					OverloadResolutionErrors errors;
-					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments, argumentNames, out foundMethod)) != OverloadResolutionErrors.None) {
-						switch (errors) {
-							case OverloadResolutionErrors.TypeInferenceFailed:
-							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
-								if (requireTypeArguments) goto default;
-								requireTypeArguments = true;
-								typeArguments = method.TypeArguments.ToArray();
-								continue;
-							default:
-								// TODO : implement some more intelligent algorithm that decides which of these fixes (cast args, add target, cast target, add type args)
-								// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
-								if (!argumentsCasted) {
-									argumentsCasted = true;
-									CastArguments(arguments, expectedParameters);
-								} else if (!requireTarget) {
-									requireTarget = true;
-									targetResolveResult = target.ResolveResult;
-								} else if (!targetCasted) {
-									targetCasted = true;
-									target = target.ConvertTo(method.DeclaringType, expressionBuilder);
-									targetResolveResult = target.ResolveResult;
-								} else if (!requireTypeArguments) {
-									requireTypeArguments = true;
-									typeArguments = method.TypeArguments.ToArray();
-								} else {
-									break;
-								}
-								continue;
-						}
-						// We've given up.
-						foundMethod = method;
-						break;
-					}
-					// Note: after this loop, 'method' and 'foundMethod' may differ,
+					var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref target,
+						arguments, argumentNames, expectedParameters, CallTransformation.All, out IParameterizedMember foundMethod);
+
+					// Note: after this, 'method' and 'foundMethod' may differ,
 					// but as far as allowed by IsAppropriateCallTarget().
 
 					Expression targetExpr;
 					string methodName = method.Name;
 					AstNodeCollection<AstType> typeArgumentList;
-					if (requireTarget) {
+					if ((transform & CallTransformation.RequireTarget) != 0) {
 						targetExpr = new MemberReferenceExpression(target.Expression, methodName);
 						typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 
@@ -320,14 +270,94 @@ namespace ICSharpCode.Decompiler.CSharp
 						targetExpr = new IdentifierExpression(methodName);
 						typeArgumentList = ((IdentifierExpression)targetExpr).TypeArguments;
 					}
-
-					if (requireTypeArguments && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
+					
+					if ((transform & CallTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 						typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 					var argumentExpressions = GetArgumentExpressions(arguments, argumentNames);
 					return new InvocationExpression(targetExpr, argumentExpressions)
 						.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod, argumentResolveResults, isExpandedForm: isExpandedForm));
 				}
 			}
+		}
+
+		[Flags]
+		enum CallTransformation
+		{
+			None = 0,
+			RequireTarget = 1,
+			RequireTypeArguments = 2,
+			All = 3
+		}
+
+		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method, ref TranslatedExpression target, List<TranslatedExpression> arguments, string[] argumentNames, List<IParameter> expectedParameters, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
+		{
+			CallTransformation transform = CallTransformation.None;
+			bool requireTarget;
+			bool requireTypeArguments = false;
+			if ((allowedTransforms & CallTransformation.RequireTarget) != 0) {
+				if (expressionBuilder.HidesVariableWithName(method.Name)) {
+					requireTarget = true;
+				} else {
+					if (method.IsStatic)
+						requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
+					else if (method.Name == ".ctor")
+						requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
+					else if (target.Expression is BaseReferenceExpression)
+						requireTarget = (expectedTargetDetails.CallOpCode != OpCode.CallVirt && method.IsVirtual);
+					else
+						requireTarget = !(target.Expression is ThisReferenceExpression);
+				}
+			} else {
+				requireTarget = false;
+			}
+			bool targetCasted = false;
+			bool argumentsCasted = false;
+			IType[] typeArguments = Empty<IType>.Array;
+			var targetResolveResult = requireTarget ? target.ResolveResult : null;
+			OverloadResolutionErrors errors;
+			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments, argumentNames, out foundMethod)) != OverloadResolutionErrors.None) {
+				switch (errors) {
+					case OverloadResolutionErrors.TypeInferenceFailed:
+						if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0) {
+							goto case OverloadResolutionErrors.WrongNumberOfTypeArguments;
+						}
+						goto default;
+					case OverloadResolutionErrors.WrongNumberOfTypeArguments:
+						Debug.Assert((allowedTransforms & CallTransformation.RequireTypeArguments) != 0);
+						if (requireTypeArguments) goto default;
+						requireTypeArguments = true;
+						typeArguments = method.TypeArguments.ToArray();
+						continue;
+					default:
+						// TODO : implement some more intelligent algorithm that decides which of these fixes (cast args, add target, cast target, add type args)
+						// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
+						if (!argumentsCasted) {
+							argumentsCasted = true;
+							CastArguments(arguments, expectedParameters);
+						} else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !requireTarget) {
+							requireTarget = true;
+							targetResolveResult = target.ResolveResult;
+						} else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !targetCasted) {
+							targetCasted = true;
+							target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+							targetResolveResult = target.ResolveResult;
+						} else if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && !requireTypeArguments) {
+							requireTypeArguments = true;
+							typeArguments = method.TypeArguments.ToArray();
+						} else {
+							break;
+						}
+						continue;
+				}
+				// We've given up.
+				foundMethod = method;
+				break;
+			}
+			if (requireTarget)
+				transform |= CallTransformation.RequireTarget;
+			if (requireTypeArguments)
+				transform |= CallTransformation.RequireTypeArguments;
+			return transform;
 		}
 
 		private void CastArguments(List<TranslatedExpression> arguments, List<IParameter> expectedParameters)
