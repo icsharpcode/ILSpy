@@ -17,16 +17,42 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 {
-	public class InitializerTests
+	public static class Extensions
+	{
+		public static void Add(this TestCases.CustomList<int> inst, int a, int b)
+		{
+		}
+	}
+
+	public class TestCases
 	{
 		#region Types and helpers
+		public class CustomList<T> : IEnumerable<T>, IEnumerable
+		{
+			public IEnumerator<T> GetEnumerator()
+			{
+				throw new NotImplementedException();
+			}
+
+			IEnumerator IEnumerable.GetEnumerator()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Add<T2>(string name)
+			{
+				new Dictionary<string, Type>().Add(name, typeof(T2));
+			}
+		}
+
 		public class C
 		{
 			public int Z;
@@ -206,9 +232,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void InvalidIndices2(int a)
 		{
+#pragma warning disable 251
 			int[] array = new int[1];
 			array[-1] = a;
 			X(Y(), array);
+#pragma warning restore
 		}
 
 		public static void IndicesInWrongOrder(int a, int b)
@@ -217,6 +245,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			array[2] = b;
 			array[1] = a;
 			X(Y(), array);
+		}
+
+		public static CustomList<int> ExtensionMethodInCollectionInitializer()
+		{
+#if CS60
+			return new CustomList<int> {
+				{
+					1,
+					2
+				}
+			};
+#else
+			CustomList<int> customList = new CustomList<int>();
+			customList.Add(1, 2);
+			return customList;
+#endif
+		}
+
+		public static void NoCollectionInitializerBecauseOfTypeArguments()
+		{
+			CustomList<int> customList = new CustomList<int>();
+			customList.Add<int>("int");
+			Console.WriteLine(customList);
 		}
 
 		public static void CollectionInitializerList()

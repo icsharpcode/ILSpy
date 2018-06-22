@@ -73,6 +73,7 @@ namespace ICSharpCode.Decompiler
 				nullPropagation = false;
 				stringInterpolation = false;
 				dictionaryInitializers = false;
+				extensionMethodsInCollectionInitializers = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
@@ -473,6 +474,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (dictionaryInitializers != value) {
 					dictionaryInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool extensionMethodsInCollectionInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
+		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// </summary>
+		public bool ExtensionMethodsInCollectionInitializers {
+			get { return extensionMethodsInCollectionInitializers; }
+			set {
+				if (extensionMethodsInCollectionInitializers != value) {
+					extensionMethodsInCollectionInitializers = value;
 					OnPropertyChanged();
 				}
 			}

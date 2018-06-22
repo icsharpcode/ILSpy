@@ -158,5 +158,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments());
 		}
+
+		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
+		{
+			if (method.Parameters.Count == 0) return false;
+			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
+			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
+			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectArray(p => p.Name);
+			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
+			var resolver = new CSharpResolver(resolveContext);
+			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
+		}
+
+		public static bool CanInferTypeArgumentsFromParameters(IMethod method, IReadOnlyList<ResolveResult> arguments, ITypeResolveContext resolveContext)
+		{
+			if (method.TypeParameters.Count == 0)
+				return true;
+			var inference = new TypeInference(resolveContext.Compilation);
+			inference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectArray(p => p.Type), out bool success);
+			return success;
+		}
 	}
 }

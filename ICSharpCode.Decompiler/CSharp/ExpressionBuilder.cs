@@ -1989,7 +1989,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
-				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, allowDictionaryInitializer: settings.DictionaryInitializers);
+				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, settings: settings);
 				if (info.Kind == IL.Transforms.AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
 					currentPath = info.Path;
@@ -2012,7 +2012,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind) {
 					case IL.Transforms.AccessPathKind.Adder:
-						elementsStack.Peek().Add(MakeInitializerElements(info.Values, ((IMethod)lastElement.Member).Parameters));
+						elementsStack.Peek().Add(MakeInitializerElements(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values));
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
 						if (lastElement.Indices?.Length > 0) {
@@ -2062,19 +2062,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Expression MakeInitializerElements(List<ILInstruction> values, IReadOnlyList<IParameter> parameters)
+		Expression MakeInitializerElements(OpCode opCode, IMethod method, ResolveResult targetResolveResult, List<ILInstruction> values)
 		{
+			int firstParameterOffset = method.IsExtensionMethod ? 1 : 0;
 			if (values.Count == 1) {
-				return Translate(values[0], typeHint: parameters[0].Type).ConvertTo(parameters[0].Type, this);
+				return Translate(values[0], typeHint: method.Parameters[firstParameterOffset].Type).ConvertTo(method.Parameters[0].Type, this);
 			}
 			var expressions = new Expression[values.Count];
 			for (int i = 0; i < values.Count; i++) {
-				expressions[i] = Translate(values[i], typeHint: parameters[i].Type).ConvertTo(parameters[i].Type, this);
+				expressions[i] = Translate(values[i], typeHint: method.Parameters[i + firstParameterOffset].Type).ConvertTo(method.Parameters[i + firstParameterOffset].Type, this);
 			}
 			return new ArrayInitializerExpression(expressions);
 		}
-
-		readonly static ArraySpecifier[] NoSpecifiers = new ArraySpecifier[0];
 
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
@@ -2129,7 +2128,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					additionalSpecifiers = compType.ArraySpecifiers.Select(a => (ArraySpecifier)a.Clone()).ToArray();
 					compType.ArraySpecifiers.Clear();
 				} else {
-					additionalSpecifiers = NoSpecifiers;
+					additionalSpecifiers = Empty<ArraySpecifier>.Array;
 				}
 			}
 			var expr = new ArrayCreateExpression {
@@ -2137,7 +2136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Initializer = root
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
-			if (!(bool)type.ContainsAnonymousType())
+			if (!type.ContainsAnonymousType())
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			return expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
