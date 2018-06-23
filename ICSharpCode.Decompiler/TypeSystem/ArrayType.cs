@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetMethods(filter, options);
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
 		
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Array).GetAccessors(filter, options);
 		}
 		
-		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;

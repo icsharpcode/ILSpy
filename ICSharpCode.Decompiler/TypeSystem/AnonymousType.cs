@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return resolvedProperties; }
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Object).GetMethods(filter, options);
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -144,23 +144,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Object).GetMethods(typeArguments, filter, options);
 		}
 		
-		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			for (int i = 0; i < unresolvedProperties.Length; i++) {
-				if (filter == null || filter(unresolvedProperties[i]))
+				if (filter == null || filter(resolvedProperties[i]))
 					yield return resolvedProperties[i];
 			}
 		}
 		
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			for (int i = 0; i < unresolvedProperties.Length; i++) {
 				if (unresolvedProperties[i].CanGet) {
-					if (filter == null || filter(unresolvedProperties[i].Getter))
+					if (filter == null || filter(resolvedProperties[i].Getter))
 						yield return resolvedProperties[i].Getter;
 				}
 				if (unresolvedProperties[i].CanSet) {
-					if (filter == null || filter(unresolvedProperties[i].Setter))
+					if (filter == null || filter(resolvedProperties[i].Setter))
 						yield return resolvedProperties[i].Setter;
 				}
 			}

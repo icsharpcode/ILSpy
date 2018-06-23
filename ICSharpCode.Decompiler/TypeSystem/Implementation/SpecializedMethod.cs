@@ -93,10 +93,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
 		
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return methodDefinition.Parts; }
-		}
-		
 		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get { return methodDefinition.ReturnTypeAttributes; }
 		}

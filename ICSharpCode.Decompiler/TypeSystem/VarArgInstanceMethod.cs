@@ -109,11 +109,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				baseMethod.Specialize(substitution),
 				parameters.Skip(baseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution)).ToList());
 		}
-
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return baseMethod.Parts; }
-		}
-
+		
 		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get { return baseMethod.ReturnTypeAttributes; }
 		}

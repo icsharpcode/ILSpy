@@ -136,12 +136,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region IMethod implementation
 
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get {
-				return baseMethod.Parts;
-			}
-		}
-
 		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
 			get {
 				return baseMethod.ReturnTypeAttributes;

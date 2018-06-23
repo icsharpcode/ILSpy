@@ -36,37 +36,37 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return TypeKind.Void; }
 		}
 		
-		public override IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 		
-		public override IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter, GetMemberOptions options)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter, GetMemberOptions options)
 		{
 			return EmptyList<IEvent>.Instance;
 		}
 		
-		public override IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter, GetMemberOptions options)
+		public override IEnumerable<IField> GetFields(Predicate<IField> filter, GetMemberOptions options)
 		{
 			return EmptyList<IField>.Instance;
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 		
-		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter, GetMemberOptions options)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter, GetMemberOptions options)
 		{
 			return EmptyList<IProperty>.Instance;
 		}
 		
-		public override IEnumerable<IMember> GetMembers(Predicate<IUnresolvedMember> filter, GetMemberOptions options)
+		public override IEnumerable<IMember> GetMembers(Predicate<IMember> filter, GetMemberOptions options)
 		{
 			return EmptyList<IMember>.Instance;
 		}

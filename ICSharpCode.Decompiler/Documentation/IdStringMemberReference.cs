@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			this.memberIdString = memberIdString;
 		}
 		
-		bool CanMatch(IUnresolvedMember member)
+		bool CanMatch(IMember member)
 		{
 			switch (member.SymbolKind) {
 				case SymbolKind.Field:

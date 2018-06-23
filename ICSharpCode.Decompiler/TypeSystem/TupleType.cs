@@ -258,12 +258,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetAccessors(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public override IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			// CS8181 'new' cannot be used with tuple type. Use a tuple literal expression instead.
 			return EmptyList<IMethod>.Instance;
@@ -274,12 +274,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return UnderlyingType.GetDefinition();
 		}
 
-		public override IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetEvents(filter, options);
 		}
 
-		public override IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			// The fields from the underlying type (Item1..Item7 and Rest)
 			foreach (var field in UnderlyingType.GetFields(filter, options)) {
@@ -305,12 +305,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new TupleElementField(f, Compilation.TypeResolveContext);
 		}*/
 
-		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetMethods(filter, options);
 		}
 
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetMethods(typeArguments, filter, options);
 		}
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return UnderlyingType.GetNestedTypes(typeArguments, filter, options);
 		}
 
-		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return UnderlyingType.GetProperties(filter, options);
 		}

@@ -262,12 +262,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return EmptyList<IType>.Instance;
 		}
 		
-		public IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint) {
-					if (filter == null || filter(DefaultUnresolvedMethod.DummyConstructor)) {
-						return new [] { DefaultResolvedMethod.GetDummyConstructor(compilation, this) };
+					var dummyCtor = DefaultResolvedMethod.GetDummyConstructor(compilation, this);
+					if (filter == null || filter(dummyCtor)) {
+						return new [] { dummyCtor };
 					}
 				}
 				return EmptyList<IMethod>.Instance;
@@ -276,7 +277,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -284,7 +285,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetMethods(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -292,7 +293,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetMethods(this, typeArguments, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IProperty>.Instance;
@@ -300,7 +301,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetProperties(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IField>.Instance;
@@ -308,7 +309,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetFields(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IEvent>.Instance;
@@ -316,7 +317,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetEvents(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IMember> GetMembers(Predicate<IUnresolvedMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMember>.Instance;
@@ -324,7 +325,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetMembers(this, FilterNonStatic(filter), options);
 		}
 		
-		public IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -342,7 +343,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 
-		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IUnresolvedMember
+		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
 			if (filter == null)
 				return member => !member.IsStatic;

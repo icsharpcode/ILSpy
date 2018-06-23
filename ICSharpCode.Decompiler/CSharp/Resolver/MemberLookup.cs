@@ -347,7 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Predicate<ITypeDefinition> nestedTypeFilter = delegate(ITypeDefinition entity) {
 				return entity.Name == name && IsAccessible(entity, allowProtectedAccess);
 			};
-			Predicate<IUnresolvedMember> memberFilter = delegate(IUnresolvedMember entity) {
+			Predicate<IMember> memberFilter = delegate(IMember entity) {
 				// NOTE: Atm destructors can be looked up with 'Finalize'
 				return entity.SymbolKind != SymbolKind.Indexer &&
 				       entity.SymbolKind != SymbolKind.Operator && 
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			
 			IType targetType = targetResolveResult.Type;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
-			Predicate<IUnresolvedProperty> filter = p => p.IsIndexer;
+			Predicate<IProperty> filter = p => p.IsIndexer;
 			
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes()) {

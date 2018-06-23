@@ -611,63 +611,36 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		#region GetMembers()
-		IEnumerable<IMember> GetFilteredMembers(Predicate<IUnresolvedMember> filter)
+		IEnumerable<IMember> GetFilteredMembers(Predicate<IMember> filter)
 		{
-			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				if (filter == null || filter(members.unresolvedMembers[i])) {
-					yield return members[i];
-				}
-			}
-			for (int i = members.unresolvedMembers.Length; i < members.Count; i++) {
-				var method = (IMethod)members[i];
-				bool ok = false;
-				foreach (var part in method.Parts) {
-					if (filter == null || filter(part)) {
-						ok = true;
-						break;
-					}
-				}
-				if (ok)
-					yield return method;
-			}
-		}
-		
-		IEnumerable<IMethod> GetFilteredMethods(Predicate<IUnresolvedMethod> filter)
-		{
-			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				IUnresolvedMethod unresolved = members.unresolvedMembers[i] as IUnresolvedMethod;
-				if (unresolved != null && (filter == null || filter(unresolved))) {
-					yield return (IMethod)members[i];
-				}
-			}
-			for (int i = members.unresolvedMembers.Length; i < members.Count; i++) {
-				var method = (IMethod)members[i];
-				bool ok = false;
-				foreach (var part in method.Parts) {
-					if (filter == null || filter(part)) {
-						ok = true;
-						break;
-					}
-				}
-				if (ok)
-					yield return method;
-			}
-		}
-		
-		IEnumerable<TResolved> GetFilteredNonMethods<TUnresolved, TResolved>(Predicate<TUnresolved> filter) where TUnresolved : class, IUnresolvedMember where TResolved : class, IMember
-		{
-			var members = GetMemberList();
-			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-				TUnresolved unresolved = members.unresolvedMembers[i] as TUnresolved;
-				if (unresolved != null && (filter == null || filter(unresolved))) {
-					yield return (TResolved)members[i];
+			foreach (var member in GetMemberList()) {
+				if (filter == null || filter(member)) {
+					yield return member;
 				}
 			}
 		}
 		
-		public virtual IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		IEnumerable<IMethod> GetFilteredMethods(Predicate<IMethod> filter)
+		{
+			foreach (var member in GetMemberList().OfType<IMethod>()) {
+				if (filter == null || filter(member)) {
+					yield return member;
+				}
+			}
+		}
+		
+		IEnumerable<TResolved> GetFilteredNonMethods<TUnresolved, TResolved>(Predicate<TResolved> filter) where TUnresolved : class, IUnresolvedMember where TResolved : class, IMember
+		{
+			var members = GetMemberList();
+			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
+				if (members.unresolvedMembers[i] is TUnresolved && members[i] is TResolved member) {
+					if (filter == null || filter(member))
+						yield return member;
+				}
+			}
+		}
+		
+		public virtual IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredMethods(ExtensionMethods.And(m => !m.IsConstructor, filter));
@@ -676,12 +649,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 		
-		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+		public virtual IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if (ComHelper.IsComImport(this)) {
 				IType coClass = ComHelper.GetCoClass(this);
@@ -700,7 +673,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredNonMethods<IUnresolvedProperty, IProperty>(filter);
@@ -709,7 +682,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredNonMethods<IUnresolvedField, IField>(filter);
@@ -718,7 +691,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredNonMethods<IUnresolvedEvent, IEvent>(filter);
@@ -727,7 +700,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IMember> GetMembers(Predicate<IUnresolvedMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredMembers(filter);
@@ -736,7 +709,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredAccessors(filter);
@@ -745,7 +718,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IUnresolvedMethod> filter)
+		IEnumerable<IMethod> GetFilteredAccessors(Predicate<IMethod> filter)
 		{
 			var members = GetMemberList();
 			for (int i = 0; i < members.unresolvedMembers.Length; i++) {
@@ -753,17 +726,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var unresolvedProperty = unresolved as IUnresolvedProperty;
 				var unresolvedEvent = unresolved as IUnresolvedEvent;
 				if (unresolvedProperty != null) {
-					if (unresolvedProperty.CanGet && (filter == null || filter(unresolvedProperty.Getter)))
-						yield return ((IProperty)members[i]).Getter;
-					if (unresolvedProperty.CanSet && (filter == null || filter(unresolvedProperty.Setter)))
-						yield return ((IProperty)members[i]).Setter;
+					var prop = (IProperty)members[i];
+					if (unresolvedProperty.CanGet && (filter == null || filter(prop.Getter)))
+						yield return prop.Getter;
+					if (unresolvedProperty.CanSet && (filter == null || filter(prop.Setter)))
+						yield return prop.Setter;
 				} else if (unresolvedEvent != null) {
-					if (unresolvedEvent.CanAdd && (filter == null || filter(unresolvedEvent.AddAccessor)))
-						yield return ((IEvent)members[i]).AddAccessor;
-					if (unresolvedEvent.CanRemove && (filter == null || filter(unresolvedEvent.RemoveAccessor)))
-						yield return ((IEvent)members[i]).RemoveAccessor;
-					if (unresolvedEvent.CanInvoke && (filter == null || filter(unresolvedEvent.InvokeAccessor)))
-						yield return ((IEvent)members[i]).InvokeAccessor;
+					var ev = (IEvent)members[i];
+					if (unresolvedEvent.CanAdd && (filter == null || filter(ev.AddAccessor)))
+						yield return ev.AddAccessor;
+					if (unresolvedEvent.CanRemove && (filter == null || filter(ev.RemoveAccessor)))
+						yield return ev.RemoveAccessor;
+					if (unresolvedEvent.CanInvoke && (filter == null || filter(ev.InvokeAccessor)))
+						yield return ev.InvokeAccessor;
 				}
 			}
 		}

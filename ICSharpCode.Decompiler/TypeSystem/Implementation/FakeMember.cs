@@ -131,9 +131,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public override SymbolKind SymbolKind => symbolKind;
-
-		IReadOnlyList<IUnresolvedMethod> IMethod.Parts => throw new NotImplementedException();
-
+		
 		IReadOnlyList<IAttribute> IMethod.ReturnTypeAttributes => EmptyList<IAttribute>.Instance;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;

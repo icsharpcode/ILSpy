@@ -77,13 +77,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IMethod : IParameterizedMember
 	{
 		/// <summary>
-		/// Gets the unresolved method parts.
-		/// For partial methods, this returns all parts.
-		/// Otherwise, this returns an array with a single element (new[] { UnresolvedMember }).
-		/// </summary>
-		IReadOnlyList<IUnresolvedMethod> Parts { get; }
-
-		/// <summary>
 		/// Gets the attributes associated with the return type. (e.g. [return: MarshalAs(...)])
 		/// </summary>
 		IReadOnlyList<IAttribute> ReturnTypeAttributes { get; }
