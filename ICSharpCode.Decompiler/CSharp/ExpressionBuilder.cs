@@ -2203,11 +2203,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			BinaryOperatorType op = BinaryOperatorType.Any;
 			TranslatedExpression rhs = default(TranslatedExpression);
 
-			if (inst.MatchLogicAnd(out var lhsInst, out var rhsInst)) {
+			if (inst.MatchLogicAnd(out var lhsInst, out var rhsInst) && !rhsInst.MatchLdcI4(1)) {
 				op = BinaryOperatorType.ConditionalAnd;
 				Debug.Assert(rhsInst == inst.TrueInst);
 				rhs = trueBranch;
-			} else if (inst.MatchLogicOr(out lhsInst, out rhsInst)) {
+			} else if (inst.MatchLogicOr(out lhsInst, out rhsInst) && !rhsInst.MatchLdcI4(0)) {
 				op = BinaryOperatorType.ConditionalOr;
 				Debug.Assert(rhsInst == inst.FalseInst);
 				rhs = falseBranch;
