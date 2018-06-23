@@ -383,8 +383,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			List<IParameter> expectedParameters, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
 		{
 			CallTransformation transform = CallTransformation.None;
+
+			// initialize requireTarget flag
 			bool requireTarget;
-			bool requireTypeArguments = false;
+			ResolveResult targetResolveResult;
 			if ((allowedTransforms & CallTransformation.RequireTarget) != 0) {
 				if (expressionBuilder.HidesVariableWithName(method.Name)) {
 					requireTarget = true;
@@ -398,13 +400,41 @@ namespace ICSharpCode.Decompiler.CSharp
 					else
 						requireTarget = !(target.Expression is ThisReferenceExpression);
 				}
+				targetResolveResult = requireTarget ? target.ResolveResult : null;
 			} else {
+				// HACK: this is a special case for collection initializer calls, they do not allow a target to be
+				// emitted, but we still need it for overload resolution.
 				requireTarget = true;
+				targetResolveResult = target.ResolveResult;
 			}
+
+			// initialize requireTypeArguments flag
+			bool requireTypeArguments;
+			IType[] typeArguments;
+			bool appliedRequireTypeArgumentsShortcut = false;
+			if (method.TypeParameters.Count > 0 && (allowedTransforms & CallTransformation.RequireTypeArguments) != 0
+				&& !IsPossibleExtensionMethodCallOnNull(method, arguments)) {
+				// The ambiguity resolution below only adds type arguments as last resort measure, however there are
+				// methods, such as Enumerable.OfType<TResult>(IEnumerable input) that always require type arguments,
+				// as those cannot be inferred from the parameters, which leads to bloated expressions full of extra casts
+				// that are no longer required once we add the type arguments.
+				// We lend overload resolution a hand by detecting such cases beforehand and requiring type arguments,
+				// if necessary.
+				if (!CanInferTypeArgumentsFromParameters(method, arguments.SelectArray(a => a.ResolveResult), expressionBuilder.typeInference)) {
+					requireTypeArguments = true;
+					typeArguments = method.TypeArguments.ToArray();
+					appliedRequireTypeArgumentsShortcut = true;
+				} else {
+					requireTypeArguments = false;
+					typeArguments = Empty<IType>.Array;
+				}
+			} else {
+				requireTypeArguments = false;
+				typeArguments = Empty<IType>.Array;
+			}
+
 			bool targetCasted = false;
 			bool argumentsCasted = false;
-			IType[] typeArguments = Empty<IType>.Array;
-			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments, argumentNames, out foundMethod)) != OverloadResolutionErrors.None) {
 				switch (errors) {
@@ -423,6 +453,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						// TODO : implement some more intelligent algorithm that decides which of these fixes (cast args, add target, cast target, add type args)
 						// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
 						if (!argumentsCasted) {
+							// If we added type arguments beforehand, but that didn't make the code any better,
+							// undo that decision and add casts first.
+							if (appliedRequireTypeArgumentsShortcut) {
+								requireTypeArguments = false;
+								typeArguments = Empty<IType>.Array;
+								appliedRequireTypeArgumentsShortcut = false;
+							}
 							argumentsCasted = true;
 							CastArguments(arguments, expectedParameters);
 						} else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !requireTarget) {
@@ -449,6 +486,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && requireTypeArguments)
 				transform |= CallTransformation.RequireTypeArguments;
 			return transform;
+		}
+
+		private bool IsPossibleExtensionMethodCallOnNull(IMethod method, List<TranslatedExpression> arguments)
+		{
+			return method.IsExtensionMethod && arguments.Count > 0 && arguments[0].Expression is NullReferenceExpression;
+		}
+
+		public static bool CanInferTypeArgumentsFromParameters(IMethod method, IReadOnlyList<ResolveResult> arguments,
+			TypeInference typeInference)
+		{
+			if (method.TypeParameters.Count == 0)
+				return true;
+			// always use unspecialized member, otherwise type inference fails
+			method = (IMethod)method.MemberDefinition;
+			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectArray(p => p.Type),
+				out bool success);
+			return success;
 		}
 
 		private void CastArguments(IList<TranslatedExpression> arguments, IReadOnlyList<IParameter> expectedParameters)
@@ -574,7 +628,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return OverloadResolutionErrors.AmbiguousMatch;
 				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 			} else {
-				var result = lookup.Lookup(target, method.Name, EmptyList<IType>.Instance, isInvocation: true) as MethodGroupResolveResult;
+				var result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: true) as MethodGroupResolveResult;
 				if (result == null)
 					return OverloadResolutionErrors.AmbiguousMatch;
 				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());

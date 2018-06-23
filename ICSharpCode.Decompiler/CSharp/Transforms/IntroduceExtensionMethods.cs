@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -136,8 +137,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
 				return;
-			if (firstArgument is NullReferenceExpression)
+			if (firstArgument is NullReferenceExpression) {
+				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
+			}
 			if (invocationExpression.Target is IdentifierExpression identifierExpression) {
 				identifierExpression.Detach();
 				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
@@ -168,15 +171,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
 			var resolver = new CSharpResolver(resolveContext);
 			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
-		}
-
-		public static bool CanInferTypeArgumentsFromParameters(IMethod method, IReadOnlyList<ResolveResult> arguments, ITypeResolveContext resolveContext)
-		{
-			if (method.TypeParameters.Count == 0)
-				return true;
-			var inference = new TypeInference(resolveContext.Compilation);
-			inference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectArray(p => p.Type), out bool success);
-			return success;
 		}
 	}
 }

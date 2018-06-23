@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
-		readonly TypeInference typeInference;
+		internal readonly TypeInference typeInference;
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		

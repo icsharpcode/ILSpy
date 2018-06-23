@@ -350,7 +350,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!targetType.GetAllBaseTypes().Any(i => i.IsKnownType(KnownTypeCode.IEnumerable) || i.IsKnownType(KnownTypeCode.IEnumerableOfT)))
 				return false;
-			return CSharp.Transforms.IntroduceExtensionMethods.CanInferTypeArgumentsFromParameters(method, method.Parameters.SelectArray(p => new ResolveResult(p.Type)), resolveContext);
+			return CSharp.CallBuilder.CanInferTypeArgumentsFromParameters(
+				method, method.Parameters.SelectArray(p => new ResolveResult(p.Type)),
+				new TypeInference(resolveContext.Compilation));
 		}
 
 		static IType GetReturnTypeFromInstruction(ILInstruction instruction)
