@@ -50,6 +50,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowSequencePoints = value;
 		}
 
+		public bool ShowMetadataTokens {
+			get => methodBodyDisassembler.ShowMetadataTokens;
+			set => methodBodyDisassembler.ShowMetadataTokens = value;
+		}
+
 		public bool ExpandMemberDefinitions { get; set; } = false;
 
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
@@ -139,6 +144,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void DisassembleMethodHeaderInternal(PEFile module, MethodDefinitionHandle handle, MetadataReader metadata, GenericContext genericContext)
 		{
+			WriteMetadataToken(handle, spaceAfter:true);
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 			//    .method public hidebysig  specialname
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
@@ -254,6 +260,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteFlags(methodDefinition.ImplAttributes & ~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl);
 
 			output.Unindent();
+		}
+
+		private void WriteMetadataToken(Handle handle, bool spaceAfter)
+		{
+			if (ShowMetadataTokens) {
+				output.Write("/* {0:X8} */", MetadataTokens.GetToken(handle));
+				if (spaceAfter) {
+					output.Write(' ');
+				}
+			}
 		}
 
 		void DisassembleMethodBlock(PEFile module, MethodDefinitionHandle handle, MetadataReader metadata, GenericContext genericContext)

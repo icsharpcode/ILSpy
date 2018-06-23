@@ -46,6 +46,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public bool ShowSequencePoints { get; set; }
 
+		/// <summary>
+		/// Show metadata tokens for instructions with token operands.
+		/// </summary>
+		public bool ShowMetadataTokens { get; set; }
+
 		IList<Metadata.SequencePoint> sequencePoints;
 		int nextSequencePointIndex;
 
@@ -107,7 +112,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void DisassembleLocalsBlock(MethodBodyBlock body)
 		{
-			if (body.LocalSignature.IsNil) return;
+			if (body.LocalSignature.IsNil)
+				return;
+			output.Write(".locals");
+			WriteMetadataToken(body.LocalSignature, spaceBefore: true);
+			if (body.LocalVariablesInitialized)
+				output.Write(" init");
 			var blob = metadata.GetStandaloneSignature(body.LocalSignature);
 			if (blob.GetKind() != StandaloneSignatureKind.LocalVariables)
 				return;
@@ -118,24 +128,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (reader.ReadCompressedInteger() == 0)
 				return;
 			var signature = blob.DecodeLocalSignature(signatureDecoder, genericContext);
-			if (!signature.IsEmpty) {
-				output.Write(".locals ");
-				if (body.LocalVariablesInitialized)
-					output.Write("init ");
-				output.WriteLine("(");
-				output.Indent();
-				int index = 0;
-				foreach (var v in signature) {
-					output.WriteDefinition("[" + index + "] ", v);
-					v(ILNameSyntax.TypeName);
-					if (index + 1 < signature.Length)
-						output.Write(',');
-					output.WriteLine();
-					index++;
-				}
-				output.Unindent();
-				output.WriteLine(")");
+			output.Write(' ');
+			output.WriteLine("(");
+			output.Indent();
+			int index = 0;
+			foreach (var v in signature) {
+				output.WriteDefinition("[" + index + "] ", v);
+				v(ILNameSyntax.TypeName);
+				if (index + 1 < signature.Length)
+					output.Write(',');
+				output.WriteLine();
+				index++;
 			}
+			output.Unindent();
+			output.WriteLine(")");
 		}
 
 		internal void WriteExceptionHandlers(PEFile module, MethodDefinitionHandle handle, MethodBodyBlock body)
@@ -305,6 +311,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(' ');
 						var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
 						handle.WriteTo(module, output, genericContext);
+						WriteMetadataToken(handle, spaceBefore: true);
 						break;
 					case OperandType.Tok:
 						output.Write(' ');
@@ -325,6 +332,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								break;
 						}
 						handle.WriteTo(module, output, genericContext);
+						WriteMetadataToken(handle, spaceBefore: true);
 						break;
 					case OperandType.ShortI:
 						output.Write(' ');
@@ -347,9 +355,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 						DisassemblerHelpers.WriteOperand(output, blob.ReadDouble());
 						break;
 					case OperandType.String:
-						var userString = metadata.GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
+						var userString = MetadataTokens.UserStringHandle(blob.ReadInt32());
 						output.Write(' ');
-						DisassemblerHelpers.WriteOperand(output, userString);
+						DisassemblerHelpers.WriteOperand(output, metadata.GetUserString(userString));
+						WriteMetadataToken(userString, spaceBefore: true);
 						break;
 					case OperandType.Switch:
 						int[] targets = ILParser.DecodeSwitchTargets(ref blob);
@@ -384,6 +393,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write($".emitbyte 0x{opCode:x}");
 			}
 			output.WriteLine();
+		}
+
+		private void WriteMetadataToken(Handle handle, bool spaceBefore)
+		{
+			if (ShowMetadataTokens) {
+				if (spaceBefore) {
+					output.Write(' ');
+				}
+				output.Write("/* {0:X8} */", MetadataTokens.GetToken(handle));
+			}
 		}
 	}
 }
