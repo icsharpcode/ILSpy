@@ -39,6 +39,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.compilation = assembly.Compilation;
 		}
 
+		public TypeProvider(ICompilation compilation)
+		{
+			this.assembly = null;
+			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+		}
+
 		public IType GetArrayType(IType elementType, SRM.ArrayShape shape)
 		{
 			return new ArrayType(compilation, elementType, shape.Rank);
@@ -109,12 +115,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new ArrayType(compilation, elementType);
 		}
 
+		bool? IsReferenceType(SRM.MetadataReader reader, SRM.EntityHandle handle, byte rawTypeKind)
+		{
+			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind)) {
+				case SRM.SignatureTypeKind.ValueType:
+					return false;
+				case SRM.SignatureTypeKind.Class:
+					return true;
+				default:
+					return null;
+			}
+		}
+
 		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			ITypeDefinition td = assembly.ResolveTypeDefToken(handle);
+			ITypeDefinition td = assembly?.ResolveTypeDefToken(handle);
 			if (td != null)
 				return td;
-			return SpecialType.UnknownType;
+			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
+			return new UnknownType(handle.GetFullTypeName(reader), isReferenceType);
 		}
 
 		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
@@ -125,24 +144,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				nrAsmRef = DefaultAssemblyReference.CurrentAssembly;
 			else
 				nrAsmRef = new DefaultAssemblyReference(reader.GetString(reader.GetAssemblyReference(asmref).Name));
-			bool? isReferenceType = null;
-			switch (reader.ResolveSignatureTypeKind(handle, rawTypeKind)) {
-				case SRM.SignatureTypeKind.ValueType:
-					isReferenceType = false;
-					break;
-				case SRM.SignatureTypeKind.Class:
-					isReferenceType = true;
-					break;
-			}
+			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
 			var gctr = new GetClassTypeReference(handle.GetFullTypeName(reader), nrAsmRef, isReferenceType);
-			return gctr.Resolve(new SimpleTypeResolveContext(assembly));
+			return gctr.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
 		}
 
 		public IType GetTypeFromSerializedName(string name)
 		{
 			// TODO: aren't we missing support for assembly-qualified names?
 			return new GetClassTypeReference(new FullTypeName(name))
-				.Resolve(new SimpleTypeResolveContext(assembly));
+				.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
 		}
 
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, ITypeResolveContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)

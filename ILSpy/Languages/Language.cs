@@ -171,31 +171,20 @@ namespace ICSharpCode.ILSpy
 					return provider.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type.Handle, 0);
 				case SRM.HandleKind.TypeDefinition:
 					var td = metadata.GetTypeDefinition((SRM.TypeDefinitionHandle)type.Handle);
-					var genericParams = td.GetGenericParameters();
-
-					var buffer = new System.Text.StringBuilder();
-
-					var name = td.GetFullTypeName(metadata);
-
-					if (includeNamespace)
-						buffer.Append(name.ToString());
-					else
-						buffer.Append(name.Name);
-
-					if (genericParams.Count > 0) {
-						buffer.Append('<');
-						int i = 0;
-						foreach (var h in genericParams) {
-							var gp = metadata.GetGenericParameter(h);
-							if (i > 0)
-								buffer.Append(", ");
-							buffer.Append(metadata.GetString(gp.Name));
-							i++;
+					if (includeNamespace) {
+						var buffer = new System.Text.StringBuilder();
+						if (!td.GetDeclaringType().IsNil) {
+							buffer.Append(TypeToString(new TypeDefinition(type.Module, td.GetDeclaringType()), genericContext, includeNamespace));
+							buffer.Append('+');
+						} else if (!td.Namespace.IsNil) {
+							buffer.Append(metadata.GetString(td.Namespace));
+							buffer.Append('.');
 						}
-						buffer.Append('>');
+						buffer.Append(metadata.GetString(td.Name));
+						return buffer.ToString();
+					} else {
+						return metadata.GetString(td.Name);
 					}
-
-					return buffer.ToString();
 				case SRM.HandleKind.TypeSpecification:
 					return provider.GetTypeFromSpecification(metadata, genericContext ?? GenericContext.Empty, (SRM.TypeSpecificationHandle)type.Handle, 0);
 				default:
