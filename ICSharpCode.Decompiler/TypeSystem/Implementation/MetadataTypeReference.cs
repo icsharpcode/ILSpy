@@ -30,30 +30,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly SRM.EntityHandle type;
 		readonly SRM.MetadataReader metadata;
 		readonly SRM.CustomAttributeHandleCollection? typeAttributes;
-		readonly TypeAttributeOptions attributeOptions;
+		readonly TypeSystemOptions options;
 
 		public MetadataTypeReference(SRM.EntityHandle type,
 			SRM.MetadataReader metadata,
 			SRM.CustomAttributeHandleCollection? typeAttributes,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			this.type = type;
 			this.metadata = metadata;
 			this.typeAttributes = typeAttributes;
-			this.attributeOptions = attributeOptions;
+			this.options = options;
 		}
 
 		public IType Resolve(ITypeResolveContext context)
 		{
 			return Resolve(type, metadata, context,
-				typeAttributes, attributeOptions);
+				options, typeAttributes);
 		}
 
 		public static IType Resolve(SRM.EntityHandle type,
 			SRM.MetadataReader metadata,
 			ITypeResolveContext context,
-			SRM.CustomAttributeHandleCollection? typeAttributes,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options,
+			SRM.CustomAttributeHandleCollection? typeAttributes = null)
 		{
 			if (type.IsNil)
 				return SpecialType.UnknownType;
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					break;
 			}
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
-					typeAttributes, metadata, attributeOptions);
+					typeAttributes, metadata, options);
 			return ty;
 		}
 	}
@@ -85,35 +85,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly SRM.EntityHandle fieldHandle;
 		readonly SRM.MetadataReader metadata;
-		readonly TypeAttributeOptions attributeOptions;
+		readonly TypeSystemOptions options;
 
 		public FieldTypeReference(SRM.FieldDefinitionHandle fieldHandle,
 			SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			this.fieldHandle = fieldHandle;
 			this.metadata = metadata;
-			this.attributeOptions = attributeOptions;
+			this.options = options;
 		}
 
 		public FieldTypeReference(SRM.MemberReferenceHandle fieldReferenceHandle,
 			SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions attributeOptions)
 		{
 			this.fieldHandle = fieldReferenceHandle;
 			this.metadata = metadata;
-			this.attributeOptions = attributeOptions;
+			this.options = attributeOptions;
 		}
 
 		IType ITypeReference.Resolve(ITypeResolveContext context)
 		{
 			if (fieldHandle.Kind == SRM.HandleKind.FieldDefinition) {
-				return Resolve((SRM.FieldDefinitionHandle)fieldHandle, metadata, context, attributeOptions);
+				return Resolve((SRM.FieldDefinitionHandle)fieldHandle, metadata, context, options);
 			} else {
 				var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldHandle);
 				IType ty = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), context);
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
-					memberRef.GetCustomAttributes(), metadata, attributeOptions);
+					memberRef.GetCustomAttributes(), metadata, options);
 				return ty;
 			}
 		}
@@ -121,12 +121,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IType Resolve(SRM.FieldDefinitionHandle fieldHandle,
 			SRM.MetadataReader metadata,
 			ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			var fieldDef = metadata.GetFieldDefinition(fieldHandle);
 			IType ty = fieldDef.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
-				fieldDef.GetCustomAttributes(), metadata, attributeOptions);
+				fieldDef.GetCustomAttributes(), metadata, options);
 			return ty;
 		}
 	}
@@ -138,22 +138,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		readonly SRM.EntityHandle handle;
 		readonly SRM.MetadataReader metadata;
-		readonly TypeAttributeOptions attributeOptions;
+		readonly TypeSystemOptions options;
 
 		public UnresolvedMethodSignature(SRM.MethodDefinitionHandle handle, SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			this.handle = handle;
 			this.metadata = metadata;
-			this.attributeOptions = attributeOptions;
+			this.options = options;
 		}
 
 		public UnresolvedMethodSignature(SRM.PropertyDefinitionHandle handle, SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions attributeOptions)
 		{
 			this.handle = handle;
 			this.metadata = metadata;
-			this.attributeOptions = attributeOptions;
+			this.options = attributeOptions;
 		}
 
 		public SRM.MethodSignature<IType> Resolve(ITypeResolveContext context)
@@ -165,12 +165,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case SRM.HandleKind.MethodDefinition:
 							return GetSignature(
 								metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)handle),
-								metadata, context, attributeOptions
+								metadata, context, options
 							);
 						case SRM.HandleKind.PropertyDefinition:
 							return GetSignature(
 								metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)handle),
-								metadata, context, attributeOptions
+								metadata, context, options
 							);
 						default:
 							throw new InvalidOperationException();
@@ -181,16 +181,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static SRM.MethodSignature<IType> GetSignature(SRM.MethodDefinition methodDef,
 			SRM.MetadataReader metadata, ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
 			var signature = methodDef.DecodeSignature(typeProvider, context);
-			return ApplyAttributes(signature, methodDef.GetParameters(), context.Compilation, metadata, attributeOptions);
+			return ApplyAttributes(signature, methodDef.GetParameters(), context.Compilation, metadata, options);
 		}
 
 		public static SRM.MethodSignature<IType> GetSignature(SRM.PropertyDefinition propertyDef,
 			SRM.MetadataReader metadata, ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions)
+			TypeSystemOptions options)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
 			var signature = propertyDef.DecodeSignature(typeProvider, context);
@@ -205,10 +205,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					parameterHandles = setter.GetParameters();
 				}
 			}
-			return ApplyAttributes(signature, parameterHandles, context.Compilation, metadata, attributeOptions);
+			return ApplyAttributes(signature, parameterHandles, context.Compilation, metadata, options);
 		}
 
-		static SRM.MethodSignature<IType> ApplyAttributes(SRM.MethodSignature<IType> signature, SRM.ParameterHandleCollection? parameterHandles, ICompilation compilation, SRM.MetadataReader metadata, TypeAttributeOptions attributeOptions)
+		static SRM.MethodSignature<IType> ApplyAttributes(SRM.MethodSignature<IType> signature, SRM.ParameterHandleCollection? parameterHandles, ICompilation compilation, SRM.MetadataReader metadata, TypeSystemOptions options)
 		{
 			SRM.CustomAttributeHandleCollection? returnTypeAttributes = null;
 			var parameterAttributes = new SRM.CustomAttributeHandleCollection?[signature.ParameterTypes.Length];
@@ -223,11 +223,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			IType returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-				signature.ReturnType, compilation, returnTypeAttributes, metadata, attributeOptions
+				signature.ReturnType, compilation, returnTypeAttributes, metadata, options
 			);
 			var parameterTypes = signature.ParameterTypes.SelectWithIndex(
 				(i, p) => ApplyAttributeTypeVisitor.ApplyAttributesToType(
-					p, compilation, parameterAttributes[i], metadata, attributeOptions
+					p, compilation, parameterAttributes[i], metadata, options
 				)
 			).ToImmutableArray();
 			return new SRM.MethodSignature<IType>(

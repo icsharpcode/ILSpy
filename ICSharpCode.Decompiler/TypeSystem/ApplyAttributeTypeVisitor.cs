@@ -26,18 +26,6 @@ using SRM = System.Reflection.Metadata;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Options for converting builtin
-	/// </summary>
-	[Flags]
-	enum TypeAttributeOptions
-	{
-		None = 0,
-		Dynamic = 1,
-		Tuple = 2,
-		Default = Dynamic | Tuple
-	}
-	
-	/// <summary>
 	/// Introduces 'dynamic' and tuple types based on attribute values.
 	/// </summary>
 	sealed class ApplyAttributeTypeVisitor : TypeVisitor
@@ -47,20 +35,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ICompilation compilation,
 			SRM.CustomAttributeHandleCollection? attributes,
 			SRM.MetadataReader metadata,
-			TypeAttributeOptions options)
+			TypeSystemOptions options)
 		{
-			if (options == TypeAttributeOptions.None) {
+			if ((options & (TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)) == TypeSystemOptions.None) {
 				return inputType;
 			}
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
-			bool useTupleTypes = (options & TypeAttributeOptions.Tuple) != 0;
+			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			string[] tupleElementNames = null;
 			if (attributes != null) {
 				foreach (var attrHandle in attributes.Value) {
 					var attr = metadata.GetCustomAttribute(attrHandle);
 					var attrType = attr.GetAttributeType(metadata);
-					if ((options & TypeAttributeOptions.Dynamic) != 0
+					if ((options & TypeSystemOptions.Dynamic) != 0
 						&& attrType.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "DynamicAttribute")) {
 						hasDynamicAttribute = true;
 						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);

@@ -30,6 +30,40 @@ using System.Collections.Immutable;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
+	/// Options that control how metadata is represented in the type system.
+	/// </summary>
+	[Flags]
+	public enum TypeSystemOptions
+	{
+		/// <summary>
+		/// No options enabled; stay as close to the metadata as possible.
+		/// </summary>
+		None = 0,
+		/// <summary>
+		/// [DynamicAttribute] is used to replace 'object' types with the 'dynamic' type.
+		/// 
+		/// If this option is not active, the 'dynamic' type is not used, and the attribute is preserved.
+		/// </summary>
+		Dynamic = 1,
+		/// <summary>
+		/// Tuple types are represented using the TupleType class.
+		/// [TupleElementNames] is used to name the tuple elements.
+		/// 
+		/// If this option is not active, the tuples are represented using their underlying type, and the attribute is preserved.
+		/// </summary>
+		Tuple = 2,
+		/// <summary>
+		/// If this option is active, [ExtensionAttribute] is removed and methods are marked as IsExtensionMethod.
+		/// Otherwise, the attribute is preserved but the methods are not marked.
+		/// </summary>
+		ExtensionMethods = 4,
+		/// <summary>
+		/// Default settings: all features enabled.
+		/// </summary>
+		Default = Dynamic | Tuple | ExtensionMethods
+	}
+
+	/// <summary>
 	/// Manages the NRefactory type system for the decompiler.
 	/// </summary>
 	/// <remarks>
@@ -40,7 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly Metadata.PEFile moduleDefinition;
 		readonly ICompilation compilation;
 		readonly ITypeResolveContext context;
-		readonly TypeAttributeOptions typeAttributeOptions;
+		readonly TypeSystemOptions typeSystemOptions;
 
 		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
@@ -58,17 +92,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
 			this.moduleDefinition = moduleDefinition;
-			typeAttributeOptions = TypeAttributeOptions.None;
+			typeSystemOptions = TypeSystemOptions.None;
 			if (settings.Dynamic)
-				typeAttributeOptions |= TypeAttributeOptions.Dynamic;
+				typeSystemOptions |= TypeSystemOptions.Dynamic;
 			if (settings.TupleTypes)
-				typeAttributeOptions |= TypeAttributeOptions.Tuple;
+				typeSystemOptions |= TypeSystemOptions.Tuple;
+			if (settings.ExtensionMethods)
+				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
 			MetadataLoader loader = new MetadataLoader {
 				IncludeInternalMembers = true,
 				ShortenInterfaceImplNames = false,
-				UseDynamicType = settings.Dynamic,
-				UseTupleTypes = settings.TupleTypes,
-				UseExtensionMethods = settings.ExtensionMethods,
+				Options = typeSystemOptions,
 			};
 			IUnresolvedAssembly mainAssembly = loader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -160,8 +194,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeReference,
 				moduleDefinition.Metadata,
 				context,
-				typeAttributes: null,
-				typeAttributeOptions 
+				typeSystemOptions
 			);
 		}
 
@@ -172,8 +205,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				declaringTypeReference,
 				moduleDefinition.Metadata,
 				context,
-				typeAttributes: null,
-				attributeOptions: TypeAttributeOptions.None
+				typeSystemOptions & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)
 			);
 		}
 		#endregion
@@ -226,7 +258,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								field = new FakeField(compilation) {
 									DeclaringType = declaringType,
 									Name = metadata.GetString(fieldDef.Name),
-									ReturnType = FieldTypeReference.Resolve(fieldDefHandle, metadata, context, typeAttributeOptions),
+									ReturnType = FieldTypeReference.Resolve(fieldDefHandle, metadata, context, typeSystemOptions),
 									IsStatic = (fieldDef.Attributes & System.Reflection.FieldAttributes.Static) != 0,
 								};
 							}

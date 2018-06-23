@@ -50,19 +50,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IncludeInternalMembers { get; set; }
 
 		/// <summary>
-		/// Gets/Sets whether to use the <c>dynamic</c> type.
+		/// Gets/Sets type system options.
 		/// </summary>
-		public bool UseDynamicType { get; set; } = true;
-
-		/// <summary>
-		/// Gets/Sets whether to use the tuple types.
-		/// </summary>
-		public bool UseTupleTypes { get; set; } = true;
-
-		/// <summary>
-		/// Gets/Sets whether to use extension methods.
-		/// </summary>
-		public bool UseExtensionMethods { get; set; } = true;
+		public TypeSystemOptions Options { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the cancellation token used by the assembly loader.
@@ -136,9 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.IncludeInternalMembers = loader.IncludeInternalMembers;
 			this.LazyLoad = loader.LazyLoad;
 			this.ShortenInterfaceImplNames = loader.ShortenInterfaceImplNames;
-			this.UseDynamicType = loader.UseDynamicType;
-			this.UseTupleTypes = loader.UseTupleTypes;
-			this.UseExtensionMethods = loader.UseExtensionMethods;
+			this.Options = loader.Options;
 			this.currentModule = loader.currentModule;
 			this.currentMetadata = loader.currentMetadata;
 			this.currentAssembly = loader.currentAssembly;
@@ -298,18 +286,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </param>
 		public ITypeReference ReadTypeReference(EntityHandle type, CustomAttributeHandleCollection? typeAttributes = null)
 		{
-			return new MetadataTypeReference(type, currentMetadata, typeAttributes, TypeAttributeOptions);
-		}
-
-		private TypeAttributeOptions TypeAttributeOptions {
-			get {
-				TypeAttributeOptions options = TypeAttributeOptions.None;
-				if (UseDynamicType)
-					options |= TypeAttributeOptions.Dynamic;
-				if (UseTupleTypes)
-					options |= TypeAttributeOptions.Tuple;
-				return options;
-			}
+			return new MetadataTypeReference(type, currentMetadata, typeAttributes, Options);
 		}
 		#endregion
 
@@ -695,11 +672,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case "System.Runtime.CompilerServices":
 					switch (typeName.Name) {
 						case "DynamicAttribute":
-							return UseDynamicType;
+							return (Options & TypeSystemOptions.Dynamic) != 0;
 						case "TupleElementNamesAttribute":
-							return UseTupleTypes;
+							return (Options & TypeSystemOptions.Tuple) != 0;
 						case "ExtensionAttribute":
-							return UseExtensionMethods;
+							return (Options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
 							return true;
 						default:
@@ -827,7 +804,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				foreach (FieldDefinitionHandle h in typeDefinition.GetFields()) {
 					var enumField = currentMetadata.GetFieldDefinition(h);
 					if (!enumField.HasFlag(FieldAttributes.Static)) {
-						baseTypes.Add(new FieldTypeReference(h, currentMetadata, TypeAttributeOptions.None));
+						baseTypes.Add(new FieldTypeReference(h, currentMetadata, TypeSystemOptions.None));
 						break;
 					}
 				}
@@ -1233,7 +1210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TranslateModifiers(handle, m);
 
 			var signature = method.DecodeSignature(TypeCodeProvider.Instance, default);
-			var unresolvedSig = new UnresolvedMethodSignature(handle, currentMetadata, TypeAttributeOptions);
+			var unresolvedSig = new UnresolvedMethodSignature(handle, currentMetadata, Options);
 			var (retType, parameters) = TranslateSignature(signature, unresolvedSig, method.GetParameters());
 			m.ReturnType = retType;
 			m.Parameters.AddRange(parameters);
@@ -1354,7 +1331,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		bool HasExtensionAttribute(MetadataReader metadata, CustomAttributeHandleCollection attributes)
 		{
-			if (!UseExtensionMethods)
+			if ((Options & TypeSystemOptions.ExtensionMethods) == 0)
 				return false;
 			foreach (var h in attributes) {
 				var attr = metadata.GetCustomAttribute(h);
@@ -1506,7 +1483,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			f.Accessibility = GetAccessibility(field.Attributes);
 			f.IsReadOnly = (field.Attributes & FieldAttributes.InitOnly) == FieldAttributes.InitOnly;
 			f.IsStatic = (field.Attributes & FieldAttributes.Static) == FieldAttributes.Static;
-			f.ReturnType = new FieldTypeReference(handle, currentMetadata, TypeAttributeOptions);
+			f.ReturnType = new FieldTypeReference(handle, currentMetadata, Options);
 			var constantHandle = field.GetDefaultValue();
 			if (!constantHandle.IsNil) {
 				var constant = currentMetadata.GetConstant(constantHandle);
@@ -1629,7 +1606,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 
 			var signature = property.DecodeSignature(TypeCodeProvider.Instance, default);
-			var unresolvedSig = new UnresolvedMethodSignature(handle, currentMetadata, TypeAttributeOptions);
+			var unresolvedSig = new UnresolvedMethodSignature(handle, currentMetadata, Options);
 			var (retType, parameters) = TranslateSignature(signature, unresolvedSig, parameterHandles);
 			p.ReturnType = retType;
 			p.Parameters.AddRange(parameters);
