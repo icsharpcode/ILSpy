@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public MetadataTypeReference(SRM.EntityHandle type,
 			SRM.MetadataReader metadata,
-			SRM.CustomAttributeHandleCollection? typeAttributes = null,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			SRM.CustomAttributeHandleCollection? typeAttributes,
+			TypeAttributeOptions attributeOptions)
 		{
 			this.type = type;
 			this.metadata = metadata;
@@ -52,8 +52,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IType Resolve(SRM.EntityHandle type,
 			SRM.MetadataReader metadata,
 			ITypeResolveContext context,
-			SRM.CustomAttributeHandleCollection? typeAttributes = null,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			SRM.CustomAttributeHandleCollection? typeAttributes,
+			TypeAttributeOptions attributeOptions)
 		{
 			if (type.IsNil)
 				return SpecialType.UnknownType;
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public FieldTypeReference(SRM.FieldDefinitionHandle fieldHandle,
 			SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			this.fieldHandle = fieldHandle;
 			this.metadata = metadata;
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public FieldTypeReference(SRM.MemberReferenceHandle fieldReferenceHandle,
 			SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			this.fieldHandle = fieldReferenceHandle;
 			this.metadata = metadata;
@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public static IType Resolve(SRM.FieldDefinitionHandle fieldHandle,
 			SRM.MetadataReader metadata,
 			ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			var fieldDef = metadata.GetFieldDefinition(fieldHandle);
 			IType ty = fieldDef.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly TypeAttributeOptions attributeOptions;
 
 		public UnresolvedMethodSignature(SRM.MethodDefinitionHandle handle, SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			this.handle = handle;
 			this.metadata = metadata;
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public UnresolvedMethodSignature(SRM.PropertyDefinitionHandle handle, SRM.MetadataReader metadata,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			this.handle = handle;
 			this.metadata = metadata;
@@ -165,12 +165,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case SRM.HandleKind.MethodDefinition:
 							return GetSignature(
 								metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)handle),
-								metadata, context
+								metadata, context, attributeOptions
 							);
 						case SRM.HandleKind.PropertyDefinition:
 							return GetSignature(
 								metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)handle),
-								metadata, context
+								metadata, context, attributeOptions
 							);
 						default:
 							throw new InvalidOperationException();
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static SRM.MethodSignature<IType> GetSignature(SRM.MethodDefinition methodDef,
 			SRM.MetadataReader metadata, ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
 			var signature = methodDef.DecodeSignature(typeProvider, context);
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public static SRM.MethodSignature<IType> GetSignature(SRM.PropertyDefinition propertyDef,
 			SRM.MetadataReader metadata, ITypeResolveContext context,
-			TypeAttributeOptions attributeOptions = TypeAttributeOptions.Default)
+			TypeAttributeOptions attributeOptions)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
 			var signature = propertyDef.DecodeSignature(typeProvider, context);

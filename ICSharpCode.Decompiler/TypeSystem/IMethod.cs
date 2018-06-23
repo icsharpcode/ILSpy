@@ -106,18 +106,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsOperator { get; }
 		
 		/// <summary>
-		/// Gets whether the method is a C#-style partial method.
-		/// A call to such a method is ignored by the compiler if the partial method has no body.
-		/// </summary>
-		/// <seealso cref="HasBody"/>
-		bool IsPartial { get; }
-
-		/// <summary>
-		/// Gets whether the method is a C#-style async method.
-		/// </summary>
-		bool IsAsync { get; }
-
-		/// <summary>
 		/// Gets whether the method has a body.
 		/// This property returns <c>false</c> for <c>abstract</c> or <c>extern</c> methods,
 		/// or for <c>partial</c> methods without implementation.

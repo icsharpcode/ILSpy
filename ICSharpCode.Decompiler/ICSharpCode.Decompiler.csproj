@@ -339,6 +339,7 @@
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />

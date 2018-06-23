@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2018 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SRM = System.Reflection.Metadata;
@@ -190,23 +208,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (fieldReference.Kind != SRM.HandleKind.FieldDefinition && fieldReference.Kind != SRM.HandleKind.MemberReference)
 				throw new ArgumentException("HandleKind must be either FieldDefinition or MemberReference", nameof(fieldReference));
 			lock (fieldLookupCache) {
-				IField field;
-				if (!fieldLookupCache.TryGetValue(fieldReference, out field)) {
+				if (!fieldLookupCache.TryGetValue(fieldReference, out IField field)) {
 					var metadata = moduleDefinition.Metadata;
 					IType declaringType;
-					ITypeReference returnType;
 					switch (fieldReference.Kind) {
 						case SRM.HandleKind.FieldDefinition:
 							var fieldDefHandle = (SRM.FieldDefinitionHandle)fieldReference;
 							var fieldDef = metadata.GetFieldDefinition(fieldDefHandle);
 							declaringType = ResolveDeclaringType(fieldDef.GetDeclaringType());
-							returnType = new FieldTypeReference(fieldDefHandle, metadata, typeAttributeOptions);
 							var declaringTypeDefinition = declaringType.GetDefinition();
-							if (declaringTypeDefinition == null)
-								field = CreateFakeField(declaringType, metadata.GetString(fieldDef.Name), returnType);
-							else {
-								field = declaringTypeDefinition.GetFields(f => f.MetadataToken == fieldReference, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault()
-									?? CreateFakeField(declaringType, metadata.GetString(fieldDef.Name), returnType);
+							if (declaringTypeDefinition != null) {
+								field = declaringTypeDefinition.GetFields(f => f.MetadataToken == fieldReference, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+							} else {
+								field = null;
+							}
+							if (field == null) {
+								field = new FakeField(compilation) {
+									DeclaringType = declaringType,
+									Name = metadata.GetString(fieldDef.Name),
+									ReturnType = FieldTypeReference.Resolve(fieldDefHandle, metadata, context, typeAttributeOptions),
+									IsStatic = (fieldDef.Attributes & System.Reflection.FieldAttributes.Static) != 0
+								};
 							}
 							break;
 						case SRM.HandleKind.MemberReference:
@@ -233,38 +255,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
 			string name = metadata.GetString(memberRef.Name);
 			ITypeDefinition typeDef = declaringType.GetDefinition();
-			ITypeReference returnType = new FieldTypeReference(memberRefHandle, metadata, typeAttributeOptions);
 
-			if (typeDef == null)
-				return CreateFakeField(declaringType, name, returnType);
-			foreach (IField field in typeDef.Fields)
-				if (field.Name == name)
-					return field;
-			return CreateFakeField(declaringType, name, returnType);
-		}
-
-		IField CreateFakeField(IType declaringType, string name, ITypeReference returnType)
-		{
-			var f = new DefaultUnresolvedField();
-			f.Name = name;
-			f.ReturnType = returnType;
-			return new ResolvedFakeField(f, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
-		}
-
-		class ResolvedFakeField : DefaultResolvedField
-		{
-			readonly IType declaringType;
-
-			public ResolvedFakeField(DefaultUnresolvedField unresolved, ITypeResolveContext parentContext, IType declaringType)
-				: base(unresolved, parentContext)
-			{
-				this.declaringType = declaringType;
+			if (typeDef != null) {
+				foreach (IField field in typeDef.Fields) {
+					if (field.Name == name)
+						return field;
+				}
 			}
-
-			public override IType DeclaringType
-			{
-				get { return declaringType; }
-			}
+			var returnType = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), context);
+			return new FakeField(compilation) {
+				DeclaringType = declaringType,
+				Name = name,
+				ReturnType = returnType
+			};
 		}
 		#endregion
 
@@ -276,128 +279,138 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (methodReference.Kind != SRM.HandleKind.MethodDefinition && methodReference.Kind != SRM.HandleKind.MemberReference && methodReference.Kind != SRM.HandleKind.MethodSpecification)
 				throw new ArgumentException("HandleKind must be either a MethodDefinition, MemberReference or MethodSpecification", nameof(methodReference));
 			lock (methodLookupCache) {
-				IMethod method;
-				IType declaringType;
-				IReadOnlyList<IType> classTypeArguments = null;
-				IReadOnlyList<IType> methodTypeArguments = null;
-				SRM.MethodSignature<ITypeReference>? signature = null;
-				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
+				if (!methodLookupCache.TryGetValue(methodReference, out IMethod method)) {
 					var metadata = moduleDefinition.Metadata;
 					switch (methodReference.Kind) {
 						case SRM.HandleKind.MethodDefinition:
-							var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
-							signature = methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default);
-							method = FindNonGenericMethod(metadata, methodReference, out declaringType);
+							method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)methodReference);
 							break;
 						case SRM.HandleKind.MemberReference:
-							var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)methodReference);
-							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Method);
-							signature = memberRef.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
-							var elementMethod = methodReference;
-							if (memberRef.Parent.Kind == SRM.HandleKind.MethodDefinition) {
-								elementMethod = (SRM.MethodDefinitionHandle)memberRef.Parent;
-							}
-							method = FindNonGenericMethod(metadata, elementMethod, out declaringType);
+							method = ResolveMethodReference(metadata, (SRM.MemberReferenceHandle)methodReference);
 							break;
 						case SRM.HandleKind.MethodSpecification:
 							var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
-							method = FindNonGenericMethod(metadata, methodSpec.Method, out declaringType);
-							var typeArguments = methodSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), default);
-							if (typeArguments.Length > 0) {
-								methodTypeArguments = typeArguments;
+							var methodTypeArgs = methodSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
+							if (methodSpec.Method.Kind == SRM.HandleKind.MethodDefinition) {
+								// generic instance of a methoddef (=generic method in non-generic class in current assembly)
+								method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)methodSpec.Method);
+								method = method.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
+							} else {
+								method = ResolveMethodReference(metadata, (SRM.MemberReferenceHandle)methodSpec.Method, methodTypeArgs);
 							}
 							break;
 						default:
 							throw new NotSupportedException();
 					}
-					if (signature?.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
-						method = new VarArgInstanceMethod(method, signature.Value.ParameterTypes.Skip(signature.Value.RequiredParameterCount).Select(p => p.Resolve(context)));
-					}
-					if (declaringType.TypeArguments.Count > 0) {
-						classTypeArguments = declaringType.TypeArguments.ToList();
-					}
-					if (classTypeArguments != null || methodTypeArguments != null) {
-						method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
-					}
-
 					methodLookupCache.Add(methodReference, method);
 				}
 				return method;
 			}
 		}
 
-		IMethod FindNonGenericMethod(SRM.MetadataReader metadata, SRM.EntityHandle methodReference, out IType declaringType)
+		IMethod ResolveMethodDefinition(SRM.MetadataReader metadata, SRM.MethodDefinitionHandle methodDefHandle, bool expandVarArgs = true)
 		{
-			ITypeDefinition declaringTypeDefinition;
-			string name;
-			switch (methodReference.Kind) {
-				case SRM.HandleKind.MethodDefinition:
-					var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)methodReference);
-					declaringType = ResolveDeclaringType(methodDef.GetDeclaringType());
-					declaringTypeDefinition = declaringType.GetDefinition();
-					if (declaringTypeDefinition == null) {
-						return CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
-					}
-					name = metadata.GetString(methodDef.Name);
-					IMethod method;
-					if (name == ".ctor") {
-						method = declaringTypeDefinition.GetConstructors(m => m.MetadataToken == methodReference, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
-					} else if (name == ".cctor") {
-						method = declaringTypeDefinition.Methods.FirstOrDefault(m => m.MetadataToken == methodReference);
-					} else {
-						method = declaringTypeDefinition.GetMethods(m => m.MetadataToken == methodReference, GetMemberOptions.IgnoreInheritedMembers)
-							.Concat(declaringTypeDefinition.GetAccessors(m => m.MetadataToken == methodReference, GetMemberOptions.IgnoreInheritedMembers)).FirstOrDefault();
-					}
-					return method ?? CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), methodDef.DecodeSignature(TypeReferenceSignatureDecoder.Instance, default));
-				case SRM.HandleKind.MemberReference:
-					var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)methodReference);
-					Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Method);
-					// TODO : Support other handles
-					switch (memberRef.Parent.Kind) {
-						case SRM.HandleKind.MethodDefinition:
-							FindNonGenericMethod(metadata, memberRef.Parent, out declaringType);
-							break;
-						default:
-							declaringType = ResolveDeclaringType(memberRef.Parent);
-							break;
-					}
-					declaringTypeDefinition = declaringType.GetDefinition();
-					var signature = memberRef.DecodeMethodSignature(TypeReferenceSignatureDecoder.Instance, default);
-					if (declaringTypeDefinition == null) {
-						return CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
-					}
+			var methodDef = metadata.GetMethodDefinition(methodDefHandle);
+			var declaringType = ResolveDeclaringType(methodDef.GetDeclaringType());
+			var declaringTypeDefinition = declaringType.GetDefinition();
+			string name = metadata.GetString(methodDef.Name);
+			IMethod method;
+			if (declaringTypeDefinition != null) {
+				if (name == ".ctor") {
+					method = declaringTypeDefinition.GetConstructors(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+				} else if (name == ".cctor") {
+					method = declaringTypeDefinition.Methods.FirstOrDefault(m => m.MetadataToken == methodDefHandle);
+				} else {
+					method = declaringTypeDefinition.GetMethods(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers)
+						.Concat(declaringTypeDefinition.GetAccessors(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers)).FirstOrDefault();
+				}
+			} else {
+				method = null;
+			}
+			if (method == null) {
+				var signature = methodDef.DecodeSignature(new TypeProvider(context.CurrentAssembly),
+					context.WithCurrentTypeDefinition(declaringTypeDefinition));
+				method = CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), signature);
+			}
+			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList) {
+				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
+			}
+			return method;
+		}
+		
+		/// <summary>
+		/// Resolves a method reference.
+		/// </summary>
+		/// <remarks>
+		/// Class type arguments are provided by the declaring type stored in the memberRef.
+		/// Method type arguments are provided by the caller.
+		/// </remarks>
+		IMethod ResolveMethodReference(SRM.MetadataReader metadata, SRM.MemberReferenceHandle memberRefHandle, IReadOnlyList<IType> methodTypeArguments = null)
+		{
+			var memberRef = metadata.GetMemberReference(memberRefHandle);
+			Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Method);
+			SRM.MethodSignature<IType> signature;
+			IReadOnlyList<IType> classTypeArguments = null;
+			IMethod method;
+			if (memberRef.Parent.Kind == SRM.HandleKind.MethodDefinition) {
+				method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
+				signature = memberRef.DecodeMethodSignature(new TypeProvider(context.CurrentAssembly), context);
+			} else {
+				var declaringType = ResolveDeclaringType(memberRef.Parent);
+				var declaringTypeDefinition = declaringType.GetDefinition();
+				if (declaringType.TypeArguments.Count > 0) {
+					classTypeArguments = declaringType.TypeArguments;
+				}
+				// Note: declaringType might be parameterized, but the signature is for the original method definition.
+				// We'll have to search the member directly on declaringTypeDefinition.
+				string name = metadata.GetString(memberRef.Name);
+				signature = memberRef.DecodeMethodSignature(new TypeProvider(context.CurrentAssembly),
+					context.WithCurrentTypeDefinition(declaringTypeDefinition));
+				if (declaringTypeDefinition != null) {
+					// Find the set of overloads to search:
 					IEnumerable<IMethod> methods;
-					name = metadata.GetString(memberRef.Name);
 					if (name == ".ctor") {
 						methods = declaringTypeDefinition.GetConstructors();
 					} else if (name == ".cctor") {
-						return declaringTypeDefinition.Methods.FirstOrDefault(m => m.IsConstructor && m.IsStatic);
+						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
 					} else {
 						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
 							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
 					}
-					IType[] parameterTypes;
+					// Determine the expected parameters from the signature:
+					ImmutableArray<IType> parameterTypes;
 					if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
 						parameterTypes = signature.ParameterTypes
 							.Take(signature.RequiredParameterCount)
-							.Select(p => p.Resolve(context))
 							.Concat(new[] { SpecialType.ArgList })
-							.ToArray();
+							.ToImmutableArray();
 					} else {
-						parameterTypes = signature.ParameterTypes.SelectArray(p => p.Resolve(context));
+						parameterTypes = signature.ParameterTypes;
 					}
-					var returnType = signature.ReturnType.Resolve(context);
+					// Search for the matching method:
+					method = null;
 					foreach (var m in methods) {
 						if (m.TypeParameters.Count != signature.GenericParameterCount)
 							continue;
-						if (!CompareSignatures(m.Parameters, parameterTypes) || !CompareTypes(m.ReturnType, returnType))
-							continue;
-						return m;
+						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType)) {
+							method = m;
+							break;
+						}
 					}
-					return CreateFakeMethod(declaringType, metadata.GetString(memberRef.Name), signature);
-				default:
-					throw new NotSupportedException();
+				} else {
+					method = null;
+				}
+				if (method == null) {
+					method = CreateFakeMethod(declaringType, name, signature);
+				}
 			}
+			if (classTypeArguments != null || methodTypeArguments != null) {
+				method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
+			}
+			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+				method = new VarArgInstanceMethod(method, signature.ParameterTypes.Skip(signature.RequiredParameterCount));
+			}
+			return method;
 		}
 		
 		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
@@ -417,7 +430,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].Type.Kind == TypeKind.ArgList;
 		}
 		
-		static bool CompareSignatures(IReadOnlyList<IParameter> parameters, IType[] parameterTypes)
+		static bool CompareSignatures(IReadOnlyList<IParameter> parameters, ImmutableArray<IType> parameterTypes)
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
@@ -431,40 +444,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Create a dummy IMethod from the specified MethodReference
 		/// </summary>
-		IMethod CreateFakeMethod(IType declaringType, string name, SRM.MethodSignature<ITypeReference> signature)
+		IMethod CreateFakeMethod(IType declaringType, string name, SRM.MethodSignature<IType> signature)
 		{
-			var m = new DefaultUnresolvedMethod();
+			SymbolKind symbolKind = SymbolKind.Method;
 			if (name == ".ctor" || name == ".cctor")
-				m.SymbolKind = SymbolKind.Constructor;
+				symbolKind = SymbolKind.Constructor;
+			var m = new FakeMethod(compilation, symbolKind);
+			m.DeclaringType = declaringType;
 			m.Name = name;
-			m.MetadataToken = default(SRM.MethodDefinitionHandle);
 			m.ReturnType = signature.ReturnType;
 			m.IsStatic = !signature.Header.IsInstance;
-			
+
 			var metadata = moduleDefinition.Metadata;
-			for (int i = 0; i < signature.GenericParameterCount; i++) {
-				m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, ""));
+			TypeParameterSubstitution substitution = null;
+			if (signature.GenericParameterCount > 0) {
+				var typeParameters = new List<ITypeParameter>();
+				for (int i = 0; i < signature.GenericParameterCount; i++) {
+					typeParameters.Add(new DefaultTypeParameter(m, i));
+				}
+				m.TypeParameters = typeParameters;
+				substitution = new TypeParameterSubstitution(null, typeParameters);
 			}
-			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-				m.Parameters.Add(new DefaultUnresolvedParameter(signature.ParameterTypes[i], ""));
+			var parameters = new List<IParameter>();
+			for (int i = 0; i < signature.RequiredParameterCount; i++) {
+				var type = signature.ParameterTypes[i];
+				if (substitution != null) {
+					// replace the dummy method type parameters with the owned instances we just created
+					type = type.AcceptVisitor(substitution);
+				}
+				parameters.Add(new DefaultParameter(type, ""));
 			}
-			return new ResolvedFakeMethod(m, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
-		}
-
-		class ResolvedFakeMethod : DefaultResolvedMethod
-		{
-			readonly IType declaringType;
-
-			public ResolvedFakeMethod(DefaultUnresolvedMethod unresolved, ITypeResolveContext parentContext, IType declaringType)
-				: base(unresolved, parentContext)
-			{
-				this.declaringType = declaringType;
-			}
-
-			public override IType DeclaringType
-			{
-				get { return declaringType; }
-			}
+			m.Parameters = parameters;
+			return m;
 		}
 		#endregion
 

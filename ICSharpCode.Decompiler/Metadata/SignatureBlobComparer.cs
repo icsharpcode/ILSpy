@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			for (; i < totalParameterCount; i++) {
 				if (!IsSameCompressedInteger(ref a, ref b, out typeCode))
 					return false;
-				//
+				// varargs sentinel
 				if (typeCode == 65)
 					break;
 				if (!TypesAreEqual(ref a, ref b, contextForA, contextForB, typeCode))

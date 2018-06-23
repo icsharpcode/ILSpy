@@ -1087,8 +1087,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			MethodDeclaration decl = new MethodDeclaration();
 			decl.Modifiers = GetMemberModifiers(method);
-			if (method.IsAsync && ShowModifiers)
-				decl.Modifiers |= Modifiers.Async;
 			if (ShowAttributes) {
 				decl.Attributes.AddRange (method.Attributes.Select ((a) => new AttributeSection (ConvertAttribute (a))));
 				decl.Attributes.AddRange (method.ReturnTypeAttributes.Select ((a) => new AttributeSection (ConvertAttribute (a)) {

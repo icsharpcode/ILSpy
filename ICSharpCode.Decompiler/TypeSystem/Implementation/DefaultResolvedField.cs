@@ -72,14 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
-			if (TypeParameterSubstitution.Identity.Equals(substitution)
-			    || DeclaringType.TypeParameterCount == 0)
-			{
-				return this;
-			}
-			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
-				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
-			return new SpecializedField(this, substitution);
+			return SpecializedField.Create(this, substitution);
 		}
 	}
 }

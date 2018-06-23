@@ -177,19 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return baseMethod.IsOperator;
 			}
 		}
-
-		public bool IsPartial {
-			get {
-				return baseMethod.IsPartial;
-			}
-		}
-
-		public bool IsAsync {
-			get {
-				return baseMethod.IsAsync;
-			}
-		}
-
+		
 		public bool HasBody {
 			get {
 				return baseMethod.HasBody;
