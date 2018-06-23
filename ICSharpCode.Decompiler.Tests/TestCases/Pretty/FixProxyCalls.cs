@@ -20,6 +20,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
+	internal class B2<T> : A
+	{
+		protected internal override async Task<string> Test(string test)
+		{
+			return await base.Test(test);
+		}
+	}
+
 	internal class C
 	{
 		protected internal virtual string Test(string test)

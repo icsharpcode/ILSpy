@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 									DeclaringType = declaringType,
 									Name = metadata.GetString(fieldDef.Name),
 									ReturnType = FieldTypeReference.Resolve(fieldDefHandle, metadata, context, typeAttributeOptions),
-									IsStatic = (fieldDef.Attributes & System.Reflection.FieldAttributes.Static) != 0
+									IsStatic = (fieldDef.Attributes & System.Reflection.FieldAttributes.Static) != 0,
 								};
 							}
 							break;
