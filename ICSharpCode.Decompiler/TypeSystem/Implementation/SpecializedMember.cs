@@ -302,11 +302,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				for (int i = 0; i < parameters.Length; i++) {
 					var p = paramDefs[i];
 					IType newType = substitution(p.Type);
-					parameters[i] = new DefaultParameter(
-						newType, p.Name, this,
-						p.Attributes, p.IsRef, p.IsOut,
-						p.IsParams, p.IsOptional, p.ConstantValue
-					);
+					parameters[i] = new SpecializedParameter(p, newType, this);
 				}
 				return parameters;
 			}

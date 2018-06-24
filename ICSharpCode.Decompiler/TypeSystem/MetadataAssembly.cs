@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataTypeDefinition[] typeDefs;
 		readonly MetadataField[] fieldDefs;
 		readonly MetadataMethod[] methodDefs;
+		readonly MetadataProperty[] propertyDefs;
 
 		internal MetadataAssembly(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
 		{
@@ -75,6 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.typeDefs = new MetadataTypeDefinition[metadata.TypeDefinitions.Count + 1];
 			this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
 			this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
+			this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
 		}
 
 		internal string GetString(StringHandle name)
@@ -198,7 +200,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IProperty GetDefinition(PropertyDefinitionHandle handle)
 		{
-			throw new NotImplementedException();
+			int row = MetadataTokens.GetRowNumber(handle);
+			if (row >= methodDefs.Length)
+				return null;
+			var property = LazyInit.VolatileRead(ref propertyDefs[row]);
+			if (property != null || handle.IsNil)
+				return property;
+			property = new MetadataProperty(this, handle);
+			return LazyInit.GetOrSet(ref propertyDefs[row], property);
 		}
 
 		public IEvent GetDefinition(EventDefinitionHandle handle)

@@ -25,8 +25,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
@@ -130,44 +128,52 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private void DecodeSignature()
 		{
-			var metadata = assembly.metadata;
-			var methodDef = metadata.GetMethodDefinition(handle);
+			var methodDef = assembly.metadata.GetMethodDefinition(handle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
 			var signature = methodDef.DecodeSignature(assembly.TypeProvider, genericContext);
+			var (returnType, parameters) = DecodeSignature(assembly, this, signature, methodDef.GetParameters());
+			LazyInit.GetOrSet(ref this.returnType, returnType);
+			LazyInit.GetOrSet(ref this.parameters, parameters);
+		}
+
+		internal static (IType, IParameter[]) DecodeSignature(MetadataAssembly assembly, IParameterizedMember owner, MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles)
+		{
+			var metadata = assembly.metadata;
 			int i = 0;
 			CustomAttributeHandleCollection? returnTypeAttributes = null;
 			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
 				+ (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs ? 1 : 0)];
-			foreach (var parameterHandle in methodDef.GetParameters()) {
-				var par = metadata.GetParameter(parameterHandle);
-				if (par.SequenceNumber == 0) {
-					// "parameter" holds return type attributes
-					returnTypeAttributes = par.GetCustomAttributes();
-				} else if (par.SequenceNumber > 0 && i < signature.RequiredParameterCount) {
-					Debug.Assert(par.SequenceNumber - 1 == i);
-					var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-						signature.ParameterTypes[i], Compilation,
-						par.GetCustomAttributes(), metadata, assembly.TypeSystemOptions);
-					parameters[i] = new MetadataParameter(assembly, this, parameterType, parameterHandle);
-					i++;
+			if (parameterHandles != null) {
+				foreach (var parameterHandle in parameterHandles) {
+					var par = metadata.GetParameter(parameterHandle);
+					if (par.SequenceNumber == 0) {
+						// "parameter" holds return type attributes
+						returnTypeAttributes = par.GetCustomAttributes();
+					} else if (par.SequenceNumber > 0 && i < signature.RequiredParameterCount) {
+						Debug.Assert(par.SequenceNumber - 1 == i);
+						var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+							signature.ParameterTypes[i], assembly.Compilation,
+							par.GetCustomAttributes(), metadata, assembly.TypeSystemOptions);
+						parameters[i] = new MetadataParameter(assembly, owner, parameterType, parameterHandle);
+						i++;
+					}
 				}
 			}
 			while (i < signature.RequiredParameterCount) {
 				var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-					signature.ParameterTypes[i], Compilation, null, metadata, assembly.TypeSystemOptions);
-				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner: this,
+					signature.ParameterTypes[i], assembly.Compilation, null, metadata, assembly.TypeSystemOptions);
+				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
 					isRef: parameterType.Kind == TypeKind.ByReference);
 				i++;
 			}
 			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
-				parameters[i] = new DefaultParameter(SpecialType.ArgList, name: string.Empty, owner: this);
+				parameters[i] = new DefaultParameter(SpecialType.ArgList, name: string.Empty, owner);
 				i++;
 			}
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				Compilation, returnTypeAttributes, metadata, assembly.TypeSystemOptions);
-			LazyInit.GetOrSet(ref this.returnType, returnType);
-			LazyInit.GetOrSet(ref this.parameters, parameters);
+				assembly.Compilation, returnTypeAttributes, metadata, assembly.TypeSystemOptions);
+			return (returnType, parameters);
 		}
 		#endregion
 
