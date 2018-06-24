@@ -66,11 +66,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IAssembly : ICompilationProvider
 	{
 		/// <summary>
-		/// Gets the original unresolved assembly.
-		/// </summary>
-		IUnresolvedAssembly UnresolvedAssembly { get; }
-		
-		/// <summary>
 		/// Gets whether this assembly is the main assembly of the compilation.
 		/// </summary>
 		bool IsMainAssembly { get; }
@@ -120,8 +115,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<ITypeDefinition> TopLevelTypeDefinitions { get; }
 
 		/// <summary>
-		/// Gets the type definition from the metadata token, or null if not found.
+		/// Gets all types in the assembly, including nested types.
 		/// </summary>
-		ITypeDefinition ResolveTypeDefToken(TypeDefinitionHandle token);
+		IEnumerable<ITypeDefinition> TypeDefinitions { get; }
 	}
 }

@@ -41,6 +41,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using System.Reflection;
 using ICSharpCode.Decompiler.Disassembler;
+using GenericContext = ICSharpCode.Decompiler.Metadata.GenericContext;
 
 namespace ICSharpCode.ILSpy
 {
@@ -404,7 +405,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override string TypeToString(Entity type, GenericContext genericContext = null, bool includeNamespace = true)
+		public override string TypeToString(Entity type, Decompiler.Metadata.GenericContext genericContext = null, bool includeNamespace = true)
 		{
 			if (type.Handle.IsNil)
 				throw new ArgumentNullException(nameof(type));

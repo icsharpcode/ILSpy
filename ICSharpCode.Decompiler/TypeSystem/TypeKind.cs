@@ -39,8 +39,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>A <see cref="ITypeDefinition"/> that is an enum.</summary>
 		/// <remarks><c>System.Enum</c> itself is TypeKind.Class</remarks>
 		Enum,
-		/// <summary>A <see cref="ITypeDefinition"/> that is a module (VB).</summary>
-		Module,
 		
 		/// <summary>The <c>System.Void</c> type.</summary>
 		/// <see cref="KnownTypeReference.Void"/>
@@ -91,5 +89,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <see cref="TupleType"/>
 		Tuple,
+		/// <summary>
+		/// Modified type, with optional modifier.
+		/// </summary>
+		ModOpt,
+		/// <summary>
+		/// Modified type, with required modifier.
+		/// </summary>
+		ModReq,
 	}
 }

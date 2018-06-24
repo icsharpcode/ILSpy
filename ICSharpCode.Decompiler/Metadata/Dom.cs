@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		Net_4_0
 	}
 
-	public class PEFile : IDisposable
+	public class PEFile : IDisposable, TypeSystem.IAssemblyReference
 	{
 		public string FileName { get; }
 		public PEReader Reader { get; }
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public ImmutableArray<AssemblyReference> AssemblyReferences => Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
 		public ImmutableArray<ModuleReferenceHandle> ModuleReferences => Metadata.GetModuleReferences().ToImmutableArray();
-		public ImmutableArray<TypeDefinition> TypeDefinitions => Metadata.GetTopLevelTypeDefinitions().Select(t => new TypeDefinition(this, t)).ToImmutableArray();
+		public ImmutableArray<TypeDefinition> TopLevelTypeDefinitions => Metadata.GetTopLevelTypeDefinitions().Select(t => new TypeDefinition(this, t)).ToImmutableArray();
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
 
 		IEnumerable<Resource> GetResources()
@@ -164,6 +164,39 @@ namespace ICSharpCode.Decompiler.Metadata
 		public void Dispose()
 		{
 			Reader.Dispose();
+		}
+
+		Dictionary<TopLevelTypeName, TypeDefinitionHandle> typeLookup;
+
+		/// <summary>
+		/// Finds the top-level-type with the specified name.
+		/// </summary>
+		public TypeDefinitionHandle GetTypeDefinition(TopLevelTypeName typeName)
+		{
+			var lookup = LazyInit.VolatileRead(ref typeLookup);
+			if (lookup == null) {
+				lookup = new Dictionary<TopLevelTypeName, TypeDefinitionHandle>();
+				foreach (var handle in Metadata.TypeDefinitions) {
+					var td = Metadata.GetTypeDefinition(handle);
+					if (!td.GetDeclaringType().IsNil) {
+						continue; // nested type
+					}
+					var nsHandle = td.Namespace;
+					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
+					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name), out int typeParameterCount);
+					lookup[new TopLevelTypeName(ns, name, typeParameterCount)] = handle;
+				}
+				lookup = LazyInit.GetOrSet(ref typeLookup, lookup);
+			}
+			if (lookup.TryGetValue(typeName, out var resultHandle))
+				return resultHandle;
+			else
+				return default;
+		}
+
+		IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
+		{
+			return new MetadataAssembly(context.Compilation, this, TypeSystemOptions.Default);
 		}
 	}
 

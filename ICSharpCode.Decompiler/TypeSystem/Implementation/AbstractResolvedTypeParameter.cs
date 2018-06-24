@@ -31,10 +31,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IEntity owner;
 		readonly int index;
 		readonly string name;
-		readonly IReadOnlyList<IAttribute> attributes;
 		readonly VarianceModifier variance;
 		
-		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
+		protected AbstractTypeParameter(IEntity owner, int index, string name, VarianceModifier variance)
 		{
 			if (owner == null)
 				throw new ArgumentNullException("owner");
@@ -43,11 +42,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.ownerType = owner.SymbolKind;
 			this.index = index;
 			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
-			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.variance = variance;
 		}
 		
-		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance, IReadOnlyList<IAttribute> attributes)
+		protected AbstractTypeParameter(ICompilation compilation, SymbolKind ownerType, int index, string name, VarianceModifier variance)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
@@ -55,7 +53,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.ownerType = ownerType;
 			this.index = index;
 			this.name = name ?? ((this.OwnerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
-			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.variance = variance;
 		}
 		
@@ -75,9 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return index; }
 		}
 		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
+		public abstract IReadOnlyList<IAttribute> Attributes { get; }
 		
 		public VarianceModifier Variance {
 			get { return variance; }
@@ -247,11 +242,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 		
-		public ITypeReference ToTypeReference()
-		{
-			return TypeParameterReference.Create(this.OwnerType, this.Index);
-		}
-		
 		IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition> filter, GetMemberOptions options)
 		{
 			return EmptyList<IType>.Instance;
@@ -333,12 +323,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return GetMembersHelper.GetAccessors(this, FilterNonStatic(filter), options);
 		}
 
-		public TypeParameterSubstitution GetSubstitution()
+		TypeParameterSubstitution IType.GetSubstitution()
 		{
 			return TypeParameterSubstitution.Identity;
 		}
 		
-		public TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
+		TypeParameterSubstitution IType.GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
 		{
 			return TypeParameterSubstitution.Identity;
 		}

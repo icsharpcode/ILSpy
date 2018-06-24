@@ -451,7 +451,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public int TypeParameterCount {
 			get { return typeParameterCount; }
 		}
-		
+
+		public TopLevelTypeName TypeName => new TopLevelTypeName(namespaceName, name, typeParameterCount);
+
 		public IType Resolve(ITypeResolveContext context)
 		{
 			return context.Compilation.FindType(knownTypeCode);

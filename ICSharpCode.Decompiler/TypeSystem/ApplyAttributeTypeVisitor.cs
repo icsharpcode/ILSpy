@@ -20,6 +20,7 @@ using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
 
@@ -40,16 +41,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((options & (TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)) == TypeSystemOptions.None) {
 				return inputType;
 			}
+			bool useDynamicType = (options & TypeSystemOptions.Dynamic) != 0;
+			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
-			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			string[] tupleElementNames = null;
 			if (attributes != null) {
 				foreach (var attrHandle in attributes.Value) {
 					var attr = metadata.GetCustomAttribute(attrHandle);
 					var attrType = attr.GetAttributeType(metadata);
-					if ((options & TypeSystemOptions.Dynamic) != 0
-						&& attrType.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "DynamicAttribute")) {
+					if (useDynamicType && attrType.IsKnownType(metadata, KnownAttribute.Dynamic)) {
 						hasDynamicAttribute = true;
 						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
 						if (ctor.FixedArguments.Length == 1) {
@@ -59,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 								dynamicAttributeData = values.SelectArray(v => (bool)v.Value);
 							}
 						}
-					} else if (useTupleTypes && attrType.IsTopLevelType(metadata, "System.Runtime.CompilerServices", "TupleElementNamesAttribute")) {
+					} else if (useTupleTypes && attrType.IsKnownType(metadata, KnownAttribute.TupleElementNames)) {
 						var ctor = attr.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
 						if (ctor.FixedArguments.Length == 1) {
 							var arg = ctor.FixedArguments[0];

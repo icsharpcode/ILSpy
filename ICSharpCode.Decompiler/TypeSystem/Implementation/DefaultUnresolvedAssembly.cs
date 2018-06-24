@@ -443,6 +443,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
+			public IEnumerable<ITypeDefinition> TypeDefinitions {
+				get {
+					return TreeTraversal.PreOrder(TopLevelTypeDefinitions, td => td.NestedTypes);
+				}
+			}
+
 			public ITypeDefinition ResolveTypeDefToken(System.Reflection.Metadata.TypeDefinitionHandle token)
 			{
 				var td = unresolvedAssembly.GetTypeDefByToken(token);

@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public static void CollectNamespaces(DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
-			foreach (var type in typeSystem.MainAssembly.GetAllTypeDefinitions()) {
+			foreach (var type in typeSystem.MainAssembly.TypeDefinitions) {
 				CollectNamespaces(type, typeSystem, namespaces);
 			}
 		}

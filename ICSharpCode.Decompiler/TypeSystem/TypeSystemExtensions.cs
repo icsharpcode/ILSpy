@@ -205,8 +205,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var def = type.GetDefinition();
 			return def != null && def.KnownTypeCode == knownType;
 		}
+
+		/// <summary>
+		/// Gets whether the type is the specified known type.
+		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// </summary>
+		internal static bool IsKnownType(this IType type, KnownAttribute knownType)
+		{
+			var def = type.GetDefinition();
+			return def != null && def.FullTypeName.IsKnownType(knownType);
+		}
+
+		public static bool IsKnownType(this FullTypeName typeName, KnownTypeCode knownType)
+		{
+			return typeName == KnownTypeReference.Get(knownType).TypeName;
+		}
+
+		public static bool IsKnownType(this TopLevelTypeName typeName, KnownTypeCode knownType)
+		{
+			return typeName == KnownTypeReference.Get(knownType).TypeName;
+		}
+
+		internal static bool IsKnownType(this FullTypeName typeName, KnownAttribute knownType)
+		{
+			return typeName == knownType.GetTypeName();
+		}
+
+		internal static bool IsKnownType(this TopLevelTypeName typeName, KnownAttribute knownType)
+		{
+			return typeName == knownType.GetTypeName();
+		}
 		#endregion
-		
+
 		#region GetDelegateInvokeMethod
 		/// <summary>
 		/// Gets the invoke method for a delegate type.
@@ -235,18 +265,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return TreeTraversal.PreOrder(assembly.TopLevelTypeDefinitions, t => t.NestedTypes);
 		}
 		
-		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this IAssembly assembly)
-		{
-			return TreeTraversal.PreOrder(assembly.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
 		/// <summary>
 		/// Gets all type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this ICompilation compilation)
 		{
-			return compilation.Assemblies.SelectMany(a => a.GetAllTypeDefinitions());
+			return compilation.Assemblies.SelectMany(a => a.TypeDefinitions);
 		}
 
 		/// <summary>

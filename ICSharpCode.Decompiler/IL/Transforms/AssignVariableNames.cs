@@ -359,10 +359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static string GetNameByType(IType type)
 		{
-			var git = type as ParameterizedType;
-			if (git != null && git.FullName == "System.Nullable`1" && git.TypeArguments.Count == 1) {
-				type = git.TypeArguments[0];
-			}
+			type = NullableType.GetUnderlyingType(type);
 
 			string name;
 			if (type is ArrayType) {

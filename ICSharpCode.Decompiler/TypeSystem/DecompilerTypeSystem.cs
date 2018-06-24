@@ -75,6 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly ICompilation compilation;
 		readonly ITypeResolveContext context;
 		readonly TypeSystemOptions typeSystemOptions;
+		readonly MetadataAssembly mainAssembly;
 
 		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
 		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
@@ -141,8 +142,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return compilation; }
 		}
 		
-		public IAssembly MainAssembly {
-			get { return compilation.MainAssembly; }
+		public MetadataAssembly MainAssembly {
+			get { return mainAssembly; }
 		}
 
 		public Metadata.PEFile ModuleDefinition {
@@ -153,11 +154,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public Metadata.PEFile GetModuleDefinition(IAssembly assembly)
 		{
-			if (assembly == MainAssembly)
-				return ModuleDefinition;
-			if (!moduleLookup.TryGetValue(assembly.UnresolvedAssembly, out var file))
-				return null;
-			return file;
+			if (assembly is MetadataAssembly asm) {
+				return asm.PEFile;
+			}
+			return null;
 		}
 		
 		public IMember ResolveAsMember(SRM.EntityHandle memberReference)
@@ -193,7 +193,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return MetadataTypeReference.Resolve(
 				typeReference,
 				moduleDefinition.Metadata,
-				context,
+				mainAssembly.TypeProvider,
+				new GenericContext(),
 				typeSystemOptions
 			);
 		}
@@ -204,7 +205,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return MetadataTypeReference.Resolve(
 				declaringTypeReference,
 				moduleDefinition.Metadata,
-				context,
+				mainAssembly.TypeProvider,
+				new GenericContext(context),
 				typeSystemOptions & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)
 			);
 		}
@@ -216,8 +218,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.Method)
 				throw new InvalidOperationException("Expected Method signature");
 			return standaloneSignature.DecodeMethodSignature(
-				new TypeProvider(compilation.MainAssembly),
-				context
+				mainAssembly.TypeProvider,
+				new GenericContext(context)
 			);
 		}
 
@@ -227,8 +229,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.LocalVariables)
 				throw new InvalidOperationException("Expected Local signature");
 			return standaloneSignature.DecodeLocalSignature(
-				new TypeProvider(compilation.MainAssembly),
-				context
+				mainAssembly.TypeProvider,
+				new GenericContext(context)
 			);
 		}
 
@@ -294,7 +296,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						return field;
 				}
 			}
-			var returnType = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), context);
+			var returnType = memberRef.DecodeFieldSignature(mainAssembly.TypeProvider, new GenericContext(context));
 			return new FakeField(compilation) {
 				DeclaringType = declaringType,
 				Name = name,
@@ -322,7 +324,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							break;
 						case SRM.HandleKind.MethodSpecification:
 							var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
-							var methodTypeArgs = methodSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
+							var methodTypeArgs = methodSpec.DecodeSignature(mainAssembly.TypeProvider, new GenericContext(context));
 							if (methodSpec.Method.Kind == SRM.HandleKind.MethodDefinition) {
 								// generic instance of a methoddef (=generic method in non-generic class in current assembly)
 								method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)methodSpec.Method);
@@ -342,27 +344,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IMethod ResolveMethodDefinition(SRM.MetadataReader metadata, SRM.MethodDefinitionHandle methodDefHandle, bool expandVarArgs = true)
 		{
-			var methodDef = metadata.GetMethodDefinition(methodDefHandle);
-			var declaringType = ResolveDeclaringType(methodDef.GetDeclaringType());
-			var declaringTypeDefinition = declaringType.GetDefinition();
-			string name = metadata.GetString(methodDef.Name);
-			IMethod method;
-			if (declaringTypeDefinition != null) {
-				if (name == ".ctor") {
-					method = declaringTypeDefinition.GetConstructors(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
-				} else if (name == ".cctor") {
-					method = declaringTypeDefinition.Methods.FirstOrDefault(m => m.MetadataToken == methodDefHandle);
-				} else {
-					method = declaringTypeDefinition.GetMethods(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers)
-						.Concat(declaringTypeDefinition.GetAccessors(m => m.MetadataToken == methodDefHandle, GetMemberOptions.IgnoreInheritedMembers)).FirstOrDefault();
-				}
-			} else {
-				method = null;
-			}
+			var method = mainAssembly.GetDefinition(methodDefHandle);
 			if (method == null) {
-				var signature = methodDef.DecodeSignature(new TypeProvider(context.CurrentAssembly),
-					context.WithCurrentTypeDefinition(declaringTypeDefinition));
-				method = CreateFakeMethod(declaringType, metadata.GetString(methodDef.Name), signature);
+				throw new NotImplementedException();
 			}
 			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList) {
 				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
@@ -386,7 +370,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			IMethod method;
 			if (memberRef.Parent.Kind == SRM.HandleKind.MethodDefinition) {
 				method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
-				signature = memberRef.DecodeMethodSignature(new TypeProvider(context.CurrentAssembly), context);
+				signature = memberRef.DecodeMethodSignature(mainAssembly.TypeProvider, new GenericContext(context));
 			} else {
 				var declaringType = ResolveDeclaringType(memberRef.Parent);
 				var declaringTypeDefinition = declaringType.GetDefinition();
@@ -396,8 +380,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				// Note: declaringType might be parameterized, but the signature is for the original method definition.
 				// We'll have to search the member directly on declaringTypeDefinition.
 				string name = metadata.GetString(memberRef.Name);
-				signature = memberRef.DecodeMethodSignature(new TypeProvider(context.CurrentAssembly),
-					context.WithCurrentTypeDefinition(declaringTypeDefinition));
+				signature = memberRef.DecodeMethodSignature(mainAssembly.TypeProvider,
+					new GenericContext(declaringTypeDefinition?.TypeParameters));
 				if (declaringTypeDefinition != null) {
 					// Find the set of overloads to search:
 					IEnumerable<IMethod> methods;

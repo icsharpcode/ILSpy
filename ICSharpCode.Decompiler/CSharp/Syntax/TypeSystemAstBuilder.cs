@@ -437,11 +437,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (ResolveResult arg in attribute.PositionalArguments) {
 				attr.Arguments.Add(ConvertConstantValue(arg));
 			}
-			foreach (var pair in attribute.NamedArguments) {
-				NamedExpression namedArgument = new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value));
-				if (AddResolveResultAnnotations)
-					namedArgument.AddAnnotation(new MemberResolveResult(new InitializedObjectResolveResult(attribute.AttributeType), pair.Key));
-				attr.Arguments.Add(namedArgument);
+			if (attribute.NamedArguments.Count > 0) {
+				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
+				foreach (var pair in attribute.NamedArguments) {
+					NamedExpression namedArgument = new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value));
+					if (AddResolveResultAnnotations) {
+						namedArgument.AddAnnotation(new MemberResolveResult(targetResult, pair.Key));
+					}
+					attr.Arguments.Add(namedArgument);
+				}
 			}
 			return attr;
 		}

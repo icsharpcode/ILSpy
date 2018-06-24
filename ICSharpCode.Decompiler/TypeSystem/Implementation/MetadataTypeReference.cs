@@ -45,37 +45,39 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return Resolve(type, metadata, context,
+			return Resolve(type, metadata,
+				new TypeProvider(context.CurrentAssembly),
+				new GenericContext(context),
 				options, typeAttributes);
 		}
 
 		public static IType Resolve(SRM.EntityHandle type,
 			SRM.MetadataReader metadata,
-			ITypeResolveContext context,
+			TypeProvider typeProvider,
+			GenericContext genericContext,
 			TypeSystemOptions options,
 			SRM.CustomAttributeHandleCollection? typeAttributes = null)
 		{
 			if (type.IsNil)
 				return SpecialType.UnknownType;
-			var tp = new TypeProvider(context.CurrentAssembly);
 			IType ty;
 			switch (type.Kind) {
 				case SRM.HandleKind.TypeDefinition:
-					ty = tp.GetTypeFromDefinition(metadata, (SRM.TypeDefinitionHandle)type, 0);
+					ty = typeProvider.GetTypeFromDefinition(metadata, (SRM.TypeDefinitionHandle)type, 0);
 					break;
 				case SRM.HandleKind.TypeReference:
-					ty = tp.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type, 0);
+					ty = typeProvider.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type, 0);
 					break;
 				case SRM.HandleKind.TypeSpecification:
 					var typeSpec = metadata.GetTypeSpecification((SRM.TypeSpecificationHandle)type);
-					ty = typeSpec.DecodeSignature(tp, context);
+					ty = typeSpec.DecodeSignature(typeProvider, genericContext);
 					break;
 				default:
 					Debug.Fail("Not a type handle");
 					ty = SpecialType.UnknownType;
 					break;
 			}
-			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, typeProvider.Compilation,
 					typeAttributes, metadata, options);
 			return ty;
 		}
@@ -111,7 +113,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return Resolve((SRM.FieldDefinitionHandle)fieldHandle, metadata, context, options);
 			} else {
 				var memberRef = metadata.GetMemberReference((SRM.MemberReferenceHandle)fieldHandle);
-				IType ty = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), context);
+				IType ty = memberRef.DecodeFieldSignature(new TypeProvider(context.CurrentAssembly), new GenericContext(context));
 				ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
 					memberRef.GetCustomAttributes(), metadata, options);
 				return ty;
@@ -124,7 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			TypeSystemOptions options)
 		{
 			var fieldDef = metadata.GetFieldDefinition(fieldHandle);
-			IType ty = fieldDef.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
+			IType ty = fieldDef.DecodeSignature(new TypeProvider(context.CurrentAssembly), new GenericContext(context));
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, context.Compilation,
 				fieldDef.GetCustomAttributes(), metadata, options);
 			return ty;
@@ -184,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			TypeSystemOptions options)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
-			var signature = methodDef.DecodeSignature(typeProvider, context);
+			var signature = methodDef.DecodeSignature(typeProvider, new GenericContext(context));
 			return ApplyAttributes(signature, methodDef.GetParameters(), context.Compilation, metadata, options);
 		}
 
@@ -193,7 +195,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			TypeSystemOptions options)
 		{
 			var typeProvider = new TypeProvider(context.CurrentAssembly);
-			var signature = propertyDef.DecodeSignature(typeProvider, context);
+			var signature = propertyDef.DecodeSignature(typeProvider, new GenericContext(context));
 			var accessors = propertyDef.GetAccessors();
 			SRM.ParameterHandleCollection? parameterHandles = null;
 			if (!accessors.Getter.IsNil) {

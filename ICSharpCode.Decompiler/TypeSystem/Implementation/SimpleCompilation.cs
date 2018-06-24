@@ -35,12 +35,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IList<IAssembly> referencedAssemblies;
 		INamespace rootNamespace;
 		
-		public SimpleCompilation(IUnresolvedAssembly mainAssembly, params IAssemblyReference[] assemblyReferences)
+		public SimpleCompilation(IAssemblyReference mainAssembly, params IAssemblyReference[] assemblyReferences)
 			: this(mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
 		{
 		}
 		
-		public SimpleCompilation(IUnresolvedAssembly mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
+		public SimpleCompilation(IAssemblyReference mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
 		{
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");

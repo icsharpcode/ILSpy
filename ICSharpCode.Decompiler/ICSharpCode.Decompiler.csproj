@@ -240,7 +240,6 @@
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
     <Compile Include="CSharp\TypeSystem\ResolvedUsingScope.cs" />
     <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
@@ -280,6 +279,7 @@
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
+    <Compile Include="Metadata\CustomAttributeDecoder.cs" />
     <Compile Include="Metadata\Dom.cs" />
     <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\DotNetCorePathFinder.cs" />
@@ -339,8 +339,18 @@
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\GenericContext.cs" />
+    <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
+    <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
+    <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataField.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataNamespace.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeReference.cs" />
+    <Compile Include="TypeSystem\MetadataAssembly.cs" />
+    <Compile Include="TypeSystem\ModifiedType.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />

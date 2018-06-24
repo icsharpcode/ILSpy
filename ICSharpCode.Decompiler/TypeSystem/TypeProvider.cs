@@ -28,22 +28,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Allows decoding signatures using decompiler types.
 	/// </summary>
-	sealed class TypeProvider : SRM.ISignatureTypeProvider<IType, ITypeResolveContext>, SRM.ICustomAttributeTypeProvider<IType>
+	sealed class TypeProvider : ICompilationProvider,
+		SRM.ISignatureTypeProvider<IType, GenericContext>,
+		SRM.ICustomAttributeTypeProvider<IType>
 	{
-		readonly IAssembly assembly;
+		readonly MetadataAssembly assembly;
 		readonly ICompilation compilation;
 
 		public TypeProvider(IAssembly assembly)
 		{
-			this.assembly = assembly;
+			this.assembly = (MetadataAssembly)assembly; // TODO: change parameter type instead of casting
 			this.compilation = assembly.Compilation;
 		}
 
 		public TypeProvider(ICompilation compilation)
 		{
-			this.assembly = null;
-			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+			this.compilation = compilation;
 		}
+
+		public ICompilation Compilation => compilation;
 
 		public IType GetArrayType(IType elementType, SRM.ArrayShape shape)
 		{
@@ -65,29 +68,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new ParameterizedType(genericType, typeArguments);
 		}
 
-		public IType GetGenericMethodParameter(ITypeResolveContext genericContext, int index)
+		public IType GetGenericMethodParameter(GenericContext genericContext, int index)
 		{
-			// Note: returning type parameter, never type argument.
-			// Otherwise we risk screwing up the counting for dynamicTypeIndex.
-			IMethod method = genericContext.CurrentMember as IMethod;
-			if (method != null && index < method.TypeParameters.Count) {
-				return method.TypeParameters[index];
-			}
-			return DummyTypeParameter.GetMethodTypeParameter(index);
+			return genericContext.GetMethodTypeParameter(index);
 		}
 
-		public IType GetGenericTypeParameter(ITypeResolveContext genericContext, int index)
+		public IType GetGenericTypeParameter(GenericContext genericContext, int index)
 		{
-			ITypeDefinition typeDef = genericContext.CurrentTypeDefinition;
-			if (typeDef != null && index < typeDef.TypeParameters.Count) {
-				return typeDef.TypeParameters[index];
-			}
-			return DummyTypeParameter.GetClassTypeParameter(index);
+			return genericContext.GetClassTypeParameter(index);
 		}
 
 		public IType GetModifiedType(IType modifier, IType unmodifiedType, bool isRequired)
 		{
-			return unmodifiedType;
+			return new ModifiedType(modifier, unmodifiedType, isRequired);
 		}
 
 		public IType GetPinnedType(IType elementType)
@@ -129,7 +122,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			ITypeDefinition td = assembly?.ResolveTypeDefToken(handle);
+			ITypeDefinition td = assembly?.GetDefinition(handle);
 			if (td != null)
 				return td;
 			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
@@ -155,10 +148,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return new GetClassTypeReference(new FullTypeName(name))
 				.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
 		}
-
-		public IType GetTypeFromSpecification(SRM.MetadataReader reader, ITypeResolveContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
+		
+		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
 		{
-			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+			return reader.GetTypeSpecification(handle).DecodeSignature<IType, GenericContext>(this, genericContext);
 		}
 
 		public SRM.PrimitiveTypeCode GetUnderlyingEnumType(IType type)

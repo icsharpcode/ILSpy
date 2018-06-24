@@ -436,7 +436,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				switch (this.Kind) {
 					case TypeKind.Class:
 					case TypeKind.Interface:
-					case TypeKind.Module:
 					case TypeKind.Delegate:
 						return true;
 					case TypeKind.Struct:

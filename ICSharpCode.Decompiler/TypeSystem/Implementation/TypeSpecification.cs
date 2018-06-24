@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			ITypeDefinition td = context.CurrentAssembly.ResolveTypeDefToken(token);
+			ITypeDefinition td = ((MetadataAssembly)context.CurrentAssembly).GetDefinition(token);
 			if (td != null)
 				return td;
 			return SpecialType.UnknownType;
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return typeSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), context);
+			return typeSpec.DecodeSignature(new TypeProvider(context.CurrentAssembly), new GenericContext(context));
 		}
 	}
 

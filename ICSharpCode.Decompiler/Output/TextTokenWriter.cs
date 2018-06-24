@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler
 {
@@ -106,15 +107,15 @@ namespace ICSharpCode.Decompiler
 					var definition = type.GetDefinition();
 					if (definition == null)
 						return null;
-					return new TypeDefinition(typeSystem.GetModuleDefinition(definition.ParentAssembly), (System.Reflection.Metadata.TypeDefinitionHandle)definition.MetadataToken);
+					return new TypeDefinition(typeSystem.GetModuleDefinition(definition.ParentAssembly), (SRM.TypeDefinitionHandle)definition.MetadataToken);
 				case IMethod method:
-					return new MethodDefinition(typeSystem.GetModuleDefinition(method.ParentAssembly), (System.Reflection.Metadata.MethodDefinitionHandle)method.MetadataToken);
+					return new MethodDefinition(typeSystem.GetModuleDefinition(method.ParentAssembly), (SRM.MethodDefinitionHandle)method.MetadataToken);
 				case IProperty property:
-					return new PropertyDefinition(typeSystem.GetModuleDefinition(property.ParentAssembly), (System.Reflection.Metadata.PropertyDefinitionHandle)property.MetadataToken);
+					return new PropertyDefinition(typeSystem.GetModuleDefinition(property.ParentAssembly), (SRM.PropertyDefinitionHandle)property.MetadataToken);
 				case IEvent @event:
-					return new EventDefinition(typeSystem.GetModuleDefinition(@event.ParentAssembly), (System.Reflection.Metadata.EventDefinitionHandle)@event.MetadataToken);
+					return new EventDefinition(typeSystem.GetModuleDefinition(@event.ParentAssembly), (SRM.EventDefinitionHandle)@event.MetadataToken);
 				case IField field:
-					return new FieldDefinition(typeSystem.GetModuleDefinition(field.ParentAssembly), (System.Reflection.Metadata.FieldDefinitionHandle)field.MetadataToken);
+					return new FieldDefinition(typeSystem.GetModuleDefinition(field.ParentAssembly), (SRM.FieldDefinitionHandle)field.MetadataToken);
 				default:
 					return null;
 			}

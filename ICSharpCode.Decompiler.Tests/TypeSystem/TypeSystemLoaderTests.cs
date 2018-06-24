@@ -18,10 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -32,24 +35,29 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	[TestFixture]
 	public class TypeSystemLoaderTests
 	{
-		static readonly Lazy<IUnresolvedAssembly> mscorlib = new Lazy<IUnresolvedAssembly>(
+		static PEFile LoadAssembly(string filename)
+		{
+			return new PEFile(filename, new FileStream(filename, FileMode.Open, FileAccess.Read));
+		}
+
+		static readonly Lazy<PEFile> mscorlib = new Lazy<PEFile>(
 			delegate {
-				return new MetadataLoader().LoadAssemblyFile(typeof(object).Assembly.Location);
+				return LoadAssembly(typeof(object).Assembly.Location);
 			});
 
-		static readonly Lazy<IUnresolvedAssembly> systemCore = new Lazy<IUnresolvedAssembly>(
+		static readonly Lazy<PEFile> systemCore = new Lazy<PEFile>(
 			delegate {
-				return new MetadataLoader().LoadAssemblyFile(typeof(System.Linq.Enumerable).Assembly.Location);
+				return LoadAssembly(typeof(System.Linq.Enumerable).Assembly.Location);
 			});
 
-		static readonly Lazy<IUnresolvedAssembly> testAssembly = new Lazy<IUnresolvedAssembly>(
+		static readonly Lazy<PEFile> testAssembly = new Lazy<PEFile>(
 			delegate {
-				return new MetadataLoader { IncludeInternalMembers = true }.LoadAssemblyFile(typeof(SimplePublicClass).Assembly.Location);
+				return LoadAssembly(typeof(SimplePublicClass).Assembly.Location);
 			});
 
-		public static IUnresolvedAssembly Mscorlib { get { return mscorlib.Value; } }
-		public static IUnresolvedAssembly SystemCore { get { return systemCore.Value; } }
-		public static IUnresolvedAssembly TestAssembly { get { return testAssembly.Value; } }
+		public static PEFile Mscorlib { get { return mscorlib.Value; } }
+		public static PEFile SystemCore { get { return systemCore.Value; } }
+		public static PEFile TestAssembly { get { return testAssembly.Value; } }
 
 		[OneTimeSetUp]
 		public void FixtureSetUp()

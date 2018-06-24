@@ -223,13 +223,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			internal TypeVisitor substitution;
 			
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
-				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance, baseTp.Attributes)
+				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Variance)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.
 				this.baseTp = baseTp;
 			}
-			
+
+			public override IReadOnlyList<IAttribute> Attributes => baseTp.Attributes;
+
 			public override int GetHashCode()
 			{
 				return baseTp.GetHashCode() ^ this.Owner.GetHashCode();

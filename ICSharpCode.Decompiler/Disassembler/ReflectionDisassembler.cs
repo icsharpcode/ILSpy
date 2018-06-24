@@ -285,6 +285,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 			}
 
+			foreach (var p in methodDefinition.GetGenericParameters()) {
+				WriteGenericParameterAttributes(module, p);
+			}
 			foreach (var p in methodDefinition.GetParameters()) {
 				WriteParameterAttributes(module, p);
 			}
@@ -940,6 +943,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
+		void WriteGenericParameterAttributes(PEFile module, GenericParameterHandle handle)
+		{
+			var metadata = module.Metadata;
+			var p = metadata.GetGenericParameter(handle);
+			if (p.GetCustomAttributes().Count == 0)
+				return;
+			output.Write(".param type {0}", metadata.GetString(p.Name));
+			output.WriteLine();
+			WriteAttributes(module, p.GetCustomAttributes());
+		}
+
 		void WriteParameterAttributes(PEFile module, ParameterHandle handle)
 		{
 			var metadata = module.Metadata;
@@ -1576,7 +1590,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void WriteModuleContents(PEFile module)
 		{
-			foreach (var handle in module.TypeDefinitions) {
+			foreach (var handle in module.TopLevelTypeDefinitions) {
 				DisassembleType(handle);
 				output.WriteLine();
 			}

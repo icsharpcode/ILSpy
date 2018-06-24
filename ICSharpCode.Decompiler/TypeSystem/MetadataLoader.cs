@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets/Sets type system options.
 		/// </summary>
-		public TypeSystemOptions Options { get; set; }
+		public TypeSystemOptions Options { get; set; } = TypeSystemOptions.Default;
 
 		/// <summary>
 		/// Gets/Sets the cancellation token used by the assembly loader.
@@ -555,6 +555,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if ((fieldDefinition.Attributes & FieldAttributes.NotSerialized) != 0) {
 				targetEntity.Attributes.Add(nonSerializedAttribute);
 			}
+
 			AddMarshalInfo(fieldDefinition.GetMarshallingDescriptor(), targetEntity.Attributes);
 			AddCustomAttributes(fieldDefinition.GetCustomAttributes(), targetEntity.Attributes);
 		}
@@ -852,10 +853,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return TypeKind.Enum;
 			} else if (typeDefinition.IsValueType(module)) {
 				return TypeKind.Struct;
-			} else if (IsDelegate(module, typeDefinition)) {
+			} else if (typeDefinition.IsDelegate(module)) {
 				return TypeKind.Delegate;
-			} else if (IsModule(module, typeDefinition)) {
-				return TypeKind.Module;
 			} else {
 				return TypeKind.Class;
 			}
@@ -888,32 +887,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					break;
 			}
 		}
-
-		static bool IsDelegate(MetadataReader currentModule, TypeDefinition type)
-		{
-			if (!type.BaseType.IsNil) {
-				var baseTypeName = type.BaseType.GetFullTypeName(currentModule).ToString();
-				if (baseTypeName == "System.MulticastDelegate")
-					return true;
-				var thisTypeName = type.GetFullTypeName(currentModule).ToString();
-				if (baseTypeName == "Delegate" && thisTypeName != "System.MulticastDelegate")
-					return true;
-			}
-			return false;
-		}
-
-		static bool IsModule(MetadataReader reader, TypeDefinition type)
-		{
-			foreach (var h in type.GetCustomAttributes()) {
-				var attType = reader.GetCustomAttribute(h).GetAttributeType(reader).GetFullTypeName(reader);
-				if (attType.ToString() == "Microsoft.VisualBasic.CompilerServices.StandardModuleAttribute"
-					|| attType.ToString() == "System.Runtime.CompilerServices.CompilerGlobalScopeAttribute") {
-					return true;
-				}
-			}
-			return false;
-		}
-
+		
 		void InitMembers(TypeDefinition typeDefinition, IUnresolvedTypeDefinition td, IList<IUnresolvedMember> members)
 		{
 			foreach (MethodDefinitionHandle h in typeDefinition.GetMethods()) {
@@ -971,8 +945,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			foreach (var h in typeDefinition.GetCustomAttributes()) {
 				var a = reader.GetCustomAttribute(h);
-				var type = a.GetAttributeType(reader);
-				if (!type.IsTopLevelType(reader, "System.Reflection", "DefaultMemberAttribute"))
+				if (!a.IsKnownAttribute(reader, KnownAttribute.DefaultMember))
 					continue;
 				var value = a.DecodeValue(Metadata.MetadataExtensions.minimalCorlibTypeProvider);
 				if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name)
@@ -1333,12 +1306,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if ((Options & TypeSystemOptions.ExtensionMethods) == 0)
 				return false;
-			foreach (var h in attributes) {
-				var attr = metadata.GetCustomAttribute(h);
-				if (attr.IsAttributeType(metadata, "System.Runtime.CompilerServices", "ExtensionAttribute"))
-					return true;
-			}
-			return false;
+			return attributes.HasKnownAttribute(metadata, KnownAttribute.Extension);
 		}
 
 		bool IsVisible(MethodAttributes att)
@@ -1350,7 +1318,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				|| att == MethodAttributes.FamORAssem;
 		}
 
-		static Accessibility GetAccessibility(MethodAttributes attr)
+		internal static Accessibility GetAccessibility(MethodAttributes attr)
 		{
 			switch (attr & MethodAttributes.MemberAccessMask) {
 				case MethodAttributes.Public:
@@ -1423,7 +1391,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == SignatureTypeCode.SZArray) {
 				foreach (CustomAttributeHandle h in parameter.GetCustomAttributes()) {
 					var att = currentMetadata.GetCustomAttribute(h);
-					if (att.IsAttributeType(currentMetadata, "System", "ParamArrayAttribute")) {
+					if (att.IsKnownAttribute(currentMetadata, KnownAttribute.ParamArray)) {
 						p.IsParams = true;
 						break;
 					}
@@ -1510,7 +1478,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return f;
 		}
 
-		static Accessibility GetAccessibility(FieldAttributes attr)
+		internal static Accessibility GetAccessibility(FieldAttributes attr)
 		{
 			switch (attr & FieldAttributes.FieldAccessMask) {
 				case FieldAttributes.Public:

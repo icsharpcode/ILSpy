@@ -64,29 +64,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
 		{
-			unsafe HashSet<uint> GetNestedTypes()
-			{
-				byte* startPointer = reader.MetadataPointer;
-				int offset = reader.GetTableMetadataOffset(TableIndex.NestedClass);
-				int rowSize = reader.GetTableRowSize(TableIndex.NestedClass);
-				int rowCount = reader.GetTableRowCount(TableIndex.NestedClass);
-				var typeDefSize = reader.GetReferenceSize(TableIndex.TypeDef);
-
-				var set = new HashSet<uint>();
-
-				for (int row = 0; row < rowCount; row++) {
-					byte* ptr = startPointer + offset + rowSize * row;
-					uint currentTypeRow = typeDefSize == 2 ? *(ushort*)ptr : *(uint*)ptr;
-					set.Add(currentTypeRow);
-				}
-
-				return set;
-			}
-
-			HashSet<uint> nestedTypes = GetNestedTypes();
-
 			foreach (var handle in reader.TypeDefinitions) {
-				if (!nestedTypes.Contains((uint)reader.GetRowNumber(handle)))
+				var td = reader.GetTypeDefinition(handle);
+				if (td.GetDeclaringType().IsNil)
 					yield return handle;
 			}
 		}
@@ -171,7 +151,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
-			new TypeProvider(MinimalCorlib.Instance.CreateCompilation().MainAssembly);
+			new TypeProvider(MinimalCorlib.Instance.CreateCompilation());
 
 		/// <summary>
 		/// An attribute type provider that can be used to decode attribute signatures
@@ -187,7 +167,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			foreach (var h in td.GetCustomAttributes()) {
 				var ca = reader.GetCustomAttribute(h);
-				if (ca.GetAttributeType(reader).IsTopLevelType(reader, "System.Reflection", "DefaultMemberAttribute")) {
+				if (ca.IsKnownAttribute(reader, KnownAttribute.DefaultMember)) {
 					var decodedValues = ca.DecodeValue(minimalCorlibTypeProvider);
 					if (decodedValues.FixedArguments.Length == 1 && decodedValues.FixedArguments[0].Value is string value) {
 						defaultMemberAttribute = h;

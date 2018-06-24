@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <c>NamespaceName '.' TopLevelTypeName ['`'#] { '+' NestedTypeName ['`'#] }</c>
 	/// </remarks>
 	[Serializable]
-	public struct FullTypeName : IEquatable<FullTypeName>
+	public readonly struct FullTypeName : IEquatable<FullTypeName>
 	{
 		[Serializable]
-		struct NestedTypeName
+		readonly struct NestedTypeName
 		{
 			public readonly string Name;
 			public readonly int AdditionalTypeParameterCount;
