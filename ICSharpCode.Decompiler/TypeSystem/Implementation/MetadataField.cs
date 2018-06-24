@@ -22,9 +22,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
 using System.Threading;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -32,7 +30,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// <summary>
 	/// Field definition backed by System.Reflection.Metadata
 	/// </summary>
-	class MetadataField : IField
+	sealed class MetadataField : IField
 	{
 		readonly MetadataAssembly assembly;
 		readonly FieldDefinitionHandle handle;
@@ -149,7 +147,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
-		public string Namespace => DeclaringType?.Namespace;
+		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
 		public bool IsVolatile {
 			get {
@@ -179,6 +177,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				Volatile.Write(ref this.isVolatile, true);
 				ty = mod.ElementType;
 			}
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
+				fieldDef.GetCustomAttributes(), metadata, assembly.TypeSystemOptions);
 			return LazyInit.GetOrSet(ref this.type, ty);
 		}
 

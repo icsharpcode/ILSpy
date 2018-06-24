@@ -82,7 +82,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Kind = TypeKind.Enum;
 				this.EnumUnderlyingType = assembly.Compilation.FindType(underlyingType.ToKnownTypeCode());
 			} else if (td.IsValueType(metadata)) {
-				this.Kind = TypeKind.Struct;
+				if (KnownTypeCode == KnownTypeCode.Void) {
+					this.Kind = TypeKind.Void;
+				} else {
+					this.Kind = TypeKind.Struct;
+				}
 			} else if (td.IsDelegate(metadata)) {
 				this.Kind = TypeKind.Delegate;
 			} else {
@@ -97,8 +101,24 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return $"{MetadataTokens.GetToken(handle):X8} {fullTypeName}";
 		}
 
-		public IReadOnlyList<ITypeDefinition> NestedTypes => throw new NotImplementedException();
+		ITypeDefinition[] nestedTypes;
 
+		public IReadOnlyList<ITypeDefinition> NestedTypes {
+			get {
+				var nestedTypes = LazyInit.VolatileRead(ref this.nestedTypes);
+				if (nestedTypes != null)
+					return nestedTypes;
+				var metadata = assembly.metadata;
+				var nestedTypeCollection = metadata.GetTypeDefinition(handle).GetNestedTypes();
+				var nestedTypeList = new List<ITypeDefinition>(nestedTypeCollection.Length);
+				foreach (TypeDefinitionHandle h in nestedTypeCollection) {
+					nestedTypeList.Add(assembly.GetDefinition(h));
+				}
+				return LazyInit.GetOrSet(ref this.nestedTypes, nestedTypeList.ToArray());
+			}
+		}
+
+		#region Members
 		IMember[] members;
 
 		public IReadOnlyList<IMember> Members {
@@ -132,13 +152,57 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public IEnumerable<IMethod> Methods => throw new NotImplementedException();
+		IProperty[] properties;
 
-		public IEnumerable<IProperty> Properties => throw new NotImplementedException();
+		public IEnumerable<IProperty> Properties {
+			get {
+				var properties = LazyInit.VolatileRead(ref this.properties);
+				if (properties != null)
+					return properties;
+				var metadata = assembly.metadata;
+				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
+				var propertyList = new List<IProperty>(propertyCollection.Count);
+				foreach (PropertyDefinitionHandle h in propertyCollection) {
+					propertyList.Add(assembly.GetDefinition(h));
+				}
+				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
+			}
+		}
 
-		public IEnumerable<IEvent> Events => throw new NotImplementedException();
+		IEvent[] events;
 
+		public IEnumerable<IEvent> Events {
+			get {
+				var events = LazyInit.VolatileRead(ref this.events);
+				if (events != null)
+					return events;
+				var metadata = assembly.metadata;
+				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
+				var eventList = new List<IEvent>(eventCollection.Count);
+				foreach (EventDefinitionHandle h in eventCollection) {
+					eventList.Add(assembly.GetDefinition(h));
+				}
+				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
+			}
+		}
 
+		IMethod[] methods;
+
+		public IEnumerable<IMethod> Methods {
+			get {
+				var methods = LazyInit.VolatileRead(ref this.methods);
+				if (methods != null)
+					return methods;
+				var metadata = assembly.metadata;
+				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
+				var methodsList = new List<IMethod>(methodsCollection.Count);
+				foreach (MethodDefinitionHandle h in methodsCollection) {
+					methodsList.Add(assembly.GetDefinition(h));
+				}
+				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
+			}
+		}
+		#endregion
 
 		public IType DeclaringType => DeclaringTypeDefinition;
 
@@ -161,7 +225,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyList<IType> IType.TypeArguments => TypeParameters;
 
-		public IEnumerable<IType> DirectBaseTypes => throw new NotImplementedException();
+		List<IType> directBaseTypes;
+
+		public IEnumerable<IType> DirectBaseTypes {
+			get {
+				var baseTypes = LazyInit.VolatileRead(ref this.directBaseTypes);
+				if (baseTypes != null)
+					return baseTypes;
+				var metadata = assembly.metadata;
+				var td = metadata.GetTypeDefinition(handle);
+				var context = new GenericContext(TypeParameters);
+				var interfaceImplCollection = td.GetInterfaceImplementations();
+				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
+				if (!td.BaseType.IsNil) {
+					baseTypes.Add(assembly.ResolveType(td.BaseType, context));
+				}
+				foreach (var h in interfaceImplCollection) {
+					var iface = metadata.GetInterfaceImplementation(h);
+					baseTypes.Add(assembly.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
+				}
+				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
+			}
+		}
 
 		public EntityHandle MetadataToken => handle;
 
@@ -285,7 +370,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ICompilation Compilation => assembly.Compilation;
 
-		public string FullName => throw new NotImplementedException();
+		public string FullName {
+			get {
+				if (DeclaringType != null)
+					return DeclaringType.FullName + "." + Name;
+				else if (!string.IsNullOrEmpty(this.Namespace))
+					return this.Namespace + "." + Name;
+				else
+					return Name;
+			}
+		}
+
 		public string ReflectionName => fullTypeName.ReflectionName;
 		public string Namespace => fullTypeName.TopLevelTypeName.Namespace;
 
@@ -344,6 +439,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IMethod>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFiltered(this.Methods, ExtensionMethods.And(m => !m.IsConstructor, filter));
 			} else {
@@ -353,11 +450,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IMethod>.Instance;
 			return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
 		}
 
 		public IEnumerable<IMethod> GetConstructors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IMethod>.Instance;
 			if (ComHelper.IsComImport(this)) {
 				IType coClass = ComHelper.GetCoClass(this);
 				using (var busyLock = BusyManager.Enter(this)) {
@@ -377,6 +478,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IProperty>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFiltered(this.Properties, filter);
 			} else {
@@ -386,6 +489,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IField> GetFields(Predicate<IField> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IField>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFiltered(this.Fields, filter);
 			} else {
@@ -395,6 +500,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IEvent> GetEvents(Predicate<IEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IEvent>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFiltered(this.Events, filter);
 			} else {
@@ -404,6 +511,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IEnumerable<IMember> GetMembers(Predicate<IMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IMethod>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFiltered(this.Members, filter);
 			} else {
@@ -413,6 +522,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
+			if (Kind == TypeKind.Void)
+				return EmptyList<IMethod>.Instance;
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFilteredAccessors(filter);
 			} else {

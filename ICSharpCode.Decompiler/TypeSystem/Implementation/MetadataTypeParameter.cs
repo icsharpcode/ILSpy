@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -36,23 +37,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyList<IAttribute> customAttributes;
 		IReadOnlyList<IType> constraints;
 
-		public static IReadOnlyList<ITypeParameter> Create(MetadataAssembly assembly, IEntity owner, GenericParameterHandleCollection handles)
+		public static ITypeParameter[] Create(MetadataAssembly assembly, IEntity owner, GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
-				return EmptyList<ITypeParameter>.Instance;
+				return Empty<ITypeParameter>.Array;
 			var tps = new ITypeParameter[handles.Count];
 			int i = 0;
 			foreach (var handle in handles) {
-				tps[i] = Create(assembly, owner, handle);
+				tps[i] = Create(assembly, owner, i, handle);
+				i++;
 			}
 			return tps;
 		}
 
-		public static MetadataTypeParameter Create(MetadataAssembly assembly, IEntity owner, GenericParameterHandle handle)
+		public static MetadataTypeParameter Create(MetadataAssembly assembly, IEntity owner, int index, GenericParameterHandle handle)
 		{
 			var metadata = assembly.metadata;
 			var gp = metadata.GetGenericParameter(handle);
-			return new MetadataTypeParameter(assembly, owner, gp.Index, assembly.GetString(gp.Name), handle, gp.Attributes);
+			Debug.Assert(gp.Index == index);
+			return new MetadataTypeParameter(assembly, owner, index, assembly.GetString(gp.Name), handle, gp.Attributes);
 		}
 
 		private MetadataTypeParameter(MetadataAssembly assembly, IEntity owner, int index, string name,

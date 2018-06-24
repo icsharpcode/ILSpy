@@ -144,8 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromSerializedName(string name)
 		{
-			// TODO: aren't we missing support for assembly-qualified names?
-			return new GetClassTypeReference(new FullTypeName(name))
+			return ReflectionHelper.ParseReflectionName(name)
 				.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
 		}
 		

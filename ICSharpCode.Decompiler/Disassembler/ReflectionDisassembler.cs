@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			WriteSecurityDeclarations(module, methodDefinition.GetDeclarativeSecurityAttributes());
 
-			if (handle.HasBody(metadata)) {
+			if (methodDefinition.HasBody()) {
 				methodBodyDisassembler.Disassemble(module, handle);
 			}
 			var declaringType = metadata.GetTypeDefinition(methodDefinition.GetDeclaringType());

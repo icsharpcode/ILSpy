@@ -366,10 +366,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			var typeSystem = context.TypeSystem;
 			var metadata = typeSystem.GetMetadata();
-			if (method.IsNil || !method.HasBody(metadata))
+			if (method.IsNil)
 				throw new SymbolicAnalysisFailedException();
 
 			var methodDef = metadata.GetMethodDefinition(method);
+			if (!methodDef.HasBody())
+				throw new SymbolicAnalysisFailedException();
 
 			var sdtp = typeSystem as SpecializingDecompilerTypeSystem;
 			if (sdtp != null) {

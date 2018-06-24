@@ -38,6 +38,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		NonSerialized,
 
 		// Method attributes:
+		DllImport,
+		PreserveSig,
+		MethodImpl,
 
 		// Parameter attributes:
 		ParamArray,
@@ -70,6 +73,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// Field attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(FieldOffsetAttribute)),
 			new TopLevelTypeName("System", nameof(NonSerializedAttribute)),
+			// Method attributes:
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(DllImportAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(PreserveSigAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplAttribute)),
 			// Parameter attributes:
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
 			// Marshalling attributes:
@@ -88,5 +95,5 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return compilation.FindType(attrType.GetTypeName());
 		}
-	
+	}
 }

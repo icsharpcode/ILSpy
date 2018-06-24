@@ -345,7 +345,9 @@
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataField.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataMethod.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataNamespace.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataParameter.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeReference.cs" />

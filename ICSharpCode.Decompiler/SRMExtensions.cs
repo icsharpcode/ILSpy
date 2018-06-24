@@ -92,13 +92,7 @@ namespace ICSharpCode.Decompiler
 			}
 			return false;
 		}
-
-		public static bool HasBody(this MethodDefinitionHandle handle, MetadataReader reader)
-		{
-			var methodDefinition = reader.GetMethodDefinition(handle);
-			return methodDefinition.HasBody();
-		}
-
+		
 		public static bool HasBody(this MethodDefinition methodDefinition)
 		{
 			const MethodAttributes noBodyAttrs = MethodAttributes.Abstract | MethodAttributes.PinvokeImpl;

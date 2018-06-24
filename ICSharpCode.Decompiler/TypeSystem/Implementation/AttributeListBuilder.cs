@@ -89,6 +89,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return Implementation.CustomAttribute.MakeNamedArg(assembly.Compilation, attrType, name, rr);
 		}
 
+		internal KeyValuePair<IMember, ResolveResult> MakeNamedArg(IType attrType, string name, bool value)
+		{
+			return MakeNamedArg(attrType, name, assembly.Compilation.FindType(KnownTypeCode.Boolean), value);
+		}
+
 		#region MarshalAsAttribute (ConvertMarshalInfo)
 		internal void AddMarshalInfo(BlobHandle marshalInfo)
 		{

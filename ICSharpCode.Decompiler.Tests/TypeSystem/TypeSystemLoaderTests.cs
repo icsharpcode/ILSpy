@@ -1359,6 +1359,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var f = type.GetFields().Single(x => x.Name == name);
 			Assert.IsTrue(f.IsConst);
 			Assert.AreEqual(expected, f.ConstantValue);
+			Assert.AreEqual(0, f.Attributes.Count);
 		}
 
 		[Test]
@@ -1613,6 +1614,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		{
 			ITypeDefinition c = compilation.FindType(typeof(void)).GetDefinition();
 			Assert.IsNotNull(c, "System.Void not found");
+			Assert.AreEqual(TypeKind.Void, c.Kind);
 			Assert.AreEqual(0, c.GetMethods().Count());
 			Assert.AreEqual(0, c.GetProperties().Count());
 			Assert.AreEqual(0, c.GetEvents().Count());
