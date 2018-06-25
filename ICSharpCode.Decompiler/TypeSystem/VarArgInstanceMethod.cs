@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.ReturnType; }
 		}
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ImplementedInterfaceMembers {
 			get { return baseMethod.ImplementedInterfaceMembers; }
 		}
 

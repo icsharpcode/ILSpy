@@ -141,15 +141,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </returns>
 		IMember GetInterfaceImplementation(IMember interfaceMember);
 
-		/// <summary>
-		/// Determines how this type is implementing the specified interface members.
-		/// </summary>
-		/// <returns>
-		/// For each interface member, this method returns the class member 
-		/// that implements the interface member.
-		/// For interface members that are missing an implementation, the
-		/// result collection will contain a null element.
-		/// </returns>
-		IReadOnlyList<IMember> GetInterfaceImplementation(IReadOnlyList<IMember> interfaceMembers);
+		//IEnumerable<IMember> GetImplementedInterfaces();
 	}
 }

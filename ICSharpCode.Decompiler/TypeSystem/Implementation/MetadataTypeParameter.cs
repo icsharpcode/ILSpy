@@ -37,6 +37,23 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IReadOnlyList<IAttribute> customAttributes;
 		IReadOnlyList<IType> constraints;
 
+		public static ITypeParameter[] Create(MetadataAssembly assembly, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)
+		{
+			if (handles.Count == 0)
+				return Empty<ITypeParameter>.Array;
+			var outerTps = copyFromOuter.TypeParameters;
+			var tps = new ITypeParameter[handles.Count];
+			int i = 0;
+			foreach (var handle in handles) {
+				if (i < outerTps.Count)
+					tps[i] = outerTps[i];
+				else
+					tps[i] = Create(assembly, owner, i, handle);
+				i++;
+			}
+			return tps;
+		}
+
 		public static ITypeParameter[] Create(MetadataAssembly assembly, IEntity owner, GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
@@ -116,7 +133,24 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private IReadOnlyList<IType> DecodeConstraints()
 		{
-			throw new NotImplementedException();
+			var metadata = assembly.metadata;
+			var gp = metadata.GetGenericParameter(handle);
+
+			var constraintHandleCollection = gp.GetConstraints();
+			List<IType> result = new List<IType>(constraintHandleCollection.Count + 1);
+			bool hasNonInterfaceConstraint = false;
+			foreach (var constraintHandle in constraintHandleCollection) {
+				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
+				var ty = assembly.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes());
+				result.Add(ty);
+				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
+			}
+			if (this.HasValueTypeConstraint) {
+				result.Add(Compilation.FindType(KnownTypeCode.ValueType));
+			} else if (!hasNonInterfaceConstraint) {
+				result.Add(Compilation.FindType(KnownTypeCode.Object));
+			}
+			return result;
 		}
 
 		public override string ToString()

@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType ReturnType { get; set; } = SpecialType.UnknownType;
 
-		IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+		IEnumerable<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 
 		bool IMember.IsExplicitInterfaceImplementation => false;
 
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyList<IAttribute> IEntity.Attributes => EmptyList<IAttribute>.Instance;
 
-		Accessibility IEntity.Accessibility => Accessibility.Public;
+		public Accessibility Accessibility { get; set; } = Accessibility.Public;
 
 		public bool IsStatic { get; set; }
 		bool IEntity.IsAbstract => false;

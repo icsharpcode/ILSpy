@@ -42,6 +42,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		object constantValue;
 		IType type;
 		bool isVolatile; // initialized together with this.type
+		byte decimalConstant; // 0=no, 1=yes, 2=unknown
 		IAttribute[] customAttributes;
 
 		internal MetadataField(MetadataAssembly assembly, FieldDefinitionHandle handle)
@@ -52,6 +53,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.handle = handle;
 			var def = assembly.metadata.GetFieldDefinition(handle);
 			this.attributes = def.Attributes;
+			if ((attributes & (FieldAttributes.Static | FieldAttributes.InitOnly)) == (FieldAttributes.Static | FieldAttributes.InitOnly)) {
+				decimalConstant = 2; // may be decimal constant
+			}
 		}
 
 		public EntityHandle MetadataToken => handle;
@@ -88,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		// Fields can't implement interfaces:
-		IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+		IEnumerable<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 		bool IMember.IsExplicitInterfaceImplementation => false;
 		bool IMember.IsVirtual => false;
 		bool IMember.IsOverride => false;
@@ -182,8 +186,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return LazyInit.GetOrSet(ref this.type, ty);
 		}
 
-		// TODO: decimal constants
-		public bool IsConst => (attributes & FieldAttributes.Literal) != 0;
+		public bool IsConst => (attributes & FieldAttributes.Literal) != 0 || IsDecimalConstant;
+
+		bool IsDecimalConstant {
+			get {
+				if (decimalConstant == 2) {
+					var metadata = assembly.metadata;
+					var fieldDef = metadata.GetFieldDefinition(handle);
+					if (fieldDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.DecimalConstant))
+						decimalConstant = 1;
+					else
+						decimalConstant = 0;
+				}
+				return decimalConstant == 1;
+			}
+		}
 
 		public object ConstantValue {
 			get {
@@ -192,16 +209,51 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return val;
 				var metadata = assembly.metadata;
 				var fieldDef = metadata.GetFieldDefinition(handle);
-				var constantHandle = fieldDef.GetDefaultValue();
-				if (constantHandle.IsNil)
-					return null;
-				var constant = metadata.GetConstant(constantHandle);
-				var blobReader = metadata.GetBlobReader(constant.Value);
-				val = blobReader.ReadConstant(constant.TypeCode);
+				if (IsDecimalConstant) {
+					foreach (var attrHandle in fieldDef.GetCustomAttributes()) {
+						var attribute = metadata.GetCustomAttribute(attrHandle);
+						if (attribute.IsKnownAttribute(metadata, KnownAttribute.DecimalConstant)) {
+							val = TryDecodeDecimalConstantAttribute(attribute);
+						}
+					}
+				} else {
+					var constantHandle = fieldDef.GetDefaultValue();
+					if (constantHandle.IsNil)
+						return null;
+					var constant = metadata.GetConstant(constantHandle);
+					var blobReader = metadata.GetBlobReader(constant.Value);
+					val = blobReader.ReadConstant(constant.TypeCode);
+				}
 				return LazyInit.GetOrSet(ref this.constantValue, val);
 			}
 		}
-		
+
+		decimal? TryDecodeDecimalConstantAttribute(System.Reflection.Metadata.CustomAttribute attribute)
+		{
+			var attrValue = attribute.DecodeValue(assembly.TypeProvider);
+			if (attrValue.FixedArguments.Length != 5)
+				return null;
+			// DecimalConstantAttribute has the arguments (byte scale, byte sign, uint hi, uint mid, uint low) or (byte scale, byte sign, int hi, int mid, int low)
+			// Both of these invoke the Decimal constructor (int lo, int mid, int hi, bool isNegative, byte scale) with explicit argument conversions if required.
+			if (!(attrValue.FixedArguments[0].Value is byte scale && attrValue.FixedArguments[1].Value is byte sign))
+				return null;
+			unchecked {
+				if (attrValue.FixedArguments[2].Value is uint hi
+					&& attrValue.FixedArguments[3].Value is uint mid
+					&& attrValue.FixedArguments[4].Value is uint lo) {
+					return new decimal((int)lo, (int)mid, (int)hi, sign != 0, scale);
+				}
+			}
+			{
+				if (attrValue.FixedArguments[2].Value is int hi
+					&& attrValue.FixedArguments[3].Value is int mid
+					&& attrValue.FixedArguments[4].Value is int lo) {
+					return new decimal(lo, mid, hi, sign != 0, scale);
+				}
+			}
+			return null;
+		}
+
 		public bool Equals(IMember obj, TypeVisitor typeNormalization)
 		{
 			return this == obj;

@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -33,6 +34,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType Type { get; }
 		public IParameterizedMember Owner { get; }
+
+		// lazy-loaded:
+		string name;
+		IAttribute[] customAttributes;
 
 		internal MetadataParameter(MetadataAssembly assembly, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
@@ -47,17 +52,60 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public EntityHandle MetadataToken => handle;
 
-		public IReadOnlyList<IAttribute> Attributes => throw new NotImplementedException();
+		#region Attributes
+		public IReadOnlyList<IAttribute> Attributes {
+			get {
+				var attr = LazyInit.VolatileRead(ref this.customAttributes);
+				if (attr != null)
+					return attr;
+				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
+			}
+		}
+
+		IAttribute[] DecodeAttributes()
+		{
+			var b = new AttributeListBuilder(assembly);
+			var metadata = assembly.metadata;
+			var parameter = metadata.GetParameter(handle);
+
+			if (!IsOut) {
+				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
+					b.Add(KnownAttribute.In);
+				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
+					b.Add(KnownAttribute.Out);
+			}
+			b.Add(parameter.GetCustomAttributes());
+			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
+
+			return b.Build();
+		}
+		#endregion
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
-
-		public bool IsParams => throw new NotImplementedException();
-
 		public bool IsOptional => (attributes & ParameterAttributes.HasDefault) != 0;
 
-		public string Name => throw new NotImplementedException();
+		public bool IsParams {
+			get {
+				if (Type.Kind != TypeKind.Array)
+					return false;
+				var metadata = assembly.metadata;
+				var propertyDef = metadata.GetParameter(handle);
+				return propertyDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
+			}
+		}
+
+		public string Name {
+			get {
+				string name = LazyInit.VolatileRead(ref this.name);
+				if (name != null)
+					return name;
+				var metadata = assembly.metadata;
+				var propertyDef = metadata.GetParameter(handle);
+				return LazyInit.GetOrSet(ref this.name, metadata.GetString(propertyDef.Name));
+			}
+		}
 
 		bool IVariable.IsConst => false;
 

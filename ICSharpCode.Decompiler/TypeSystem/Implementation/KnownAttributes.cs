@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// Field attributes:
 		FieldOffset,
 		NonSerialized,
+		DecimalConstant,
 
 		// Method attributes:
 		DllImport,
@@ -44,6 +45,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// Parameter attributes:
 		ParamArray,
+		In,
+		Out,
 
 		// Marshalling attributes:
 		MarshalAs,
@@ -69,16 +72,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			new TopLevelTypeName("System", nameof(SerializableAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(ComImportAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(StructLayoutAttribute)),
-			new TopLevelTypeName("System.Runtime", nameof(DefaultMemberAttribute)),
+			new TopLevelTypeName("System.Reflection", nameof(DefaultMemberAttribute)),
 			// Field attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(FieldOffsetAttribute)),
 			new TopLevelTypeName("System", nameof(NonSerializedAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(DecimalConstantAttribute)),
 			// Method attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(DllImportAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(PreserveSigAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplAttribute)),
 			// Parameter attributes:
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
 			// Marshalling attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(MarshalAsAttribute)),
 			// Security attributes:

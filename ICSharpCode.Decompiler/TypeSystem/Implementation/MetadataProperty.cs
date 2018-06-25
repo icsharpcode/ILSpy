@@ -38,14 +38,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly PropertyDefinitionHandle propertyHandle;
 		readonly MethodDefinitionHandle getterHandle;
 		readonly MethodDefinitionHandle setterHandle;
+		readonly string name;
+		readonly SymbolKind symbolKind;
 
 		// lazy-loaded:
-		string name;
 		IAttribute[] customAttributes;
 		volatile Accessibility cachedAccessiblity = InvalidAccessibility;
 		IParameter[] parameters;
 		IType returnType;
-		
+
 		internal MetadataProperty(MetadataAssembly assembly, PropertyDefinitionHandle handle)
 		{
 			Debug.Assert(assembly != null);
@@ -58,20 +59,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var accessors = prop.GetAccessors();
 			getterHandle = accessors.Getter;
 			setterHandle = accessors.Setter;
+			name = metadata.GetString(prop.Name);
+			if (name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName) {
+				symbolKind = SymbolKind.Indexer;
+			} else {
+				symbolKind = SymbolKind.Property;
+			}
 		}
 
 		public EntityHandle MetadataToken => propertyHandle;
-
-		public string Name {
-			get {
-				string name = LazyInit.VolatileRead(ref this.name);
-				if (name != null)
-					return name;
-				var metadata = assembly.metadata;
-				var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
-				return LazyInit.GetOrSet(ref this.name, metadata.GetString(propertyDef.Name));
-			}
-		}
+		public string Name => name;
 
 		public bool CanGet => !getterHandle.IsNil;
 		public bool CanSet => !setterHandle.IsNil;
@@ -79,8 +76,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod Getter => assembly.GetDefinition(getterHandle);
 		public IMethod Setter => assembly.GetDefinition(setterHandle);
 
-		public bool IsIndexer => SymbolKind == SymbolKind.Indexer;
-		public SymbolKind SymbolKind => throw new NotImplementedException();
+		public bool IsIndexer => symbolKind == SymbolKind.Indexer;
+		public SymbolKind SymbolKind => symbolKind;
 
 		#region Signature (ReturnType + Parameters)
 		public IReadOnlyList<IParameter> Parameters {
@@ -121,9 +118,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers => throw new NotImplementedException();
+		public bool IsExplicitInterfaceImplementation => (Getter ?? Setter)?.IsExplicitInterfaceImplementation ?? false;
+		public IEnumerable<IMember> ImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(Getter ?? Setter);
 
-		public bool IsExplicitInterfaceImplementation => throw new NotImplementedException();
+		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
+		{
+			if (method == null)
+				return EmptyList<IMember>.Instance;
+			return method.ImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
+		}
 
 		public ITypeDefinition DeclaringTypeDefinition => (Getter ?? Setter)?.DeclaringTypeDefinition;
 		public IType DeclaringType => (Getter ?? Setter)?.DeclaringType;

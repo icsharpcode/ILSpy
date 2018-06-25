@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		IReadOnlyList<IMember> implementedInterfaceMembers;
 		
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ImplementedInterfaceMembers {
 			get {
 				return LazyInitializer.EnsureInitialized(ref implementedInterfaceMembers, FindImplementedInterfaceMembers);
 			}
@@ -165,12 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
 		{
-			var definitionImplementations = baseMember.ImplementedInterfaceMembers;
-			IMember[] result = new IMember[definitionImplementations.Count];
-			for (int i = 0; i < result.Length; i++) {
-				result[i] = definitionImplementations[i].Specialize(substitution);
-			}
-			return result;
+			return baseMember.ImplementedInterfaceMembers.Select(m => m.Specialize(substitution)).ToArray();
 		}
 		
 		public bool IsExplicitInterfaceImplementation {

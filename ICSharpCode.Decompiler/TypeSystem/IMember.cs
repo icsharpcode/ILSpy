@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the interface members implemented by this member (both implicitly and explicitly).
 		/// </summary>
-		IReadOnlyList<IMember> ImplementedInterfaceMembers { get; }
+		IEnumerable<IMember> ImplementedInterfaceMembers { get; }
 		
 		/// <summary>
 		/// Gets whether this member is explicitly implementing an interface.

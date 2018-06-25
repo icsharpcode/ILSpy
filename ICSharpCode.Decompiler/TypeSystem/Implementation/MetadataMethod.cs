@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IAttribute[] returnTypeAttributes;
 		IParameter[] parameters;
 		IType returnType;
+		IMember[] implementedInterfaceMembers;
 
 		internal MetadataMethod(MetadataAssembly assembly, MethodDefinitionHandle handle)
 		{
@@ -177,8 +178,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers => throw new NotImplementedException();
-
+		public IEnumerable<IMember> ImplementedInterfaceMembers => throw new NotImplementedException();
 		public bool IsExplicitInterfaceImplementation => throw new NotImplementedException();
 
 		IMember IMember.MemberDefinition => this;
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAbstract => (attributes & MethodAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & (MethodAttributes.Abstract | MethodAttributes.Final | MethodAttributes.NewSlot | MethodAttributes.Static)) == MethodAttributes.Final;
 		public bool IsVirtual => (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
-		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Static)) == 0;
+		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual)) == MethodAttributes.Virtual;
 		public bool IsOverridable
 			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0
 			&& (attributes & MethodAttributes.Final) == 0;

@@ -129,8 +129,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			IMember IMember.MemberDefinition {
 				get { return this; }
 			}
-			
-			IReadOnlyList<IMember> IMember.ImplementedInterfaceMembers {
+
+			IEnumerable<IMember> IMember.ImplementedInterfaceMembers {
 				get { return EmptyList<IMember>.Instance; }
 			}
 			

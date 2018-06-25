@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return unresolved; }
 		}
 		
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ImplementedInterfaceMembers {
 			get {
 				IReadOnlyList<IMember> result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
 				if (result != null) {

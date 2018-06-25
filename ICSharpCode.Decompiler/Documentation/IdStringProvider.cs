@@ -61,10 +61,10 @@ namespace ICSharpCode.Decompiler.Documentation
 				AppendTypeName(b, member.DeclaringType, false);
 				b.Append('.');
 			}
-			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ImplementedInterfaceMembers.Count == 1) {
+			/*if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ImplementedInterfaceMembers.Count == 1) {
 				AppendTypeName(b, member.ImplementedInterfaceMembers[0].DeclaringType, true);
 				b.Append('#');
-			}
+			}*/
 			b.Append(member.Name.Replace('.', '#'));
 			IMethod method = member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0) {

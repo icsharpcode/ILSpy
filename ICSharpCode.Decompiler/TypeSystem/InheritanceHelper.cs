@@ -50,10 +50,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (member == null)
 				throw new ArgumentNullException("member");
 
-			if (member.IsExplicitInterfaceImplementation && member.ImplementedInterfaceMembers.Count == 1) {
-				// C#-style explicit interface implementation
-				member = member.ImplementedInterfaceMembers[0];
-				yield return member;
+			if (includeImplementedInterfaces) {
+				throw new NotImplementedException();
+				/*if (member.IsExplicitInterfaceImplementation && member.ImplementedInterfaceMembers.Count == 1) {
+					// C#-style explicit interface implementation
+					member = member.ImplementedInterfaceMembers[0];
+					yield return member;
+				}*/
 			}
 			
 			// Remove generic specialization
@@ -77,15 +80,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				IEnumerable<IMember> baseMembers;
 				if (member.SymbolKind == SymbolKind.Accessor) {
-					baseMembers = baseType.GetAccessors(m => m.Name == member.Name && !m.IsExplicitInterfaceImplementation, GetMemberOptions.IgnoreInheritedMembers);
+					baseMembers = baseType.GetAccessors(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
 				} else {
-					baseMembers = baseType.GetMembers(m => m.Name == member.Name && !m.IsExplicitInterfaceImplementation, GetMemberOptions.IgnoreInheritedMembers);
+					baseMembers = baseType.GetMembers(m => m.Name == member.Name && m.Accessibility > Accessibility.Private, GetMemberOptions.IgnoreInheritedMembers);
 				}
 				foreach (IMember baseMember in baseMembers) {
-					if (baseMember.Accessibility == Accessibility.Private) {
-						// skip private base members; 
-						continue;
-					}
+					System.Diagnostics.Debug.Assert(baseMember.Accessibility != Accessibility.Private);
 					if (SignatureComparer.Ordinal.Equals(member, baseMember)) {
 						yield return baseMember.Specialize(substitution);
 					}

@@ -51,6 +51,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		IAttribute[] customAttributes;
+		IMember[] members;
+		IField[] fields;
+		IProperty[] properties;
+		IEvent[] events;
+		IMethod[] methods;
+		List<IType> directBaseTypes;
+		string defaultMemberName;
 
 		internal MetadataTypeDefinition(MetadataAssembly assembly, TypeDefinitionHandle handle)
 		{
@@ -65,7 +72,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested) {
 				this.DeclaringTypeDefinition = assembly.GetDefinition(td.GetDeclaringType());
+				
+				// Create type parameters:
+				this.TypeParameters = MetadataTypeParameter.Create(assembly, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
 			} else {
+				// Create type parameters:
+				this.TypeParameters = MetadataTypeParameter.Create(assembly, this, td.GetGenericParameters());
+
 				var topLevelTypeName = fullTypeName.TopLevelTypeName;
 				for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
 					var ktr = KnownTypeReference.Get((KnownTypeCode)i);
@@ -92,8 +105,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				this.Kind = TypeKind.Class;
 			}
-			// Create type parameters:
-			this.TypeParameters = MetadataTypeParameter.Create(assembly, this, td.GetGenericParameters());
 		}
 
 		public override string ToString()
@@ -119,8 +130,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		#region Members
-		IMember[] members;
-
 		public IReadOnlyList<IMember> Members {
 			get {
 				var members = LazyInit.VolatileRead(ref this.members);
@@ -130,8 +139,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return LazyInit.GetOrSet(ref this.members, members);
 			}
 		}
-
-		IField[] fields;
 
 		public IEnumerable<IField> Fields {
 			get {
@@ -152,8 +159,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		IProperty[] properties;
-
 		public IEnumerable<IProperty> Properties {
 			get {
 				var properties = LazyInit.VolatileRead(ref this.properties);
@@ -168,8 +173,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
 			}
 		}
-
-		IEvent[] events;
 
 		public IEnumerable<IEvent> Events {
 			get {
@@ -186,8 +189,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		IMethod[] methods;
-
 		public IEnumerable<IMethod> Methods {
 			get {
 				var methods = LazyInit.VolatileRead(ref this.methods);
@@ -198,6 +199,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				foreach (MethodDefinitionHandle h in methodsCollection) {
 					methodsList.Add(assembly.GetDefinition(h));
+				}
+				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
+					methodsList.Add(new FakeMethod(Compilation, SymbolKind.Constructor) {
+						DeclaringType = this,
+						Name = ".ctor",
+						ReturnType = Compilation.FindType(KnownTypeCode.Void),
+						Accessibility = IsAbstract ? Accessibility.Protected : Accessibility.Public,
+					});
 				}
 				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
 			}
@@ -224,8 +233,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public int TypeParameterCount => TypeParameters.Count;
 
 		IReadOnlyList<IType> IType.TypeArguments => TypeParameters;
-
-		List<IType> directBaseTypes;
 
 		public IEnumerable<IType> DirectBaseTypes {
 			get {
@@ -334,6 +341,27 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.AddSecurityAttributes(typeDefinition.GetDeclarativeSecurityAttributes());
 
 			return b.Build();
+		}
+
+		public string DefaultMemberName {
+			get {
+				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
+				if (defaultMemberName != null)
+					return defaultMemberName;
+				var metadata = assembly.metadata;
+				var typeDefinition = metadata.GetTypeDefinition(handle);
+				foreach (var h in typeDefinition.GetCustomAttributes()) {
+					var a = metadata.GetCustomAttribute(h);
+					if (!a.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
+						continue;
+					var value = a.DecodeValue(assembly.TypeProvider);
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name) {
+						defaultMemberName = name;
+						break;
+					}
+				}
+				return LazyInit.GetOrSet(ref this.defaultMemberName, defaultMemberName ?? "Item");
+			}
 		}
 		#endregion
 
