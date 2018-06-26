@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.Tests
 			try {
 				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 			} catch (CompilationFailedException) {
-				Assert.Ignore("C# 7 tuples not yet supported.");
+				Assert.Ignore("C# 7 local functions not yet supported.");
 			}
 		}
 
