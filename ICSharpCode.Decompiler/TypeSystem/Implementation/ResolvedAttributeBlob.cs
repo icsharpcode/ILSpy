@@ -26,7 +26,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Threading;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
@@ -74,7 +76,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return constructor;
 			}
 		}
-		
+
+		IType IAttribute.AttributeType => throw new NotImplementedException();
+
+		IMethod IAttribute.Constructor => throw new NotImplementedException();
+
+		ImmutableArray<CustomAttributeTypedArgument<IType>> IAttribute.FixedArguments => throw new NotImplementedException();
+
+		ImmutableArray<CustomAttributeNamedArgument<IType>> IAttribute.NamedArguments => throw new NotImplementedException();
+
 		IMethod ResolveConstructor()
 		{
 			var parameterTypes = ctorParameterTypes.Resolve(context);
@@ -90,28 +100,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					return ctor;
 			}
 			return null;
-		}
-		
-		public IReadOnlyList<ResolveResult> PositionalArguments {
-			get {
-				var result = LazyInit.VolatileRead(ref this.positionalArguments);
-				if (result != null) {
-					return result;
-				}
-				DecodeBlob();
-				return positionalArguments;
-			}
-		}
-		
-		public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
-			get {
-				var result = LazyInit.VolatileRead(ref this.namedArguments);
-				if (result != null) {
-					return result;
-				}
-				DecodeBlob();
-				return namedArguments;
-			}
 		}
 		
 		public override string ToString()

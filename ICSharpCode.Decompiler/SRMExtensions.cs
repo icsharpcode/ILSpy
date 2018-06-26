@@ -227,6 +227,13 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		public static FullTypeName GetFullTypeName(this ExportedType type, MetadataReader metadata)
+		{
+			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
+			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(type.Name), out int typeParameterCount);
+			return new TopLevelTypeName(ns, name, typeParameterCount);
+		}
+
 		public static TType DecodeSignature<TType, TGenericContext>(this EventDefinition ev, MetadataReader reader, ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
 		{
 			switch (ev.Type.Kind) {

@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 
-			return resultBuilder.ToImmutable();
+			return resultBuilder.MoveToImmutable();
 		}
 
 		/*

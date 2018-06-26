@@ -108,10 +108,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						namedArgs.Add(namedArg);
 					
 				}
+				throw new NotImplementedException(); /*
 				attributes[i] = new DefaultAttribute(
 					attributeType,
 					positionalArguments: new ResolveResult[] { securityActionRR },
-					namedArguments: namedArgs);
+					namedArguments: namedArgs);*/
 			}
 		}
 	}

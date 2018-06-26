@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
@@ -186,7 +188,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			readonly IReadOnlyList<ResolveResult> positionalArguments;
 
 			// cannot use ProjectedList because KeyValuePair is value type
-			IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+			//IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 			
 			IMethod constructor;
 			volatile bool constructorResolved;
@@ -231,33 +233,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return null;
 			}
 			
-			public IReadOnlyList<ResolveResult> PositionalArguments {
-				get { return positionalArguments; }
-			}
-			
-			public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
-				get {
-					var namedArgs = LazyInit.VolatileRead(ref this.namedArguments);
-					if (namedArgs != null) {
-						return namedArgs;
-					} else {
-						var newNamedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
-						foreach (var pair in unresolved.NamedArguments) {
-							IMember member = pair.Key.Resolve(context);
-							if (member != null) {
-								ResolveResult val = pair.Value.Resolve(context);
-								newNamedArgs.Add(new KeyValuePair<IMember, ResolveResult>(member, val));
-							}
-						}
-						return LazyInit.GetOrSet(ref this.namedArguments, newNamedArgs);
-					}
-				}
-			}
-			
 			public ICompilation Compilation {
 				get { return context.Compilation; }
 			}
-			
+
+			IType IAttribute.AttributeType => throw new NotImplementedException();
+
+			IMethod IAttribute.Constructor => throw new NotImplementedException();
+
+			ImmutableArray<CustomAttributeTypedArgument<IType>> IAttribute.FixedArguments => throw new NotImplementedException();
+
+			ImmutableArray<CustomAttributeNamedArgument<IType>> IAttribute.NamedArguments => throw new NotImplementedException();
+
 			public override string ToString()
 			{
 				if (positionalArguments.Count == 0)

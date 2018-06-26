@@ -498,7 +498,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If inherit is true, an from the entity itself will be returned if possible;
 		/// and the base entity will only be searched if none exists.
 		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, FullTypeName attributeType, bool inherit = true)
+		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit = true)
 		{
 			return GetAttributes(entity, attributeType, inherit).FirstOrDefault();
 		}
@@ -516,13 +516,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Returns the list of attributes that were found.
 		/// If inherit is true, attributes from the entity itself are returned first; followed by attributes inherited from the base entity.
 		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, FullTypeName attributeType, bool inherit = true)
+		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, KnownAttribute attributeType, bool inherit = true)
 		{
 			if (entity == null)
 				throw new ArgumentNullException("entity");
 			return GetAttributes(entity, attrType => {
 			                     	ITypeDefinition typeDef = attrType.GetDefinition();
-			                     	return typeDef != null && typeDef.FullTypeName == attributeType;
+			                     	return typeDef != null && typeDef.FullTypeName == attributeType.GetTypeName();
 			                     }, inherit);
 		}
 
@@ -589,14 +589,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region IsCompilerGenerated
-		static readonly FullTypeName compilerGeneratedAttributeTypeName = new FullTypeName("System.Runtime.CompilerServices.CompilerGeneratedAttribute");
-
 		public static bool IsCompilerGenereated(this IEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));
 
-			return entity.GetAttribute(compilerGeneratedAttributeTypeName) != null;
+			return entity.GetAttribute(KnownAttribute.CompilerGenerated) != null;
 		}
 		#endregion
 

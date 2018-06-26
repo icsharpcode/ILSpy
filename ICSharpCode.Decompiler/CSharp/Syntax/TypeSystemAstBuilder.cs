@@ -434,15 +434,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (mt != null && mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal)) {
 				mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
 			}
-			foreach (ResolveResult arg in attribute.PositionalArguments) {
-				attr.Arguments.Add(ConvertConstantValue(arg));
+			foreach (var arg in attribute.FixedArguments) {
+				attr.Arguments.Add(ConvertConstantValue(arg.Type, arg.Value));
 			}
-			if (attribute.NamedArguments.Count > 0) {
+			if (attribute.NamedArguments.Length > 0) {
 				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
-				foreach (var pair in attribute.NamedArguments) {
-					NamedExpression namedArgument = new NamedExpression(pair.Key.Name, ConvertConstantValue(pair.Value));
+				foreach (var namedArg in attribute.NamedArguments) {
+					NamedExpression namedArgument = new NamedExpression(namedArg.Name, ConvertConstantValue(namedArg.Type, namedArg.Value));
 					if (AddResolveResultAnnotations) {
-						namedArgument.AddAnnotation(new MemberResolveResult(targetResult, pair.Key));
+						//namedArgument.AddAnnotation(new MemberResolveResult(targetResult, pair.Key));
 					}
 					attr.Arguments.Add(namedArgument);
 				}

@@ -292,6 +292,7 @@
     <Compile Include="Metadata\LightJson\Serialization\JsonReader.cs" />
     <Compile Include="Metadata\LightJson\Serialization\TextPosition.cs" />
     <Compile Include="Metadata\LightJson\Serialization\TextScanner.cs" />
+    <Compile Include="Metadata\MethodSemanticsLookup.cs" />
     <Compile Include="Metadata\OperandType.cs" />
     <Compile Include="Metadata\SignatureBlobComparer.cs" />
     <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
@@ -348,6 +349,7 @@
     <Compile Include="TypeSystem\Implementation\MetadataMethod.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataNamespace.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataEvent.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataProperty.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />

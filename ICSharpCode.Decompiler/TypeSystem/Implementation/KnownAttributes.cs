@@ -1,14 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Copyright (c) 2010-2018 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace ICSharpCode.Decompiler.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem
 {
-	enum KnownAttribute
+	public enum KnownAttribute
 	{
 		/// <summary>
 		/// Not a known attribute
@@ -22,21 +38,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		Extension,
 		Dynamic,
 		TupleElementNames,
+		Conditional,
+		Obsolete,
+		IsReadOnly,
+		DebuggerHidden,
+		DebuggerStepThrough,
 
 		// Assembly attributes:
 		AssemblyVersion,
 		InternalsVisibleTo,
+		TypeForwardedTo,
 		
 		// Type attributes:
 		Serializable,
 		ComImport,
+		CoClass,
 		StructLayout,
 		DefaultMember,
+		IsByRefLike,
+		IteratorStateMachine,
+		AsyncStateMachine,
 
 		// Field attributes:
 		FieldOffset,
 		NonSerialized,
 		DecimalConstant,
+		FixedBuffer,
 
 		// Method attributes:
 		DllImport,
@@ -65,18 +92,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(ExtensionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(DynamicAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TupleElementNamesAttribute)),
+			new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)),
+			new TopLevelTypeName("System", nameof(ObsoleteAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "IsReadOnlyAttribute"),
+			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerHiddenAttribute)),
+			new TopLevelTypeName("System.Diagnostics", nameof(DebuggerStepThroughAttribute)),
 			// Assembly attributes:
 			new TopLevelTypeName("System.Reflection", nameof(AssemblyVersionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(InternalsVisibleToAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TypeForwardedToAttribute)),
 			// Type attributes:
 			new TopLevelTypeName("System", nameof(SerializableAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(ComImportAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(CoClassAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(StructLayoutAttribute)),
 			new TopLevelTypeName("System.Reflection", nameof(DefaultMemberAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "IsByRefLikeAttribute"),
+			new TopLevelTypeName("System.Reflection", nameof(IteratorStateMachineAttribute)),
+			new TopLevelTypeName("System.Reflection", nameof(AsyncStateMachineAttribute)),
 			// Field attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(FieldOffsetAttribute)),
 			new TopLevelTypeName("System", nameof(NonSerializedAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(DecimalConstantAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(FixedBufferAttribute)),
 			// Method attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(DllImportAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(PreserveSigAttribute)),

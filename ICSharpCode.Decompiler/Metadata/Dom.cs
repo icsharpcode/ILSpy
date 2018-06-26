@@ -194,6 +194,40 @@ namespace ICSharpCode.Decompiler.Metadata
 				return default;
 		}
 
+		Dictionary<FullTypeName, ExportedTypeHandle> typeForwarderLookup;
+
+		/// <summary>
+		/// Finds the type forwarder with the specified name.
+		/// </summary>
+		public ExportedTypeHandle GetTypeForwarder(FullTypeName typeName)
+		{
+			var lookup = LazyInit.VolatileRead(ref typeForwarderLookup);
+			if (lookup == null) {
+				lookup = new Dictionary<FullTypeName, ExportedTypeHandle>();
+				foreach (var handle in Metadata.ExportedTypes) {
+					var td = Metadata.GetExportedType(handle);
+					lookup[td.GetFullTypeName(Metadata)] = handle;
+				}
+				lookup = LazyInit.GetOrSet(ref typeForwarderLookup, lookup);
+			}
+			if (lookup.TryGetValue(typeName, out var resultHandle))
+				return resultHandle;
+			else
+				return default;
+		}
+
+		MethodSemanticsLookup methodSemanticsLookup;
+
+		internal MethodSemanticsLookup MethodSemanticsLookup {
+			get {
+				var r = LazyInit.VolatileRead(ref methodSemanticsLookup);
+				if (r != null)
+					return r;
+				else
+					return LazyInit.GetOrSet(ref methodSemanticsLookup, new MethodSemanticsLookup(Metadata));
+			}
+		}
+
 		IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
 		{
 			return new MetadataAssembly(context.Compilation, this, TypeSystemOptions.Default);

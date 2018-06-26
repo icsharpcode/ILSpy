@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					Debug.Assert(elementTypes.Count == tupleCardinality);
 					return new TupleType(
 						compilation,
-						elementTypes.ToImmutable(),
+						elementTypes.MoveToImmutable(),
 						elementNames,
 						valueTupleAssembly
 					);

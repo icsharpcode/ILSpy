@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly MethodAttributes attributes;
 		readonly SymbolKind symbolKind;
 		readonly ITypeParameter[] typeParameters;
+		readonly EntityHandle accessorOwner;
 		public bool IsExtensionMethod { get; }
 
 		// lazy-loaded fields:
@@ -61,7 +62,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = def.Attributes;
 
 			this.symbolKind = SymbolKind.Method;
-			if ((attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) != 0) {
+			var (accessorOwner, semanticsAttribute) = assembly.PEFile.MethodSemanticsLookup.GetSemantics(handle);
+			if (semanticsAttribute != 0) {
+				this.symbolKind = SymbolKind.Accessor;
+				this.accessorOwner = accessorOwner;
+			} else if ((attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) != 0) {
 				string name = this.Name;
 				if (name == ".cctor" || name == ".ctor")
 					this.symbolKind = SymbolKind.Constructor;
@@ -104,7 +109,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool HasBody => assembly.metadata.GetMethodDefinition(handle).HasBody();
 
 
-		public IMember AccessorOwner => throw new NotImplementedException();
+		public IMember AccessorOwner {
+			get {
+				if (accessorOwner.IsNil)
+					return null;
+				if (accessorOwner.Kind == HandleKind.PropertyDefinition)
+					return assembly.GetDefinition((PropertyDefinitionHandle)accessorOwner);
+				else if (accessorOwner.Kind == HandleKind.EventDefinition)
+					return assembly.GetDefinition((EventDefinitionHandle)accessorOwner);
+				else
+					return null;
+			}
+		}
 
 		#region Signature (ReturnType + Parameters)
 		public IReadOnlyList<IParameter> Parameters {
@@ -231,18 +247,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			#region DllImportAttribute
 			var info = def.GetImport();
 			if ((attributes & MethodAttributes.PinvokeImpl) == MethodAttributes.PinvokeImpl && !info.Module.IsNil) {
-				var dllImportType = assembly.GetAttributeType(KnownAttribute.DllImport);
-				var positionalArguments = new ResolveResult[] {
-					new ConstantResolveResult(assembly.Compilation.FindType(KnownTypeCode.String),
-						metadata.GetString(metadata.GetModuleReference(info.Module).Name))
-				};
-				var namedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
+				var dllImport = new AttributeBuilder(assembly, KnownAttribute.DllImport);
+				dllImport.AddFixedArg(KnownTypeCode.String,
+					metadata.GetString(metadata.GetModuleReference(info.Module).Name));
 
 				var importAttrs = info.Attributes;
 				if ((importAttrs & MethodImportAttributes.BestFitMappingDisable) == MethodImportAttributes.BestFitMappingDisable)
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "BestFitMapping", false));
+					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, false);
 				if ((importAttrs & MethodImportAttributes.BestFitMappingEnable) == MethodImportAttributes.BestFitMappingEnable)
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "BestFitMapping", true));
+					dllImport.AddNamedArg("BestFitMapping", KnownTypeCode.Boolean, true);
 
 				CallingConvention callingConvention;
 				switch (info.Attributes & MethodImportAttributes.CallingConventionMask) {
@@ -270,7 +283,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				if (callingConvention != CallingConvention.Winapi) {
 					var callingConventionType = FindInteropType(nameof(CallingConvention));
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "CallingConvention", callingConventionType, (int)callingConvention));
+					dllImport.AddNamedArg("CallingConvention", callingConventionType, (int)callingConvention);
 				}
 
 				CharSet charSet = CharSet.None;
@@ -287,33 +300,32 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				if (charSet != CharSet.None) {
 					var charSetType = FindInteropType(nameof(CharSet));
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "CharSet", charSetType, (int)charSet));
+					dllImport.AddNamedArg("CharSet", charSetType, (int)charSet);
 				}
 
 				if (!info.Name.IsNil && info.Name != def.Name) {
-					namedArgs.Add(b.MakeNamedArg(dllImportType,
-						"EntryPoint", KnownTypeCode.String, metadata.GetString(info.Name)));
+					dllImport.AddNamedArg("EntryPoint", KnownTypeCode.String, metadata.GetString(info.Name));
 				}
 
 				if ((info.Attributes & MethodImportAttributes.ExactSpelling) == MethodImportAttributes.ExactSpelling) {
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "ExactSpelling", true));
+					dllImport.AddNamedArg("ExactSpelling", KnownTypeCode.Boolean, true);
 				}
 
 				if ((implAttributes & MethodImplAttributes.PreserveSig) == MethodImplAttributes.PreserveSig) {
 					implAttributes &= ~MethodImplAttributes.PreserveSig;
 				} else {
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "PreserveSig", true));
+					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, true);
 				}
 
 				if ((info.Attributes & MethodImportAttributes.SetLastError) == MethodImportAttributes.SetLastError)
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "SetLastError", true));
+					dllImport.AddNamedArg("SetLastError", KnownTypeCode.Boolean, true);
 
 				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharDisable) == MethodImportAttributes.ThrowOnUnmappableCharDisable)
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "ThrowOnUnmappableChar", false));
+					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, false);
 				if ((info.Attributes & MethodImportAttributes.ThrowOnUnmappableCharEnable) == MethodImportAttributes.ThrowOnUnmappableCharEnable)
-					namedArgs.Add(b.MakeNamedArg(dllImportType, "ThrowOnUnmappableChar", true));
+					dllImport.AddNamedArg("ThrowOnUnmappableChar", KnownTypeCode.Boolean, true);
 
-				b.Add(new DefaultAttribute(dllImportType, positionalArguments, namedArgs));
+				b.Add(dllImport.Build());
 			}
 			#endregion
 
@@ -326,10 +338,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			#region MethodImplAttribute
 			if (implAttributes != 0) {
-				b.Add(KnownAttribute.MethodImpl, new ConstantResolveResult(
-					Compilation.FindType(new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplOptions))),
+				b.Add(KnownAttribute.MethodImpl,
+					new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplOptions)),
 					(int)implAttributes
-				));
+				);
 			}
 			#endregion
 
@@ -392,7 +404,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsStatic => (attributes & MethodAttributes.Static) != 0;
 		public bool IsAbstract => (attributes & MethodAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & (MethodAttributes.Abstract | MethodAttributes.Final | MethodAttributes.NewSlot | MethodAttributes.Static)) == MethodAttributes.Final;
-		public bool IsVirtual => (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
+		public bool IsVirtual => (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.NewSlot | MethodAttributes.Final)) == (MethodAttributes.Virtual | MethodAttributes.NewSlot);
 		public bool IsOverride => (attributes & (MethodAttributes.NewSlot | MethodAttributes.Virtual)) == MethodAttributes.Virtual;
 		public bool IsOverridable
 			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0

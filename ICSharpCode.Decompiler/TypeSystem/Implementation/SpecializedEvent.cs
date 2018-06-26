@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
@@ -23,6 +25,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedEvent : SpecializedMember, IEvent
 	{
+		public static IEvent Create(IEvent ev, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution)
+				|| ev.DeclaringType.TypeParameterCount == 0) {
+				return ev;
+			}
+			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
+				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			return new SpecializedEvent(ev, substitution);
+		}
+
 		readonly IEvent eventDefinition;
 		
 		public SpecializedEvent(IEvent eventDefinition, TypeParameterSubstitution substitution)

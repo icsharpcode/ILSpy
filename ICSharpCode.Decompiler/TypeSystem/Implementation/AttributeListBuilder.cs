@@ -26,6 +26,7 @@ using System.Text;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Semantics;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -67,33 +68,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, KnownTypeCode argType, object argValue)
 		{
-			Add(type, new ConstantResolveResult(assembly.Compilation.FindType(argType), argValue));
+			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(assembly.Compilation.FindType(argType), argValue)));
+		}
+
+		/// <summary>
+		/// Construct a builtin attribute with a single positional argument of known type.
+		/// </summary>
+		public void Add(KnownAttribute type, TopLevelTypeName argType, object argValue)
+		{
+			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(assembly.Compilation.FindType(argType), argValue)));
 		}
 
 		/// <summary>
 		/// Construct a builtin attribute.
 		/// </summary>
-		public void Add(KnownAttribute type, params ResolveResult[] positionalArguments)
+		public void Add(KnownAttribute type, ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments)
 		{
-			Add(new DefaultAttribute(assembly.GetAttributeType(type), positionalArguments));
+			Add(new DefaultAttribute(assembly.GetAttributeType(type), fixedArguments,
+				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>()));
 		}
-
-		internal KeyValuePair<IMember, ResolveResult> MakeNamedArg(IType attrType, string name, KnownTypeCode valueType, object value)
-		{
-			return MakeNamedArg(attrType, name, assembly.Compilation.FindType(valueType), value);
-		}
-
-		internal KeyValuePair<IMember, ResolveResult> MakeNamedArg(IType attrType, string name, IType valueType, object value)
-		{
-			var rr = new ConstantResolveResult(valueType, value);
-			return Implementation.CustomAttribute.MakeNamedArg(assembly.Compilation, attrType, name, rr);
-		}
-
-		internal KeyValuePair<IMember, ResolveResult> MakeNamedArg(IType attrType, string name, bool value)
-		{
-			return MakeNamedArg(attrType, name, assembly.Compilation.FindType(KnownTypeCode.Boolean), value);
-		}
-
+		
 		#region MarshalAsAttribute (ConvertMarshalInfo)
 		internal void AddMarshalInfo(BlobHandle marshalInfo)
 		{
@@ -106,34 +100,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IAttribute ConvertMarshalInfo(SRM.BlobReader marshalInfo)
 		{
-			IType marshalAsAttributeType = assembly.GetAttributeType(KnownAttribute.MarshalAs);
+			var b = new AttributeBuilder(assembly, KnownAttribute.MarshalAs);
 			IType unmanagedTypeType = assembly.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
 
 			int type = marshalInfo.ReadByte();
-			var positionalArguments = new ResolveResult[] {
-				new ConstantResolveResult(unmanagedTypeType, type)
-			};
-			var namedArguments = new List<KeyValuePair<IMember, ResolveResult>>();
-
+			b.AddFixedArg(unmanagedTypeType, type);
+			
 			int size;
 			switch (type) {
 				case 0x1e: // FixedArray
 					if (!marshalInfo.TryReadCompressedInteger(out size))
 						size = 0;
-					namedArguments.Add(MakeNamedArg(marshalAsAttributeType, "SizeConst", KnownTypeCode.Int32, size));
+					b.AddNamedArg("SizeConst", KnownTypeCode.Int32, size);
 					if (marshalInfo.RemainingBytes > 0) {
 						type = marshalInfo.ReadByte();
 						if (type != 0x66) // None
-							namedArguments.Add(MakeNamedArg(marshalAsAttributeType, "ArraySubType", unmanagedTypeType, type));
+							b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
 					break;
 				case 0x1d: // SafeArray
 					if (marshalInfo.RemainingBytes > 0) {
 						VarEnum varType = (VarEnum)marshalInfo.ReadByte();
 						if (varType != VarEnum.VT_EMPTY) {
-							var varEnumType = assembly.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(VarEnum)));
-							namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-								"SafeArraySubType", varEnumType, (int)varType));
+							var varEnumType = new TopLevelTypeName(InteropServices, nameof(VarEnum));
+							b.AddNamedArg("SafeArraySubType", varEnumType, (int)varType);
 						}
 					}
 					break;
@@ -144,19 +134,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						type = 0x66; // Cecil uses NativeType.None as default.
 					}
 					if (type != 0x50) { // Max
-						namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-							"ArraySubType", unmanagedTypeType, type));
+						b.AddNamedArg("ArraySubType", unmanagedTypeType, type);
 					}
 					int sizeParameterIndex = marshalInfo.TryReadCompressedInteger(out int value) ? value : -1;
 					size = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
 					int sizeParameterMultiplier = marshalInfo.TryReadCompressedInteger(out value) ? value : -1;
 					if (size >= 0) {
-						namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-							"SizeConst", KnownTypeCode.Int32, size));
+						b.AddNamedArg("SizeConst", KnownTypeCode.Int32, size);
 					}
 					if (sizeParameterMultiplier != 0 && sizeParameterIndex >= 0) {
-						namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-							"SizeParamIndex", KnownTypeCode.Int16, (short)sizeParameterIndex));
+						b.AddNamedArg("SizeParamIndex", KnownTypeCode.Int16, (short)sizeParameterIndex);
 					}
 					break;
 				case 0x2c: // CustomMarshaler
@@ -165,21 +152,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					string managedType = marshalInfo.ReadSerializedString();
 					string cookie = marshalInfo.ReadSerializedString();
 					if (managedType != null) {
-						namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-							"MarshalType", KnownTypeCode.String, managedType));
+						b.AddNamedArg("MarshalType", KnownTypeCode.String, managedType);
 					}
 					if (!string.IsNullOrEmpty(cookie)) {
-						namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-							"MarshalCookie", KnownTypeCode.String, cookie));
+						b.AddNamedArg("MarshalCookie", KnownTypeCode.String, cookie);
 					}
 					break;
 				case 0x17: // FixedSysString
-					namedArguments.Add(MakeNamedArg(marshalAsAttributeType,
-						"SizeConst", KnownTypeCode.Int32, marshalInfo.ReadCompressedInteger()));
+					b.AddNamedArg("SizeConst", KnownTypeCode.Int32, marshalInfo.ReadCompressedInteger());
 					break;
 			}
 
-			return new DefaultAttribute(marshalAsAttributeType, positionalArguments, namedArguments);
+			return b.Build();
 		}
 		#endregion
 
@@ -239,7 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void AddSecurityAttributes(DeclarativeSecurityAttribute secDecl)
 		{
 			var securityActionType = assembly.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
-			var securityAction = new ConstantResolveResult(securityActionType, (int)secDecl.Action);
+			var securityAction = new CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
 			var metadata = assembly.metadata;
 			var reader = metadata.GetBlobReader(secDecl.PermissionSet);
 			if (reader.ReadByte() == '.') {
@@ -255,20 +239,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, ConstantResolveResult securityAction)
+		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
-			var permissionSetAttributeType = assembly.GetAttributeType(KnownAttribute.PermissionSet);
-			Add(new DefaultAttribute(
-				permissionSetAttributeType,
-				positionalArguments: new ResolveResult[] { securityAction },
-				namedArguments: new[] {
-						MakeNamedArg(permissionSetAttributeType, "XML", assembly.Compilation.FindType(KnownTypeCode.String), xml)
-				}
-			));
+			var b = new AttributeBuilder(assembly, KnownAttribute.PermissionSet);
+			b.AddFixedArg(securityAction);
+			b.AddNamedArg("XML", KnownTypeCode.String, xml);
 		}
 
-		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, ResolveResult securityActionRR)
+		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string attributeTypeName = reader.ReadSerializedString();
 			IType attributeType = assembly.Compilation.FindType(new FullTypeName(attributeTypeName));
@@ -282,8 +261,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			return new DefaultAttribute(
 				attributeType,
-				positionalArguments: new ResolveResult[] { securityActionRR },
-				namedArguments: CustomAttribute.ConvertNamedArguments(assembly.Compilation, attributeType, namedArgs));
+				fixedArguments: ImmutableArray.Create(securityAction),
+				namedArguments: namedArgs);
 		}
 		#endregion
 
@@ -293,6 +272,72 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return Empty<IAttribute>.Array;
 			else
 				return attributes.ToArray();
+		}
+	}
+
+	struct AttributeBuilder
+	{
+		readonly ICompilation compilation;
+		readonly IType attributeType;
+		ImmutableArray<CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
+		ImmutableArray<CustomAttributeNamedArgument<IType>>.Builder namedArgs;
+
+		public AttributeBuilder(MetadataAssembly assembly, KnownAttribute attributeType)
+			: this(assembly, assembly.GetAttributeType(attributeType))
+		{
+		}
+
+		public AttributeBuilder(MetadataAssembly assembly, IType attributeType)
+		{
+			this.compilation = assembly.Compilation;
+			this.attributeType = attributeType;
+			this.fixedArgs = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<IType>>();
+			this.namedArgs = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<IType>>();
+		}
+
+		public void AddFixedArg(CustomAttributeTypedArgument<IType> arg)
+		{
+			fixedArgs.Add(arg);
+		}
+
+		public void AddFixedArg(KnownTypeCode type, object value)
+		{
+			AddFixedArg(compilation.FindType(type), value);
+		}
+
+		public void AddFixedArg(TopLevelTypeName type, object value)
+		{
+			AddFixedArg(compilation.FindType(type), value);
+		}
+
+		public void AddFixedArg(IType type, object value)
+		{
+			fixedArgs.Add(new CustomAttributeTypedArgument<IType>(type, value));
+		}
+
+		public void AddNamedArg(string name, KnownTypeCode type, object value)
+		{
+			AddNamedArg(name, compilation.FindType(type), value);
+		}
+
+		public void AddNamedArg(string name, TopLevelTypeName type, object value)
+		{
+			AddNamedArg(name, compilation.FindType(type), value);
+		}
+		
+		public void AddNamedArg(string name, IType type, object value)
+		{
+			CustomAttributeNamedArgumentKind kind;
+			if (attributeType.GetFields(f => f.Name == name, GetMemberOptions.ReturnMemberDefinitions).Any())
+				kind = CustomAttributeNamedArgumentKind.Field;
+			else
+				kind = CustomAttributeNamedArgumentKind.Property;
+			namedArgs.Add(new CustomAttributeNamedArgument<IType>(name, kind, type, value));
+		}
+
+		public IAttribute Build()
+		{
+			return new DefaultAttribute(attributeType, fixedArgs.ToImmutable(), namedArgs.ToImmutable());
 		}
 	}
 }

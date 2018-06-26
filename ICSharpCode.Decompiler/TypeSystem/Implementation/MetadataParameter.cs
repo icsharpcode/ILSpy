@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
 		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
-		public bool IsOptional => (attributes & ParameterAttributes.HasDefault) != 0;
+		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 
 		public bool IsParams {
 			get {
@@ -109,7 +109,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IVariable.IsConst => false;
 
-		public object ConstantValue => throw new NotImplementedException();
+		public object ConstantValue {
+			get {
+				var metadata = assembly.metadata;
+				var propertyDef = metadata.GetParameter(handle);
+				var constantHandle = propertyDef.GetDefaultValue();
+				if (constantHandle.IsNil)
+					return null;
+				var constant = metadata.GetConstant(constantHandle);
+				var blobReader = metadata.GetBlobReader(constant.Value);
+				return blobReader.ReadConstant(constant.TypeCode);
+			}
+		}
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 

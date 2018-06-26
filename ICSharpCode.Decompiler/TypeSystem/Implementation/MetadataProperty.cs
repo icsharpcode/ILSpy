@@ -75,6 +75,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IMethod Getter => assembly.GetDefinition(getterHandle);
 		public IMethod Setter => assembly.GetDefinition(setterHandle);
+		IMethod AnyAccessor => assembly.GetDefinition(getterHandle.IsNil ? setterHandle : getterHandle);
 
 		public bool IsIndexer => symbolKind == SymbolKind.Indexer;
 		public SymbolKind SymbolKind => symbolKind;
@@ -118,8 +119,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public bool IsExplicitInterfaceImplementation => (Getter ?? Setter)?.IsExplicitInterfaceImplementation ?? false;
-		public IEnumerable<IMember> ImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(Getter ?? Setter);
+		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
+		public IEnumerable<IMember> ImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
 
 		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
 		{
@@ -128,8 +129,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return method.ImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
 		}
 
-		public ITypeDefinition DeclaringTypeDefinition => (Getter ?? Setter)?.DeclaringTypeDefinition;
-		public IType DeclaringType => (Getter ?? Setter)?.DeclaringType;
+		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;
+		public IType DeclaringType => AnyAccessor?.DeclaringType;
 		IMember IMember.MemberDefinition => this;
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
@@ -202,14 +203,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public bool IsStatic => (Getter ?? Setter)?.IsStatic ?? false;
-		public bool IsAbstract => (Getter ?? Setter)?.IsAbstract ?? false;
-		public bool IsSealed => (Getter ?? Setter)?.IsSealed ?? false;
-		public bool IsVirtual => (Getter ?? Setter)?.IsVirtual ?? false;
-		public bool IsOverride => (Getter ?? Setter)?.IsOverride ?? false;
-		public bool IsOverridable => (Getter ?? Setter)?.IsOverridable ?? false;
+		public bool IsStatic => AnyAccessor?.IsStatic ?? false;
+		public bool IsAbstract => AnyAccessor?.IsAbstract ?? false;
+		public bool IsSealed => AnyAccessor?.IsSealed ?? false;
+		public bool IsVirtual => AnyAccessor?.IsVirtual ?? false;
+		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
+		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
 
-		bool IEntity.IsShadowing => (Getter ?? Setter)?.IsShadowing ?? false;
+		bool IEntity.IsShadowing => AnyAccessor?.IsShadowing ?? false;
 
 		public IAssembly ParentAssembly => assembly;
 		public ICompilation Compilation => assembly.Compilation;

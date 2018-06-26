@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.TypeSystem
@@ -53,11 +55,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the positional arguments.
 		/// </summary>
-		IReadOnlyList<ResolveResult> PositionalArguments { get; }
+		ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
 
 		/// <summary>
 		/// Gets the named arguments passed to the attribute.
 		/// </summary>
-		IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments { get; }
+		ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments { get; }
 	}
 }

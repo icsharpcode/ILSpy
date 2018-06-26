@@ -168,7 +168,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
 				var propertyList = new List<IProperty>(propertyCollection.Count);
 				foreach (PropertyDefinitionHandle h in propertyCollection) {
-					propertyList.Add(assembly.GetDefinition(h));
+					var property = metadata.GetPropertyDefinition(h);
+					var accessors = property.GetAccessors();
+					bool getterVisible = !accessors.Getter.IsNil && assembly.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
+					bool setterVisible = !accessors.Setter.IsNil && assembly.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
+					if (getterVisible || setterVisible) {
+						propertyList.Add(assembly.GetDefinition(h));
+					}
 				}
 				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
 			}
@@ -183,7 +189,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
 				var eventList = new List<IEvent>(eventCollection.Count);
 				foreach (EventDefinitionHandle h in eventCollection) {
-					eventList.Add(assembly.GetDefinition(h));
+					var ev = metadata.GetEventDefinition(h);
+					var accessors = ev.GetAccessors();
+					if (accessors.Adder.IsNil)
+						continue;
+					var addMethod = metadata.GetMethodDefinition(accessors.Adder);
+					if (assembly.IsVisible(addMethod.Attributes)) {
+						eventList.Add(assembly.GetDefinition(h));
+					}
 				}
 				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
 			}
@@ -311,29 +324,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var layout = typeDefinition.GetLayout();
 			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
 			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0) {
-				var structLayoutAttributeType = Compilation.FindType(KnownAttribute.StructLayout);
-				var layoutKindType = Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"));
-				var positionalArguments = new ResolveResult[] {
-					new ConstantResolveResult(layoutKindType, (int)layoutKind)
-				};
-				var namedArguments = new List<KeyValuePair<IMember, ResolveResult>>(3);
+				var structLayout = new AttributeBuilder(assembly, KnownAttribute.StructLayout);
+				structLayout.AddFixedArg(
+					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
+					(int)layoutKind);
 				if (charSet != CharSet.Ansi) {
 					var charSetType = Compilation.FindType(new TopLevelTypeName("System.Runtime.InteropServices", "CharSet"));
-					namedArguments.Add(b.MakeNamedArg(structLayoutAttributeType,
-						"CharSet", charSetType, (int)charSet));
+					structLayout.AddNamedArg("CharSet", charSetType, (int)charSet);
 				}
 				if (layout.PackingSize > 0) {
-					namedArguments.Add(b.MakeNamedArg(structLayoutAttributeType,
-						"Pack", KnownTypeCode.Int32, (int)layout.PackingSize));
+					structLayout.AddNamedArg("Pack", KnownTypeCode.Int32, (int)layout.PackingSize);
 				}
 				if (layout.Size > 0) {
-					namedArguments.Add(b.MakeNamedArg(structLayoutAttributeType,
-						"Size", KnownTypeCode.Int32, (int)layout.Size));
+					structLayout.AddNamedArg("Size", KnownTypeCode.Int32, (int)layout.Size);
 				}
-				b.Add(new DefaultAttribute(
-					structLayoutAttributeType,
-					positionalArguments, namedArguments
-				));
+				b.Add(structLayout.Build());
 			}
 			#endregion
 

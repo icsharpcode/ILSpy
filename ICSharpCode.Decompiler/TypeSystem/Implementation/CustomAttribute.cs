@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
@@ -38,8 +38,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IMethod Constructor { get; }
 
 		// lazy-loaded:
-		IReadOnlyList<ResolveResult> positionalArguments;
-		IReadOnlyList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+		SRM.CustomAttributeValue<IType> value;
+		bool valueDecoded;
 
 		internal CustomAttribute(MetadataAssembly assembly, IMethod attrCtor, SRM.CustomAttributeHandle handle)
 		{
@@ -53,34 +53,30 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType AttributeType => Constructor.DeclaringType;
 
-		public IReadOnlyList<ResolveResult> PositionalArguments {
+		public ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments {
 			get {
-				var args = LazyInit.VolatileRead(ref this.positionalArguments);
-				if (args != null)
-					return args;
 				DecodeValue();
-				return this.positionalArguments;
+				return value.FixedArguments;
 			}
 		}
 
-		public IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
+		public ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments {
 			get {
-				var namedArgs = LazyInit.VolatileRead(ref this.namedArguments);
-				if (namedArgs != null)
-					return namedArgs;
 				DecodeValue();
-				return this.namedArguments;
+				return value.NamedArguments;
 			}
 		}
 
 		void DecodeValue()
 		{
-			var metadata = assembly.metadata;
-			var attr = metadata.GetCustomAttribute(handle);
-			var attrVal = attr.DecodeValue(assembly.TypeProvider);
-			LazyInit.GetOrSet(ref this.positionalArguments, ConvertArguments(attrVal.FixedArguments));
-			LazyInit.GetOrSet(ref this.namedArguments,
-				ConvertNamedArguments(assembly.Compilation, AttributeType, attrVal.NamedArguments));
+			lock (this) {
+				if (!valueDecoded) {
+					var metadata = assembly.metadata;
+					var attr = metadata.GetCustomAttribute(handle);
+					value = attr.DecodeValue(assembly.TypeProvider);
+					valueDecoded = true;
+				}
+			}
 		}
 
 		internal static KeyValuePair<IMember, ResolveResult> MakeNamedArg(ICompilation compilation, IType attrType, string name, ResolveResult rr)
@@ -101,21 +97,46 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return new KeyValuePair<IMember, ResolveResult>(field, rr);
 		}
 
+		internal static KeyValuePair<IMember, ResolveResult> MakeNamedArg(ICompilation compilation, IType attrType, SRM.CustomAttributeNamedArgumentKind kind, string name, ResolveResult rr)
+		{
+			if (kind == CustomAttributeNamedArgumentKind.Field) {
+				var field = attrType.GetFields(f => f.Name == name).FirstOrDefault();
+				if (field != null) {
+					return new KeyValuePair<IMember, ResolveResult>(field, rr);
+				}
+			}
+			if (kind == CustomAttributeNamedArgumentKind.Property) {
+				var prop = attrType.GetProperties(f => f.Name == name).FirstOrDefault();
+				if (prop != null) {
+					return new KeyValuePair<IMember, ResolveResult>(prop, rr);
+				}
+			}
+			var fakeField = new FakeField(compilation) {
+				DeclaringType = attrType,
+				Name = name,
+				ReturnType = rr.Type
+			};
+			return new KeyValuePair<IMember, ResolveResult>(fakeField, rr);
+		}
+
 		internal static IReadOnlyList<KeyValuePair<IMember, ResolveResult>> ConvertNamedArguments(
 			ICompilation compilation, IType attributeType, ImmutableArray<SRM.CustomAttributeNamedArgument<IType>> namedArgs)
 		{
 			var arr = new KeyValuePair<IMember, ResolveResult>[namedArgs.Length];
 			for (int i = 0; i < arr.Length; i++) {
 				var namedArg = namedArgs[i];
-				arr[i] = MakeNamedArg(compilation, attributeType, namedArg.Name, ConvertArgument(namedArg.Type, namedArg.Value));
+				arr[i] = MakeNamedArg(compilation, attributeType, namedArg.Kind, namedArg.Name,
+					ConvertArgument(compilation, namedArg.Type, namedArg.Value));
 			}
 			return arr;
 		}
 
-		private static ResolveResult ConvertArgument(IType type, object value)
+		private static ResolveResult ConvertArgument(ICompilation compilation, IType type, object value)
 		{
 			if (value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> arr) {
-				return new ArrayCreateResolveResult(type, null, ConvertArguments(arr));
+				var arrSize = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), arr.Length);
+				return new ArrayCreateResolveResult(type, new[] { arrSize },
+					ConvertArguments(compilation, type, arr));
 			} else if (value is IType valueType) {
 				return new TypeOfResolveResult(type, valueType);
 			} else {
@@ -123,9 +144,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		private static IReadOnlyList<ResolveResult> ConvertArguments(ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> arr)
+		private static IReadOnlyList<ResolveResult> ConvertArguments(ICompilation compilation, IType type, ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> arr)
 		{
-			return arr.SelectArray(arg => ConvertArgument(arg.Type, arg.Value));
+			return arr.SelectArray(arg => ConvertArgument(compilation, type ?? arg.Type, arg.Value));
 		}
 	}
 }

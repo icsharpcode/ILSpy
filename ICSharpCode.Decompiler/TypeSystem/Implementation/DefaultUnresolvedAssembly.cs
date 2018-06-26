@@ -385,8 +385,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							from attr in this.AssemblyAttributes
 							where attr.AttributeType.Name == "InternalsVisibleToAttribute"
 							&& attr.AttributeType.Namespace == "System.Runtime.CompilerServices"
-							&& attr.PositionalArguments.Count == 1
-							select GetShortName(attr.PositionalArguments.Single().ConstantValue as string)
+							&& attr.FixedArguments.Length == 1
+							select GetShortName(attr.FixedArguments.Single().Value as string)
 						).ToArray();
 					}
 					return internalsVisibleTo;

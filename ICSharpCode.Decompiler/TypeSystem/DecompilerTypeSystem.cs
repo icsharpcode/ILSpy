@@ -58,6 +58,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ExtensionMethods = 4,
 		/// <summary>
+		/// Only load the public API into the type system.
+		/// </summary>
+		OnlyPublicAPI = 8,
+		/// <summary>
 		/// Default settings: all features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods

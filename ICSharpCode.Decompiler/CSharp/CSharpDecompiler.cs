@@ -371,16 +371,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
 			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes) {
-				decompileRun.Namespaces.Add(a.AttributeType.Namespace);
-				if (a.AttributeType.FullName == typeof(System.Runtime.CompilerServices.TypeForwardedToAttribute).FullName) {
-					decompileRun.Namespaces.Add(((TypeOfResolveResult)a.PositionalArguments[0]).ReferencedType.Namespace);
-				} else {
-					decompileRun.Namespaces.AddRange(a.PositionalArguments.Select(pa => pa.Type.Namespace));
-					decompileRun.Namespaces.AddRange(a.NamedArguments.Select(na => na.Value.Type.Namespace));
-				}
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
+				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+			}
+			foreach (var a in typeSystem.Compilation.MainAssembly.ModuleAttributes) {
+				var astBuilder = CreateAstBuilder(decompilationContext);
+				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
+				attrSection.AttributeTarget = "module";
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
 		}
@@ -738,16 +737,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
 				// Remove the [DefaultMember] attribute if the class contains indexers
-				RemoveAttribute(typeDecl, new TopLevelTypeName("System.Reflection", "DefaultMemberAttribute"));
+				RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
 			}
 			if (settings.IntroduceRefAndReadonlyModifiersOnStructs && typeDecl.ClassType == ClassType.Struct) {
-				if (RemoveAttribute(typeDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IsByRefLikeAttribute"))) {
+				if (RemoveAttribute(typeDecl, KnownAttribute.IsByRefLike)) {
 					typeDecl.Modifiers |= Modifiers.Ref;
 				}
-				if (RemoveAttribute(typeDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IsReadOnlyAttribute"))) {
+				if (RemoveAttribute(typeDecl, KnownAttribute.IsReadOnly)) {
 					typeDecl.Modifiers |= Modifiers.Readonly;
 				}
-				if (FindAttribute(typeDecl, new TopLevelTypeName("System", "ObsoleteAttribute"), out var attr)) {
+				if (FindAttribute(typeDecl, KnownAttribute.Obsolete, out var attr)) {
 					if (obsoleteAttributePattern.IsMatch(attr)) {
 						if (attr.Parent is Syntax.AttributeSection section && section.Attributes.Count == 1)
 							section.Remove();
@@ -880,28 +879,28 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
 						body.Add(new YieldBreakStatement());
 					}
-					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
+					RemoveAttribute(entityDecl, KnownAttribute.IteratorStateMachine);
 					if (function.StateMachineCompiledWithMono) {
-						RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerHiddenAttribute"));
+						RemoveAttribute(entityDecl, KnownAttribute.DebuggerHidden);
 					}
 				}
 				if (function.IsAsync) {
 					entityDecl.Modifiers |= Modifiers.Async;
-					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
-					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerStepThroughAttribute"));
+					RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
+					RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
 				}
 			} catch (Exception innerException) when (!(innerException is OperationCanceledException)) {
 				throw new DecompilerException(typeSystem.ModuleDefinition, (MethodDefinitionHandle)method.MetadataToken, innerException);
 			}
 		}
 
-		bool RemoveAttribute(EntityDeclaration entityDecl, FullTypeName attrName)
+		bool RemoveAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType)
 		{
 			bool found = false;
 			foreach (var section in entityDecl.Attributes) {
 				foreach (var attr in section.Attributes) {
 					var symbol = attr.Type.GetSymbol();
-					if (symbol is ITypeDefinition td && td.FullTypeName == attrName) {
+					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName()) {
 						attr.Remove();
 						found = true;
 					}
@@ -913,13 +912,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return found;
 		}
 
-		bool FindAttribute(EntityDeclaration entityDecl, FullTypeName attrName, out Syntax.Attribute attribute)
+		bool FindAttribute(EntityDeclaration entityDecl, KnownAttribute attributeType, out Syntax.Attribute attribute)
 		{
 			attribute = null;
 			foreach (var section in entityDecl.Attributes) {
 				foreach (var attr in section.Attributes) {
 					var symbol = attr.Type.GetSymbol();
-					if (symbol is ITypeDefinition td && td.FullTypeName == attrName) {
+					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName()) {
 						attribute = attr;
 						return true;
 					}
@@ -931,8 +930,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			foreach (var call in function.Descendants.OfType<CallInstruction>()) {
-				var attr = call.Method.GetAttribute(new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)));
-				var symbolName = attr?.PositionalArguments.FirstOrDefault()?.ConstantValue as string;
+				var attr = call.Method.GetAttribute(KnownAttribute.Conditional);
+				var symbolName = attr?.FixedArguments.FirstOrDefault().Value as string;
 				if (symbolName == null || !decompileRun.DefinedSymbols.Add(symbolName))
 					continue;
 				syntaxTree.InsertChildAfter(null, new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
@@ -977,7 +976,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
 				fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
 				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
-				RemoveAttribute(fixedFieldDecl, fixedBufferAttributeTypeName);
+				RemoveAttribute(fixedFieldDecl, KnownAttribute.FixedBuffer);
 				return fixedFieldDecl;
 			}
 			var fieldDefinition = typeSystem.GetMetadata().GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
@@ -992,16 +991,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return fieldDecl;
 		}
 
-		static readonly FullTypeName fixedBufferAttributeTypeName = new TopLevelTypeName("System.Runtime.CompilerServices", "FixedBufferAttribute");
-
 		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
 		{
 			type = null;
 			elementCount = 0;
-			IAttribute attr = field.GetAttribute(fixedBufferAttributeTypeName, inherit: false);
-			if (attr != null && attr.PositionalArguments.Count == 2) {
-				if (attr.PositionalArguments[0] is TypeOfResolveResult trr && attr.PositionalArguments[1].ConstantValue is int length) {
-					type = trr.ReferencedType;
+			IAttribute attr = field.GetAttribute(KnownAttribute.FixedBuffer, inherit: false);
+			if (attr != null && attr.FixedArguments.Length == 2) {
+				if (attr.FixedArguments[0].Value is IType trr && attr.FixedArguments[1].Value is int length) {
+					type = trr;
 					elementCount = length;
 					return true;
 				}

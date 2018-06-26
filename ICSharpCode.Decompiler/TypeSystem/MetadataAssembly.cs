@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataField[] fieldDefs;
 		readonly MetadataMethod[] methodDefs;
 		readonly MetadataProperty[] propertyDefs;
+		readonly MetadataEvent[] eventDefs;
 
 		internal MetadataAssembly(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
 		{
@@ -77,6 +78,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
 			this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
 			this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
+			this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
 		}
 
 		internal string GetString(StringHandle name)
@@ -99,6 +101,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public ITypeDefinition GetTypeDefinition(TopLevelTypeName topLevelTypeName)
 		{
 			var typeDefHandle = PEFile.GetTypeDefinition(topLevelTypeName);
+			if (typeDefHandle.IsNil) {
+				var forwarderHandle = PEFile.GetTypeForwarder(topLevelTypeName);
+				if (!forwarderHandle.IsNil) {
+					var forwarder = metadata.GetExportedType(forwarderHandle);
+					return ResolveForwardedType(forwarder).GetDefinition();
+				}
+			}
 			return GetDefinition(typeDefHandle);
 		}
 		#endregion
@@ -109,7 +118,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (this == assembly)
 				return true;
 			foreach (string shortName in GetInternalsVisibleTo()) {
-				if (assembly.AssemblyName == shortName)
+				if (string.Equals(assembly.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
 					return true;
 			}
 			return false;
@@ -212,7 +221,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IEvent GetDefinition(EventDefinitionHandle handle)
 		{
-			throw new NotImplementedException();
+			int row = MetadataTokens.GetRowNumber(handle);
+			if (row >= methodDefs.Length)
+				return null;
+			var ev = LazyInit.VolatileRead(ref eventDefs[row]);
+			if (ev != null || handle.IsNil)
+				return ev;
+			ev = new MetadataEvent(this, handle);
+			return LazyInit.GetOrSet(ref eventDefs[row], ev);
 		}
 		#endregion
 
@@ -431,6 +447,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					if (assembly.Version != null) {
 						b.Add(KnownAttribute.AssemblyVersion, KnownTypeCode.String, assembly.Version.ToString());
 					}
+
+					AddTypeForwarderAttributes(ref b);
 				}
 				return LazyInit.GetOrSet(ref this.assemblyAttributes, b.Build());
 			}
@@ -446,8 +464,56 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return attrs;
 				var b = new AttributeListBuilder(this);
 				b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition));
+				if (!metadata.IsAssembly) {
+					AddTypeForwarderAttributes(ref b);
+				}
 				return LazyInit.GetOrSet(ref this.moduleAttributes, b.Build());
 			}
+		}
+
+		void AddTypeForwarderAttributes(ref AttributeListBuilder b)
+		{
+			foreach (ExportedTypeHandle t in metadata.ExportedTypes) {
+				var type = metadata.GetExportedType(t);
+				if (type.IsForwarder) {
+					b.Add(KnownAttribute.TypeForwardedTo, KnownTypeCode.Type, ResolveForwardedType(type));
+				}
+			}
+		}
+
+		IType ResolveForwardedType(ExportedType forwarder)
+		{
+			IAssembly assembly;
+			switch (forwarder.Implementation.Kind) {
+				case HandleKind.AssemblyFile:
+					assembly = this;
+					break;
+				case HandleKind.ExportedType:
+					throw new NotImplementedException();
+				case HandleKind.AssemblyReference:
+					var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)forwarder.Implementation);
+					string shortName = metadata.GetString(asmRef.Name);
+					assembly = null;
+					foreach (var asm in Compilation.Assemblies) {
+						if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)) {
+							assembly = asm;
+							break;
+						}
+					}
+					break;
+				default:
+					throw new NotSupportedException();
+			}
+			var typeName = forwarder.GetFullTypeName(metadata);
+			using (var busyLock = BusyManager.Enter(this)) {
+				if (busyLock.Success) {
+					var td = assembly.GetTypeDefinition(typeName);
+					if (td != null) {
+						return td;
+					}
+				}
+			}
+			return new UnknownType(typeName);
 		}
 		#endregion
 
@@ -479,15 +545,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var attr = LazyInit.VolatileRead(ref knownAttributes[(int)type]);
 			if (attr != null)
 				return attr;
-			attr = new DefaultAttribute(GetAttributeType(type));
+			attr = new DefaultAttribute(GetAttributeType(type),
+				ImmutableArray.Create<CustomAttributeTypedArgument<IType>>(), 
+				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>());
 			return LazyInit.GetOrSet(ref knownAttributes[(int)type], attr);
 		}
 		#endregion
 
 		#region Visibility Filter
-		internal bool IsVisible(FieldAttributes attributes)
+		internal bool IncludeInternalMembers => (options & TypeSystemOptions.OnlyPublicAPI) == 0;
+
+		internal bool IsVisible(FieldAttributes att)
 		{
-			return true;
+			att &= FieldAttributes.FieldAccessMask;
+			return IncludeInternalMembers
+				|| att == FieldAttributes.Public
+				|| att == FieldAttributes.Family
+				|| att == FieldAttributes.FamORAssem;
+		}
+
+		internal bool IsVisible(MethodAttributes att)
+		{
+			att &= MethodAttributes.MemberAccessMask;
+			return IncludeInternalMembers
+				|| att == MethodAttributes.Public
+				|| att == MethodAttributes.Family
+				|| att == MethodAttributes.FamORAssem;
 		}
 		#endregion
 	}

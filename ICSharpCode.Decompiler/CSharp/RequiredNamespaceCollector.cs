@@ -24,6 +24,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var type in typeSystem.MainAssembly.TypeDefinitions) {
 				CollectNamespaces(type, typeSystem, namespaces);
 			}
+			HandleAttributes(typeSystem.MainAssembly.AssemblyAttributes, namespaces);
+			HandleAttributes(typeSystem.MainAssembly.ModuleAttributes, namespaces);
 		}
 
 		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)
@@ -138,19 +140,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static void HandleAttributes(IEnumerable<IAttribute> attributes, HashSet<string> namespaces)
+		public static void HandleAttributes(IEnumerable<IAttribute> attributes, HashSet<string> namespaces)
 		{
 			foreach (var attr in attributes) {
 				namespaces.Add(attr.AttributeType.Namespace);
-				foreach (var arg in attr.PositionalArguments) {
-					namespaces.Add(arg.Type.Namespace);
-					if (arg is TypeOfResolveResult torr)
-						namespaces.Add(torr.ReferencedType.Namespace);
+				foreach (var arg in attr.FixedArguments) {
+					HandleAttributeValue(arg.Type, arg.Value, namespaces);
 				}
 				foreach (var arg in attr.NamedArguments) {
-					namespaces.Add(arg.Value.Type.Namespace);
-					if (arg.Value is TypeOfResolveResult torr)
-						namespaces.Add(torr.ReferencedType.Namespace);
+					HandleAttributeValue(arg.Type, arg.Value, namespaces);
+				}
+			}
+		}
+
+		static void HandleAttributeValue(IType type, object value, HashSet<string> namespaces)
+		{
+			CollectNamespacesForTypeReference(type, namespaces);
+			if (value is IType typeofType)
+				CollectNamespacesForTypeReference(typeofType, namespaces);
+			if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr) {
+				foreach (var element in arr) {
+					HandleAttributeValue(element.Type, element.Value, namespaces);
 				}
 			}
 		}
