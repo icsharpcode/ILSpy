@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -434,15 +435,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (mt != null && mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal)) {
 				mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
 			}
-			foreach (var arg in attribute.FixedArguments) {
-				attr.Arguments.Add(ConvertConstantValue(arg.Type, arg.Value));
+			var parameters = attribute.Constructor?.Parameters ?? EmptyList<IParameter>.Instance;
+			foreach (var (arg, p) in attribute.FixedArguments.ZipLongest(parameters)) {
+				attr.Arguments.Add(ConvertConstantValue(p?.Type ?? arg.Type, arg.Type, arg.Value));
 			}
 			if (attribute.NamedArguments.Length > 0) {
 				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
 				foreach (var namedArg in attribute.NamedArguments) {
 					NamedExpression namedArgument = new NamedExpression(namedArg.Name, ConvertConstantValue(namedArg.Type, namedArg.Value));
 					if (AddResolveResultAnnotations) {
-						//namedArgument.AddAnnotation(new MemberResolveResult(targetResult, pair.Key));
+						IMember member = CustomAttribute.MemberForNamedArgument(attribute.AttributeType, namedArg);
+						if (member != null) {
+							namedArgument.AddAnnotation(new MemberResolveResult(targetResult, member));
+						}
 					}
 					attr.Arguments.Add(namedArgument);
 				}
@@ -524,6 +529,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public Expression ConvertConstantValue(IType type, object constantValue)
 		{
+			return ConvertConstantValue(type, type, constantValue);
+		}
+
+		/// <summary>
+		/// Creates an Expression for the given constant value.
+		/// </summary>
+		public Expression ConvertConstantValue(IType expectedType, IType type, object constantValue)
+		{
 			if (type == null)
 				throw new ArgumentNullException("type");
 			if (constantValue == null) {
@@ -538,20 +551,41 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						expr.AddAnnotation(new ConstantResolveResult(type, null));
 					return expr;
 				}
+			} else if (constantValue is IType typeofType) {
+				var expr = new TypeOfExpression(ConvertType(typeofType));
+				if (AddResolveResultAnnotations)
+					expr.AddAnnotation(new TypeOfResolveResult(type, typeofType));
+				return expr;
+			} else if (constantValue is ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> arr) {
+				var elementType = (type as ArrayType)?.ElementType ?? SpecialType.UnknownType;
+				var expr = new ArrayCreateExpression();
+				expr.Type = ConvertType(type);
+				if (expr.Type is ComposedType composedType) {
+					composedType.ArraySpecifiers.MoveTo(expr.AdditionalArraySpecifiers);
+					if (!composedType.HasNullableSpecifier && composedType.PointerRank == 0)
+						expr.Type = composedType.BaseType;
+				}
+				expr.Initializer = new ArrayInitializerExpression(arr.Select(e => ConvertConstantValue(elementType, e.Type, e.Value)));
+				return expr;
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
 				if (IsSpecialConstant(type, constantValue, out var expr))
 					return expr;
-				if (type.IsCSharpSmallIntegerType()) { 
+				IType literalType = type;
+				bool smallInteger = type.IsCSharpSmallIntegerType();
+				if (smallInteger) { 
 					// C# does not have integer literals of small integer types,
 					// use `int` literal instead.
 					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
-					type = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
+					literalType = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
 				}
 				expr = new PrimitiveExpression(constantValue);
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
+				if (smallInteger && !type.Equals(expectedType)) {
+					expr = new CastExpression(ConvertType(type), expr);
+				}
 				return expr;
 			}
 		}

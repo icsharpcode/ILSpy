@@ -24,12 +24,9 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -238,12 +235,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ResolveType(typeRefDefSpec, context, options, typeAttributes);
 		}
 
-		public IType ResolveType(SRM.EntityHandle typeRefDefSpec, GenericContext context, TypeSystemOptions customOptions,  CustomAttributeHandleCollection? typeAttributes = null)
+		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, TypeSystemOptions customOptions,  CustomAttributeHandleCollection? typeAttributes = null)
 		{
+			if (typeRefDefSpec.Kind == HandleKind.ExportedType) {
+				return ResolveForwardedType(metadata.GetExportedType((ExportedTypeHandle)typeRefDefSpec));
+			}
 			return MetadataTypeReference.Resolve(typeRefDefSpec, metadata, TypeProvider, context, customOptions, typeAttributes);
 		}
 
-		IType ResolveDeclaringType(SRM.EntityHandle declaringTypeReference, GenericContext context)
+		IType ResolveDeclaringType(EntityHandle declaringTypeReference, GenericContext context)
 		{
 			// resolve without substituting dynamic/tuple types
 			return ResolveType(declaringTypeReference, context,
@@ -251,34 +251,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
-		#region ResolveMethod
+		#region Resolve Method
 		public IMethod ResolveMethod(EntityHandle methodReference, GenericContext context = default)
 		{
 			if (methodReference.IsNil)
 				throw new ArgumentNullException(nameof(methodReference));
 			switch (methodReference.Kind) {
-				case SRM.HandleKind.MethodDefinition:
-					return ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)methodReference, expandVarArgs: true);
-				case SRM.HandleKind.MemberReference:
-					return ResolveMethodReference(metadata, (SRM.MemberReferenceHandle)methodReference, context);
-				case SRM.HandleKind.MethodSpecification:
-					var methodSpec = metadata.GetMethodSpecification((SRM.MethodSpecificationHandle)methodReference);
-					var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context);
-					IMethod method;
-					if (methodSpec.Method.Kind == SRM.HandleKind.MethodDefinition) {
-						// generic instance of a methoddef (=generic method in non-generic class in current assembly)
-						method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)methodSpec.Method, expandVarArgs: true);
-						method = method.Specialize(new TypeParameterSubstitution(context.ClassTypeParameters, methodTypeArgs));
-					} else {
-						method = ResolveMethodReference(metadata, (SRM.MemberReferenceHandle)methodSpec.Method, context, methodTypeArgs);
-					}
-					return method;
+				case HandleKind.MethodDefinition:
+					return ResolveMethodDefinition((MethodDefinitionHandle)methodReference, expandVarArgs: true);
+				case HandleKind.MemberReference:
+					return ResolveMethodReference((MemberReferenceHandle)methodReference, context, expandVarArgs: true);
+				case HandleKind.MethodSpecification:
+					return ResolveMethodSpecification((MethodSpecificationHandle)methodReference, context, expandVarArgs: true);
 				default:
 					throw new ArgumentException("HandleKind must be either a MethodDefinition, MemberReference or MethodSpecification", nameof(methodReference));
 			}
 		}
 
-		IMethod ResolveMethodDefinition(SRM.MetadataReader metadata, SRM.MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
+		IMethod ResolveMethodDefinition(MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
 		{
 			var method = GetDefinition(methodDefHandle);
 			if (method == null) {
@@ -290,6 +280,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return method;
 		}
 
+		IMethod ResolveMethodSpecification(MethodSpecificationHandle methodSpecHandle, GenericContext context, bool expandVarArgs)
+		{
+			var methodSpec = metadata.GetMethodSpecification(methodSpecHandle);
+			var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context);
+			IMethod method;
+			if (methodSpec.Method.Kind == HandleKind.MethodDefinition) {
+				// generic instance of a methoddef (=generic method in non-generic class in current assembly)
+				method = ResolveMethodDefinition((MethodDefinitionHandle)methodSpec.Method, expandVarArgs);
+				method = method.Specialize(new TypeParameterSubstitution(context.ClassTypeParameters, methodTypeArgs));
+			} else {
+				method = ResolveMethodReference((MemberReferenceHandle)methodSpec.Method, context, methodTypeArgs, expandVarArgs);
+			}
+			return method;
+		}
+
 		/// <summary>
 		/// Resolves a method reference.
 		/// </summary>
@@ -297,15 +302,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Class type arguments are provided by the declaring type stored in the memberRef.
 		/// Method type arguments are provided by the caller.
 		/// </remarks>
-		IMethod ResolveMethodReference(SRM.MetadataReader metadata, SRM.MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType> methodTypeArguments = null)
+		IMethod ResolveMethodReference(MemberReferenceHandle memberRefHandle, GenericContext context, IReadOnlyList<IType> methodTypeArguments = null, bool expandVarArgs = true)
 		{
 			var memberRef = metadata.GetMemberReference(memberRefHandle);
-			Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Method);
-			SRM.MethodSignature<IType> signature;
+			Debug.Assert(memberRef.GetKind() == MemberReferenceKind.Method);
+			MethodSignature<IType> signature;
 			IReadOnlyList<IType> classTypeArguments = null;
 			IMethod method;
-			if (memberRef.Parent.Kind == SRM.HandleKind.MethodDefinition) {
-				method = ResolveMethodDefinition(metadata, (SRM.MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
+			if (memberRef.Parent.Kind == HandleKind.MethodDefinition) {
+				method = ResolveMethodDefinition((MethodDefinitionHandle)memberRef.Parent, expandVarArgs: false);
 				signature = memberRef.DecodeMethodSignature(TypeProvider, context);
 			} else {
 				var declaringType = ResolveDeclaringType(memberRef.Parent, context);
@@ -331,7 +336,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 					// Determine the expected parameters from the signature:
 					ImmutableArray<IType> parameterTypes;
-					if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
 						parameterTypes = signature.ParameterTypes
 							.Take(signature.RequiredParameterCount)
 							.Concat(new[] { SpecialType.ArgList })
@@ -359,7 +364,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (classTypeArguments != null || methodTypeArguments != null) {
 				method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 			}
-			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+			if (expandVarArgs && signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
 				method = new VarArgInstanceMethod(method, signature.ParameterTypes.Skip(signature.RequiredParameterCount));
 			}
 			return method;
@@ -391,7 +396,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Create a dummy IMethod from the specified MethodReference
 		/// </summary>
-		IMethod CreateFakeMethod(IType declaringType, string name, SRM.MethodSignature<IType> signature)
+		IMethod CreateFakeMethod(IType declaringType, string name, MethodSignature<IType> signature)
 		{
 			SymbolKind symbolKind = SymbolKind.Method;
 			if (name == ".ctor" || name == ".cctor")
@@ -422,6 +427,76 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			m.Parameters = parameters;
 			return m;
+		}
+		#endregion
+
+		#region Resolve Entity
+		/// <summary>
+		/// Resolves a symbol.
+		/// </summary>
+		/// <remarks>
+		/// * Types are resolved to their definition, as IType does not implement ISymbol.
+		///    * types without definition will resolve to <c>null</c>
+		///    * use ResolveType() properly resolve types
+		/// * When resolving methods, varargs signatures are not expanded.
+		///    * use ResolveMethod() instead to get an IMethod instance suitable for call-sites
+		/// * May return specialized members, where generics are involved.
+		/// * Other types of handles that don't correspond to TS entities, will return <c>null</c>.
+		/// </remarks>
+		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context)
+		{
+			switch (entityHandle.Kind) {
+				case HandleKind.TypeReference:
+				case HandleKind.TypeDefinition:
+				case HandleKind.TypeSpecification:
+				case HandleKind.ExportedType:
+					return ResolveType(entityHandle, context).GetDefinition();
+				case HandleKind.MemberReference:
+					var memberReferenceHandle = (MemberReferenceHandle)entityHandle;
+					switch (metadata.GetMemberReference(memberReferenceHandle).GetKind()) {
+						case MemberReferenceKind.Method:
+							// for consistency with the MethodDefinition case, never expand varargs
+							return ResolveMethodReference(memberReferenceHandle, context, expandVarArgs: false);
+						case MemberReferenceKind.Field:
+							return ResolveFieldReference(memberReferenceHandle, context);
+						default:
+							throw new BadImageFormatException("Unknown MemberReferenceKind");
+					}
+				case HandleKind.MethodDefinition:
+					return GetDefinition((MethodDefinitionHandle)entityHandle);
+				case HandleKind.MethodSpecification:
+					return ResolveMethodSpecification((MethodSpecificationHandle)entityHandle, context, expandVarArgs: false);
+				case HandleKind.FieldDefinition:
+					return GetDefinition((FieldDefinitionHandle)entityHandle);
+				case HandleKind.EventDefinition:
+					return GetDefinition((EventDefinitionHandle)entityHandle);
+				case HandleKind.PropertyDefinition:
+					return GetDefinition((PropertyDefinitionHandle)entityHandle);
+				default:
+					return null;
+			}
+		}
+
+		IField ResolveFieldReference(MemberReferenceHandle memberReferenceHandle, GenericContext context)
+		{
+			var memberRef = metadata.GetMemberReference(memberReferenceHandle);
+			var declaringType = ResolveDeclaringType(memberRef.Parent, context);
+			var declaringTypeDefinition = declaringType.GetDefinition();
+			string name = metadata.GetString(memberRef.Name);
+			// field signature is for the definition, not the generic instance
+			var signature = memberRef.DecodeFieldSignature(TypeProvider,
+				new GenericContext(declaringTypeDefinition?.TypeParameters));
+			// 'f' in the predicate is also the definition, even if declaringType is a ParameterizedType
+			var field = declaringType.GetFields(f => f.Name == name && CompareTypes(f.ReturnType, signature),
+				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			if (field == null) {
+				field = new FakeField(Compilation) {
+					ReturnType = signature,
+					Name = name,
+					DeclaringType = declaringType,
+				};
+			}
+			return field;
 		}
 		#endregion
 

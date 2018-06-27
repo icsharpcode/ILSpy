@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string attributeTypeName = reader.ReadSerializedString();
-			IType attributeType = assembly.Compilation.FindType(new FullTypeName(attributeTypeName));
+			IType attributeType = assembly.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
 
 			reader.ReadCompressedInteger(); // ??
 											// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.

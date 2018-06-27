@@ -144,6 +144,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromSerializedName(string name)
 		{
+			if (name == null) {
+				return null;
+			}
 			return ReflectionHelper.ParseReflectionName(name)
 				.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
 		}

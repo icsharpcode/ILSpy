@@ -17,6 +17,25 @@ namespace ICSharpCode.Decompiler.Util
 			return input1.Zip(input2, (a, b) => (a, b));
 		}
 
+		public static IEnumerable<(A, B)> ZipLongest<A, B>(this IEnumerable<A> input1, IEnumerable<B> input2)
+		{
+			using (var it1 = input1.GetEnumerator()) {
+				using (var it2 = input2.GetEnumerator()) {
+					bool hasElements1 = true;
+					bool hasElements2 = true;
+					while (true) {
+						if (hasElements1)
+							hasElements1 = it1.MoveNext();
+						if (hasElements2)
+							hasElements2 = it2.MoveNext();
+						if (!(hasElements1 || hasElements2))
+							break;
+						yield return ((hasElements1 ? it1.Current : default), (hasElements2 ? it2.Current : default));
+					}
+				}
+			}
+		}
+
 		public static IEnumerable<T> Slice<T>(this IReadOnlyList<T> input, int offset, int length)
 		{
 			for (int i = offset; i < offset + length; i++) {

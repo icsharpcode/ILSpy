@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
@@ -78,75 +79,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 		}
-
-		internal static KeyValuePair<IMember, ResolveResult> MakeNamedArg(ICompilation compilation, IType attrType, string name, ResolveResult rr)
+		
+		internal static IMember MemberForNamedArgument(IType attributeType, CustomAttributeNamedArgument<IType> namedArgument)
 		{
-			var field = attrType.GetFields(f => f.Name == name).FirstOrDefault();
-			if (field != null) {
-				return new KeyValuePair<IMember, ResolveResult>(field, rr);
+			switch (namedArgument.Kind) {
+				case CustomAttributeNamedArgumentKind.Field:
+					return attributeType.GetFields(f => f.Name == namedArgument.Name).LastOrDefault();
+				case CustomAttributeNamedArgumentKind.Property:
+					return attributeType.GetProperties(p => p.Name == namedArgument.Name).LastOrDefault();
+				default:
+					return null;
 			}
-			var prop = attrType.GetProperties(f => f.Name == name).FirstOrDefault();
-			if (prop != null) {
-				return new KeyValuePair<IMember, ResolveResult>(prop, rr);
-			}
-			field = new FakeField(compilation) {
-				DeclaringType = attrType,
-				Name = name,
-				ReturnType = rr.Type
-			};
-			return new KeyValuePair<IMember, ResolveResult>(field, rr);
-		}
-
-		internal static KeyValuePair<IMember, ResolveResult> MakeNamedArg(ICompilation compilation, IType attrType, SRM.CustomAttributeNamedArgumentKind kind, string name, ResolveResult rr)
-		{
-			if (kind == CustomAttributeNamedArgumentKind.Field) {
-				var field = attrType.GetFields(f => f.Name == name).FirstOrDefault();
-				if (field != null) {
-					return new KeyValuePair<IMember, ResolveResult>(field, rr);
-				}
-			}
-			if (kind == CustomAttributeNamedArgumentKind.Property) {
-				var prop = attrType.GetProperties(f => f.Name == name).FirstOrDefault();
-				if (prop != null) {
-					return new KeyValuePair<IMember, ResolveResult>(prop, rr);
-				}
-			}
-			var fakeField = new FakeField(compilation) {
-				DeclaringType = attrType,
-				Name = name,
-				ReturnType = rr.Type
-			};
-			return new KeyValuePair<IMember, ResolveResult>(fakeField, rr);
-		}
-
-		internal static IReadOnlyList<KeyValuePair<IMember, ResolveResult>> ConvertNamedArguments(
-			ICompilation compilation, IType attributeType, ImmutableArray<SRM.CustomAttributeNamedArgument<IType>> namedArgs)
-		{
-			var arr = new KeyValuePair<IMember, ResolveResult>[namedArgs.Length];
-			for (int i = 0; i < arr.Length; i++) {
-				var namedArg = namedArgs[i];
-				arr[i] = MakeNamedArg(compilation, attributeType, namedArg.Kind, namedArg.Name,
-					ConvertArgument(compilation, namedArg.Type, namedArg.Value));
-			}
-			return arr;
-		}
-
-		private static ResolveResult ConvertArgument(ICompilation compilation, IType type, object value)
-		{
-			if (value is ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> arr) {
-				var arrSize = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), arr.Length);
-				return new ArrayCreateResolveResult(type, new[] { arrSize },
-					ConvertArguments(compilation, type, arr));
-			} else if (value is IType valueType) {
-				return new TypeOfResolveResult(type, valueType);
-			} else {
-				return new ConstantResolveResult(type, value);
-			}
-		}
-
-		private static IReadOnlyList<ResolveResult> ConvertArguments(ICompilation compilation, IType type, ImmutableArray<SRM.CustomAttributeTypedArgument<IType>> arr)
-		{
-			return arr.SelectArray(arg => ConvertArgument(compilation, type ?? arg.Type, arg.Value));
 		}
 	}
 }

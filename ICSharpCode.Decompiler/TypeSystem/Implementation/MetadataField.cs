@@ -81,11 +81,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsStatic => (attributes & FieldAttributes.Static) != 0;
 
 		// not sure if we need IsFixed anywhere...
-		public bool IsFixed => throw new NotImplementedException();
+		bool IField.IsFixed => false;
 
 		// Do we still want IsShadowing in the TS?
 		// We never set it for assemblies loaded from disk; only for those parsed from C#...
-		bool IEntity.IsShadowing => throw new NotImplementedException();
+		bool IEntity.IsShadowing => false;
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Field;
 		IMember IMember.MemberDefinition => this;

@@ -77,17 +77,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly Metadata.PEFile moduleDefinition;
 		readonly ICompilation compilation;
-		readonly ITypeResolveContext context;
 		readonly TypeSystemOptions typeSystemOptions;
 		readonly MetadataAssembly mainAssembly;
 
-		Dictionary<SRM.EntityHandle, IField> fieldLookupCache = new Dictionary<SRM.EntityHandle, IField>();
-		Dictionary<SRM.EntityHandle, IProperty> propertyLookupCache = new Dictionary<SRM.EntityHandle, IProperty>();
-		Dictionary<SRM.EntityHandle, IMethod> methodLookupCache = new Dictionary<SRM.EntityHandle, IMethod>();
-		Dictionary<SRM.EntityHandle, IEvent> eventLookupCache = new Dictionary<SRM.EntityHandle, IEvent>();
-
-		Dictionary<IUnresolvedAssembly, Metadata.PEFile> moduleLookup = new Dictionary<IUnresolvedAssembly, Metadata.PEFile>();
-		
 		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition) : this(moduleDefinition, new DecompilerSettings())
 		{
 		}
@@ -104,15 +96,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.Tuple;
 			if (settings.ExtensionMethods)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
-			MetadataLoader loader = new MetadataLoader {
-				IncludeInternalMembers = true,
-				ShortenInterfaceImplNames = false,
-				Options = typeSystemOptions,
-			};
-			IUnresolvedAssembly mainAssembly = loader.LoadModule(moduleDefinition);
+			var mainAssembly = moduleDefinition.WithOptions(typeSystemOptions);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
-			var referencedAssemblies = new List<IUnresolvedAssembly>();
+			var referencedAssemblies = new List<IAssemblyReference>();
 			var assemblyReferenceQueue = new Queue<Metadata.AssemblyReference>(moduleDefinition.AssemblyReferences);
 			var processedAssemblyReferences = new HashSet<Metadata.AssemblyReference>(KeyComparer.Create((Metadata.AssemblyReference reference) => reference.FullName));
 			while (assemblyReferenceQueue.Count > 0) {
@@ -121,9 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null) {
-					IUnresolvedAssembly unresolvedAsm = loader.LoadModule(asm);
-					referencedAssemblies.Add(unresolvedAsm);
-					moduleLookup.Add(unresolvedAsm, asm);
+					referencedAssemblies.Add(asm.WithOptions(typeSystemOptions));
 					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes) {
 						var forwarder = metadata.GetExportedType(h);
@@ -139,7 +124,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				referencedAssemblies.Add(MinimalCorlib.Instance);
 				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			}
-			context = new SimpleTypeResolveContext(compilation.MainAssembly);
+			this.mainAssembly = (MetadataAssembly)compilation.MainAssembly;
 		}
 
 		public ICompilation Compilation {
@@ -191,31 +176,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		#region Resolve Type
 		public IType ResolveAsType(SRM.EntityHandle typeReference)
 		{
-			return MetadataTypeReference.Resolve(
-				typeReference,
-				moduleDefinition.Metadata,
-				mainAssembly.TypeProvider,
-				new GenericContext(),
-				typeSystemOptions
-			);
+			return mainAssembly.ResolveType(typeReference, new GenericContext());
 		}
 
-		IType ResolveDeclaringType(SRM.EntityHandle declaringTypeReference)
+		public IMethod ResolveAsMethod(SRM.EntityHandle methodReference)
 		{
-			// resolve without substituting dynamic/tuple types
-			return MetadataTypeReference.Resolve(
-				declaringTypeReference,
-				moduleDefinition.Metadata,
-				mainAssembly.TypeProvider,
-				new GenericContext(context),
-				typeSystemOptions & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)
-			);
+			return mainAssembly.ResolveMethod(methodReference);
 		}
-		#endregion
-		
+
+		public IField ResolveAsField(SRM.EntityHandle fieldReference)
+		{
+			return mainAssembly.ResolveEntity(fieldReference, new GenericContext()) as IField;
+		}
+
+		public IProperty ResolveAsProperty(SRM.EntityHandle propertyReference)
+		{
+			return mainAssembly.ResolveEntity(propertyReference, new GenericContext()) as IProperty;
+		}
+
+		public IEvent ResolveAsEvent(SRM.EntityHandle eventReference)
+		{
+			return mainAssembly.ResolveEntity(eventReference, new GenericContext()) as IEvent;
+		}
+
 		public SRM.MethodSignature<IType> DecodeMethodSignature(SRM.StandaloneSignatureHandle handle)
 		{
 			var standaloneSignature = moduleDefinition.Metadata.GetStandaloneSignature(handle);
@@ -223,7 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new InvalidOperationException("Expected Method signature");
 			return standaloneSignature.DecodeMethodSignature(
 				mainAssembly.TypeProvider,
-				new GenericContext(context)
+				new GenericContext()
 			);
 		}
 
@@ -234,158 +219,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new InvalidOperationException("Expected Local signature");
 			return standaloneSignature.DecodeLocalSignature(
 				mainAssembly.TypeProvider,
-				new GenericContext(context)
+				new GenericContext()
 			);
 		}
-
-		#region Resolve Field
-		public IField ResolveAsField(SRM.EntityHandle fieldReference)
-		{
-			/*if (fieldReference.IsNil)
-				throw new ArgumentNullException(nameof(fieldReference));
-			if (fieldReference.Kind != SRM.HandleKind.FieldDefinition && fieldReference.Kind != SRM.HandleKind.MemberReference)
-				throw new ArgumentException("HandleKind must be either FieldDefinition or MemberReference", nameof(fieldReference));
-			lock (fieldLookupCache) {
-				if (!fieldLookupCache.TryGetValue(fieldReference, out IField field)) {
-					var metadata = moduleDefinition.Metadata;
-					IType declaringType;
-					switch (fieldReference.Kind) {
-						case SRM.HandleKind.FieldDefinition:
-							var fieldDefHandle = (SRM.FieldDefinitionHandle)fieldReference;
-							field = mainAssembly.GetDefinition(fieldDefHandle);
-							if (field == null) {
-								throw new NotImplementedException();
-							}
-							break;
-						case SRM.HandleKind.MemberReference:
-							var memberRefHandle = (SRM.MemberReferenceHandle)fieldReference;
-							var memberRef = metadata.GetMemberReference(memberRefHandle);
-							Debug.Assert(memberRef.GetKind() == SRM.MemberReferenceKind.Field);
-							declaringType = ResolveDeclaringType(memberRef.Parent);
-							field = FindNonGenericField(metadata, memberRefHandle, declaringType);
-							break;
-						default:
-							throw new NotSupportedException();
-					}
-					if (declaringType.TypeArguments.Count > 0) {
-						field = (IField)field.Specialize(new TypeParameterSubstitution(declaringType.TypeArguments, null));
-					}
-					fieldLookupCache.Add(fieldReference, field);
-				}
-				return field;
-			}*/
-			throw new NotImplementedException();
-		}
-
-		/*
-		IField FindNonGenericField(SRM.MetadataReader metadata, SRM.MemberReferenceHandle memberRefHandle, IType declaringType)
-		{
-			var memberRef = metadata.GetMemberReference(memberRefHandle);
-			string name = metadata.GetString(memberRef.Name);
-			ITypeDefinition typeDef = declaringType.GetDefinition();
-
-			if (typeDef != null) {
-				foreach (IField field in typeDef.Fields) {
-					if (field.Name == name)
-						return field;
-				}
-			}
-			var returnType = memberRef.DecodeFieldSignature(mainAssembly.TypeProvider, new GenericContext(context));
-			return new FakeField(compilation) {
-				DeclaringType = declaringType,
-				Name = name,
-				ReturnType = returnType
-			};
-		}
-		*/
-		#endregion
-
-		#region Resolve Method
-		public IMethod ResolveAsMethod(SRM.EntityHandle methodReference)
-		{
-			return MainAssembly.ResolveMethod(methodReference);
-		}
 		
-		#endregion
-
-		#region Resolve Property
-		public IProperty ResolveAsProperty(SRM.EntityHandle propertyReference)
-		{
-			if (propertyReference.IsNil)
-				throw new ArgumentNullException(nameof(propertyReference));
-			if (propertyReference.Kind != SRM.HandleKind.PropertyDefinition)
-				throw new ArgumentException("HandleKind must be PropertyDefinition", nameof(propertyReference));
-			lock (propertyLookupCache) {
-				IProperty property;
-				if (!propertyLookupCache.TryGetValue(propertyReference, out property)) {
-					var metadata = moduleDefinition.Metadata;
-					property = FindNonGenericProperty(metadata, (SRM.PropertyDefinitionHandle)propertyReference);
-					/*if (propertyReference.DeclaringType.IsGenericInstance) {
-						var git = (GenericInstanceType)propertyReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(Resolve);
-						property = (IProperty)property.Specialize(new TypeParameterSubstitution(typeArguments, null));
-					}*/
-					propertyLookupCache.Add(propertyReference, property);
-				}
-				return property;
-			}
-		}
-
-		IProperty FindNonGenericProperty(SRM.MetadataReader metadata, SRM.PropertyDefinitionHandle handle)
-		{
-			var propertyDefinition = metadata.GetPropertyDefinition(handle);
-			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			ITypeDefinition typeDef = ResolveDeclaringType(declaringType).GetDefinition();
-			if (typeDef == null)
-				return null;
-			foreach (IProperty property in typeDef.Properties) {
-				if (property.MetadataToken == handle)
-					return property;
-			}
-			return null;
-		}
-		#endregion
-
-		#region Resolve Event
-		public IEvent ResolveAsEvent(SRM.EntityHandle eventReference)
-		{
-			if (eventReference.IsNil)
-				throw new ArgumentNullException(nameof(eventReference));
-			if (eventReference.Kind != SRM.HandleKind.EventDefinition)
-				throw new ArgumentException("HandleKind must be EventDefinition", nameof(eventReference));
-			lock (eventLookupCache) {
-				IEvent ev;
-				if (!eventLookupCache.TryGetValue(eventReference, out ev)) {
-					var metadata = moduleDefinition.Metadata;
-					ev = FindNonGenericEvent(metadata, (SRM.EventDefinitionHandle)eventReference);
-					/*if (eventReference.DeclaringType.IsGenericInstance) {
-						var git = (GenericInstanceType)eventReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(Resolve);
-						ev = (IEvent)ev.Specialize(new TypeParameterSubstitution(typeArguments, null));
-					}*/
-					eventLookupCache.Add(eventReference, ev);
-				}
-				return ev;
-			}
-		}
-
-		IEvent FindNonGenericEvent(SRM.MetadataReader metadata, SRM.EventDefinitionHandle handle)
-		{
-			var eventDefinition = metadata.GetEventDefinition(handle);
-			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			ITypeDefinition typeDef = ResolveDeclaringType(declaringType).GetDefinition();
-			if (typeDef == null)
-				return null;
-			var returnType = ResolveAsType(eventDefinition.Type);
-			string name = metadata.GetString(eventDefinition.Name);
-			foreach (IEvent ev in typeDef.Events) {
-				if (ev.MetadataToken == handle)
-					return ev;
-			}
-			return null;
-		}
-		#endregion
-
 		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution)
 		{
 			if (substitution.Equals(TypeParameterSubstitution.Identity)) {

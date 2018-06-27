@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
 		public IType EnumUnderlyingType { get; }
+		public bool HasExtensionMethods { get; }
 
 		// lazy-loaded:
 		IAttribute[] customAttributes;
@@ -104,6 +105,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Kind = TypeKind.Delegate;
 			} else {
 				this.Kind = TypeKind.Class;
+				this.HasExtensionMethods = this.IsStatic
+					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}
 		}
 
@@ -230,8 +233,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		public IType DeclaringType => DeclaringTypeDefinition;
-
-		public bool HasExtensionMethods => throw new NotImplementedException();
 
 		public bool? IsReferenceType {
 			get {
@@ -400,7 +401,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAbstract => (attributes & TypeAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & TypeAttributes.Sealed) != 0;
 
-		bool IEntity.IsShadowing => throw new NotImplementedException();
+		bool IEntity.IsShadowing => false;
 
 		public SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
