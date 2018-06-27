@@ -254,46 +254,15 @@ namespace ICSharpCode.Decompiler
 			if (corlib.Version == version || IsZero(version))
 				return typeof(object).Module.FullyQualifiedName;
 
-			var path = Directory.GetParent(
-				Directory.GetParent(
-					typeof(object).Module.FullyQualifiedName).FullName
-				).FullName;
-
+			string path;
 			if (DetectMono()) {
-				if (version.Major == 1)
-					path = Path.Combine(path, "1.0");
-				else if (version.Major == 2) {
-					if (version.MajorRevision == 5)
-						path = Path.Combine(path, "2.1");
-					else
-						path = Path.Combine(path, "2.0");
-				} else if (version.Major == 4)
-					path = Path.Combine(path, "4.0");
-				else {
-					if (throwOnError)
-						throw new NotSupportedException("Version not supported: " + version);
-					return null;
-				}
+				path = GetMonoMscorlibBasePath(version);
 			} else {
-				switch (version.Major) {
-					case 1:
-						if (version.MajorRevision == 3300)
-							path = Path.Combine(path, "v1.0.3705");
-						else
-							path = Path.Combine(path, "v1.0.5000.0");
-						break;
-					case 2:
-						path = Path.Combine(path, "v2.0.50727");
-						break;
-					case 4:
-						path = Path.Combine(path, "v4.0.30319");
-						break;
-					default:
-						if (throwOnError)
-							throw new NotSupportedException("Version not supported: " + version);
-						return null;
-				}
+				path = GetMscorlibBasePath(version);
 			}
+
+			if (path == null)
+				return null;
 
 			var file = Path.Combine(path, "mscorlib.dll");
 			if (File.Exists(file))
@@ -302,18 +271,77 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
+		string GetMscorlibBasePath(Version version)
+		{
+			string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
+			string[] frameworkPaths = new[] {
+				Path.Combine(rootPath, "Framework"),
+				Path.Combine(rootPath, "Framework64")
+			};
+
+			string folder = GetSubFolderForVersion();
+
+			foreach (var path in frameworkPaths) {
+				var basePath = Path.Combine(path, folder);
+				if (Directory.Exists(basePath))
+					return basePath;
+			}
+
+			if (throwOnError)
+				throw new NotSupportedException("Version not supported: " + version);
+			return null;
+
+			string GetSubFolderForVersion()
+			{
+				switch (version.Major) {
+					case 1:
+						if (version.MajorRevision == 3300)
+							return "v1.0.3705";
+						return "v1.1.4322";
+					case 2:
+						return "v2.0.50727";
+					case 4:
+						return "v4.0.30319";
+					default:
+						if (throwOnError)
+							throw new NotSupportedException("Version not supported: " + version);
+						return null;
+				}
+			}
+		}
+
+		string GetMonoMscorlibBasePath(Version version)
+		{
+			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName).Parent.FullName;
+			if (version.Major == 1)
+				path = Path.Combine(path, "1.0");
+			else if (version.Major == 2) {
+				if (version.MajorRevision == 5)
+					path = Path.Combine(path, "2.1");
+				else
+					path = Path.Combine(path, "2.0");
+			} else if (version.Major == 4)
+				path = Path.Combine(path, "4.0");
+			else {
+				if (throwOnError)
+					throw new NotSupportedException("Version not supported: " + version);
+				return null;
+			}
+			return path;
+		}
+
 		static List<string> GetGacPaths()
 		{
 			if (DetectMono())
 				return GetDefaultMonoGacPaths();
 
 			var paths = new List<string>(2);
-			var windir = Environment.GetEnvironmentVariable("WINDIR");
+			var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 			if (windir == null)
 				return paths;
 
 			paths.Add(Path.Combine(windir, "assembly"));
-			paths.Add(Path.Combine(windir, Path.Combine("Microsoft.NET", "assembly")));
+			paths.Add(Path.Combine(windir, "Microsoft.NET", "assembly"));
 			return paths;
 		}
 
