@@ -106,8 +106,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 					owner.ShowMessage(OLEMSGICON.OLEMSGICON_WARNING,
 						"Symbol can't be opened. This might happen while project is loading.",
 						Environment.NewLine, invalidSymbolReference.AssemblyFile);
-				}
-				if (invalidSymbolReference.IsProjectReference) {
+				} else if (invalidSymbolReference.IsProjectReference) {
 					// Some project references don't have assemblies, maybe not compiled yet?
 					if (owner.ShowMessage(
 						OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_WARNING,
