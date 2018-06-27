@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		protected override void LoadChildren()
 		{
-			if (analyzedMethod.HasBody(module.Metadata))
+			if (module.Metadata.GetMethodDefinition(analyzedMethod).HasBody())
 				this.Children.Add(new AnalyzedMethodUsesTreeNode(module, analyzedMethod));
 
 			/*if (analyzedMethod.HasFlag(MethodAttributes.Virtual) && !(analyzedMethod.HasFlag(MethodAttributes.NewSlot) && analyzedMethod.HasFlag(MethodAttributes.Final)))

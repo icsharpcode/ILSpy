@@ -54,6 +54,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			name = metadata.GetString(ev.Name);
 		}
 
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(handle):X8} {DeclaringType?.ReflectionName}.{Name}";
+		}
+
 		public EntityHandle MetadataToken => handle;
 		public string Name => name;
 		
@@ -83,13 +88,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
-		public IEnumerable<IMember> ImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
 
 		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
 		{
 			if (method == null)
 				return EmptyList<IMember>.Instance;
-			return method.ImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
 		}
 
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;

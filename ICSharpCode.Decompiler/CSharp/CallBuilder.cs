@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 						// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 						if (method.IsExplicitInterfaceImplementation && target.Expression is ThisReferenceExpression) {
-							var interfaceMember = method.ImplementedInterfaceMembers.First();
+							var interfaceMember = method.ExplicitlyImplementedInterfaceMembers.First();
 							var castExpression = new CastExpression(expressionBuilder.ConvertType(interfaceMember.DeclaringType), target.Expression);
 							methodName = interfaceMember.Name;
 							targetExpr = new MemberReferenceExpression(castExpression, methodName);

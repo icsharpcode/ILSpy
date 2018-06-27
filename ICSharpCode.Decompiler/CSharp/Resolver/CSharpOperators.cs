@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return this; }
 			}
 
-			IEnumerable<IMember> IMember.ImplementedInterfaceMembers {
+			IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers {
 				get { return EmptyList<IMember>.Instance; }
 			}
 			

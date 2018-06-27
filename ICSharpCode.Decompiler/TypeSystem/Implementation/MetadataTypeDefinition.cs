@@ -211,7 +211,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
 				foreach (MethodDefinitionHandle h in methodsCollection) {
-					methodsList.Add(assembly.GetDefinition(h));
+					var md = metadata.GetMethodDefinition(h);
+					if (assembly.IsVisible(md.Attributes)) {
+						methodsList.Add(assembly.GetDefinition(h));
+					}
 				}
 				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
 					methodsList.Add(new FakeMethod(Compilation, SymbolKind.Constructor) {
@@ -588,43 +591,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		#region GetInterfaceImplementation
-		public IMember GetInterfaceImplementation(IMember interfaceMember)
+		#region GetOverrides
+		internal IEnumerable<IMethod> GetOverrides(MethodDefinitionHandle method)
 		{
-			return GetInterfaceImplementation(new[] { interfaceMember })[0];
+			var metadata = assembly.metadata;
+			var td = metadata.GetTypeDefinition(handle);
+			foreach (var implHandle in td.GetMethodImplementations()) {
+				var impl = metadata.GetMethodImplementation(implHandle);
+				if (impl.MethodBody == method)
+					yield return assembly.ResolveMethod(impl.MethodDeclaration, new GenericContext(this.TypeParameters));
+			}
 		}
 
-		public IReadOnlyList<IMember> GetInterfaceImplementation(IReadOnlyList<IMember> interfaceMembers)
+		internal bool HasOverrides(MethodDefinitionHandle method)
 		{
-			// TODO: review the subtle rules for interface reimplementation,
-			// write tests and fix this method.
-			// Also virtual/override is going to be tricky -
-			// I think we'll need to consider the 'virtual' method first for
-			// reimplemenatation purposes, but then actually return the 'override'
-			// (as that's the method that ends up getting called)
-
-			interfaceMembers = interfaceMembers.ToList(); // avoid evaluating more than once
-
-			var result = new IMember[interfaceMembers.Count];
-			var signatureToIndexDict = new MultiDictionary<IMember, int>(SignatureComparer.Ordinal);
-			for (int i = 0; i < interfaceMembers.Count; i++) {
-				signatureToIndexDict.Add(interfaceMembers[i], i);
+			var metadata = assembly.metadata;
+			var td = metadata.GetTypeDefinition(handle);
+			foreach (var implHandle in td.GetMethodImplementations()) {
+				var impl = metadata.GetMethodImplementation(implHandle);
+				if (impl.MethodBody == method)
+					return true;
 			}
-			foreach (var member in GetMembers(m => !m.IsExplicitInterfaceImplementation)) {
-				foreach (int interfaceMemberIndex in signatureToIndexDict[member]) {
-					result[interfaceMemberIndex] = member;
-				}
-			}
-			foreach (var explicitImpl in GetMembers(m => m.IsExplicitInterfaceImplementation)) {
-				foreach (var interfaceMember in explicitImpl.ImplementedInterfaceMembers) {
-					foreach (int potentialMatchingIndex in signatureToIndexDict[interfaceMember]) {
-						if (interfaceMember.Equals(interfaceMembers[potentialMatchingIndex])) {
-							result[potentialMatchingIndex] = explicitImpl;
-						}
-					}
-				}
-			}
-			return result;
+			return false;
 		}
 		#endregion
 	}

@@ -325,9 +325,11 @@ namespace ICSharpCode.ILSpy
 			if (module == null)
 				return false;
 			var metadata = module.Metadata;
-			if (m.IsNil || !m.HasBody(metadata))
+			if (m.IsNil)
 				return false;
 			var methodDefinition = metadata.GetMethodDefinition(m);
+			if (!methodDefinition.HasBody())
+				return false;
 			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
 			if (searchTermLiteralType == TypeCode.Int64) {
 				long val = (long)searchTermLiteralValue;

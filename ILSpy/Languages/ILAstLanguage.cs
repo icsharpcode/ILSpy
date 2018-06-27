@@ -87,9 +87,9 @@ namespace ICSharpCode.ILSpy
 			{
 				base.DecompileMethod(method, output, options);
 				var metadata = method.Module.Metadata;
-				if (!method.Handle.HasBody(metadata))
-					return;
 				var methodDef = metadata.GetMethodDefinition(method.Handle);
+				if (!methodDef.HasBody())
+					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
 				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
@@ -110,9 +110,9 @@ namespace ICSharpCode.ILSpy
 			{
 				base.DecompileMethod(method, output, options);
 				var metadata = method.Module.Metadata;
-				if (!method.Handle.HasBody(metadata))
-					return;
 				var methodDef = metadata.GetMethodDefinition(method.Handle);
+				if (!methodDef.HasBody())
+					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.ResolveAsMethod(method.Handle)));
 				var reader = new ILReader(specializingTypeSystem);

@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					foreach (IMember member in context.CurrentTypeDefinition.Members) {
 						if (!member.IsExplicitInterfaceImplementation)
 							continue;
-						var interfaceMembers = member.ImplementedInterfaceMembers.ToList();
+						var interfaceMembers = member.ExplicitlyImplementedInterfaceMembers.ToList();
 						if (interfaceMembers.Count != 1)
 							continue;
 						if (IsNonGenericMatch(member, symbolKind, name, parameterTypes)) {
@@ -223,9 +223,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					if (explicitInterfaceTypeReference == null) {
 						if (!method.IsExplicitInterfaceImplementation)
 							return method;
-					} else if (method.IsExplicitInterfaceImplementation && method.ImplementedInterfaceMembers.Count() == 1) {
+					} else if (method.IsExplicitInterfaceImplementation && method.ExplicitlyImplementedInterfaceMembers.Count() == 1) {
 						IType explicitInterfaceType = explicitInterfaceTypeReference.Resolve(contextForMethod);
-						if (explicitInterfaceType.Equals(method.ImplementedInterfaceMembers.First().DeclaringType))
+						if (explicitInterfaceType.Equals(method.ExplicitlyImplementedInterfaceMembers.First().DeclaringType))
 							return method;
 					}
 				}

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return unresolved; }
 		}
 		
-		public IEnumerable<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {
 				IReadOnlyList<IMember> result = LazyInit.VolatileRead(ref this.implementedInterfaceMembers);
 				if (result != null) {
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				IEnumerable<IMember> otherMembers = DeclaringTypeDefinition.Members;
 				if (SymbolKind == SymbolKind.Accessor)
 					otherMembers = DeclaringTypeDefinition.GetAccessors(options: GetMemberOptions.IgnoreInheritedMembers);
-				result = result.Where(item => !otherMembers.Any(m => m.IsExplicitInterfaceImplementation && m.ImplementedInterfaceMembers.Contains(item))).ToArray();
+				result = result.Where(item => !otherMembers.Any(m => m.IsExplicitInterfaceImplementation && m.ExplicitlyImplementedInterfaceMembers.Contains(item))).ToArray();
 
 				return result;
 			}

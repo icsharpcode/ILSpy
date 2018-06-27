@@ -1303,7 +1303,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		AstType GetExplicitInterfaceType (IMember member)
 		{
 			if (member.IsExplicitInterfaceImplementation) {
-				var baseMember = member.ImplementedInterfaceMembers.FirstOrDefault ();
+				var baseMember = member.ExplicitlyImplementedInterfaceMembers.FirstOrDefault ();
 				if (baseMember != null)
 					return ConvertType (baseMember.DeclaringType);
 			}

@@ -173,8 +173,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.ReturnType; }
 		}
 
-		public IEnumerable<IMember> ImplementedInterfaceMembers {
-			get { return baseMethod.ImplementedInterfaceMembers; }
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
+			get { return baseMethod.ExplicitlyImplementedInterfaceMembers; }
 		}
 
 		public bool IsExplicitInterfaceImplementation {

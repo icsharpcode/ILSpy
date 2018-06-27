@@ -49,7 +49,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IAttribute[] returnTypeAttributes;
 		IParameter[] parameters;
 		IType returnType;
-		IMember[] implementedInterfaceMembers;
 
 		internal MetadataMethod(MetadataAssembly assembly, MethodDefinitionHandle handle)
 		{
@@ -194,8 +193,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		#endregion
 
-		public IEnumerable<IMember> ImplementedInterfaceMembers => throw new NotImplementedException();
-		public bool IsExplicitInterfaceImplementation => throw new NotImplementedException();
+		public bool IsExplicitInterfaceImplementation {
+			get {
+				if (Name.IndexOf('.') < 0)
+					return false;
+				var typeDef = ((MetadataTypeDefinition)DeclaringTypeDefinition);
+				return typeDef.HasOverrides(handle);
+			}
+		}
+
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
+			get {
+				var typeDef = ((MetadataTypeDefinition)DeclaringTypeDefinition);
+				return typeDef.GetOverrides(handle);
+			}
+		}
 
 		IMember IMember.MemberDefinition => this;
 		IMethod IMethod.ReducedFrom => this;

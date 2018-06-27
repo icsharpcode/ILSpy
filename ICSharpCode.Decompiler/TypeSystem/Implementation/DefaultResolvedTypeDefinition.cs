@@ -771,13 +771,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			foreach (var explicitImpl in GetMembers(m => m.IsExplicitInterfaceImplementation)) {
-				foreach (var interfaceMember in explicitImpl.ImplementedInterfaceMembers) {
+				/*foreach (var interfaceMember in explicitImpl.ImplementedInterfaceMembers) {
 					foreach (int potentialMatchingIndex in signatureToIndexDict[interfaceMember]) {
 						if (interfaceMember.Equals(interfaceMembers[potentialMatchingIndex])) {
 							result[potentialMatchingIndex] = explicitImpl;
 						}
 					}
-				}
+				}*/
+				// not adjusted to TS changes; but this is dead code and about to be deleted
+				throw new NotImplementedException();
 			}
 			return result;
 		}

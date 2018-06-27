@@ -228,9 +228,31 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
+		public TypeSystem.IAssemblyReference WithOptions(TypeSystemOptions options)
+		{
+			return new PEFileWithOptions(this, options);
+		}
+
 		IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
 		{
 			return new MetadataAssembly(context.Compilation, this, TypeSystemOptions.Default);
+		}
+
+		private class PEFileWithOptions : TypeSystem.IAssemblyReference
+		{
+			readonly PEFile peFile;
+			readonly TypeSystemOptions options;
+
+			public PEFileWithOptions(PEFile peFile, TypeSystemOptions options)
+			{
+				this.peFile = peFile;
+				this.options = options;
+			}
+
+			IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
+			{
+				return new MetadataAssembly(context.Compilation, peFile, options);
+			}
 		}
 	}
 

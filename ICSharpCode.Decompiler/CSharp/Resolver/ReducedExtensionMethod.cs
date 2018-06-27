@@ -86,9 +86,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public IEnumerable<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {
-				return baseMethod.ImplementedInterfaceMembers;
+				return baseMethod.ExplicitlyImplementedInterfaceMembers;
 			}
 		}
 

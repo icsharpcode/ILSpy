@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						var isCompletedProperty = (isCompletedRR is MemberResolveResult ? ((MemberResolveResult)isCompletedRR).Member as IProperty : null);
 						if (isCompletedProperty != null && (!isCompletedProperty.ReturnType.IsKnownType(KnownTypeCode.Boolean) || !isCompletedProperty.CanGet))
 							isCompletedProperty = null;
-
+						/*
 						var interfaceOnCompleted = compilation.FindType(KnownTypeCode.INotifyCompletion).GetMethods().FirstOrDefault(x => x.Name == "OnCompleted");
 						var interfaceUnsafeOnCompleted = compilation.FindType(KnownTypeCode.ICriticalNotifyCompletion).GetMethods().FirstOrDefault(x => x.Name == "UnsafeOnCompleted");
 
@@ -415,6 +415,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						}
 
 						return new AwaitResolveResult(awaitResultType, getAwaiterInvocation, getAwaiterInvocation.Type, isCompletedProperty, onCompletedMethod, getResultMethod);
+						*/
+						// Not adjusted to TS changes for interface impls
+						// But I believe this is dead code for ILSpy anyways...
+						throw new NotImplementedException();
 					}
 
 					default:

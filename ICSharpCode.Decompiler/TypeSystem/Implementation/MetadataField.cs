@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		// Fields can't implement interfaces:
-		IEnumerable<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 		bool IMember.IsExplicitInterfaceImplementation => false;
 		bool IMember.IsVirtual => false;
 		bool IMember.IsOverride => false;

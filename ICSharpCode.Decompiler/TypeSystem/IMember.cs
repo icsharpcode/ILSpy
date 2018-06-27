@@ -122,9 +122,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType ReturnType { get; }
 
 		/// <summary>
-		/// Gets the interface members implemented by this member (both implicitly and explicitly).
+		/// Gets the interface members explicitly implemented by this member.
 		/// </summary>
-		IEnumerable<IMember> ImplementedInterfaceMembers { get; }
+		/// <remarks>
+		/// For methods, equivalent to (
+		///		from impl in DeclaringTypeDefinition.GetExplicitInterfaceImplementations()
+		///		where impl.Implementation == this
+		///		select impl.InterfaceMethod
+		/// ),
+		/// but may be more efficient than searching the whole list.
+		/// 
+		/// Note that it is possible for a class to implement an interface using members in a
+		/// base class unrelated to that interface:
+		///   class BaseClass { public void Dispose() {} }
+		///   class C : BaseClass, IDisposable { }
+		/// In this case, the interface member will not show up in (BaseClass.Dispose).ImplementedInterfaceMembers,
+		/// so use (C).GetInterfaceImplementations() instead to handle this case.
+		/// </remarks>
+		IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers { get; }
 		
 		/// <summary>
 		/// Gets whether this member is explicitly implementing an interface.

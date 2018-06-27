@@ -62,9 +62,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			name = metadata.GetString(prop.Name);
 			if (name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName) {
 				symbolKind = SymbolKind.Indexer;
+			} else if (name.IndexOf('.') >= 0) {
+				// explicit interface implementation
+				var interfaceProp = this.ExplicitlyImplementedInterfaceMembers.FirstOrDefault() as IProperty;
+				symbolKind = interfaceProp?.SymbolKind ?? SymbolKind.Property;
 			} else {
 				symbolKind = SymbolKind.Property;
 			}
+		}
+
+		public override string ToString()
+		{
+			return $"{MetadataTokens.GetToken(propertyHandle):X8} {DeclaringType?.ReflectionName}.{Name}";
 		}
 
 		public EntityHandle MetadataToken => propertyHandle;
@@ -120,13 +129,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		public bool IsExplicitInterfaceImplementation => AnyAccessor?.IsExplicitInterfaceImplementation ?? false;
-		public IEnumerable<IMember> ImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers => GetInterfaceMembersFromAccessor(AnyAccessor);
 
 		internal static IEnumerable<IMember> GetInterfaceMembersFromAccessor(IMethod method)
 		{
 			if (method == null)
 				return EmptyList<IMember>.Instance;
-			return method.ImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
+			return method.ExplicitlyImplementedInterfaceMembers.Select(m => ((IMethod)m).AccessorOwner).Where(m => m != null);
 		}
 
 		public ITypeDefinition DeclaringTypeDefinition => AnyAccessor?.DeclaringTypeDefinition;

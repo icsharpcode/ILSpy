@@ -302,6 +302,12 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		int this[T x] { get; set; }
 	}
 
+	public interface IInterfaceWithRenamedIndexer
+	{
+		[IndexerName("NewName")]
+		int this[int x] { get; set; }
+	}
+
 	public class ClassThatImplementsIndexers : IInterfaceWithIndexers, IGenericInterfaceWithIndexer<int>
 	{
 		public int this[int x] { get { return 0; } set { } }
@@ -309,12 +315,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public int this[int x, int y] { get { return 0; } set { } }
 	}
 
-	public class ClassThatImplementsIndexersExplicitly : IInterfaceWithIndexers, IGenericInterfaceWithIndexer<int>
+	public class ClassThatImplementsIndexersExplicitly : IInterfaceWithIndexers, IGenericInterfaceWithIndexer<int>, IInterfaceWithRenamedIndexer
 	{
 		int IInterfaceWithIndexers.this[int x] { get { return 0; } set { } }
 		int IGenericInterfaceWithIndexer<int>.this[int x] { get { return 0; } set { } }
 		int IInterfaceWithIndexers.this[string x] { get { return 0; } set { } }
 		int IInterfaceWithIndexers.this[int x, int y] { get { return 0; } set { } }
+		int IInterfaceWithRenamedIndexer.this[int x] { get { return 0; } set { } }
 	}
 
 	public interface IHasEvent

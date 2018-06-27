@@ -155,17 +155,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.Attributes; }
 		}
 		
-		IReadOnlyList<IMember> implementedInterfaceMembers;
-		
-		public IEnumerable<IMember> ImplementedInterfaceMembers {
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {
-				return LazyInitializer.EnsureInitialized(ref implementedInterfaceMembers, FindImplementedInterfaceMembers);
+				// Note: if the interface is generic, then the interface members should already be specialized,
+				// so we only need to append our substitution.
+				return baseMember.ExplicitlyImplementedInterfaceMembers.Select(m => m.Specialize(substitution));
 			}
-		}
-		
-		IReadOnlyList<IMember> FindImplementedInterfaceMembers()
-		{
-			return baseMember.ImplementedInterfaceMembers.Select(m => m.Specialize(substitution)).ToArray();
 		}
 		
 		public bool IsExplicitInterfaceImplementation {

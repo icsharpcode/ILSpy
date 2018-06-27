@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType ReturnType { get; set; } = SpecialType.UnknownType;
 
-		IEnumerable<IMember> IMember.ImplementedInterfaceMembers => EmptyList<IMember>.Instance;
+		IEnumerable<IMember> IMember.ExplicitlyImplementedInterfaceMembers => EmptyList<IMember>.Instance;
 
 		bool IMember.IsExplicitInterfaceImplementation => false;
 
