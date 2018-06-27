@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler
 			return result ?? version.ToString();
 		}
 
-		static (Version, string) ConvertToVersion(string name)
+		internal static (Version, string) ConvertToVersion(string name)
 		{
 			string RemoveTrailingVersionInfo()
 			{
