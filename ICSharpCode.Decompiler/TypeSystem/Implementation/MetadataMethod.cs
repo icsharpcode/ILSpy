@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		IMember IMember.MemberDefinition => this;
-		IMethod IMethod.ReducedFrom => this;
+		IMethod IMethod.ReducedFrom => null;
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		public ITypeDefinition DeclaringTypeDefinition {

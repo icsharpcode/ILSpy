@@ -1317,6 +1317,19 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void ExtensionMethodTest()
+		{
+			ITypeDefinition type = GetTypeDefinition(typeof(StaticClass));
+			var method = type.Methods.Single(m => m.Name == "Extension");
+
+			Assert.IsTrue(method.IsStatic);
+			Assert.IsTrue(method.IsExtensionMethod);
+			Assert.IsNull(method.ReducedFrom);
+
+			Assert.IsTrue(type.HasExtensionMethods);
+		}
+
+		[Test]
 		public void NoDefaultConstructorOnStaticClassTest()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(StaticClass));

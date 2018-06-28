@@ -360,7 +360,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		new event EventHandler Evt;
 	}
 
-	public static class StaticClass { }
+	public static class StaticClass
+	{
+		public static void Extension(this object inst) { }
+	}
+
 	public abstract class AbstractClass { }
 
 	public class IndexerNonDefaultName
