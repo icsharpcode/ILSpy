@@ -582,7 +582,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				expr = new PrimitiveExpression(constantValue);
 				if (AddResolveResultAnnotations)
-					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
+					expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
 				if (smallInteger && !type.Equals(expectedType)) {
 					expr = new CastExpression(ConvertType(type), expr);
 				}
