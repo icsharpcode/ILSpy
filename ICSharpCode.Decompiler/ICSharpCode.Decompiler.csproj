@@ -473,7 +473,6 @@
     <Compile Include="TypeSystem\ArrayType.cs" />
     <Compile Include="TypeSystem\AssemblyQualifiedTypeName.cs" />
     <Compile Include="TypeSystem\ByReferenceType.cs" />
-    <Compile Include="TypeSystem\MetadataLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
