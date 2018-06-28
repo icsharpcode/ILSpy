@@ -130,8 +130,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
 		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
 
-		bool IEntity.IsShadowing => AnyAccessor?.IsShadowing ?? false;
-
 		public IAssembly ParentAssembly => assembly;
 		public ICompilation Compilation => assembly.Compilation;
 

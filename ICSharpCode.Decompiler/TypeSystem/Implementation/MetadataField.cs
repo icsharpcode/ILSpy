@@ -79,14 +79,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public Accessibility Accessibility => MetadataLoader.GetAccessibility(attributes);
 		public bool IsReadOnly => (attributes & FieldAttributes.InitOnly) != 0;
 		public bool IsStatic => (attributes & FieldAttributes.Static) != 0;
-
-		// not sure if we need IsFixed anywhere...
-		bool IField.IsFixed => false;
-
-		// Do we still want IsShadowing in the TS?
-		// We never set it for assemblies loaded from disk; only for those parsed from C#...
-		bool IEntity.IsShadowing => false;
-
+		
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Field;
 		IMember IMember.MemberDefinition => this;
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;

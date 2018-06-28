@@ -266,13 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return baseMethod.IsSealed;
 			}
 		}
-
-		public bool IsShadowing {
-			get {
-				return baseMethod.IsShadowing;
-			}
-		}
-
+		
 		#endregion
 
 		#region IHasAccessibility implementation

@@ -170,10 +170,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return false; }
 			}
 			
-			bool IEntity.IsShadowing {
-				get { return false; }
-			}
-			
 			bool IMember.IsExplicitInterfaceImplementation {
 				get { return false; }
 			}

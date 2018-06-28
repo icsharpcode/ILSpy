@@ -72,8 +72,8 @@ namespace ICSharpCode.Decompiler.Semantics
 				case SymbolKind.Constructor:
 					return member.DeclaringType ?? SpecialType.UnknownType;
 				case SymbolKind.Field:
-					if (((IField)member).IsFixed)
-						return new PointerType(member.ReturnType);
+					//if (((IField)member).IsFixed)
+					//	return new PointerType(member.ReturnType);
 					break;
 			}
 			if (member.ReturnType.Kind == TypeKind.ByReference)
