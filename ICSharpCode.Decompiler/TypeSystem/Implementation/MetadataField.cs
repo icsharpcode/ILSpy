@@ -76,7 +76,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		public Accessibility Accessibility => MetadataLoader.GetAccessibility(attributes);
+		public Accessibility Accessibility {
+			get {
+				switch (attributes & FieldAttributes.FieldAccessMask) {
+					case FieldAttributes.Public:
+						return Accessibility.Public;
+					case FieldAttributes.FamANDAssem:
+						return Accessibility.ProtectedAndInternal;
+					case FieldAttributes.Assembly:
+						return Accessibility.Internal;
+					case FieldAttributes.Family:
+						return Accessibility.Protected;
+					case FieldAttributes.FamORAssem:
+						return Accessibility.ProtectedOrInternal;
+					default:
+						return Accessibility.Private;
+				}
+			}
+		}
+
 		public bool IsReadOnly => (attributes & FieldAttributes.InitOnly) != 0;
 		public bool IsStatic => (attributes & FieldAttributes.Static) != 0;
 
