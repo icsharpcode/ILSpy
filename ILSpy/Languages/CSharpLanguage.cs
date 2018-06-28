@@ -228,11 +228,11 @@ namespace ICSharpCode.ILSpy
 		{
 			var members = new List<EntityHandle>();
 			foreach (var field in type.Fields) {
-				if (field.IsStatic == isStatic)
+				if (!field.MetadataToken.IsNil && field.IsStatic == isStatic)
 					members.Add(field.MetadataToken);
 			}
 			foreach (var ctor in type.Methods) {
-				if (ctor.IsConstructor && ctor.IsStatic == isStatic)
+				if (!ctor.MetadataToken.IsNil && ctor.IsConstructor && ctor.IsStatic == isStatic)
 					members.Add(ctor.MetadataToken);
 			}
 

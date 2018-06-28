@@ -535,11 +535,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			ITypeDefinition parentTypeDef = null;
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
-			foreach (var entity in definitions)
-				RequiredNamespaceCollector.CollectNamespaces(entity, typeSystem, decompileRun.Namespaces);
 			foreach (var entity in definitions) {
 				if (entity.IsNil)
 					throw new ArgumentException("definitions contains null element");
+				RequiredNamespaceCollector.CollectNamespaces(entity, typeSystem, decompileRun.Namespaces);
+			}
+
+			foreach (var entity in definitions) {
 				switch (entity.Kind) {
 					case HandleKind.TypeDefinition:
 						ITypeDefinition typeDef = typeSystem.ResolveAsType(entity).GetDefinition();
