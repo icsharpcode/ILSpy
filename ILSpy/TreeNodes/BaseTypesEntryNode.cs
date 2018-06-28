@@ -29,58 +29,48 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly Entity tr;
 		readonly GenericContext context;
 		readonly bool isInterface;
-		TypeDefinition td;
+		readonly bool showExpander;
+		readonly object icon;
 
 		public BaseTypesEntryNode(GenericContext context, Entity entity, bool isInterface)
 		{
 			if (entity.IsNil) throw new ArgumentNullException(nameof(entity));
 			this.tr = entity;
-			this.td = tr.ResolveAsType();
 			this.context = context;
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
-		}
 
-		public override bool ShowExpander
-		{
-			get {
-				if (td.IsNil) return false;
+			var td = tr.ResolveAsType();
+			if (!td.IsNil) {
 				var typeDef = td.Module.Metadata.GetTypeDefinition(td.Handle);
-				return !typeDef.BaseType.IsNil || typeDef.GetInterfaceImplementations().Any();
+				showExpander = !typeDef.BaseType.IsNil || typeDef.GetInterfaceImplementations().Any();
+				icon = TypeTreeNode.GetIcon(td);
+			} else {
+				showExpander = false;
+				icon = isInterface ? Images.Interface : Images.Class;
 			}
 		}
+
+		public override bool ShowExpander => showExpander;
 
 		public override object Text
 		{
 			get { return this.Language.TypeToString(tr, context, includeNamespace: true) + tr.Handle.ToSuffixString(); }
 		}
 
-		public override object Icon
-		{
-			get
-			{
-				if (!td.IsNil)
-					return TypeTreeNode.GetIcon(td);
-				else
-					return isInterface ? Images.Interface : Images.Class;
-			}
-		}
+		public override object Icon => icon;
 
 		protected override void LoadChildren()
 		{
-			if (!td.IsNil)
+			var td = tr.ResolveAsType();
+			if (!td.IsNil) {
 				BaseTypesTreeNode.AddBaseTypes(this.Children, td);
+			}
 		}
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			// on item activation, try to resolve once again (maybe the user loaded the assembly in the meantime)
-			if (td.IsNil) {
-				td = tr.ResolveAsType();
-				if (!td.IsNil)
-					this.LazyLoading = true;
-				// re-load children
-			}
+			var td = tr.ResolveAsType();
 			e.Handled = ActivateItem(this, td);
 		}
 

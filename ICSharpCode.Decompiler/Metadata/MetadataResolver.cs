@@ -197,12 +197,16 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 				case HandleKind.TypeReference:
 					var resolvedTypeReference = Resolve((TypeReferenceHandle)mr.Parent, context);
+					if (resolvedTypeReference.IsNil)
+						return default;
 					targetModule = resolvedTypeReference.Module;
 					targetMetadata = targetModule.Metadata;
 					declaringType = targetMetadata.GetTypeDefinition(resolvedTypeReference.Handle);
 					break;
 				case HandleKind.TypeSpecification:
 					resolvedTypeReference = Resolve((TypeSpecificationHandle)mr.Parent, context);
+					if (resolvedTypeReference.IsNil)
+						return default;
 					targetModule = resolvedTypeReference.Module;
 					targetMetadata = targetModule.Metadata;
 					declaringType = targetMetadata.GetTypeDefinition(resolvedTypeReference.Handle);
@@ -221,7 +225,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						if (targetMetadata.StringComparer.Equals(fd.Name, name))
 							return new FieldDefinition(targetModule, f);
 					}
-					throw new NotSupportedException();
+					return default;
 				case MemberReferenceKind.Method:
 					var candidates = new List<(MethodDefinitionHandle, BlobHandle)>();
 					foreach (var m in declaringType.GetMethods()) {
@@ -229,15 +233,14 @@ namespace ICSharpCode.Decompiler.Metadata
 						if (targetMetadata.StringComparer.Equals(md.Name, name))
 							candidates.Add((m, md.Signature));
 					}
-					if (candidates.Count == 0)
-						throw new NotSupportedException();
 					foreach (var (method, signature) in candidates) {
 						if (SignatureBlobComparer.EqualsMethodSignature(targetMetadata.GetBlobReader(signature), metadata.GetBlobReader(mr.Signature), targetMetadata, metadata))
 							return new MethodDefinition(targetModule, method);
 					}
+					return default;
+				default:
 					throw new NotSupportedException();
 			}
-			throw new NotSupportedException();
 		}
 
 		public static TypeDefinition Resolve(this TypeSpecificationHandle handle, IMetadataResolveContext context)

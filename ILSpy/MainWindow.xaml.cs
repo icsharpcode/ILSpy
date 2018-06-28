@@ -616,7 +616,7 @@ namespace ICSharpCode.ILSpy
 					}
 				case TypeReference tr:
 					var resolved = tr.Handle.Resolve(new SimpleMetadataResolveContext(tr.Module));
-					if (!resolved.IsNil)
+					if (resolved != null && !resolved.IsNil)
 						return assemblyListTreeNode.FindTypeNode(resolved);
 					return null;
 				case TypeSpecification ts:
@@ -626,7 +626,7 @@ namespace ICSharpCode.ILSpy
 					return null;
 				case MemberReference mr:
 					var resolvedMember = mr.Handle.Resolve(new SimpleMetadataResolveContext(mr.Module));
-					if (!resolvedMember.IsNil) {
+					if (resolvedMember != null && !resolvedMember.IsNil) {
 						switch (resolvedMember) {
 							case FieldDefinition fd:
 								return assemblyListTreeNode.FindFieldNode(fd);
@@ -639,7 +639,7 @@ namespace ICSharpCode.ILSpy
 					return null;
 				case MethodSpecification ms:
 					resolvedMember = ms.Handle.Resolve(new SimpleMetadataResolveContext(ms.Module));
-					if (!resolvedMember.IsNil) {
+					if (resolvedMember != null && !resolvedMember.IsNil) {
 						switch (resolvedMember) {
 							case MethodDefinition md:
 								return assemblyListTreeNode.FindMethodNode(md);
