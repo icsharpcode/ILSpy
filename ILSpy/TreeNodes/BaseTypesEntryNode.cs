@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			get
 			{
-				if (td != null)
+				if (!td.IsNil)
 					return TypeTreeNode.GetIcon(td);
 				else
 					return isInterface ? Images.Interface : Images.Class;

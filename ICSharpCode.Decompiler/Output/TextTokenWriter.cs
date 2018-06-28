@@ -105,16 +105,24 @@ namespace ICSharpCode.Decompiler
 			switch (symbol) {
 				case IType type:
 					var definition = type.GetDefinition();
-					if (definition == null)
+					if (definition == null || definition.MetadataToken.IsNil)
 						return null;
 					return new TypeDefinition(typeSystem.GetModuleDefinition(definition.ParentAssembly), (SRM.TypeDefinitionHandle)definition.MetadataToken);
 				case IMethod method:
+					if (method.MetadataToken.IsNil)
+						return null;
 					return new MethodDefinition(typeSystem.GetModuleDefinition(method.ParentAssembly), (SRM.MethodDefinitionHandle)method.MetadataToken);
 				case IProperty property:
+					if (property.MetadataToken.IsNil)
+						return null;
 					return new PropertyDefinition(typeSystem.GetModuleDefinition(property.ParentAssembly), (SRM.PropertyDefinitionHandle)property.MetadataToken);
 				case IEvent @event:
+					if (@event.MetadataToken.IsNil)
+						return null;
 					return new EventDefinition(typeSystem.GetModuleDefinition(@event.ParentAssembly), (SRM.EventDefinitionHandle)@event.MetadataToken);
 				case IField field:
+					if (field.MetadataToken.IsNil)
+						return null;
 					return new FieldDefinition(typeSystem.GetModuleDefinition(field.ParentAssembly), (SRM.FieldDefinitionHandle)field.MetadataToken);
 				default:
 					return null;
