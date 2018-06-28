@@ -558,27 +558,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IType ResolveForwardedType(ExportedType forwarder)
 		{
-			IAssembly assembly;
-			switch (forwarder.Implementation.Kind) {
-				case HandleKind.AssemblyFile:
-					assembly = this;
-					break;
-				case HandleKind.ExportedType:
-					throw new NotImplementedException();
-				case HandleKind.AssemblyReference:
-					var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)forwarder.Implementation);
-					string shortName = metadata.GetString(asmRef.Name);
-					assembly = null;
-					foreach (var asm in Compilation.Assemblies) {
-						if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)) {
-							assembly = asm;
-							break;
-						}
-					}
-					break;
-				default:
-					throw new NotSupportedException();
-			}
+			IAssembly assembly = ResolveAssembly(forwarder);
+			Debug.Assert(assembly != null);
 			var typeName = forwarder.GetFullTypeName(metadata);
 			using (var busyLock = BusyManager.Enter(this)) {
 				if (busyLock.Success) {
@@ -589,6 +570,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			return new UnknownType(typeName);
+
+			IAssembly ResolveAssembly(ExportedType type)
+			{
+				switch (type.Implementation.Kind) {
+					case HandleKind.AssemblyFile:
+						return this;
+					case HandleKind.ExportedType:
+						var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
+						return ResolveAssembly(outerType);
+					case HandleKind.AssemblyReference:
+						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.Implementation);
+						string shortName = metadata.GetString(asmRef.Name);
+						foreach (var asm in Compilation.Assemblies) {
+							if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)) {
+								return asm;
+							}
+						}
+						return null;
+					default:
+						throw new NotSupportedException();
+				}
+			}
 		}
 		#endregion
 
