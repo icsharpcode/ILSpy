@@ -24,7 +24,6 @@ using System.Xml;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-
 	public class ExpressionTrees
 	{
 		private class GenericClass<X>
@@ -49,6 +48,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private int field;
+
+		public static readonly object[] SupportedMethods = new object[2] {
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate((object o1, object o2) => null)),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object o1, object o2) => null))
+		};
+
+		public static readonly object[] SupportedMethods2 = new object[4] {
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate(null, (object o1, object o2) => null)),
+			ToCode(null, () => ((IQueryable<object>)null).Aggregate((object)null, (Expression<Func<object, object, object>>)((object o1, object o2) => null), (Expression<Func<object, object>>)((object o) => null))),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate(null, (object o1, object o2) => null)),
+			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object)null, (Func<object, object, object>)((object o1, object o2) => null), (Func<object, object>)((object o) => null)))
+		};
 
 		private static object ToCode<R>(object x, Expression<Action<R>> expr)
 		{
@@ -474,53 +485,53 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void ArrayIndexer()
 		{
-			Test((Func<int[], int>)((int[] array) => array[0]), (Expression<Func<int[], int>>)((int[] array) => array[0]));
-			Test((Func<int[], int, int>)((int[] array, int index) => array[index]), (Expression<Func<int[], int, int>>)((int[] array, int index) => array[index]));
-			Test((Func<int[,], int>)((int[,] array) => array[0, 5]), (Expression<Func<int[,], int>>)((int[,] array) => array[0, 5]));
-			Test((Func<int[,], int, int>)((int[,] array, int index) => array[index, 7]), (Expression<Func<int[,], int, int>>)((int[,] array, int index) => array[index, 7]));
-			Test((Func<int[][], int, int>)((int[][] array, int index) => array[index][7]), (Expression<Func<int[][], int, int>>)((int[][] array, int index) => array[index][7]));
+			Test<Func<int[], int>>((int[] array) => array[0], (int[] array) => array[0]);
+			Test<Func<int[], int, int>>((int[] array, int index) => array[index], (int[] array, int index) => array[index]);
+			Test<Func<int[,], int>>((int[,] array) => array[0, 5], (int[,] array) => array[0, 5]);
+			Test<Func<int[,], int, int>>((int[,] array, int index) => array[index, 7], (int[,] array, int index) => array[index, 7]);
+			Test<Func<int[][], int, int>>((int[][] array, int index) => array[index][7], (int[][] array, int index) => array[index][7]);
 		}
 
 		public static void ArrayLength()
 		{
-			Test((Func<int[], int>)((int[] array) => array.Length), (Expression<Func<int[], int>>)((int[] array) => array.Length));
-			Test((Func<int>)(() => ((Array)null).Length), (Expression<Func<int>>)(() => ((Array)null).Length));
+			Test<Func<int[], int>>((int[] array) => array.Length, (int[] array) => array.Length);
+			Test<Func<int>>(() => ((Array)null).Length, () => ((Array)null).Length);
 		}
 
 		public static void NewObj()
 		{
-			Test((Func<object>)(() => new SimpleType()), (Expression<Func<object>>)(() => new SimpleType()));
-			Test((Func<object>)(() => new SimpleTypeWithCtor(5)), (Expression<Func<object>>)(() => new SimpleTypeWithCtor(5)));
-			Test((Func<object>)(() => new SimpleTypeWithMultipleCtors()), (Expression<Func<object>>)(() => new SimpleTypeWithMultipleCtors()));
-			Test((Func<object>)(() => new SimpleTypeWithMultipleCtors(5)), (Expression<Func<object>>)(() => new SimpleTypeWithMultipleCtors(5)));
-			Test((Func<object>)(() => new GenericClass<int>()), (Expression<Func<object>>)(() => new GenericClass<int>()));
-			Test((Func<object>)(() => new GenericClassWithCtor<int>()), (Expression<Func<object>>)(() => new GenericClassWithCtor<int>()));
-			Test((Func<object>)(() => new GenericClassWithMultipleCtors<int>(5)), (Expression<Func<object>>)(() => new GenericClassWithMultipleCtors<int>(5)));
+			Test<Func<object>>(() => new SimpleType(), () => new SimpleType());
+			Test<Func<object>>(() => new SimpleTypeWithCtor(5), () => new SimpleTypeWithCtor(5));
+			Test<Func<object>>(() => new SimpleTypeWithMultipleCtors(), () => new SimpleTypeWithMultipleCtors());
+			Test<Func<object>>(() => new SimpleTypeWithMultipleCtors(5), () => new SimpleTypeWithMultipleCtors(5));
+			Test<Func<object>>(() => new GenericClass<int>(), () => new GenericClass<int>());
+			Test<Func<object>>(() => new GenericClassWithCtor<int>(), () => new GenericClassWithCtor<int>());
+			Test<Func<object>>(() => new GenericClassWithMultipleCtors<int>(5), () => new GenericClassWithMultipleCtors<int>(5));
 		}
 
 		public unsafe static void TypeOfExpr()
 		{
-			Test((Func<Type>)(() => typeof(int)), (Expression<Func<Type>>)(() => typeof(int)));
-			Test((Func<Type>)(() => typeof(object)), (Expression<Func<Type>>)(() => typeof(object)));
-			Test((Func<Type>)(() => typeof(List<>)), (Expression<Func<Type>>)(() => typeof(List<>)));
-			Test((Func<Type>)(() => typeof(List<int>)), (Expression<Func<Type>>)(() => typeof(List<int>)));
-			Test((Func<Type>)(() => typeof(int*)), (Expression<Func<Type>>)(() => typeof(int*)));
+			Test<Func<Type>>(() => typeof(int), () => typeof(int));
+			Test<Func<Type>>(() => typeof(object), () => typeof(object));
+			Test<Func<Type>>(() => typeof(List<>), () => typeof(List<>));
+			Test<Func<Type>>(() => typeof(List<int>), () => typeof(List<int>));
+			Test<Func<Type>>(() => typeof(int*), () => typeof(int*));
 		}
 
 		public static void AsTypeExpr()
 		{
-			Test((Func<object, MyClass>)((object obj) => obj as MyClass), (Expression<Func<object, MyClass>>)((object obj) => obj as MyClass));
-			Test((Func<object, GenericClass<object>>)((object obj) => obj as GenericClass<object>), (Expression<Func<object, GenericClass<object>>>)((object obj) => obj as GenericClass<object>));
+			Test<Func<object, MyClass>>((object obj) => obj as MyClass, (object obj) => obj as MyClass);
+			Test<Func<object, GenericClass<object>>>((object obj) => obj as GenericClass<object>, (object obj) => obj as GenericClass<object>);
 		}
 
 		public static void IsTypeExpr()
 		{
-			Test((Func<object, bool>)((object obj) => obj is MyClass), (Expression<Func<object, bool>>)((object obj) => obj is MyClass));
+			Test<Func<object, bool>>((object obj) => obj is MyClass, (object obj) => obj is MyClass);
 		}
 
 		public static void UnaryLogicalOperators()
 		{
-			Test((Func<bool, bool>)((bool a) => !a), (Expression<Func<bool, bool>>)((bool a) => !a));
+			Test<Func<bool, bool>>((bool a) => !a, (bool a) => !a);
 		}
 
 		public static void ConditionalOperator()
@@ -552,55 +563,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void UnaryArithmeticOperators()
 		{
-			Test((Func<int, int>)((int a) => a), (Expression<Func<int, int>>)((int a) => a));
-			Test((Func<int, int>)((int a) => -a), (Expression<Func<int, int>>)((int a) => -a));
+			Test<Func<int, int>>((int a) => a, (int a) => a);
+			Test<Func<int, int>>((int a) => -a, (int a) => -a);
 		}
 
 		public static void BinaryArithmeticOperators()
 		{
-			Test((Func<int, int, int>)((int a, int b) => a + b), (Expression<Func<int, int, int>>)((int a, int b) => a + b));
-			Test((Func<int, int, int>)((int a, int b) => a - b), (Expression<Func<int, int, int>>)((int a, int b) => a - b));
-			Test((Func<int, int, int>)((int a, int b) => a * b), (Expression<Func<int, int, int>>)((int a, int b) => a * b));
-			Test((Func<int, int, int>)((int a, int b) => a / b), (Expression<Func<int, int, int>>)((int a, int b) => a / b));
-			Test((Func<int, int, int>)((int a, int b) => a % b), (Expression<Func<int, int, int>>)((int a, int b) => a % b));
-			Test((Func<long, int, long>)((long a, int b) => a + b), (Expression<Func<long, int, long>>)((long a, int b) => a + (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a - b), (Expression<Func<long, int, long>>)((long a, int b) => a - (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a * b), (Expression<Func<long, int, long>>)((long a, int b) => a * (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a / b), (Expression<Func<long, int, long>>)((long a, int b) => a / (long)b));
-			Test((Func<long, int, long>)((long a, int b) => a % b), (Expression<Func<long, int, long>>)((long a, int b) => a % (long)b));
-			Test((Func<short, int, int>)((short a, int b) => a + b), (Expression<Func<short, int, int>>)((short a, int b) => a + b));
-			Test((Func<int, short, int>)((int a, short b) => a - b), (Expression<Func<int, short, int>>)((int a, short b) => a - b));
-			Test((Func<short, int, int>)((short a, int b) => a * b), (Expression<Func<short, int, int>>)((short a, int b) => a * b));
-			Test((Func<int, short, int>)((int a, short b) => a / b), (Expression<Func<int, short, int>>)((int a, short b) => a / b));
-			Test((Func<short, int, int>)((short a, int b) => a % b), (Expression<Func<short, int, int>>)((short a, int b) => a % b));
+			Test<Func<int, int, int>>((int a, int b) => a + b, (int a, int b) => a + b);
+			Test<Func<int, int, int>>((int a, int b) => a - b, (int a, int b) => a - b);
+			Test<Func<int, int, int>>((int a, int b) => a * b, (int a, int b) => a * b);
+			Test<Func<int, int, int>>((int a, int b) => a / b, (int a, int b) => a / b);
+			Test<Func<int, int, int>>((int a, int b) => a % b, (int a, int b) => a % b);
+			Test<Func<long, int, long>>((long a, int b) => a + b, (long a, int b) => a + (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a - b, (long a, int b) => a - (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a * b, (long a, int b) => a * (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a / b, (long a, int b) => a / (long)b);
+			Test<Func<long, int, long>>((long a, int b) => a % b, (long a, int b) => a % (long)b);
+			Test<Func<short, int, int>>((short a, int b) => a + b, (short a, int b) => a + b);
+			Test<Func<int, short, int>>((int a, short b) => a - b, (int a, short b) => a - b);
+			Test<Func<short, int, int>>((short a, int b) => a * b, (short a, int b) => a * b);
+			Test<Func<int, short, int>>((int a, short b) => a / b, (int a, short b) => a / b);
+			Test<Func<short, int, int>>((short a, int b) => a % b, (short a, int b) => a % b);
 		}
 
 		public static void BitOperators()
 		{
-			Test((Func<int, int>)((int a) => ~a), (Expression<Func<int, int>>)((int a) => ~a));
-			Test((Func<int, int, int>)((int a, int b) => a & b), (Expression<Func<int, int, int>>)((int a, int b) => a & b));
-			Test((Func<int, int, int>)((int a, int b) => a | b), (Expression<Func<int, int, int>>)((int a, int b) => a | b));
-			Test((Func<int, int, int>)((int a, int b) => a ^ b), (Expression<Func<int, int, int>>)((int a, int b) => a ^ b));
+			Test<Func<int, int>>((int a) => ~a, (int a) => ~a);
+			Test<Func<int, int, int>>((int a, int b) => a & b, (int a, int b) => a & b);
+			Test<Func<int, int, int>>((int a, int b) => a | b, (int a, int b) => a | b);
+			Test<Func<int, int, int>>((int a, int b) => a ^ b, (int a, int b) => a ^ b);
 		}
 
 		public static void ShiftOperators()
 		{
-			Test((Func<int, int>)((int a) => a >> 2), (Expression<Func<int, int>>)((int a) => a >> 2));
-			Test((Func<int, int>)((int a) => a << 2), (Expression<Func<int, int>>)((int a) => a << 2));
-			Test((Func<long, long>)((long a) => a >> 2), (Expression<Func<long, long>>)((long a) => a >> 2));
-			Test((Func<long, long>)((long a) => a << 2), (Expression<Func<long, long>>)((long a) => a << 2));
+			Test<Func<int, int>>((int a) => a >> 2, (int a) => a >> 2);
+			Test<Func<int, int>>((int a) => a << 2, (int a) => a << 2);
+			Test<Func<long, long>>((long a) => a >> 2, (long a) => a >> 2);
+			Test<Func<long, long>>((long a) => a << 2, (long a) => a << 2);
 		}
 
 		public static void SimpleExpressions()
 		{
-			Test((Func<int>)(() => 0), (Expression<Func<int>>)(() => 0));
-			Test((Func<int, int>)((int a) => a), (Expression<Func<int, int>>)((int a) => a));
+			Test<Func<int>>(() => 0, () => 0);
+			Test<Func<int, int>>((int a) => a, (int a) => a);
 		}
 
 		public static void Capturing()
 		{
 			int captured = 5;
-			Test((Func<int>)(() => captured), (Expression<Func<int>>)(() => captured));
+			Test<Func<int>>(() => captured, () => captured);
 		}
 
 		public static void FieldAndPropertyAccess()
@@ -619,55 +630,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Call()
 		{
 			ToCode(null, (string a) => Console.WriteLine(a));
-			Test((Func<string, string>)((string a) => a.ToString()), (Expression<Func<string, string>>)((string a) => a.ToString()));
-			Test((Func<int, string>)((int a) => a.ToString()), (Expression<Func<int, string>>)((int a) => a.ToString()));
-			Test((Func<string, char[]>)((string a) => a.ToArray()), (Expression<Func<string, char[]>>)((string a) => a.ToArray()));
-			Test((Func<bool>)(() => 'a'.CompareTo('b') < 0), (Expression<Func<bool>>)(() => 'a'.CompareTo('b') < 0));
+			Test<Func<string, string>>((string a) => a.ToString(), (string a) => a.ToString());
+			Test<Func<int, string>>((int a) => a.ToString(), (int a) => a.ToString());
+			Test<Func<string, char[]>>((string a) => a.ToArray(), (string a) => a.ToArray());
+			Test<Func<bool>>(() => 'a'.CompareTo('b') < 0, () => 'a'.CompareTo('b') < 0);
 		}
 
 		public static void Quote()
 		{
-			Test((Func<bool>)(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null), (Expression<Func<bool>>)(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null));
+			Test<Func<bool>>(() => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null, () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
 		}
 
 		public static void ArrayInitializer()
 		{
-			Test((Func<int[]>)(() => new int[3] {
+			Test<Func<int[]>>(() => new int[3] {
 				1,
 				2,
 				3
-			}), (Expression<Func<int[]>>)(() => new int[3] {
+			}, () => new int[3] {
 				1,
 				2,
 				3
-			}));
-			Test((Func<int[]>)(() => new int[3]), (Expression<Func<int[]>>)(() => new int[3]));
-			Test((Func<int[,]>)(() => new int[3, 5]), (Expression<Func<int[,]>>)(() => new int[3, 5]));
-			Test((Func<int[][]>)(() => new int[3][]), (Expression<Func<int[][]>>)(() => new int[3][]));
-			Test((Func<int[][]>)(() => new int[1][] {
+			});
+			Test<Func<int[]>>(() => new int[3], () => new int[3]);
+			Test<Func<int[,]>>(() => new int[3, 5], () => new int[3, 5]);
+			Test<Func<int[][]>>(() => new int[3][], () => new int[3][]);
+			Test<Func<int[][]>>(() => new int[1][] {
 				new int[3] {
 					1,
 					2,
 					3
 				}
-			}), (Expression<Func<int[][]>>)(() => new int[1][] {
+			}, () => new int[1][] {
 				new int[3] {
 					1,
 					2,
 					3
 				}
-			}));
+			});
 		}
 
 		public static void AnonymousTypes()
 		{
-			Test((Func<object>)(() => new {
+			Test<Func<object>>(() => new {
 				A = 5,
 				B = "Test"
-			}), (Expression<Func<object>>)(() => new {
+			}, () => new {
 				A = 5,
 				B = "Test"
-			}));
+			});
 		}
 
 		public static void ObjectInit()

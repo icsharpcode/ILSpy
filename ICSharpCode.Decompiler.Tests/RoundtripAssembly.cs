@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class RoundtripAssembly
 	{
-		public static readonly string TestDir = Path.GetFullPath(Path.Combine(DecompilerTestBase.TestCasePath, "../../ILSpy-tests"));
+		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
 		static readonly string nunit = Path.Combine(TestDir, "nunit", "nunit3-console.exe");
 		
 		[Test]
@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.Tests
 			try {
 				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.exe");
 			} catch (CompilationFailedException) {
-				Assert.Ignore("C# 7 tuples not yet supported.");
+				Assert.Ignore("C# 7 local functions not yet supported.");
 			}
 		}
 

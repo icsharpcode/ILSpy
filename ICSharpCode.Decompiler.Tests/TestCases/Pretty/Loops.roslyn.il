@@ -694,7 +694,7 @@
     IL_0004:  ret
   } // end of method Loops::TryGetItem
 
-  .method private hidebysig static void  Operation(int32& item) cil managed
+  .method private hidebysig static void  Operation(int32& i) cil managed
   {
     // Code size       2 (0x2)
     .maxstack  8
@@ -2149,6 +2149,186 @@
     IL_004e:  ret
   } // end of method Loops::NestedLoops
 
+  .method public hidebysig instance int32 
+          MultipleExits() cil managed
+  {
+    // Code size       88 (0x58)
+    .maxstack  2
+    .locals init (int32 V_0,
+             bool V_1,
+             int32 V_2,
+             bool V_3,
+             bool V_4,
+             bool V_5,
+             bool V_6)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0049
+
+    IL_0005:  nop
+    IL_0006:  ldloc.0
+    IL_0007:  ldc.i4.4
+    IL_0008:  rem
+    IL_0009:  ldc.i4.0
+    IL_000a:  ceq
+    IL_000c:  stloc.1
+    IL_000d:  ldloc.1
+    IL_000e:  brfalse.s  IL_0015
+
+    IL_0010:  nop
+    IL_0011:  ldc.i4.4
+    IL_0012:  stloc.2
+    IL_0013:  br.s       IL_0056
+
+    IL_0015:  ldloc.0
+    IL_0016:  ldc.i4.7
+    IL_0017:  rem
+    IL_0018:  ldc.i4.0
+    IL_0019:  ceq
+    IL_001b:  stloc.3
+    IL_001c:  ldloc.3
+    IL_001d:  brfalse.s  IL_0022
+
+    IL_001f:  nop
+    IL_0020:  br.s       IL_004e
+
+    IL_0022:  ldloc.0
+    IL_0023:  ldc.i4.s   9
+    IL_0025:  rem
+    IL_0026:  ldc.i4.0
+    IL_0027:  ceq
+    IL_0029:  stloc.s    V_4
+    IL_002b:  ldloc.s    V_4
+    IL_002d:  brfalse.s  IL_0034
+
+    IL_002f:  nop
+    IL_0030:  ldc.i4.5
+    IL_0031:  stloc.2
+    IL_0032:  br.s       IL_0056
+
+    IL_0034:  ldloc.0
+    IL_0035:  ldc.i4.s   11
+    IL_0037:  rem
+    IL_0038:  ldc.i4.0
+    IL_0039:  ceq
+    IL_003b:  stloc.s    V_5
+    IL_003d:  ldloc.s    V_5
+    IL_003f:  brfalse.s  IL_0044
+
+    IL_0041:  nop
+    IL_0042:  br.s       IL_004e
+
+    IL_0044:  ldloc.0
+    IL_0045:  ldc.i4.1
+    IL_0046:  add
+    IL_0047:  stloc.0
+    IL_0048:  nop
+    IL_0049:  ldc.i4.1
+    IL_004a:  stloc.s    V_6
+    IL_004c:  br.s       IL_0005
+
+    IL_004e:  ldc.i4     0x80000000
+    IL_0053:  stloc.2
+    IL_0054:  br.s       IL_0056
+
+    IL_0056:  ldloc.2
+    IL_0057:  ret
+  } // end of method Loops::MultipleExits
+
+  .method public hidebysig instance int32 
+          InterestingLoop() cil managed
+  {
+    // Code size       110 (0x6e)
+    .maxstack  2
+    .locals init (int32 V_0,
+             bool V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4,
+             bool V_5,
+             int32 V_6)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  ldloc.0
+    IL_0004:  ldc.i4.s   11
+    IL_0006:  rem
+    IL_0007:  ldc.i4.0
+    IL_0008:  ceq
+    IL_000a:  stloc.1
+    IL_000b:  ldloc.1
+    IL_000c:  brfalse.s  IL_0066
+
+    IL_000e:  nop
+    IL_000f:  br.s       IL_005a
+
+    IL_0011:  nop
+    IL_0012:  ldloc.0
+    IL_0013:  ldc.i4.4
+    IL_0014:  rem
+    IL_0015:  ldc.i4.0
+    IL_0016:  ceq
+    IL_0018:  stloc.2
+    IL_0019:  ldloc.2
+    IL_001a:  brfalse.s  IL_0053
+
+    IL_001c:  nop
+    IL_001d:  ldloc.0
+    IL_001e:  ldc.i4.7
+    IL_001f:  rem
+    IL_0020:  ldc.i4.0
+    IL_0021:  cgt.un
+    IL_0023:  stloc.3
+    IL_0024:  ldloc.3
+    IL_0025:  brfalse.s  IL_0035
+
+    IL_0027:  nop
+    IL_0028:  ldstr      "!7"
+    IL_002d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0032:  nop
+    IL_0033:  br.s       IL_005f
+
+    IL_0035:  ldloc.0
+    IL_0036:  ldc.i4.s   11
+    IL_0038:  rem
+    IL_0039:  ldc.i4.0
+    IL_003a:  cgt.un
+    IL_003c:  stloc.s    V_4
+    IL_003e:  ldloc.s    V_4
+    IL_0040:  brfalse.s  IL_0050
+
+    IL_0042:  nop
+    IL_0043:  ldstr      "7"
+    IL_0048:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004d:  nop
+    IL_004e:  br.s       IL_005f
+
+    IL_0050:  nop
+    IL_0051:  br.s       IL_0059
+
+    IL_0053:  nop
+    IL_0054:  ldloc.0
+    IL_0055:  ldc.i4.1
+    IL_0056:  add
+    IL_0057:  stloc.0
+    IL_0058:  nop
+    IL_0059:  nop
+    IL_005a:  ldc.i4.1
+    IL_005b:  stloc.s    V_5
+    IL_005d:  br.s       IL_0011
+
+    IL_005f:  ldc.i4     0x80000000
+    IL_0064:  stloc.0
+    IL_0065:  nop
+    IL_0066:  ldloc.0
+    IL_0067:  stloc.s    V_6
+    IL_0069:  br.s       IL_006b
+
+    IL_006b:  ldloc.s    V_6
+    IL_006d:  ret
+  } // end of method Loops::InterestingLoop
+
   .method private hidebysig instance bool 
           Condition(string arg) cil managed
   {
@@ -2249,6 +2429,84 @@
     IL_0095:  nop
     IL_0096:  ret
   } // end of method Loops::WhileLoop
+
+  .method public hidebysig instance void 
+          DoWhileLoop() cil managed
+  {
+    // Code size       149 (0x95)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4)
+    IL_0000:  nop
+    IL_0001:  ldstr      "Initial"
+    IL_0006:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000b:  nop
+    IL_000c:  ldarg.0
+    IL_000d:  ldstr      "if"
+    IL_0012:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0017:  stloc.0
+    IL_0018:  ldloc.0
+    IL_0019:  brfalse.s  IL_0089
+
+    IL_001b:  nop
+    IL_001c:  nop
+    IL_001d:  ldstr      "Loop Body"
+    IL_0022:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0027:  nop
+    IL_0028:  ldarg.0
+    IL_0029:  ldstr      "test"
+    IL_002e:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0033:  stloc.1
+    IL_0034:  ldloc.1
+    IL_0035:  brfalse.s  IL_0060
+
+    IL_0037:  nop
+    IL_0038:  ldarg.0
+    IL_0039:  ldstr      "continue"
+    IL_003e:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0043:  stloc.2
+    IL_0044:  ldloc.2
+    IL_0045:  brfalse.s  IL_004a
+
+    IL_0047:  nop
+    IL_0048:  br.s       IL_006c
+
+    IL_004a:  ldarg.0
+    IL_004b:  ldstr      "break"
+    IL_0050:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0055:  ldc.i4.0
+    IL_0056:  ceq
+    IL_0058:  stloc.3
+    IL_0059:  ldloc.3
+    IL_005a:  brfalse.s  IL_005f
+
+    IL_005c:  nop
+    IL_005d:  br.s       IL_007d
+
+    IL_005f:  nop
+    IL_0060:  ldstr      "End of loop body"
+    IL_0065:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_006a:  nop
+    IL_006b:  nop
+    IL_006c:  ldarg.0
+    IL_006d:  ldstr      "while"
+    IL_0072:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0077:  stloc.s    V_4
+    IL_0079:  ldloc.s    V_4
+    IL_007b:  brtrue.s   IL_001c
+
+    IL_007d:  ldstr      "After loop"
+    IL_0082:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0087:  nop
+    IL_0088:  nop
+    IL_0089:  ldstr      "End of method"
+    IL_008e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0093:  nop
+    IL_0094:  ret
+  } // end of method Loops::DoWhileLoop
 
   .method public hidebysig instance void 
           ForLoop() cil managed
@@ -2493,6 +2751,231 @@
     }  // end handler
     IL_0043:  ret
   } // end of method Loops::ForeachLoopWithEarlyReturn
+
+  .method public hidebysig instance void 
+          NestedForeach(class [mscorlib]System.Collections.Generic.List`1<object> items1,
+                        class [mscorlib]System.Collections.Generic.List`1<object> items2) cil managed
+  {
+    // Code size       141 (0x8d)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object> V_0,
+             object V_1,
+             bool V_2,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object> V_3,
+             object V_4,
+             bool V_5,
+             bool V_6)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<object>::GetEnumerator()
+    IL_0008:  stloc.0
+    .try
+    {
+      IL_0009:  br.s       IL_0067
+
+      IL_000b:  ldloca.s   V_0
+      IL_000d:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::get_Current()
+      IL_0012:  stloc.1
+      IL_0013:  nop
+      IL_0014:  ldc.i4.0
+      IL_0015:  stloc.2
+      IL_0016:  nop
+      IL_0017:  ldarg.2
+      IL_0018:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<object>::GetEnumerator()
+      IL_001d:  stloc.3
+      .try
+      {
+        IL_001e:  br.s       IL_003b
+
+        IL_0020:  ldloca.s   V_3
+        IL_0022:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::get_Current()
+        IL_0027:  stloc.s    V_4
+        IL_0029:  nop
+        IL_002a:  ldloc.s    V_4
+        IL_002c:  ldloc.1
+        IL_002d:  ceq
+        IL_002f:  stloc.s    V_5
+        IL_0031:  ldloc.s    V_5
+        IL_0033:  brfalse.s  IL_003a
+
+        IL_0035:  nop
+        IL_0036:  ldc.i4.1
+        IL_0037:  stloc.2
+        IL_0038:  br.s       IL_0044
+
+        IL_003a:  nop
+        IL_003b:  ldloca.s   V_3
+        IL_003d:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
+        IL_0042:  brtrue.s   IL_0020
+
+        IL_0044:  leave.s    IL_0055
+
+      }  // end .try
+      finally
+      {
+        IL_0046:  ldloca.s   V_3
+        IL_0048:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
+        IL_004e:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+        IL_0053:  nop
+        IL_0054:  endfinally
+      }  // end handler
+      IL_0055:  ldloc.2
+      IL_0056:  ldc.i4.0
+      IL_0057:  ceq
+      IL_0059:  stloc.s    V_6
+      IL_005b:  ldloc.s    V_6
+      IL_005d:  brfalse.s  IL_0066
+
+      IL_005f:  ldloc.1
+      IL_0060:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_0065:  nop
+      IL_0066:  nop
+      IL_0067:  ldloca.s   V_0
+      IL_0069:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
+      IL_006e:  brtrue.s   IL_000b
+
+      IL_0070:  leave.s    IL_0081
+
+    }  // end .try
+    finally
+    {
+      IL_0072:  ldloca.s   V_0
+      IL_0074:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
+      IL_007a:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_007f:  nop
+      IL_0080:  endfinally
+    }  // end handler
+    IL_0081:  ldstr      "end"
+    IL_0086:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_008b:  nop
+    IL_008c:  ret
+  } // end of method Loops::NestedForeach
+
+  .method public hidebysig instance void 
+          MergeAroundContinue() cil managed
+  {
+    // Code size       144 (0x90)
+    .maxstack  2
+    .locals init (int32 V_0,
+             bool V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4,
+             bool V_5,
+             bool V_6,
+             bool V_7,
+             bool V_8)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0079
+
+    IL_0005:  nop
+    IL_0006:  ldloc.0
+    IL_0007:  ldc.i4.3
+    IL_0008:  rem
+    IL_0009:  ldc.i4.0
+    IL_000a:  ceq
+    IL_000c:  stloc.1
+    IL_000d:  ldloc.1
+    IL_000e:  brfalse.s  IL_0021
+
+    IL_0010:  nop
+    IL_0011:  ldloc.0
+    IL_0012:  ldc.i4.6
+    IL_0013:  ceq
+    IL_0015:  ldc.i4.0
+    IL_0016:  ceq
+    IL_0018:  stloc.2
+    IL_0019:  ldloc.2
+    IL_001a:  brfalse.s  IL_001e
+
+    IL_001c:  br.s       IL_0075
+
+    IL_001e:  nop
+    IL_001f:  br.s       IL_006d
+
+    IL_0021:  ldloc.0
+    IL_0022:  ldc.i4.5
+    IL_0023:  rem
+    IL_0024:  ldc.i4.0
+    IL_0025:  ceq
+    IL_0027:  stloc.3
+    IL_0028:  ldloc.3
+    IL_0029:  brfalse.s  IL_003e
+
+    IL_002b:  nop
+    IL_002c:  ldloc.0
+    IL_002d:  ldc.i4.5
+    IL_002e:  ceq
+    IL_0030:  ldc.i4.0
+    IL_0031:  ceq
+    IL_0033:  stloc.s    V_4
+    IL_0035:  ldloc.s    V_4
+    IL_0037:  brfalse.s  IL_003b
+
+    IL_0039:  br.s       IL_0075
+
+    IL_003b:  nop
+    IL_003c:  br.s       IL_006d
+
+    IL_003e:  ldloc.0
+    IL_003f:  ldc.i4.7
+    IL_0040:  rem
+    IL_0041:  ldc.i4.0
+    IL_0042:  ceq
+    IL_0044:  stloc.s    V_5
+    IL_0046:  ldloc.s    V_5
+    IL_0048:  brfalse.s  IL_005d
+
+    IL_004a:  nop
+    IL_004b:  ldloc.0
+    IL_004c:  ldc.i4.7
+    IL_004d:  ceq
+    IL_004f:  ldc.i4.0
+    IL_0050:  ceq
+    IL_0052:  stloc.s    V_6
+    IL_0054:  ldloc.s    V_6
+    IL_0056:  brfalse.s  IL_005a
+
+    IL_0058:  br.s       IL_0075
+
+    IL_005a:  nop
+    IL_005b:  br.s       IL_006d
+
+    IL_005d:  ldloc.0
+    IL_005e:  ldc.i4.s   11
+    IL_0060:  rem
+    IL_0061:  ldc.i4.0
+    IL_0062:  ceq
+    IL_0064:  stloc.s    V_7
+    IL_0066:  ldloc.s    V_7
+    IL_0068:  brfalse.s  IL_006d
+
+    IL_006a:  nop
+    IL_006b:  br.s       IL_0075
+
+    IL_006d:  ldloc.0
+    IL_006e:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0073:  nop
+    IL_0074:  nop
+    IL_0075:  ldloc.0
+    IL_0076:  ldc.i4.1
+    IL_0077:  add
+    IL_0078:  stloc.0
+    IL_0079:  ldloc.0
+    IL_007a:  ldc.i4.s   20
+    IL_007c:  clt
+    IL_007e:  stloc.s    V_8
+    IL_0080:  ldloc.s    V_8
+    IL_0082:  brtrue.s   IL_0005
+
+    IL_0084:  ldstr      "end"
+    IL_0089:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_008e:  nop
+    IL_008f:  ret
+  } // end of method Loops::MergeAroundContinue
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class PrettyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Pretty";
+		static readonly string TestCasePath = Tester.TestCasePath + "/Pretty";
 
 		[Test]
 		public void AllFilesHaveTests()
@@ -106,7 +106,9 @@ namespace ICSharpCode.Decompiler.Tests
 		public void ExceptionHandling([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
-				NullPropagation = false
+				NullPropagation = false,
+				// legacy csc generates a dead store in debug builds
+				RemoveDeadCode = (cscOptions == CSharpCompilerOptions.None)
 			});
 		}
 
@@ -161,7 +163,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Loops([ValueSource("defaultOptionsWithMcs")] CSharpCompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				// legacy csc generates a dead store in debug builds
+				RemoveDeadCode = (cscOptions == CSharpCompilerOptions.None)
+			});
 		}
 
 		[Test]
@@ -209,6 +214,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void InitializerTests([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void DynamicTests([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
@@ -293,6 +304,30 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void Issue1080([ValueSource(nameof(roslynOnlyOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void AssemblyCustomAttributes([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomAttributes([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomAttributeConflicts([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void CustomAttributeSamples([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}

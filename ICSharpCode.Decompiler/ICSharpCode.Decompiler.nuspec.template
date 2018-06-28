@@ -6,9 +6,9 @@
     <title>ILSpy Decompiler Engine</title>
     <authors>Daniel Grunwald, David Srbecky, Ed Harvey, Siegfried Pammer</authors>
     <owners>Daniel Grunwald, SharpDevelop</owners>
-    <licenseUrl>http://www.opensource.org/licenses/mit-license.php</licenseUrl>
+    <licenseUrl>https://opensource.org/licenses/mit-license.php</licenseUrl>
     <projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>
-    <iconUrl>http://ilspy.net/images/icon32.png</iconUrl>
+    <iconUrl>https://ilspy.net/images/icon32.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</description>
     <!--<releaseNotes></releaseNotes>-->

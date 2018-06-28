@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (invocation == null)
 				return null;
 			MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
-			if (mre == null)
+			if (mre == null || IsNullConditional(mre.Target))
 				return null;
 			switch (mre.MemberName) {
 				case "Select":
@@ -134,6 +134,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						string parameterName;
 						Expression collectionSelector;
 						if (!MatchSimpleLambda(invocation.Arguments.ElementAt(0), out parameterName, out collectionSelector))
+							return null;
+						if (IsNullConditional(collectionSelector))
 							return null;
 						LambdaExpression lambda = invocation.Arguments.ElementAt(1) as LambdaExpression;
 						if (lambda != null && lambda.Parameters.Count == 2 && lambda.Body is Expression) {
@@ -210,6 +212,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return null;
 						Expression source1 = mre.Target;
 						Expression source2 = invocation.Arguments.ElementAt(0);
+						if (IsNullConditional(source2))
+							return null;
 						string elementName1, elementName2;
 						Expression key1, key2;
 						if (!MatchSimpleLambda(invocation.Arguments.ElementAt(1), out elementName1, out key1))
@@ -241,6 +245,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return null;
 			}
+		}
+
+		bool IsNullConditional(Expression target)
+		{
+			return target is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional;
 		}
 
 		/// <summary>

@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler
 				anonymousMethods = false;
 				liftNullables = false;
 				yieldReturn = false;
+				useImplicitMethodGroupConversion = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
 				anonymousTypes = false;
@@ -62,7 +63,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
 				dynamic = false;
 				namedArguments = false;
-				// * named and optional arguments (not supported yet)
+				// * optional arguments (not supported yet)
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
 				asyncAwait = false;
@@ -73,6 +74,7 @@ namespace ICSharpCode.Decompiler
 				nullPropagation = false;
 				stringInterpolation = false;
 				dictionaryInitializers = false;
+				extensionMethodsInCollectionInitializers = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7) {
 				outVariables = false;
@@ -395,6 +397,24 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysCastTargetsOfExplicitInterfaceImplementationCalls = false;
+
+		/// <summary>
+		/// Gets/Sets whether to always cast targets to explicitly implemented methods.
+		/// true: <c>((ISupportInitialize)pictureBox1).BeginInit();</c>
+		/// false: <c>pictureBox1.BeginInit();</c>
+		/// default: false
+		/// </summary>
+		public bool AlwaysCastTargetsOfExplicitInterfaceImplementationCalls {
+			get { return alwaysCastTargetsOfExplicitInterfaceImplementationCalls; }
+			set {
+				if (alwaysCastTargetsOfExplicitInterfaceImplementationCalls != value) {
+					alwaysCastTargetsOfExplicitInterfaceImplementationCalls = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool fullyQualifyAmbiguousTypeNames = true;
 
 		public bool FullyQualifyAmbiguousTypeNames {
@@ -467,6 +487,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (dictionaryInitializers != value) {
 					dictionaryInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool extensionMethodsInCollectionInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 Extension Add methods in collection initializers.
+		/// Only has an effect if ObjectOrCollectionInitializers is enabled.
+		/// </summary>
+		public bool ExtensionMethodsInCollectionInitializers {
+			get { return extensionMethodsInCollectionInitializers; }
+			set {
+				if (extensionMethodsInCollectionInitializers != value) {
+					extensionMethodsInCollectionInitializers = value;
 					OnPropertyChanged();
 				}
 			}

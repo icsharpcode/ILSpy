@@ -161,11 +161,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return new DefaultValue(elementType);
 			}
 		}
-		
+
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int instructionsToRemove)
+		internal static bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			values = null;

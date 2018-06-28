@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Microsoft.VisualStudio.Shell;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -13,18 +14,24 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		{
 		}
 
+		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
+		{
+			if (sender is OleMenuCommand menuItem) {
+				menuItem.Visible = false;
+
+				var selectedItem = owner.DTE.SelectedItems.Item(1);
+				menuItem.Visible = (ProjectItemForILSpy.Detect(owner, selectedItem) != null);
+			}
+		}
+
 		protected override void OnExecute(object sender, EventArgs e)
 		{
-			if (owner.DTE.SelectedItems.Count != 1) return;
-			var project = owner.DTE.SelectedItems.Item(1).Project;
-			var roslynProject = owner.Workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == project.FileName);
-			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
-			//get the directory path based on the project file.
-			string projectPath = Path.GetDirectoryName(project.FullName);
-			//get the output path based on the active configuration
-			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
-			//combine the project path and output path to get the bin path
-			OpenAssembliesInILSpy(new[] { Path.Combine(projectPath, projectOutputPath, outputFileName) });
+			if (owner.DTE.SelectedItems.Count != 1)
+				return;
+			var projectItemWrapper = ProjectItemForILSpy.Detect(owner, owner.DTE.SelectedItems.Item(1));
+			if (projectItemWrapper != null) {
+				OpenAssembliesInILSpy(projectItemWrapper.GetILSpyParameters(owner));
+			}
 		}
 
 		internal static void Register(ILSpyAddInPackage owner)

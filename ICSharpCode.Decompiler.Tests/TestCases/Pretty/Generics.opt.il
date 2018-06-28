@@ -188,6 +188,14 @@
     IL_001f:  ret
   } // end of method Generics::New
 
+  .method public hidebysig instance !!T  NotNew<T>() cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  call       !!0 [mscorlib]System.Activator::CreateInstance<!!0>()
+    IL_0005:  ret
+  } // end of method Generics::NotNew
+
   .method public hidebysig instance bool 
           IsNull<T>(!!T t) cil managed
   {

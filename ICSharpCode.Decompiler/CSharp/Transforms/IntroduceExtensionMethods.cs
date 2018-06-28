@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -136,8 +137,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (!CanTransformToExtensionMethodCall(resolver, method, typeArguments, target, args, argNames))
 				return;
-			if (firstArgument is NullReferenceExpression)
+			if (firstArgument is NullReferenceExpression) {
+				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
+			}
 			if (invocationExpression.Target is IdentifierExpression identifierExpression) {
 				identifierExpression.Detach();
 				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
@@ -157,6 +160,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (or == null || or.IsAmbiguous)
 				return false;
 			return method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments());
+		}
+
+		public static bool CanTransformToExtensionMethodCall(IMethod method, CSharpTypeResolveContext resolveContext, bool ignoreTypeArguments = false, bool ignoreArgumentNames = true)
+		{
+			if (method.Parameters.Count == 0) return false;
+			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
+			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
+			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectArray(p => p.Name);
+			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
+			var resolver = new CSharpResolver(resolveContext);
+			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);
 		}
 	}
 }

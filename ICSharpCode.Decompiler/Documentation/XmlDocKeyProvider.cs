@@ -344,7 +344,15 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 				}
 			}
-			return default(TypeDefinition);
+			// TODO : add support for type forwarders
+			//foreach (var h in metadata.ExportedTypes) {
+			//	var exportedType = metadata.GetExportedType(h);
+			//	if (metadata.StringComparer.Equals(exportedType.Name, name) && exportedType.Namespace == ns) {
+			//		type = exportedType.Resolve();
+			//		break;
+			//	}
+			//}
+			return default;
 		}
 		#endregion
 	}

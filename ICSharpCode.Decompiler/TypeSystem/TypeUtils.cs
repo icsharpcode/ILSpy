@@ -196,6 +196,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				memoryType = ((TypeWithElementType)pointerType).ElementType;
 			else
 				return false;
+			memoryType = memoryType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			accessType = accessType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 			if (memoryType.Equals(accessType))
 				return true;
 			// If the types are not equal, the access still might produce equal results in some cases:

@@ -64,17 +64,25 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						return Primary;
 					case UnaryOperatorType.NullConditionalRewrap:
 						return NullableRewrap;
+					case UnaryOperatorType.IsTrue:
+						return Conditional;
 					default:
 						return Unary;
 				}
 			}
 			if (expr is CastExpression)
 				return Unary;
-			if (expr is PrimitiveExpression) {
-				var value = ((PrimitiveExpression)expr).Value;
-				if (value is int && (int)value < 0)
+			if (expr is PrimitiveExpression primitive) {
+				var value = primitive.Value;
+				if (value is int i && i < 0)
 					return Unary;
-				if (value is long && (long)value < 0)
+				if (value is long l && l < 0)
+					return Unary;
+				if (value is float f && f < 0)
+					return Unary;
+				if (value is double d && d < 0)
+					return Unary;
+				if (value is decimal de && de < 0)
 					return Unary;
 			}
 			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
@@ -264,12 +272,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (InsertParenthesesForReadability && precedence < Equality) {
 					// In readable mode, boost the priority of the left-hand side if the operator
 					// there isn't the same as the operator on this expression.
+					int boostTo = IsBitwise(binaryOperatorExpression.Operator) ? Unary : Equality;
 					if (GetBinaryOperatorType(binaryOperatorExpression.Left) == binaryOperatorExpression.Operator) {
 						ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence);
 					} else {
-						ParenthesizeIfRequired(binaryOperatorExpression.Left, Equality);
+						ParenthesizeIfRequired(binaryOperatorExpression.Left, boostTo);
 					}
-					ParenthesizeIfRequired(binaryOperatorExpression.Right, Equality);
+					ParenthesizeIfRequired(binaryOperatorExpression.Right, boostTo);
 				} else {
 					// all other binary operators are left-associative
 					ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence);
@@ -278,7 +287,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			base.VisitBinaryOperatorExpression(binaryOperatorExpression);
 		}
-		
+
+		static bool IsBitwise(BinaryOperatorType op)
+		{
+			return op == BinaryOperatorType.BitwiseAnd
+				|| op == BinaryOperatorType.BitwiseOr
+				|| op == BinaryOperatorType.ExclusiveOr;
+		}
+
 		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
 		{
 			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;

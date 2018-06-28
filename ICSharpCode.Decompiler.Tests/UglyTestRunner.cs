@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture, Parallelizable(ParallelScope.All)]
 	public class UglyTestRunner
 	{
-		static readonly string TestCasePath = DecompilerTestBase.TestCasePath + "/Ugly";
+		static readonly string TestCasePath = Tester.TestCasePath + "/Ugly";
 
 		[Test]
 		public void AllFilesHaveTests()

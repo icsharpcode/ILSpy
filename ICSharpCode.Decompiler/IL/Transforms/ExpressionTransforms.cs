@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -35,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		internal StatementTransformContext context;
 
-		public static void RunOnSingleStatment(ILInstruction statement, ILTransformContext context)
+		public static void RunOnSingleStatement(ILInstruction statement, ILTransformContext context)
 		{
 			if (statement == null)
 				throw new ArgumentNullException(nameof(statement));
@@ -302,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 			TransformAssignment.HandleCompoundAssign(inst, context);
-			}
+		}
 
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
@@ -329,6 +330,115 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (new NullableLiftingTransform(context).Run(inst))
 				return;
+
+			if (TransformDynamicAddAssignOrRemoveAssign(inst))
+				return;
+		}
+
+		/// <summary>
+		/// op is either add or remove/subtract:
+		/// if (dynamic.isevent (target)) {
+		///     dynamic.invokemember.invokespecial.discard op_Name(target, value)
+		/// } else {
+		///     dynamic.compound.op (dynamic.getmember Name(target), value)
+		/// }
+		/// =>
+		/// dynamic.compound.op (dynamic.getmember Name(target), value)
+		/// </summary>
+		bool TransformDynamicAddAssignOrRemoveAssign(IfInstruction inst)
+		{
+			if (!inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
+				return false;
+			if (!(condition is DynamicIsEventInstruction isEvent))
+				return false;
+			trueInst = Block.Unwrap(trueInst);
+			falseInst = Block.Unwrap(falseInst);
+			if (!(falseInst is DynamicCompoundAssign dynamicCompoundAssign))
+				return false;
+			if (!(dynamicCompoundAssign.Target is DynamicGetMemberInstruction getMember))
+				return false;
+			if (!isEvent.Argument.Match(getMember.Target).Success)
+				return false;
+			if (!SemanticHelper.IsPure(isEvent.Argument.Flags))
+				return false;
+			if (!(trueInst is DynamicInvokeMemberInstruction invokeMember))
+				return false;
+			if (!(invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSpecialName) && invokeMember.BinderFlags.HasFlag(CSharpBinderFlags.ResultDiscarded)))
+				return false;
+			switch (dynamicCompoundAssign.Operation) {
+				case ExpressionType.AddAssign:
+					if (invokeMember.Name != "add_" + getMember.Name)
+						return false;
+					break;
+				case ExpressionType.SubtractAssign:
+					if (invokeMember.Name != "remove_" + getMember.Name)
+						return false;
+					break;
+				default:
+					return false;
+			}
+			if (!dynamicCompoundAssign.Value.Match(invokeMember.Arguments[1]).Success)
+				return false;
+			if (!invokeMember.Arguments[0].Match(getMember.Target).Success)
+				return false;
+			context.Step("+= / -= dynamic.isevent pattern -> dynamic.compound.op", inst);
+			inst.ReplaceWith(dynamicCompoundAssign);
+			return true;
+		}
+
+		/// <summary>
+		/// dynamic.setmember.compound Name(target, dynamic.binary.operator op(dynamic.getmember Name(target), value))
+		/// =>
+		/// dynamic.compound.op (dynamic.getmember Name(target), value)
+		/// </summary>
+		protected internal override void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
+		{
+			base.VisitDynamicSetMemberInstruction(inst);
+
+			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
+				return;
+			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp))
+				return;
+			if (!(binaryOp.Left is DynamicGetMemberInstruction dynamicGetMember))
+				return;
+			if (!dynamicGetMember.Target.Match(inst.Target).Success)
+				return;
+			if (!SemanticHelper.IsPure(dynamicGetMember.Target.Flags))
+				return;
+			if (inst.Name != dynamicGetMember.Name || !DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
+				return;
+			context.Step("dynamic.setmember.compound -> dynamic.compound.op", inst);
+			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
+		}
+
+		/// <summary>
+		/// dynamic.setindex.compound(target, index, dynamic.binary.operator op(dynamic.getindex(target, index), value))
+		/// =>
+		/// dynamic.compound.op (dynamic.getindex(target, index), value)
+		/// </summary>
+		protected internal override void VisitDynamicSetIndexInstruction(DynamicSetIndexInstruction inst)
+		{
+			base.VisitDynamicSetIndexInstruction(inst);
+
+			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
+				return;
+			if (!(inst.Arguments.LastOrDefault() is DynamicBinaryOperatorInstruction binaryOp))
+				return;
+			if (!(binaryOp.Left is DynamicGetIndexInstruction dynamicGetIndex))
+				return;
+			if (inst.Arguments.Count != dynamicGetIndex.Arguments.Count + 1)
+				return;
+			// Ensure that same arguments are passed to dynamicGetIndex and inst:
+			for (int j = 0; j < dynamicGetIndex.Arguments.Count; j++) {
+				if (!SemanticHelper.IsPure(dynamicGetIndex.Arguments[j].Flags))
+					return;
+				if (!dynamicGetIndex.Arguments[j].Match(dynamicGetIndex.Arguments[j]).Success)
+					return;
+			}
+			if (!DynamicCompoundAssign.IsExpressionTypeSupported(binaryOp.Operation))
+				return;
+			context.Step("dynamic.setindex.compound -> dynamic.compound.op", inst);
+			inst.ReplaceWith(new DynamicCompoundAssign(binaryOp.Operation, binaryOp.BinderFlags, binaryOp.Left, binaryOp.LeftArgumentInfo, binaryOp.Right, binaryOp.RightArgumentInfo));
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)

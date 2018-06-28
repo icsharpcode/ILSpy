@@ -14,6 +14,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			event Action Event;
 		}
 
+		private abstract class BaseClass
+		{
+			public abstract event EventHandler ThisIsAnAbstractEvent;
+		}
+
+		private class OtherClass : BaseClass
+		{
+			public override event EventHandler ThisIsAnAbstractEvent;
+		}
+
 		private class Impl : IBase
 		{
 			int IBase.Test {
@@ -28,6 +38,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				add {
 				}
 				remove {
+				}
+			}
+		}
+
+		private interface IChange
+		{
+			int Property {
+				get;
+				set;
+			}
+
+			event EventHandler Changed;
+		}
+
+		private class Change : IChange
+		{
+			private EventHandler Changed;
+
+			int IChange.Property {
+				get;
+				set;
+			}
+
+			event EventHandler IChange.Changed {
+				add {
+					Changed = (EventHandler)Delegate.Combine(Changed, value);
+				}
+				remove {
+					Changed = (EventHandler)Delegate.Remove(Changed, value);
 				}
 			}
 		}

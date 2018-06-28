@@ -260,6 +260,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
+				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
+					.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
+					.Where(arg => !string.IsNullOrWhiteSpace(arg))
+					.Except(currentFieldNames).ToList();
+				if (proposedNameForAddress.Count > 0) {
+					proposedName = proposedNameForAddress[0];
+				}
+			}
+			if (string.IsNullOrEmpty(proposedName)) {
 				var proposedNameForStores = variable.StoreInstructions.OfType<StLoc>()
 					.Select(expr => GetNameFromInstruction(expr.Value))
 					.Except(currentFieldNames).ToList();
@@ -366,7 +375,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = "array";
 			} else if (type is PointerType) {
 				name = "ptr";
-			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown) {
+			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown || type.Kind == TypeKind.Dynamic) {
 				name = "val";
 			} else if (type.Kind == TypeKind.ByReference) {
 				name = "reference";

@@ -3,7 +3,7 @@
 $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
 
-$masterBranches = @("master", "3.0.x", "3.1.x");
+$masterBranches = @("master", "3.2.x");
 
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 
@@ -67,7 +67,8 @@ $templateFiles = (
 	@{Input=$globalAssemblyInfoTemplateFile; Output="ILSpy/Properties/AssemblyInfo.cs"},
 	@{Input="ICSharpCode.Decompiler/Properties/AssemblyInfo.template.cs"; Output="ICSharpCode.Decompiler/Properties/AssemblyInfo.cs"},
 	@{Input="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec.template"; Output="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec"},
-	@{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"}
+    @{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"},
+    @{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"}
 );
 [string]$mutexId = "ILSpyUpdateAssemblyInfo" + (Get-Location).ToString().GetHashCode();
 Write-Host $mutexId;

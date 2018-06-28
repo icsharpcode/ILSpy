@@ -31,6 +31,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestParamsMethod();
 			Generics();
 			ConstructorTest();
+			TestIndexer();
 		}
 
 		#region ConstructorTest
@@ -182,5 +183,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("GenericsTest<" + typeof(T).Name + ">(object: " + x + ");");
 		}
 		#endregion
+
+		#region IndexerTests
+		static void TestIndexer()
+		{
+			var obj = new IndexerTests();
+			Console.WriteLine(obj[(object)5]);
+			obj[(object)5] = null;
+			Console.WriteLine(obj[5]);
+			obj[5] = null;
+		}
+		#endregion
+	}
+
+	class IndexerTests
+	{
+		public object this[object key] {
+			get {
+				Console.WriteLine("IndexerTests.get_Item(object key)");
+				return new object();
+			}
+			set {
+				Console.WriteLine("IndexerTests.set_Item(object key, object value)");
+			}
+		}
+
+		public object this[int key] {
+			get {
+				Console.WriteLine("IndexerTests.get_Item(int key)");
+				return new object();
+			}
+			set {
+				Console.WriteLine("IndexerTests.set_Item(int key, object value)");
+			}
+		}
 	}
 }

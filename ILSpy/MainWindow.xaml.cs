@@ -290,7 +290,9 @@ namespace ICSharpCode.ILSpy
 							var mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
 							if (!mr.IsNil) {
 								found = true;
-								JumpToReference(mr);
+								// Defer JumpToReference call to allow an assembly that was loaded while
+								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
+								Dispatcher.BeginInvoke(new Action(() => JumpToReference(mr)), DispatcherPriority.Loaded);
 								break;
 							}
 						}
@@ -337,6 +339,9 @@ namespace ICSharpCode.ILSpy
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
+#if DEBUG
+			this.Title = $"ILSpy {RevisionClass.FullVersion}";
+#endif
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)

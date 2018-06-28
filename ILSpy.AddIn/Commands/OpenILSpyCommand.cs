@@ -6,11 +6,38 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
+	public class ILSpyParameters
+	{
+		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
+		{
+			this.AssemblyFileNames = assemblyFileNames;
+			this.Arguments = arguments;
+		}
+
+		public IEnumerable<string> AssemblyFileNames { get; private set; }
+		public string[] Arguments { get; private set; }
+	}
+
+	public class DetectedReference
+	{
+		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
+		{
+			this.Name = name;
+			this.AssemblyFile = assemblyFile;
+			this.IsProjectReference = isProjectReference;
+		}
+
+		public string Name { get; private set; }
+		public string AssemblyFile { get; private set; }
+		public bool IsProjectReference { get; private set; }
+	}
+
 	abstract class ILSpyCommand
 	{
 		protected ILSpyAddInPackage owner;
@@ -36,53 +63,69 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			return Path.Combine(basePath, "ILSpy.exe");
 		}
 
-		protected void OpenAssembliesInILSpy(IEnumerable<string> assemblyFileNames, params string[] arguments)
+		protected void OpenAssembliesInILSpy(ILSpyParameters parameters)
 		{
-			foreach (string assemblyFileName in assemblyFileNames) {
+			if (parameters == null)
+				return;
+
+			foreach (string assemblyFileName in parameters.AssemblyFileNames) {
 				if (!File.Exists(assemblyFileName)) {
 					owner.ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
 					return;
 				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileNames.ToArray());
-			if (arguments != null) {
-				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
+			string commandLineArguments = Utils.ArgumentArrayToCommandLine(parameters.AssemblyFileNames.ToArray());
+			if (parameters.Arguments != null) {
+				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(parameters.Arguments));
 			}
 
 			System.Diagnostics.Process.Start(GetILSpyPath(), commandLineArguments);
 		}
 
-		protected string GetProjectOutputPath(EnvDTE.Project project, Microsoft.CodeAnalysis.Project roslynProject)
+		protected Dictionary<string, DetectedReference> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
 		{
-			string outputFileName = Path.GetFileName(roslynProject.OutputFilePath);
-			//get the directory path based on the project file.
-			string projectPath = Path.GetDirectoryName(project.FullName);
-			//get the output path based on the active configuration
-			string projectOutputPath = project.ConfigurationManager.ActiveConfiguration.Properties.Item("OutputPath").Value.ToString();
-			//combine the project path and output path to get the bin path
-			return Path.Combine(projectPath, projectOutputPath, outputFileName);
-		}
-
-		protected Dictionary<string, string> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
-		{
-			var dict = new Dictionary<string, string>();
+			var dict = new Dictionary<string, DetectedReference>();
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
+					string assemblyName = assemblyDef.Name.Name;
 					if (IsReferenceAssembly(assemblyDef)) {
-						dict.Add(assemblyDef.Name.Name, GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDef.FullName)));
+						string resolvedAssemblyFile = GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDef.FullName));
+						dict.Add(assemblyName, 
+							new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 					} else {
-						dict.Add(assemblyDef.Name.Name, reference.Display);
+						dict.Add(assemblyName, 
+							new DetectedReference(assemblyName, reference.Display, false));
 					}
 				}
 			}
 			foreach (var projectReference in parentProject.ProjectReferences) {
 				var roslynProject = owner.Workspace.CurrentSolution.GetProject(projectReference.ProjectId);
-				var project = owner.DTE.Solution.Projects.OfType<EnvDTE.Project>().FirstOrDefault(p => p.FileName == roslynProject.FilePath);
+				var project = FindProject(owner.DTE.Solution.Projects.OfType<EnvDTE.Project>(), roslynProject.FilePath);
 				if (roslynProject != null && project != null)
-					dict.Add(roslynProject.AssemblyName, GetProjectOutputPath(project, roslynProject));
+					dict.Add(roslynProject.AssemblyName, 
+						new DetectedReference(roslynProject.AssemblyName, Utils.GetProjectOutputAssembly(project, roslynProject), true));
 			}
 			return dict;
+		}
+
+		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
+		{
+			foreach (var project in projects) {
+				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder) {
+					// This is a solution folder -> search in sub-projects
+					var subProject = FindProject(
+						project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(), 
+						projectFile);
+					if (subProject != null)
+						return subProject;
+				} else {
+					if (project.FileName == projectFile)
+						return project;
+				}
+			}
+
+			return null;
 		}
 
 		protected bool IsReferenceAssembly(AssemblyDefinition assemblyDef)

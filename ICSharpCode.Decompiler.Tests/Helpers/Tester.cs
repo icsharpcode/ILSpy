@@ -65,6 +65,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public static partial class Tester
 	{
+		public static readonly string TestCasePath = Path.Combine(
+	Path.GetDirectoryName(typeof(Tester).Assembly.Location),
+	"../../../TestCases");
+
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
@@ -182,6 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
 					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location)
 			};
 		});
@@ -309,6 +314,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
+				options.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");

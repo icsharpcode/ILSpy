@@ -43,8 +43,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& call.Method.FullNameIs("System.Linq.Expressions.Expression", "Lambda")
 				&& call.Arguments.Count == 2))
 				return false;
-			if (call.Parent is CallInstruction parentCall && parentCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Quote"))
-				return false;
 			if (!(IsEmptyParameterList(call.Arguments[1]) || (call.Arguments[1] is Block block && block.Kind == BlockKind.ArrayInitializer)))
 				return false;
 			//if (!ILInlining.CanUninline(call, stmt))
@@ -125,6 +123,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MightBeExpressionTree(instruction, statement)) {
 				var (lambda, type) = ConvertLambda((CallInstruction)instruction);
 				if (lambda != null) {
+					SetExpressionTreeFlag((ILFunction)lambda, (CallInstruction)instruction);
 					context.Step("Convert Expression Tree", instruction);
 					instruction.ReplaceWith(lambda);
 					return true;
@@ -150,14 +149,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var parameterVariablesList = new List<ILVariable>();
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return (null, SpecialType.UnknownType);
-			bool isQuotedLambda = instruction.Parent is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Quote";
 			var container = new BlockContainer();
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var function = new ILFunction(functionType.GetDelegateInvokeMethod()?.ReturnType, parameterList, container);
-			if (isQuotedLambda || lambdaStack.Count == 0)
-				function.DelegateType = instruction.Method.ReturnType;
-			else
-				function.DelegateType = functionType;
+			function.DelegateType = functionType;
 			function.Variables.AddRange(parameterVariablesList);
 			lambdaStack.Push(function);
 			var (bodyInstruction, type) = ConvertInstruction(instruction.Arguments[0]);
@@ -169,12 +164,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (function, function.DelegateType);
 		}
 
+		(ILInstruction, IType) ConvertQuote(CallInstruction invocation)
+		{
+			if (invocation.Arguments.Count != 1)
+				return (null, SpecialType.UnknownType);
+			var argument = invocation.Arguments.Single();
+			if (argument is ILFunction function) {
+				return (function, function.DelegateType);
+			} else {
+				var converted = ConvertInstruction(argument);
+
+				if (converted.Item1 is ILFunction lambda && argument is CallInstruction call) {
+					SetExpressionTreeFlag(lambda, call);
+				}
+
+				return converted;
+			}
+		}
+
+		void SetExpressionTreeFlag(ILFunction lambda, CallInstruction call)
+		{
+			lambda.DelegateType = call.Method.ReturnType;
+		}
+
 		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters, IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
 		{
-			if (!context.Function.Method.IsStatic) {
-				var thisParam = context.Function.Variables[0];
-				parameterVariables.Add(new ILVariable(VariableKind.Parameter, thisParam.Type, -1) { Name = "this" });
-			}
 			switch (initializer) {
 				case Block initializerBlock:
 					if (initializerBlock.Kind != BlockKind.ArrayInitializer)
@@ -296,10 +310,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "Property":
 								return ConvertProperty(invocation);
 							case "Quote":
-								if (invocation.Arguments.Count == 1)
-									return ConvertInstruction(invocation.Arguments.Single());
-								else
-									return (null, SpecialType.UnknownType);
+								return ConvertQuote(invocation);
 							case "RightShift":
 								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight);
 							case "Subtract":
@@ -1034,7 +1045,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
+		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
 		{
 			type = null;
 			return inst is CallInstruction getTypeCall

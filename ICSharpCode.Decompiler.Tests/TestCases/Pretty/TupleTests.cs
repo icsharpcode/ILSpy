@@ -96,5 +96,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(item);
 			Console.WriteLine(TupleDict.Values.ToList().First().d);
 		}
+
+		public void Issue1174()
+		{
+			Console.WriteLine((1, 2, 3).GetHashCode());
+		}
+
+		public void LocalVariables((int, int) a)
+		{
+			(int, int) valueTuple = (a.Item1 + a.Item2, a.Item1 * a.Item2);
+			Console.WriteLine(valueTuple.ToString());
+			Console.WriteLine(valueTuple.GetType().FullName);
+		}
+
+		public void Foreach(IEnumerable<(int Index, string Data)> input)
+		{
+			foreach ((int, string) item3 in input) {
+				int item = item3.Item1;
+				string item2 = item3.Item2;
+				Console.WriteLine($"{item}: {item2}");
+			}
+		}
+
+		public void ForeachNamedElements(IEnumerable<(int Index, string Data)> input)
+		{
+			foreach ((int, string) item3 in input) {
+				int item = item3.Item1;
+				string item2 = item3.Item2;
+				Console.WriteLine($"{item}: {item2}");
+			}
+		}
 	}
 }

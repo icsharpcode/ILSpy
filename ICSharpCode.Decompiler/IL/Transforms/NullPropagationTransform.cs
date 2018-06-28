@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (call.Arguments.Count == 0) {
 						return false;
 					}
-					if (call.Method.IsStatic && (!call.Method.IsExtensionMethod || !CanTransformToExtensionMethodCall(call))) {
+					if (call.Method.IsStatic && (!call.Method.IsExtensionMethod || !CanTransformToExtensionMethodCall(call, context))) {
 						return false; // only instance or extension methods can be called with ?. syntax
 					}
 					if (call.Method.IsAccessor && !IsGetter(call.Method)) {
@@ -208,18 +208,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						inst = arg;
 					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
-					for (int i = 1; i < call.Arguments.Count; ++i) {
-						if (call.Arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
-							return false;
-						}
-					}
+					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
+						return false;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
+				} else if (inst is DynamicGetMemberInstruction dynGetMember) {
+					inst = dynGetMember.Target;
+				} else if (inst is DynamicInvokeMemberInstruction dynInvokeMember) {
+					inst = dynInvokeMember.Arguments[0];
+					if (ArgumentsAfterFirstMayUnwrapNull(dynInvokeMember.Arguments))
+						return false;
+				} else if (inst is DynamicGetIndexInstruction dynGetIndex) {
+					inst = dynGetIndex.Arguments[0];
+					if (ArgumentsAfterFirstMayUnwrapNull(dynGetIndex.Arguments))
+						return false;
 				} else {
 					// unknown node -> invalid chain
 					return false;
 				}
 				chainLength++;
+			}
+
+			bool ArgumentsAfterFirstMayUnwrapNull(InstructionCollection<ILInstruction> arguments)
+			{
+				// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
+				for (int i = 1; i < arguments.Count; ++i) {
+					if (arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			bool IsValidEndOfChain()
@@ -237,19 +255,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						throw new ArgumentOutOfRangeException("mode");
 				}
 			}
-		}
 
-		bool CanTransformToExtensionMethodCall(CallInstruction call)
-		{
-			if (call.Method.Parameters.Count == 0) return false;
-			var targetType = call.Method.Parameters.Select(p => new ResolveResult(p.Type)).First();
-			var paramTypes = call.Method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = call.Method.Parameters.SelectReadOnlyArray(p => p.Name);
-			var typeArgs = call.Method.TypeArguments.ToArray();
-			var resolveContext = new CSharp.TypeSystem.CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
-			var resolver = new CSharp.Resolver.CSharpResolver(resolveContext);
-			return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
-				resolver, call.Method, typeArgs, targetType, paramTypes, argumentNames: null);
+			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
+			{
+				return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
+					call.Method, new CSharp.TypeSystem.CSharpTypeResolveContext(
+						context.TypeSystem.Compilation.MainAssembly, context.UsingScope
+					)
+				);
+			}
 		}
 
 		static bool IsGetter(IMethod method)

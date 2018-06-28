@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -51,43 +52,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchWhileLoop(BlockContainer loop, out IfInstruction condition, out Block loopBody)
 		{
+			// ConditionDetection favours leave inside if and branch at end of block
 			// while-loop:
-			// if (loop-condition) br loop-content-block
-			// leave loop-container
-			// -or-
-			// if (loop-condition) block content-block
-			// leave loop-container
+			// if (!loop-condition) leave loop-container
+			// ...
 			condition = null;
 			loopBody = null;
-			if (loop.EntryPoint.Instructions.Count != 2)
-				return false;
 			if (!(loop.EntryPoint.Instructions[0] is IfInstruction ifInstruction))
 				return false;
 			if (!ifInstruction.FalseInst.MatchNop())
 				return false;
 			if (UsesVariableCapturedInLoop(loop, ifInstruction.Condition))
 				return false;
+
 			condition = ifInstruction;
-			var trueInst = ifInstruction.TrueInst;
-			if (!loop.EntryPoint.Instructions[1].MatchLeave(loop))
+			if (!ifInstruction.TrueInst.MatchLeave(loop))
 				return false;
-			if (trueInst is Block b) {
-				context.Step("Transform to while (condition) loop", loop);
-				// move the loop body to its own block:
-				loopBody = b;
-				trueInst.ReplaceWith(new Branch(loopBody));
-				loop.Blocks.Insert(1, loopBody);
-				// sometimes the loop-content-block does not end with a leave/branch
-				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
-					loopBody.Instructions.Add(new Leave(loop));
-			} else if (trueInst is Branch br) {
-				context.Step("Transform to while (condition) loop", loop);
-				loopBody = br.TargetBlock;
-			} else {
-				return false;
-			}
+			
+			context.Step("Transform to while (condition) loop", loop);
+			loop.Kind = ContainerKind.While;
+			//invert comparison
+			ifInstruction.Condition = Comp.LogicNot(ifInstruction.Condition);
+			ifInstruction.FalseInst = ifInstruction.TrueInst;
+			//move the rest of the body into a new block
+			loopBody = ConditionDetection.ExtractBlock(loop.EntryPoint, 1, loop.EntryPoint.Instructions.Count);
+			loop.Blocks.Insert(1, loopBody);
+			if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
+				loopBody.Instructions.Add(new Leave(loop));
+
+			ifInstruction.TrueInst = new Branch(loopBody);
+			ExpressionTransforms.RunOnSingleStatement(ifInstruction, context);
+			
 			// Analyze conditions and decide whether to move some of them out of the condition block:
-			var conditions = new List<ILInstruction>();
+			/*var conditions = new List<ILInstruction>();
 			SplitConditions(condition.Condition, conditions);
 			// Break apart conditions that could be a MoveNext call followed by a Current accessor call:
 			if (MightBeHeaderOfForEach(loop, conditions)) {
@@ -97,13 +94,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					loopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(cond), new Leave(loop)));
 					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
-			}
-			// move the branch/leave instruction into the condition block
-			ifInstruction.FalseInst = loop.EntryPoint.Instructions[1];
-			loop.EntryPoint.Instructions.RemoveAt(1);
-			loop.Kind = ContainerKind.While;
+			}*/
+
 			// Invert condition and unwrap nested block, if loop ends in a break or return statement preceeded by an IfInstruction.
-			while (loopBody.Instructions.Last() is Leave leave && loopBody.Instructions.SecondToLastOrDefault() is IfInstruction nestedIf && nestedIf.FalseInst.MatchNop()) {
+			/*while (loopBody.Instructions.Last() is Leave leave && loopBody.Instructions.SecondToLastOrDefault() is IfInstruction nestedIf && nestedIf.FalseInst.MatchNop()) {
 				switch (nestedIf.TrueInst) {
 					case Block nestedBlock:
 						loopBody.Instructions.RemoveAt(leave.ChildIndex);
@@ -120,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ExpressionTransforms.RunOnSingleStatment(nestedIf, context);
 				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
 					loopBody.Instructions.Add(new Leave(loop));
-			}
+			}*/
 			return true;
 		}
 
@@ -178,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				returnCondition.Condition = Comp.LogicNot(returnCondition.Condition);
 				returnCondition.TrueInst = leaveFunction;
 				// simplify the condition:
-				ExpressionTransforms.RunOnSingleStatment(returnCondition, context);
+				ExpressionTransforms.RunOnSingleStatement(returnCondition, context);
 				topLevelBlock.Instructions.RemoveAt(returnCondition.ChildIndex + 1);
 				topLevelBlock.Instructions.AddRange(originalBlock.Instructions);
 				originalBlock = topLevelBlock;
@@ -222,7 +216,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// insert the combined conditions into the condition block:
 			conditionBlock.Instructions.Add(condition);
 			// simplify the condition:
-			ExpressionTransforms.RunOnSingleStatment(condition, context);
+			ExpressionTransforms.RunOnSingleStatement(condition, context);
 			// transform complete
 			loop.Kind = ContainerKind.DoWhile;
 			return true;
@@ -331,6 +325,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		internal static Block GetIncrementBlock(BlockContainer loop, Block whileLoopBody) => 
+			loop.Blocks.SingleOrDefault(b => b != whileLoopBody
+			                              && b.Instructions.Last().MatchBranch(loop.EntryPoint)
+			                              && b.Instructions.SkipLast(1).All(IsSimpleStatement));
+
 		bool MatchForLoop(BlockContainer loop, IfInstruction whileCondition, Block whileLoopBody)
 		{
 			// for loops have exactly two incoming edges at the entry point.
@@ -338,10 +337,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			// try to find an increment block:
 			// consists of simple statements only.
-			var incrementBlock = loop.Blocks.SingleOrDefault(
-				b => b != whileLoopBody
-					 && b.Instructions.Last().MatchBranch(loop.EntryPoint)
-					 && b.Instructions.SkipLast(1).All(IsSimpleStatement));
+			var incrementBlock = GetIncrementBlock(loop, whileLoopBody);
 			if (incrementBlock != null) {
 				// we found a possible increment block, just make sure, that there are at least three blocks:
 				// - condition block
@@ -392,11 +388,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("Transform to for loop", loop);
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
-				ExpressionTransforms.RunOnSingleStatment(forCondition, context);
+				ExpressionTransforms.RunOnSingleStatement(forCondition, context);
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
 					IfInstruction inst;
 					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
-					ExpressionTransforms.RunOnSingleStatment(inst, context);
+					ExpressionTransforms.RunOnSingleStatement(inst, context);
 				}
 				// create a new increment block and add it at the end:
 				int secondToLastIndex = secondToLast.ChildIndex;

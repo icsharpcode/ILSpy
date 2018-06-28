@@ -329,13 +329,8 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	sealed class SearchResult : INotifyPropertyChanged, IMemberTreeNode
+	sealed class SearchResult : IMemberTreeNode
 	{
-		event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged {
-			add { }
-			remove { }
-		}
-		
 		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
 		
 		public IMetadataEntity Member { get; set; }

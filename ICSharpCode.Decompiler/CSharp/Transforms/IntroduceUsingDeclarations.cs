@@ -174,16 +174,29 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					context.Pop();
 				}
 			}
-			
+
+			public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+			{
+				if (methodDeclaration.GetSymbol() is IMethod method && CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
+					var previousContext = context.Peek();
+					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly);
+					context.Push(currentContext);
+					try {
+						astBuilder = CreateAstBuilder(currentContext);
+						base.VisitMethodDeclaration(methodDeclaration);
+					} finally {
+						astBuilder = CreateAstBuilder(previousContext);
+						context.Pop();
+					}
+				} else {
+					base.VisitMethodDeclaration(methodDeclaration);
+				}
+			}
+
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;
 				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null) {
-					base.VisitSimpleType(simpleType);
-					return;
-				}
-				// HACK : ignore type names in attributes (TypeSystemAstBuilder doesn't handle them correctly)
-				if (simpleType.Parent is Syntax.Attribute) {
 					base.VisitSimpleType(simpleType);
 					return;
 				}
@@ -199,7 +212,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						astBuilder.NameLookupMode = NameLookupMode.Expression;
 					}
 				}
-				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				if (simpleType.Parent is Syntax.Attribute) {
+					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
+				} else {
+					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+				}
 			}
 		}
 	}

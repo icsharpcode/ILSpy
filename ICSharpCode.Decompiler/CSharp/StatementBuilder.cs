@@ -446,6 +446,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// but a base reference is not valid in this context.
 			if (collectionExpr is BaseReferenceExpression) {
 				collectionExpr = new ThisReferenceExpression().CopyAnnotationsFrom(collectionExpr);
+			} else if (IsDynamicCastToIEnumerable(collectionExpr, out var dynamicExpr)) {
+				collectionExpr = dynamicExpr.Detach();
 			}
 			// Handle explicit casts:
 			// This is the case if an explicit type different from the collection-item-type was used.
@@ -465,7 +467,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Handle the required foreach-variable transformation:
 			switch (transformation) {
 				case RequiredGetCurrentTransformation.UseExistingVariable:
-					foreachVariable.Type = type;
+					if (foreachVariable.Type.Kind != TypeKind.Dynamic)
+						foreachVariable.Type = type;
 					foreachVariable.Kind = VariableKind.ForeachLocal;
 					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), foreachVariable);
 					break;
@@ -524,6 +527,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 			return foreachStmt;
+		}
+
+		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
+		{
+			if (!(expr is CastExpression cast)) {
+				dynamicExpr = null;
+				return false;
+			}
+			dynamicExpr = cast.Expression;
+			if (!(expr.GetResolveResult() is ConversionResolveResult crr))
+				return false;
+			if (!crr.Type.IsKnownType(KnownTypeCode.IEnumerable))
+				return false;
+			return crr.Input.Type.Kind == TypeKind.Dynamic;
 		}
 
 		/// <summary>
