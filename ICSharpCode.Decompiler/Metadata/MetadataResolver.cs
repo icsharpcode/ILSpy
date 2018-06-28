@@ -52,6 +52,8 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		public static TypeDefinition ResolveType(EntityHandle handle, IMetadataResolveContext context)
 		{
+			if (handle.IsNil)
+				return default;
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
 					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)handle);
@@ -66,6 +68,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static MethodDefinition ResolveAsMethod(EntityHandle handle, IMetadataResolveContext context)
 		{
+			if (handle.IsNil)
+				return default;
 			switch (handle.Kind) {
 				case HandleKind.MethodDefinition:
 					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
@@ -79,12 +83,15 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (resolved is MethodDefinition m2)
 						return m2;
 					return default;
+				default:
+					throw new NotSupportedException();
 			}
-			throw new NotImplementedException();
 		}
 
 		public static FieldDefinition ResolveAsField(EntityHandle handle, IMetadataResolveContext context)
 		{
+			if (handle.IsNil)
+				return default;
 			switch (handle.Kind) {
 				case HandleKind.FieldDefinition:
 					return new FieldDefinition(context.CurrentModule, (FieldDefinitionHandle)handle);
@@ -93,8 +100,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					if (resolved is FieldDefinition m)
 						return m;
 					return default;
+				default:
+					throw new NotSupportedException();
 			}
-			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -102,6 +110,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// </summary>
 		public static TypeDefinition Resolve(this TypeReferenceHandle handle, IMetadataResolveContext context)
 		{
+			if (handle.IsNil)
+				return default;
 			var metadata = context.CurrentModule.Metadata;
 			var tr = metadata.GetTypeReference(handle);
 			if (tr.ResolutionScope.IsNil) {
@@ -248,6 +258,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			var metadata = context.CurrentModule.Metadata;
 			var ts = metadata.GetTypeSpecification(handle);
 			var unspecialized = ts.DecodeSignature(new Unspecializer(), default);
+			if (unspecialized.IsNil)
+				return default;
 			switch (unspecialized.Kind) {
 				case HandleKind.TypeDefinition:
 					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)unspecialized);
