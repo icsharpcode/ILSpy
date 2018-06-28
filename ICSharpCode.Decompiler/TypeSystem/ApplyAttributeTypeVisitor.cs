@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
 
-		public ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, bool useTupleTypes, string[] tupleElementNames)
+		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, bool useTupleTypes, string[] tupleElementNames)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;

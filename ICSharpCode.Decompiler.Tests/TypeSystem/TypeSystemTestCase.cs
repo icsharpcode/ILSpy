@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 	public interface IDerived : IBase1, IBase2
 	{
-		int Prop { get; set; }
+		new int Prop { get; set; }
 	}
 
 	public class ClassWithVirtualProperty

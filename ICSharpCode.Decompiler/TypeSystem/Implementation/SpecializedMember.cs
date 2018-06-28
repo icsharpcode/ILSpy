@@ -183,10 +183,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.IsSealed; }
 		}
 		
-		public bool IsShadowing {
-			get { return baseMember.IsShadowing; }
-		}
-		
 		public string FullName {
 			get { return baseMember.FullName; }
 		}

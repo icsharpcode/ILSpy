@@ -965,9 +965,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else if (typeDefinition.IsSealed) {
 					modifiers |= Modifiers.Sealed;
 				}
-				if (typeDefinition.IsShadowing) {
-					modifiers |= Modifiers.New;
-				}
 			}
 			
 			ClassType classType;
@@ -1360,8 +1357,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					if (member.IsSealed)
 						m |= Modifiers.Sealed;
 				}
-				if (member.IsShadowing)
-					m |= Modifiers.New;
 			}
 			return m;
 		}

@@ -241,10 +241,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.IsSealed; }
 		}
 
-		public bool IsShadowing {
-			get { return baseMethod.IsShadowing; }
-		}
-
 		#endregion
 
 		#region IHasAccessibility implementation

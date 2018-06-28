@@ -71,6 +71,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		PreserveSig,
 		MethodImpl,
 
+		// Property attributes:
+		IndexerName,
+
 		// Parameter attributes:
 		ParamArray,
 		In,
@@ -121,6 +124,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(DllImportAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(PreserveSigAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(MethodImplAttribute)),
+			// Property attributes:
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(IndexerNameAttribute)),
 			// Parameter attributes:
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),

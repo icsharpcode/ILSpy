@@ -60,10 +60,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public bool IsFixed {
-			get { return fieldDefinition.IsFixed; }
-		}
-
 		public object ConstantValue {
 			get { return fieldDefinition.ConstantValue; }
 		}

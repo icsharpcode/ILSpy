@@ -1067,8 +1067,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(decompilationContext.CurrentMember == property);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
-			int lastDot = property.Name.LastIndexOf('.');
 			if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
+				int lastDot = property.Name.LastIndexOf('.');
 				propertyDecl.Name = property.Name.Substring(lastDot + 1);
 			}
 			FixParameterNames(propertyDecl);

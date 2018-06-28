@@ -158,6 +158,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;
 			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
+			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation) {
+				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
+			}
 			b.Add(propertyDef.GetCustomAttributes());
 			return b.Build();
 		}
@@ -218,8 +221,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsVirtual => AnyAccessor?.IsVirtual ?? false;
 		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
 		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
-
-		bool IEntity.IsShadowing => AnyAccessor?.IsShadowing ?? false;
 
 		public IAssembly ParentAssembly => assembly;
 		public ICompilation Compilation => assembly.Compilation;

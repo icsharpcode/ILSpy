@@ -422,8 +422,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			=> (attributes & (MethodAttributes.Abstract | MethodAttributes.Virtual)) != 0
 			&& (attributes & MethodAttributes.Final) == 0;
 
-		bool IEntity.IsShadowing => false;
-
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;

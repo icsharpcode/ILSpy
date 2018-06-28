@@ -65,7 +65,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsStatic { get; set; }
 		bool IEntity.IsAbstract => false;
 		bool IEntity.IsSealed => false;
-		bool IEntity.IsShadowing => false;
 
 		public abstract SymbolKind SymbolKind { get; }
 
@@ -107,7 +106,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IField.IsReadOnly => false;
 		bool IField.IsVolatile => false;
-		bool IField.IsFixed => false;
 
 		bool IVariable.IsConst => false;
 		object IVariable.ConstantValue => null;

@@ -405,8 +405,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAbstract => (attributes & TypeAttributes.Abstract) != 0;
 		public bool IsSealed => (attributes & TypeAttributes.Sealed) != 0;
 
-		bool IEntity.IsShadowing => false;
-
 		public SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
 		public ICompilation Compilation => assembly.Compilation;

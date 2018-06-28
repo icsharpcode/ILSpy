@@ -32,6 +32,57 @@
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.MemberTests
        extends [mscorlib]System.Object
 {
+  .class auto ansi nested public beforefieldinit IndexerNonDefaultName
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 03 46 6F 6F 00 00 )                         // ...Foo..
+    .method public hidebysig specialname 
+            instance int32  get_Foo(int32 index) cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  1
+      .locals init (int32 V_0)
+      IL_0000:  nop
+      IL_0001:  ldc.i4.0
+      IL_0002:  stloc.0
+      IL_0003:  br.s       IL_0005
+
+      IL_0005:  ldloc.0
+      IL_0006:  ret
+    } // end of method IndexerNonDefaultName::get_Foo
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method IndexerNonDefaultName::.ctor
+
+    .property instance int32 Foo(int32)
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.MemberTests/IndexerNonDefaultName::get_Foo(int32)
+    } // end of property IndexerNonDefaultName::Foo
+  } // end of class IndexerNonDefaultName
+
+  .class auto ansi nested public beforefieldinit NoDefaultMember
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 03 42 61 72 00 00 )                         // ...Bar..
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method NoDefaultMember::.ctor
+
+  } // end of class NoDefaultMember
+
   .field public static literal int32 IntConstant = int32(0x00000001)
   .field public static initonly valuetype [mscorlib]System.Decimal DecimalConstant
   .custom instance void [mscorlib]System.Runtime.CompilerServices.DecimalConstantAttribute::.ctor(uint8,

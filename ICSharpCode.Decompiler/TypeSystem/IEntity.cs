@@ -148,11 +148,5 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <remarks>Static classes also count as sealed classes.</remarks>
 		bool IsSealed { get; }
-		
-		/// <summary>
-		/// Gets whether this member is declared to be shadowing another member with the same name.
-		/// (C# 'new' keyword)
-		/// </summary>
-		bool IsShadowing { get; }
 	}
 }
