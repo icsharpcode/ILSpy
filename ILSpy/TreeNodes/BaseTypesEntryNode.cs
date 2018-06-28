@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			if (td != null)
+			if (!td.IsNil)
 				BaseTypesTreeNode.AddBaseTypes(this.Children, td);
 		}
 
@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static bool ActivateItem(SharpTreeNode node, TypeDefinition def)
 		{
-			if (def != null) {
+			if (!def.IsNil) {
 				var assemblyListNode = node.Ancestors().OfType<AssemblyListTreeNode>().FirstOrDefault();
 				if (assemblyListNode != null) {
 					assemblyListNode.Select(assemblyListNode.FindTypeNode(def));
