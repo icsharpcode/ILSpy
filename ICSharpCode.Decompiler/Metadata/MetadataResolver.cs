@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Reflection.PortableExecutable;
-using System.Text;
-using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
 
@@ -143,28 +141,35 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			TypeDefinition ResolveTypeInOtherAssembly(AssemblyReferenceHandle asm, string ns, string typeName)
 			{
-				var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, (AssemblyReferenceHandle)tr.ResolutionScope));
-				var moduleMetadata = module.Metadata;
-				var @namespace = ResolveNamespace(moduleMetadata, ns.Split('.'));
-				if (@namespace == null)
-					throw new NotSupportedException();
-				var type = FindTypeInNamespace(moduleMetadata, @namespace.Value, typeName);
-				if (type.IsNil)
-					throw new NotSupportedException();
+				var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, asm));
+				if (module == null)
+					return default;
+				var @namespace = ResolveNamespace(module.Metadata, ns);
+				Debug.Assert(@namespace != null);
+				var type = FindTypeInNamespace(module.Metadata, @namespace.Value, typeName);
+				Debug.Assert(!type.IsNil);
 				return new TypeDefinition(module, type);
 			}
 		}
 
-		static NamespaceDefinition? ResolveNamespace(MetadataReader metadata, string[] namespaceParts)
+		static NamespaceDefinition? ResolveNamespace(MetadataReader metadata, string @namespace)
 		{
 			var currentNamespace = metadata.GetNamespaceDefinitionRoot();
-			for (int i = 0; i < namespaceParts.Length; i++) {
-				string identifier = namespaceParts[i];
+			int startIndex = 0;
+			int dotIndex;
+
+			do {
+				dotIndex = @namespace.IndexOf('.', startIndex);
+				string identifier = dotIndex == -1 ? @namespace : @namespace.Substring(0, dotIndex);
+
 				var next = currentNamespace.NamespaceDefinitions.FirstOrDefault(ns => metadata.StringComparer.Equals(ns, identifier));
 				if (next.IsNil)
 					return null;
+
 				currentNamespace = metadata.GetNamespaceDefinition(next);
-			}
+				startIndex = dotIndex + 1;
+			} while (dotIndex > 0);
+
 			return currentNamespace;
 		}
 
