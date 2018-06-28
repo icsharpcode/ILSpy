@@ -1083,6 +1083,33 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void InterfaceShouldDeriveFromObject()
+		{
+			ITypeDefinition type = GetTypeDefinition(typeof(IInterfaceWithProperty));
+			Assert.That(type.DirectBaseTypes.Count() == 1, "Should have exactly one direct base type");
+			Assert.That(type.DirectBaseTypes.First().IsKnownType(KnownTypeCode.Object), "Base type should be object");
+		}
+
+		[Test]
+		public void InterfaceShouldDeriveFromObject2()
+		{
+			ITypeDefinition type = GetTypeDefinition(typeof(IShadowTestDerived));
+			Assert.That(type.DirectBaseTypes.Count() == 2, "Should have exactly two direct base types");
+			Assert.That(type.DirectBaseTypes.First() == GetTypeDefinition(typeof(IShadowTestBase)), "Base type should be IShadowTestBase");
+			Assert.That(type.DirectBaseTypes.Skip(1).First().IsKnownType(KnownTypeCode.Object), "Base type should be object");
+		}
+
+		[Test]
+		public void CheckInterfaceDirectBaseTypes()
+		{
+			ITypeDefinition type = GetTypeDefinition(typeof(IDerived));
+			Assert.That(type.DirectBaseTypes.Count() == 3, "Should have exactly three direct base types");
+			Assert.That(type.DirectBaseTypes.First() == GetTypeDefinition(typeof(IBase1)), "Base type should be IBase1");
+			Assert.That(type.DirectBaseTypes.Skip(1).First() == GetTypeDefinition(typeof(IBase2)), "Base type should be IBase2");
+			Assert.That(type.DirectBaseTypes.Skip(2).First().IsKnownType(KnownTypeCode.Object), "Base type should be object");
+		}
+
+		[Test]
 		public void VirtualPropertyAccessorsShouldNotBeOverrides()
 		{
 			ITypeDefinition type = GetTypeDefinition(typeof(ClassWithVirtualProperty));

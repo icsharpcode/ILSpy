@@ -261,12 +261,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var context = new GenericContext(TypeParameters);
 				var interfaceImplCollection = td.GetInterfaceImplementations();
 				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
-				if (!td.BaseType.IsNil) {
-					baseTypes.Add(assembly.ResolveType(td.BaseType, context));
-				}
 				foreach (var h in interfaceImplCollection) {
 					var iface = metadata.GetInterfaceImplementation(h);
 					baseTypes.Add(assembly.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
+				}
+				if (!td.BaseType.IsNil) {
+					baseTypes.Add(assembly.ResolveType(td.BaseType, context));
+				} else if (Kind == TypeKind.Interface) {
+					// td.BaseType.IsNil is always true for interfaces,
+					// but the type system expects every interface to derive from System.Object as well.
+					baseTypes.Add(Compilation.FindType(KnownTypeCode.Object));
 				}
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
 			}

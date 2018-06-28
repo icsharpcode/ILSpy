@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IReadOnlyList<IAttribute> IParameter.Attributes => baseParameter.Attributes;
 		bool IParameter.IsRef => baseParameter.IsRef;
-		bool IParameter.IsOut => baseParameter.IsOptional;
+		bool IParameter.IsOut => baseParameter.IsOut;
 		bool IParameter.IsParams => baseParameter.IsParams;
 		bool IParameter.IsOptional => baseParameter.IsOptional;
 		IParameterizedMember IParameter.Owner => newOwner;
