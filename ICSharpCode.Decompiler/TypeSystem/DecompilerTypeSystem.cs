@@ -206,9 +206,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var standaloneSignature = moduleDefinition.Metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.Method)
 				throw new InvalidOperationException("Expected Method signature");
-			return standaloneSignature.DecodeMethodSignature(
+			var sig = standaloneSignature.DecodeMethodSignature(
 				mainAssembly.TypeProvider,
 				new GenericContext()
+			);
+			return new SRM.MethodSignature<IType>(
+				sig.Header,
+				ApplyAttributesToType(sig.ReturnType),
+				sig.RequiredParameterCount,
+				sig.GenericParameterCount,
+				ImmutableArray.CreateRange(
+					sig.ParameterTypes, ApplyAttributesToType
+				)
 			);
 		}
 
@@ -217,12 +226,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var standaloneSignature = moduleDefinition.Metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.LocalVariables)
 				throw new InvalidOperationException("Expected Local signature");
-			return standaloneSignature.DecodeLocalSignature(
+			var types = standaloneSignature.DecodeLocalSignature(
 				mainAssembly.TypeProvider,
 				new GenericContext()
 			);
+			return ImmutableArray.CreateRange(types, ApplyAttributesToType);
 		}
-		
+
+		IType ApplyAttributesToType(IType t)
+		{
+			return ApplyAttributeTypeVisitor.ApplyAttributesToType(t, compilation, null,
+				moduleDefinition.Metadata, typeSystemOptions);
+		}
+
 		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution)
 		{
 			if (substitution.Equals(TypeParameterSubstitution.Identity)) {
