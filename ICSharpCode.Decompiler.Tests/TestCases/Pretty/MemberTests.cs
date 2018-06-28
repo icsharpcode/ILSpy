@@ -17,11 +17,28 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class MemberTests
 	{
+		public class IndexerNonDefaultName
+		{
+			[IndexerName("Foo")]
+			public int this[int index] {
+				get {
+					return 0;
+				}
+			}
+		}
+
+		[DefaultMember("Bar")]
+		public class NoDefaultMember
+		{
+		}
+
 		public const int IntConstant = 1;
 		public const decimal DecimalConstant = 2m;
 

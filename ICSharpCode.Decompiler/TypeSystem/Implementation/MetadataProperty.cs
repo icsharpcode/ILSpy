@@ -158,6 +158,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;
 			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
+			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation) {
+				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
+			}
 			b.Add(propertyDef.GetCustomAttributes());
 			return b.Build();
 		}
