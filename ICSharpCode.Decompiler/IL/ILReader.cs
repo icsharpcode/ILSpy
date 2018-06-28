@@ -1093,21 +1093,47 @@ namespace ICSharpCode.Decompiler.IL
 					return inst;
 				default:
 					Warn("Expected native int or pointer, but got " + inst.ResultType);
-					return inst;
+					return new Conv(inst, PrimitiveType.I, false, Sign.None);
 			}
 		}
 
 		ILInstruction PopFieldTarget(IField field)
 		{
-			return field.DeclaringType.IsReferenceType == true ? Pop(StackType.O) : PopPointer();
+			switch (field.DeclaringType.IsReferenceType) {
+				case true:
+					return Pop(StackType.O);
+				case false:
+					return PopPointer();
+				default:
+					// field in unresolved type
+					if (PeekStackType() == StackType.O)
+						return Pop();
+					else
+						return PopPointer();
+			}
 		}
 
+		/// <summary>
+		/// Like PopFieldTarget, but supports ldfld's special behavior for fields of temporary value types.
+		/// </summary>
 		ILInstruction PopLdFldTarget(IField field)
 		{
-			if (field.DeclaringType.IsReferenceType == true)
-				return Pop(StackType.O);
-
-			return PeekStackType() == StackType.O ? new AddressOf(Pop()) : PopPointer();
+			switch (field.DeclaringType.IsReferenceType) {
+				case true:
+					return Pop(StackType.O);
+				case false:
+					// field of value type: ldfld can handle temporaries
+					if (PeekStackType() == StackType.O)
+						return new AddressOf(Pop());
+					else
+						return PopPointer();
+				default:
+					// field in unresolved type
+					if (PeekStackType() == StackType.O)
+						return Pop(StackType.O);
+					else
+						return PopPointer();
+			}
 		}
 
 		private ILInstruction Return()
