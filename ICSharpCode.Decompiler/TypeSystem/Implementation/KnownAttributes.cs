@@ -108,8 +108,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(StructLayoutAttribute)),
 			new TopLevelTypeName("System.Reflection", nameof(DefaultMemberAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", "IsByRefLikeAttribute"),
-			new TopLevelTypeName("System.Reflection", nameof(IteratorStateMachineAttribute)),
-			new TopLevelTypeName("System.Reflection", nameof(AsyncStateMachineAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(IteratorStateMachineAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(AsyncStateMachineAttribute)),
 			// Field attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(FieldOffsetAttribute)),
 			new TopLevelTypeName("System", nameof(NonSerializedAttribute)),
