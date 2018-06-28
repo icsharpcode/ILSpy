@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (method.Parameters.Count == 0) return false;
 			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
 			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectArray(p => p.Name);
+			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);
 			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
 			var resolver = new CSharpResolver(resolveContext);
 			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);

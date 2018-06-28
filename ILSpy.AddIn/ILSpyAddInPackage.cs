@@ -10,6 +10,7 @@ using ICSharpCode.ILSpy.AddIn.Commands;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using EnvDTE;
+using System.Collections.Generic;
 
 namespace ICSharpCode.ILSpy.AddIn
 {

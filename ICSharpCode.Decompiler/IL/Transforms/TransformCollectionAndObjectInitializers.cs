@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!targetType.GetAllBaseTypes().Any(i => i.IsKnownType(KnownTypeCode.IEnumerable) || i.IsKnownType(KnownTypeCode.IEnumerableOfT)))
 				return false;
 			return CSharp.CallBuilder.CanInferTypeArgumentsFromParameters(
-				method, method.Parameters.SelectArray(p => new ResolveResult(p.Type)),
+				method, method.Parameters.SelectReadOnlyArray(p => new ResolveResult(p.Type)),
 				new TypeInference(resolveContext.Compilation));
 		}
 

@@ -501,7 +501,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			// always use unspecialized member, otherwise type inference fails
 			method = (IMethod)method.MemberDefinition;
-			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectArray(p => p.Type),
+			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectReadOnlyArray(p => p.Type),
 				out bool success);
 			return success;
 		}

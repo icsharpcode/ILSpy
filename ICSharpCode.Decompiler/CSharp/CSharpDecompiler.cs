@@ -762,7 +762,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			if (typeDecl.ClassType == ClassType.Enum) {
-				switch (DetectBestEnumValueDisplayMode(typeDef)) {
+				switch (DetectBestEnumValueDisplayMode(typeDef, typeSystem.ModuleDefinition)) {
 					case EnumValueDisplayMode.FirstOnly:
 						foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>().Skip(1)) {
 							enumMember.Initializer = null;
@@ -790,15 +790,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			FirstOnly
 		}
 
-		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef)
+		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, PEFile module)
 		{
-			if (typeDef.GetAttribute(new TopLevelTypeName("System", "FlagsAttribute")) != null)
+			if (typeDef.GetAttribute(KnownAttribute.Flags) != null)
 				return EnumValueDisplayMode.All;
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
 			foreach (var field in typeDef.Fields) {
-				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
-				if (!(fieldDef != null && !MemberIsHidden(fieldDef, settings))) continue;
+				if (MemberIsHidden(module, field.MetadataToken, settings)) continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				if (first) {
 					firstValue = currentValue;

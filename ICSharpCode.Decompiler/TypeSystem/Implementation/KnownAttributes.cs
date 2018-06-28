@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		// Type attributes:
 		Serializable,
+		Flags,
 		ComImport,
 		CoClass,
 		StructLayout,
@@ -103,6 +104,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TypeForwardedToAttribute)),
 			// Type attributes:
 			new TopLevelTypeName("System", nameof(SerializableAttribute)),
+			new TopLevelTypeName("System", nameof(FlagsAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(ComImportAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(CoClassAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(StructLayoutAttribute)),

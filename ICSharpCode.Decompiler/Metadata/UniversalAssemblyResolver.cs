@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// This only works on Windows
 		/// </summary>
-		string ResolveSilverlight(AssemblyNameReference name, Version version)
+		string ResolveSilverlight(IAssemblyReference name, Version version)
 		{
 			AddTargetFrameworkSearchPathIfExists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Silverlight"));
 			AddTargetFrameworkSearchPathIfExists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Silverlight"));
@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return IsZero(reference.Version) || reference.IsRetargetable;
 		}
 
-		string SearchDirectory(AssemblyNameReference name, string directory)
+		string SearchDirectory(IAssemblyReference name, string directory)
 		{
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".exe", ".dll" };
 			foreach (var extension in extensions) {
