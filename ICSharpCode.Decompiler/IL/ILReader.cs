@@ -100,25 +100,37 @@ namespace ICSharpCode.Decompiler.IL
 
 		EntityHandle ReadAndDecodeMetadataToken()
 		{
-			return MetadataTokens.EntityHandle(reader.ReadInt32());
+			int token = reader.ReadInt32();
+			if (token < 0) {
+				// SRM uses negative tokens as "virtual tokens" and can get confused
+				// if we manually create them.
+				throw new BadImageFormatException("Invalid metadata token");
+			}
+			return MetadataTokens.EntityHandle(token);
 		}
 
 		IType ReadAndDecodeTypeReference()
 		{
-			var typeReference = MetadataTokens.EntityHandle(reader.ReadInt32());
+			var typeReference = ReadAndDecodeMetadataToken();
 			return typeSystem.ResolveAsType(typeReference);
 		}
 
 		IMethod ReadAndDecodeMethodReference()
 		{
-			var methodReference = MetadataTokens.EntityHandle(reader.ReadInt32());
-			return typeSystem.ResolveAsMethod(methodReference);
+			var methodReference = ReadAndDecodeMetadataToken();
+			IMethod m = typeSystem.ResolveAsMethod(methodReference);
+			if (m == null)
+				throw new BadImageFormatException("Invalid method token");
+			return m;
 		}
 
 		IField ReadAndDecodeFieldReference()
 		{
-			var fieldReference = MetadataTokens.EntityHandle(reader.ReadInt32());
-			return typeSystem.ResolveAsField(fieldReference);
+			var fieldReference = ReadAndDecodeMetadataToken();
+			IField f = typeSystem.ResolveAsField(fieldReference);
+			if (f == null)
+				throw new BadImageFormatException("Invalid field token");
+			return f;
 		}
 
 		ILVariable[] InitLocalVariables()
@@ -337,7 +349,12 @@ namespace ICSharpCode.Decompiler.IL
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Offset;
 				StoreStackForOffset(start, ref currentStack);
-				ILInstruction decodedInstruction = DecodeInstruction();
+				ILInstruction decodedInstruction;
+				try {
+					decodedInstruction = DecodeInstruction();
+				} catch (BadImageFormatException ex) {
+					decodedInstruction = new InvalidBranch(ex.Message);
+				}
 				if (decodedInstruction.ResultType == StackType.Unknown)
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
@@ -1131,34 +1148,60 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Ldarg(int v)
 		{
-			return new LdLoc(parameterVariables[v]);
+			if (v >= 0 && v < parameterVariables.Length) {
+				return new LdLoc(parameterVariables[v]);
+			} else {
+				return new InvalidExpression($"ldarg {v} (out-of-bounds)");
+			}
 		}
 
 		private ILInstruction Ldarga(int v)
 		{
-			return new LdLoca(parameterVariables[v]);
+			if (v >= 0 && v < parameterVariables.Length) {
+				return new LdLoca(parameterVariables[v]);
+			} else {
+				return new InvalidExpression($"ldarga {v} (out-of-bounds)");
+			}
 		}
 
 		private ILInstruction Starg(int v)
 		{
-			return new StLoc(parameterVariables[v], Pop(parameterVariables[v].StackType));
+			if (v >= 0 && v < parameterVariables.Length) {
+				return new StLoc(parameterVariables[v], Pop(parameterVariables[v].StackType));
+			} else {
+				Pop();
+				return new InvalidExpression($"starg {v} (out-of-bounds)");
+			}
 		}
 
 		private ILInstruction Ldloc(int v)
 		{
-			return new LdLoc(localVariables[v]);
+			if (v >= 0 && v < localVariables.Length) {
+				return new LdLoc(localVariables[v]);
+			} else {
+				return new InvalidExpression($"ldloc {v} (out-of-bounds)");
+			}
 		}
 
 		private ILInstruction Ldloca(int v)
 		{
-			return new LdLoca(localVariables[v]);
+			if (v >= 0 && v < localVariables.Length) {
+				return new LdLoca(localVariables[v]);
+			} else {
+				return new InvalidExpression($"ldloca {v} (out-of-bounds)");
+			}
 		}
 
 		private ILInstruction Stloc(int v)
 		{
-			return new StLoc(localVariables[v], Pop(localVariables[v].StackType)) {
-				ILStackWasEmpty = currentStack.IsEmpty
-			};
+			if (v >= 0 && v < localVariables.Length) {
+				return new StLoc(localVariables[v], Pop(localVariables[v].StackType)) {
+					ILStackWasEmpty = currentStack.IsEmpty
+				};
+			} else {
+				Pop();
+				return new InvalidExpression($"stloc {v} (out-of-bounds)");
+			}
 		}
 		
 		private ILInstruction LdElem(IType type)

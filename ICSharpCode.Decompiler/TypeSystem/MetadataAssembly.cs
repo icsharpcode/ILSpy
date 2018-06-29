@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case HandleKind.MethodSpecification:
 					return ResolveMethodSpecification((MethodSpecificationHandle)methodReference, context, expandVarArgs: true);
 				default:
-					throw new ArgumentException("HandleKind must be either a MethodDefinition, MemberReference or MethodSpecification", nameof(methodReference));
+					throw new BadImageFormatException("Metadata token must be either a methoddef, memberref or methodspec");
 			}
 		}
 
