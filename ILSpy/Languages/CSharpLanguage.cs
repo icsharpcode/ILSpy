@@ -339,11 +339,13 @@ namespace ICSharpCode.ILSpy
 					output.WriteLine();
 				}
 				var corHeader = module.Reader.PEHeaders.CorHeader;
-				var entrypointHandle = MetadataTokens.MethodDefinitionHandle(corHeader.EntryPointTokenOrRelativeVirtualAddress);
-				if (!entrypointHandle.IsNil) {
-					var entrypoint = metadata.GetMethodDefinition(entrypointHandle);
+				var entrypointHandle = MetadataTokens.EntityHandle(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition) {
+					var entrypoint = metadata.GetMethodDefinition((MethodDefinitionHandle)entrypointHandle);
 					output.Write("// Entry point: ");
-					output.WriteReference(entrypoint.GetDeclaringType().GetFullTypeName(metadata) + "." + metadata.GetString(entrypoint.Name), new Decompiler.Metadata.MethodDefinition(module, entrypointHandle));
+					string name = entrypoint.GetDeclaringType().GetFullTypeName(metadata) + "." + metadata.GetString(entrypoint.Name);
+					var entrypointEntity = new Decompiler.Metadata.MethodDefinition(module, (MethodDefinitionHandle)entrypointHandle);
+					output.WriteReference(name, entrypointEntity);
 					output.WriteLine();
 				}
 				output.WriteLine("// Architecture: " + GetPlatformDisplayName(module));
