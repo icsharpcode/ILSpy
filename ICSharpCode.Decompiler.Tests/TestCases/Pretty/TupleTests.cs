@@ -109,9 +109,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(valueTuple.GetType().FullName);
 		}
 
-		public void Foreach(IEnumerable<(int Index, string Data)> input)
+		public void Foreach(IEnumerable<(int, string)> input)
 		{
-			foreach ((int, string) item3 in input) {
+			foreach (var item3 in input) {
 				int item = item3.Item1;
 				string item2 = item3.Item2;
 				Console.WriteLine($"{item}: {item2}");
@@ -120,9 +120,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void ForeachNamedElements(IEnumerable<(int Index, string Data)> input)
 		{
-			foreach ((int, string) item3 in input) {
-				int item = item3.Item1;
-				string item2 = item3.Item2;
+			foreach (var item3 in input) {
+				int item = item3.Index;
+				string item2 = item3.Data;
 				Console.WriteLine($"{item}: {item2}");
 			}
 		}

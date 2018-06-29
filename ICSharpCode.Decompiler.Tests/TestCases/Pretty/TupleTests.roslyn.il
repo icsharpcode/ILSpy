@@ -517,9 +517,6 @@
   .method public hidebysig instance void 
           Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> input) cil managed
   {
-    .param [1]
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 05 49 6E 64 65 78 04 44 61 74   // .......Index.Dat
-                                                                                                                    61 00 00 )                                        // a..
     // Code size       79 (0x4f)
     .maxstack  3
     .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> V_0,

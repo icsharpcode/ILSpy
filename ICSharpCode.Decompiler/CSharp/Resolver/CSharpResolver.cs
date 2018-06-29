@@ -1678,7 +1678,122 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return memberLookup.Lookup(this.CurrentObjectInitializer, identifier, EmptyList<IType>.Instance, false);
 		}
 		#endregion
-		
+
+		#region ResolveForeach
+		public ForEachResolveResult ResolveForeach(ResolveResult expression)
+		{
+			var memberLookup = CreateMemberLookup();
+
+			IType collectionType, enumeratorType, elementType;
+			ResolveResult getEnumeratorInvocation;
+			ResolveResult currentRR = null;
+			// C# 4.0 spec: §8.8.4 The foreach statement
+			if (expression.Type.Kind == TypeKind.Array || expression.Type.Kind == TypeKind.Dynamic) {
+				collectionType = compilation.FindType(KnownTypeCode.IEnumerable);
+				enumeratorType = compilation.FindType(KnownTypeCode.IEnumerator);
+				if (expression.Type.Kind == TypeKind.Array) {
+					elementType = ((ArrayType)expression.Type).ElementType;
+				} else {
+					elementType = SpecialType.Dynamic;
+				}
+				getEnumeratorInvocation = ResolveCast(collectionType, expression);
+				getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
+				getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+			} else {
+				var getEnumeratorMethodGroup = memberLookup.Lookup(expression, "GetEnumerator", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+				if (getEnumeratorMethodGroup != null) {
+					var or = getEnumeratorMethodGroup.PerformOverloadResolution(
+						compilation, new ResolveResult[0],
+						allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
+					if (or.FoundApplicableCandidate && !or.IsAmbiguous && !or.BestCandidate.IsStatic && or.BestCandidate.Accessibility == Accessibility.Public) {
+						collectionType = expression.Type;
+						getEnumeratorInvocation = or.CreateResolveResult(expression);
+						enumeratorType = getEnumeratorInvocation.Type;
+						currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+						elementType = currentRR.Type;
+					} else {
+						CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType, out getEnumeratorInvocation);
+					}
+				} else {
+					CheckForEnumerableInterface(expression, out collectionType, out enumeratorType, out elementType, out getEnumeratorInvocation);
+				}
+			}
+			IMethod moveNextMethod = null;
+			var moveNextMethodGroup = memberLookup.Lookup(new ResolveResult(enumeratorType), "MoveNext", EmptyList<IType>.Instance, false) as MethodGroupResolveResult;
+			if (moveNextMethodGroup != null) {
+				var or = moveNextMethodGroup.PerformOverloadResolution(
+					compilation, new ResolveResult[0],
+					allowExtensionMethods: false, allowExpandingParams: false, allowOptionalParameters: false);
+				moveNextMethod = or.GetBestCandidateWithSubstitutedTypeArguments() as IMethod;
+			}
+
+			if (currentRR == null)
+				currentRR = memberLookup.Lookup(new ResolveResult(enumeratorType), "Current", EmptyList<IType>.Instance, false);
+			IProperty currentProperty = null;
+			if (currentRR is MemberResolveResult)
+				currentProperty = ((MemberResolveResult)currentRR).Member as IProperty;
+
+			var voidType = compilation.FindType(KnownTypeCode.Void);
+			return new ForEachResolveResult(getEnumeratorInvocation, collectionType, enumeratorType, elementType,
+											currentProperty, moveNextMethod, voidType);
+		}
+
+		void CheckForEnumerableInterface(ResolveResult expression, out IType collectionType, out IType enumeratorType, out IType elementType, out ResolveResult getEnumeratorInvocation)
+		{
+			bool? isGeneric;
+			elementType = GetElementTypeFromIEnumerable(expression.Type, compilation, false, out isGeneric);
+			if (isGeneric == true) {
+				ITypeDefinition enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
+				if (enumerableOfT != null)
+					collectionType = new ParameterizedType(enumerableOfT, new[] { elementType });
+				else
+					collectionType = SpecialType.UnknownType;
+
+				ITypeDefinition enumeratorOfT = compilation.FindType(KnownTypeCode.IEnumeratorOfT).GetDefinition();
+				if (enumeratorOfT != null)
+					enumeratorType = new ParameterizedType(enumeratorOfT, new[] { elementType });
+				else
+					enumeratorType = SpecialType.UnknownType;
+			} else if (isGeneric == false) {
+				collectionType = compilation.FindType(KnownTypeCode.IEnumerable);
+				enumeratorType = compilation.FindType(KnownTypeCode.IEnumerator);
+			} else {
+				collectionType = SpecialType.UnknownType;
+				enumeratorType = SpecialType.UnknownType;
+			}
+			getEnumeratorInvocation = ResolveCast(collectionType, expression);
+			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
+			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
+		}
+
+		static IType GetElementTypeFromIEnumerable(IType collectionType, ICompilation compilation, bool allowIEnumerator, out bool? isGeneric)
+		{
+			bool foundNonGenericIEnumerable = false;
+			foreach (IType baseType in collectionType.GetAllBaseTypes()) {
+				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+				if (baseTypeDef != null) {
+					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
+					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT)) {
+						ParameterizedType pt = baseType as ParameterizedType;
+						if (pt != null) {
+							isGeneric = true;
+							return pt.GetTypeArgument(0);
+						}
+					}
+					if (typeCode == KnownTypeCode.IEnumerable || (allowIEnumerator && typeCode == KnownTypeCode.IEnumerator))
+						foundNonGenericIEnumerable = true;
+				}
+			}
+			// System.Collections.IEnumerable found in type hierarchy -> Object is element type.
+			if (foundNonGenericIEnumerable) {
+				isGeneric = false;
+				return compilation.FindType(KnownTypeCode.Object);
+			}
+			isGeneric = null;
+			return SpecialType.UnknownType;
+		}
+		#endregion
+
 		#region GetExtensionMethods
 		/// <summary>
 		/// Gets all extension methods that are available in the current context.

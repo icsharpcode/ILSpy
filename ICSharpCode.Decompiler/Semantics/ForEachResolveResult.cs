@@ -49,11 +49,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		public readonly IType ElementType;
 		
 		/// <summary>
-		/// Gets the element variable.
-		/// </summary>
-		public readonly IVariable ElementVariable;
-		
-		/// <summary>
 		/// Gets the Current property on the IEnumerator.
 		/// Returns null if the property is not found.
 		/// </summary>
@@ -65,7 +60,7 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public readonly IMethod MoveNextMethod;
 		
-		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType, IType elementType, IVariable elementVariable, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
+		public ForEachResolveResult(ResolveResult getEnumeratorCall, IType collectionType, IType enumeratorType, IType elementType, IProperty currentProperty, IMethod moveNextMethod, IType voidType)
 			: base(voidType)
 		{
 			if (getEnumeratorCall == null)
@@ -76,13 +71,10 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException("enumeratorType");
 			if (elementType == null)
 				throw new ArgumentNullException("elementType");
-			if (elementVariable == null)
-				throw new ArgumentNullException("elementVariable");
 			this.GetEnumeratorCall = getEnumeratorCall;
 			this.CollectionType = collectionType;
 			this.EnumeratorType = enumeratorType;
 			this.ElementType = elementType;
-			this.ElementVariable = elementVariable;
 			this.CurrentProperty = currentProperty;
 			this.MoveNextMethod = moveNextMethod;
 		}
