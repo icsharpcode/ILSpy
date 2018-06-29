@@ -390,7 +390,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 						break;
 				}
 			} else {
-				output.Write($".emitbyte 0x{opCode:x}");
+				ushort opCodeValue = (ushort)opCode;
+				if (opCodeValue > 0xFF) {
+					// split 16-bit value into two emitbyte directives
+					output.WriteLine($".emitbyte 0x{(byte)(opCodeValue >> 8):x}");
+					// add label
+					output.WriteDefinition(DisassemblerHelpers.OffsetToString(offset + 1), offset + 1);
+					output.Write(": ");
+					output.Write($".emitbyte 0x{(byte)(opCodeValue & 0xFF):x}");
+				} else {
+					output.Write($".emitbyte 0x{(byte)opCodeValue:x}");
+				}
 			}
 			output.WriteLine();
 		}
