@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					} else {
 						stream.Position = 0;
-						string fileName = GetFileNameForResource(Path.ChangeExtension(r.Name, ".resource"));
+						string fileName = Path.ChangeExtension(GetFileNameForResource(r.Name), ".resource");
 						WriteResourceToFile(fileName, r.Name, stream);
 					}
 				} else {
