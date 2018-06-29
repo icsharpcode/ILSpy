@@ -196,10 +196,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					case Metadata.OperandType.Tok:
 					case Metadata.OperandType.Type:
 						var handle = MetadataTokens.EntityHandle(instructions.ReadInt32());
-						if (handle.Kind.IsTypeKind())
-							CollectNamespacesForTypeReference(typeSystem.ResolveAsType(handle), namespaces);
-						else
-							CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), typeSystem, namespaces, scanningFullType: scanningFullType);
+						switch (handle.Kind) {
+							case HandleKind.TypeDefinition:
+							case HandleKind.TypeReference:
+							case HandleKind.TypeSpecification:
+								CollectNamespacesForTypeReference(typeSystem.ResolveAsType(handle), namespaces);
+								break;
+							case HandleKind.FieldDefinition:
+							case HandleKind.MethodDefinition:
+							case HandleKind.MethodSpecification:
+							case HandleKind.MemberReference:
+								CollectNamespacesForMemberReference(typeSystem.ResolveAsMember(handle), typeSystem, namespaces, scanningFullType: scanningFullType);
+								break;
+							case HandleKind.StandaloneSignature:
+								var sig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)handle);
+								if (sig.GetKind() == StandaloneSignatureKind.Method) {
+									var methodSig = typeSystem.DecodeMethodSignature((StandaloneSignatureHandle)handle);
+									CollectNamespacesForTypeReference(methodSig.ReturnType, namespaces);
+									foreach (var paramType in methodSig.ParameterTypes) {
+										CollectNamespacesForTypeReference(paramType, namespaces);
+									}
+								}
+								break;
+							default:
+								throw new NotSupportedException();
+						}
 						break;
 					default:
 						instructions.SkipOperand(opCode);
