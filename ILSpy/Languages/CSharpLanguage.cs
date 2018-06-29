@@ -339,7 +339,7 @@ namespace ICSharpCode.ILSpy
 					output.WriteLine();
 				}
 				var corHeader = module.Reader.PEHeaders.CorHeader;
-				var entrypointHandle = MetadataTokens.EntityHandle(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+				var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
 				if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition) {
 					var entrypoint = metadata.GetMethodDefinition((MethodDefinitionHandle)entrypointHandle);
 					output.Write("// Entry point: ");

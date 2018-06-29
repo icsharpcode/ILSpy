@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Type:
 						output.Write(' ');
 						int metadataToken = blob.ReadInt32();
-						EntityHandle? handle = TryAsEntityHandle(metadataToken);
+						EntityHandle? handle = MetadataTokenHelpers.TryAsEntityHandle(metadataToken);
 						try {
 							handle?.WriteTo(module, output, genericContext);
 						} catch (BadImageFormatException) {
@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Tok:
 						output.Write(' ');
 						metadataToken = blob.ReadInt32();
-						handle = TryAsEntityHandle(metadataToken);
+						handle = MetadataTokenHelpers.TryAsEntityHandle(metadataToken);
 						switch (handle?.Kind) {
 							case HandleKind.MemberReference:
 								switch (metadata.GetMemberReference((MemberReferenceHandle)handle).GetKind()) {
@@ -424,19 +424,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			output.WriteLine();
-		}
-
-		private EntityHandle? TryAsEntityHandle(int metadataToken)
-		{
-			// SRM would interpret negative token values as virtual tokens,
-			// but that causes problems later on.
-			if (metadataToken < 0)
-				return null;
-			try {
-				return MetadataTokens.EntityHandle(metadataToken);
-			} catch (ArgumentException) {
-				return null;
-			}
 		}
 
 		private void WriteMetadataToken(EntityHandle handle, bool spaceBefore)
