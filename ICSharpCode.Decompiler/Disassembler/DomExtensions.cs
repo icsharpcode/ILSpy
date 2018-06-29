@@ -273,9 +273,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 							break;
 					}
 					break;
-				case HandleKind.PropertyDefinition:
-				case HandleKind.EventDefinition:
-					throw new NotSupportedException();
 				case HandleKind.StandaloneSignature:
 					var standaloneSig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)entity);
 					switch (standaloneSig.GetKind()) {
@@ -292,11 +289,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 							break;
 						case StandaloneSignatureKind.LocalVariables:
 						default:
-							throw new NotSupportedException();
+							output.Write($"@{MetadataTokens.GetToken(entity):X8} /* signature {standaloneSig.GetKind()} */");
+							break;
 					}
 					break;
 				default:
-					throw new NotSupportedException();
+					output.Write($"@{MetadataTokens.GetToken(entity):X8}");
+					break;
 			}
 		}
 

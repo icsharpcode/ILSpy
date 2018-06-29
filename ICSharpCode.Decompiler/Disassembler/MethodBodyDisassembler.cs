@@ -309,14 +309,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 					case OperandType.Sig:
 					case OperandType.Type:
 						output.Write(' ');
-						var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
-						handle.WriteTo(module, output, genericContext);
-						WriteMetadataToken(handle, spaceBefore: true);
+						int metadataToken = blob.ReadInt32();
+						EntityHandle? handle = TryAsEntityHandle(metadataToken);
+						try {
+							handle?.WriteTo(module, output, genericContext);
+						} catch (BadImageFormatException) {
+							handle = null;
+						}
+						WriteMetadataToken(handle, metadataToken, spaceBefore: true);
 						break;
 					case OperandType.Tok:
 						output.Write(' ');
-						handle = MetadataTokens.EntityHandle(blob.ReadInt32());
-						switch (handle.Kind) {
+						metadataToken = blob.ReadInt32();
+						handle = TryAsEntityHandle(metadataToken);
+						switch (handle?.Kind) {
 							case HandleKind.MemberReference:
 								switch (metadata.GetMemberReference((MemberReferenceHandle)handle).GetKind()) {
 									case MemberReferenceKind.Method:
@@ -331,8 +337,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write("field ");
 								break;
 						}
-						handle.WriteTo(module, output, genericContext);
-						WriteMetadataToken(handle, spaceBefore: true);
+						try {
+							handle?.WriteTo(module, output, genericContext);
+						} catch (BadImageFormatException) {
+							handle = null;
+						}
+						WriteMetadataToken(handle, metadataToken, spaceBefore: true);
 						break;
 					case OperandType.ShortI:
 						output.Write(' ');
@@ -355,10 +365,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 						DisassemblerHelpers.WriteOperand(output, blob.ReadDouble());
 						break;
 					case OperandType.String:
-						var userString = MetadataTokens.UserStringHandle(blob.ReadInt32());
+						metadataToken = blob.ReadInt32();
 						output.Write(' ');
-						DisassemblerHelpers.WriteOperand(output, metadata.GetUserString(userString));
-						WriteMetadataToken(userString, spaceBefore: true);
+						UserStringHandle? userString;
+						string text;
+						try {
+							userString = MetadataTokens.UserStringHandle(metadataToken);
+							text = metadata.GetUserString(userString.Value);
+						} catch (BadImageFormatException) {
+							userString = null;
+							text = null;
+						}
+						if (userString != null) {
+							DisassemblerHelpers.WriteOperand(output, text);
+						}
+						WriteMetadataToken(userString, metadataToken, spaceBefore: true);
 						break;
 					case OperandType.Switch:
 						int[] targets = ILParser.DecodeSwitchTargets(ref blob);
@@ -405,13 +426,31 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 		}
 
-		private void WriteMetadataToken(Handle handle, bool spaceBefore)
+		private EntityHandle? TryAsEntityHandle(int metadataToken)
 		{
-			if (ShowMetadataTokens) {
+			// SRM would interpret negative token values as virtual tokens,
+			// but that causes problems later on.
+			if (metadataToken < 0)
+				return null;
+			try {
+				return MetadataTokens.EntityHandle(metadataToken);
+			} catch (ArgumentException) {
+				return null;
+			}
+		}
+
+		private void WriteMetadataToken(EntityHandle handle, bool spaceBefore)
+		{
+			WriteMetadataToken(handle, MetadataTokens.GetToken(handle), spaceBefore);
+		}
+
+		private void WriteMetadataToken(Handle? handle, int metadataToken, bool spaceBefore)
+		{
+			if (ShowMetadataTokens || handle == null) {
 				if (spaceBefore) {
 					output.Write(' ');
 				}
-				output.Write("/* {0:X8} */", MetadataTokens.GetToken(handle));
+				output.Write("/* {0:X8} */", metadataToken);
 			}
 		}
 	}
