@@ -25,6 +25,7 @@ using Humanizer;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -369,6 +370,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static string GetNameByType(IType type)
 		{
 			type = NullableType.GetUnderlyingType(type);
+			while (type is ModifiedType || type is PinnedType) {
+				type = ((TypeWithElementType)type).ElementType;
+			}
 
 			string name;
 			if (type is ArrayType) {
