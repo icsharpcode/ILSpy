@@ -76,6 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case IMethod method:
 					HandleAttributes(method.Attributes, namespaces);
+					HandleAttributes(method.ReturnTypeAttributes, namespaces);
 					CollectNamespacesForTypeReference(method.ReturnType, namespaces);
 					foreach (var param in method.Parameters) {
 						HandleAttributes(param.Attributes, namespaces);
