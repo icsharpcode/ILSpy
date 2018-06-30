@@ -399,6 +399,7 @@ namespace ICSharpCode.ILSpy
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
+					fileName = Path.ChangeExtension(fileName, ".resx");
 					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
 						foreach (var entry in new ResourcesFile(entryStream)) {

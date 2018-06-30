@@ -332,6 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
 					bool decodedIntoIndividualFiles;
+					var individualResources = new List<Tuple<string, string>>();
 					try {
 						var resourcesFile = new ResourcesFile(stream);
 						if (resourcesFile.AllEntriesAreStreams()) {
@@ -343,7 +344,8 @@ namespace ICSharpCode.Decompiler.CSharp
 								}
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
-								WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)name, entryStream);
+								individualResources.AddRange(
+									WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)name, entryStream));
 							}
 							decodedIntoIndividualFiles = true;
 						} else {
@@ -352,10 +354,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					} catch (BadImageFormatException) {
 						decodedIntoIndividualFiles = false;
 					}
-					if (!decodedIntoIndividualFiles) {
+					if (decodedIntoIndividualFiles) {
+						foreach (var entry in individualResources) {
+							yield return entry;
+						}
+					} else {
 						stream.Position = 0;
 						string fileName = Path.ChangeExtension(GetFileNameForResource(r.Name), ".resource");
-						WriteResourceToFile(fileName, r.Name, stream);
+						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream)) {
+							yield return entry;
+						}
 					}
 				} else {
 					string fileName = GetFileNameForResource(r.Name);
