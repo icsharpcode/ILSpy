@@ -18,11 +18,6 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
-		public static bool IsNil(this IAssemblyReference reference)
-		{
-			return reference == null || (reference is Metadata.AssemblyReference ar && ar.IsNil);
-		}
-
 		public static string GetFullAssemblyName(this MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
