@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler.Tests.Helpers;

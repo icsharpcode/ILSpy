@@ -21,7 +21,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading.Tasks;
 using System.Xml;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -31,6 +30,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 using System.Threading;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -330,20 +330,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				Stream stream = r.GetResourceStream();
 				stream.Position = 0;
 
-				IEnumerable<DictionaryEntry> entries;
 				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
-					if (GetEntries(stream, out entries) && entries.All(e => e.Value is Stream)) {
-						foreach (var pair in entries) {
-							string fileName = Path.Combine(((string)pair.Key).Split('/').Select(p => CleanUpFileName(p)).ToArray());
-							string dirName = Path.GetDirectoryName(fileName);
-							if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName)) {
-								Directory.CreateDirectory(Path.Combine(targetDirectory, dirName));
+					bool decodedIntoIndividualFiles;
+					try {
+						var resourcesFile = new ResourcesFile(stream);
+						if (resourcesFile.AllEntriesAreStreams()) {
+							foreach (var (name, value) in resourcesFile) {
+								string fileName = Path.Combine(name.Split('/').Select(p => CleanUpFileName(p)).ToArray());
+								string dirName = Path.GetDirectoryName(fileName);
+								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName)) {
+									Directory.CreateDirectory(Path.Combine(targetDirectory, dirName));
+								}
+								Stream entryStream = (Stream)value;
+								entryStream.Position = 0;
+								WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)name, entryStream);
 							}
-							Stream entryStream = (Stream)pair.Value;
-							entryStream.Position = 0;
-							WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)pair.Key, entryStream);
+							decodedIntoIndividualFiles = true;
+						} else {
+							decodedIntoIndividualFiles = false;
 						}
-					} else {
+					} catch (BadImageFormatException) {
+						decodedIntoIndividualFiles = false;
+					}
+					if (!decodedIntoIndividualFiles) {
 						stream.Position = 0;
 						string fileName = Path.ChangeExtension(GetFileNameForResource(r.Name), ".resource");
 						WriteResourceToFile(fileName, r.Name, stream);
@@ -381,17 +390,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return fileName;
 		}
-
-		bool GetEntries(Stream stream, out IEnumerable<DictionaryEntry> entries)
-		{
-			try {
-				entries = new ResourceSet(stream).Cast<DictionaryEntry>();
-				return true;
-			} catch (ArgumentException) {
-				entries = null;
-				return false;
-			}
-		}
 		#endregion
 
 		/// <summary>
@@ -406,9 +404,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (pos > 0)
 				text = text.Substring(0, pos);
 			text = text.Trim();
-			foreach (char c in Path.GetInvalidFileNameChars())
-				text = text.Replace(c, '-');
-			return text;
+			// Whitelist allowed characters, replace everything else:
+			StringBuilder b = new StringBuilder(text.Length);
+			foreach (var c in text) {
+				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
+					b.Append(c);
+				else if (c == '.' && b.Length > 0 && b[b.Length - 1] != '.')
+					b.Append('.'); // allow dot, but never two in a row
+				else
+					b.Append('-');
+				if (b.Length >= 64)
+					break; // limit to 64 chars
+			}
+			if (b.Length == 0)
+				b.Append('-');
+			return b.ToString();
 		}
 
 		public static string GetPlatformName(ModuleDefinition module)
