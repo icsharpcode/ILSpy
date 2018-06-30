@@ -17,13 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
-using System.Resources;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;

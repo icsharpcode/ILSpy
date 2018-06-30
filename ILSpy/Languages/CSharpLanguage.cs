@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -33,7 +32,6 @@ using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.CSharp.Transforms;
-using System.Resources;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy

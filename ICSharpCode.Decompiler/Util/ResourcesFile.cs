@@ -87,6 +87,7 @@ namespace ICSharpCode.Decompiler.Util
 		readonly long fileStartPosition;
 		readonly long nameSectionPosition;
 		readonly long dataSectionPosition;
+		long[] startPositions;
 
 		/// <summary>
 		/// Creates a new ResourcesFile.
@@ -210,6 +211,12 @@ namespace ICSharpCode.Decompiler.Util
 			return GetResourceName(index, out _);
 		}
 
+		int GetResourceDataOffset(int index)
+		{
+			GetResourceName(index, out int dataOffset);
+			return dataOffset;
+		}
+
 		string GetResourceName(int index, out int dataOffset)
 		{
 			long pos = nameSectionPosition + namePositions[index];
@@ -239,14 +246,14 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return Encoding.Unicode.GetString(bytes);
 		}
-		
+
 		internal bool AllEntriesAreStreams()
 		{
 			if (version != 2)
 				return false;
-			for (int i = 0; i < numResources; i++) {
-				GetResourceName(i, out int dataOffset);
-				lock (reader) {
+			lock (reader) {
+				for (int i = 0; i < numResources; i++) {
+					int dataOffset = GetResourceDataOffset(i);
 					reader.Seek(dataSectionPosition + dataOffset, SeekOrigin.Begin);
 					var typeCode = (ResourceTypeCode)reader.Read7BitEncodedInt();
 					if (typeCode != ResourceTypeCode.Stream)
@@ -330,7 +337,7 @@ namespace ICSharpCode.Decompiler.Util
 						bits[i] = reader.ReadInt32();
 					return new decimal(bits);
 				default:
-					return new ResourceSerializedObject(FindType(typeIndex), reader);
+					return new ResourceSerializedObject(FindType(typeIndex), this, reader.BaseStream.Position);
 			}
 		}
 
@@ -416,7 +423,7 @@ namespace ICSharpCode.Decompiler.Util
 					if (typeCode < ResourceTypeCode.StartOfUserTypes) {
 						throw new BadImageFormatException("Invalid typeCode");
 					}
-					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes), reader);
+					return new ResourceSerializedObject(FindType(typeCode - ResourceTypeCode.StartOfUserTypes), this, reader.BaseStream.Position);
 			}
 		}
 
@@ -439,19 +446,65 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return GetEnumerator();
 		}
+
+		long[] GetStartPositions()
+		{
+			long[] positions = LazyInit.VolatileRead(ref startPositions);
+			if (positions != null)
+				return positions;
+			lock (reader) {
+				// double-checked locking
+				positions = LazyInit.VolatileRead(ref startPositions);
+				if (positions != null)
+					return positions;
+				positions = new long[numResources * 2];
+				int outPos = 0;
+				for (int i = 0; i < numResources; i++) {
+					positions[outPos++] = nameSectionPosition + namePositions[i];
+					positions[outPos++] = dataSectionPosition + GetResourceDataOffset(i);
+				}
+				Array.Sort(positions);
+				return LazyInit.GetOrSet(ref startPositions, positions);
+			}
+		}
+
+		internal byte[] GetBytesForSerializedObject(long pos)
+		{
+			long[] positions = GetStartPositions();
+			int i = Array.BinarySearch(positions, pos);
+			if (i < 0) {
+				// 'pos' the the start position of the serialized object data
+				// This is the position after the type code, so it should not appear in the 'positions' array.
+				// Set i to the index of the next position after 'pos'.
+				i = ~i;
+				// Note: if 'pos' does exist in the array, that means the stream has length 0,
+				// so we keep the i that we found.
+			}
+			lock (reader) {
+				long endPos;
+				if (i == positions.Length) {
+					endPos = reader.BaseStream.Length;
+				} else {
+					endPos = positions[i];
+				}
+				int len = (int)(endPos - pos);
+				reader.Seek(pos, SeekOrigin.Begin);
+				return reader.ReadBytes(len);
+			}
+		}
 	}
 
 	public class ResourceSerializedObject
 	{
 		public string TypeName { get; }
-		readonly Stream stream;
+		readonly ResourcesFile file;
 		readonly long position;
 		
-		internal ResourceSerializedObject(string typeName, BinaryReader reader)
+		internal ResourceSerializedObject(string typeName, ResourcesFile file, long position)
 		{
 			this.TypeName = typeName;
-			this.stream = reader.BaseStream;
-			this.position = stream.Position;
+			this.file = file;
+			this.position = position;
 		}
 
 		/// <summary>
@@ -459,8 +512,15 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public Stream GetStream()
 		{
-			stream.Seek(position, SeekOrigin.Begin);
-			return stream;
+			return new MemoryStream(file.GetBytesForSerializedObject(position), writable: false);
+		}
+
+		/// <summary>
+		/// Gets the serialized object data.
+		/// </summary>
+		public byte[] GetBytes()
+		{
+			return file.GetBytesForSerializedObject(position);
 		}
 	}
 }
