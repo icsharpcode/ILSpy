@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,9 +29,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
-
-using SRM = System.Reflection.Metadata;
-using static System.Reflection.Metadata.PEReaderExtensions;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -42,46 +40,36 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
-		readonly LoadedAssembly assembly;
 		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
+		readonly Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
+		ICompilation typeSystem;
 
 		public AssemblyTreeNode(LoadedAssembly assembly)
 		{
-			if (assembly == null)
-				throw new ArgumentNullException(nameof(assembly));
-
-			this.assembly = assembly;
-
+			this.LoadedAssembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
 			assembly.ContinueWhenLoaded(OnAssemblyLoaded, TaskScheduler.FromCurrentSynchronizationContext());
 
 			this.LazyLoading = true;
 		}
 
-		public AssemblyList AssemblyList
-		{
-			get { return assembly.AssemblyList; }
+		public AssemblyList AssemblyList {
+			get { return LoadedAssembly.AssemblyList; }
 		}
 
-		public LoadedAssembly LoadedAssembly
-		{
-			get { return assembly; }
-		}
+		public LoadedAssembly LoadedAssembly { get; }
 
-		public override bool IsAutoLoaded
-		{
-			get { 
-				return assembly.IsAutoLoaded; 
+		public override bool IsAutoLoaded {
+			get {
+				return LoadedAssembly.IsAutoLoaded;
 			}
 		}
 
-		public override object Text => assembly.Text;
+		public override object Text => LoadedAssembly.Text;
 
-		public override object Icon
-		{
-			get
-			{
-				if (assembly.IsLoaded) {
-					return assembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
+		public override object Icon {
+			get {
+				if (LoadedAssembly.IsLoaded) {
+					return LoadedAssembly.HasLoadError ? Images.AssemblyWarning : Images.Assembly;
 				} else {
 					return Images.AssemblyLoading;
 				}
@@ -90,15 +78,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		TextBlock tooltip;
 
-		public override object ToolTip
-		{
+		public override object ToolTip {
 			get {
-				if (assembly.HasLoadError)
+				if (LoadedAssembly.HasLoadError)
 					return "Assembly could not be loaded. Click here for details.";
 
-				if (tooltip == null && assembly.IsLoaded) {
+				if (tooltip == null && LoadedAssembly.IsLoaded) {
 					tooltip = new TextBlock();
-					var module = assembly.GetPEFileOrNull();
+					var module = LoadedAssembly.GetPEFileOrNull();
 					var metadata = module?.Metadata;
 					if (metadata?.IsAssembly == true) {
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
@@ -106,7 +93,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						tooltip.Inlines.Add(new LineBreak());
 					}
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
-					tooltip.Inlines.Add(new Run(assembly.FileName));
+					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
 					tooltip.Inlines.Add(new LineBreak());
 					tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
 					tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(module)));
@@ -122,9 +109,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override bool ShowExpander
-		{
-			get { return !assembly.HasLoadError; }
+		public override bool ShowExpander {
+			get { return !LoadedAssembly.HasLoadError; }
 		}
 
 		void OnAssemblyLoaded(Task<PEFile> moduleTask)
@@ -135,23 +121,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			RaisePropertyChanged("Tooltip");
 			if (moduleTask.IsFaulted) {
 				RaisePropertyChanged("ShowExpander"); // cannot expand assemblies with load error
-				// observe the exception so that the Task's finalizer doesn't re-throw it
-				try { moduleTask.Wait(); }
-				catch (AggregateException) { }
+													  // observe the exception so that the Task's finalizer doesn't re-throw it
+				try { moduleTask.Wait(); } catch (AggregateException) { }
 			} else {
 				RaisePropertyChanged("Text"); // shortname might have changed
 			}
 		}
 
-		readonly Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
-
 		protected override void LoadChildren()
 		{
-			var module = assembly.GetPEFileOrNull();
+			var module = LoadedAssembly.GetPEFileOrNull();
 			if (module == null) {
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
+			typeSystem = new SimpleCompilation(module, MinimalCorlib.Instance);
 			var metadata = module.Metadata;
 
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
@@ -209,7 +193,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			else
 				return null;
 		}
-		
+
 		public override bool CanDrag(SharpTreeNode[] nodes)
 		{
 			return nodes.All(n => n is AssemblyTreeNode);
@@ -232,7 +216,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void DeleteCore()
 		{
-			assembly.AssemblyList.Unload(assembly);
+			LoadedAssembly.AssemblyList.Unload(LoadedAssembly);
 		}
 
 		internal const string DataFormat = "ILSpyAssemblies";
@@ -246,7 +230,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.SearchTermMatches(assembly.ShortName))
+			if (settings.SearchTermMatches(LoadedAssembly.ShortName))
 				return FilterResult.Match;
 			else
 				return FilterResult.Recurse;
@@ -265,9 +249,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 
 			try {
-				assembly.WaitUntilLoaded(); // necessary so that load errors are passed on to the caller
+				LoadedAssembly.WaitUntilLoaded(); // necessary so that load errors are passed on to the caller
 			} catch (AggregateException ex) {
-				language.WriteCommentLine(output, assembly.FileName);
+				language.WriteCommentLine(output, LoadedAssembly.FileName);
 				switch (ex.InnerException) {
 					case BadImageFormatException badImage:
 						HandleException(badImage, "This file does not contain a managed assembly.");
@@ -282,7 +266,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						throw;
 				}
 			}
-			language.DecompileAssembly(assembly, output, options);
+			language.DecompileAssembly(LoadedAssembly, output, options);
 		}
 
 		public override bool Save(DecompilerTextView textView)
@@ -291,7 +275,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + language.ProjectFileExtension;
+			dlg.FileName = DecompilerTextView.CleanUpName(LoadedAssembly.ShortName) + language.ProjectFileExtension;
 			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true) {
 				DecompilationOptions options = new DecompilationOptions();
@@ -320,7 +304,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			// ToString is used by FindNodeByPath/GetPathForNode
 			// Fixes #821 - Reload All Assemblies Should Point to the Correct Assembly
-			return assembly.FileName;
+			return LoadedAssembly.FileName;
 		}
 	}
 
@@ -421,7 +405,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (context.SelectedTreeNodes == null)
 				return false;
-			return context.SelectedTreeNodes.Where(n => n is AssemblyTreeNode).Any(n=>((AssemblyTreeNode)n).IsAutoLoaded);
+			return context.SelectedTreeNodes.Where(n => n is AssemblyTreeNode).Any(n => ((AssemblyTreeNode)n).IsAutoLoaded);
 		}
 
 		public bool IsEnabled(TextViewContext context)

@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var metadata = module.Metadata;
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
 				this.Children.Add(new AssemblyReferenceTreeNode(r, parentAssembly));
-			foreach (var r in module.ModuleReferences.OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
+			foreach (var r in metadata.GetModuleReferences().OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
 				this.Children.Add(new ModuleReferenceTreeNode(r, metadata));
 		}
 		

@@ -85,7 +85,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		public ImmutableArray<AssemblyReference> AssemblyReferences => Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
-		public ImmutableArray<ModuleReferenceHandle> ModuleReferences => Metadata.GetModuleReferences().ToImmutableArray();
 		public ImmutableArray<TypeDefinition> TopLevelTypeDefinitions => Metadata.GetTopLevelTypeDefinitions().Select(t => new TypeDefinition(this, t)).ToImmutableArray();
 		public ImmutableArray<Resource> Resources => GetResources().ToImmutableArray();
 
