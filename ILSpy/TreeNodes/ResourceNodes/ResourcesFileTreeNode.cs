@@ -17,15 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
-using System.Resources;
-
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
@@ -73,44 +70,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (er != null) {
 				Stream s = er.GetResourceStream();
 				s.Position = 0;
-				ResourceReader reader;
 				try {
-					reader = new ResourceReader(s);
-				}
-				catch (ArgumentException) {
-					return;
-				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
-					ProcessResourceEntry(entry);
+					foreach (var entry in new ResourcesFile(s)) {
+						ProcessResourceEntry(entry);
+					}
+				} catch (BadImageFormatException) {
+					// ignore errors
 				}
 			}
 		}
 
-		private void ProcessResourceEntry(DictionaryEntry entry)
+		private void ProcessResourceEntry(KeyValuePair<string, object> entry)
 		{
-			var keyString = entry.Key.ToString();
-
 			if (entry.Value is String) {
-				stringTableEntries.Add(new KeyValuePair<string, string>(keyString, (string)entry.Value));
+				stringTableEntries.Add(new KeyValuePair<string, string>(entry.Key, (string)entry.Value));
 				return;
 			}
 
 			if (entry.Value is byte[]) {
-				Children.Add(ResourceEntryNode.Create(keyString, new MemoryStream((byte[])entry.Value)));
+				Children.Add(ResourceEntryNode.Create(entry.Key, new MemoryStream((byte[])entry.Value)));
 				return;
 			}
 
-			var node = ResourceEntryNode.Create(keyString, entry.Value);
+			var node = ResourceEntryNode.Create(entry.Key, entry.Value);
 			if (node != null) {
 				Children.Add(node);
 				return;
 			}
 
-			string entryType = entry.Value.GetType().FullName;
-			if (entry.Value is System.Globalization.CultureInfo) {
-				otherEntries.Add(new SerializedObjectRepresentation(keyString, entryType, ((System.Globalization.CultureInfo)entry.Value).DisplayName));
+			if (entry.Value == null) {
+				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, "null", ""));
+			} else if (entry.Value is ResourceSerializedObject so) {
+				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, so.TypeName, "<serialized>"));
 			} else {
-				otherEntries.Add(new SerializedObjectRepresentation(keyString, entryType, entry.Value.ToString()));
+				otherEntries.Add(new SerializedObjectRepresentation(entry.Key, entry.Value.GetType().FullName, entry.Value.ToString()));
 			}
 		}
 		
@@ -131,10 +124,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 							}
 							break;
 						case 2:
-							var reader = new ResourceReader(s);
 							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
-								foreach (DictionaryEntry entry in reader) {
-									writer.AddResource(entry.Key.ToString(), entry.Value);
+								foreach (var entry in new ResourcesFile(s)) {
+									writer.AddResource(entry.Key, entry.Value);
 								}
 							}
 							break;

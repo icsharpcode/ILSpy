@@ -5,10 +5,10 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 using NUnit.Framework;
 
@@ -143,14 +143,14 @@ namespace ILSpy.BamlDecompiler.Tests
 			if (er != null) {
 				Stream s = er.GetResourceStream();
 				s.Position = 0;
-				ResourceReader reader;
+				ResourcesFile resources;
 				try {
-					reader = new ResourceReader(s);
+					resources = new ResourcesFile(s);
 				} catch (ArgumentException) {
 					return null;
 				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
-					if (entry.Key.ToString() == name) {
+				foreach (var entry in resources.OrderBy(e => e.Key)) {
+					if (entry.Key == name) {
 						if (entry.Value is Stream)
 							return (Stream)entry.Value;
 						if (entry.Value is byte[])

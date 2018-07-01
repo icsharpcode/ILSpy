@@ -17,12 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Resources;
 
 using ICSharpCode.Decompiler;
 using Mono.Cecil;
@@ -34,6 +32,7 @@ using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy
 {
@@ -400,11 +399,11 @@ namespace ICSharpCode.ILSpy
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
-					using (ResourceReader reader = new ResourceReader(entryStream))
+					fileName = Path.ChangeExtension(fileName, ".resx");
 					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
 					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
-						foreach (DictionaryEntry entry in reader) {
-							writer.AddResource((string)entry.Key, entry.Value);
+						foreach (var entry in new ResourcesFile(entryStream)) {
+							writer.AddResource(entry.Key, entry.Value);
 						}
 					}
 					return new[] { Tuple.Create("EmbeddedResource", fileName) };

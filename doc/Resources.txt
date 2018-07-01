@@ -1,0 +1,99 @@
+System.Resources.ResourceReader is unsuitable for deserializing resources in the ILSpy context,
+because it tries to deserialize custom resource types, which fails if the types are in a non-GAC assembly.
+
+So we are instead using our own "class ResourcesFile", which is based on the
+.NET Core ResourceReader implementation.
+
+struct ResourcesFileFormat {
+	int32 magicNum; [check == ResourceManager.MagicNumber]
+	
+	// ResourceManager header:
+	int32 resMgrHeaderVersion; [check >= 0]
+	int32 numBytesToSkip; [check >= 0]
+	if (resMgrHeaderVersion <= 1) {
+		string readerType;
+		string resourceSetType;
+	} else {
+		byte _[numBytesToSkip];
+	}
+	
+	// RuntimeResourceSet header:
+	int32 version; [check in (1, 2)]
+	int32 numResources; [check >=0]
+	int32 numTypes; [check >=0]
+	string typeName[numTypes];
+	.align 8;
+	int32 nameHashes[numResources];
+	int32 namePositions[numResources]; [check >= 0]
+	int32 dataSectionOffset; [check >= current position in file]
+	byte remainderOfFile[];
+}
+
+// normal strings in this file format are stored as:
+struct string {
+	compressedint len;
+	byte value[len]; // interpret as UTF-8
+}
+
+// NameEntry #i is stored starting at remainderOfFile[namePositions[i]]
+// (that is, namePositions is interpreted relative to the start of the remainderOfFile array)
+struct NameEntry {
+	compressedint len;
+	byte name[len]; // interpret as UTF-16
+	int32 dataOffset; [check >= 0]
+}
+
+// Found at position ResourcesFileFormat.dataSectionOffset+NameEntry.dataOffset in the file.
+struct ValueEntry {
+	if (version == 1) {
+		compressedint typeIndex;
+		if (typeIndex == -1) {
+			// no value stored; value is implicitly null
+		} else {
+			switch (typeName[typeIndex]) {
+				case string:
+				case int, uint, long, ulong, sbyte, byte, short, ushort:
+				case float:
+				case double:
+					T value; // value directly stored
+				case DateTime:
+					int64 value; // new DateTime(_store.ReadInt64())
+				case TimeSpan:
+					int64 value; // new TimeSpan(_store.ReadInt64())
+				case decimal:
+					int32 value[4];
+				default:
+					byte data[...]; // BinaryFormatter-serialized data using typeName[typeIndex]
+			}
+		}
+	} else if (version == 2) {
+		compressedint typeCode;
+		// note: unlike v1, no lookup into the typeName array!
+		switch (typeCode) {
+			case null:
+				// no value stored; value is implicitly null
+			case string:
+			case bool:
+			case int, uint, long, ulong, sbyte, byte, short, ushort:
+				T value;
+			case char:
+				uint16 value;
+			case float:
+			case double:
+			case decimal:
+				T value;
+			case DateTime:
+				int64 value; // DateTime.FromBinary(_store.ReadInt64())
+			case TimeSpan:
+				int64 value; // new TimeSpan(_store.ReadInt64())
+			case ResourceTypeCode.ByteArray:
+				int32 len;
+				byte value[len];
+			case ResourceTypeCode.Stream:
+				int32 len;
+				byte value[len];
+			case >= ResourceTypeCode.StartOfUserTypes:
+				byte data[...]; // BinaryFormatter-serialized data using typeName[typeCode - ResourceTypeCode.StartOfUserTypes]
+		}
+	}
+}
