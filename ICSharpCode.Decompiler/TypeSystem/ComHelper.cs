@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return typeDefinition != null
 				&& typeDefinition.Kind == TypeKind.Interface
-				&& typeDefinition.GetAttributes(KnownAttribute.ComImport, inherit: false) != null;
+				&& typeDefinition.HasAttribute(KnownAttribute.ComImport, inherit: false);
 		}
 		
 		/// <summary>

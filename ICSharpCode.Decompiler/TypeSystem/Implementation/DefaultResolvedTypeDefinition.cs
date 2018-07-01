@@ -105,7 +105,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return LazyInit.GetOrSet(ref this.attributes, result);
 			}
 		}
-		
+
+		public IEnumerable<IAttribute> GetAttributes() => Attributes;
+
 		public System.Reflection.Metadata.EntityHandle MetadataToken => parts[0].MetadataToken;
 
 		public SymbolKind SymbolKind {

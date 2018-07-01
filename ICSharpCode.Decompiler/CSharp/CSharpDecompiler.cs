@@ -794,7 +794,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		EnumValueDisplayMode DetectBestEnumValueDisplayMode(ITypeDefinition typeDef, PEFile module)
 		{
-			if (typeDef.GetAttribute(KnownAttribute.Flags) != null)
+			if (typeDef.HasAttribute(KnownAttribute.Flags, inherit: false))
 				return EnumValueDisplayMode.All;
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
@@ -997,7 +997,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			foreach (var call in function.Descendants.OfType<CallInstruction>()) {
-				var attr = call.Method.GetAttribute(KnownAttribute.Conditional);
+				var attr = call.Method.GetAttribute(KnownAttribute.Conditional, inherit: true);
 				var symbolName = attr?.FixedArguments.FirstOrDefault().Value as string;
 				if (symbolName == null || !decompileRun.DefinedSymbols.Add(symbolName))
 					continue;
@@ -1014,12 +1014,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
 				if (enumDec.Initializer is PrimitiveExpression primitive
-					&& (decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")
+					&& (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
 						|| (initValue > 9 && ((initValue & (initValue - 1)) == 0 || (initValue & (initValue + 1)) == 0))))
 				{
 					primitive.SetValue(initValue, $"0x{initValue:X}");
 				}
-				enumDec.Attributes.AddRange(field.Attributes.Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
+				enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 				enumDec.AddAnnotation(new MemberResolveResult(null, field));
 				return enumDec;
 			}

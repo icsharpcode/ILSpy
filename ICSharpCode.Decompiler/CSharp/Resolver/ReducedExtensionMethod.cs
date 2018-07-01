@@ -136,12 +136,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region IMethod implementation
 
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get {
-				return baseMethod.ReturnTypeAttributes;
-			}
-		}
-
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
 				return baseMethod.TypeParameters;
@@ -243,11 +237,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				return baseMethod.Attributes;
-			}
-		}
+		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 
 		public bool IsStatic {
 			get {

@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.newOwner = newOwner;
 		}
 
-		IReadOnlyList<IAttribute> IParameter.Attributes => baseParameter.Attributes;
+		IEnumerable<IAttribute> IParameter.GetAttributes() => baseParameter.GetAttributes();
 		bool IParameter.IsRef => baseParameter.IsRef;
 		bool IParameter.IsOut => baseParameter.IsOut;
 		bool IParameter.IsParams => baseParameter.IsParams;

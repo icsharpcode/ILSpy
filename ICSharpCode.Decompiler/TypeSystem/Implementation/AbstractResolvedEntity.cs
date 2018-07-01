@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IReadOnlyList<IAttribute> Attributes { get; protected set; }
+		IEnumerable<IAttribute> IEntity.GetAttributes() => Attributes;
 
 		public bool IsStatic { get { return unresolved.IsStatic; } }
 		public bool IsAbstract { get { return unresolved.IsAbstract; } }

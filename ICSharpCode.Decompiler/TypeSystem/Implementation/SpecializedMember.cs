@@ -150,10 +150,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ITypeDefinition DeclaringTypeDefinition {
 			get { return baseMember.DeclaringTypeDefinition; }
 		}
-		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return baseMember.Attributes; }
-		}
+
+		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMember.GetAttributes();
 		
 		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
 			get {

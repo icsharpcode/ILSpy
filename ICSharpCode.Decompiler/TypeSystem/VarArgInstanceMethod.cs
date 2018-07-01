@@ -109,10 +109,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				baseMethod.Specialize(substitution),
 				parameters.Skip(baseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution)).ToList());
 		}
-		
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return baseMethod.ReturnTypeAttributes; }
-		}
+
+		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get { return baseMethod.TypeParameters; }
@@ -223,10 +222,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IAssembly ParentAssembly {
 			get { return baseMethod.ParentAssembly; }
-		}
-
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return baseMethod.Attributes; }
 		}
 
 		public bool IsStatic {

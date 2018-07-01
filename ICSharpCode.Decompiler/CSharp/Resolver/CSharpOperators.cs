@@ -150,8 +150,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return SymbolKind.Operator; }
 			}
 			
-			IReadOnlyList<IAttribute> IEntity.Attributes {
-				get { return EmptyList<IAttribute>.Instance; }
+			IEnumerable<IAttribute> IEntity.GetAttributes()
+			{
+				return EmptyList<IAttribute>.Instance;
 			}
 			
 			Accessibility IEntity.Accessibility {

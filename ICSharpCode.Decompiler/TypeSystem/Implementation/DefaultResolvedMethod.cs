@@ -170,6 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IReadOnlyList<IParameter> Parameters { get; private set; }
 		public IReadOnlyList<IAttribute> ReturnTypeAttributes { get; private set; }
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => ReturnTypeAttributes;
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; private set; }
 
 		public IReadOnlyList<IType> TypeArguments {

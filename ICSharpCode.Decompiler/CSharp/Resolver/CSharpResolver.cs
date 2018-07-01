@@ -1741,7 +1741,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void CheckForEnumerableInterface(ResolveResult expression, out IType collectionType, out IType enumeratorType, out IType elementType, out ResolveResult getEnumeratorInvocation)
 		{
 			bool? isGeneric;
-			elementType = GetElementTypeFromIEnumerable(expression.Type, compilation, false, out isGeneric);
+			elementType = expression.Type.GetElementTypeFromIEnumerable(compilation, false, out isGeneric);
 			if (isGeneric == true) {
 				ITypeDefinition enumerableOfT = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
 				if (enumerableOfT != null)
@@ -1764,33 +1764,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			getEnumeratorInvocation = ResolveCast(collectionType, expression);
 			getEnumeratorInvocation = ResolveMemberAccess(getEnumeratorInvocation, "GetEnumerator", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
 			getEnumeratorInvocation = ResolveInvocation(getEnumeratorInvocation, new ResolveResult[0]);
-		}
-
-		static IType GetElementTypeFromIEnumerable(IType collectionType, ICompilation compilation, bool allowIEnumerator, out bool? isGeneric)
-		{
-			bool foundNonGenericIEnumerable = false;
-			foreach (IType baseType in collectionType.GetAllBaseTypes()) {
-				ITypeDefinition baseTypeDef = baseType.GetDefinition();
-				if (baseTypeDef != null) {
-					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
-					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT)) {
-						ParameterizedType pt = baseType as ParameterizedType;
-						if (pt != null) {
-							isGeneric = true;
-							return pt.GetTypeArgument(0);
-						}
-					}
-					if (typeCode == KnownTypeCode.IEnumerable || (allowIEnumerator && typeCode == KnownTypeCode.IEnumerator))
-						foundNonGenericIEnumerable = true;
-				}
-			}
-			// System.Collections.IEnumerable found in type hierarchy -> Object is element type.
-			if (foundNonGenericIEnumerable) {
-				isGeneric = false;
-				return compilation.FindType(KnownTypeCode.Object);
-			}
-			isGeneric = null;
-			return SpecialType.UnknownType;
 		}
 		#endregion
 

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		// TODO: maybe these should be extension methods?
 		// or even part of the interface itself? (would allow for easy caching)
-		
+
 		#region GetBaseMember
 		/// <summary>
 		/// Gets the base member that has the same signature.
@@ -58,16 +58,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					yield return member;
 				}*/
 			}
-			
+
 			// Remove generic specialization
 			var substitution = member.Substitution;
 			member = member.MemberDefinition;
-			
+
 			if (member.DeclaringTypeDefinition == null) {
 				// For global methods, return empty list. (prevent SharpDevelop UDC crash 4524)
 				yield break;
 			}
-			
+
 			IEnumerable<IType> allBaseTypes;
 			if (includeImplementedInterfaces) {
 				allBaseTypes = member.DeclaringTypeDefinition.GetAllBaseTypes();
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		#endregion
-		
+
 		#region GetDerivedMember
 		/// <summary>
 		/// Finds the member declared in 'derivedType' that has the same signature (could override) 'baseMember'.
@@ -104,10 +104,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException("baseMember");
 			if (derivedType == null)
 				throw new ArgumentNullException("derivedType");
-			
+
 			if (baseMember.Compilation != derivedType.Compilation)
 				throw new ArgumentException("baseMember and derivedType must be from the same compilation");
-			
+
 			baseMember = baseMember.MemberDefinition;
 			bool includeInterfaces = baseMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
 			IMethod method = baseMember as IMethod;
@@ -145,6 +145,35 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			return null;
+		}
+		#endregion
+
+		#region Attributes
+		internal static IEnumerable<IAttribute> GetAttributes(ITypeDefinition typeDef)
+		{
+			foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse()) {
+				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+				if (baseTypeDef == null)
+					continue;
+				foreach (var attr in baseTypeDef.GetAttributes()) {
+					yield return attr;
+				}
+			}
+		}
+
+		internal static IEnumerable<IAttribute> GetAttributes(IMember member)
+		{
+			HashSet<IMember> visitedMembers = new HashSet<IMember>();
+			do {
+				member = member.MemberDefinition; // it's sufficient to look at the definitions
+				if (!visitedMembers.Add(member)) {
+					// abort if we seem to be in an infinite loop (cyclic inheritance)
+					break;
+				}
+				foreach (var attr in member.GetAttributes()) {
+					yield return attr;
+				}
+			} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
 		}
 		#endregion
 	}

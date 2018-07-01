@@ -98,16 +98,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public GenericParameterHandle MetadataToken => handle;
 
-		public override IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
-		IAttribute[] DecodeAttributes()
+		public override IEnumerable<IAttribute> GetAttributes()
 		{
 			var metadata = assembly.metadata;
 			var gp = metadata.GetGenericParameter(handle);

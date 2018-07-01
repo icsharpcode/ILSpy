@@ -141,9 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return index; }
 		}
 		
-		IReadOnlyList<IAttribute> ITypeParameter.Attributes {
-			get { return EmptyList<IAttribute>.Instance; }
-		}
+		IEnumerable<IAttribute> ITypeParameter.GetAttributes() =>EmptyList<IAttribute>.Instance;
 		
 		SymbolKind ITypeParameter.OwnerType {
 			get { return ownerType; }
