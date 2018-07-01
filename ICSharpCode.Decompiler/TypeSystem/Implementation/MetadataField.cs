@@ -43,7 +43,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType type;
 		bool isVolatile; // initialized together with this.type
 		byte decimalConstant; // 0=no, 1=yes, 2=unknown
-		IAttribute[] customAttributes;
 
 		internal MetadataField(MetadataAssembly assembly, FieldDefinitionHandle handle)
 		{
@@ -127,17 +126,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType DeclaringType => DeclaringTypeDefinition;
 		public IAssembly ParentAssembly => assembly;
 		public ICompilation Compilation => assembly.Compilation;
-
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
-		IAttribute[] DecodeAttributes()
+		
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;

@@ -42,7 +42,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly SymbolKind symbolKind;
 
 		// lazy-loaded:
-		IAttribute[] customAttributes;
 		volatile Accessibility cachedAccessiblity = InvalidAccessibility;
 		IParameter[] parameters;
 		IType returnType;
@@ -144,16 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		TypeParameterSubstitution IMember.Substitution => TypeParameterSubstitution.Identity;
 
 		#region Attributes
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
-		IAttribute[] DecodeAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;

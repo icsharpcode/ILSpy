@@ -123,8 +123,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// Gets the attributes on this entity.
+		/// Does not include inherited attributes.
 		/// </summary>
-		IReadOnlyList<IAttribute> Attributes { get; }
+		IEnumerable<IAttribute> GetAttributes();
 
 		/// <summary>
 		/// Gets the accessibility of this entity.

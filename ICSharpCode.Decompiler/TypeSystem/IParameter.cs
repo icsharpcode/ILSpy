@@ -63,9 +63,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IParameter : IVariable
 	{
 		/// <summary>
-		/// Gets the list of attributes.
+		/// Gets the attributes on this parameter.
 		/// </summary>
-		IReadOnlyList<IAttribute> Attributes { get; }
+		IEnumerable<IAttribute> GetAttributes();
 		
 		/// <summary>
 		/// Gets whether this parameter is a C# 'ref' parameter.

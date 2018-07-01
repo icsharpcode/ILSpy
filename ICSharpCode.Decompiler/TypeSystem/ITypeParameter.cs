@@ -82,9 +82,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		new string Name { get; }
 
 		/// <summary>
-		/// Gets the list of attributes declared on this type parameter.
+		/// Gets the attributes declared on this type parameter.
 		/// </summary>
-		IReadOnlyList<IAttribute> Attributes { get; }
+		IEnumerable<IAttribute> GetAttributes();
 		
 		/// <summary>
 		/// Gets the variance of this type parameter.

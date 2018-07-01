@@ -44,10 +44,7 @@ namespace ICSharpCode.Decompiler
 		public static bool IsCompilerGenerated(this IEntity entity)
 		{
 			if (entity != null) {
-				foreach (IAttribute a in entity.Attributes) {
-					if (a.AttributeType.FullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
-						return true;
-				}
+				return entity.HasAttribute(KnownAttribute.CompilerGenerated);
 			}
 			return false;
 		}

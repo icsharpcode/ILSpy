@@ -79,7 +79,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the attributes associated with the return type. (e.g. [return: MarshalAs(...)])
 		/// </summary>
-		IReadOnlyList<IAttribute> ReturnTypeAttributes { get; }
+		/// <remarks>
+		/// Does not include inherited attributes.
+		/// </remarks>
+		IEnumerable<IAttribute> GetReturnTypeAttributes();
 
 		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.

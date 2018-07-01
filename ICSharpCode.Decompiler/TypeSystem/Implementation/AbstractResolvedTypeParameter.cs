@@ -71,8 +71,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public int Index {
 			get { return index; }
 		}
-		
-		public abstract IReadOnlyList<IAttribute> Attributes { get; }
+
+		public abstract IEnumerable<IAttribute> GetAttributes();
 		
 		public VarianceModifier Variance {
 			get { return variance; }

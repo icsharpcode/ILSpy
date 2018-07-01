@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IAssembly IEntity.ParentAssembly => DeclaringType?.GetDefinition()?.ParentAssembly;
 
-		IReadOnlyList<IAttribute> IEntity.Attributes => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
 
 		public Accessibility Accessibility { get; set; } = Accessibility.Public;
 
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override SymbolKind SymbolKind => symbolKind;
 		
-		IReadOnlyList<IAttribute> IMethod.ReturnTypeAttributes => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
 

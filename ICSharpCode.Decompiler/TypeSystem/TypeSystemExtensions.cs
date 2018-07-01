@@ -420,181 +420,70 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 		#endregion
-
-		#region ITypeReference.Resolve(ICompilation)
-
-		/// <summary>
-		/// Resolves a type reference in the compilation's main type resolve context.
-		/// Some type references require a more specific type resolve context and will not resolve using this method.
-		/// </summary>
-		/// <returns>
-		/// Returns the resolved type.
-		/// In case of an error, returns <see cref="SpecialType.UnknownType"/>.
-		/// Never returns null.
-		/// </returns>
-		public static IType Resolve (this ITypeReference reference, ICompilation compilation)
-		{
-			if (reference == null)
-				throw new ArgumentNullException ("reference");
-			if (compilation == null)
-				throw new ArgumentNullException ("compilation");
-			return reference.Resolve (compilation.TypeResolveContext);
-		}
-		#endregion
 		
-		#region ITypeDefinition.GetAttribute
+		#region IEntity.GetAttribute
+		/// <summary>
+		/// Gets whether the entity has an attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="entity">The entity on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		/// <param name="inherit">
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
+		/// </param>
+		public static bool HasAttribute(this IEntity entity, KnownAttribute attrType, bool inherit=false)
+		{
+			return GetAttribute(entity, attrType, inherit) != null;
+		}
+
 		/// <summary>
 		/// Gets the attribute of the specified attribute type (or derived attribute types).
 		/// </summary>
 		/// <param name="entity">The entity on which the attributes are declared.</param>
 		/// <param name="attributeType">The attribute type to look for.</param>
 		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
 		/// </param>
 		/// <returns>
 		/// Returns the attribute that was found; or <c>null</c> if none was found.
 		/// If inherit is true, an from the entity itself will be returned if possible;
 		/// and the base entity will only be searched if none exists.
 		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, IType attributeType, bool inherit = true)
+		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit=false)
 		{
-			return GetAttributes(entity, attributeType, inherit).FirstOrDefault();
+			return GetAttributes(entity, inherit).FirstOrDefault(a => a.AttributeType.IsKnownType(attributeType));
 		}
-		
+
 		/// <summary>
-		/// Gets the attributes of the specified attribute type (or derived attribute types).
+		/// Gets the attributes on the entity.
 		/// </summary>
 		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
 		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
 		/// </param>
 		/// <returns>
 		/// Returns the list of attributes that were found.
-		/// If inherit is true, attributes from the entity itself are returned first; followed by attributes inherited from the base entity.
+		/// If inherit is true, attributes from the entity itself are returned first;
+		/// followed by attributes inherited from the base entity.
 		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, IType attributeType, bool inherit = true)
+		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, bool inherit)
 		{
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
-			return GetAttributes(entity, attributeType.Equals, inherit);
-		}
-		
-		/// <summary>
-		/// Gets the attribute of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the attribute that was found; or <c>null</c> if none was found.
-		/// If inherit is true, an from the entity itself will be returned if possible;
-		/// and the base entity will only be searched if none exists.
-		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit = true)
-		{
-			return GetAttributes(entity, attributeType, inherit).FirstOrDefault();
-		}
-		
-		/// <summary>
-		/// Gets the attributes of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the list of attributes that were found.
-		/// If inherit is true, attributes from the entity itself are returned first; followed by attributes inherited from the base entity.
-		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, KnownAttribute attributeType, bool inherit = true)
-		{
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-			return GetAttributes(entity, attrType => {
-			                     	ITypeDefinition typeDef = attrType.GetDefinition();
-			                     	return typeDef != null && typeDef.FullTypeName == attributeType.GetTypeName();
-			                     }, inherit);
-		}
-
-		/// <summary>
-		/// Gets the attribute of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the attribute that was found; or <c>null</c> if none was found.
-		/// If inherit is true, an from the entity itself will be returned if possible;
-		/// and the base entity will only be searched if none exists.
-		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, bool inherit = true)
-		{
-			if (entity == null)
-				throw new ArgumentNullException ("entity");
-			return GetAttributes(entity, a => true, inherit);
-		}
-		
-		static IEnumerable<IAttribute> GetAttributes(IEntity entity, Predicate<IType> attributeTypePredicate, bool inherit)
-		{
-			if (!inherit) {
-				foreach (var attr in entity.Attributes) {
-					if (attributeTypePredicate(attr.AttributeType))
-						yield return attr;
+			if (inherit) {
+				if (entity is ITypeDefinition td) {
+					return InheritanceHelper.GetAttributes(td);
+				} else if (entity is IMember m) {
+					return InheritanceHelper.GetAttributes(m);
+				} else {
+					throw new NotSupportedException("Unknown entity type");
 				}
-				yield break;
+			} else {
+				return entity.GetAttributes();
 			}
-			ITypeDefinition typeDef = entity as ITypeDefinition;
-			if (typeDef != null) {
-				foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse()) {
-					ITypeDefinition baseTypeDef = baseType.GetDefinition();
-					if (baseTypeDef == null)
-						continue;
-					foreach (var attr in baseTypeDef.Attributes) {
-						if (attributeTypePredicate(attr.AttributeType))
-							yield return attr;
-					}
-				}
-				yield break;
-			}
-			IMember member = entity as IMember;
-			if (member != null) {
-				HashSet<IMember> visitedMembers = new HashSet<IMember>();
-				do {
-					member = member.MemberDefinition; // it's sufficient to look at the definitions
-					if (!visitedMembers.Add(member)) {
-						// abort if we seem to be in an infinite loop (cyclic inheritance)
-						break;
-					}
-					foreach (var attr in member.Attributes) {
-						if (attributeTypePredicate(attr.AttributeType))
-							yield return attr;
-					}
-				} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
-				yield break;
-			}
-			throw new NotSupportedException("Unknown entity type");
-		}
-		#endregion
-
-		#region IsCompilerGenerated
-		public static bool IsCompilerGenereated(this IEntity entity)
-		{
-			if (entity == null)
-				throw new ArgumentNullException(nameof(entity));
-
-			return entity.GetAttribute(KnownAttribute.CompilerGenerated) != null;
 		}
 		#endregion
 

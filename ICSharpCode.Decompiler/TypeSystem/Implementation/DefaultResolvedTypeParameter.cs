@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
 
-		public override IReadOnlyList<IAttribute> Attributes => attributes;
+		public override IEnumerable<IAttribute> GetAttributes() => attributes;
 
 		public override bool HasValueTypeConstraint => hasValueTypeConstraint;
 		public override bool HasReferenceTypeConstraint => hasReferenceTypeConstraint;

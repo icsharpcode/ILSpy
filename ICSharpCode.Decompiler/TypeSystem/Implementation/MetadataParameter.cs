@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		string name;
-		IAttribute[] customAttributes;
 
 		internal MetadataParameter(MetadataAssembly assembly, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
@@ -53,16 +52,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public EntityHandle MetadataToken => handle;
 
 		#region Attributes
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
-		IAttribute[] DecodeAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;
