@@ -23,6 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ICSharpCode.Decompiler.Util;
 using LightJson.Serialization;
 
 namespace ICSharpCode.Decompiler.Metadata
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				this.Version = parts[1];
 				this.Type = type;
 				this.Path = path;
-				this.RuntimeComponents = runtimeComponents ?? new string[0];
+				this.RuntimeComponents = runtimeComponents ?? Empty<string>.Array;
 			}
 		}
 

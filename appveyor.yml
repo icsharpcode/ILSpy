@@ -31,8 +31,7 @@ for:
 - branches:
     only:
       - master
-      - 3.0.x
-      - 3.1.x
+      - 3.2.x
   artifacts:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
