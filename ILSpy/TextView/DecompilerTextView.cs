@@ -46,6 +46,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -206,14 +207,14 @@ namespace ICSharpCode.ILSpy.TextView
 					}
 				}
 				return $"{code.Name} (0x{code.Code:x})";
-			} else if (segment.Reference is IMetadataEntity entity) {
+			} else if (segment.Reference is IEntity entity) {
 				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(new Entity(entity.Module, entity.Handle)));
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
 				try {
 					//var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
-					var docProvider = XmlDocLoader.LoadDocumentation(entity.Module);
+					var docProvider = XmlDocLoader.LoadDocumentation(((MetadataAssembly)entity.ParentAssembly).PEFile);
 					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(new Entity(entity.Module, entity.Handle)));
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
 						if (documentation != null) {
 							renderer.AppendText(Environment.NewLine);
 							renderer.AddXmlDocumentation(documentation);

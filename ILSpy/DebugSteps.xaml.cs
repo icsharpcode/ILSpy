@@ -7,10 +7,6 @@ using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.ILSpy
 {
-
-	/// <summary>
-	/// Interaktionslogik für DebugSteps.xaml
-	/// </summary>
 	public partial class DebugSteps : UserControl, IPane
 	{
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
@@ -20,7 +16,7 @@ namespace ICSharpCode.ILSpy
 
 		public static ILAstWritingOptions Options => writingOptions;
 
-#if DEBUG
+#if false
 		ILAstLanguage language;
 #endif
 
@@ -28,7 +24,7 @@ namespace ICSharpCode.ILSpy
 		{
 			InitializeComponent();
 
-#if DEBUG
+#if false
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
@@ -56,7 +52,7 @@ namespace ICSharpCode.ILSpy
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-#if DEBUG
+#if false
 			if (e.PropertyName == "Language") {
 				if (language != null) {
 					language.StepperUpdated -= ILAstStepperUpdated;
@@ -72,7 +68,7 @@ namespace ICSharpCode.ILSpy
 
 		private void ILAstStepperUpdated(object sender, EventArgs e)
 		{
-#if DEBUG
+#if false
 			if (language == null) return;
 			Dispatcher.Invoke(() => {
 				tree.ItemsSource = language.Stepper.Steps;
@@ -88,7 +84,7 @@ namespace ICSharpCode.ILSpy
 
 		void IPane.Closed()
 		{
-#if DEBUG
+#if false
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged -= SelectionChanged;
 			writingOptions.PropertyChanged -= WritingOptions_PropertyChanged;

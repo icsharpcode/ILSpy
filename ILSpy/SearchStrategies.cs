@@ -14,6 +14,7 @@ using ILOpCode = System.Reflection.Metadata.ILOpCode;
 using ICSharpCode.Decompiler;
 
 using static System.Reflection.Metadata.PEReaderExtensions;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy
 {
@@ -43,29 +44,9 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected float CalculateFitness(IMetadataEntity member)
+		protected float CalculateFitness(IEntity member)
 		{
-			var metadata = member.Module.Metadata;
-			string text;
-			switch (member) {
-				case TypeDefinition td:
-					text = metadata.GetString(metadata.GetTypeDefinition(td.Handle).Name);
-					break;
-				case FieldDefinition fd:
-					text = metadata.GetString(metadata.GetFieldDefinition(fd.Handle).Name);
-					break;
-				case MethodDefinition md:
-					text = metadata.GetString(metadata.GetMethodDefinition(md.Handle).Name);
-					break;
-				case PropertyDefinition pd:
-					text = metadata.GetString(metadata.GetPropertyDefinition(pd.Handle).Name);
-					break;
-				case EventDefinition ed:
-					text = metadata.GetString(metadata.GetEventDefinition(ed.Handle).Name);
-					break;
-				default:
-					throw new NotSupportedException();
-			}
+			string text = member.Name;
 
 			// Probably compiler generated types without meaningful names, show them last
 			if (text.StartsWith("<")) {
@@ -75,36 +56,36 @@ namespace ICSharpCode.ILSpy
 			// Constructors always have the same name in IL:
 			// Use type name instead
 			if (text == ".cctor" || text == ".ctor") {
-				//text = member.DeclaringType.Name;
+				text = member.DeclaringType.Name;
 			}
 
 			// Ignore generic arguments, it not possible to search based on them either
-			text = Decompiler.TypeSystem.ReflectionHelper.SplitTypeParameterCountFromReflectionName(text);
+			text = ReflectionHelper.SplitTypeParameterCountFromReflectionName(text);
 
 			return 1.0f / text.Length;
 		}
 
-		protected virtual bool IsMatch(FieldDefinition field, Language language)
+		protected virtual bool IsMatch(IField field, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(PropertyDefinition property, Language language)
+		protected virtual bool IsMatch(IProperty property, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(EventDefinition ev, Language language)
+		protected virtual bool IsMatch(IEvent ev, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(MethodDefinition m, Language language)
+		protected virtual bool IsMatch(IMethod m, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool MatchName(IMetadataEntity m, Language language)
+		protected virtual bool MatchName(IEntity m, Language language)
 		{
 			return IsMatch(t => GetLanguageSpecificName(language, m, regex != null ? fullNameSearch : t.Contains(".")));
 		}
@@ -178,26 +159,25 @@ namespace ICSharpCode.ILSpy
 			return false;
 		}
 
-		string GetLanguageSpecificName(Language language, IMetadataEntity member, bool fullName = false)
+		string GetLanguageSpecificName(Language language, IEntity member, bool fullName = false)
 		{
-			var metadata = member.Module.Metadata;
 			switch (member) {
-				case TypeDefinition t:
+				case ITypeDefinition t:
 					return language.TypeToString(t, includeNamespace: fullName);
-				case FieldDefinition f:
+				case IField f:
 					return language.FieldToString(f, fullName, fullName);
-				case PropertyDefinition p:
-					return language.PropertyToString(p, fullName, fullName, p.Handle.HasMatchingDefaultMemberAttribute(member.Module, out _));
-				case MethodDefinition m:
+				case IProperty p:
+					return language.PropertyToString(p, fullName, fullName, p.IsIndexer);
+				case IMethod m:
 					return language.MethodToString(m, fullName, fullName);
-				case EventDefinition e:
+				case IEvent e:
 					return language.EventToString(e, fullName, fullName);
 				default:
 					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}
 		}
 
-		void Add<T>(Func<IEnumerable<T>> itemsGetter, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMetadataEntity
+		void Add<T>(Func<IEnumerable<T>> itemsGetter, ITypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IEntity
 		{
 			IEnumerable<T> items = Enumerable.Empty<T>();
 			try {
@@ -219,28 +199,16 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
+		public virtual void Search(ITypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			var metadata = type.Module.Metadata;
-			var td = metadata.GetTypeDefinition(type.Handle);
-			Add(() => td.GetFields().Select(f => new FieldDefinition(type.Module, f)), type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
-			Add(() => td.GetProperties().Select(p => new PropertyDefinition(type.Module, p)), type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
-			Add(() => td.GetEvents().Select(e => new EventDefinition(type.Module, e)), type, language, addResult, IsMatch, EventTreeNode.GetIcon);
-			Add(() => td.GetMethods().Where(m => NotSpecialMethod(m, metadata)).Select(m => new MethodDefinition(type.Module, m)), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
+			Add(() => type.Fields, type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
+			Add(() => type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
+			Add(() => type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
+			Add(() => type.Methods.Where(m => !m.IsAccessor), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
 
-			foreach (var nestedType in td.GetNestedTypes()) {
-				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
+			foreach (var nestedType in type.NestedTypes) {
+				Search(nestedType, language, addResult);
 			}
-		}
-
-		bool NotSpecialMethod(SRM.MethodDefinitionHandle method, SRM.MetadataReader metadata)
-		{
-			return (method.GetMethodSemanticsAttributes(metadata) & (
-				MethodSemanticsAttributes.Setter
-				| MethodSemanticsAttributes.Getter
-				| MethodSemanticsAttributes.Adder
-				| MethodSemanticsAttributes.Remover
-				| MethodSemanticsAttributes.Raiser)) == 0;
 		}
 
 		Regex SafeNewRegex(string unsafePattern)
@@ -265,9 +233,9 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		protected override bool MatchName(IMetadataEntity m, Language language)
+		protected override bool MatchName(IEntity m, Language language)
 		{
-			return SRM.Ecma335.MetadataTokens.GetToken(m.Handle) == searchTermToken;
+			return SRM.Ecma335.MetadataTokens.GetToken(m.MetadataToken) == searchTermToken;
 		}
 	}
 
@@ -308,26 +276,24 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		protected override bool IsMatch(FieldDefinition field, Language language)
+		protected override bool IsMatch(IField field, Language language)
 		{
-			return IsLiteralMatch(field.DecodeConstant());
+			return IsLiteralMatch(field.ConstantValue);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property, Language language)
+		protected override bool IsMatch(IProperty property, Language language)
 		{
-			var accessors = property.Module.Metadata.GetPropertyDefinition(property.Handle).GetAccessors();
-			return MethodIsLiteralMatch(accessors.Getter, property.Module) || MethodIsLiteralMatch(accessors.Setter, property.Module);
+			return MethodIsLiteralMatch(property.Getter) || MethodIsLiteralMatch(property.Setter);
 		}
 
-		protected override bool IsMatch(EventDefinition ev, Language language)
+		protected override bool IsMatch(IEvent ev, Language language)
 		{
-			var accessors = ev.Module.Metadata.GetEventDefinition(ev.Handle).GetAccessors();
-			return MethodIsLiteralMatch(accessors.Adder, ev.Module) || MethodIsLiteralMatch(accessors.Remover, ev.Module) || MethodIsLiteralMatch(accessors.Raiser, ev.Module);
+			return MethodIsLiteralMatch(ev.AddAccessor) || MethodIsLiteralMatch(ev.RemoveAccessor) || MethodIsLiteralMatch(ev.InvokeAccessor);
 		}
 
-		protected override bool IsMatch(MethodDefinition m, Language language)
+		protected override bool IsMatch(IMethod m, Language language)
 		{
-			return MethodIsLiteralMatch(m.Handle, m.Module);
+			return MethodIsLiteralMatch(m);
 		}
 
 		bool IsLiteralMatch(object val)
@@ -351,14 +317,15 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		bool MethodIsLiteralMatch(SRM.MethodDefinitionHandle m, PEFile module)
+		bool MethodIsLiteralMatch(IMethod method)
 		{
-			if (module == null)
+			if (method == null)
 				return false;
-			var metadata = module.Metadata;
+			var module = ((MetadataAssembly)method.ParentAssembly).PEFile;
+			var m = (SRM.MethodDefinitionHandle)method.MetadataToken;
 			if (m.IsNil)
 				return false;
-			var methodDefinition = metadata.GetMethodDefinition(m);
+			var methodDefinition = module.Metadata.GetMethodDefinition(m);
 			if (!methodDefinition.HasBody())
 				return false;
 			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
@@ -455,7 +422,7 @@ namespace ICSharpCode.ILSpy
 								return true;
 							break;
 						case ILOpCode.Ldstr:
-							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, metadata))
+							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, module.Metadata))
 								return true;
 							break;
 					}
@@ -467,7 +434,7 @@ namespace ICSharpCode.ILSpy
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					if (IsMatch(t => ILParser.DecodeUserString(ref blob, metadata)))
+					if (base.IsMatch(t => ILParser.DecodeUserString(ref blob, module.Metadata)))
 						return true;
 				}
 			}
@@ -499,22 +466,22 @@ namespace ICSharpCode.ILSpy
 			this.searchKind = searchKind;
 		}
 
-		protected override bool IsMatch(FieldDefinition field, Language language)
+		protected override bool IsMatch(IField field, Language language)
 		{
 			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && MatchName(field, language);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property, Language language)
+		protected override bool IsMatch(IProperty property, Language language)
 		{
 			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && MatchName(property, language);
 		}
 
-		protected override bool IsMatch(EventDefinition ev, Language language)
+		protected override bool IsMatch(IEvent ev, Language language)
 		{
 			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && MatchName(ev, language);
 		}
 
-		protected override bool IsMatch(MethodDefinition m, Language language)
+		protected override bool IsMatch(IMethod m, Language language)
 		{
 			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && MatchName(m, language);
 		}
@@ -527,26 +494,23 @@ namespace ICSharpCode.ILSpy
 		{
 		}
 
-		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
+		public override void Search(ITypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			var metadata = type.Module.Metadata;
-			var td = metadata.GetTypeDefinition(type.Handle);
-
 			if (MatchName(type, language)) {
 				string name = language.TypeToString(type, includeNamespace: false);
-				var declaringType = td.GetDeclaringType();
+				var declaringType = type.DeclaringTypeDefinition;
 				addResult(new SearchResult {
 					Member = type,
 					Fitness = CalculateFitness(type),
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
-					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
+					Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : type.Namespace
 				});
 			}
 
-			foreach (var nestedType in td.GetNestedTypes()) {
-				Search(new TypeDefinition(type.Module, nestedType), language, addResult);
+			foreach (var nestedType in type.NestedTypes) {
+				Search(nestedType, language, addResult);
 			}
 		}
 	}
@@ -558,42 +522,41 @@ namespace ICSharpCode.ILSpy
 		{
 		}
 
-		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
+		public override void Search(ITypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (MatchName(type, language))
 			{
 				string name = language.TypeToString(type, includeNamespace: false);
-				var metadata = type.Module.Metadata;
-				var declaringType = metadata.GetTypeDefinition(type.Handle).GetDeclaringType();
+				var declaringType = type.DeclaringTypeDefinition;
 				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
 					Fitness = CalculateFitness(type),
 					Name = name,
-					LocationImage = !declaringType.IsNil ? TypeTreeNode.GetIcon(new TypeDefinition(type.Module, declaringType)) : Images.Namespace,
-					Location = !declaringType.IsNil ? language.TypeToString(new TypeDefinition(type.Module, declaringType), includeNamespace: true) : type.Handle.GetFullTypeName(metadata).TopLevelTypeName.Namespace
+					LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
+					Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : type.Namespace
 				});
 			}
 
 			base.Search(type, language, addResult);
 		}
 
-		protected override bool IsMatch(FieldDefinition field, Language language)
+		protected override bool IsMatch(IField field, Language language)
 		{
 			return MatchName(field, language);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property, Language language)
+		protected override bool IsMatch(IProperty property, Language language)
 		{
 			return MatchName(property, language);
 		}
 
-		protected override bool IsMatch(EventDefinition ev, Language language)
+		protected override bool IsMatch(IEvent ev, Language language)
 		{
 			return MatchName(ev, language);
 		}
 
-		protected override bool IsMatch(MethodDefinition m, Language language)
+		protected override bool IsMatch(IMethod m, Language language)
 		{
 			return MatchName(m, language);
 		}

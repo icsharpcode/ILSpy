@@ -26,9 +26,9 @@ using ICSharpCode.Decompiler.Util;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
-{
+{/*
 	/// <summary>
-	/// Lists the super types of a class.
+	/// Lists the sub types of a class.
 	/// </summary>
 	sealed class DerivedTypesTreeNode : ILSpyTreeNode
 	{
@@ -97,5 +97,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			threading.Decompile(language, output, options, EnsureLazyChildren);
 		}
-	}
+	}*/
 }

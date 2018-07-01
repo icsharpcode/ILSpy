@@ -22,18 +22,19 @@ using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		private readonly TypeDefinition type;
-		private readonly PEFile[] assemblies;
+		private readonly ITypeDefinition type;
+	/*	private readonly PEFile[] assemblies;
 		private readonly ThreadingSupport threading;
 		private readonly SRM.TypeDefinition td;
 
-		public DerivedTypesEntryNode(TypeDefinition type, PEFile[] assemblies)
+		public DerivedTypesEntryNode(ITypeDefinition type, PEFile[] assemblies)
 		{
 			this.type = type;
 			this.td = type.Module.Metadata.GetTypeDefinition(type.Handle);
@@ -100,13 +101,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = BaseTypesEntryNode.ActivateItem(this, type);
-		}
+		}*/
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => type;
+		IEntity IMemberTreeNode.Member => type;
 	}
 }

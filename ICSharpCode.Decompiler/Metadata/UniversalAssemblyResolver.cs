@@ -69,7 +69,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string TargetFramework { get; }
 
-		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework, PEStreamOptions options)
+		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
+			PEStreamOptions options = PEStreamOptions.Default)
 		{
 			this.options = options;
 			this.TargetFramework = targetFramework;

@@ -18,10 +18,11 @@
 
 using System;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-
+using ICSharpCode.Decompiler.TypeSystem;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -33,38 +34,31 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly bool isIndexer;
 
-		public PropertyTreeNode(PropertyDefinition property)
+		public PropertyTreeNode(IProperty property)
 		{
-			if (property == null)
-				throw new ArgumentNullException(nameof(property));
-			this.PropertyDefinition = property;
-			var metadata = property.Module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
-			var accessors = propertyDefinition.GetAccessors();
-			using (LoadedAssembly.DisableAssemblyLoad()) {
-				this.isIndexer = property.Handle.HasMatchingDefaultMemberAttribute(property.Module, out _);
-			}
+			this.PropertyDefinition = property ?? throw new ArgumentNullException(nameof(property));
+			this.isIndexer = property.IsIndexer;
 
-			if (!accessors.Getter.IsNil)
-				this.Children.Add(new MethodTreeNode(new MethodDefinition(property.Module, accessors.Getter)));
-			if (!accessors.Setter.IsNil)
-				this.Children.Add(new MethodTreeNode(new MethodDefinition(property.Module, accessors.Setter)));
+			if (property.CanGet)
+				this.Children.Add(new MethodTreeNode(property.Getter));
+			if (property.CanSet)
+				this.Children.Add(new MethodTreeNode(property.Setter));
 			/*foreach (var m in property.OtherMethods)
 				this.Children.Add(new MethodTreeNode(m));*/
 		}
 
-		public PropertyDefinition PropertyDefinition { get; }
+		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.Handle.ToSuffixString();
+		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
+		public static object GetText(IProperty property, Language language, bool? isIndexer = null)
 		{
 			return language.PropertyToString(property, false, false, isIndexer);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);
 
-		public static ImageSource GetIcon(PropertyDefinition property, bool isIndexer = false)
+		public static ImageSource GetIcon(IProperty property, bool isIndexer = false)
 		{
 			MemberIcon icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
 			MethodAttributes attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
@@ -94,7 +88,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private static MethodAttributes GetAttributesOfMostAccessibleMethod(PropertyDefinition property)
+		private static MethodAttributes GetAttributesOfMostAccessibleMethod(IProperty property)
 		{
 			// There should always be at least one method from which to
 			// obtain the result, but the compiler doesn't know this so
@@ -105,8 +99,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// in numeric order, so we can do an integer comparison of the masked attribute
 			int accessLevel = 0;
 
-			var metadata = property.Module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
+			var metadata = ((MetadataAssembly)property.ParentAssembly).PEFile.Metadata;
+			var propertyDefinition = metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
 			var accessors = propertyDefinition.GetAccessors();
 
 			if (!accessors.Getter.IsNil) {
@@ -142,9 +136,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = PropertyDefinition.Module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(PropertyDefinition.Handle);
-			if (settings.SearchTermMatches(metadata.GetString(propertyDefinition.Name)) && settings.Language.ShowMember(PropertyDefinition))
+			if (settings.SearchTermMatches(PropertyDefinition.Name) && settings.Language.ShowMember(PropertyDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -168,6 +160,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => PropertyDefinition;
+		IEntity IMemberTreeNode.Member => PropertyDefinition;
 	}
 }

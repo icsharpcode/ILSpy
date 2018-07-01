@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class MetadataAssembly : IAssembly
 	{
 		public ICompilation Compilation { get; }
-		internal readonly Metadata.PEFile PEFile;
+		public readonly Metadata.PEFile PEFile;
 		internal readonly MetadataReader metadata;
 		readonly TypeSystemOptions options;
 		internal readonly TypeProvider TypeProvider;

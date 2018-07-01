@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
-		readonly Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
+		readonly Dictionary<ITypeDefinition, TypeTreeNode> typeDict = new Dictionary<ITypeDefinition, TypeTreeNode>();
 		ICompilation typeSystem;
 
 		public AssemblyTreeNode(LoadedAssembly assembly)
@@ -136,6 +136,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			}
 			typeSystem = new SimpleCompilation(module, MinimalCorlib.Instance);
+			var assembly = (MetadataAssembly)typeSystem.MainAssembly;
 			var metadata = module.Metadata;
 
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
@@ -144,13 +145,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (var typeHandle in metadata.GetTopLevelTypeDefinitions().OrderBy(t => t.GetFullTypeName(metadata).ToString(), NaturalStringComparer.Instance)) {
-				NamespaceTreeNode ns;
-				var type = new TypeDefinition(module, typeHandle);
-				var namespaceString = metadata.GetString(metadata.GetTypeDefinition(typeHandle).Namespace);
-				if (!namespaces.TryGetValue(namespaceString, out ns)) {
-					ns = new NamespaceTreeNode(namespaceString);
-					namespaces[namespaceString] = ns;
+			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.FullName, NaturalStringComparer.Instance)) {
+				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns)) {
+					ns = new NamespaceTreeNode(type.Namespace);
+					namespaces[type.Namespace] = ns;
 				}
 				TypeTreeNode node = new TypeTreeNode(type, this);
 				typeDict[type] = node;
@@ -167,7 +165,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a top-level type.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(TypeDefinition def)
+		public TypeTreeNode FindTypeNode(ITypeDefinition def)
 		{
 			if (def == null)
 				return null;

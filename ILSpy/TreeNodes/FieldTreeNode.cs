@@ -18,9 +18,11 @@
 
 using System;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -30,28 +32,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		public FieldDefinition FieldDefinition { get; }
+		public IField FieldDefinition { get; }
 
-		public FieldTreeNode(FieldDefinition field)
+		public FieldTreeNode(IField field)
 		{
-			if (field.IsNil)
-				throw new ArgumentNullException(nameof(field));
-			this.FieldDefinition = field;
+			this.FieldDefinition = field ?? throw new ArgumentNullException(nameof(field));
 		}
 
-		public override object Text => GetText(FieldDefinition, Language) + FieldDefinition.Handle.ToSuffixString();
+		public override object Text => GetText(FieldDefinition, Language) + FieldDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(FieldDefinition field, Language language)
+		public static object GetText(IField field, Language language)
 		{
 			return language.FieldToString(field, includeTypeName: false, includeNamespace: false);
 		}
 
 		public override object Icon => GetIcon(FieldDefinition);
 
-		public static ImageSource GetIcon(FieldDefinition field)
+		public static ImageSource GetIcon(IField field)
 		{
-			var metadata = field.Module.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
+			var metadata = ((MetadataAssembly)field.ParentAssembly).PEFile.Metadata;
+			var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 			if (fieldDefinition.GetDeclaringType().IsEnum(metadata) && !fieldDefinition.HasFlag(FieldAttributes.SpecialName))
 				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(fieldDefinition.Attributes), false);
 
@@ -66,22 +66,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(fieldDefinition.Attributes), fieldDefinition.HasFlag(FieldAttributes.Static));
 		}
 
-		private static bool IsDecimalConstant(FieldDefinition field)
+		private static bool IsDecimalConstant(IField field)
 		{
-			var metadata = field.Module.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
-
-			var fieldType = fieldDefinition.DecodeSignature(new FullTypeNameSignatureDecoder(metadata), default(Unit));
-			if (fieldType.ToString() == "System.Decimal") {
-				var attrs = fieldDefinition.GetCustomAttributes();
-				foreach (var h in attrs) {
-					var attr = metadata.GetCustomAttribute(h);
-					var attrType = attr.GetAttributeType(metadata).GetFullTypeName(metadata);
-					if (attrType.ToString() == "System.Runtime.CompilerServices.DecimalConstantAttribute")
-						return true;
-				}
-			}
-			return false;
+			return field.IsConst && field.Type.IsKnownType(KnownTypeCode.Decimal) && field.ConstantValue != null;
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(FieldAttributes fieldAttributes)
@@ -110,9 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = FieldDefinition.Module.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
-			if (settings.SearchTermMatches(metadata.GetString(fieldDefinition.Name)) && settings.Language.ShowMember(FieldDefinition))
+			if (settings.SearchTermMatches(FieldDefinition.Name) && settings.Language.ShowMember(FieldDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -125,13 +110,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				var metadata = FieldDefinition.Module.Metadata;
-				var fieldDefinition = metadata.GetFieldDefinition(FieldDefinition.Handle);
-
-				switch (fieldDefinition.Attributes & FieldAttributes.FieldAccessMask) {
-					case FieldAttributes.Public:
-					case FieldAttributes.FamORAssem:
-					case FieldAttributes.Family:
+				switch (FieldDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Protected:
+					case Accessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;
@@ -139,6 +121,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => FieldDefinition;
+		IEntity IMemberTreeNode.Member => FieldDefinition;
 	}
 }

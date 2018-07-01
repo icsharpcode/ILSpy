@@ -25,6 +25,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.DebugInfo;
 using ICSharpCode.ILSpy.Options;
 
@@ -83,6 +85,14 @@ namespace ICSharpCode.ILSpy
 				System.Diagnostics.Trace.TraceError(ex.ToString());
 				return null;
 			}
+		}
+
+		public ICompilation GetTypeSystem()
+		{
+			var module = GetPEFileOrNull();
+			if (module == null)
+				return null;
+			return new SimpleCompilation(module, MinimalCorlib.Instance);
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
@@ -193,7 +203,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		sealed class MyAssemblyResolver : IAssemblyResolver
+		sealed class MyAssemblyResolver : Decompiler.Metadata.IAssemblyResolver
 		{
 			readonly LoadedAssembly parent;
 			
@@ -202,7 +212,7 @@ namespace ICSharpCode.ILSpy
 				this.parent = parent;
 			}
 			
-			public PEFile Resolve(IAssemblyReference reference)
+			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
 			{
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();
 			}
@@ -213,7 +223,7 @@ namespace ICSharpCode.ILSpy
 			return new MyAssemblyResolver(this);
 		}
 		
-		public LoadedAssembly LookupReferencedAssembly(IAssemblyReference reference)
+		public LoadedAssembly LookupReferencedAssembly(Decompiler.Metadata.IAssemblyReference reference)
 		{
 			if (reference == null)
 				throw new ArgumentNullException(nameof(reference));
@@ -234,9 +244,9 @@ namespace ICSharpCode.ILSpy
 
 		static Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 
-		LoadedAssembly LookupReferencedAssemblyInternal(IAssemblyReference fullName, bool isWinRT)
+		LoadedAssembly LookupReferencedAssemblyInternal(Decompiler.Metadata.IAssemblyReference fullName, bool isWinRT)
 		{
-			string GetName(IAssemblyReference name) => isWinRT ? name.Name : name.FullName;
+			string GetName(Decompiler.Metadata.IAssemblyReference name) => isWinRT ? name.Name : name.FullName;
 
 			string file;
 			LoadedAssembly asm;

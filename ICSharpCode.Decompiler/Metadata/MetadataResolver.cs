@@ -68,13 +68,13 @@ namespace ICSharpCode.Decompiler.Metadata
 
 	public static class MetadataResolver
 	{
-		public static TypeDefinition ResolveType(EntityHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, TypeDefinitionHandle Handle) ResolveType(EntityHandle handle, IMetadataResolveContext context)
 		{
 			if (handle.IsNil)
 				return default;
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
-					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)handle);
+					return (context.CurrentModule, (TypeDefinitionHandle)handle);
 				case HandleKind.TypeReference:
 					return Resolve((TypeReferenceHandle)handle, context);
 				case HandleKind.TypeSpecification:
@@ -84,39 +84,39 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static MethodDefinition ResolveAsMethod(EntityHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, MethodDefinitionHandle Handle) ResolveAsMethod(EntityHandle handle, IMetadataResolveContext context)
 		{
 			if (handle.IsNil)
 				return default;
 			switch (handle.Kind) {
 				case HandleKind.MethodDefinition:
-					return new MethodDefinition(context.CurrentModule, (MethodDefinitionHandle)handle);
+					return (context.CurrentModule, (MethodDefinitionHandle)handle);
 				case HandleKind.MemberReference:
 					var resolved = ((MemberReferenceHandle)handle).Resolve(context);
-					if (resolved is MethodDefinition m)
-						return m;
+					if (resolved.Handle.Kind == HandleKind.MethodDefinition)
+						return (resolved.Module, (MethodDefinitionHandle)resolved.Handle);
 					return default;
 				case HandleKind.MethodSpecification:
 					resolved = ((MethodSpecificationHandle)handle).Resolve(context);
-					if (resolved is MethodDefinition m2)
-						return m2;
+					if (resolved.Handle.Kind == HandleKind.MethodDefinition)
+						return (resolved.Module, (MethodDefinitionHandle)resolved.Handle);
 					return default;
 				default:
 					throw new NotSupportedException();
 			}
 		}
 
-		public static FieldDefinition ResolveAsField(EntityHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, FieldDefinitionHandle Handle) ResolveAsField(EntityHandle handle, IMetadataResolveContext context)
 		{
 			if (handle.IsNil)
 				return default;
 			switch (handle.Kind) {
 				case HandleKind.FieldDefinition:
-					return new FieldDefinition(context.CurrentModule, (FieldDefinitionHandle)handle);
+					return (context.CurrentModule, (FieldDefinitionHandle)handle);
 				case HandleKind.MemberReference:
 					var resolved = ((MemberReferenceHandle)handle).Resolve(context);
-					if (resolved is FieldDefinition m)
-						return m;
+					if (resolved.Handle.Kind == HandleKind.FieldDefinition)
+						return (resolved.Module, (FieldDefinitionHandle)resolved.Handle);
 					return default;
 				default:
 					throw new NotSupportedException();
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// <summary>
 		/// Implements resolving of TypeReferences to TypeDefinitions as decribed in II.7.3 of ECMA-335 6th edition.
 		/// </summary>
-		public static TypeDefinition Resolve(this TypeReferenceHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, TypeDefinitionHandle Handle) Resolve(this TypeReferenceHandle handle, IMetadataResolveContext context)
 		{
 			if (handle.IsNil)
 				return default;
@@ -150,14 +150,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			switch (tr.ResolutionScope.Kind) {
 				case HandleKind.TypeReference:
 					var outerType = Resolve((TypeReferenceHandle)tr.ResolutionScope, context);
-					if (outerType == null)
+					if (outerType.Module == null)
 						throw new NotSupportedException();
 					var td = outerType.Module.Metadata.GetTypeDefinition(outerType.Handle);
 					var name = metadata.GetString(tr.Name);
 					foreach (var nestedType in td.GetNestedTypes()) {
 						var nestedTypeDef = outerType.Module.Metadata.GetTypeDefinition(nestedType);
 						if (outerType.Module.Metadata.GetString(nestedTypeDef.Name) == name)
-							return new TypeDefinition(outerType.Module, nestedType);
+							return (outerType.Module, nestedType);
 					}
 					break;
 				case HandleKind.ModuleReference:
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 			throw new NotSupportedException();
 
-			TypeDefinition ResolveTypeInOtherAssembly(AssemblyReferenceHandle asm, string ns, string typeName)
+			(PEFile Module, TypeDefinitionHandle Handle) ResolveTypeInOtherAssembly(AssemblyReferenceHandle asm, string ns, string typeName)
 			{
 				var module = context.ResolveAssembly(new AssemblyReference(context.CurrentModule, asm));
 				if (module == null)
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				Debug.Assert(@namespace != null);
 				var type = FindTypeInNamespace(module.Metadata, @namespace.Value, typeName);
 				Debug.Assert(!type.IsNil);
-				return new TypeDefinition(module, type);
+				return (module, type);
 			}
 		}
 
@@ -210,7 +210,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			return default;
 		}
 
-		public static IMetadataEntity Resolve(this MemberReferenceHandle handle, IMetadataResolveContext context)
+		static (PEFile Module, EntityHandle Handle) Resolve(this MemberReferenceHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var mr = metadata.GetMemberReference(handle);
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 				case HandleKind.TypeReference:
 					var resolvedTypeReference = Resolve((TypeReferenceHandle)mr.Parent, context);
-					if (resolvedTypeReference.IsNil)
+					if (resolvedTypeReference.Module == null)
 						return default;
 					targetModule = resolvedTypeReference.Module;
 					targetMetadata = targetModule.Metadata;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					break;
 				case HandleKind.TypeSpecification:
 					resolvedTypeReference = Resolve((TypeSpecificationHandle)mr.Parent, context);
-					if (resolvedTypeReference.IsNil)
+					if (resolvedTypeReference.Module == null)
 						return default;
 					targetModule = resolvedTypeReference.Module;
 					targetMetadata = targetModule.Metadata;
@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					foreach (var f in declaringType.GetFields()) {
 						var fd = targetMetadata.GetFieldDefinition(f);
 						if (targetMetadata.StringComparer.Equals(fd.Name, name))
-							return new FieldDefinition(targetModule, f);
+							return (targetModule, f);
 					}
 					return default;
 				case MemberReferenceKind.Method:
@@ -263,7 +263,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					}
 					foreach (var (method, signature) in candidates) {
 						if (SignatureBlobComparer.EqualsMethodSignature(targetMetadata.GetBlobReader(signature), metadata.GetBlobReader(mr.Signature), targetMetadata, metadata))
-							return new MethodDefinition(targetModule, method);
+							return (targetModule, method);
 					}
 					return default;
 				default:
@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static TypeDefinition Resolve(this TypeSpecificationHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, TypeDefinitionHandle Handle) Resolve(this TypeSpecificationHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var ts = metadata.GetTypeSpecification(handle);
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				return default;
 			switch (unspecialized.Kind) {
 				case HandleKind.TypeDefinition:
-					return new TypeDefinition(context.CurrentModule, (TypeDefinitionHandle)unspecialized);
+					return (context.CurrentModule, (TypeDefinitionHandle)unspecialized);
 				case HandleKind.TypeReference:
 					return Resolve((TypeReferenceHandle)unspecialized, context);
 				default:
@@ -288,7 +288,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static MethodDefinition Resolve(this MethodSpecificationHandle handle, IMetadataResolveContext context)
+		public static (PEFile Module, MethodDefinitionHandle Handle) Resolve(this MethodSpecificationHandle handle, IMetadataResolveContext context)
 		{
 			var metadata = context.CurrentModule.Metadata;
 			var ms = metadata.GetMethodSpecification(handle);

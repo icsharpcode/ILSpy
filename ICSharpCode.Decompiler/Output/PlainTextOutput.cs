@@ -18,7 +18,10 @@
 
 using System;
 using System.IO;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {

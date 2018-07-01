@@ -18,14 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Metadata;
-using SRM = System.Reflection.Metadata;
-using ICSharpCode.Decompiler.Util;
-using System.Collections.Immutable;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.Documentation
 {
@@ -35,324 +31,361 @@ namespace ICSharpCode.Decompiler.Documentation
 	public static class XmlDocKeyProvider
 	{
 		#region GetKey
-		public static string GetKey(Entity entity)
-		{
-			return GetKey(entity.Module.Metadata, entity.Handle);
-		}
-
-		public static string GetKey(SRM.MetadataReader metadata, SRM.EntityHandle member)
+		/// <summary>
+		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
+		/// </summary>
+		public static string GetKey(IEntity entity)
 		{
 			StringBuilder b = new StringBuilder();
-
-			void AppendTypeName(SRM.EntityHandle type)
-			{
-				switch (type.Kind) {
-					case SRM.HandleKind.TypeDefinition:
-						b.Append("T:");
-						b.Append(((SRM.TypeDefinitionHandle)type).GetFullTypeName(metadata));
-						break;
-					case SRM.HandleKind.TypeReference:
-						b.Append("T:");
-						b.Append(((SRM.TypeReferenceHandle)type).GetFullTypeName(metadata));
-						break;
-					default:
-						throw new NotImplementedException();
-					/*case SRM.HandleKind.TypeSpecification:
-						b.Append("T:");
-						var typeSpec = metadata.GetTypeSpecification((SRM.TypeSpecificationHandle)type);
-						b.Append(typeSpec.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)));
-						break;*/
-				}
+			switch (entity.SymbolKind) {
+				case SymbolKind.TypeDefinition:
+					b.Append("T:");
+					AppendTypeName(b, (ITypeDefinition)entity, false);
+					return b.ToString();
+				case SymbolKind.Field:
+					b.Append("F:");
+					break;
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
+					b.Append("P:");
+					break;
+				case SymbolKind.Event:
+					b.Append("E:");
+					break;
+				default:
+					b.Append("M:");
+					break;
 			}
-
-			void AppendSignature(SRM.MethodSignature<string> signature, bool printExplicitReturnType = false)
-			{
-				if (signature.GenericParameterCount > 0) {
-					b.Append("``");
-					b.Append(signature.GenericParameterCount);
-				}
+			IMember member = (IMember)entity;
+			if (member.DeclaringType != null) {
+				AppendTypeName(b, member.DeclaringType, false);
+				b.Append('.');
+			}
+			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ExplicitlyImplementedInterfaceMembers.Count() == 1) {
+				AppendTypeName(b, member.ExplicitlyImplementedInterfaceMembers.First().DeclaringType, true);
+				b.Append('#');
+			}
+			b.Append(member.Name.Replace('.', '#'));
+			IMethod method = member as IMethod;
+			if (method != null && method.TypeParameters.Count > 0) {
+				b.Append("``");
+				b.Append(method.TypeParameters.Count);
+			}
+			IParameterizedMember parameterizedMember = member as IParameterizedMember;
+			if (parameterizedMember != null && parameterizedMember.Parameters.Count > 0) {
 				b.Append('(');
-				for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-					if (i > 0)
-						b.Append(',');
-					b.Append(signature.ParameterTypes[i]);
+				var parameters = parameterizedMember.Parameters;
+				for (int i = 0; i < parameters.Count; i++) {
+					if (i > 0) b.Append(',');
+					AppendTypeName(b, parameters[i].Type, false);
 				}
 				b.Append(')');
-				if (printExplicitReturnType) {
-					b.Append('~');
-					b.Append(signature.ReturnType);
-				}
 			}
-
-			switch (member.Kind) {
-				case SRM.HandleKind.TypeDefinition:
-				case SRM.HandleKind.TypeReference:
-				case SRM.HandleKind.TypeSpecification:
-					b.Append("T:");
-					AppendTypeName(member);
-					break;
-				case SRM.HandleKind.FieldDefinition:
-					b.Append("F:");
-					var field = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)member);
-					AppendTypeName(field.GetDeclaringType());
-					b.Append('.');
-					b.Append(metadata.GetString(field.Name).Replace('.', '#'));
-					break;
-				case SRM.HandleKind.PropertyDefinition: {
-					b.Append("P:");
-					var property = metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)member);
-					var accessors = property.GetAccessors();
-					SRM.TypeDefinitionHandle declaringType;
-					if (!accessors.Getter.IsNil) {
-						declaringType = metadata.GetMethodDefinition(accessors.Getter).GetDeclaringType();
-					} else {
-						declaringType = metadata.GetMethodDefinition(accessors.Setter).GetDeclaringType();
-					}
-					AppendTypeName(declaringType);
-					b.Append('.');
-					b.Append(metadata.GetString(property.Name).Replace('.', '#'));
-					AppendSignature(property.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)));
-					break;
-				}
-				case SRM.HandleKind.MethodDefinition:
-					b.Append("M:");
-					var method = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)member);
-					AppendTypeName(method.GetDeclaringType());
-					b.Append('.');
-					var methodName = metadata.GetString(method.Name);
-					b.Append(metadata.GetString(method.Name).Replace('.', '#'));
-					AppendSignature(method.DecodeSignature(new DocumentationKeySignatureTypeProvider(), default(Unit)), methodName == "op_Implicit" || methodName == "op_Explicit");
-					break;
-				case SRM.HandleKind.EventDefinition: {
-					b.Append("E:");
-					var @event = metadata.GetEventDefinition((SRM.EventDefinitionHandle)member);
-					var accessors = @event.GetAccessors();
-					SRM.TypeDefinitionHandle declaringType;
-					if (!accessors.Adder.IsNil) {
-						declaringType = metadata.GetMethodDefinition(accessors.Adder).GetDeclaringType();
-					} else if (!accessors.Remover.IsNil) {
-						declaringType = metadata.GetMethodDefinition(accessors.Remover).GetDeclaringType();
-					} else {
-						declaringType = metadata.GetMethodDefinition(accessors.Raiser).GetDeclaringType();
-					}
-					AppendTypeName(declaringType);
-					b.Append('.');
-					b.Append(metadata.GetString(@event.Name).Replace('.', '#'));
-					break;
-				}
-				default:
-					throw new NotImplementedException();
+			if (member.SymbolKind == SymbolKind.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit")) {
+				b.Append('~');
+				AppendTypeName(b, member.ReturnType, false);
 			}
 			return b.ToString();
 		}
+		#endregion
 
-		public sealed class DocumentationKeySignatureTypeProvider : SRM.ISignatureTypeProvider<string, Unit>
+		#region GetTypeName
+		public static string GetTypeName(IType type)
 		{
-			public string GetArrayType(string elementType, SRM.ArrayShape shape)
-			{
-				string shapeString = "";
-				for (int i = 0; i < shape.Rank; i++) {
-					if (i > 0)
-						shapeString += ',';
-					int? lowerBound = i < shape.LowerBounds.Length ? (int?)shape.LowerBounds[i] : null;
-					int? size = i < shape.Sizes.Length ? (int?)shape.Sizes[i] : null;
-					if (lowerBound != null || size != null) {
-						shapeString += lowerBound.ToString();
-						shapeString += ':';
-						shapeString += (lowerBound + size - 1).ToString();
+			if (type == null)
+				throw new ArgumentNullException("type");
+			StringBuilder b = new StringBuilder();
+			AppendTypeName(b, type, false);
+			return b.ToString();
+		}
+
+		static void AppendTypeName(StringBuilder b, IType type, bool explicitInterfaceImpl)
+		{
+			switch (type.Kind) {
+				case TypeKind.Dynamic:
+					b.Append(explicitInterfaceImpl ? "System#Object" : "System.Object");
+					break;
+				case TypeKind.TypeParameter:
+					ITypeParameter tp = (ITypeParameter)type;
+					if (explicitInterfaceImpl) {
+						b.Append(tp.Name);
+					} else {
+						b.Append('`');
+						if (tp.OwnerType == SymbolKind.Method)
+							b.Append('`');
+						b.Append(tp.Index);
 					}
+					break;
+				case TypeKind.Array:
+					ArrayType array = (ArrayType)type;
+					AppendTypeName(b, array.ElementType, explicitInterfaceImpl);
+					b.Append('[');
+					if (array.Dimensions > 1) {
+						for (int i = 0; i < array.Dimensions; i++) {
+							if (i > 0)
+								b.Append(explicitInterfaceImpl ? '@' : ',');
+							if (!explicitInterfaceImpl)
+								b.Append("0:");
+						}
+					}
+					b.Append(']');
+					break;
+				case TypeKind.Pointer:
+					AppendTypeName(b, ((PointerType)type).ElementType, explicitInterfaceImpl);
+					b.Append('*');
+					break;
+				case TypeKind.ByReference:
+					AppendTypeName(b, ((ByReferenceType)type).ElementType, explicitInterfaceImpl);
+					b.Append('@');
+					break;
+				default:
+					IType declType = type.DeclaringType;
+					if (declType != null) {
+						AppendTypeName(b, declType, explicitInterfaceImpl);
+						b.Append(explicitInterfaceImpl ? '#' : '.');
+						b.Append(type.Name);
+						AppendTypeParameters(b, type, declType.TypeParameterCount, explicitInterfaceImpl);
+					} else {
+						if (explicitInterfaceImpl)
+							b.Append(type.FullName.Replace('.', '#'));
+						else
+							b.Append(type.FullName);
+						AppendTypeParameters(b, type, 0, explicitInterfaceImpl);
+					}
+					break;
+			}
+		}
+
+		static void AppendTypeParameters(StringBuilder b, IType type, int outerTypeParameterCount, bool explicitInterfaceImpl)
+		{
+			int tpc = type.TypeParameterCount - outerTypeParameterCount;
+			if (tpc > 0) {
+				ParameterizedType pt = type as ParameterizedType;
+				if (pt != null) {
+					b.Append('{');
+					var ta = pt.TypeArguments;
+					for (int i = outerTypeParameterCount; i < ta.Count; i++) {
+						if (i > outerTypeParameterCount)
+							b.Append(explicitInterfaceImpl ? '@' : ',');
+						AppendTypeName(b, ta[i], explicitInterfaceImpl);
+					}
+					b.Append('}');
+				} else {
+					b.Append('`');
+					b.Append(tpc);
 				}
-				return elementType + "[" + shapeString + "]";
-			}
-
-			public string GetByReferenceType(string elementType)
-			{
-				return elementType + '@';
-			}
-
-			public string GetFunctionPointerType(SRM.MethodSignature<string> signature)
-			{
-				return "";
-			}
-
-			public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
-			{
-				string arguments = "";
-				for (int i = 0; i < typeArguments.Length; i++) {
-					if (i > 0)
-						arguments += ',';
-					arguments += typeArguments[i];
-				}
-				return genericType + "{" + arguments + "}";
-			}
-
-			public string GetGenericMethodParameter(Unit genericContext, int index)
-			{
-				return "``" + index;
-			}
-
-			public string GetGenericTypeParameter(Unit genericContext, int index)
-			{
-				return "`" + index;
-			}
-
-			public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
-			{
-				return unmodifiedType;
-			}
-
-			public string GetPinnedType(string elementType)
-			{
-				return elementType;
-			}
-
-			public string GetPointerType(string elementType)
-			{
-				return elementType + '*';
-			}
-
-			public string GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
-			{
-				return $"System.{typeCode}";
-			}
-
-			public string GetSZArrayType(string elementType)
-			{
-				return elementType + "[]";
-			}
-
-			public string GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
-			{
-				return handle.GetFullTypeName(reader).ToString();
-			}
-
-			public string GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
-			{
-				return handle.GetFullTypeName(reader).ToString();
-			}
-
-			public string GetTypeFromSpecification(SRM.MetadataReader reader, Unit genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
-			{
-				return handle.GetFullTypeName(reader).ToString();
 			}
 		}
 		#endregion
 
-		#region FindMemberByKey
-		public static Entity FindMemberByKey(PEFile module, string key)
+		#region ParseMemberName
+		/// <summary>
+		/// Parse the ID string into a member reference.
+		/// </summary>
+		/// <param name="memberIdString">The ID string representing the member (with "M:", "F:", "P:" or "E:" prefix).</param>
+		/// <returns>A member reference that represents the ID string.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
+		/// <remarks>
+		/// The member reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// and if the member is not found there,
+		/// it will look in all other assemblies of the compilation.
+		/// </remarks>
+		public static IMemberReference ParseMemberIdString(string memberIdString)
 		{
-			if (module == null)
-				throw new ArgumentNullException(nameof(module));
-			if (key == null || key.Length < 2 || key[1] != ':')
-				return default(Entity);
-			switch (key[0]) {
-				case 'T':
-					return FindType(module, key.Substring(2));
-				case 'F':
-					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetFields().Select(f => new Entity(module, f)));
-				case 'P':
-					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetProperties().Select(p => new Entity(module, p)));
-				case 'E':
-					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetEvents().Select(e => new Entity(module, e)));
-				case 'M':
-					return FindMember(module, key, type => module.Metadata.GetTypeDefinition(type.Handle).GetMethods().Select(m => new Entity(module, m)));
+			if (memberIdString == null)
+				throw new ArgumentNullException("memberIdString");
+			if (memberIdString.Length < 2 || memberIdString[1] != ':')
+				throw new ReflectionNameParseException(0, "Missing type tag");
+			char typeChar = memberIdString[0];
+			int parenPos = memberIdString.IndexOf('(');
+			if (parenPos < 0)
+				parenPos = memberIdString.LastIndexOf('~');
+			if (parenPos < 0)
+				parenPos = memberIdString.Length;
+			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
+			if (dotPos < 0)
+				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
+			string typeName = memberIdString.Substring(0, dotPos);
+			int pos = 2;
+			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
+			if (pos != typeName.Length)
+				throw new ReflectionNameParseException(pos, "Expected end of type name");
+			//			string memberName = memberIDString.Substring(dotPos + 1, parenPos - (dotPos + 1));
+			//			pos = memberName.LastIndexOf("``");
+			//			if (pos > 0)
+			//				memberName = memberName.Substring(0, pos);
+			//			memberName = memberName.Replace('#', '.');
+			return new IdStringMemberReference(typeReference, typeChar, memberIdString);
+		}
+		#endregion
+
+		#region ParseTypeName
+		/// <summary>
+		/// Parse the ID string type name into a type reference.
+		/// </summary>
+		/// <param name="typeName">The ID string representing the type (the "T:" prefix is optional).</param>
+		/// <returns>A type reference that represents the ID string.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
+		/// <remarks>
+		/// <para>
+		/// The type reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// and if the type is not found there,
+		/// it will look in all other assemblies of the compilation.
+		/// </para>
+		/// <para>
+		/// If the type is open (contains type parameters '`0' or '``0'),
+		/// an <see cref="ITypeResolveContext"/> with the appropriate CurrentTypeDefinition/CurrentMember is required
+		/// to resolve the reference to the ITypeParameter.
+		/// </para>
+		/// </remarks>
+		public static ITypeReference ParseTypeName(string typeName)
+		{
+			if (typeName == null)
+				throw new ArgumentNullException("typeName");
+			int pos = 0;
+			if (typeName.StartsWith("T:", StringComparison.Ordinal))
+				pos = 2;
+			ITypeReference r = ParseTypeName(typeName, ref pos);
+			if (pos < typeName.Length)
+				throw new ReflectionNameParseException(pos, "Expected end of type name");
+			return r;
+		}
+
+		static bool IsIDStringSpecialCharacter(char c)
+		{
+			switch (c) {
+				case ':':
+				case '{':
+				case '}':
+				case '[':
+				case ']':
+				case '(':
+				case ')':
+				case '`':
+				case '*':
+				case '@':
+				case ',':
+					return true;
 				default:
-					return default(Entity);
+					return false;
 			}
 		}
-		
-		static Entity FindMember(PEFile module, string key, Func<TypeDefinition, IEnumerable<Entity>> memberSelector)
+
+		static ITypeReference ParseTypeName(string typeName, ref int pos)
 		{
-			Debug.WriteLine("Looking for member " + key);
-			int parenPos = key.IndexOf('(');
-			int dotPos;
-			if (parenPos > 0) {
-				dotPos = key.LastIndexOf('.', parenPos - 1, parenPos);
+			string reflectionTypeName = typeName;
+			if (pos == typeName.Length)
+				throw new ReflectionNameParseException(pos, "Unexpected end");
+			ITypeReference result;
+			if (reflectionTypeName[pos] == '`') {
+				// type parameter reference
+				pos++;
+				if (pos == reflectionTypeName.Length)
+					throw new ReflectionNameParseException(pos, "Unexpected end");
+				if (reflectionTypeName[pos] == '`') {
+					// method type parameter reference
+					pos++;
+					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
+					result = TypeParameterReference.Create(SymbolKind.Method, index);
+				} else {
+					// class type parameter reference
+					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
+					result = TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
+				}
 			} else {
-				dotPos = key.LastIndexOf('.');
+				// not a type parameter reference: read the actual type name
+				List<ITypeReference> typeArguments = new List<ITypeReference>();
+				int typeParameterCount;
+				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out typeParameterCount, typeArguments);
+				result = new GetPotentiallyNestedClassTypeReference(typeNameWithoutSuffix, typeParameterCount);
+				while (pos < typeName.Length && typeName[pos] == '.') {
+					pos++;
+					string nestedTypeName = ReadTypeName(typeName, ref pos, false, out typeParameterCount, typeArguments);
+					result = new NestedTypeReference(result, nestedTypeName, typeParameterCount);
+				}
+				if (typeArguments.Count > 0) {
+					result = new ParameterizedTypeReference(result, typeArguments);
+				}
 			}
-			if (dotPos < 0)
-				return default(Entity);
-			TypeDefinition type = FindType(module, key.Substring(2, dotPos - 2));
-			if (type == null)
-				return default(Entity);
-			string shortName;
-			if (parenPos > 0) {
-				shortName = key.Substring(dotPos + 1, parenPos - (dotPos + 1));
-			} else {
-				shortName = key.Substring(dotPos + 1);
-			}
-			var metadata = module.Metadata;
-			Debug.WriteLine("Searching in type {0} for {1}", type.Handle.GetFullTypeName(metadata), shortName);
-			Entity shortNameMatch = default(Entity);
-			foreach (var member in memberSelector(type)) {
-				string memberKey = GetKey(member);
-				Debug.WriteLine(memberKey);
-				if (memberKey == key)
-					return member;
-				string name;
-				switch (member.Handle.Kind) {
-					case SRM.HandleKind.MethodDefinition:
-						name = metadata.GetString(metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)member.Handle).Name);
+			while (pos < typeName.Length) {
+				switch (typeName[pos]) {
+					case '[':
+						int dimensions = 1;
+						do {
+							pos++;
+							if (pos == typeName.Length)
+								throw new ReflectionNameParseException(pos, "Unexpected end");
+							if (typeName[pos] == ',')
+								dimensions++;
+						} while (typeName[pos] != ']');
+						result = new ArrayTypeReference(result, dimensions);
 						break;
-					case SRM.HandleKind.FieldDefinition:
-						name = metadata.GetString(metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)member.Handle).Name);
+					case '*':
+						result = new PointerTypeReference(result);
 						break;
-					case SRM.HandleKind.PropertyDefinition:
-						name = metadata.GetString(metadata.GetPropertyDefinition((SRM.PropertyDefinitionHandle)member.Handle).Name);
-						break;
-					case SRM.HandleKind.EventDefinition:
-						name = metadata.GetString(metadata.GetEventDefinition((SRM.EventDefinitionHandle)member.Handle).Name);
+					case '@':
+						result = new ByReferenceTypeReference(result);
 						break;
 					default:
-						throw new NotSupportedException();
+						return result;
 				}
-				if (shortName == name.Replace('.', '#'))
-					shortNameMatch = member;
+				pos++;
 			}
-			// if there's no match by ID string (key), return the match by name.
-			return shortNameMatch;
+			return result;
 		}
-		
-		static TypeDefinition FindType(PEFile module, string name)
+
+		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount, List<ITypeReference> typeArguments)
 		{
-			var metadata = module.Metadata;
-			string[] segments = name.Split('.');
-			var currentNamespace = metadata.GetNamespaceDefinitionRoot();
-			int i = 0;
-			while (i < segments.Length) {
-				string part = segments[i];
-				var next = currentNamespace.NamespaceDefinitions.FirstOrDefault(ns => metadata.GetString(metadata.GetNamespaceDefinition(ns).Name) == part);
-				if (next.IsNil)
-					break;
-				currentNamespace = metadata.GetNamespaceDefinition(next);
-				i++;
+			int startPos = pos;
+			// skip the simple name portion:
+			while (pos < typeName.Length && !IsIDStringSpecialCharacter(typeName[pos]) && (allowDottedName || typeName[pos] != '.'))
+				pos++;
+			if (pos == startPos)
+				throw new ReflectionNameParseException(pos, "Expected type name");
+			string shortTypeName = typeName.Substring(startPos, pos - startPos);
+			// read type arguments:
+			typeParameterCount = 0;
+			if (pos < typeName.Length && typeName[pos] == '`') {
+				// unbound generic type
+				pos++;
+				typeParameterCount = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
+			} else if (pos < typeName.Length && typeName[pos] == '{') {
+				// bound generic type
+				typeArguments = new List<ITypeReference>();
+				do {
+					pos++;
+					typeArguments.Add(ParseTypeName(typeName, ref pos));
+					typeParameterCount++;
+					if (pos == typeName.Length)
+						throw new ReflectionNameParseException(pos, "Unexpected end");
+				} while (typeName[pos] == ',');
+				if (typeName[pos] != '}')
+					throw new ReflectionNameParseException(pos, "Expected '}'");
+				pos++;
 			}
-			if (i == segments.Length)
-				return default(TypeDefinition);
-			var typeDefinitions = currentNamespace.TypeDefinitions;
-			while (i < segments.Length) {
-				string part = segments[i];
-				foreach (var t in typeDefinitions) {
-					var type = metadata.GetTypeDefinition(t);
-					if (metadata.GetString(type.Name) == part) {
-						if (i + 1 == segments.Length)
-							return new TypeDefinition(module, t);
-						typeDefinitions = type.GetNestedTypes();
-						i++;
-						break;
-					}
-				}
+			return shortTypeName;
+		}
+		#endregion
+
+		#region FindEntity
+		/// <summary>
+		/// Finds the entity in the given type resolve context.
+		/// </summary>
+		/// <param name="idString">ID string of the entity.</param>
+		/// <param name="context">Type resolve context</param>
+		/// <returns>Returns the entity, or null if it is not found.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
+		public static IEntity FindEntity(string idString, ITypeResolveContext context)
+		{
+			if (idString == null)
+				throw new ArgumentNullException("idString");
+			if (context == null)
+				throw new ArgumentNullException("context");
+			if (idString.StartsWith("T:", StringComparison.Ordinal)) {
+				return ParseTypeName(idString.Substring(2)).Resolve(context).GetDefinition();
+			} else {
+				return ParseMemberIdString(idString).Resolve(context);
 			}
-			// TODO : add support for type forwarders
-			//foreach (var h in metadata.ExportedTypes) {
-			//	var exportedType = metadata.GetExportedType(h);
-			//	if (metadata.StringComparer.Equals(exportedType.Name, name) && exportedType.Namespace == ns) {
-			//		type = exportedType.Resolve();
-			//		break;
-			//	}
-			//}
-			return default;
 		}
 		#endregion
 	}

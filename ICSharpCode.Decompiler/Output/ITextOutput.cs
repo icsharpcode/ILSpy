@@ -17,6 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler
 {
 	public interface ITextOutput
@@ -49,6 +53,27 @@ namespace ICSharpCode.Decompiler
 		public static void WriteLine(this ITextOutput output, string format, params object[] args)
 		{
 			output.WriteLine(string.Format(format, args));
+		}
+
+		public static void WriteReference(this ITextOutput output, PEFile module, EntityHandle handle, string text, bool isDefinition = false)
+		{
+			output.Write(text);
+		}
+
+		public static void WriteReference(this ITextOutput output, IType type, string text, bool isDefinition = false)
+		{
+			output.Write(text);
+		}
+
+		public static void WriteReference(this ITextOutput output, IMember member, string text, bool isDefinition = false)
+		{
+			output.Write(text);
+
+		}
+
+		public static void WriteLocalReference(this ITextOutput output, string text, object reference, bool isDefinition = false)
+		{
+			output.Write(text);
 		}
 	}
 }

@@ -123,7 +123,6 @@ namespace ILSpy.BamlDecompiler.Tests
 				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, bamlStream, CancellationToken.None);
 
 				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
-
 			}
 		}
 

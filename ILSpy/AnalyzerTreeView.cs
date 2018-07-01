@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy
 		
 		public void ShowOrFocus(AnalyzerTreeNode node)
 		{
-			if (node is AnalyzerEntityTreeNode) {
+			/*if (node is AnalyzerEntityTreeNode) {
 				var an = node as AnalyzerEntityTreeNode;
 				var found = this.Root.Children.OfType<AnalyzerEntityTreeNode>().FirstOrDefault(n => n.Member == an.Member);
 				if (found != null) {
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy
 					return;
 				}
 			}
-			Show(node);
+			Show(node);*/
 		}
 
 		void IPane.Closed()

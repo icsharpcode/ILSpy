@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 			List<Language> languages = new List<Language>();
 			languages.AddRange(ep.GetExportedValues<Language>());
 			languages.Sort((a, b) => a.Name.CompareTo(b.Name));
-			#if DEBUG
+			#if false
 			languages.AddRange(ILAstLanguage.GetDebugLanguages());
 			languages.AddRange(CSharpLanguage.GetDebugLanguages());
 			#endif

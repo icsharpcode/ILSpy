@@ -34,6 +34,8 @@ using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -287,8 +289,8 @@ namespace ICSharpCode.ILSpy
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							var mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
-							if (!mr.IsNil) {
+							var mr = XmlDocKeyProvider.FindEntity(args.NavigateTo, new SimpleCompilation(def, MinimalCorlib.Instance).TypeResolveContext);
+							if (mr != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
 								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
@@ -599,21 +601,17 @@ namespace ICSharpCode.ILSpy
 					return assemblyListTreeNode.FindAssemblyNode(asm);
 				case Resource res:
 					return assemblyListTreeNode.FindResourceNode(res);
-				case IMetadataEntity entity:
-					switch (entity) {
-						case TypeDefinition td:
-							return assemblyListTreeNode.FindTypeNode(td);
-						case FieldDefinition fd:
-							return assemblyListTreeNode.FindFieldNode(fd);
-						case MethodDefinition md:
-							return assemblyListTreeNode.FindMethodNode(md);
-						case PropertyDefinition pd:
-							return assemblyListTreeNode.FindPropertyNode(pd);
-						case EventDefinition ed:
-							return assemblyListTreeNode.FindEventNode(ed);
-						default:
-							throw new NotSupportedException();
-					}
+				case ITypeDefinition type:
+					return assemblyListTreeNode.FindTypeNode(type);
+				case IField fd:
+					return assemblyListTreeNode.FindFieldNode(fd);
+				case IMethod md:
+					return assemblyListTreeNode.FindMethodNode(md);
+				case IProperty pd:
+					return assemblyListTreeNode.FindPropertyNode(pd);
+				case IEvent ed:
+					return assemblyListTreeNode.FindEventNode(ed);
+					/*
 				case TypeReference tr:
 					var resolved = tr.Handle.Resolve(new SimpleMetadataResolveContext(tr.Module));
 					if (resolved != null && !resolved.IsNil)
@@ -647,7 +645,7 @@ namespace ICSharpCode.ILSpy
 								throw new NotSupportedException();
 						}
 					}
-					return null;
+					return null;*/
 				default:
 					return null;
 			}

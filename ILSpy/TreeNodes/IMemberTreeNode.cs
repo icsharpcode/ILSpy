@@ -16,17 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Interface implemented by all tree nodes
 	/// (both in main tree view and in analyzer)
-	/// that represent Cecil members.
+	/// that represent TypeSystem members.
 	/// </summary>
 	public interface IMemberTreeNode
 	{
-		IMetadataEntity Member { get; }
+		IEntity Member { get; }
 	}
 }

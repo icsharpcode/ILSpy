@@ -3,16 +3,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using Metadata = ICSharpCode.Decompiler.Metadata;
 
@@ -31,36 +29,34 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	sealed class ConnectMethodDecompiler
 	{
-		public List<(LongSet, EventRegistration[])> DecompileEventMappings(Metadata.PEFile module, string fullTypeName, CancellationToken cancellationToken)
+		public List<(LongSet, EventRegistration[])> DecompileEventMappings(Metadata.PEFile module,
+			string fullTypeName, CancellationToken cancellationToken)
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
+			var typeSystem = new DecompilerTypeSystem(module);
 
-			var typeDefinition = (Metadata.TypeDefinition)XmlDocKeyProvider.FindMemberByKey(module, "T:" + fullTypeName);
-			if (typeDefinition.IsNil)
+			var typeDefinition = typeSystem.Compilation.FindType(new FullTypeName(fullTypeName)).GetDefinition();
+			if (typeDefinition == null)
 				return result;
-
-			var metadata = module.Metadata;
-			TypeDefinition type = metadata.GetTypeDefinition(typeDefinition.Handle);
+		
+			IMethod method = null;
+			MethodDefinition metadataEntry = default;
 			
-			MethodDefinition method = default;
-			MethodDefinitionHandle handle = default;
-			
-			foreach (var h in type.GetMethods()) {
-				var m = metadata.GetMethodDefinition(h);
-				if (metadata.GetString(m.Name) == "System.Windows.Markup.IComponentConnector.Connect") {
-					handle = h;
+			foreach (var m in typeDefinition.GetMethods()) {
+				if (m.Name == "System.Windows.Markup.IComponentConnector.Connect") {
 					method = m;
+					metadataEntry = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 					break;
 				}
 			}
 			
-			if (handle.IsNil)
+			if (method == null || metadataEntry.RelativeVirtualAddress <= 0)
 				return result;
 			
 			// decompile method and optimize the switch
-			var typeSystem = new DecompilerTypeSystem(typeDefinition.Module);
 			var ilReader = new ILReader(typeSystem);
-			var function = ilReader.ReadIL(typeDefinition.Module, handle, typeDefinition.Module.Reader.GetMethodBody(method.RelativeVirtualAddress), cancellationToken);
+			var function = ilReader.ReadIL(module, (MethodDefinitionHandle)method.MetadataToken,
+				module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress), cancellationToken);
 
 			var context = new ILTransformContext(function, typeSystem) {
 				CancellationToken = cancellationToken

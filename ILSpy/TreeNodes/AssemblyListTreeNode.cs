@@ -26,6 +26,7 @@ using System.Reflection.PortableExecutable;
 using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -176,6 +177,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
+		public AssemblyTreeNode FindAssemblyNode(IAssembly module)
+		{
+			if (!(module is MetadataAssembly assembly))
+				return null;
+			return FindAssemblyNode(assembly.PEFile);
+		}
+
 		public AssemblyTreeNode FindAssemblyNode(PEFile module)
 		{
 			if (module == null)
@@ -204,17 +212,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the type node corresponding to the type definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(TypeDefinition def)
+		public TypeTreeNode FindTypeNode(ITypeDefinition def)
 		{
-			var declaringType = def.Module.Metadata.GetTypeDefinition(def.Handle).GetDeclaringType();
-			if (!declaringType.IsNil) {
-				TypeTreeNode decl = FindTypeNode(new TypeDefinition(def.Module, declaringType));
+			var declaringType = def.DeclaringTypeDefinition;
+			if (declaringType != null) {
+				TypeTreeNode decl = FindTypeNode(declaringType);
 				if (decl != null) {
 					decl.EnsureLazyChildren();
-					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition == def && !t.IsHidden);
+					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.Equals(def) && !t.IsHidden);
 				}
 			} else {
-				AssemblyTreeNode asm = FindAssemblyNode(def.Module);
+				AssemblyTreeNode asm = FindAssemblyNode(def.ParentAssembly);
 				if (asm != null) {
 					return asm.FindTypeNode(def);
 				}
@@ -226,78 +234,79 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the method node corresponding to the method definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public ILSpyTreeNode FindMethodNode(MethodDefinition def)
+		public ILSpyTreeNode FindMethodNode(IMethod def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.Module.Metadata.GetMethodDefinition(def.Handle).GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
-			typeNode.EnsureLazyChildren();
-			MethodTreeNode methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition == def && !m.IsHidden);
-			if (methodNode != null)
-				return methodNode;
-			foreach (var p in typeNode.Children.OfType<ILSpyTreeNode>()) {
-				if (p.IsHidden)
-					continue;
-
-				// method might be a child of a property or event
-				if (p is PropertyTreeNode || p is EventTreeNode) {
-					p.EnsureLazyChildren();
-					methodNode = p.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition == def);
-					if (methodNode != null) {
-						// If the requested method is a property or event accessor, and accessors are
-						// hidden in the UI, then return the owning property or event.
-						if (methodNode.IsHidden)
-							return p;
-						else
-							return methodNode;
-					}
-				}
+			// method might be an accessor, must look for parent node
+			ILSpyTreeNode parentNode = typeNode;
+			MethodTreeNode methodNode;
+			parentNode.EnsureLazyChildren();
+			switch (def.AccessorOwner) {
+				case IProperty p:
+					parentNode = parentNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.Equals(p));
+					if (parentNode == null)
+						return null;
+					parentNode.EnsureLazyChildren();
+					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def));
+					if (methodNode == null || methodNode.IsHidden)
+						return parentNode;
+					return methodNode;
+				case IEvent e:
+					parentNode = parentNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.Equals(e));
+					if (parentNode == null)
+						return null;
+					parentNode.EnsureLazyChildren();
+					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def));
+					if (methodNode == null || methodNode.IsHidden)
+						return parentNode;
+					return methodNode;
+				default:
+					methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def) && !m.IsHidden);
+					if (methodNode != null)
+						return methodNode;
+					return null;
 			}
-
-			return null;
 		}
 
 		/// <summary>
 		/// Looks up the field node corresponding to the field definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public FieldTreeNode FindFieldNode(FieldDefinition def)
+		public FieldTreeNode FindFieldNode(IField def)
 		{
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, def.Module.Metadata.GetFieldDefinition(def.Handle).GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(m => m.FieldDefinition == def && !m.IsHidden);
+			return typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(m => m.FieldDefinition.Equals(def) && !m.IsHidden);
 		}
 
 		/// <summary>
 		/// Looks up the property node corresponding to the property definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public PropertyTreeNode FindPropertyNode(PropertyDefinition def)
+		public PropertyTreeNode FindPropertyNode(IProperty def)
 		{
-			var metadata = def.Module.Metadata;
-			var accessor = metadata.GetMethodDefinition(metadata.GetPropertyDefinition(def.Handle).GetAccessors().GetAny());
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition == def && !m.IsHidden);
+			return typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.Equals(def) && !m.IsHidden);
 		}
 
 		/// <summary>
 		/// Looks up the event node corresponding to the event definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public EventTreeNode FindEventNode(EventDefinition def)
+		public EventTreeNode FindEventNode(IEvent def)
 		{
-			var metadata = def.Module.Metadata;
-			var accessor = metadata.GetMethodDefinition(metadata.GetEventDefinition(def.Handle).GetAccessors().GetAny());
-			TypeTreeNode typeNode = FindTypeNode(new TypeDefinition(def.Module, accessor.GetDeclaringType()));
+			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition == def && !m.IsHidden);
+			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.Equals(def) && !m.IsHidden);
 		}
 		#endregion
 	}

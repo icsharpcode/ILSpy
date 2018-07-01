@@ -18,7 +18,7 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public bool IsEnabled(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
-				return context.Reference != null && context.Reference.Reference is IMetadataEntity;
+				return context.Reference != null && context.Reference.Reference is IEntity;
 			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
 				if (!IsValidReference(node.Member))
 					return false;
@@ -48,11 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		bool IsValidReference(object reference)
 		{
-			return reference is IMetadataEntity
-				|| reference is MemberReference
-				|| reference is MethodSpecification
-				|| reference is TypeReference
-				|| reference is TypeSpecification;
+			return reference is IEntity;
 		}
 
 		public void Execute(TextViewContext context)
@@ -67,7 +63,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		}
 
 		public static void Analyze(object member)
-		{
+		{/*
 			switch (member) {
 				case IMetadataEntity entity:
 					switch (entity) {
@@ -133,6 +129,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					}
 					break;
 			}
+		*/
 		}
 	}
 }

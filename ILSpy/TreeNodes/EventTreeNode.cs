@@ -23,6 +23,8 @@ using SRM = System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -31,39 +33,34 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		public EventTreeNode(EventDefinition ev)
+		public EventTreeNode(IEvent @event)
 		{
-			if (ev.IsNil)
-				throw new ArgumentNullException(nameof(ev));
-			this.EventDefinition = ev;
-			var metadata = ev.Module.Metadata;
-			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
-			var accessors = eventDefinition.GetAccessors();
-			if (!accessors.Adder.IsNil)
-				this.Children.Add(new MethodTreeNode(new MethodDefinition(ev.Module, accessors.Adder)));
-			if (!accessors.Remover.IsNil)
-				this.Children.Add(new MethodTreeNode(new MethodDefinition(ev.Module, accessors.Remover)));
-			if (!accessors.Raiser.IsNil)
-				this.Children.Add(new MethodTreeNode(new MethodDefinition(ev.Module, accessors.Raiser)));
+			this.EventDefinition = @event ?? throw new ArgumentNullException(nameof(@event));
+			if (@event.CanAdd)
+				this.Children.Add(new MethodTreeNode(@event.AddAccessor));
+			if (@event.CanRemove)
+				this.Children.Add(new MethodTreeNode(@event.RemoveAccessor));
+			if (@event.CanInvoke)
+				this.Children.Add(new MethodTreeNode(@event.InvokeAccessor));
 			//foreach (var m in ev.OtherMethods)
 			//	this.Children.Add(new MethodTreeNode(m));
 		}
 
-		public EventDefinition EventDefinition { get; }
+		public IEvent EventDefinition { get; }
 
-		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.Handle.ToSuffixString();
+		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(EventDefinition ev, Language language)
+		public static object GetText(IEvent ev, Language language)
 		{
 			return language.EventToString(ev, false, false);
 		}
 
 		public override object Icon => GetIcon(EventDefinition);
 
-		public static ImageSource GetIcon(EventDefinition @event)
+		public static ImageSource GetIcon(IEvent @event)
 		{
-			var metadata = @event.Module.Metadata;
-			var accessor = metadata.GetEventDefinition(@event.Handle).GetAccessors().GetAny();
+			var metadata = ((MetadataAssembly)@event.ParentAssembly).PEFile.Metadata;
+			var accessor = metadata.GetEventDefinition((EventDefinitionHandle)@event.MetadataToken).GetAccessors().GetAny();
 			if (!accessor.IsNil) {
 				var accessorMethod = metadata.GetMethodDefinition(accessor);
 				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(accessorMethod.Attributes), accessorMethod.HasFlag(MethodAttributes.Static));
@@ -97,8 +94,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = EventDefinition.Module.Metadata;
-			if (settings.SearchTermMatches(metadata.GetString(metadata.GetEventDefinition(EventDefinition.Handle).Name)) && settings.Language.ShowMember(EventDefinition))
+			if (settings.SearchTermMatches(EventDefinition.Name) && settings.Language.ShowMember(EventDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -111,14 +107,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				var metadata = EventDefinition.Module.Metadata;
-				var accessor = metadata.GetEventDefinition(EventDefinition.Handle).GetAccessors().GetAny();
-				if (accessor.IsNil) return false;
-				var accessorMethod = metadata.GetMethodDefinition(accessor);
-				switch (accessorMethod.Attributes & MethodAttributes.MemberAccessMask) {
-					case MethodAttributes.Public:
-					case MethodAttributes.FamORAssem:
-					case MethodAttributes.Family:
+				switch (EventDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.ProtectedOrInternal:
+					case Accessibility.Protected:
 						return true;
 					default:
 						return false;
@@ -126,6 +118,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => EventDefinition;
+		IEntity IMemberTreeNode.Member => EventDefinition;
 	}
 }

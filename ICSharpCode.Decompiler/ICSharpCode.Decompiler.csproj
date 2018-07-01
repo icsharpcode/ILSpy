@@ -270,6 +270,7 @@
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
@@ -283,7 +284,6 @@
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Metadata\CustomAttributeDecoder.cs" />
     <Compile Include="Metadata\Dom.cs" />
-    <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\DotNetCorePathFinder.cs" />
     <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="Metadata\LightJson\JsonArray.cs" />
