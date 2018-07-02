@@ -507,17 +507,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				propertyDeclaration.Getter.Body = null;
 				propertyDeclaration.Setter.Body = null;
 
-			// Add C# 7.3 attributes on backing field:
-			var attributes = field.Attributes
-				.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
-				.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
-			if (attributes.Length > 0) {
-				var section = new AttributeSection {
-					AttributeTarget = "field"
-				};
-				section.Attributes.AddRange(attributes);
-				propertyDeclaration.Attributes.Add(section);
-			}
+				// Add C# 7.3 attributes on backing field:
+				var attributes = field.GetAttributes()
+					.Where(a => !attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
+					.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
+				if (attributes.Length > 0) {
+					var section = new AttributeSection {
+						AttributeTarget = "field"
+					};
+					section.Attributes.AddRange(attributes);
+					propertyDeclaration.Attributes.Add(section);
+				}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
@@ -788,8 +788,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
-					var attributes = field.Attributes
-							.Where(a => !attributeTypesToRemoveFromAutoEvents.Any(t => t == a.AttributeType.FullName))
+					var attributes = field.GetAttributes()
+							.Where(a => !attributeTypesToRemoveFromAutoEvents.Contains(a.AttributeType.FullName))
 							.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 					if (attributes.Length > 0) {
 						var section = new AttributeSection {

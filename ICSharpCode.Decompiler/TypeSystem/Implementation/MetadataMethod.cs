@@ -45,8 +45,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded fields:
 		ITypeDefinition declaringType;
 		string name;
-		IAttribute[] customAttributes;
-		IAttribute[] returnTypeAttributes;
 		IParameter[] parameters;
 		IType returnType;
 
@@ -232,15 +230,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public ICompilation Compilation => assembly.Compilation;
 
 		#region Attributes
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
 		IType FindInteropType(string name)
 		{
 			return assembly.Compilation.FindType(new TopLevelTypeName(
@@ -248,7 +237,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			));
 		}
 
-		IAttribute[] DecodeAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 
@@ -365,16 +354,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		#region Return type attributes
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.returnTypeAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.returnTypeAttributes, DecodeReturnTypeAttributes());
-			}
-		}
-
-		private IAttribute[] DecodeReturnTypeAttributes()
+		public IEnumerable<IAttribute> GetReturnTypeAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;

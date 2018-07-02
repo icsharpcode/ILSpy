@@ -51,7 +51,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool HasExtensionMethods { get; }
 
 		// lazy-loaded:
-		IAttribute[] customAttributes;
 		IMember[] members;
 		IField[] fields;
 		IProperty[] properties;
@@ -285,16 +284,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IAssembly ParentAssembly => assembly;
 
 		#region Type Attributes
-		public IReadOnlyList<IAttribute> Attributes {
-			get {
-				var attr = LazyInit.VolatileRead(ref this.customAttributes);
-				if (attr != null)
-					return attr;
-				return LazyInit.GetOrSet(ref this.customAttributes, DecodeAttributes());
-			}
-		}
-
-		IAttribute[] DecodeAttributes()
+		public IEnumerable<IAttribute> GetAttributes()
 		{
 			var b = new AttributeListBuilder(assembly);
 			var metadata = assembly.metadata;

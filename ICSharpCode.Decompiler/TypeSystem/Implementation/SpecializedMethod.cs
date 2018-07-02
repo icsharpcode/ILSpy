@@ -92,10 +92,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IReadOnlyList<IType> TypeArguments {
 			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
 		}
-		
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return methodDefinition.ReturnTypeAttributes; }
-		}
+
+		public IEnumerable<IAttribute> GetReturnTypeAttributes() => methodDefinition.GetReturnTypeAttributes();
 		
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get {
@@ -230,7 +228,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.baseTp = baseTp;
 			}
 
-			public override IReadOnlyList<IAttribute> Attributes => baseTp.Attributes;
+			public override IEnumerable<IAttribute> GetAttributes() => baseTp.GetAttributes();
 
 			public override int GetHashCode()
 			{

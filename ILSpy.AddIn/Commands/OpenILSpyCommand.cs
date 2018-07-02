@@ -89,8 +89,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			foreach (var reference in parentProject.MetadataReferences) {
 				using (var assemblyDef = AssemblyDefinition.ReadAssembly(reference.Display)) {
 					string assemblyName = assemblyDef.Name.Name;
-					if (IsReferenceAssembly(assemblyDef)) {
-						string resolvedAssemblyFile = GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(assemblyDef.FullName));
+					if (AssemblyFileFinder.IsReferenceAssembly(assemblyDef, reference.Display)) {
+						string resolvedAssemblyFile = AssemblyFileFinder.FindAssemblyFile(assemblyDef, reference.Display);
 						dict.Add(assemblyName, 
 							new DetectedReference(assemblyName, resolvedAssemblyFile, false));
 					} else {
@@ -126,11 +126,6 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			}
 
 			return null;
-		}
-
-		protected bool IsReferenceAssembly(AssemblyDefinition assemblyDef)
-		{
-			return assemblyDef.CustomAttributes.Any(ca => ca.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute");
 		}
 	}
 

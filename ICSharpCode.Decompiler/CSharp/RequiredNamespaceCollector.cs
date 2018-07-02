@@ -40,10 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (entity) {
 				case ITypeDefinition td:
 					namespaces.Add(td.Namespace);
-					HandleAttributes(td.Attributes, namespaces);
+					HandleAttributes(td.GetAttributes(), namespaces);
 
 					foreach (var typeParam in td.TypeParameters) {
-						HandleAttributes(typeParam.Attributes, namespaces);
+						HandleAttributes(typeParam.GetAttributes(), namespaces);
 					}
 
 					foreach (var baseType in td.DirectBaseTypes) {
@@ -71,19 +71,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					break;
 				case IField field:
-					HandleAttributes(field.Attributes, namespaces);
+					HandleAttributes(field.GetAttributes(), namespaces);
 					CollectNamespacesForTypeReference(field.ReturnType, namespaces);
 					break;
 				case IMethod method:
-					HandleAttributes(method.Attributes, namespaces);
-					HandleAttributes(method.ReturnTypeAttributes, namespaces);
+					HandleAttributes(method.GetAttributes(), namespaces);
+					HandleAttributes(method.GetReturnTypeAttributes(), namespaces);
 					CollectNamespacesForTypeReference(method.ReturnType, namespaces);
 					foreach (var param in method.Parameters) {
-						HandleAttributes(param.Attributes, namespaces);
+						HandleAttributes(param.GetAttributes(), namespaces);
 						CollectNamespacesForTypeReference(param.Type, namespaces);
 					}
 					foreach (var typeParam in method.TypeParameters) {
-						HandleAttributes(typeParam.Attributes, namespaces);
+						HandleAttributes(typeParam.GetAttributes(), namespaces);
 					}
 					if (!method.MetadataToken.IsNil && method.HasBody) {
 						var reader = typeSystem.ModuleDefinition.Reader;
@@ -93,12 +93,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					break;
 				case IProperty property:
-					HandleAttributes(property.Attributes, namespaces);
+					HandleAttributes(property.GetAttributes(), namespaces);
 					CollectNamespaces(property.Getter, typeSystem, namespaces);
 					CollectNamespaces(property.Setter, typeSystem, namespaces);
 					break;
 				case IEvent @event:
-					HandleAttributes(@event.Attributes, namespaces);
+					HandleAttributes(@event.GetAttributes(), namespaces);
 					CollectNamespaces(@event.AddAccessor, typeSystem, namespaces);
 					CollectNamespaces(@event.RemoveAccessor, typeSystem, namespaces);
 					break;

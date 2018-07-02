@@ -72,9 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return owner; }
 		}
 		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
+		public IEnumerable<IAttribute> GetAttributes() => attributes;
 		
 		public bool IsRef {
 			get { return isRef; }
