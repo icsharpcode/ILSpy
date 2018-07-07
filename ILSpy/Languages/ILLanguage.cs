@@ -63,19 +63,19 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleMethod(((MetadataAssembly)method.ParentAssembly).PEFile, (MethodDefinitionHandle)method.MetadataToken);
+			dis.DisassembleMethod(method.ParentAssembly.PEFile, (MethodDefinitionHandle)method.MetadataToken);
 		}
 		
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleField(((MetadataAssembly)field.ParentAssembly).PEFile, (FieldDefinitionHandle)field.MetadataToken);
+			dis.DisassembleField(field.ParentAssembly.PEFile, (FieldDefinitionHandle)field.MetadataToken);
 		}
 		
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			PEFile module = ((MetadataAssembly)property.ParentAssembly).PEFile;
+			PEFile module = property.ParentAssembly.PEFile;
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
 			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
 			var accessors = pd.GetAccessors();
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			PEFile module = ((MetadataAssembly)ev.ParentAssembly).PEFile;
+			PEFile module = ev.ParentAssembly.PEFile;
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
 			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
@@ -123,14 +123,14 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			PEFile module = ((MetadataAssembly)type.ParentAssembly).PEFile;
+			PEFile module = type.ParentAssembly.PEFile;
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
 		}
 
 		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			PEFile module = ((MetadataAssembly)types.FirstOrDefault()?.ParentAssembly)?.PEFile;
+			PEFile module = types.FirstOrDefault()?.ParentAssembly.PEFile;
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		

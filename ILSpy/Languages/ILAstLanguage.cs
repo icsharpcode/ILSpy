@@ -70,11 +70,11 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
-			var module = method.Module;
-			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(module, method.Handle);
+			new ReflectionDisassembler(output, options.CancellationToken)
+				.DisassembleMethodHeader(method.ParentAssembly.PEFile, (SRM.MethodDefinitionHandle)method.MetadataToken);
 			output.WriteLine();
 			output.WriteLine();
 		}
@@ -83,17 +83,17 @@ namespace ICSharpCode.ILSpy
 		{
 			public TypedIL() : base("Typed IL") {}
 			
-			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var metadata = method.Module.Metadata;
-				var methodDef = metadata.GetMethodDefinition(method.Handle);
+				var module = method.ParentAssembly.PEFile;
+				var methodDef = module.Metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)method.MetadataToken);
 				if (!methodDef.HasBody())
 					return;
-				var typeSystem = new DecompilerTypeSystem(method.Module);
+				var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 				ILReader reader = new ILReader(typeSystem);
-				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				reader.WriteTypedIL(method.Module, method.Handle, methodBody, output, options.CancellationToken);
+				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				reader.WriteTypedIL(module, (SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, output, options.CancellationToken);
 			}
 		}
 
@@ -106,21 +106,23 @@ namespace ICSharpCode.ILSpy
 				this.transforms = transforms;
 			}
 
-			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var metadata = method.Module.Metadata;
-				var methodDef = metadata.GetMethodDefinition(method.Handle);
+				var module = method.ParentAssembly.PEFile;
+				var metadata = module.Metadata;
+				var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)method.MetadataToken);
 				if (!methodDef.HasBody())
 					return;
-				var typeSystem = new DecompilerTypeSystem(method.Module);
-				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.ResolveAsMethod(method.Handle)));
+				IAssemblyResolver assemblyResolver = module.GetAssemblyResolver();
+				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
+				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.ResolveAsMethod(method.MetadataToken)));
 				var reader = new ILReader(specializingTypeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
-				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				ILFunction il = reader.ReadIL(method.Module, method.Handle, methodBody, options.CancellationToken);
+				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				ILFunction il = reader.ReadIL(module, (SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, options.CancellationToken);
 				var namespaces = new HashSet<string>();
-				var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
+				var decompiler = new CSharpDecompiler(typeSystem, assemblyResolver, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
 				ILTransformContext context = decompiler.CreateILTransformContext(il);
 				context.Stepper.StepLimit = options.StepLimit;
 				context.Stepper.IsDebug = options.IsDebug;
