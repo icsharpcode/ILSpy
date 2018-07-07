@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Util;
 
 using Mono.Cecil;
@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.PdbProvider.Cecil
 			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as Mono.Cecil.MethodDefinition;
 			if (method?.DebugInformation == null || !method.DebugInformation.HasSequencePoints)
 				return EmptyList<SequencePoint>.Instance;
-			return method.DebugInformation.SequencePoints.Select(point => new Metadata.SequencePoint {
+			return method.DebugInformation.SequencePoints.Select(point => new SequencePoint {
 				Offset = point.Offset,
 				StartLine = point.StartLine,
 				StartColumn = point.StartColumn,

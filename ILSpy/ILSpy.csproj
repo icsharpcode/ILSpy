@@ -120,6 +120,7 @@
     <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
+    <Compile Include="Languages\CSharpLanguage.cs" />
     <Compile Include="Languages\CSharpLexer.cs" />
     <Compile Include="Languages\CSharpHighlightingTokenWriter.cs" />
     <Compile Include="ILSpySettings.cs" />
@@ -135,6 +136,7 @@
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
     <Compile Include="LoadedAssembly.cs" />
+    <Compile Include="LoadedAssemblyExtensions.cs" />
     <Compile Include="LoadedNugetPackage.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />

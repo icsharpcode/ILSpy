@@ -233,7 +233,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		IEnumerable<T> FindReferencesInAssembly(Decompiler.Metadata.PEFile module, CancellationToken ct)
 		{
-			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(module) : null;
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(module, module.GetAssemblyResolver()) : null;
 			var metadata = module.Metadata;
 			foreach (var type in TreeTraversal.PreOrder(metadata.TypeDefinitions, t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
@@ -247,7 +247,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		IEnumerable<T> FindReferencesInTypeScope(CancellationToken ct)
 		{
-			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope, assemblyScope.GetAssemblyResolver()) : null;
 			foreach (var type in TreeTraversal.PreOrder(typeScopeHandle, t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();
 				var codeMappingInfo = language.GetCodeMappingInfo(assemblyScope, type);
@@ -260,7 +260,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		IEnumerable<T> FindReferencesInEnclosingTypeScope(CancellationToken ct)
 		{
-			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope) : null;
+			IDecompilerTypeSystem ts = provideTypeSystem ? new DecompilerTypeSystem(assemblyScope, assemblyScope.GetAssemblyResolver()) : null;
 			var codeMappingInfo = language.GetCodeMappingInfo(assemblyScope, typeScope.GetDeclaringType());
 			foreach (var type in TreeTraversal.PreOrder(typeScope.GetDeclaringType(), t => assemblyScope.Metadata.GetTypeDefinition(t).GetNestedTypes())) {
 				ct.ThrowIfCancellationRequested();

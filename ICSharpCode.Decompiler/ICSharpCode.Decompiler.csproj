@@ -306,7 +306,7 @@
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
-    <Compile Include="Metadata\SequencePoint.cs" />
+    <Compile Include="DebugInfo\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\DynamicCallSiteTransform.cs" />
@@ -342,7 +342,8 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
-    <Compile Include="Pdb\PortablePdbWriter.cs" />
+    <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
+    <Compile Include="DebugInfo\PortablePdbWriter.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />

@@ -33,24 +33,17 @@ namespace ICSharpCode.Decompiler.Metadata
 		public string FileName { get; }
 		public PEReader Reader { get; }
 		public MetadataReader Metadata { get; }
-		public IAssemblyResolver AssemblyResolver { get; }
-		public IAssemblyDocumentationResolver DocumentationResolver { get; set; }
-		public IDebugInfoProvider DebugInfo { get; set; }
 
-		public PEFile(string fileName, Stream stream, bool throwOnResolveError = false, PEStreamOptions options = PEStreamOptions.Default)
+		public PEFile(string fileName, Stream stream, PEStreamOptions options = PEStreamOptions.Default)
+			: this(fileName, new PEReader(stream, options))
 		{
-			this.FileName = fileName;
-			this.Reader = new PEReader(stream, options);
-			this.Metadata = Reader.GetMetadataReader();
-			this.AssemblyResolver = new UniversalAssemblyResolver(fileName, throwOnResolveError, Reader.DetectTargetFrameworkId(), options);
 		}
 
-		public PEFile(string fileName, Stream stream, IAssemblyResolver assemblyResolver, PEStreamOptions options = PEStreamOptions.Default)
+		public PEFile(string fileName, PEReader reader)
 		{
-			this.FileName = fileName;
-			this.Reader = new PEReader(stream, options);
-			this.Metadata = Reader.GetMetadataReader();
-			this.AssemblyResolver = assemblyResolver;
+			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
+			this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
+			this.Metadata = reader.GetMetadataReader();
 		}
 
 		public bool IsAssembly => Metadata.IsAssembly;

@@ -114,13 +114,13 @@ namespace ILSpy.BamlDecompiler.Tests
 		{
 			using (var fileStream = new FileStream(asmPath, FileMode.Open, FileAccess.Read)) {
 				var module = new PEFile(asmPath, fileStream);
-				var resolver = (UniversalAssemblyResolver)module.AssemblyResolver;
+				var resolver = new UniversalAssemblyResolver(asmPath, false, module.Reader.DetectTargetFrameworkId());
 				resolver.RemoveSearchDirectory(".");
 				resolver.AddSearchDirectory(Path.GetDirectoryName(asmPath));
 				var res = module.Resources.First();
 				Stream bamlStream = LoadBaml(res, name + ".baml");
 				Assert.IsNotNull(bamlStream);
-				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, bamlStream, CancellationToken.None);
+				XDocument document = BamlResourceEntryNode.LoadIntoDocument(module, resolver, bamlStream, CancellationToken.None);
 
 				XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 			}

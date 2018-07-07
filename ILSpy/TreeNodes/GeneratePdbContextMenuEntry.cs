@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Pdb;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
 
@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 					try {
 						var file = assembly.GetPEFileOrNull();
-						var decompiler = new CSharpDecompiler(file, options.DecompilerSettings);
+						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(), options.DecompilerSettings);
 						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream);
 					} catch (OperationCanceledException) {
 						output.WriteLine();

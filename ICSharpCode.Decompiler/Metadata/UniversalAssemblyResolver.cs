@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), this, options);
+			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), options);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)

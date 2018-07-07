@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.Util;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 using System.Diagnostics;
 using System.Collections.Immutable;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -77,18 +78,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly Metadata.PEFile moduleDefinition;
 		readonly ICompilation compilation;
+		readonly IAssemblyResolver assemblyResolver;
 		readonly TypeSystemOptions typeSystemOptions;
 		readonly MetadataAssembly mainAssembly;
 
-		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition) : this(moduleDefinition, new DecompilerSettings())
+		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition, IAssemblyResolver assemblyResolver)
+			: this(moduleDefinition, assemblyResolver, new DecompilerSettings())
 		{
 		}
 
-		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition, DecompilerSettings settings)
+		public DecompilerTypeSystem(PEFile moduleDefinition, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 		{
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
-			this.moduleDefinition = moduleDefinition;
+			this.moduleDefinition = moduleDefinition ?? throw new ArgumentNullException(nameof(moduleDefinition));
+			this.assemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			typeSystemOptions = TypeSystemOptions.None;
 			if (settings.Dynamic)
 				typeSystemOptions |= TypeSystemOptions.Dynamic;
@@ -106,7 +110,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
-				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
+				var asm = assemblyResolver.Resolve(asmRef);
 				if (asm != null) {
 					referencedAssemblies.Add(asm.WithOptions(typeSystemOptions));
 					var metadata = asm.Metadata;

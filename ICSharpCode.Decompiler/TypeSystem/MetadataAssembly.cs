@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class MetadataAssembly : IAssembly
 	{
 		public ICompilation Compilation { get; }
-		public readonly Metadata.PEFile PEFile;
 		internal readonly MetadataReader metadata;
 		readonly TypeSystemOptions options;
 		internal readonly TypeProvider TypeProvider;
@@ -86,6 +85,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public TypeSystemOptions TypeSystemOptions => options;
 
 		#region IAssembly interface
+		public PEFile PEFile { get; }
+
 		public bool IsMainAssembly => this == Compilation.MainAssembly;
 
 		public string AssemblyName { get; }

@@ -25,6 +25,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using Microsoft.DiaSymReader;
@@ -48,12 +49,12 @@ namespace ICSharpCode.ILSpy.DebugInfo
 			this.reader = SymUnmanagedReaderFactory.CreateReader<ISymUnmanagedReader5>(stream, this);
 		}
 
-		public IList<Decompiler.Metadata.SequencePoint> GetSequencePoints(MethodDefinitionHandle handle)
+		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle handle)
 		{
 			var method = reader.GetMethod(MetadataTokens.GetToken(handle));
 			if (method == null || method.GetSequencePointCount(out int count) != 0)
-				return Empty<Decompiler.Metadata.SequencePoint>.Array;
-			var sequencePoints = new Decompiler.Metadata.SequencePoint[count];
+				return Empty<Decompiler.DebugInfo.SequencePoint>.Array;
+			var sequencePoints = new Decompiler.DebugInfo.SequencePoint[count];
 			var points = method.GetSequencePoints();
 			int i = 0;
 			var buffer = new char[1024];
@@ -64,7 +65,7 @@ namespace ICSharpCode.ILSpy.DebugInfo
 				} else {
 					url = "";
 				}
-				sequencePoints[i] = new Decompiler.Metadata.SequencePoint() {
+				sequencePoints[i] = new Decompiler.DebugInfo.SequencePoint() {
 					Offset = point.Offset,
 					StartLine = point.StartLine,
 					StartColumn = point.StartColumn,

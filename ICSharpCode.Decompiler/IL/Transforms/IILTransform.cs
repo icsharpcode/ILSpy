@@ -22,6 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -42,6 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public ILFunction Function { get; }
 		public IDecompilerTypeSystem TypeSystem { get; }
+		public IDebugInfoProvider DebugInfo { get; }
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
@@ -49,11 +51,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal DecompileRun DecompileRun { get; set; }
 		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem.Compilation);
 
-		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, DecompilerSettings settings = null)
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, IDebugInfoProvider debugInfo, DecompilerSettings settings = null)
 		{
 			this.Function = function ?? throw new ArgumentNullException(nameof(function));
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.Settings = settings ?? new DecompilerSettings();
+			this.DebugInfo = debugInfo;
 			Stepper = new Stepper();
 		}
 
@@ -61,10 +64,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.Function = context.Function;
 			this.TypeSystem = context.TypeSystem;
+			this.DebugInfo = context.DebugInfo;
 			this.Settings = context.Settings;
 			this.DecompileRun = context.DecompileRun;
 			this.CancellationToken = context.CancellationToken;
 			this.Stepper = context.Stepper;
+		}
+
+		public ILReader CreateILReader(IDecompilerTypeSystem typeSystem = null)
+		{
+			if (typeSystem == null)
+				typeSystem = this.TypeSystem;
+			return new ILReader(typeSystem) {
+				UseDebugSymbols = Settings.UseDebugSymbols,
+				DebugInfo = DebugInfo
+			};
 		}
 
 		/// <summary>

@@ -9,9 +9,11 @@ using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpy;
 using Metadata = ICSharpCode.Decompiler.Metadata;
 
 namespace ILSpy.BamlDecompiler
@@ -29,11 +31,11 @@ namespace ILSpy.BamlDecompiler
 	/// </summary>
 	sealed class ConnectMethodDecompiler
 	{
-		public List<(LongSet, EventRegistration[])> DecompileEventMappings(Metadata.PEFile module,
+		public List<(LongSet, EventRegistration[])> DecompileEventMappings(Metadata.PEFile module, IAssemblyResolver assemblyResolver,
 			string fullTypeName, CancellationToken cancellationToken)
 		{
 			var result = new List<(LongSet, EventRegistration[])>();
-			var typeSystem = new DecompilerTypeSystem(module);
+			var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
 
 			var typeDefinition = typeSystem.Compilation.FindType(new FullTypeName(fullTypeName)).GetDefinition();
 			if (typeDefinition == null)
@@ -58,7 +60,7 @@ namespace ILSpy.BamlDecompiler
 			var function = ilReader.ReadIL(module, (MethodDefinitionHandle)method.MetadataToken,
 				module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress), cancellationToken);
 
-			var context = new ILTransformContext(function, typeSystem) {
+			var context = new ILTransformContext(function, typeSystem, null) {
 				CancellationToken = cancellationToken
 			};
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);

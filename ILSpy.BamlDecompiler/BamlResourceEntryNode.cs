@@ -50,30 +50,32 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
 			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), Data, cancellationToken);
+			XDocument xamlDocument = LoadIntoDocument(asm.GetPEFileOrNull(), asm.GetAssemblyResolver(), Data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}
 
-		internal static XDocument LoadIntoDocument(PEFile module, Stream stream, CancellationToken cancellationToken)
+		internal static XDocument LoadIntoDocument(PEFile module, IAssemblyResolver assemblyResolver,
+			Stream stream, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 			XDocument xamlDocument;
-			using (XmlBamlReader reader = new XmlBamlReader(stream, new NRTypeResolver(module))) {
+			using (XmlBamlReader reader = new XmlBamlReader(stream, new NRTypeResolver(module, assemblyResolver))) {
 				xamlDocument = XDocument.Load(reader);
-				ConvertConnectionIds(xamlDocument, module, cancellationToken);
+				ConvertConnectionIds(xamlDocument, module, assemblyResolver, cancellationToken);
 				ConvertToEmptyElements(xamlDocument.Root);
 				MoveNamespacesToRoot(xamlDocument, reader.XmlnsDefinitions);
 				return xamlDocument;
 			}
 		}
 
-		static void ConvertConnectionIds(XDocument xamlDocument, PEFile asm, CancellationToken cancellationToken)
+		static void ConvertConnectionIds(XDocument xamlDocument, PEFile asm, IAssemblyResolver assemblyResolver,
+			CancellationToken cancellationToken)
 		{
 			var attr = xamlDocument.Root.Attribute(XName.Get("Class", XmlBamlReader.XWPFNamespace));
 			if (attr != null) {
 				string fullTypeName = attr.Value;
-				var mappings = new ConnectMethodDecompiler().DecompileEventMappings(asm, fullTypeName, cancellationToken);
+				var mappings = new ConnectMethodDecompiler().DecompileEventMappings(asm, assemblyResolver, fullTypeName, cancellationToken);
 				RemoveConnectionIds(xamlDocument.Root, mappings);
 			}
 		}

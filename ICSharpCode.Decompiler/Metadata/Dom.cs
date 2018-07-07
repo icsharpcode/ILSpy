@@ -15,23 +15,6 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public interface IAssemblyDocumentationResolver
-	{
-		XmlDocumentationProvider GetProvider();
-	}
-
-	public struct Variable
-	{
-		public string Name { get; set; }
-	}
-
-	public interface IDebugInfoProvider
-	{
-		IList<SequencePoint> GetSequencePoints(MethodDefinitionHandle method);
-		IList<Variable> GetVariables(MethodDefinitionHandle method);
-		bool TryGetName(MethodDefinitionHandle method, int index, out string name);
-	}
-
 	public enum TargetRuntime
 	{
 		Unknown,

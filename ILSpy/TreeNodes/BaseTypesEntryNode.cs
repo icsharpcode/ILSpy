@@ -65,16 +65,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module);
+			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 			var t = typeSystem.ResolveAsType(handle).GetDefinition();
 			if (t != null) {
-				BaseTypesTreeNode.AddBaseTypes(this.Children, ((MetadataAssembly)t.ParentAssembly).PEFile, t);
+				BaseTypesTreeNode.AddBaseTypes(this.Children, t.ParentAssembly.PEFile, t);
 			}
 		}
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module);
+			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 			var t = typeSystem.ResolveAsType(handle).GetDefinition();
 			e.Handled = ActivateItem(this, t);
 		}
@@ -98,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		IEntity IMemberTreeNode.Member {
 			get {
-				DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module);
+				DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 				var t = typeSystem.ResolveAsType(handle).GetDefinition();
 				return t;
 			}

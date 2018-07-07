@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.Decompiler.Metadata
+namespace ICSharpCode.Decompiler.DebugInfo
 {
 	/// <summary>
 	/// A sequence point read from a PDB file or produced by the decompiler.

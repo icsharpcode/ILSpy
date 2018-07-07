@@ -27,6 +27,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -55,7 +56,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
+		public IDebugInfoProvider DebugInfo {
+			get => methodBodyDisassembler.DebugInfo;
+			set => methodBodyDisassembler.DebugInfo = value;
+		}
+
 		public bool ExpandMemberDefinitions { get; set; } = false;
+
+		public IAssemblyResolver AssemblyResolver { get; set; }
 
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
 			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
@@ -362,59 +370,61 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(secdecl.Action.ToString());
 						break;
 				}
-				output.WriteLine(" = {");
-				output.Indent();
-				var blob = metadata.GetBlobReader(secdecl.PermissionSet);
-				if ((char)blob.ReadByte() != '.') {
-					blob.Reset();
-					WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
+				if (AssemblyResolver == null) {
+					output.Write(" = ");
+					WriteBlob(secdecl.PermissionSet, metadata);
 				} else {
-					string currentAssemblyName = null;
-					string currentFullAssemblyName = null;
-					if (metadata.IsAssembly) {
-						currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
-						currentFullAssemblyName = metadata.GetFullAssemblyName();
-					}
-					int count = blob.ReadCompressedInteger();
-					for (int i = 0; i < count; i++) {
-						var typeName = blob.ReadSerializedString();
-						string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
-						if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
-							output.Write("class ");
-							output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
-						} else {
-							string[] typeNameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
-							if (typeNameParts.Length < 2)
-								throw new NotImplementedException();
-							output.Write('[');
-							output.Write(typeNameParts[1]);
-							output.Write(']');
-							output.WriteReference(typeNameParts[0], null); // TODO : hyperlink!
+					output.WriteLine(" = {");
+					output.Indent();
+					var blob = metadata.GetBlobReader(secdecl.PermissionSet);
+					if ((char)blob.ReadByte() != '.') {
+						blob.Reset();
+						WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
+					} else {
+						string currentAssemblyName = null;
+						string currentFullAssemblyName = null;
+						if (metadata.IsAssembly) {
+							currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+							currentFullAssemblyName = metadata.GetFullAssemblyName();
 						}
-						output.Write(" = {");
-						blob.ReadCompressedInteger(); // ?
-													  // The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
-						int argCount = blob.ReadCompressedInteger();
-						if (argCount > 0) {
-							output.WriteLine();
-							output.Indent();
-
-							for (int j = 0; j < argCount; j++) {
-								WriteSecurityDeclarationArgument(module, ref blob);
-								output.WriteLine();
+						int count = blob.ReadCompressedInteger();
+						for (int i = 0; i < count; i++) {
+							var typeName = blob.ReadSerializedString();
+							string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
+							if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
+								output.Write("class ");
+								output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
+							} else {
+								output.Write('[');
+								output.Write(nameParts[1]);
+								output.Write(']');
+								output.WriteReference(nameParts[0], null); // TODO : hyperlink!
 							}
+							output.Write(" = {");
+							blob.ReadCompressedInteger(); // ?
+														  // The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
+							int argCount = blob.ReadCompressedInteger();
+							if (argCount > 0) {
+								output.WriteLine();
+								output.Indent();
 
-							output.Unindent();
+								for (int j = 0; j < argCount; j++) {
+									WriteSecurityDeclarationArgument(module, ref blob);
+									output.WriteLine();
+								}
+
+								output.Unindent();
+							}
+							output.Write('}');
+
+							if (i + 1 < count)
+								output.Write(',');
+							output.WriteLine();
 						}
-						output.Write('}');
-
-						if (i + 1 < count)
-							output.Write(',');
-						output.WriteLine();
 					}
+					output.Unindent();
+					output.WriteLine("}");
 				}
-				output.Unindent();
-				output.WriteLine("}");
 			}
 		}
 
@@ -525,7 +535,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			PEFile containingModule = null;
 			// if we deal with an assembly-qualified name, resolve the assembly
 			if (nameParts.Length == 2)
-				containingModule = module.AssemblyResolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
+				containingModule = AssemblyResolver.Resolve(AssemblyNameReference.Parse(nameParts[1]));
 			if (containingModule != null) {
 				// try to find the type in the assembly
 				var handle = FindType(containingModule, typeNameParts);
@@ -539,7 +549,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				var handle = FindType(module, typeNameParts);
 				if (handle.IsNil) {
 					// otherwise try mscorlib
-					var mscorlib = module.AssemblyResolver.Resolve(AssemblyNameReference.Parse("mscorlib"));
+					var mscorlib = AssemblyResolver.Resolve(AssemblyNameReference.Parse("mscorlib"));
 					handle = FindType(mscorlib, typeNameParts);
 					if (handle.IsNil)
 						throw new NotImplementedException();
@@ -1352,27 +1362,27 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write(".custom ");
 				var attr = metadata.GetCustomAttribute(a);
 				attr.Constructor.WriteTo(module, output, GenericContext.Empty);
-				byte[] blob = metadata.GetBlobBytes(attr.Value);
-				if (blob.Length > 0) {
+				if (!attr.Value.IsNil) {
 					output.Write(" = ");
-					WriteBlob(blob);
+					WriteBlob(attr.Value, metadata);
 				}
 				output.WriteLine();
 			}
 		}
 
-		void WriteBlob(byte[] blob)
+		void WriteBlob(BlobHandle blob, MetadataReader metadata)
 		{
+			var reader = metadata.GetBlobReader(blob);
 			output.Write("(");
 			output.Indent();
 
-			for (int i = 0; i < blob.Length; i++) {
-				if (i % 16 == 0 && i < blob.Length - 1) {
+			for (int i = 0; i < reader.Length; i++) {
+				if (i % 16 == 0 && i < reader.Length - 1) {
 					output.WriteLine();
 				} else {
 					output.Write(' ');
 				}
-				output.Write(blob[i].ToString("x2"));
+				output.Write(reader.ReadByte().ToString("x2"));
 			}
 
 			output.WriteLine();
@@ -1484,10 +1494,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			OpenBlock(false);
 			WriteAttributes(module, asm.GetCustomAttributes());
 			WriteSecurityDeclarations(module, asm.GetDeclarativeSecurityAttributes());
-			var publicKey = metadata.GetBlobBytes(asm.PublicKey);
-			if (publicKey.Length > 0) {
+			if (!asm.PublicKey.IsNil) {
 				output.Write(".publickey = ");
-				WriteBlob(publicKey);
+				WriteBlob(asm.PublicKey, metadata);
 				output.WriteLine();
 			}
 			if (asm.HashAlgorithm != AssemblyHashAlgorithm.None) {
@@ -1518,7 +1527,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				OpenBlock(false);
 				if (!aref.PublicKeyOrToken.IsNil) {
 					output.Write(".publickeytoken = ");
-					WriteBlob(metadata.GetBlobBytes(aref.PublicKeyOrToken));
+					WriteBlob(aref.PublicKeyOrToken, metadata);
 					output.WriteLine();
 				}
 				if (aref.Version != null) {

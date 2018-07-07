@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
-
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
@@ -51,7 +51,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public bool ShowMetadataTokens { get; set; }
 
-		IList<Metadata.SequencePoint> sequencePoints;
+		/// <summary>
+		/// Optional provider for sequence points.
+		/// </summary>
+		public IDebugInfoProvider DebugInfo { get; set; }
+
+		IList<DebugInfo.SequencePoint> sequencePoints;
 		int nextSequencePointIndex;
 
 		// cache info
@@ -68,7 +73,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
 		{
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureProvider(module, output);
@@ -94,7 +99,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleLocalsBlock(body);
 			output.WriteLine();
 
-			sequencePoints = module.DebugInfo?.GetSequencePoints(handle) ?? EmptyList<Metadata.SequencePoint>.Instance;
+			sequencePoints = DebugInfo?.GetSequencePoints(handle) ?? EmptyList<DebugInfo.SequencePoint>.Instance;
 			nextSequencePointIndex = 0;
 			if (DetectControlStructure && blob.Length > 0) {
 				blob.Reset();
@@ -278,7 +283,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			int offset = blob.Offset;
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
-				Metadata.SequencePoint sp = sequencePoints[nextSequencePointIndex];
+				var sp = sequencePoints[nextSequencePointIndex];
 				if (sp.Offset <= offset) {
 					output.Write("// sequence point: ");
 					if (sp.Offset != offset) {

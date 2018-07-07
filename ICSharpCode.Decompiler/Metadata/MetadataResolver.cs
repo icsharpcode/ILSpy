@@ -40,18 +40,18 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly IAssemblyResolver assemblyResolver;
 		readonly Dictionary<IAssemblyReference, PEFile> loadedModules;
 
-		public SimpleMetadataResolveContext(PEFile mainModule)
+		public SimpleMetadataResolveContext(PEFile mainModule, IAssemblyResolver assemblyResolver)
 		{
-			this.mainModule = mainModule;
-			this.assemblyResolver = mainModule.AssemblyResolver;
+			this.mainModule = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
+			this.assemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			this.loadedModules = new Dictionary<IAssemblyReference, PEFile>();
 		}
 
-		public SimpleMetadataResolveContext(PEFile mainModule, IMetadataResolveContext parentContext)
+		public SimpleMetadataResolveContext(PEFile mainModule, SimpleMetadataResolveContext parentContext)
 		{
-			this.mainModule = mainModule;
-			this.assemblyResolver = mainModule.AssemblyResolver;
-			this.loadedModules = parentContext is SimpleMetadataResolveContext simple ? simple.loadedModules : new Dictionary<IAssemblyReference, PEFile>();
+			this.mainModule = mainModule ?? throw new ArgumentNullException(nameof(mainModule));
+			this.assemblyResolver = parentContext.assemblyResolver;
+			this.loadedModules = parentContext.loadedModules;
 		}
 
 		public PEFile CurrentModule => mainModule;

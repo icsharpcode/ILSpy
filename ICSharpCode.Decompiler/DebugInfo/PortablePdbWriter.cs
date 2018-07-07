@@ -17,7 +17,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.Pdb
+namespace ICSharpCode.Decompiler.DebugInfo
 {
 	public class PortablePdbWriter
 	{
@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Pdb
 			var hasher = SHA256.Create();
 			var sequencePointBlobs = new Dictionary<MethodDefinitionHandle, (DocumentHandle Document, BlobHandle SequencePoints)>();
 			var importScopeBlobs = new Dictionary<MethodDefinitionHandle, (DocumentHandle Document, BlobHandle ImportScope)>();
-			var emptyList = new List<Metadata.SequencePoint>();
+			var emptyList = new List<SequencePoint>();
 
 			foreach (var handle in reader.GetTopLevelTypeDefinitions()) {
 				var type = reader.GetTypeDefinition(handle);
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.Pdb
 			return metadata.GetOrAddBlob(writer);
 		}
 
-		static BlobHandle EncodeSequencePoints(MetadataBuilder metadata, int localSignatureRowId, List<Metadata.SequencePoint> sequencePoints)
+		static BlobHandle EncodeSequencePoints(MetadataBuilder metadata, int localSignatureRowId, List<SequencePoint> sequencePoints)
 		{
 			if (sequencePoints.Count == 0)
 				return default;

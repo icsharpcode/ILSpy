@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IDecompilerTypeSystem typeSystem;
 
 		public bool UseDebugSymbols { get; set; }
+		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
 		public List<string> Warnings { get; } = new List<string>();
 
 		public ILReader(IDecompilerTypeSystem typeSystem)
@@ -53,7 +54,6 @@ namespace ICSharpCode.Decompiler.IL
 		MetadataReader metadata;
 		IMethod method;
 		MethodBodyBlock body;
-		Metadata.IDebugInfoProvider debugInfo;
 		StackType methodReturnStackType;
 		BlobReader reader;
 		ImmutableStack<ILVariable> currentStack;
@@ -79,7 +79,6 @@ namespace ICSharpCode.Decompiler.IL
 			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
 			this.body = body;
 			this.reader = body.GetILReader();
-			this.debugInfo = module.DebugInfo;
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
@@ -177,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL
 				kind = VariableKind.Local;
 			}
 			ILVariable ilVar = new ILVariable(kind, type, index);
-			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name)) {
+			if (!UseDebugSymbols || DebugInfo == null || !DebugInfo.TryGetName((MethodDefinitionHandle)method.MetadataToken, index, out string name)) {
 				ilVar.Name = "V_" + index;
 				ilVar.HasGeneratedName = true;
 			} else if (string.IsNullOrWhiteSpace(name)) {
@@ -410,7 +409,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
 		/// </summary>
-		public void WriteTypedIL(Metadata.PEFile module, MethodDefinitionHandle method, MethodBodyBlock body, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
+		public void WriteTypedIL(Metadata.PEFile module,
+			MethodDefinitionHandle method, MethodBodyBlock body, ITextOutput output, CancellationToken cancellationToken = default)
 		{
 			Init(module, method, body);
 			ReadInstructions(cancellationToken);

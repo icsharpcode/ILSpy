@@ -135,7 +135,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			typeSystem = new SimpleCompilation(module, MinimalCorlib.Instance);
+			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataAssembly)typeSystem.MainAssembly;
 			var metadata = module.Metadata;
 
