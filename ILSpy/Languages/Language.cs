@@ -149,9 +149,20 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Converts a type definition, reference or specification into a string. This method is used by the type tree nodes and search results.
+		/// Converts a type definition, reference or specification into a string. This method is used by tree nodes and search results.
 		/// </summary>
 		public virtual string TypeToString(IType type, bool includeNamespace)
+		{
+			if (includeNamespace)
+				return type.FullName;
+			else
+				return type.Name;
+		}
+
+		/// <summary>
+		/// Converts a type definition into a string. This method is used by tree nodes and search results.
+		/// </summary>
+		public virtual string TypeDefinitionToString(ITypeDefinition type, bool includeNamespace)
 		{
 			if (includeNamespace)
 				return type.FullName;

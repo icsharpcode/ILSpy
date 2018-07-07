@@ -403,17 +403,44 @@ namespace ICSharpCode.ILSpy
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);
 			}
 		}
+		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
+
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			TypeSystemAstBuilder builder = new TypeSystemAstBuilder();
+			builder.AlwaysUseShortTypeNames = !includeNamespace;
 			AstType astType = builder.ConvertType(type);
 			StringWriter w = new StringWriter();
 
-			astType.AcceptVisitor(new CSharpOutputVisitor(w, FormattingOptionsFactory.CreateAllman()));
+			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			return w.ToString();
+		}
+
+		public override string TypeDefinitionToString(ITypeDefinition type, bool includeNamespace)
+		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
+			var buffer = new System.Text.StringBuilder();
+			if (includeNamespace) {
+				buffer.Append(type.FullName);
+			} else {
+				buffer.Append(type.Name);
+			}
+			if (type.TypeParameterCount > 0) {
+				buffer.Append('<');
+				int i = 0;
+				foreach (var tp in type.TypeParameters) {
+					if (i > 0)
+						buffer.Append(", ");
+					buffer.Append(tp.Name);
+					i++;
+				}
+				buffer.Append('>');
+			}
+			return buffer.ToString();
 		}
 
 		public override string FieldToString(IField field, bool includeTypeName, bool includeNamespace)
@@ -429,7 +456,7 @@ namespace ICSharpCode.ILSpy
 				return typeName.Name + "." + simple;
 			return typeName + "." + simple;
 		}
-		/*
+
 		public override string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
 		{
 			if (property == null)
@@ -439,147 +466,66 @@ namespace ICSharpCode.ILSpy
 				convertTypeOptions |= ConvertTypeOptions.IncludeNamespace;
 			if (includeTypeName)
 				convertTypeOptions |= ConvertTypeOptions.IncludeOuterTypeName;
-			var metadata = property.Module.Metadata;
-			var pd = metadata.GetPropertyDefinition(property.Handle);
-			var accessors = pd.GetAccessors();
-			var accessorHandle = accessors.GetAny();
-			var accessor = metadata.GetMethodDefinition(accessorHandle);
-			var declaringType = metadata.GetTypeDefinition(accessor.GetDeclaringType());
-			if (!isIndexer.HasValue) {
-				isIndexer = accessor.GetDeclaringType().GetDefaultMemberName(metadata) != null;
-			}
 			var buffer = new System.Text.StringBuilder();
 			if (isIndexer.Value) {
-				var overrides = accessorHandle.GetMethodImplementations(metadata);
-				if (overrides.Any()) {
-					string name = metadata.GetString(pd.Name);
+				if (property.IsExplicitInterfaceImplementation) {
+					string name = property.Name;
 					int index = name.LastIndexOf('.');
 					if (index > 0) {
 						buffer.Append(name.Substring(0, index));
-						buffer.Append(@".");
+						buffer.Append('.');
 					}
 				}
 				buffer.Append(@"this[");
-				var signature = pd.DecodeSignature(new AstTypeBuilder(convertTypeOptions), new GenericContext(accessorHandle, property.Module));
-
-				var parameterHandles = accessor.GetParameters();
 
 				int i = 0;
-				CustomAttributeHandleCollection? returnTypeAttributes = null;
-				if (signature.RequiredParameterCount > parameterHandles.Count) {
-					foreach (var type in signature.ParameterTypes) {
-						if (i > 0)
-							buffer.Append(", ");
-						buffer.Append(TypeToString(signature.ParameterTypes[i], metadata, null));
-						i++;
-					}
-				} else {
-					foreach (var h in parameterHandles) {
-						var p = metadata.GetParameter(h);
-						if (p.SequenceNumber > 0 && i < signature.ParameterTypes.Length) {
-							if (i > 0)
-								buffer.Append(", ");
-							buffer.Append(TypeToString(signature.ParameterTypes[i], metadata, p.GetCustomAttributes(), h));
-							i++;
-						}
-						if (p.SequenceNumber == 0) {
-							returnTypeAttributes = p.GetCustomAttributes();
-						}
-					}
-				}
-				if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
-					if (signature.ParameterTypes.Length > 0)
+				var parameters = property.Parameters;
+				foreach (var param in parameters) {
+					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append("...");
+					buffer.Append(TypeToString(param.Type, includeNamespace));
+					i++;
 				}
 
 				buffer.Append(@"]");
-				buffer.Append(" : ");
-				buffer.Append(TypeToString(signature.ReturnType, metadata, returnTypeAttributes));
 			} else {
-				var signature = pd.DecodeSignature(new AstTypeBuilder(convertTypeOptions), new GenericContext(accessorHandle, property.Module));
-
-				var parameterHandles = accessor.GetParameters();
-
-				CustomAttributeHandleCollection? returnTypeAttributes = null;
-				if (parameterHandles.Count > 0) {
-					var p = metadata.GetParameter(parameterHandles.First());
-					if (p.SequenceNumber == 0) {
-						returnTypeAttributes = p.GetCustomAttributes();
-					}
-				}
-				buffer.Append(metadata.GetString(pd.Name));
-				buffer.Append(" : ");
-				buffer.Append(TypeToString(signature.ReturnType, metadata, returnTypeAttributes));
+				buffer.Append(property.Name);
 			}
+			buffer.Append(" : ");
+			buffer.Append(TypeToString(property.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 
-		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
 
-		string TypeToString(AstType astType, MetadataReader metadata, CustomAttributeHandleCollection? customAttributes, ParameterHandle paramHandle = default)
+		public override string MethodToString(IMethod method, bool includeTypeName, bool includeNamespace)
 		{
-			StringWriter w = new StringWriter();
-
-			if (astType is ComposedType ct && ct.HasRefSpecifier) {
-				if (!paramHandle.IsNil) {
-					var p = metadata.GetParameter(paramHandle);
-					if ((p.Attributes & ParameterAttributes.In) == 0 && (p.Attributes & ParameterAttributes.Out) != 0) {
-						w.Write("out ");
-					} else {
-						w.Write("ref ");
-					}
-				} else {
-					w.Write("ref ");
-				}
-
-				astType = ct.BaseType;
-				astType.Remove();
-			}
-
-			var st = new SyntaxTree();
-			st.AddChild(astType, Roles.Type);
-			//st.AcceptVisitor(new InsertDynamicTypeVisitor(metadata, customAttributes));
-			// TODO: we should probably remove AstTypeBuilder and use TypeBuilder(with dummy compilation)+TSAstBuilder instead.
-			// Otherwise we'd need to duplicate a whole bunch of logic...
-			st.FirstChild.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
-			return w.ToString();
-		}
-
-		public override string MethodToString(Decompiler.Metadata.MethodDefinition method, bool includeTypeName, bool includeNamespace)
-		{
-			if (method.IsNil)
-				throw new ArgumentNullException("method");
+			if (method == null)
+				throw new ArgumentNullException(nameof(method));
 			ConvertTypeOptions convertTypeOptions = ConvertTypeOptions.IncludeTypeParameterDefinitions;
 			if (includeNamespace)
 				convertTypeOptions |= ConvertTypeOptions.IncludeNamespace;
 			if (includeTypeName)
 				convertTypeOptions |= ConvertTypeOptions.IncludeOuterTypeName;
-			var metadata = method.Module.Metadata;
-			var md = metadata.GetMethodDefinition(method.Handle);
 			string name;
-			if (md.IsConstructor(metadata)) {
-				name = TypeToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace: includeNamespace);
+			if (method.IsConstructor) {
+				name = TypeDefinitionToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace);
 			} else {
 				if (includeTypeName) {
-					name = TypeToString(new Decompiler.Metadata.TypeDefinition(method.Module, md.GetDeclaringType()), includeNamespace: includeNamespace) + ".";
+					name = TypeDefinitionToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace) + ".";
 				} else {
 					name = "";
 				}
-				name += metadata.GetString(md.Name);
+				name += method.Name;
 			}
-			var signature = md.DecodeSignature(new AstTypeBuilder(convertTypeOptions), new GenericContext(method));
-
 			int i = 0;
 			var buffer = new System.Text.StringBuilder(name);
-			var genericParams = md.GetGenericParameters();
-			if (genericParams.Count > 0) {
+
+			if (method.TypeParameters.Count > 0) {
 				buffer.Append('<');
-				foreach (var h in genericParams) {
-					var gp = metadata.GetGenericParameter(h);
+				foreach (var tp in method.TypeParameters) {
 					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append(metadata.GetString(gp.Name));
+					buffer.Append(tp.Name);
 					i++;
 				}
 				buffer.Append('>');
@@ -587,71 +533,30 @@ namespace ICSharpCode.ILSpy
 			buffer.Append('(');
 
 			i = 0;
-			var parameterHandles = md.GetParameters();
-			CustomAttributeHandleCollection? returnTypeAttributes = null;
-			if (signature.RequiredParameterCount > parameterHandles.Count) {
-				foreach (var type in signature.ParameterTypes) {
-					if (i > 0)
-						buffer.Append(", ");
-					buffer.Append(TypeToString(signature.ParameterTypes[i], metadata, null));
-					i++;
-				}
-			} else {
-				foreach (var h in parameterHandles) {
-					var p = metadata.GetParameter(h);
-					if (p.SequenceNumber > 0 && i < signature.ParameterTypes.Length) {
-						if (i > 0)
-							buffer.Append(", ");
-						buffer.Append(TypeToString(signature.ParameterTypes[i], metadata, p.GetCustomAttributes(), h));
-						i++;
-					}
-					if (p.SequenceNumber == 0) {
-						returnTypeAttributes = p.GetCustomAttributes();
-					}
-				}
-			}
-			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs) {
-				if (signature.ParameterTypes.Length > 0)
+			var parameters = method.Parameters;
+			foreach (var param in parameters) {
+				if (i > 0)
 					buffer.Append(", ");
-				buffer.Append("...");
+				buffer.Append(TypeToString(param.Type, includeNamespace));
+				i++;
 			}
+
 			buffer.Append(')');
 			buffer.Append(" : ");
-			buffer.Append(TypeToString(signature.ReturnType, metadata, returnTypeAttributes));
+			buffer.Append(TypeToString(method.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 
-		public override string EventToString(Decompiler.Metadata.EventDefinition @event, bool includeTypeName, bool includeNamespace)
+		public override string EventToString(IEvent @event, bool includeTypeName, bool includeNamespace)
 		{
-			if (@event.IsNil)
+			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
-			ConvertTypeOptions convertTypeOptions = ConvertTypeOptions.IncludeTypeParameterDefinitions;
-			if (includeNamespace)
-				convertTypeOptions |= ConvertTypeOptions.IncludeNamespace;
-			if (includeTypeName)
-				convertTypeOptions |= ConvertTypeOptions.IncludeOuterTypeName;
-			var metadata = @event.Module.Metadata;
-			var ed = metadata.GetEventDefinition(@event.Handle);
-			var accessors = ed.GetAccessors();
-			var accessorHandle = accessors.GetAny();
-			var accessor = metadata.GetMethodDefinition(accessorHandle);
-			var declaringType = metadata.GetTypeDefinition(accessor.GetDeclaringType());
-			var signature = ed.DecodeSignature(metadata, new AstTypeBuilder(convertTypeOptions), new GenericContext(accessorHandle, @event.Module));
-
-			var parameterHandles = accessor.GetParameters();
-			CustomAttributeHandleCollection? returnTypeAttributes = null;
-			if (parameterHandles.Count > 0) {
-				var p = metadata.GetParameter(parameterHandles.First());
-				if (p.SequenceNumber == 0) {
-					returnTypeAttributes = p.GetCustomAttributes();
-				}
-			}
 			var buffer = new System.Text.StringBuilder();
-			buffer.Append(metadata.GetString(ed.Name));
+			buffer.Append(GetDisplayName(@event, includeTypeName, includeNamespace));
 			buffer.Append(" : ");
-			buffer.Append(TypeToString(signature, metadata, returnTypeAttributes));
+			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
 			return buffer.ToString();
-		}*/
+		}
 
 		public override bool ShowMember(IEntity member)
 		{
