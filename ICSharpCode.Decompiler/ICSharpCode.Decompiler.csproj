@@ -359,7 +359,6 @@
     <Compile Include="TypeSystem\Implementation\MetadataProperty.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\MetadataTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedParameter.cs" />
     <Compile Include="TypeSystem\MetadataAssembly.cs" />
     <Compile Include="TypeSystem\ModifiedType.cs" />

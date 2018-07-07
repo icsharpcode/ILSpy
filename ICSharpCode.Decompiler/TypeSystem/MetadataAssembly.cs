@@ -237,17 +237,39 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType ResolveType(EntityHandle typeRefDefSpec, GenericContext context, TypeSystemOptions customOptions,  CustomAttributeHandleCollection? typeAttributes = null)
 		{
-			if (typeRefDefSpec.Kind == HandleKind.ExportedType) {
-				return ResolveForwardedType(metadata.GetExportedType((ExportedTypeHandle)typeRefDefSpec));
+			if (typeRefDefSpec.IsNil)
+				return SpecialType.UnknownType;
+			IType ty;
+			switch (typeRefDefSpec.Kind) {
+				case HandleKind.TypeDefinition:
+					ty = TypeProvider.GetTypeFromDefinition(metadata, (TypeDefinitionHandle)typeRefDefSpec, 0);
+					break;
+				case HandleKind.TypeReference:
+					ty = TypeProvider.GetTypeFromReference(metadata, (TypeReferenceHandle)typeRefDefSpec, 0);
+					break;
+				case HandleKind.TypeSpecification:
+					var typeSpec = metadata.GetTypeSpecification((TypeSpecificationHandle)typeRefDefSpec);
+					ty = typeSpec.DecodeSignature(TypeProvider, context);
+					break;
+				case HandleKind.ExportedType:
+					return ResolveForwardedType(metadata.GetExportedType((ExportedTypeHandle)typeRefDefSpec));
+				default:
+					Debug.Fail("Not a type handle");
+					ty = SpecialType.UnknownType;
+					break;
 			}
-			return MetadataTypeReference.Resolve(typeRefDefSpec, metadata, TypeProvider, context, customOptions, typeAttributes);
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, typeAttributes, metadata, customOptions);
+			return ty;
 		}
 
 		IType ResolveDeclaringType(EntityHandle declaringTypeReference, GenericContext context)
 		{
 			// resolve without substituting dynamic/tuple types
-			return ResolveType(declaringTypeReference, context,
+			var ty = ResolveType(declaringTypeReference, context,
 				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple));
+			// but substitute tuple types in type arguments:
+			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, typeChildrenOnly: true);
+			return ty;
 		}
 		#endregion
 

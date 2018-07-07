@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -111,20 +112,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void Foreach(IEnumerable<(int, string)> input)
 		{
-			foreach (var item3 in input) {
-				int item = item3.Item1;
-				string item2 = item3.Item2;
-				Console.WriteLine($"{item}: {item2}");
+			foreach (var item in input) {
+				Console.WriteLine($"{item.Item1}: {item.Item2}");
 			}
 		}
 
 		public void ForeachNamedElements(IEnumerable<(int Index, string Data)> input)
 		{
-			foreach (var item3 in input) {
-				int item = item3.Index;
-				string item2 = item3.Data;
-				Console.WriteLine($"{item}: {item2}");
+			foreach (var item in input) {
+				Console.WriteLine($"{item.Index}: {item.Data}");
 			}
+		}
+
+		public void NonGenericForeach(IEnumerable input)
+		{
+			foreach ((string, int) item in input) {
+				Console.WriteLine($"{item.Item1}: {item.Item2}");
+			}
+		}
+
+		public void CallForeach()
+		{
+			Foreach(new List<(int, string)> {
+				(1, "a"),
+				(2, "b")
+			});
 		}
 	}
 }

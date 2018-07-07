@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly GenericParameterAttributes attr;
 
 		// lazy-loaded:
-		IReadOnlyList<IAttribute> customAttributes;
 		IReadOnlyList<IType> constraints;
 
 		public static ITypeParameter[] Create(MetadataAssembly assembly, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)

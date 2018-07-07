@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ICompilation compilation,
 			SRM.CustomAttributeHandleCollection? attributes,
 			SRM.MetadataReader metadata,
-			TypeSystemOptions options)
+			TypeSystemOptions options,
+			bool typeChildrenOnly = false)
 		{
 			if ((options & (TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)) == TypeSystemOptions.None) {
 				return inputType;
@@ -73,9 +74,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			if (hasDynamicAttribute || useTupleTypes) {
-				return inputType.AcceptVisitor(new ApplyAttributeTypeVisitor(
+				var visitor = new ApplyAttributeTypeVisitor(
 					compilation, hasDynamicAttribute, dynamicAttributeData, useTupleTypes, tupleElementNames
-				));
+				);
+				if (typeChildrenOnly) {
+					return inputType.VisitChildren(visitor);
+				} else {
+					return inputType.AcceptVisitor(visitor);
+				}
 			} else {
 				return inputType;
 			}
