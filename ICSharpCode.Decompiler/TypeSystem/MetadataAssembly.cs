@@ -560,8 +560,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType ResolveForwardedType(ExportedType forwarder)
 		{
 			IAssembly assembly = ResolveAssembly(forwarder);
-			Debug.Assert(assembly != null);
 			var typeName = forwarder.GetFullTypeName(metadata);
+			if (assembly == null)
+				return new UnknownType(typeName);
 			using (var busyLock = BusyManager.Enter(this)) {
 				if (busyLock.Success) {
 					var td = assembly.GetTypeDefinition(typeName);
