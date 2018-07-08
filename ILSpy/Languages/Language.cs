@@ -154,9 +154,14 @@ namespace ICSharpCode.ILSpy
 		public virtual string TypeToString(IType type, bool includeNamespace)
 		{
 			if (includeNamespace)
-				return type.FullName;
-			else
-				return type.Name;
+				return type.ReflectionName;
+			else {
+				int index = type.ReflectionName.LastIndexOf('.');
+				if (index > 0) {
+					return type.ReflectionName.Substring(index + 1);
+				}
+				return type.ReflectionName;
+			}
 		}
 
 		/// <summary>
@@ -230,7 +235,7 @@ namespace ICSharpCode.ILSpy
 
 		protected string GetDisplayName(IEntity entity, bool includeTypeName, bool includeNamespace)
 		{
-			if (includeTypeName) {
+			if (includeTypeName && entity.DeclaringTypeDefinition != null) {
 				string name;
 				if (includeNamespace) {
 					name = entity.DeclaringTypeDefinition.FullName;
@@ -239,6 +244,8 @@ namespace ICSharpCode.ILSpy
 				}
 				return name + "." + entity.Name;
 			} else {
+				if (includeNamespace)
+					return entity.FullName;
 				return entity.Name;
 			}
 		}
