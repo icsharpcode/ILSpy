@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
-			output.WriteDefinition(this.Name, this, isLocal: true);
+			output.WriteLocalReference(this.Name, this, isDefinition: true);
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write('(');
@@ -340,7 +340,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal void WriteTo(ITextOutput output)
 		{
-			output.WriteReference(this.Name, this, isLocal: true);
+			output.WriteLocalReference(this.Name, this);
 		}
 		
 		/// <summary>

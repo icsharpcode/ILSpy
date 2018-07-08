@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (offset == null)
 				writer.Write("null");
 			else
-				writer.WriteReference(OffsetToString(offset.Value), offset);
+				writer.WriteLocalReference(OffsetToString(offset.Value), offset);
 		}
 
 		public static void WriteTo(this SRM.ExceptionRegion exceptionHandler, Metadata.PEFile module, GenericContext context, ITextOutput writer)

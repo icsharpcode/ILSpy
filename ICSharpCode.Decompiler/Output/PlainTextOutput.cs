@@ -99,17 +99,32 @@ namespace ICSharpCode.Decompiler
 			line++;
 			column = 1;
 		}
-		
-		public void WriteDefinition(string text, object definition, bool isLocal = true)
+
+		public void WriteReference(Disassembler.OpCodeInfo opCode)
+		{
+			Write(opCode.Name);
+		}
+
+		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
 		{
 			Write(text);
 		}
-		
-		public void WriteReference(string text, object reference, bool isLocal = false)
+
+		public void WriteReference(IType type, string text, bool isDefinition = false)
 		{
 			Write(text);
 		}
-		
+
+		public void WriteReference(IMember member, string text, bool isDefinition = false)
+		{
+			Write(text);
+		}
+
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		{
+			Write(text);
+		}
+
 		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
 		{
 		}

@@ -331,7 +331,7 @@ namespace ICSharpCode.ILSpy
 				var globalType = typeSystem.MainAssembly.TypeDefinitions.FirstOrDefault();
 				if (globalType != null) {
 					output.Write("// Global type: ");
-					output.WriteReference(globalType.FullName, globalType);
+					output.WriteReference(globalType, globalType.FullName);
 					output.WriteLine();
 				}
 				var metadata = module.Metadata;
@@ -341,7 +341,7 @@ namespace ICSharpCode.ILSpy
 					var entrypoint = typeSystem.ResolveAsMethod(entrypointHandle);
 					if (entrypoint != null) {
 						output.Write("// Entry point: ");
-						output.WriteReference(entrypoint.DeclaringType.FullName + "." + entrypoint.Name, entrypoint);
+						output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
 						output.WriteLine();
 					}
 				}

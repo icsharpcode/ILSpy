@@ -41,15 +41,15 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public static void WriteTo(this IType type, ITextOutput output, ILNameSyntax nameSyntax = ILNameSyntax.ShortTypeName)
 		{
-			output.WriteReference(type.ReflectionName, type);
+			output.WriteReference(type, type.ReflectionName);
 		}
 		
-		public static void WriteTo(this ISymbol symbol, ITextOutput output)
+		public static void WriteTo(this IMember member, ITextOutput output)
 		{
-			if (symbol is IMethod method && method.IsConstructor)
-				output.WriteReference(method.DeclaringType?.Name + "." + method.Name, symbol);
+			if (member is IMethod method && method.IsConstructor)
+				output.WriteReference(member, method.DeclaringType?.Name + "." + method.Name);
 			else
-				output.WriteReference(symbol.Name, symbol);
+				output.WriteReference(member, member.Name);
 		}
 
 		public static void WriteTo(this Interval interval, ITextOutput output, ILAstWritingOptions options)

@@ -84,13 +84,13 @@ namespace ICSharpCode.Decompiler
 
 			var localDefinition = GetCurrentLocalDefinition();
 			if (localDefinition != null) {
-				output.WriteDefinition(identifier.Name, localDefinition);
+				output.WriteLocalReference(identifier.Name, localDefinition, isDefinition: true);
 				return;
 			}
 
 			var localRef = GetCurrentLocalReference();
 			if (localRef != null) {
-				output.WriteReference(identifier.Name, localRef, true);
+				output.WriteLocalReference(identifier.Name, localRef);
 				return;
 			}
 

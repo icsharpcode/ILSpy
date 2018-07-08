@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 								output.Write('[');
 								output.Write(nameParts[1]);
 								output.Write(']');
-								output.WriteReference(nameParts[0], null); // TODO : hyperlink!
+								output.Write(nameParts[0]);
 							}
 							output.Write(" = {");
 							blob.ReadCompressedInteger(); // ?
@@ -945,7 +945,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (!md.IsNil) {
 						WriteMarshalInfo(metadata.GetBlobReader(md));
 					}
-					output.WriteDefinition(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p);
+					output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
 				} else {
 					signature.ParameterTypes[i](ILNameSyntax.Signature);
 					output.Write(" ''");
@@ -1036,7 +1036,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			var metadata = module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(field);
-			output.WriteDefinition(".field ", field);
+			output.WriteReference(module, field, ".field ", isDefinition: true);
 			int offset = fieldDefinition.GetOffset();
 			if (offset > -1) {
 				output.Write("[" + offset + "] ");

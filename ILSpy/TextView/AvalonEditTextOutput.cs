@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
 
@@ -27,6 +28,8 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using TextLocation = ICSharpCode.Decompiler.CSharp.Syntax.TextLocation;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -206,26 +209,72 @@ namespace ICSharpCode.ILSpy.TextView
 				throw new OutputLengthExceededException();
 			}
 		}
-		
-		public void WriteDefinition(string text, object definition, bool isLocal = true)
+
+		public void WriteReference(Decompiler.Disassembler.OpCodeInfo opCode)
+		{
+			WriteIndent();
+			int start = this.TextLength;
+			b.Append(opCode.Name);
+			int end = this.TextLength;
+			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = opCode });
+		}
+
+		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
 		{
 			WriteIndent();
 			int start = this.TextLength;
 			b.Append(text);
 			int end = this.TextLength;
-			this.DefinitionLookup.AddDefinition(definition, this.TextLength);
-			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = definition, IsLocal = isLocal, IsLocalTarget = true });
+			if (isDefinition) {
+				this.DefinitionLookup.AddDefinition((module, handle), this.TextLength);
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = (module, handle) });
+			} else {
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = (module, handle) });
+			}
 		}
-		
-		public void WriteReference(string text, object reference, bool isLocal = false)
+
+		public void WriteReference(IType type, string text, bool isDefinition = false)
 		{
 			WriteIndent();
 			int start = this.TextLength;
 			b.Append(text);
 			int end = this.TextLength;
-			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = isLocal });
+			if (isDefinition) {
+				this.DefinitionLookup.AddDefinition(type, this.TextLength);
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = type });
+			} else {
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = type });
+			}
 		}
-		
+
+		public void WriteReference(IMember member, string text, bool isDefinition = false)
+		{
+			WriteIndent();
+			int start = this.TextLength;
+			b.Append(text);
+			int end = this.TextLength;
+			if (isDefinition) {
+				this.DefinitionLookup.AddDefinition(member, this.TextLength);
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = member });
+			} else {
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = member });
+			}
+		}
+
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		{
+			WriteIndent();
+			int start = this.TextLength;
+			b.Append(text);
+			int end = this.TextLength;
+			if (isDefinition) {
+				this.DefinitionLookup.AddDefinition(reference, this.TextLength);
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = true, IsLocalTarget = true });
+			} else {
+				references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = true });
+			}
+		}
+
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
 		{
 			WriteIndent();

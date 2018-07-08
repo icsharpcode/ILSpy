@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler.IL
 						isFirstElement = false;
 					else
 						output.Write(", ");
-					output.WriteReference(element.Name, element, isLocal: true);
+					output.WriteLocalReference(element.Name, element);
 					output.Write(":");
 					output.Write(element.StackType);
 				}
@@ -438,7 +438,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write('*');
 				else
 					output.Write(' ');
-				output.WriteDefinition("IL_" + inst.ILRange.Start.ToString("x4"), inst.ILRange.Start);
+				output.WriteLocalReference("IL_" + inst.ILRange.Start.ToString("x4"), inst.ILRange.Start, isDefinition: true);
 				output.Write(": ");
 				inst.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();

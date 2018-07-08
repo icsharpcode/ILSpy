@@ -18,6 +18,7 @@
 
 
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -30,8 +31,11 @@ namespace ICSharpCode.Decompiler
 		void Write(char ch);
 		void Write(string text);
 		void WriteLine();
-		void WriteDefinition(string text, object definition, bool isLocal = true);
-		void WriteReference(string text, object reference, bool isLocal = false);
+		void WriteReference(OpCodeInfo opCode);
+		void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false);
+		void WriteReference(IType type, string text, bool isDefinition = false);
+		void WriteReference(IMember member, string text, bool isDefinition = false);
+		void WriteLocalReference(string text, object reference, bool isDefinition = false);
 
 		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
 		void MarkFoldEnd();
@@ -53,27 +57,6 @@ namespace ICSharpCode.Decompiler
 		public static void WriteLine(this ITextOutput output, string format, params object[] args)
 		{
 			output.WriteLine(string.Format(format, args));
-		}
-
-		public static void WriteReference(this ITextOutput output, PEFile module, EntityHandle handle, string text, bool isDefinition = false)
-		{
-			output.Write(text);
-		}
-
-		public static void WriteReference(this ITextOutput output, IType type, string text, bool isDefinition = false)
-		{
-			output.Write(text);
-		}
-
-		public static void WriteReference(this ITextOutput output, IMember member, string text, bool isDefinition = false)
-		{
-			output.Write(text);
-
-		}
-
-		public static void WriteLocalReference(this ITextOutput output, string text, object reference, bool isDefinition = false)
-		{
-			output.Write(text);
 		}
 	}
 }

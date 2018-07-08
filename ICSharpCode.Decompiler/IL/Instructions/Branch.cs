@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
-			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
+			output.WriteLocalReference(TargetLabel, (object)targetBlock ?? TargetILOffset);
 		}
 	}
 
