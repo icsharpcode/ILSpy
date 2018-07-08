@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Properties
 		void InitProperties()
 		{
+			this.AlwaysUseBuiltinTypeNames = true;
 			this.ShowAccessibility = true;
 			this.ShowModifiers = true;
 			this.ShowBaseTypes = true;
@@ -135,13 +136,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool ShowAttributes { get; set; }
-		
+
 		/// <summary>
 		/// Controls whether to use fully-qualified type names or short type names.
 		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool AlwaysUseShortTypeNames { get; set; }
-		
+
+		/// <summary>
+		/// Controls whether to use fully-qualified type names or short type names.
+		/// The default value is <c>true</c>.
+		/// </summary>
+		public bool AlwaysUseBuiltinTypeNames { get; set; }
+
 		/// <summary>
 		/// Determines the name lookup mode for converting a type name.
 		/// 
@@ -233,7 +240,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			if (type is ParameterizedType pt) {
-				if (pt.IsKnownType(KnownTypeCode.NullableOfT)) {
+				if (AlwaysUseBuiltinTypeNames && pt.IsKnownType(KnownTypeCode.NullableOfT)) {
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
@@ -269,7 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Debug.Assert(genericType is ITypeDefinition || genericType.Kind == TypeKind.Unknown);
 
 			ITypeDefinition typeDef = genericType as ITypeDefinition;
-			if (typeDef != null) {
+			if (AlwaysUseBuiltinTypeNames && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
 				if (keyword != null)
 					return new PrimitiveType(keyword);
