@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => this.Language.TypeDefinitionToString(TypeDefinition, includeNamespace: false)
+		public override object Text => this.Language.TypeToString(Language.MakeParameterizedType(TypeDefinition), includeNamespace: false)
 			+ TypeDefinition.MetadataToken.ToSuffixString();
 
 		public override bool IsPublicAPI {
@@ -72,10 +72,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			if (!TypeDefinition.DirectBaseTypes.Any())
+			if (TypeDefinition.DirectBaseTypes.Any())
 				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
-			/*if (!TypeDefinition.IsSealed)
-				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));*/
+			if (!TypeDefinition.IsSealed)
+				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
 			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
 			}

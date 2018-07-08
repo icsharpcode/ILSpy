@@ -160,17 +160,6 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Converts a type definition into a string. This method is used by tree nodes and search results.
-		/// </summary>
-		public virtual string TypeDefinitionToString(ITypeDefinition type, bool includeNamespace)
-		{
-			if (includeNamespace)
-				return type.FullName;
-			else
-				return type.Name;
-		}
-
-		/// <summary>
 		/// Converts a member signature to a string.
 		/// This is used for displaying the tooltip on a member reference.
 		/// </summary>
@@ -252,6 +241,13 @@ namespace ICSharpCode.ILSpy
 			} else {
 				return entity.Name;
 			}
+		}
+
+		public static IType MakeParameterizedType(ITypeDefinition type)
+		{
+			if (type.TypeParameterCount == 0)
+				return type;
+			return new ParameterizedType(type, type.TypeParameters);
 		}
 
 		/// <summary>

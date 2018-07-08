@@ -63,7 +63,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				i++;
 			}
 			foreach (var h in typeDef.GetInterfaceImplementations()) {
-				children.Add(new BaseTypesEntryNode(module, h, baseTypes[i], true));
+				var impl = module.Metadata.GetInterfaceImplementation(h);
+				children.Add(new BaseTypesEntryNode(module, impl.Interface, baseTypes[i], true));
 				i++;
 			}
 		}

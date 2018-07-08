@@ -27,6 +27,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public interface IMemberTreeNode
 	{
+		/// <summary>
+		/// Returns the entity that is represented by this tree node.
+		/// May return null, if the member cannot be resolved.
+		/// </summary>
 		IEntity Member { get; }
 	}
 }

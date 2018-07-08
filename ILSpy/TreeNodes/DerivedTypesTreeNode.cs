@@ -21,22 +21,23 @@ using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
-{/*
+{
 	/// <summary>
 	/// Lists the sub types of a class.
 	/// </summary>
 	sealed class DerivedTypesTreeNode : ILSpyTreeNode
 	{
 		readonly AssemblyList list;
-		readonly TypeDefinition type;
+		readonly ITypeDefinition type;
 		readonly ThreadingSupport threading;
 
-		public DerivedTypesTreeNode(AssemblyList list, TypeDefinition type)
+		public DerivedTypesTreeNode(AssemblyList list, ITypeDefinition type)
 		{
 			this.list = list;
 			this.type = type;
@@ -44,15 +45,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.threading = new ThreadingSupport();
 		}
 
-		public override object Text
-		{
-			get { return "Derived Types"; }
-		}
+		public override object Text => "Derived Types";
 
-		public override object Icon
-		{
-			get { return Images.SubTypes; }
-		}
+		public override object Icon => Images.SubTypes;
 
 		protected override void LoadChildren()
 		{
@@ -66,11 +61,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return FindDerivedTypes(type, assemblies, cancellationToken);
 		}
 
-		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
+		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(ITypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
 		{
-			foreach (var module in assemblies) {
-				var metadata = module.Metadata;
-				foreach (var h in TreeTraversal.PreOrder(metadata.GetTopLevelTypeDefinitions(), t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
+			/*foreach (var module in assemblies) {
+				var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+				foreach (var td in typeSystem.MainAssembly.TypeDefinitions) {
 					cancellationToken.ThrowIfCancellationRequested();
 					var td = new TypeDefinition(module, h);
 					var typeDefinition = metadata.GetTypeDefinition(h);
@@ -83,19 +78,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						yield return new DerivedTypesEntryNode(td, assemblies);
 					}
 				}
-			}
+			}*/
 			yield break;
 		}
-		
-		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef, TypeDefinition type)
+		/*
+		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef, ITypeDefinition type)
 		{
 			// FullName contains only namespace, name and type parameter count, therefore this should suffice.
 			return typeRef.GetFullTypeName(referenceMetadata) == type.Handle.GetFullTypeName(type.Module.Metadata);
-		}
+		}*/
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			threading.Decompile(language, output, options, EnsureLazyChildren);
 		}
-	}*/
+	}
 }
