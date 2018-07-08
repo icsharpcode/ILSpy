@@ -243,13 +243,6 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public static IType MakeParameterizedType(ITypeDefinition type)
-		{
-			if (type.TypeParameterCount == 0)
-				return type;
-			return new ParameterizedType(type, type.TypeParameters);
-		}
-
 		/// <summary>
 		/// Used for WPF keyboard navigation.
 		/// </summary>

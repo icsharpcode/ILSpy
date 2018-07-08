@@ -410,9 +410,19 @@ namespace ICSharpCode.ILSpy
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
+			if (type is ITypeDefinition definition && definition.TypeParameterCount > 0) {
+				return TypeToStringInternal(new ParameterizedType(definition, definition.TypeParameters), includeNamespace, false);
+			}
+			return TypeToStringInternal(type, includeNamespace, false);
+		}
+
+		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true)
+		{
 			TypeSystemAstBuilder builder = new TypeSystemAstBuilder();
 			builder.AlwaysUseShortTypeNames = !includeNamespace;
-			AstType astType = builder.ConvertType(type);
+			builder.AlwaysUseBuiltinTypeNames = useBuiltinTypeNames;
+
+			AstType astType = builder.ConvertType(t);
 			StringWriter w = new StringWriter();
 
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
@@ -427,7 +437,7 @@ namespace ICSharpCode.ILSpy
 			string simple = field.Name + " : " + TypeToString(field.Type, includeNamespace);
 			if (!includeTypeName)
 				return simple;
-			return TypeToString(MakeParameterizedType(field.DeclaringTypeDefinition), includeNamespace) + "." + simple;
+			return TypeToStringInternal(field.DeclaringTypeDefinition, includeNamespace) + "." + simple;
 		}
 
 		public override string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
@@ -451,7 +461,7 @@ namespace ICSharpCode.ILSpy
 				foreach (var param in parameters) {
 					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append(TypeToString(param.Type, includeNamespace));
+					buffer.Append(TypeToStringInternal(param.Type, includeNamespace));
 					i++;
 				}
 
@@ -460,10 +470,10 @@ namespace ICSharpCode.ILSpy
 				buffer.Append(property.Name);
 			}
 			buffer.Append(" : ");
-			buffer.Append(TypeToString(property.ReturnType, includeNamespace));
+			buffer.Append(TypeToStringInternal(property.ReturnType, includeNamespace));
 			if (!includeTypeName)
 				return buffer.ToString();
-			return TypeToString(MakeParameterizedType(property.DeclaringTypeDefinition), includeNamespace) + "." + buffer.ToString();
+			return TypeToString(property.DeclaringTypeDefinition, includeNamespace) + "." + buffer.ToString();
 		}
 
 		public override string MethodToString(IMethod method, bool includeTypeName, bool includeNamespace)
@@ -472,10 +482,10 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(method));
 			string name;
 			if (method.IsConstructor) {
-				name = TypeToString(MakeParameterizedType(method.DeclaringTypeDefinition), includeNamespace: includeNamespace);
+				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace);
 			} else {
 				if (includeTypeName) {
-					name = TypeToString(MakeParameterizedType(method.DeclaringTypeDefinition), includeNamespace: includeNamespace) + ".";
+					name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace) + ".";
 				} else {
 					name = "";
 				}
@@ -501,13 +511,13 @@ namespace ICSharpCode.ILSpy
 			foreach (var param in parameters) {
 				if (i > 0)
 					buffer.Append(", ");
-				buffer.Append(TypeToString(param.Type, includeNamespace));
+				buffer.Append(TypeToStringInternal(param.Type, includeNamespace));
 				i++;
 			}
 
 			buffer.Append(')');
 			buffer.Append(" : ");
-			buffer.Append(TypeToString(method.ReturnType, includeNamespace));
+			buffer.Append(TypeToStringInternal(method.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 
@@ -517,11 +527,11 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(@event));
 			var buffer = new System.Text.StringBuilder();
 			if (includeTypeName) {
-				buffer.Append(TypeToString(MakeParameterizedType(@event.DeclaringTypeDefinition), includeNamespace) + ".");
+				buffer.Append(TypeToString(@event.DeclaringTypeDefinition, includeNamespace) + ".");
 			}
 			buffer.Append(@event.Name);
 			buffer.Append(" : ");
-			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
+			buffer.Append(TypeToStringInternal(@event.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 

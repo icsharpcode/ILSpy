@@ -163,7 +163,7 @@ namespace ICSharpCode.ILSpy
 		{
 			switch (member) {
 				case ITypeDefinition t:
-					return language.TypeToString(Language.MakeParameterizedType(t), includeNamespace: fullName);
+					return language.TypeToString(t, includeNamespace: fullName);
 				case IField f:
 					return language.FieldToString(f, fullName, fullName);
 				case IProperty p:
@@ -193,7 +193,7 @@ namespace ICSharpCode.ILSpy
 						Image = image(item),
 						Name = GetLanguageSpecificName(language, item),
 						LocationImage = TypeTreeNode.GetIcon(type),
-						Location = language.TypeToString(Language.MakeParameterizedType(type), includeNamespace: true)
+						Location = language.TypeToString(type, includeNamespace: true)
 					});
 				}
 			}
@@ -497,7 +497,7 @@ namespace ICSharpCode.ILSpy
 		public override void Search(ITypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (MatchName(type, language)) {
-				string name = language.TypeToString(Language.MakeParameterizedType(type), includeNamespace: false);
+				string name = language.TypeToString(type, includeNamespace: false);
 				var declaringType = type.DeclaringTypeDefinition;
 				addResult(new SearchResult {
 					Member = type,
@@ -505,7 +505,7 @@ namespace ICSharpCode.ILSpy
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
 					LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
-					Location = declaringType != null ? language.TypeToString(Language.MakeParameterizedType(declaringType), includeNamespace: true) : type.Namespace
+					Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : type.Namespace
 				});
 			}
 
@@ -526,7 +526,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language))
 			{
-				string name = language.TypeToString(Language.MakeParameterizedType(type), includeNamespace: false);
+				string name = language.TypeToString(type, includeNamespace: false);
 				var declaringType = type.DeclaringTypeDefinition;
 				addResult(new SearchResult {
 					Member = type,
@@ -534,7 +534,7 @@ namespace ICSharpCode.ILSpy
 					Fitness = CalculateFitness(type),
 					Name = name,
 					LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
-					Location = declaringType != null ? language.TypeToString(Language.MakeParameterizedType(declaringType), includeNamespace: true) : type.Namespace
+					Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : type.Namespace
 				});
 			}
 

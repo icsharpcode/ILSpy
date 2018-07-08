@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => this.Language.TypeToString(Language.MakeParameterizedType(TypeDefinition), includeNamespace: false)
+		public override object Text => this.Language.TypeToString(TypeDefinition, includeNamespace: false)
 			+ TypeDefinition.MetadataToken.ToSuffixString();
 
 		public override bool IsPublicAPI {
