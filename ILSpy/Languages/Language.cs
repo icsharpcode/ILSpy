@@ -20,11 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
-using static System.Reflection.Metadata.PEReaderExtensions;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy
@@ -96,42 +95,32 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		public virtual void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = method.Module.Metadata;
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			WriteCommentLine(output, TypeToString(new TypeDefinition(method.Module, methodDefinition.GetDeclaringType()), includeNamespace: true) + "." + metadata.GetString(methodDefinition.Name));
+			WriteCommentLine(output, TypeToString(method.DeclaringTypeDefinition, includeNamespace: true) + "." + method.Name);
 		}
 
-		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = property.Module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(property.Handle);
-			var declaringType = metadata.GetMethodDefinition(propertyDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeToString(new TypeDefinition(property.Module, declaringType), includeNamespace: true) + "." + metadata.GetString(propertyDefinition.Name));
+			WriteCommentLine(output, TypeToString(property.DeclaringTypeDefinition, includeNamespace: true) + "." + property.Name);
 		}
 
-		public virtual void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = field.Module.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition(field.Handle);
-			WriteCommentLine(output, TypeToString(new TypeDefinition(field.Module, fieldDefinition.GetDeclaringType()), includeNamespace: true) + "." + metadata.GetString(fieldDefinition.Name));
+			WriteCommentLine(output, TypeToString(field.DeclaringTypeDefinition, includeNamespace: true) + "." + field.Name);
 		}
 
-		public virtual void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = ev.Module.Metadata;
-			var eventDefinition = metadata.GetEventDefinition(ev.Handle);
-			var declaringType = metadata.GetMethodDefinition(eventDefinition.GetAccessors().GetAny()).GetDeclaringType();
-			WriteCommentLine(output, TypeToString(new TypeDefinition(ev.Module, declaringType), includeNamespace: true) + "." + metadata.GetString(eventDefinition.Name));
+			WriteCommentLine(output, TypeToString(@event.DeclaringTypeDefinition, includeNamespace: true) + "." + @event.Name);
 		}
 
-		public virtual void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 		}
 
-		public virtual void DecompileNamespace(string nameSpace, IEnumerable<TypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		public virtual void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, nameSpace);
 		}
@@ -160,35 +149,18 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
-		/// Converts a type definition, reference or specification into a string. This method is used by the type tree nodes and search results.
+		/// Converts a type definition, reference or specification into a string. This method is used by tree nodes and search results.
 		/// </summary>
-		public virtual string TypeToString(Entity type, GenericContext genericContext = null, bool includeNamespace = true)
+		public virtual string TypeToString(IType type, bool includeNamespace)
 		{
-			var provider = includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace;
-			var metadata = type.Module.Metadata;
-			switch (type.Handle.Kind) {
-				case SRM.HandleKind.TypeReference:
-					return provider.GetTypeFromReference(metadata, (SRM.TypeReferenceHandle)type.Handle, 0);
-				case SRM.HandleKind.TypeDefinition:
-					var td = metadata.GetTypeDefinition((SRM.TypeDefinitionHandle)type.Handle);
-					if (includeNamespace) {
-						var buffer = new System.Text.StringBuilder();
-						if (!td.GetDeclaringType().IsNil) {
-							buffer.Append(TypeToString(new TypeDefinition(type.Module, td.GetDeclaringType()), genericContext, includeNamespace));
-							buffer.Append('+');
-						} else if (!td.Namespace.IsNil) {
-							buffer.Append(metadata.GetString(td.Namespace));
-							buffer.Append('.');
-						}
-						buffer.Append(metadata.GetString(td.Name));
-						return buffer.ToString();
-					} else {
-						return metadata.GetString(td.Name);
-					}
-				case SRM.HandleKind.TypeSpecification:
-					return provider.GetTypeFromSpecification(metadata, genericContext ?? GenericContext.Empty, (SRM.TypeSpecificationHandle)type.Handle, 0);
-				default:
-					throw new NotSupportedException();
+			if (includeNamespace)
+				return type.ReflectionName;
+			else {
+				int index = type.ReflectionName.LastIndexOf('.');
+				if (index > 0) {
+					return type.ReflectionName.Substring(index + 1);
+				}
+				return type.ReflectionName;
 			}
 		}
 
@@ -196,91 +168,40 @@ namespace ICSharpCode.ILSpy
 		/// Converts a member signature to a string.
 		/// This is used for displaying the tooltip on a member reference.
 		/// </summary>
-		public virtual string GetTooltip(Entity entity)
+		public virtual string GetTooltip(IEntity entity)
 		{
-			var metadata = entity.Module.Metadata;
-			switch (entity.Handle.Kind) {
-				case SRM.HandleKind.TypeReference:
-				case SRM.HandleKind.TypeDefinition:
-				case SRM.HandleKind.TypeSpecification:
-					return entity.Handle.GetFullTypeName(metadata).ToString();
-				case SRM.HandleKind.FieldDefinition:
-					var fieldDefinition = metadata.GetFieldDefinition((SRM.FieldDefinitionHandle)entity.Handle);
-					string fieldType = fieldDefinition.DecodeSignature(ILSignatureProvider.WithoutNamespace, new GenericContext(fieldDefinition.GetDeclaringType(), entity.Module));
-					return fieldType + " " + fieldDefinition.GetDeclaringType().GetFullTypeName(metadata) +  "." + metadata.GetString(fieldDefinition.Name);
-				case SRM.HandleKind.MethodDefinition:
-					return TreeNodes.MethodTreeNode.GetText(entity, this).ToString();
-				case SRM.HandleKind.EventDefinition:
-					return TreeNodes.EventTreeNode.GetText(entity, this).ToString();
-				case SRM.HandleKind.PropertyDefinition:
-					return TreeNodes.PropertyTreeNode.GetText(entity, this).ToString();
-				default:
-					throw new NotSupportedException();
-			}
+			return GetDisplayName(entity, true, true);
 		}
 
-		public virtual string FieldToString(FieldDefinition field, bool includeTypeName, bool includeNamespace)
+		public virtual string FieldToString(IField field, bool includeTypeName, bool includeNamespace)
 		{
-			if (field.Handle.IsNil)
+			if (field == null)
 				throw new ArgumentNullException(nameof(field));
-			var metadata = field.Module.Metadata;
-			var fd = metadata.GetFieldDefinition(field.Handle);
-			string fieldType = fd.DecodeSignature(ILSignatureProvider.WithoutNamespace, new GenericContext(fd.GetDeclaringType(), field.Module));
-			string simple = metadata.GetString(fd.Name) + " : " + fieldType;
-			if (!includeTypeName)
-				return simple;
-			var typeName = fd.GetDeclaringType().GetFullTypeName(metadata);
-			if (!includeNamespace)
-				return typeName.Name + "." + simple;
-			return typeName + "." + simple;
+			return GetDisplayName(field, includeTypeName, includeNamespace) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
-		public virtual string PropertyToString(PropertyDefinition property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
+		public virtual string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
 		{
-			if (property.Handle.IsNil)
+			if (property == null)
 				throw new ArgumentNullException(nameof(property));
-			var metadata = property.Module.Metadata;
-			var pd = metadata.GetPropertyDefinition(property.Handle);
-			var declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
-			var signature = pd.DecodeSignature(!includeNamespace ? ILSignatureProvider.WithoutNamespace : ILSignatureProvider.WithNamespace, new GenericContext(declaringType, property.Module));
-			string simple = metadata.GetString(metadata.GetPropertyDefinition(property.Handle).Name) + " : " + signature.ReturnType;
-			if (!includeTypeName)
-				return simple;
-			var typeName = declaringType.GetFullTypeName(metadata);
-			if (!includeNamespace)
-				return typeName.Name + "." + simple;
-			return typeName + "." + simple;
+			return GetDisplayName(property, includeTypeName, includeNamespace) + " : " + TypeToString(property.ReturnType, includeNamespace);
 		}
 
-		public virtual string MethodToString(MethodDefinition method, bool includeTypeName, bool includeNamespace)
+		public virtual string MethodToString(IMethod method, bool includeTypeName, bool includeNamespace)
 		{
-			if (method.IsNil)
+			if (method == null)
 				throw new ArgumentNullException(nameof(method));
-			var metadata = method.Module.Metadata;
-			var md = metadata.GetMethodDefinition(method.Handle);
-			string name;
-			if (includeTypeName) {
-				if (includeNamespace) {
-					name = md.GetDeclaringType().GetFullTypeName(metadata) + ".";
-				} else {
-					name = md.GetDeclaringType().GetFullTypeName(metadata).Name + ".";
-				}
-				name += metadata.GetString(md.Name);
-			} else {
-				name = metadata.GetString(md.Name);
-			}
-			var signature = md.DecodeSignature(includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace, new GenericContext(method));
 
 			int i = 0;
-			var buffer = new System.Text.StringBuilder(name);
-			var genericParams = md.GetGenericParameters();
-			if (genericParams.Count > 0) {
+			var buffer = new System.Text.StringBuilder();
+			buffer.Append(GetDisplayName(method, includeTypeName, includeNamespace));
+			var typeParameters = method.TypeParameters;
+			if (typeParameters.Count > 0) {
 				buffer.Append('<');
-				foreach (var h in genericParams) {
-					var gp = metadata.GetGenericParameter(h);
+				foreach (var tp in typeParameters) {
 					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append(metadata.GetString(gp.Name));
+					buffer.Append(tp.Name);
 					i++;
 				}
 				buffer.Append('>');
@@ -288,49 +209,45 @@ namespace ICSharpCode.ILSpy
 			buffer.Append('(');
 
 			i = 0;
-			var parameterHandles = md.GetParameters();
-			if (signature.RequiredParameterCount > parameterHandles.Count) {
-				foreach (var type in signature.ParameterTypes) {
-					if (i > 0)
-						buffer.Append(", ");
-					buffer.Append(signature.ParameterTypes[i]);
-					i++;
-				}
-			} else {
-				foreach (var h in parameterHandles) {
-					var p = metadata.GetParameter(h);
-					if (p.SequenceNumber > 0 && i < signature.ParameterTypes.Length) {
-						if (i > 0)
-							buffer.Append(", ");
-						buffer.Append(signature.ParameterTypes[i]);
-						i++;
-					}
-				}
-			}
-			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
-				if (signature.ParameterTypes.Length > 0)
+			var parameters = method.Parameters;
+			foreach (var param in parameters) {
+				if (i > 0)
 					buffer.Append(", ");
-				buffer.Append("...");
+				buffer.Append(TypeToString(param.Type, includeNamespace));
+				i++;
 			}
 			buffer.Append(')');
 			buffer.Append(" : ");
-			buffer.Append(signature.ReturnType);
+			buffer.Append(TypeToString(method.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 
-		public virtual string EventToString(EventDefinition @event, bool includeTypeName, bool includeNamespace)
+		public virtual string EventToString(IEvent @event, bool includeTypeName, bool includeNamespace)
 		{
-			if (@event.IsNil)
+			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
-			var metadata = @event.Module.Metadata;
-			var ed = metadata.GetEventDefinition(@event.Handle);
-			var accessorHandle = ed.GetAccessors().GetAny();
-			var signature = ed.DecodeSignature(metadata, includeNamespace ? ILSignatureProvider.WithNamespace : ILSignatureProvider.WithoutNamespace, new GenericContext(accessorHandle, @event.Module));
 			var buffer = new System.Text.StringBuilder();
-			buffer.Append(metadata.GetString(ed.Name));
+			buffer.Append(GetDisplayName(@event, includeTypeName, includeNamespace));
 			buffer.Append(" : ");
-			buffer.Append(signature);
+			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
 			return buffer.ToString();
+		}
+
+		protected string GetDisplayName(IEntity entity, bool includeTypeName, bool includeNamespace)
+		{
+			if (includeTypeName && entity.DeclaringTypeDefinition != null) {
+				string name;
+				if (includeNamespace) {
+					name = entity.DeclaringTypeDefinition.FullName;
+				} else {
+					name = entity.DeclaringTypeDefinition.Name;
+				}
+				return name + "." + entity.Name;
+			} else {
+				if (includeNamespace)
+					return entity.FullName;
+				return entity.Name;
+			}
 		}
 
 		/// <summary>
@@ -341,7 +258,7 @@ namespace ICSharpCode.ILSpy
 			return Name;
 		}
 
-		public virtual bool ShowMember(IMetadataEntity member)
+		public virtual bool ShowMember(IEntity member)
 		{
 			return true;
 		}

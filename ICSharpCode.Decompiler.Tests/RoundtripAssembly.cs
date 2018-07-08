@@ -144,11 +144,12 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
-						PEFile module = new PEFile(file, fileStream, false, PEStreamOptions.PrefetchEntireImage);
-						UniversalAssemblyResolver resolver = (UniversalAssemblyResolver)module.AssemblyResolver;
+						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+						UniversalAssemblyResolver resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
 						var decompiler = new TestProjectDecompiler(inputDir);
+						decompiler.AssemblyResolver = resolver;
 						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
 						decompiler.DecompileProject(module, decompiledDir);

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -65,6 +66,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </summary>
 	public interface IAssembly : ICompilationProvider
 	{
+		/// <summary>
+		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.
+		/// </summary>
+		PEFile PEFile { get; }
+
 		/// <summary>
 		/// Gets whether this assembly is the main assembly of the compilation.
 		/// </summary>

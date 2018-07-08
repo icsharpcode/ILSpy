@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
-			output.WriteDefinition("case", this, isLocal: true);
+			output.WriteLocalReference("case", this, isDefinition: true);
 			output.Write(' ');
 			if (HasNullLabel) {
 				output.Write("null");

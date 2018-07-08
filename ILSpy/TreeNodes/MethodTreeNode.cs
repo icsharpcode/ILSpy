@@ -20,11 +20,13 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -34,76 +36,57 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		public MethodDefinition MethodDefinition { get; }
-		SRM.MethodDefinition md;
+		public IMethod MethodDefinition { get; }
 
-		public MethodTreeNode(MethodDefinition method)
+		public MethodTreeNode(IMethod method)
 		{
-			if (method.IsNil)
-				throw new ArgumentNullException(nameof(method));
-			this.MethodDefinition = method;
-			this.md = method.Module.Metadata.GetMethodDefinition(method.Handle);
+			this.MethodDefinition = method ?? throw new ArgumentNullException(nameof(method));
 		}
 
-		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.Handle.ToSuffixString();
+		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(MethodDefinition method, Language language)
+		public static object GetText(IMethod method, Language language)
 		{
 			return language.MethodToString(method, false, false);
 		}
 
 		public override object Icon => GetIcon(MethodDefinition);
 
-		public static ImageSource GetIcon(MethodDefinition method)
+		public static ImageSource GetIcon(IMethod method)
 		{
-			var metadata = method.Module.Metadata;
-			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-			var methodName = metadata.GetString(methodDefinition.Name);
-			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) && methodName.StartsWith("op_", StringComparison.Ordinal)) {
-				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(methodDefinition.Attributes), false);
-			}
+			if (method.IsOperator)
+				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method), false);
 
-			if (methodDefinition.IsExtensionMethod(metadata)) {
-				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(methodDefinition.Attributes), false);
-			}
+			if (method.IsExtensionMethod)
+				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method), false);
 
-			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) &&
-				(methodName == ".ctor" || methodName == ".cctor")) {
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(methodDefinition.Attributes), methodDefinition.HasFlag(MethodAttributes.Static));
-			}
+			if (method.IsConstructor)
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method), method.IsStatic);
 
-			if (methodDefinition.HasFlag(MethodAttributes.PinvokeImpl) && !methodDefinition.GetImport().Module.IsNil)
-				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(methodDefinition.Attributes), true);
+			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
+				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method), true);
 
-			bool showAsVirtual = methodDefinition.HasFlag(MethodAttributes.Virtual)
-				&& !(methodDefinition.HasFlag(MethodAttributes.NewSlot) && methodDefinition.HasFlag(MethodAttributes.Final))
-				&& (metadata.GetTypeDefinition(methodDefinition.GetDeclaringType()).Attributes & TypeAttributes.ClassSemanticsMask) != TypeAttributes.Interface;
-
-			return Images.GetIcon(
-				showAsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				GetOverlayIcon(methodDefinition.Attributes),
-				methodDefinition.HasFlag(MethodAttributes.Static));
+			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
+				GetOverlayIcon(method), method.IsStatic);
 		}
 
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
+		static AccessOverlayIcon GetOverlayIcon(IMethod method)
 		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
+			switch (method.Accessibility) {
+				case Accessibility.Public:
 					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
+				case Accessibility.Internal:
 					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
+				case Accessibility.ProtectedAndInternal:
 					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
+				case Accessibility.Protected:
 					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
+				case Accessibility.ProtectedOrInternal:
 					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
+				case Accessibility.Private:
 					return AccessOverlayIcon.Private;
-				case 0:
-					return AccessOverlayIcon.CompilerControlled;
 				default:
-					throw new NotSupportedException();
+					return AccessOverlayIcon.CompilerControlled;
 			}
 		}
 
@@ -116,8 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = MethodDefinition.Module.Metadata;
-			if (settings.SearchTermMatches(metadata.GetString(md.Name)) && settings.Language.ShowMember(MethodDefinition))
+			if (settings.SearchTermMatches(MethodDefinition.Name) && settings.Language.ShowMember(MethodDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -125,10 +107,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (md.Attributes & MethodAttributes.MemberAccessMask) {
-					case MethodAttributes.Public:
-					case MethodAttributes.Family:
-					case MethodAttributes.FamORAssem:
+				switch (MethodDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Protected:
+					case Accessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;
@@ -136,6 +118,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => MethodDefinition;
+		IEntity IMemberTreeNode.Member => MethodDefinition;
 	}
 }

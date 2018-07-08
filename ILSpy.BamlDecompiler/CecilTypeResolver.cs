@@ -4,6 +4,7 @@
 using System;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy;
 using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler
@@ -17,10 +18,10 @@ namespace ILSpy.BamlDecompiler
 		readonly DecompilerTypeSystem typeSystem;
 		readonly ICompilation compilation;
 	
-		public NRTypeResolver(PEFile module)
+		public NRTypeResolver(PEFile module, IAssemblyResolver resolver)
 		{
-			this.module = module;
-			this.typeSystem = new DecompilerTypeSystem(module);
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			this.typeSystem = new DecompilerTypeSystem(module, resolver);
 			this.compilation = typeSystem.Compilation;
 		}
 		

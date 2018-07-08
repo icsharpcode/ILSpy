@@ -63,32 +63,34 @@ namespace ICSharpCode.Decompiler
 			}
 			
 			var definition = GetCurrentDefinition();
-			if (definition != null) {
-				IMetadataEntity entity = SymbolToMetadata(definition);
-				if (entity != null) {
-					output.WriteDefinition(identifier.Name, entity, false);
+			switch (definition) {
+				case IType t:
+					output.WriteReference(t, identifier.Name, true);
 					return;
-				}
+				case IMember m:
+					output.WriteReference(m, identifier.Name, true);
+					return;
 			}
 			
 			var member = GetCurrentMemberReference();
-			if (member != null) {
-				IMetadataEntity entity = SymbolToMetadata(member);
-				if (entity != null) {
-					output.WriteReference(identifier.Name, entity);
+			switch (member) {
+				case IType t:
+					output.WriteReference(t, identifier.Name, false);
 					return;
-				}
+				case IMember m:
+					output.WriteReference(m, identifier.Name, false);
+					return;
 			}
 
 			var localDefinition = GetCurrentLocalDefinition();
 			if (localDefinition != null) {
-				output.WriteDefinition(identifier.Name, localDefinition);
+				output.WriteLocalReference(identifier.Name, localDefinition, isDefinition: true);
 				return;
 			}
 
 			var localRef = GetCurrentLocalReference();
 			if (localRef != null) {
-				output.WriteReference(identifier.Name, localRef, true);
+				output.WriteLocalReference(identifier.Name, localRef);
 				return;
 			}
 
@@ -98,35 +100,6 @@ namespace ICSharpCode.Decompiler
 			}
 
 			output.Write(identifier.Name);
-		}
-
-		IMetadataEntity SymbolToMetadata(ISymbol symbol)
-		{
-			switch (symbol) {
-				case IType type:
-					var definition = type.GetDefinition();
-					if (definition == null || definition.MetadataToken.IsNil)
-						return null;
-					return new TypeDefinition(typeSystem.GetModuleDefinition(definition.ParentAssembly), (SRM.TypeDefinitionHandle)definition.MetadataToken);
-				case IMethod method:
-					if (method.MetadataToken.IsNil)
-						return null;
-					return new MethodDefinition(typeSystem.GetModuleDefinition(method.ParentAssembly), (SRM.MethodDefinitionHandle)method.MetadataToken);
-				case IProperty property:
-					if (property.MetadataToken.IsNil)
-						return null;
-					return new PropertyDefinition(typeSystem.GetModuleDefinition(property.ParentAssembly), (SRM.PropertyDefinitionHandle)property.MetadataToken);
-				case IEvent @event:
-					if (@event.MetadataToken.IsNil)
-						return null;
-					return new EventDefinition(typeSystem.GetModuleDefinition(@event.ParentAssembly), (SRM.EventDefinitionHandle)@event.MetadataToken);
-				case IField field:
-					if (field.MetadataToken.IsNil)
-						return null;
-					return new FieldDefinition(typeSystem.GetModuleDefinition(field.ParentAssembly), (SRM.FieldDefinitionHandle)field.MetadataToken);
-				default:
-					return null;
-			}
 		}
 
 		ISymbol GetCurrentMemberReference()
@@ -219,11 +192,8 @@ namespace ICSharpCode.Decompiler
 			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
 			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole) {
 				if (nodeStack.Peek() is ConstructorInitializer initializer && initializer.GetSymbol() is IMember member) {
-					var entity = SymbolToMetadata(member);
-					if (entity != null) {
-						output.WriteReference(keyword, entity);
-						return;
-					}
+					output.WriteReference(member, keyword);
+					return;
 				}
 			}
 			output.Write(keyword);
@@ -254,11 +224,18 @@ namespace ICSharpCode.Decompiler
 					break;
 				default:
 					// Attach member reference to token only if there's no identifier in the current node.
-					var member = SymbolToMetadata(GetCurrentMemberReference());
+					var member = GetCurrentMemberReference();
 					var node = nodeStack.Peek();
-					if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
-						output.WriteReference(token, member);
-					else
+					if (member != null && node.GetChildByRole(Roles.Identifier).IsNull) {
+						switch (member) {
+							case IType t:
+								output.WriteReference(t, token, false);
+								return;
+							case IMember m:
+								output.WriteReference(m, token, false);
+								return;
+						}
+					} else
 						output.Write(token);
 					break;
 			}
@@ -368,7 +345,14 @@ namespace ICSharpCode.Decompiler
 						symbol = nodeStack.Peek().GetSymbol();
 					}
 					if (symbol == null) goto default;
-					output.WriteReference(type, SymbolToMetadata(symbol));
+					switch (symbol) {
+						case IType t:
+							output.WriteReference(t, type, false);
+							return;
+						case IMember m:
+							output.WriteReference(m, type, false);
+							return;
+					}
 					break;
 				default:
 					output.Write(type);

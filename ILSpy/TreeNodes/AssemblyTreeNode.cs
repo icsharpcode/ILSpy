@@ -30,7 +30,7 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
-		readonly Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
+		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new Dictionary<TypeDefinitionHandle, TypeTreeNode>();
 		ICompilation typeSystem;
 
 		public AssemblyTreeNode(LoadedAssembly assembly)
@@ -135,7 +135,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			typeSystem = new SimpleCompilation(module, MinimalCorlib.Instance);
+			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
+			var assembly = (MetadataAssembly)typeSystem.MainAssembly;
 			var metadata = module.Metadata;
 
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
@@ -144,16 +145,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (var typeHandle in metadata.GetTopLevelTypeDefinitions().OrderBy(t => t.GetFullTypeName(metadata).ToString(), NaturalStringComparer.Instance)) {
-				NamespaceTreeNode ns;
-				var type = new TypeDefinition(module, typeHandle);
-				var namespaceString = metadata.GetString(metadata.GetTypeDefinition(typeHandle).Namespace);
-				if (!namespaces.TryGetValue(namespaceString, out ns)) {
-					ns = new NamespaceTreeNode(namespaceString);
-					namespaces[namespaceString] = ns;
+			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance)) {
+				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns)) {
+					ns = new NamespaceTreeNode(type.Namespace);
+					namespaces[type.Namespace] = ns;
 				}
 				TypeTreeNode node = new TypeTreeNode(type, this);
-				typeDict[type] = node;
+				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
 				ns.Children.Add(node);
 			}
 			foreach (NamespaceTreeNode ns in namespaces.Values.OrderBy(n => n.Name, NaturalStringComparer.Instance)) {
@@ -167,13 +165,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a top-level type.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(TypeDefinition def)
+		public TypeTreeNode FindTypeNode(ITypeDefinition type)
 		{
-			if (def == null)
+			if (type == null)
 				return null;
 			EnsureLazyChildren();
 			TypeTreeNode node;
-			if (typeDict.TryGetValue(def, out node))
+			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
 				return node;
 			else
 				return null;

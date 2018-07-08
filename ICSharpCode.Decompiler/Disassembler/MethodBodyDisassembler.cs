@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
-
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
@@ -51,7 +51,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		public bool ShowMetadataTokens { get; set; }
 
-		IList<Metadata.SequencePoint> sequencePoints;
+		/// <summary>
+		/// Optional provider for sequence points.
+		/// </summary>
+		public IDebugInfoProvider DebugInfo { get; set; }
+
+		IList<DebugInfo.SequencePoint> sequencePoints;
 		int nextSequencePointIndex;
 
 		// cache info
@@ -68,7 +73,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public virtual void Disassemble(PEFile module, MethodDefinitionHandle handle)
 		{
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			metadata = module.Metadata;
 			genericContext = new GenericContext(handle, module);
 			signatureDecoder = new DisassemblerSignatureProvider(module, output);
@@ -94,7 +99,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleLocalsBlock(body);
 			output.WriteLine();
 
-			sequencePoints = module.DebugInfo?.GetSequencePoints(handle) ?? EmptyList<Metadata.SequencePoint>.Instance;
+			sequencePoints = DebugInfo?.GetSequencePoints(handle) ?? EmptyList<DebugInfo.SequencePoint>.Instance;
 			nextSequencePointIndex = 0;
 			if (DetectControlStructure && blob.Length > 0) {
 				blob.Reset();
@@ -133,7 +138,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 			int index = 0;
 			foreach (var v in signature) {
-				output.WriteDefinition("[" + index + "] ", v);
+				output.WriteLocalReference("[" + index + "] ", v, isDefinition: true);
 				v(ILNameSyntax.TypeName);
 				if (index + 1 < signature.Length)
 					output.Write(',');
@@ -278,7 +283,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			int offset = blob.Offset;
 			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
-				Metadata.SequencePoint sp = sequencePoints[nextSequencePointIndex];
+				var sp = sequencePoints[nextSequencePointIndex];
 				if (sp.Offset <= offset) {
 					output.Write("// sequence point: ");
 					if (sp.Offset != offset) {
@@ -293,16 +298,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			ILOpCode opCode = ILParser.DecodeOpCode(ref blob);
-			output.WriteDefinition(DisassemblerHelpers.OffsetToString(offset), offset);
+			output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset), offset, isDefinition: true);
 			output.Write(": ");
 			if (opCode.IsDefined()) {
-				output.WriteReference(opCode.GetDisplayName(), new OpCodeInfo(opCode, opCode.GetDisplayName()));
+				output.WriteReference(new OpCodeInfo(opCode, opCode.GetDisplayName()));
 				switch (opCode.GetOperandType()) {
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
 						output.Write(' ');
 						int targetOffset = ILParser.DecodeBranchTarget(ref blob, opCode);
-						output.WriteReference($"IL_{targetOffset:x4}", targetOffset, true);
+						output.WriteLocalReference($"IL_{targetOffset:x4}", targetOffset);
 						break;
 					case OperandType.Field:
 					case OperandType.Method:
@@ -387,7 +392,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						for (int i = 0; i < targets.Length; i++) {
 							if (i > 0)
 								output.Write(", ");
-							output.WriteReference($"IL_{targets[i]:x4}", targets[i], true);
+							output.WriteLocalReference($"IL_{targets[i]:x4}", targets[i]);
 						}
 						output.Write(")");
 						break;
@@ -416,7 +421,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					// split 16-bit value into two emitbyte directives
 					output.WriteLine($".emitbyte 0x{(byte)(opCodeValue >> 8):x}");
 					// add label
-					output.WriteDefinition(DisassemblerHelpers.OffsetToString(offset + 1), offset + 1);
+					output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset + 1), offset + 1, isDefinition: true);
 					output.Write(": ");
 					output.Write($".emitbyte 0x{(byte)(opCodeValue & 0xFF):x}");
 				} else {

@@ -145,8 +145,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!methodDefinition.HasBody())
 				return null;
 			var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
-			var ilReader = new ILReader(localTypeSystem);
-			ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
+			var ilReader = context.CreateILReader(localTypeSystem);
 			var function = ilReader.ReadIL(context.TypeSystem.ModuleDefinition, (MethodDefinitionHandle)targetMethod.MetadataToken, context.TypeSystem.ModuleDefinition.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress), context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
@@ -156,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				v.Name = contextPrefix + v.Name;
 			}
 
-			var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
+			var nestedContext = new ILTransformContext(function, localTypeSystem, context.DebugInfo, context.Settings) {
 				CancellationToken = context.CancellationToken,
 				DecompileRun = context.DecompileRun
 			};

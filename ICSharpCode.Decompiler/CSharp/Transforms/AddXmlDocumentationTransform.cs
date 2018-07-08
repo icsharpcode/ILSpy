@@ -41,10 +41,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (xmldoc == null)
 					return;
 				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
-					var handle = ((entity.GetSymbol() as IEntity)?.MetadataToken).Value;
-					if (handle.IsNil)
+					if (!(entity.GetSymbol() is IEntity symbolicEntity))
 						continue;
-					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(context.TypeSystem.GetMetadata(), handle));
+					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(symbolicEntity));
 					if (doc != null) {
 						InsertXmlDocumentation(entity, new StringReader(doc));
 					}

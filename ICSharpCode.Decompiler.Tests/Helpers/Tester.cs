@@ -348,8 +348,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var emitResult = compilation.Emit(peStream);
 			peStream.Position = 0;
 
-			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, false, PEStreamOptions.PrefetchEntireImage);
-			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
+			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, PEStreamOptions.PrefetchEntireImage);
+			var resolver = new UniversalAssemblyResolver("TestAssembly.dll", false, moduleDefinition.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
 
 			return decompiler;
 		}
@@ -394,9 +395,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
-				var module = new PEFile(assemblyFileName, file, false, PEStreamOptions.PrefetchEntireImage);
-				var typeSystem = new DecompilerTypeSystem(module);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
+				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
+					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+				var typeSystem = new DecompilerTypeSystem(module, resolver);
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, resolver, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());

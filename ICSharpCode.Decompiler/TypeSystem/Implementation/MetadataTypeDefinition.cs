@@ -212,9 +212,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var metadata = assembly.metadata;
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
+				var methodSemantics = assembly.PEFile.MethodSemanticsLookup;
 				foreach (MethodDefinitionHandle h in methodsCollection) {
 					var md = metadata.GetMethodDefinition(h);
-					if (assembly.IsVisible(md.Attributes)) {
+					if (methodSemantics.GetSemantics(h).Item2 == 0 && assembly.IsVisible(md.Attributes)) {
 						methodsList.Add(assembly.GetDefinition(h));
 					}
 				}

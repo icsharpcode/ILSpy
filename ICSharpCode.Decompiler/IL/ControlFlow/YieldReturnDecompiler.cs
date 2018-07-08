@@ -384,9 +384,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					)
 				);
 			}
-			var il = new ILReader(typeSystem).ReadIL(typeSystem.ModuleDefinition, method, typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress), context.CancellationToken);
+			var body = typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var il = context.CreateILReader(typeSystem)
+				.ReadIL(typeSystem.ModuleDefinition, method, body, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
-				new ILTransformContext(il, typeSystem, context.Settings) {
+				new ILTransformContext(il, typeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
 					DecompileRun = context.DecompileRun
 				});

@@ -21,22 +21,22 @@ using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.TypeSystem;
 
 using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Lists the super types of a class.
+	/// Lists the sub types of a class.
 	/// </summary>
 	sealed class DerivedTypesTreeNode : ILSpyTreeNode
 	{
 		readonly AssemblyList list;
-		readonly TypeDefinition type;
+		readonly ITypeDefinition type;
 		readonly ThreadingSupport threading;
 
-		public DerivedTypesTreeNode(AssemblyList list, TypeDefinition type)
+		public DerivedTypesTreeNode(AssemblyList list, ITypeDefinition type)
 		{
 			this.list = list;
 			this.type = type;
@@ -44,15 +44,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.threading = new ThreadingSupport();
 		}
 
-		public override object Text
-		{
-			get { return "Derived Types"; }
-		}
+		public override object Text => "Derived Types";
 
-		public override object Icon
-		{
-			get { return Images.SubTypes; }
-		}
+		public override object Icon => Images.SubTypes;
 
 		protected override void LoadChildren()
 		{
@@ -63,34 +57,38 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			// FetchChildren() runs on the main thread; but the enumerator will be consumed on a background thread
 			var assemblies = list.GetAssemblies().Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
-			return FindDerivedTypes(type, assemblies, cancellationToken);
+			return FindDerivedTypes(list, type, assemblies, cancellationToken);
 		}
 
-		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
+		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(AssemblyList list, ITypeDefinition type,
+			PEFile[] assemblies, CancellationToken cancellationToken)
 		{
+			var definitionMetadata = type.ParentAssembly.PEFile.Metadata;
+			var metadataToken = (SRM.TypeDefinitionHandle)type.MetadataToken;
 			foreach (var module in assemblies) {
 				var metadata = module.Metadata;
-				foreach (var h in TreeTraversal.PreOrder(metadata.GetTopLevelTypeDefinitions(), t => metadata.GetTypeDefinition(t).GetNestedTypes())) {
+				var assembly = (MetadataAssembly)module.GetTypeSystemOrNull().MainAssembly;
+				foreach (var h in metadata.TypeDefinitions) {
 					cancellationToken.ThrowIfCancellationRequested();
-					var td = new TypeDefinition(module, h);
-					var typeDefinition = metadata.GetTypeDefinition(h);
-					foreach (var iface in typeDefinition.GetInterfaceImplementations()) {
+					var td = metadata.GetTypeDefinition(h);
+					foreach (var iface in td.GetInterfaceImplementations()) {
 						var ifaceImpl = metadata.GetInterfaceImplementation(iface);
-						if (IsSameType(metadata, ifaceImpl.Interface, type))
-							yield return new DerivedTypesEntryNode(td, assemblies);
+						if (IsSameType(metadata, ifaceImpl.Interface, definitionMetadata, metadataToken))
+							yield return new DerivedTypesEntryNode(list, assembly.GetDefinition(h));
 					}
-					if (!typeDefinition.BaseType.IsNil && IsSameType(metadata, typeDefinition.BaseType, type)) {
-						yield return new DerivedTypesEntryNode(td, assemblies);
+					if (!td.BaseType.IsNil && IsSameType(metadata, td.BaseType, definitionMetadata, metadataToken)) {
+						yield return new DerivedTypesEntryNode(list, assembly.GetDefinition(h));
 					}
 				}
 			}
 			yield break;
 		}
-		
-		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef, TypeDefinition type)
+
+		static bool IsSameType(SRM.MetadataReader referenceMetadata, SRM.EntityHandle typeRef,
+			                   SRM.MetadataReader definitionMetadata, SRM.TypeDefinitionHandle typeDef)
 		{
 			// FullName contains only namespace, name and type parameter count, therefore this should suffice.
-			return typeRef.GetFullTypeName(referenceMetadata) == type.Handle.GetFullTypeName(type.Module.Metadata);
+			return typeRef.GetFullTypeName(referenceMetadata) == typeDef.GetFullTypeName(definitionMetadata);
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

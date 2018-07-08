@@ -27,6 +27,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
@@ -216,12 +217,12 @@ namespace ICSharpCode.ILSpy
 				try {
 					var searcher = GetSearchStrategy(searchMode, searchTerm);
 					foreach (var loadedAssembly in assemblies) {
-						var module = loadedAssembly.GetPEFileOrNull();
-						if (module == null)
+						var typeSystem = loadedAssembly.GetTypeSystemOrNull();
+						if (typeSystem == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;
 
-						foreach (var type in module.TopLevelTypeDefinitions) {
+						foreach (var type in typeSystem.GetTopLevelTypeDefinitions()) {
 							cancellationToken.ThrowIfCancellationRequested();
 							searcher.Search(type, language, AddResult);
 						}
@@ -333,7 +334,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
 		
-		public IMetadataEntity Member { get; set; }
+		public IEntity Member { get; set; }
 		public float Fitness { get; set; }
 		
 		public string Location { get; set; }

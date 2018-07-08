@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.DebugInfo
@@ -34,11 +35,11 @@ namespace ICSharpCode.ILSpy.DebugInfo
 			this.provider = provider;
 		}
 
-		public IList<Decompiler.Metadata.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
+		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
 			var metadata = provider.GetMetadataReader();
 			var debugInfo = metadata.GetMethodDebugInformation(method);
-			var sequencePoints = new List<Decompiler.Metadata.SequencePoint>();
+			var sequencePoints = new List<Decompiler.DebugInfo.SequencePoint>();
 
 			foreach (var point in debugInfo.GetSequencePoints()) {
 				string documentFileName;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.DebugInfo
 					documentFileName = "";
 				}
 
-				sequencePoints.Add(new Decompiler.Metadata.SequencePoint() {
+				sequencePoints.Add(new Decompiler.DebugInfo.SequencePoint() {
 					Offset = point.Offset,
 					StartLine = point.StartLine,
 					StartColumn = point.StartColumn,

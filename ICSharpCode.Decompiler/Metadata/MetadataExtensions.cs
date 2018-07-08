@@ -104,42 +104,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				&& (name == ".cctor" || name == ".ctor");
 		}
 
-		public static bool HasMatchingDefaultMemberAttribute(this PropertyDefinitionHandle handle, PEFile module, out CustomAttributeHandle defaultMemberAttribute)
-		{
-			defaultMemberAttribute = default(CustomAttributeHandle);
-			var metadata = module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(handle);
-			var accessorHandle = propertyDefinition.GetAccessors().GetAny();
-			var accessor = metadata.GetMethodDefinition(accessorHandle);
-			if (accessor.GetParameters().Count > 0) {
-				var basePropDef = propertyDefinition;
-				var firstOverrideHandle = accessorHandle.GetMethodImplementations(metadata).FirstOrDefault();
-				if (!firstOverrideHandle.IsNil) {
-					// if the property is explicitly implementing an interface, look up the property in the interface:
-					var firstOverride = metadata.GetMethodImplementation(firstOverrideHandle);
-					var baseAccessor = new Metadata.Entity(module, firstOverride.MethodDeclaration).ResolveAsMethod();
-					if (!baseAccessor.IsNil) {
-						var declaringType = metadata.GetTypeDefinition(metadata.GetMethodDefinition(baseAccessor.Handle).GetDeclaringType());
-						foreach (var basePropHandle in declaringType.GetProperties()) {
-							var baseProp = metadata.GetPropertyDefinition(basePropHandle);
-							var accessors = baseProp.GetAccessors();
-							if (accessors.Getter == baseAccessor.Handle || accessors.Setter == baseAccessor.Handle) {
-								basePropDef = baseProp;
-								break;
-							}
-						}
-					} else
-						return false;
-				}
-				var defaultMemberName = accessor.GetDeclaringType().GetDefaultMemberName(metadata, out var attr);
-				if (defaultMemberName == metadata.GetString(basePropDef.Name)) {
-					defaultMemberAttribute = attr;
-					return true;
-				}
-			}
-			return false;
-		}
-
 		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader)
 		{
 			return type.GetDefaultMemberName(reader, out var attr);

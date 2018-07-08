@@ -270,6 +270,7 @@
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
@@ -283,7 +284,6 @@
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Metadata\CustomAttributeDecoder.cs" />
     <Compile Include="Metadata\Dom.cs" />
-    <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\DotNetCorePathFinder.cs" />
     <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="Metadata\LightJson\JsonArray.cs" />
@@ -306,7 +306,7 @@
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
-    <Compile Include="Metadata\SequencePoint.cs" />
+    <Compile Include="DebugInfo\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\DynamicCallSiteTransform.cs" />
@@ -342,7 +342,8 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
-    <Compile Include="Pdb\PortablePdbWriter.cs" />
+    <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
+    <Compile Include="DebugInfo\PortablePdbWriter.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />

@@ -69,7 +69,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string TargetFramework { get; }
 
-		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework, PEStreamOptions options)
+		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
+			PEStreamOptions options = PEStreamOptions.Default)
 		{
 			this.options = options;
 			this.TargetFramework = targetFramework;
@@ -89,7 +90,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), this, options);
+			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), options);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)

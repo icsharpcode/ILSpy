@@ -6,6 +6,7 @@ using System.Reflection.Metadata;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy;
 
 namespace TestPlugin
@@ -30,12 +31,12 @@ namespace TestPlugin
 		}
 
 		// There are several methods available to override; in this sample, we deal with methods only
-		public override void DecompileMethod(ICSharpCode.Decompiler.Metadata.MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			var metadata = method.Module.Metadata;
-			var methodDef = metadata.GetMethodDefinition(method.Handle);
+			var module = ((MetadataAssembly)method.ParentAssembly).PEFile;
+			var methodDef = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 			if (methodDef.HasBody()) {
-				var methodBody = method.Module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 				output.WriteLine("Size of method: {0} bytes", methodBody.GetCodeSize());
 				
 				ISmartTextOutput smartOutput = output as ISmartTextOutput;

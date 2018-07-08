@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy
 						Exception exception = null;
 						using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs")) {
 							try {
-								new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
+								//new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions() { FullDecompilation = true, CancellationToken = ct });
 							}
 							catch (Exception ex) {
 								writer.WriteLine(ex.ToString());

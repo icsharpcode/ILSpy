@@ -34,6 +34,7 @@ using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata;
 using static ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions;
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -55,6 +56,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				settings = value;
 			}
 		}
+
+		public IAssemblyResolver AssemblyResolver { get; set; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -218,7 +221,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
-						var asm = module.AssemblyResolver.Resolve(r);
+						var asm = AssemblyResolver.Resolve(r);
 						if (!IsGacAssembly(r, asm)) {
 							if (asm != null) {
 								w.WriteElementString("HintPath", asm.FileName);
@@ -275,7 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
-			var decompiler = new CSharpDecompiler(ts, settings);
+			var decompiler = new CSharpDecompiler(ts, AssemblyResolver, settings);
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;
@@ -314,7 +317,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
+			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver);
 			Parallel.ForEach(
 				files,
 				new ParallelOptions {

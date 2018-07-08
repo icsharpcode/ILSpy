@@ -17,6 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler
 {
 	public interface ITextOutput
@@ -26,8 +31,11 @@ namespace ICSharpCode.Decompiler
 		void Write(char ch);
 		void Write(string text);
 		void WriteLine();
-		void WriteDefinition(string text, object definition, bool isLocal = true);
-		void WriteReference(string text, object reference, bool isLocal = false);
+		void WriteReference(OpCodeInfo opCode);
+		void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false);
+		void WriteReference(IType type, string text, bool isDefinition = false);
+		void WriteReference(IMember member, string text, bool isDefinition = false);
+		void WriteLocalReference(string text, object reference, bool isDefinition = false);
 
 		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
 		void MarkFoldEnd();

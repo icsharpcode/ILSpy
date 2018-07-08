@@ -36,7 +36,7 @@ namespace ILSpy.BamlDecompiler
 
 		public string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options)
 		{
-			var document = BamlResourceEntryNode.LoadIntoDocument(assembly.GetPEFileOrNull(), stream, options.CancellationToken);
+			var document = BamlResourceEntryNode.LoadIntoDocument(assembly.GetPEFileOrNull(), assembly.GetAssemblyResolver(), stream, options.CancellationToken);
 			fileName = Path.ChangeExtension(fileName, ".xaml");
 			document.Save(Path.Combine(options.SaveAsProjectDirectory, fileName));
 			return fileName;

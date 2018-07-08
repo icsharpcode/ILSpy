@@ -17,66 +17,76 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly Entity tr;
-		readonly GenericContext context;
+		readonly PEFile module;
+		readonly EntityHandle handle;
+		readonly IType type;
 		readonly bool isInterface;
-		readonly bool showExpander;
-		readonly object icon;
+		bool showExpander;
 
-		public BaseTypesEntryNode(GenericContext context, Entity entity, bool isInterface)
+		public BaseTypesEntryNode(PEFile module, EntityHandle handle, IType type, bool isInterface)
 		{
-			if (entity.IsNil) throw new ArgumentNullException(nameof(entity));
-			this.tr = entity;
-			this.context = context;
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			this.handle = handle;
+			this.type = type;
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
-
-			var td = tr.ResolveAsType();
-			if (!td.IsNil) {
-				var typeDef = td.Module.Metadata.GetTypeDefinition(td.Handle);
-				showExpander = !typeDef.BaseType.IsNil || typeDef.GetInterfaceImplementations().Any();
-				icon = TypeTreeNode.GetIcon(td);
-			} else {
-				showExpander = false;
-				icon = isInterface ? Images.Interface : Images.Class;
-			}
+			TryResolve(module, handle, type);
 		}
 
-		public override bool ShowExpander => showExpander;
-
-		public override object Text
+		ITypeDefinition TryResolve(PEFile module, EntityHandle handle, IType type, bool mayRetry = true)
 		{
-			get { return this.Language.TypeToString(tr, context, includeNamespace: true) + tr.Handle.ToSuffixString(); }
+			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+			var t = typeSystem.ResolveAsType(handle).GetDefinition();
+			if (t != null) {
+				showExpander = t.DirectBaseTypes.Any();
+				var other = t.ParentAssembly.PEFile.GetTypeSystemOrNull();
+				Debug.Assert(other != null);
+				t = other.FindType(t.FullTypeName).GetDefinition();
+			} else {
+				showExpander = mayRetry;
+			}
+			RaisePropertyChanged(nameof(Text));
+			RaisePropertyChanged(nameof(ShowExpander));
+			return t;
 		}
 
-		public override object Icon => icon;
+		public override bool ShowExpander => showExpander && base.ShowExpander;
+
+		public override object Text => this.Language.TypeToString(type, includeNamespace: true) + handle.ToSuffixString();
+
+		public override object Icon => isInterface ? Images.Interface : Images.Class;
 
 		protected override void LoadChildren()
 		{
-			var td = tr.ResolveAsType();
-			if (!td.IsNil) {
-				BaseTypesTreeNode.AddBaseTypes(this.Children, td);
+			var t = TryResolve(module, handle, type, false);
+			if (t != null) {
+				BaseTypesTreeNode.AddBaseTypes(this.Children, t.ParentAssembly.PEFile, t);
 			}
 		}
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			var td = tr.ResolveAsType();
-			e.Handled = ActivateItem(this, td);
+			var t = TryResolve(module, handle, type, false);
+			e.Handled = ActivateItem(this, t);
 		}
 
-		internal static bool ActivateItem(SharpTreeNode node, TypeDefinition def)
+		internal static bool ActivateItem(SharpTreeNode node, ITypeDefinition def)
 		{
-			if (!def.IsNil) {
+			if (def != null) {
 				var assemblyListNode = node.Ancestors().OfType<AssemblyListTreeNode>().FirstOrDefault();
 				if (assemblyListNode != null) {
 					assemblyListNode.Select(assemblyListNode.FindTypeNode(def));
@@ -88,9 +98,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, language.TypeToString(tr, context, includeNamespace: true));
+			language.WriteCommentLine(output, language.TypeToString(type, includeNamespace: true));
 		}
 
-		IMetadataEntity IMemberTreeNode.Member => tr;
+		IEntity IMemberTreeNode.Member {
+			get {
+				return TryResolve(module, handle, type, false);
+			}
+		}
 	}
 }

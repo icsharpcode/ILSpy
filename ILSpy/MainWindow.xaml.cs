@@ -34,6 +34,8 @@ using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -287,8 +289,8 @@ namespace ICSharpCode.ILSpy
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							var mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
-							if (!mr.IsNil) {
+							var mr = XmlDocKeyProvider.FindEntity(args.NavigateTo, new SimpleCompilation(def, MinimalCorlib.Instance).TypeResolveContext);
+							if (mr != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
 								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
@@ -599,55 +601,16 @@ namespace ICSharpCode.ILSpy
 					return assemblyListTreeNode.FindAssemblyNode(asm);
 				case Resource res:
 					return assemblyListTreeNode.FindResourceNode(res);
-				case IMetadataEntity entity:
-					switch (entity) {
-						case TypeDefinition td:
-							return assemblyListTreeNode.FindTypeNode(td);
-						case FieldDefinition fd:
-							return assemblyListTreeNode.FindFieldNode(fd);
-						case MethodDefinition md:
-							return assemblyListTreeNode.FindMethodNode(md);
-						case PropertyDefinition pd:
-							return assemblyListTreeNode.FindPropertyNode(pd);
-						case EventDefinition ed:
-							return assemblyListTreeNode.FindEventNode(ed);
-						default:
-							throw new NotSupportedException();
-					}
-				case TypeReference tr:
-					var resolved = tr.Handle.Resolve(new SimpleMetadataResolveContext(tr.Module));
-					if (resolved != null && !resolved.IsNil)
-						return assemblyListTreeNode.FindTypeNode(resolved);
-					return null;
-				case TypeSpecification ts:
-					resolved = ts.Handle.Resolve(new SimpleMetadataResolveContext(ts.Module));
-					if (!resolved.IsNil)
-						return assemblyListTreeNode.FindTypeNode(resolved);
-					return null;
-				case MemberReference mr:
-					var resolvedMember = mr.Handle.Resolve(new SimpleMetadataResolveContext(mr.Module));
-					if (resolvedMember != null && !resolvedMember.IsNil) {
-						switch (resolvedMember) {
-							case FieldDefinition fd:
-								return assemblyListTreeNode.FindFieldNode(fd);
-							case MethodDefinition md:
-								return assemblyListTreeNode.FindMethodNode(md);
-							default:
-								throw new NotSupportedException();
-						}
-					}
-					return null;
-				case MethodSpecification ms:
-					resolvedMember = ms.Handle.Resolve(new SimpleMetadataResolveContext(ms.Module));
-					if (resolvedMember != null && !resolvedMember.IsNil) {
-						switch (resolvedMember) {
-							case MethodDefinition md:
-								return assemblyListTreeNode.FindMethodNode(md);
-							default:
-								throw new NotSupportedException();
-						}
-					}
-					return null;
+				case ITypeDefinition type:
+					return assemblyListTreeNode.FindTypeNode(type);
+				case IField fd:
+					return assemblyListTreeNode.FindFieldNode(fd);
+				case IMethod md:
+					return assemblyListTreeNode.FindMethodNode(md);
+				case IProperty pd:
+					return assemblyListTreeNode.FindPropertyNode(pd);
+				case IEvent ed:
+					return assemblyListTreeNode.FindEventNode(ed);
 				default:
 					return null;
 			}
@@ -668,11 +631,22 @@ namespace ICSharpCode.ILSpy
 		public Task JumpToReferenceAsync(object reference)
 		{
 			decompilationTask = TaskHelper.CompletedTask;
-			ILSpyTreeNode treeNode = FindTreeNode(reference);
-			if (treeNode != null) {
-				SelectNode(treeNode);
-			} else if (reference is Decompiler.Disassembler.OpCodeInfo opCode) {
-				OpenLink(opCode.Link);
+			switch (reference) {
+				case Decompiler.Disassembler.OpCodeInfo opCode:
+					OpenLink(opCode.Link);
+					break;
+				case ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity:
+					var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
+					if (unresolvedEntity.Item2.Kind.IsTypeKind())
+						reference = typeSystem.ResolveAsType(unresolvedEntity.Item2).GetDefinition();
+					else
+						reference = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
+					goto default;
+				default:
+					ILSpyTreeNode treeNode = FindTreeNode(reference);
+					if (treeNode != null)
+						SelectNode(treeNode);
+					break;
 			}
 			return decompilationTask;
 		}

@@ -329,6 +329,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.AssemblyAttributes = unresolved.AssemblyAttributes.CreateResolvedAttributes(context);
 				this.ModuleAttributes = unresolved.ModuleAttributes.CreateResolvedAttributes(context);
 			}
+
+			public Metadata.PEFile PEFile => null;
 			
 			public IUnresolvedAssembly UnresolvedAssembly {
 				get { return unresolvedAssembly; }

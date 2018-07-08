@@ -31,20 +31,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			// partially copied from CSharpDecompiler
 			var specializingTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(inst.Method.Substitution);
-			var ilReader = new ILReader(specializingTypeSystem);
-			System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
-			var proxyFunction = ilReader.ReadIL(module, handle, module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress), cancellationToken);
-			var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, context.Settings) {
-				CancellationToken = cancellationToken,
+			var ilReader = context.CreateILReader(specializingTypeSystem);
+			var body = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var proxyFunction = ilReader.ReadIL(module, handle, body, context.CancellationToken);
+			var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, context.DebugInfo, context.Settings) {
+				CancellationToken = context.CancellationToken,
 				DecompileRun = context.DecompileRun
 			};
-			foreach (var transform in CSharp.CSharpDecompiler.GetILTransforms()) {
-				if (transform.GetType() != typeof(ProxyCallReplacer)) { // don't call itself on itself
-					cancellationToken.ThrowIfCancellationRequested();
-					transform.Run(proxyFunction, transformContext);
-				}
-			}
-
+			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);
 			if (!(proxyFunction.Body is BlockContainer blockContainer))
 				return;
 			if (blockContainer.Blocks.Count != 1)

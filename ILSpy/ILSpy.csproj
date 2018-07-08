@@ -113,8 +113,6 @@
     </Compile>
     <Compile Include="ILSpyTraceListener.cs" />
     <Compile Include="Languages\CodeMappingInfo.cs" />
-    <Compile Include="Languages\CSharpILMixedLanguage.cs" />
-    <Compile Include="Languages\CSharpLanguage.cs" />
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FilterSettings.cs" />
@@ -122,9 +120,10 @@
     <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
+    <Compile Include="Languages\CSharpILMixedLanguage.cs" />
+    <Compile Include="Languages\CSharpLanguage.cs" />
     <Compile Include="Languages\CSharpLexer.cs" />
     <Compile Include="Languages\CSharpHighlightingTokenWriter.cs" />
-    <Compile Include="Languages\ILAstLanguage.cs" />
     <Compile Include="ILSpySettings.cs" />
     <Compile Include="Images\AccessOverlayIcon.cs" />
     <Compile Include="Images\MemberIcon.cs" />
@@ -132,12 +131,13 @@
     <Compile Include="IPane.cs" />
     <Compile Include="ISmartTextOutput.cs" />
     <Compile Include="Images\Images.cs" />
+    <Compile Include="Languages\ILAstLanguage.cs" />
     <Compile Include="Languages\ILLanguage.cs" />
-    <Compile Include="Languages\ILSignatureProvider.cs" />
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
     <Compile Include="LoadedAssembly.cs" />
+    <Compile Include="LoadedAssemblyExtensions.cs" />
     <Compile Include="LoadedNugetPackage.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
@@ -190,17 +190,6 @@
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedFieldAccessTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedFieldTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedMethodTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedMethodUsedByTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedMethodUsesTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyAccessorTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeInstantiationsTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeUsedByTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzerEntityTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerSearchTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\Extensions.cs" />

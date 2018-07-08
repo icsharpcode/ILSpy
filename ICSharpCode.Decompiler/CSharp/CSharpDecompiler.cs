@@ -39,6 +39,8 @@ using System.Reflection.Metadata;
 using SRM = System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 using System.Reflection.PortableExecutable;
+using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -179,6 +181,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public IDecompilerTypeSystem TypeSystem => typeSystem;
 
+		public IAssemblyResolver AssemblyResolver { get; }
+
+		/// <summary>
+		/// Gets or sets the optional provider for debug info.
+		/// </summary>
+		public IDebugInfoProvider DebugInfoProvider { get; set; }
+
+		/// <summary>
+		/// Gets or sets the optional provider for XML documentation strings.
+		/// </summary>
+		public IDocumentationProvider DocumentationProvider { get; set; }
+
 		/// <summary>
 		/// IL transforms.
 		/// </summary>
@@ -193,21 +207,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return astTransforms; }
 		}
 
-		public CSharpDecompiler(string fileName, DecompilerSettings settings)
-			: this(LoadPEFile(fileName, settings), settings)
+		public CSharpDecompiler(string fileName, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+			: this(LoadPEFile(fileName, settings), assemblyResolver, settings)
 		{
 		}
 
-		public CSharpDecompiler(Metadata.PEFile module, DecompilerSettings settings)
-			: this(new DecompilerTypeSystem(module, settings), settings)
+		public CSharpDecompiler(PEFile module, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+			: this(new DecompilerTypeSystem(module, assemblyResolver, settings), assemblyResolver, settings)
 		{
 		}
 
-		public CSharpDecompiler(DecompilerTypeSystem typeSystem, DecompilerSettings settings)
+		public CSharpDecompiler(DecompilerTypeSystem typeSystem, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 		{
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.typeSystem = typeSystem;
+			this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+			this.AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
 			this.settings = settings;
 		}
 
@@ -318,7 +331,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new PEFile(
 				fileName,
 				new FileStream(fileName, FileMode.Open, FileAccess.Read),
-				settings.ThrowOnAssemblyResolveErrors,
 				options: settings.LoadInMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default
 			);
 		}
@@ -436,7 +448,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
 			RequiredNamespaceCollector.CollectNamespaces(function.Method, typeSystem, decompileRun.Namespaces);
-			return new ILTransformContext(function, typeSystem, settings) {
+			return new ILTransformContext(function, typeSystem, DebugInfoProvider, settings) {
 				CancellationToken = CancellationToken,
 				DecompileRun = decompileRun
 			};
@@ -887,10 +899,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			try {
 				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
-				var ilReader = new ILReader(specializingTypeSystem);
-				ilReader.UseDebugSymbols = settings.UseDebugSymbols;
+				var ilReader = new ILReader(specializingTypeSystem) {
+					UseDebugSymbols = settings.UseDebugSymbols,
+					DebugInfo = DebugInfoProvider
+				};
 				var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-				var function = ilReader.ReadIL(typeSystem.ModuleDefinition, (MethodDefinitionHandle)method.MetadataToken, typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress), CancellationToken);
+				var methodBody = typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				var function = ilReader.ReadIL(typeSystem.ModuleDefinition, (MethodDefinitionHandle)method.MetadataToken, methodBody, CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null) {
@@ -911,7 +926,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
 				}
 
-				var context = new ILTransformContext(function, specializingTypeSystem, localSettings) {
+				var context = new ILTransformContext(function, specializingTypeSystem, DebugInfoProvider, localSettings) {
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
@@ -1126,7 +1141,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// This only works correctly when the nodes in the syntax tree have line/column information.
 		/// </summary>
-		public Dictionary<ILFunction, List<Metadata.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
+		public Dictionary<ILFunction, List<DebugInfo.SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
 		{
 			SequencePointBuilder spb = new SequencePointBuilder();
 			syntaxTree.AcceptVisitor(spb);

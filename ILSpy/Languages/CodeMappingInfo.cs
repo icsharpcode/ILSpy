@@ -30,7 +30,8 @@ namespace ICSharpCode.ILSpy
 
 		public bool ShowMember(EntityHandle entity)
 		{
-			return Language.ShowMember(new Decompiler.Metadata.Entity(Module, entity));
+			throw null;
+			//return Language.ShowMember(new Decompiler.Metadata.Entity(Module, entity));
 		}
 
 		public IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)

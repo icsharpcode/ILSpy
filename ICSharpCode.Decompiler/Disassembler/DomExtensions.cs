@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			switch (entity.Kind) {
 				case HandleKind.TypeDefinition: {
 					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)entity);
-					output.WriteReference(td.GetFullTypeName(metadata).ToILNameString(), new Metadata.TypeDefinition(module, (TypeDefinitionHandle)entity));
+					output.WriteReference(module, entity, td.GetFullTypeName(metadata).ToILNameString());
 					break;
 				}
 				case HandleKind.TypeReference: {
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						}
 						output.Write("]");
 					}
-					output.WriteReference(entity.GetFullTypeName(metadata).ToILNameString(), new Metadata.TypeReference(module, (TypeReferenceHandle)entity));
+					output.WriteReference(module, entity, entity.GetFullTypeName(metadata).ToILNameString());
 					break;
 				}
 				case HandleKind.TypeSpecification: {
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write(' ');
 					((EntityHandle)fd.GetDeclaringType()).WriteTo(module, output, GenericContext.Empty, ILNameSyntax.TypeName);
 					output.Write("::");
-					output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(fd.Name)), new Metadata.FieldDefinition(module, (FieldDefinitionHandle)entity));
+					output.WriteReference(module, entity, DisassemblerHelpers.Escape(metadata.GetString(fd.Name)));
 					break;
 				}
 				case HandleKind.MethodDefinition: {
@@ -106,11 +106,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("::");
 					}
 					bool isCompilerControlled = (md.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
-					var reference = new Metadata.MethodDefinition(module, (MethodDefinitionHandle)entity);
 					if (isCompilerControlled) {
-						output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" + MetadataTokens.GetToken(entity).ToString("X8")), reference);
+						output.WriteReference(module, entity, DisassemblerHelpers.Escape(metadata.GetString(md.Name) + "$PST" + MetadataTokens.GetToken(entity).ToString("X8")));
 					} else {
-						output.WriteReference(DisassemblerHelpers.Escape(metadata.GetString(md.Name)), reference);
+						output.WriteReference(module, entity, DisassemblerHelpers.Escape(metadata.GetString(md.Name)));
 					}
 					var genericParameters = md.GetGenericParameters();
 					if (genericParameters.Count > 0) {
@@ -174,7 +173,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
 							output.Write("::");
-							output.WriteReference(DisassemblerHelpers.Escape(memberName), new Metadata.MemberReference(module, (MemberReferenceHandle)entity));
+							output.WriteReference(module, entity, DisassemblerHelpers.Escape(memberName));
 							output.Write("(");
 							for (int i = 0; i < methodSignature.ParameterTypes.Length; ++i) {
 								if (i > 0)
@@ -191,7 +190,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.Write(' ');
 							WriteParent(output, module, metadata, mr.Parent, genericContext, syntax);
 							output.Write("::");
-							output.WriteReference(DisassemblerHelpers.Escape(memberName), new Metadata.MemberReference(module, (MemberReferenceHandle)entity));
+							output.WriteReference(module, entity, DisassemblerHelpers.Escape(memberName));
 							break;
 					}
 					break;

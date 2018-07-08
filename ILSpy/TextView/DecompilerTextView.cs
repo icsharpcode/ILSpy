@@ -46,6 +46,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -206,14 +207,41 @@ namespace ICSharpCode.ILSpy.TextView
 					}
 				}
 				return $"{code.Name} (0x{code.Code:x})";
-			} else if (segment.Reference is IMetadataEntity entity) {
+			} else if (segment.Reference is IEntity entity) {
 				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(new Entity(entity.Module, entity.Handle)));
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
 				try {
-					//var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
-					var docProvider = XmlDocLoader.LoadDocumentation(entity.Module);
+					if (entity.ParentAssembly == null || entity.ParentAssembly.PEFile == null)
+						return null;
+					var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentAssembly.PEFile);
 					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(new Entity(entity.Module, entity.Handle)));
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
+						if (documentation != null) {
+							renderer.AppendText(Environment.NewLine);
+							renderer.AddXmlDocumentation(documentation);
+						}
+					}
+				} catch (XmlException) {
+					// ignore
+				}
+				return renderer.CreateTextBlock();
+			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
+				IEntity resolved;
+				if (unresolvedEntity.Item2.Kind.IsTypeKind())
+					resolved = typeSystem.ResolveAsType(unresolvedEntity.Item2).GetDefinition();
+				else
+					resolved = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
+				if (resolved == null)
+					return null;
+				XmlDocRenderer renderer = new XmlDocRenderer();
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
+				try {
+					if (resolved.ParentAssembly == null || resolved.ParentAssembly.PEFile == null)
+						return null;
+					var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentAssembly.PEFile);
+					if (docProvider != null) {
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(resolved));
 						if (documentation != null) {
 							renderer.AppendText(Environment.NewLine);
 							renderer.AddXmlDocumentation(documentation);
