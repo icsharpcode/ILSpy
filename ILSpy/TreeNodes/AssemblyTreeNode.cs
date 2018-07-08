@@ -30,7 +30,7 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
-		readonly Dictionary<ITypeDefinition, TypeTreeNode> typeDict = new Dictionary<ITypeDefinition, TypeTreeNode>();
+		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new Dictionary<TypeDefinitionHandle, TypeTreeNode>();
 		ICompilation typeSystem;
 
 		public AssemblyTreeNode(LoadedAssembly assembly)
@@ -145,13 +145,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.FullName, NaturalStringComparer.Instance)) {
+			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance)) {
 				if (!namespaces.TryGetValue(type.Namespace, out NamespaceTreeNode ns)) {
 					ns = new NamespaceTreeNode(type.Namespace);
 					namespaces[type.Namespace] = ns;
 				}
 				TypeTreeNode node = new TypeTreeNode(type, this);
-				typeDict[type] = node;
+				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
 				ns.Children.Add(node);
 			}
 			foreach (NamespaceTreeNode ns in namespaces.Values.OrderBy(n => n.Name, NaturalStringComparer.Instance)) {
@@ -165,13 +165,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Finds the node for a top-level type.
 		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition def)
+		public TypeTreeNode FindTypeNode(ITypeDefinition type)
 		{
-			if (def == null)
+			if (type == null)
 				return null;
 			EnsureLazyChildren();
 			TypeTreeNode node;
-			if (typeDict.TryGetValue(def, out node))
+			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
 				return node;
 			else
 				return null;

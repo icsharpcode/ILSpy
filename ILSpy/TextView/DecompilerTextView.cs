@@ -211,10 +211,37 @@ namespace ICSharpCode.ILSpy.TextView
 				XmlDocRenderer renderer = new XmlDocRenderer();
 				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
 				try {
-					//var docProvider = entity.Module.DocumentationResolver.GetProvider(); // TODO implement proper API
-					var docProvider = XmlDocLoader.LoadDocumentation(((MetadataAssembly)entity.ParentAssembly).PEFile);
+					if (entity.ParentAssembly == null || entity.ParentAssembly.PEFile == null)
+						return null;
+					var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentAssembly.PEFile);
 					if (docProvider != null) {
 						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
+						if (documentation != null) {
+							renderer.AppendText(Environment.NewLine);
+							renderer.AddXmlDocumentation(documentation);
+						}
+					}
+				} catch (XmlException) {
+					// ignore
+				}
+				return renderer.CreateTextBlock();
+			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
+				IEntity resolved;
+				if (unresolvedEntity.Item2.Kind.IsTypeKind())
+					resolved = typeSystem.ResolveAsType(unresolvedEntity.Item2).GetDefinition();
+				else
+					resolved = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
+				if (resolved == null)
+					return null;
+				XmlDocRenderer renderer = new XmlDocRenderer();
+				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
+				try {
+					if (resolved.ParentAssembly == null || resolved.ParentAssembly.PEFile == null)
+						return null;
+					var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentAssembly.PEFile);
+					if (docProvider != null) {
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(resolved));
 						if (documentation != null) {
 							renderer.AppendText(Environment.NewLine);
 							renderer.AddXmlDocumentation(documentation);

@@ -214,6 +214,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public TypeTreeNode FindTypeNode(ITypeDefinition def)
 		{
+			if (def == null)
+				return null;
 			var declaringType = def.DeclaringTypeDefinition;
 			if (declaringType != null) {
 				TypeTreeNode decl = FindTypeNode(declaringType);
@@ -245,25 +247,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			parentNode.EnsureLazyChildren();
 			switch (def.AccessorOwner) {
 				case IProperty p:
-					parentNode = parentNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.Equals(p));
+					parentNode = parentNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.MetadataToken == p.MetadataToken && !m.IsHidden);
 					if (parentNode == null)
 						return null;
 					parentNode.EnsureLazyChildren();
-					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def));
+					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 					if (methodNode == null || methodNode.IsHidden)
 						return parentNode;
 					return methodNode;
 				case IEvent e:
-					parentNode = parentNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.Equals(e));
+					parentNode = parentNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.MetadataToken == e.MetadataToken && !m.IsHidden);
 					if (parentNode == null)
 						return null;
 					parentNode.EnsureLazyChildren();
-					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def));
+					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 					if (methodNode == null || methodNode.IsHidden)
 						return parentNode;
 					return methodNode;
 				default:
-					methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.Equals(def) && !m.IsHidden);
+					methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 					if (methodNode != null)
 						return methodNode;
 					return null;
