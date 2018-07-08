@@ -17,55 +17,42 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
+using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		private readonly ITypeDefinition type;
-	/*	private readonly PEFile[] assemblies;
-		private readonly ThreadingSupport threading;
-		private readonly SRM.TypeDefinition td;
+		readonly AssemblyList list;
+		readonly ITypeDefinition type;
+		readonly ThreadingSupport threading;
 
-		public DerivedTypesEntryNode(ITypeDefinition type, PEFile[] assemblies)
+		public DerivedTypesEntryNode(AssemblyList list, ITypeDefinition type)
 		{
+			this.list = list;
 			this.type = type;
-			this.td = type.Module.Metadata.GetTypeDefinition(type.Handle);
-			this.assemblies = assemblies;
 			this.LazyLoading = true;
 			threading = new ThreadingSupport();
 		}
 
-		public override bool ShowExpander
-		{
-			get { return !type.Module.Metadata.GetTypeDefinition(type.Handle).HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
-		}
+		public override bool ShowExpander => !type.IsSealed && base.ShowExpander;
 
 		public override object Text
 		{
-			get { return type.Handle.GetFullTypeName(type.Module.Metadata) + type.Handle.ToSuffixString(); }
+			get { return type.FullName + type.MetadataToken.ToSuffixString(); }
 		}
 
-		public override object Icon
-		{
-			get { return TypeTreeNode.GetIcon(type); }
-		}
+		public override object Icon => TypeTreeNode.GetIcon(type);
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var metadata = type.Module.Metadata;
-			var typeDefinition = metadata.GetTypeDefinition(type.Handle);
-			if (settings.SearchTermMatches(metadata.GetString(typeDefinition.Name))) {
-				if (!typeDefinition.GetDeclaringType().IsNil && !settings.Language.ShowMember(type))
+			if (settings.SearchTermMatches(type.Name)) {
+				if (type.DeclaringType != null && !settings.Language.ShowMember(type))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;
@@ -75,11 +62,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool IsPublicAPI {
 			get {
-				switch (td.Attributes & TypeAttributes.VisibilityMask) {
-					case TypeAttributes.Public:
-					case TypeAttributes.NestedPublic:
-					case TypeAttributes.NestedFamily:
-					case TypeAttributes.NestedFamORAssem:
+				switch (type.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Internal:
+					case Accessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;
@@ -95,13 +81,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		IEnumerable<ILSpyTreeNode> FetchChildren(CancellationToken ct)
 		{
 			// FetchChildren() runs on the main thread; but the enumerator will be consumed on a background thread
-			return DerivedTypesTreeNode.FindDerivedTypes(type, assemblies, ct);
+			var assemblies = list.GetAssemblies().Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
+			return DerivedTypesTreeNode.FindDerivedTypes(list, type, assemblies, ct);
 		}
 
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = BaseTypesEntryNode.ActivateItem(this, type);
-		}*/
+		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{

@@ -34,7 +34,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly IType type;
 		readonly bool isInterface;
 		bool showExpander;
-		object text;
 
 		public BaseTypesEntryNode(PEFile module, EntityHandle handle, IType type, bool isInterface)
 		{
@@ -57,19 +56,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var other = t.ParentAssembly.PEFile.GetTypeSystemOrNull();
 				Debug.Assert(other != null);
 				t = other.FindType(t.FullTypeName).GetDefinition();
-				text = this.Language.TypeToString(Language.MakeParameterizedType(t), includeNamespace: true) + handle.ToSuffixString();
 			} else {
 				showExpander = mayRetry;
-				text = this.Language.TypeToString(type, includeNamespace: true) + handle.ToSuffixString();
 			}
 			RaisePropertyChanged(nameof(Text));
 			RaisePropertyChanged(nameof(ShowExpander));
 			return t;
 		}
 
-		public override bool ShowExpander => showExpander;
+		public override bool ShowExpander => showExpander && base.ShowExpander;
 
-		public override object Text => text;
+		public override object Text => this.Language.TypeToString(type, includeNamespace: true) + handle.ToSuffixString();
 
 		public override object Icon => isInterface ? Images.Interface : Images.Class;
 
