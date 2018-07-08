@@ -105,10 +105,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(ITypeDefinition type)
 		{
-			TypeIcon typeIcon = GetTypeIcon(type);
-			AccessOverlayIcon overlayIcon = GetOverlayIcon(type);
-
-			return Images.GetIcon(typeIcon, overlayIcon);
+			return Images.GetIcon(GetTypeIcon(type), GetOverlayIcon(type));
 		}
 
 		internal static TypeIcon GetTypeIcon(IType type)
@@ -129,30 +126,23 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
+		static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
 		{
-			AccessOverlayIcon overlay;
 			switch (type.Accessibility) {
 				case Accessibility.Public:
-					overlay = AccessOverlayIcon.Public;
-					break;
+					return AccessOverlayIcon.Public;
 				case Accessibility.Internal:
-					overlay = AccessOverlayIcon.Internal;
-					break;
+					return AccessOverlayIcon.Internal;
 				case Accessibility.ProtectedAndInternal:
-					overlay = AccessOverlayIcon.PrivateProtected;
-					break;
+					return AccessOverlayIcon.PrivateProtected;
 				case Accessibility.Protected:
 				case Accessibility.ProtectedOrInternal:
-					overlay = AccessOverlayIcon.Protected;
-					break;
+					return AccessOverlayIcon.Protected;
 				case Accessibility.Private:
-					overlay = AccessOverlayIcon.Private;
-					break;
+					return AccessOverlayIcon.Private;
 				default:
-					throw new NotSupportedException();
+					return AccessOverlayIcon.CompilerControlled;
 			}
-			return overlay;
 		}
 
 		IEntity IMemberTreeNode.Member => TypeDefinition;

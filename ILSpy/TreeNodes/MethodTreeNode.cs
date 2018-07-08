@@ -54,54 +54,39 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IMethod method)
 		{
-			var metadata = ((MetadataAssembly)method.ParentAssembly).PEFile.Metadata;
-			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			var methodName = metadata.GetString(methodDefinition.Name);
-			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) && methodName.StartsWith("op_", StringComparison.Ordinal)) {
-				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(methodDefinition.Attributes), false);
-			}
+			if (method.IsOperator)
+				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method), false);
 
-			if (methodDefinition.IsExtensionMethod(metadata)) {
-				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(methodDefinition.Attributes), false);
-			}
+			if (method.IsExtensionMethod)
+				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method), false);
 
-			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) &&
-				(methodName == ".ctor" || methodName == ".cctor")) {
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(methodDefinition.Attributes), methodDefinition.HasFlag(MethodAttributes.Static));
-			}
+			if (method.IsConstructor)
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method), method.IsStatic);
 
-			if (methodDefinition.HasFlag(MethodAttributes.PinvokeImpl) && !methodDefinition.GetImport().Module.IsNil)
-				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(methodDefinition.Attributes), true);
+			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
+				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method), true);
 
-			bool showAsVirtual = methodDefinition.HasFlag(MethodAttributes.Virtual)
-				&& !(methodDefinition.HasFlag(MethodAttributes.NewSlot) && methodDefinition.HasFlag(MethodAttributes.Final))
-				&& (metadata.GetTypeDefinition(methodDefinition.GetDeclaringType()).Attributes & TypeAttributes.ClassSemanticsMask) != TypeAttributes.Interface;
-
-			return Images.GetIcon(
-				showAsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				GetOverlayIcon(methodDefinition.Attributes),
-				methodDefinition.HasFlag(MethodAttributes.Static));
+			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
+				GetOverlayIcon(method), method.IsStatic);
 		}
 
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
+		static AccessOverlayIcon GetOverlayIcon(IMethod method)
 		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
+			switch (method.Accessibility) {
+				case Accessibility.Public:
 					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
+				case Accessibility.Internal:
 					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
+				case Accessibility.ProtectedAndInternal:
 					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
+				case Accessibility.Protected:
 					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
+				case Accessibility.ProtectedOrInternal:
 					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
+				case Accessibility.Private:
 					return AccessOverlayIcon.Private;
-				case 0:
-					return AccessOverlayIcon.CompilerControlled;
 				default:
-					throw new NotSupportedException();
+					return AccessOverlayIcon.CompilerControlled;
 			}
 		}
 
