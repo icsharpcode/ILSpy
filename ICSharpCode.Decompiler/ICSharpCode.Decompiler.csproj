@@ -547,7 +547,6 @@
     <Compile Include="TypeSystem\Implementation\TypeWithElementType.cs" />
     <Compile Include="TypeSystem\Implementation\UnknownType.cs" />
     <Compile Include="TypeSystem\Implementation\UnresolvedAttributeBlob.cs" />
-    <Compile Include="TypeSystem\Implementation\UnresolvedSecurityDeclarationBlob.cs" />
     <Compile Include="TypeSystem\Implementation\VoidTypeDefinition.cs" />
     <Compile Include="TypeSystem\INamedElement.cs" />
     <Compile Include="TypeSystem\INamespace.cs" />
