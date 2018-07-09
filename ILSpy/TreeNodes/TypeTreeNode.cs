@@ -90,6 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new EventTreeNode(ev));
 			}
 			foreach (var method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+				if (method.MetadataToken.IsNil) continue;
 				this.Children.Add(new MethodTreeNode(method));
 			}
 		}
