@@ -68,6 +68,7 @@
     <Compile Include="AboutPage.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\TypeExposedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\IAnalyzer.cs" />
