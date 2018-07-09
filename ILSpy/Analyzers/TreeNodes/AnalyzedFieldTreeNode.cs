@@ -16,57 +16,38 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using ICSharpCode.TreeView;
+using System;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Analyzers;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	public abstract class AnalyzerTreeNode : SharpTreeNode
+	class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
 	{
-		private Language language;
+		readonly IField analyzedField;
 
-		public Language Language
+		public AnalyzedFieldTreeNode(IField analyzedField)
 		{
-			get { return language; }
-			set
-			{
-				if (language != value) {
-					language = value;
-					foreach (var child in this.Children.OfType<AnalyzerTreeNode>())
-						child.Language = value;
+			this.analyzedField = analyzedField ?? throw new ArgumentNullException(nameof(analyzedField));
+			this.LazyLoading = true;
+		}
+
+		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
+
+		public override object Text => Language.FieldToString(analyzedField, true, true);
+
+		protected override void LoadChildren()
+		{
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IField>>()) {
+				var analyzer = lazy.Value;
+				if (analyzer.Show(analyzedField)) {
+					this.Children.Add(new AnalyzerSearchTreeNode<IField>(analyzedField, analyzer));
 				}
 			}
 		}
 
-		public override bool CanDelete()
-		{
-			return Parent != null && Parent.IsRoot;
-		}
-
-		public override void DeleteCore()
-		{
-			Parent.Children.Remove(this);
-		}
-
-		public override void Delete()
-		{
-			DeleteCore();
-		}
-
-		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
-		{
-			if (e.NewItems != null) {
-				foreach (AnalyzerTreeNode a in e.NewItems.OfType<AnalyzerTreeNode>())
-					a.Language = this.Language;
-			}
-			base.OnChildrenChanged(e);
-		}
-		
-		/// <summary>
-		/// Handles changes to the assembly list.
-		/// </summary>
-		public abstract bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies);
+		public override IEntity Member => analyzedField;
 	}
 }

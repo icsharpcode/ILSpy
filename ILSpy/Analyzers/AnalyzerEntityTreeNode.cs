@@ -16,59 +16,38 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.Threading;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.TreeView;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
-	/// Base class for analyzer nodes that perform a search.
+	/// Base class for entity nodes.
 	/// </summary>
-	public abstract class AnalyzerSearchTreeNode : AnalyzerTreeNode
+	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		private readonly ThreadingSupport threading = new ThreadingSupport();
+		public abstract IEntity Member { get; }
 		
-		protected AnalyzerSearchTreeNode()
+		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
-			this.LazyLoading = true;
-		}
-		
-		public override object Icon
-		{
-			get { return Images.Search; }
-		}
-		
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-		
-		protected abstract IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct);
-		
-		protected override void OnIsVisibleChanged()
-		{
-			base.OnIsVisibleChanged();
-			if (!this.IsVisible && threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
+			e.Handled = true;
+			MainWindow.Instance.JumpToReference(this.Member);
 		}
 		
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
-			// only cancel a running analysis if user has manually added/removed assemblies
-			bool manualAdd = false;
-			foreach (var asm in addedAssemblies) {
-				if (!asm.IsAutoLoaded)
-					manualAdd = true;
+			foreach (LoadedAssembly asm in removedAssemblies) {
+				if (this.Member.ParentAssembly.PEFile == asm.GetPEFileOrNull())
+					return false; // remove this node
 			}
-			if (removedAssemblies.Count > 0 || manualAdd) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
+			this.Children.RemoveAll(
+				delegate(SharpTreeNode n) {
+					AnalyzerTreeNode an = n as AnalyzerTreeNode;
+					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+				});
 			return true;
 		}
 	}

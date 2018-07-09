@@ -18,7 +18,7 @@
 
 using System.Linq;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	[ExportContextMenuEntry(Header = "Remove", Icon = "images/Delete.png", Category = "Analyze", Order = 200)]
 	internal sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry

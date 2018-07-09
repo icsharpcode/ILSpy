@@ -66,9 +66,14 @@
 
   <ItemGroup>
     <Compile Include="AboutPage.cs" />
-    <Compile Include="AnalyzerTreeView.cs">
+    <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
+    <Compile Include="Analyzers\IAnalyzer.cs" />
+    <Compile Include="Analyzers\AnalyzerTreeView.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Analyzers\TreeNodes\AnalyzedMethodTreeNode.cs" />
+    <Compile Include="Analyzers\TreeNodes\AnalyzedTypeTreeNode.cs" />
     <Compile Include="App.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>App.xaml</DependentUpon>
@@ -189,12 +194,15 @@
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzerSearchTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\AnalyzerTreeNode.cs" />
+    <Compile Include="Analyzers\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />
+    <Compile Include="Analyzers\TreeNodes\AnalyzedFieldTreeNode.cs" />
+    <Compile Include="Analyzers\AnalyzerEntityTreeNode.cs" />
+    <Compile Include="Analyzers\AnalyzerSearchTreeNode.cs" />
+    <Compile Include="Analyzers\AnalyzerTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\Extensions.cs" />
-    <Compile Include="TreeNodes\Analyzer\RemoveAnalyzeContextMenuEntry.cs" />
-    <Compile Include="TreeNodes\Analyzer\ScopedWhereUsedAnalyzer.cs" />
+    <Compile Include="Analyzers\RemoveAnalyzeContextMenuEntry.cs" />
+    <Compile Include="Analyzers\ScopedWhereUsedAnalyzer.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
     <Compile Include="TreeNodes\CopyFullyQualifiedNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />

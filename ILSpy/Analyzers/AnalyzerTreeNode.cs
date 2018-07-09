@@ -17,37 +17,54 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
+using System.Collections.Specialized;
+using System.Linq;
 using ICSharpCode.TreeView;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers
 {
-	/// <summary>
-	/// Base class for entity nodes.
-	/// </summary>
-	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
+	public abstract class AnalyzerTreeNode : SharpTreeNode
 	{
-		public abstract IMetadataEntity Member { get; }
-		
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
-		{
-			e.Handled = true;
-			MainWindow.Instance.JumpToReference(this.Member);
-		}
-		
-		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
-		{
-			foreach (LoadedAssembly asm in removedAssemblies) {
-				if (this.Member.Module == asm.GetPEFileOrNull())
-					return false; // remove this node
+		private Language language;
+
+		public Language Language {
+			get { return language; }
+			set {
+				if (language != value) {
+					language = value;
+					foreach (var child in this.Children.OfType<AnalyzerTreeNode>())
+						child.Language = value;
+				}
 			}
-			this.Children.RemoveAll(
-				delegate(SharpTreeNode n) {
-					AnalyzerTreeNode an = n as AnalyzerTreeNode;
-					return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
-				});
-			return true;
 		}
+
+		public override bool CanDelete()
+		{
+			return Parent != null && Parent.IsRoot;
+		}
+
+		public override void DeleteCore()
+		{
+			Parent.Children.Remove(this);
+		}
+
+		public override void Delete()
+		{
+			DeleteCore();
+		}
+
+		protected override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
+		{
+			if (e.NewItems != null) {
+				foreach (AnalyzerTreeNode a in e.NewItems.OfType<AnalyzerTreeNode>())
+					a.Language = this.Language;
+			}
+			base.OnChildrenChanged(e);
+		}
+
+		/// <summary>
+		/// Handles changes to the assembly list.
+		/// </summary>
+		public abstract bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies);
 	}
 }

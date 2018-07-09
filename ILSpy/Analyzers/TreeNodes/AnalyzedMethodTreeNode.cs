@@ -17,37 +17,40 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Analyzers;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
+	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
 	{
-		readonly Decompiler.Metadata.PEFile module;
-		readonly FieldDefinitionHandle analyzedField;
+		readonly IMethod analyzedMethod;
+		readonly string prefix;
 
-		public AnalyzedFieldTreeNode(Decompiler.Metadata.PEFile module, FieldDefinitionHandle analyzedField)
+		public AnalyzedMethodTreeNode(IMethod analyzedMethod, string prefix = "")
 		{
-			if (analyzedField.IsNil)
-				throw new ArgumentNullException(nameof(analyzedField));
-			this.module = module;
-			this.analyzedField = analyzedField;
+			this.analyzedMethod = analyzedMethod ?? throw new ArgumentNullException(nameof(analyzedMethod));
+			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon => FieldTreeNode.GetIcon(new Decompiler.Metadata.FieldDefinition(module, analyzedField));
+		public override object Icon => MethodTreeNode.GetIcon(analyzedMethod);
 
-		public override object Text => Language.FieldToString(new Decompiler.Metadata.FieldDefinition(module, analyzedField), true, true);
+		public override object Text => prefix + Language.MethodToString(analyzedMethod, true, true);
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new AnalyzedFieldAccessTreeNode(module, analyzedField, false));
-			var fd = module.Metadata.GetFieldDefinition(analyzedField);
-			if (!fd.HasFlag(System.Reflection.FieldAttributes.Literal))
-				this.Children.Add(new AnalyzedFieldAccessTreeNode(module, analyzedField, true));
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IMethod>>()) {
+				var analyzer = lazy.Value;
+				if (analyzer.Show(analyzedMethod)) {
+					this.Children.Add(new AnalyzerSearchTreeNode<IMethod>(analyzedMethod, analyzer));
+				}
+			}
 		}
 
-		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.FieldDefinition(module, analyzedField);
+		public override IEntity Member => analyzedMethod;
 	}
 }

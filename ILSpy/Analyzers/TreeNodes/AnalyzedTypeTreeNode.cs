@@ -17,23 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.Metadata;
-
-using SRM = System.Reflection.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Analyzers;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
 	{
-		readonly TypeDefinition analyzedType;
-		readonly SRM.TypeDefinition td;
+		readonly ITypeDefinition analyzedType;
 
-		public AnalyzedTypeTreeNode(TypeDefinition analyzedType)
+		public AnalyzedTypeTreeNode(ITypeDefinition analyzedType)
 		{
-			if (analyzedType.IsNil)
-				throw new ArgumentNullException(nameof(analyzedType));
-			this.analyzedType = analyzedType;
-			this.td = analyzedType.Module.Metadata.GetTypeDefinition(analyzedType.Handle);
+			this.analyzedType = analyzedType ?? throw new ArgumentNullException(nameof(analyzedType));
 			this.LazyLoading = true;
 		}
 
@@ -43,22 +38,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		protected override void LoadChildren()
 		{
-			//if (AnalyzedAttributeAppliedToTreeNode.CanShow(analyzedType))
-			//	this.Children.Add(new AnalyzedAttributeAppliedToTreeNode(analyzedType));
-
-			if (AnalyzedTypeInstantiationsTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
-				this.Children.Add(new AnalyzedTypeInstantiationsTreeNode(analyzedType.Module, analyzedType.Handle));
-			
-			if (AnalyzedTypeUsedByTreeNode.CanShow(analyzedType.Module, analyzedType.Handle))
-				this.Children.Add(new AnalyzedTypeUsedByTreeNode(analyzedType.Module, analyzedType.Handle));
-/*
-			if (AnalyzedTypeExposedByTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
-				this.Children.Add(new AnalyzedTypeExposedByTreeNode(analyzedType));
-
-			if (AnalyzedTypeExtensionMethodsTreeNode.CanShow(analyzedType.Module.Metadata, analyzedType.Handle))
-				this.Children.Add(new AnalyzedTypeExtensionMethodsTreeNode(analyzedType));*/
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<ITypeDefinition>>()) {
+				var analyzer = lazy.Value;
+				if (analyzer.Show(analyzedType)) {
+					this.Children.Add(new AnalyzerSearchTreeNode<ITypeDefinition>(analyzedType, analyzer));
+				}
+			}
 		}
 
-		public override IMetadataEntity Member => analyzedType;
+		public override IEntity Member => analyzedType;
 	}
 }

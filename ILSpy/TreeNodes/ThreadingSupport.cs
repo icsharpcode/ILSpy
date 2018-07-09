@@ -65,8 +65,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						result.Add(child);
 						App.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action<SharpTreeNode>(
 							delegate (SharpTreeNode newChild) {
-								// don't access "child" here the
-								// background thread might already be running the next loop iteration
+								// don't access "child" here,
+								// the background thread might already be running the next loop iteration
 								if (loadChildrenTask == thisTask) {
 									node.Children.Insert(node.Children.Count - 1, newChild);
 								}
