@@ -68,6 +68,7 @@
     <Compile Include="AboutPage.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\PropertyOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeExposedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\TypeUsedByAnalyzer.cs" />
@@ -226,6 +227,7 @@
     <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
+    <Compile Include="TypeExtensionMethodsAnalyzer.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
