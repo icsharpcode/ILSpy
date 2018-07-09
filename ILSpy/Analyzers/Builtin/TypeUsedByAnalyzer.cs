@@ -123,6 +123,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, ITypeDefinition type, AnalyzerContext context)
 		{
+			if (analyzedEntity.ParentAssembly.PEFile == type.ParentAssembly.PEFile
+				&& analyzedEntity.MetadataToken == type.MetadataToken)
+				yield break;
+
 			var typeSystem = context.TypeSystem;
 			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity);
 
