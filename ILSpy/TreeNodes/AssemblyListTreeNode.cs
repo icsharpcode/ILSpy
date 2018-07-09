@@ -221,7 +221,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				TypeTreeNode decl = FindTypeNode(declaringType);
 				if (decl != null) {
 					decl.EnsureLazyChildren();
-					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.Equals(def) && !t.IsHidden);
+					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.MetadataToken == def.MetadataToken && !t.IsHidden);
 				}
 			} else {
 				AssemblyTreeNode asm = FindAssemblyNode(def.ParentAssembly);
@@ -282,7 +282,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(m => m.FieldDefinition.Equals(def) && !m.IsHidden);
+			return typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(m => m.FieldDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 		}
 
 		/// <summary>
@@ -295,7 +295,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.Equals(def) && !m.IsHidden);
+			return typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 		}
 
 		/// <summary>
@@ -308,7 +308,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (typeNode == null)
 				return null;
 			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.Equals(def) && !m.IsHidden);
+			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
 		}
 		#endregion
 	}
