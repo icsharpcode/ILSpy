@@ -68,11 +68,16 @@
     <Compile Include="AboutPage.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\TypeInstantiatedByAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\TypeUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\IAnalyzer.cs" />
     <Compile Include="Analyzers\AnalyzerTreeView.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Analyzers\TreeNodes\AnalyzedAccessorTreeNode.cs" />
+    <Compile Include="Analyzers\TreeNodes\AnalyzedEventTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedMethodTreeNode.cs" />
+    <Compile Include="Analyzers\TreeNodes\AnalyzedPropertyTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedTypeTreeNode.cs" />
     <Compile Include="App.xaml.cs">
       <SubType>Code</SubType>
@@ -200,7 +205,6 @@
     <Compile Include="Analyzers\AnalyzerEntityTreeNode.cs" />
     <Compile Include="Analyzers\AnalyzerSearchTreeNode.cs" />
     <Compile Include="Analyzers\AnalyzerTreeNode.cs" />
-    <Compile Include="TreeNodes\Analyzer\Extensions.cs" />
     <Compile Include="Analyzers\RemoveAnalyzeContextMenuEntry.cs" />
     <Compile Include="Analyzers\ScopedWhereUsedAnalyzer.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
@@ -372,6 +376,10 @@
   <ItemGroup>
     <None Include="@(Page)" />
     <None Include="@(Resource)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TreeNodes\Analyzer\" />
   </ItemGroup>
 
   <!--
