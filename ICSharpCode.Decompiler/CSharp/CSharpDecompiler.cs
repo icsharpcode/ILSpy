@@ -344,6 +344,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return typeSystemAstBuilder;
 		}
 
+		IDocumentationProvider CreateDefaultDocumentationProvider()
+		{
+			return XmlDocLoader.LoadDocumentation(typeSystem.ModuleDefinition);
+		}
+
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
@@ -369,6 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -433,6 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -446,7 +453,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public ILTransformContext CreateILTransformContext(ILFunction function)
 		{
-			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
+			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
+				CancellationToken = CancellationToken
+			};
 			RequiredNamespaceCollector.CollectNamespaces(function.Method, typeSystem, decompileRun.Namespaces);
 			return new ILTransformContext(function, typeSystem, DebugInfoProvider, settings) {
 				CancellationToken = CancellationToken,
@@ -474,6 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -509,6 +520,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
 			};
 			syntaxTree = new SyntaxTree();
@@ -546,7 +558,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentNullException(nameof(definitions));
 			ITypeDefinition parentTypeDef = null;
 			syntaxTree = new SyntaxTree();
-			var decompileRun = new DecompileRun(settings) { CancellationToken = CancellationToken };
+			var decompileRun = new DecompileRun(settings) {
+				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
+				CancellationToken = CancellationToken
+			};
 			foreach (var entity in definitions) {
 				if (entity.IsNil)
 					throw new ArgumentException("definitions contains null element");

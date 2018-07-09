@@ -27,8 +27,16 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.Documentation
 {
+	/// <summary>
+	/// Provides XML documentation for type and member definitions in source code.
+	/// </summary>
 	public interface IDocumentationProvider
 	{
+		/// <summary>
+		/// Returns the XML documentation for the given <paramref name="entity"/>.
+		/// May return null, if no documentation is present for the entity.
+		/// </summary>
+		/// <exception cref="ArgumentNullException"><paramref name="entity"/> is null.</exception>
 		string GetDocumentation(IEntity entity);
 	}
 
