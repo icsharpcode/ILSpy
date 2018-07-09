@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 
 		public void AddMapping(MethodDefinitionHandle parent, MethodDefinitionHandle part)
 		{
-			Debug.Print("Parent: " + MetadataTokens.GetRowNumber(parent) + " Part: " + MetadataTokens.GetRowNumber(part));
+			//Debug.Print("Parent: " + MetadataTokens.GetRowNumber(parent) + " Part: " + MetadataTokens.GetRowNumber(part));
 			if (parents.ContainsKey(part))
 				return;
 			parents.Add(part, parent);

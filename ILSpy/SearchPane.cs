@@ -222,7 +222,7 @@ namespace ICSharpCode.ILSpy
 							continue;
 						CancellationToken cancellationToken = cts.Token;
 
-						foreach (var type in typeSystem.GetTopLevelTypeDefinitions()) {
+						foreach (var type in typeSystem.MainAssembly.TopLevelTypeDefinitions) {
 							cancellationToken.ThrowIfCancellationRequested();
 							searcher.Search(type, language, AddResult);
 						}
