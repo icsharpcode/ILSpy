@@ -18,72 +18,47 @@
 
 using System;
 using System.Linq;
-using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
 	{
-		readonly Decompiler.Metadata.PEFile module;
-		readonly EventDefinitionHandle analyzedEvent;
+		readonly IEvent analyzedEvent;
 		readonly string prefix;
 
-		public AnalyzedEventTreeNode(Decompiler.Metadata.PEFile module, EventDefinitionHandle analyzedEvent, string prefix = "")
+		public AnalyzedEventTreeNode(IEvent analyzedEvent, string prefix = "")
 		{
-			if (analyzedEvent == null)
-				throw new ArgumentNullException(nameof(analyzedEvent));
-			this.module = module;
-			this.analyzedEvent = analyzedEvent;
+			this.analyzedEvent = analyzedEvent ?? throw new ArgumentNullException(nameof(analyzedEvent));
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.EventDefinition(module, analyzedEvent);
+		public override IEntity Member => analyzedEvent;
 
-		public override object Icon
-		{
-			get { return EventTreeNode.GetIcon(new Decompiler.Metadata.EventDefinition(module, analyzedEvent)); }
-		}
+		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 
 		// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-		public override object Text => prefix + Language.EventToString(new Decompiler.Metadata.EventDefinition(module, analyzedEvent), includeTypeName: true, includeNamespace: true);
+		public override object Text => prefix + Language.EventToString(analyzedEvent, includeTypeName: true, includeNamespace: true);
 
 		protected override void LoadChildren()
 		{
-			if (analyzedEvent.AddMethod != null)
-				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.AddMethod, "add"));
+			if (analyzedEvent.AddAccessor != null)
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.AddAccessor, "add"));
 			
-			if (analyzedEvent.RemoveMethod != null)
-				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.RemoveMethod, "remove"));
-			
-			foreach (var accessor in analyzedEvent.OtherMethods)
-				this.Children.Add(new AnalyzedEventAccessorTreeNode(accessor, null));
+			if (analyzedEvent.RemoveAccessor != null)
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.RemoveAccessor, "remove"));
 
-			if (AnalyzedEventFiredByTreeNode.CanShow(analyzedEvent))
-				this.Children.Add(new AnalyzedEventFiredByTreeNode(analyzedEvent));
+			//foreach (var accessor in analyzedEvent.OtherMethods)
+			//	this.Children.Add(new AnalyzedAccessorTreeNode(accessor, null));
 
-			if (AnalyzedEventOverridesTreeNode.CanShow(analyzedEvent))
-				this.Children.Add(new AnalyzedEventOverridesTreeNode(analyzedEvent));
-			
-			if (AnalyzedInterfaceEventImplementedByTreeNode.CanShow(analyzedEvent))
-				this.Children.Add(new AnalyzedInterfaceEventImplementedByTreeNode(analyzedEvent));
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IEvent>>()) {
+				var analyzer = lazy.Value;
+				if (analyzer.Show(analyzedEvent)) {
+					this.Children.Add(new AnalyzerSearchTreeNode<IEvent>(analyzedEvent, analyzer));
+				}
+			}
 		}
-
-		/*public static AnalyzerTreeNode TryCreateAnalyzer(MemberReference member)
-		{
-			if (CanShow(member))
-				return new AnalyzedEventTreeNode(member as EventDefinition);
-			else
-				return null;
-		}
-
-		public static bool CanShow(IMemberReference member)
-		{
-			if (!(member is EventDefinition eventDef))
-				return false;
-
-			return !MainWindow.Instance.CurrentLanguage.ShowMember(eventDef.GetAccessors().First().Method)
-				|| AnalyzedEventOverridesTreeNode.CanShow(eventDef);
-		}*/
 	}
 }

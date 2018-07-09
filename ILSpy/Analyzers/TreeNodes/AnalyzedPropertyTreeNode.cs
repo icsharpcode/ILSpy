@@ -17,70 +17,45 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Reflection.Metadata;
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	sealed class AnalyzedPropertyTreeNode : AnalyzerEntityTreeNode
 	{
-		readonly Decompiler.Metadata.PEFile module;
-		readonly PropertyDefinitionHandle analyzedProperty;
-		readonly bool isIndexer;
+		readonly IProperty analyzedProperty;
 		readonly string prefix;
 
-		public AnalyzedPropertyTreeNode(Decompiler.Metadata.PEFile module, PropertyDefinitionHandle analyzedProperty, string prefix = "")
+		public AnalyzedPropertyTreeNode(IProperty analyzedProperty, string prefix = "")
 		{
-			if (analyzedProperty == null)
-				throw new ArgumentNullException(nameof(analyzedProperty));
-			using (LoadedAssembly.DisableAssemblyLoad()) {
-				this.isIndexer = analyzedProperty.HasMatchingDefaultMemberAttribute(module, out _);
-			}
-			this.module = module;
-			this.analyzedProperty = analyzedProperty;
+			this.analyzedProperty = analyzedProperty ?? throw new ArgumentNullException(nameof(analyzedProperty));
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon => PropertyTreeNode.GetIcon(new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty), isIndexer);
+		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty);
 
 		// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-		public override object Text => prefix + Language.PropertyToString(new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty), includeNamespace: true, includeTypeName: true, isIndexer: isIndexer);
+		public override object Text => prefix + Language.PropertyToString(analyzedProperty, includeNamespace: true, includeTypeName: true);
 
 		protected override void LoadChildren()
 		{
-			var accessors = module.Metadata.GetPropertyDefinition(analyzedProperty).GetAccessors();
-			if (!accessors.Getter.IsNil)
-				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(module, accessors.Getter, "get"));
-			if (!accessors.Setter.IsNil)
-				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(module, accessors.Setter, "set"));
+			if (!analyzedProperty.CanGet)
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Getter, "get"));
+			if (!analyzedProperty.CanSet)
+				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter, "set"));
 			//foreach (var accessor in analyzedProperty.OtherMethods)
 			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
 
-			/*if (AnalyzedPropertyOverridesTreeNode.CanShow(analyzedProperty))
-				this.Children.Add(new AnalyzedPropertyOverridesTreeNode(analyzedProperty));
-			if (AnalyzedInterfacePropertyImplementedByTreeNode.CanShow(analyzedProperty))
-				this.Children.Add(new AnalyzedInterfacePropertyImplementedByTreeNode(analyzedProperty));*/
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IProperty>>()) {
+				var analyzer = lazy.Value;
+				if (analyzer.Show(analyzedProperty)) {
+					this.Children.Add(new AnalyzerSearchTreeNode<IProperty>(analyzedProperty, analyzer));
+				}
+			}
 		}
 
-		/*public static AnalyzerTreeNode TryCreateAnalyzer(IMemberReference member)
-		{
-			if (CanShow(member))
-				return new AnalyzedPropertyTreeNode((PropertyDefinition)member);
-			else
-				return null;
-		}
-
-		public static bool CanShow(IMemberReference member)
-		{
-			if (!(member is PropertyDefinition property))
-				return false;
-
-			return !MainWindow.Instance.CurrentLanguage.ShowMember(property.GetMethod.IsNil ? property.SetMethod : property.GetMethod)
-			    || AnalyzedPropertyOverridesTreeNode.CanShow(property);
-		}*/
-
-		public override Decompiler.Metadata.IMetadataEntity Member => new Decompiler.Metadata.PropertyDefinition(module, analyzedProperty);
+		public override IEntity Member => analyzedProperty;
 	}
 }

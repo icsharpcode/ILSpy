@@ -22,8 +22,9 @@ using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
 	{
