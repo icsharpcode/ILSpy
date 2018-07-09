@@ -44,10 +44,9 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			if (analyzedEvent.AddAccessor != null)
+			if (analyzedEvent.CanAdd)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.AddAccessor, "add"));
-			
-			if (analyzedEvent.RemoveAccessor != null)
+			if (analyzedEvent.CanRemove)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.RemoveAccessor, "remove"));
 
 			//foreach (var accessor in analyzedEvent.OtherMethods)

@@ -41,9 +41,9 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			if (!analyzedProperty.CanGet)
+			if (analyzedProperty.CanGet)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Getter, "get"));
-			if (!analyzedProperty.CanSet)
+			if (analyzedProperty.CanSet)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter, "set"));
 			//foreach (var accessor in analyzedProperty.OtherMethods)
 			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));

@@ -79,10 +79,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md));
 					break;
 				case IProperty pd:
-					//AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
 					break;
 				case IEvent ed:
-					//AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
+					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
 					break;
 				default:
 					throw new NotSupportedException();

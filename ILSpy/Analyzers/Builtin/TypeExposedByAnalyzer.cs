@@ -8,6 +8,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
+	/// <summary>
+	/// Finds all entities that expose a type.
+	/// </summary>
 	[Export(typeof(IAnalyzer<ITypeDefinition>))]
 	class TypeExposedByAnalyzer : ITypeDefinitionAnalyzer<ITypeDefinition>
 	{
