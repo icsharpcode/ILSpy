@@ -17,39 +17,46 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		public string Text => "Used By";
 
-		public bool Show(IMethod entity) => true;
+		public bool Show(IMethod entity) => !entity.IsVirtual;
 
 		public IEnumerable<IEntity> Analyze(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
 		{
 			var blob = methodBody.GetILReader();
 
+			var baseMethod = InheritanceHelper.GetBaseMember(analyzedMethod);
+
 			while (blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
-				switch (opCode.GetOperandType()) {
-					case OperandType.Field:
-					case OperandType.Method:
-					case OperandType.Sig:
-					case OperandType.Tok:
-						var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-						if (member.IsNil) continue;
+				if (opCode != ILOpCode.Call && opCode != ILOpCode.Callvirt) {
+					ILParser.SkipOperand(ref blob, opCode);
+					continue;
+				}
+				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+				if (member.IsNil || !member.Kind.IsMemberKind()) continue;
 
-						switch (member.Kind) {
-							case HandleKind.MethodDefinition:
-							case HandleKind.MethodSpecification:
-							case HandleKind.MemberReference:
-								var m = context.TypeSystem.ResolveAsMember(member)?.MemberDefinition;
-								if (m.MetadataToken == analyzedMethod.MetadataToken && m.ParentAssembly.PEFile == analyzedMethod.ParentAssembly.PEFile) {
-									yield return method;
-									yield break;
-								}
-								break;
-						}
-						break;
-					default:
-						ILParser.SkipOperand(ref blob, opCode);
-						break;
+				var m = context.TypeSystem.ResolveAsMember(member)?.MemberDefinition;
+				if (m == null) continue;
+
+				if (opCode == ILOpCode.Call) {
+					if (IsSameMember(analyzedMethod, m)) {
+						yield return method;
+						yield break;
+					}
+				}
+
+				if (opCode == ILOpCode.Callvirt && baseMethod != null) {
+					if (IsSameMember(baseMethod, m)) {
+						yield return method;
+						yield break;
+					}
 				}
 			}
+		}
+
+		static bool IsSameMember(IMember analyzedMethod, IMember m)
+		{
+			return m.MetadataToken == analyzedMethod.MetadataToken
+				&& m.ParentAssembly.PEFile == analyzedMethod.ParentAssembly.PEFile;
 		}
 	}
 }
