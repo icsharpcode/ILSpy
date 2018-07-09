@@ -49,87 +49,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public IProperty PropertyDefinition { get; }
 
-		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(PropertyDefinition, Language) + PropertyDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(IProperty property, Language language, bool? isIndexer = null)
+		public static object GetText(IProperty property, Language language)
 		{
-			return language.PropertyToString(property, false, false, isIndexer);
+			return language.PropertyToString(property, false, false);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);
 
-		public static ImageSource GetIcon(IProperty property, bool isIndexer = false)
+		public static ImageSource GetIcon(IProperty property)
 		{
-			MemberIcon icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
-			MethodAttributes attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
-			bool isStatic = (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0;
-			return Images.GetIcon(icon, GetOverlayIcon(attributesOfMostAccessibleMethod), isStatic);
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
-		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
-					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
-					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case 0:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		private static MethodAttributes GetAttributesOfMostAccessibleMethod(IProperty property)
-		{
-			// There should always be at least one method from which to
-			// obtain the result, but the compiler doesn't know this so
-			// initialize the result with a default value
-			MethodAttributes result = (MethodAttributes)0;
-
-			// Method access is defined from inaccessible (lowest) to public (highest)
-			// in numeric order, so we can do an integer comparison of the masked attribute
-			int accessLevel = 0;
-
-			var metadata = ((MetadataAssembly)property.ParentAssembly).PEFile.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
-			var accessors = propertyDefinition.GetAccessors();
-
-			if (!accessors.Getter.IsNil) {
-				var getter = metadata.GetMethodDefinition(accessors.Getter);
-				int methodAccessLevel = (int)(getter.Attributes & MethodAttributes.MemberAccessMask);
-				if (accessLevel < methodAccessLevel) {
-					accessLevel = methodAccessLevel;
-					result = getter.Attributes;
-				}
-			}
-
-			if (!accessors.Setter.IsNil) {
-				var setter = metadata.GetMethodDefinition(accessors.Setter);
-				int methodAccessLevel = (int)(setter.Attributes & MethodAttributes.MemberAccessMask);
-				if (accessLevel < methodAccessLevel) {
-					accessLevel = methodAccessLevel;
-					result = setter.Attributes;
-				}
-			}
-
-			/*foreach (var m in property.OtherMethods) {
-				int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
-				if (accessLevel < methodAccessLevel) {
-					accessLevel = methodAccessLevel;
-					result = m.Attributes;
-				}
-			}*/
-
-			return result;
+			return Images.GetIcon(property.IsIndexer ? MemberIcon.Indexer : MemberIcon.Property,
+				MethodTreeNode.GetOverlayIcon(property.Accessibility), property.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
@@ -149,10 +81,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				switch (GetAttributesOfMostAccessibleMethod(PropertyDefinition) & MethodAttributes.MemberAccessMask) {
-					case MethodAttributes.Public:
-					case MethodAttributes.Family:
-					case MethodAttributes.FamORAssem:
+				switch (PropertyDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.ProtectedOrInternal:
+					case Accessibility.Protected:
 						return true;
 					default:
 						return false;

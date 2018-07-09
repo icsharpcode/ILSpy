@@ -17,17 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -55,24 +48,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public static ImageSource GetIcon(IMethod method)
 		{
 			if (method.IsOperator)
-				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method), false);
+				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method.Accessibility), false);
 
 			if (method.IsExtensionMethod)
-				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method), false);
+				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method.Accessibility), false);
 
 			if (method.IsConstructor)
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method), method.IsStatic);
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Accessibility), method.IsStatic);
 
 			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
-				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method), true);
+				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method.Accessibility), true);
 
 			return Images.GetIcon(method.IsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
-				GetOverlayIcon(method), method.IsStatic);
+				GetOverlayIcon(method.Accessibility), method.IsStatic);
 		}
 
-		static AccessOverlayIcon GetOverlayIcon(IMethod method)
+		internal static AccessOverlayIcon GetOverlayIcon(Accessibility accessibility)
 		{
-			switch (method.Accessibility) {
+			switch (accessibility) {
 				case Accessibility.Public:
 					return AccessOverlayIcon.Public;
 				case Accessibility.Internal:

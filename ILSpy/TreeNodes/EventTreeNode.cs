@@ -17,14 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
-using System.Reflection;
-using SRM = System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -59,35 +54,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IEvent @event)
 		{
-			var metadata = ((MetadataAssembly)@event.ParentAssembly).PEFile.Metadata;
-			var accessor = metadata.GetEventDefinition((EventDefinitionHandle)@event.MetadataToken).GetAccessors().GetAny();
-			if (!accessor.IsNil) {
-				var accessorMethod = metadata.GetMethodDefinition(accessor);
-				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(accessorMethod.Attributes), accessorMethod.HasFlag(MethodAttributes.Static));
-			}
-			return Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
-		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
-					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
-					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case 0:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
+			return Images.GetIcon(MemberIcon.Event, MethodTreeNode.GetOverlayIcon(@event.Accessibility), @event.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)

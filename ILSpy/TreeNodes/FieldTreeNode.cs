@@ -17,13 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Reflection;
-using System.Reflection.Metadata;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -50,47 +46,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(IField field)
 		{
-			var metadata = ((MetadataAssembly)field.ParentAssembly).PEFile.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
-			if (fieldDefinition.GetDeclaringType().IsEnum(metadata) && !fieldDefinition.HasFlag(FieldAttributes.SpecialName))
-				return Images.GetIcon(MemberIcon.EnumValue, GetOverlayIcon(fieldDefinition.Attributes), false);
+			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
+				return Images.GetIcon(MemberIcon.EnumValue, MethodTreeNode.GetOverlayIcon(field.Accessibility), false);
 
-			if (fieldDefinition.HasFlag(FieldAttributes.Literal))
-				return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(fieldDefinition.Attributes), false);
-			else if (fieldDefinition.HasFlag(FieldAttributes.InitOnly)) {
-				if (IsDecimalConstant(field))
-					return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(fieldDefinition.Attributes), false);
-				else
-					return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(fieldDefinition.Attributes), fieldDefinition.HasFlag(FieldAttributes.Static));
-			} else
-				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(fieldDefinition.Attributes), fieldDefinition.HasFlag(FieldAttributes.Static));
-		}
+			if (field.IsConst)
+				return Images.GetIcon(MemberIcon.Literal, MethodTreeNode.GetOverlayIcon(field.Accessibility), false);
 
-		private static bool IsDecimalConstant(IField field)
-		{
-			return field.IsConst && field.Type.IsKnownType(KnownTypeCode.Decimal) && field.ConstantValue != null;
-		}
+			if (field.IsReadOnly)
+				return Images.GetIcon(MemberIcon.FieldReadOnly, MethodTreeNode.GetOverlayIcon(field.Accessibility), field.IsStatic);
 
-		private static AccessOverlayIcon GetOverlayIcon(FieldAttributes fieldAttributes)
-		{
-			switch (fieldAttributes & FieldAttributes.FieldAccessMask) {
-				case FieldAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case FieldAttributes.Assembly:
-					return AccessOverlayIcon.Internal;
-				case FieldAttributes.FamANDAssem:
-					return AccessOverlayIcon.PrivateProtected;
-				case FieldAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case FieldAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case FieldAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case 0:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
+			return Images.GetIcon(MemberIcon.Field, MethodTreeNode.GetOverlayIcon(field.Accessibility), field.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
