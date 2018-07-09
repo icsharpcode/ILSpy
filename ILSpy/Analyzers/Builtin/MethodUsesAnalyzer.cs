@@ -35,6 +35,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!md.HasBody()) yield break;
 
 			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			var visitor = new TypeDefinitionCollector();
 
 			while (blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
@@ -52,9 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
-								var type = context.TypeSystem.ResolveAsType(member).GetDefinition();
-								if (type != null)
-									yield return type;
+								context.TypeSystem.ResolveAsType(member).AcceptVisitor(visitor);
 								break;
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
@@ -70,6 +69,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 						ILParser.SkipOperand(ref blob, opCode);
 						break;
 				}
+			}
+
+			foreach (var type in visitor.UsedTypes) {
+				yield return type;
+			}
+		}
+
+		class TypeDefinitionCollector : TypeVisitor
+		{
+			public readonly List<ITypeDefinition> UsedTypes = new List<ITypeDefinition>(); 
+
+			public override IType VisitTypeDefinition(ITypeDefinition type)
+			{
+				UsedTypes.Add(type);
+				return base.VisitTypeDefinition(type);
 			}
 		}
 	}

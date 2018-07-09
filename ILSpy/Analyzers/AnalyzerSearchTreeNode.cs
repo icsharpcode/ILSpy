@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.TreeNodes.Analyzer;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			threading.LoadChildren(this, FetchChildren);
 		}
-		
+
 		protected IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
 			if (analyzer is IEntityAnalyzer<T> entityAnalyzer) {
@@ -81,14 +81,14 @@ namespace ICSharpCode.ILSpy.Analyzers
 					return new AnalyzedMethodTreeNode(md) {
 						Language = this.Language
 					};
-				//case IProperty pd:
-				//	return new AnalyzedPropertyTreeNode(pd) {
-				//Language = this.Language
-				//};
-				//case IEvent ed:
-				//	return new AnalyzedEventTreeNode(ed) {
-				//Language = this.Language
-				//};
+				case IProperty pd:
+					return new AnalyzedPropertyTreeNode(pd) {
+						Language = this.Language
+					};
+				case IEvent ed:
+					return new AnalyzedEventTreeNode(ed) {
+						Language = this.Language
+					};
 				default:
 					throw new NotSupportedException();
 			}
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				this.Children.Clear();
 			}
 		}
-		
+
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
 			// only cancel a running analysis if user has manually added/removed assemblies

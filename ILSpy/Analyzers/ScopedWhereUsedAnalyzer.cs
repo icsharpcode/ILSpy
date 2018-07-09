@@ -28,7 +28,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.Analyzers;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Determines the accessibility domain of a member for where-used analysis.
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			this.language = language ?? throw new ArgumentNullException(nameof(language));
 			this.analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
-			this.analyzedEntity = analyzedEntity ;
+			this.analyzedEntity = analyzedEntity;
 			this.assemblyScope = analyzedEntity.ParentAssembly;
 			if (analyzedEntity is ITypeDefinition type) {
 				this.typeScope = type;

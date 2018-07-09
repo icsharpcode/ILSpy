@@ -51,16 +51,5 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				}
 			}
 		}
-
-
-
-		bool ScanMethodBody(PEFile module, int rva)
-		{
-			var blob = module.Reader.GetMethodBody(rva).GetILReader();
-			while (blob.RemainingBytes > 0) {
-			}
-
-			return false;
-		}
 	}
 }
