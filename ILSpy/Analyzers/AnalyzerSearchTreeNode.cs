@@ -54,6 +54,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 				var context = new AnalyzerContext(ts) {
 					CancellationToken = ct,
+					Language = Language,
 					CodeMappingInfo = Language.GetCodeMappingInfo(module, analyzedEntity.MetadataToken)
 				};
 				foreach (var result in entityAnalyzer.Analyze(analyzedEntity, context)) {

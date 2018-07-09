@@ -44,5 +44,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public IDecompilerTypeSystem TypeSystem { get; }
 		public CancellationToken CancellationToken { get; internal set; }
 		public CodeMappingInfo CodeMappingInfo { get; internal set; }
+		public Language Language { get; internal set; }
 	}
 }

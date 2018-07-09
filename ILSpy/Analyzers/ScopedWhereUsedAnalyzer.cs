@@ -113,7 +113,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		IEnumerable<IEntity> FindReferencesInAssembly(PEFile module, CancellationToken ct)
 		{
 			var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-			var context = new AnalyzerContext(ts) { CancellationToken = ct };
+			var context = new AnalyzerContext(ts) { CancellationToken = ct, Language = language };
 			foreach (var type in ts.MainAssembly.TypeDefinitions) {
 				ct.ThrowIfCancellationRequested();
 				if (type.MetadataToken.IsNil) continue;
@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		IEnumerable<IEntity> FindReferencesInTypeScope(CancellationToken ct)
 		{
 			var ts = new DecompilerTypeSystem(assemblyScope.PEFile, assemblyScope.PEFile.GetAssemblyResolver());
-			var context = new AnalyzerContext(ts) { CancellationToken = ct };
+			var context = new AnalyzerContext(ts) { CancellationToken = ct, Language = language };
 			var types = TreeTraversal.PreOrder(typeScope,
 				t => t.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions)
 				.Select(td => td.GetDefinition()));
@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		IEnumerable<IEntity> FindReferencesInEnclosingTypeScope(CancellationToken ct)
 		{
 			var ts = new DecompilerTypeSystem(assemblyScope.PEFile, assemblyScope.PEFile.GetAssemblyResolver());
-			var context = new AnalyzerContext(ts) { CancellationToken = ct };
+			var context = new AnalyzerContext(ts) { CancellationToken = ct, Language = language };
 			var types = TreeTraversal.PreOrder(typeScope.DeclaringTypeDefinition,
 				t => t.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions)
 				.Select(td => td.GetDefinition()));
