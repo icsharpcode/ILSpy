@@ -48,6 +48,8 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.AddAccessor, "add"));
 			if (analyzedEvent.CanRemove)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedEvent.RemoveAccessor, "remove"));
+			if (TryFindBackingField(analyzedEvent, out var backingField))
+				this.Children.Add(new AnalyzedFieldTreeNode(backingField));
 
 			//foreach (var accessor in analyzedEvent.OtherMethods)
 			//	this.Children.Add(new AnalyzedAccessorTreeNode(accessor, null));
@@ -58,6 +60,18 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 					this.Children.Add(new AnalyzerSearchTreeNode<IEvent>(analyzedEvent, analyzer));
 				}
 			}
+		}
+
+		bool TryFindBackingField(IEvent analyzedEvent, out IField backingField)
+		{
+			backingField = null;
+			foreach (var field in analyzedEvent.DeclaringTypeDefinition.GetFields(options: GetMemberOptions.IgnoreInheritedMembers)) {
+				if (field.Name == analyzedEvent.Name && field.Accessibility == Accessibility.Private) {
+					backingField = field;
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }
