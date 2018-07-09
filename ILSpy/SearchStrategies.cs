@@ -167,7 +167,7 @@ namespace ICSharpCode.ILSpy
 				case IField f:
 					return language.FieldToString(f, fullName, fullName);
 				case IProperty p:
-					return language.PropertyToString(p, fullName, fullName, p.IsIndexer);
+					return language.PropertyToString(p, fullName, fullName);
 				case IMethod m:
 					return language.MethodToString(m, fullName, fullName);
 				case IEvent e:

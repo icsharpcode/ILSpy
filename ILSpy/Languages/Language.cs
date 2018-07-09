@@ -180,7 +180,7 @@ namespace ICSharpCode.ILSpy
 			return GetDisplayName(field, includeTypeName, includeNamespace) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
-		public virtual string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
+		public virtual string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));

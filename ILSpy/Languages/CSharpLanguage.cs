@@ -440,12 +440,12 @@ namespace ICSharpCode.ILSpy
 			return TypeToStringInternal(field.DeclaringTypeDefinition, includeNamespace) + "." + simple;
 		}
 
-		public override string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace, bool? isIndexer = null)
+		public override string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
 			var buffer = new System.Text.StringBuilder();
-			if (isIndexer.Value) {
+			if (property.IsIndexer) {
 				if (property.IsExplicitInterfaceImplementation) {
 					string name = property.Name;
 					int index = name.LastIndexOf('.');
