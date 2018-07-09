@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Analyzers.TreeNodes;
@@ -61,7 +62,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 					yield return EntityTreeNodeFactory(result);
 				}
 			} else {
-				foreach (var result in new ScopedWhereUsedAnalyzer<T>(Language, analyzedEntity, analyzer).PerformAnalysis(ct)) {
+				foreach (var result in new ScopedWhereUsedAnalyzer<T>(Language, analyzedEntity, analyzer).PerformAnalysis(ct).Distinct()) {
 					yield return EntityTreeNodeFactory(result);
 				}
 			}
