@@ -99,7 +99,8 @@ namespace ICSharpCode.Decompiler
 			const MethodImplAttributes noBodyImplAttrs = MethodImplAttributes.InternalCall
 				| MethodImplAttributes.Native | MethodImplAttributes.Unmanaged | MethodImplAttributes.Runtime;
 			return (methodDefinition.Attributes & noBodyAttrs) == 0 &&
-				(methodDefinition.ImplAttributes & noBodyImplAttrs) == 0;
+				(methodDefinition.ImplAttributes & noBodyImplAttrs) == 0 &&
+				methodDefinition.RelativeVirtualAddress > 0;
 		}
 
 		public static int GetCodeSize(this MethodBodyBlock body)
