@@ -66,6 +66,9 @@
 
   <ItemGroup>
     <Compile Include="AboutPage.cs" />
+    <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MethodImplementsInterfaceAnalyzer.cs" />
+    <Compile Include="Analyzers\Builtin\MethodOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsedByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodUsesAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\PropertyOverriddenByAnalyzer.cs" />

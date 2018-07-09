@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
 {
 	/// <summary>
-	/// Shows properties that override a property.
+	/// Shows events that override an event.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IProperty>))]
-	class PropertyOverriddenByAnalyzer : ITypeDefinitionAnalyzer<IProperty>
+	[Export(typeof(IAnalyzer<IEvent>))]
+	class EventOverriddenByAnalyzer : ITypeDefinitionAnalyzer<IEvent>
 	{
 		public string Text => "Overridden By";
 
-		public IEnumerable<IEntity> Analyze(IProperty analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<IEntity> Analyze(IEvent analyzedEntity, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (!analyzedEntity.DeclaringType.GetAllBaseTypeDefinitions()
 				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken && t.ParentAssembly.PEFile == type.ParentAssembly.PEFile))
@@ -32,7 +29,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(IProperty entity)
+		public bool Show(IEvent entity)
 		{
 			return entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
 		}

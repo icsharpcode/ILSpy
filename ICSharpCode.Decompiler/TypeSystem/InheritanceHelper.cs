@@ -51,12 +51,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException("member");
 
 			if (includeImplementedInterfaces) {
-				throw new NotImplementedException();
-				/*if (member.IsExplicitInterfaceImplementation && member.ImplementedInterfaceMembers.Count == 1) {
+				if (member.IsExplicitInterfaceImplementation && member.ExplicitlyImplementedInterfaceMembers.Count() == 1) {
 					// C#-style explicit interface implementation
-					member = member.ImplementedInterfaceMembers[0];
+					member = member.ExplicitlyImplementedInterfaceMembers.First();
 					yield return member;
-				}*/
+				}
 			}
 
 			// Remove generic specialization
