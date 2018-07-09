@@ -460,7 +460,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <remarks>
 		/// * Types are resolved to their definition, as IType does not implement ISymbol.
 		///    * types without definition will resolve to <c>null</c>
-		///    * use ResolveType() properly resolve types
+		///    * use ResolveType() to properly resolve types
 		/// * When resolving methods, varargs signatures are not expanded.
 		///    * use ResolveMethod() instead to get an IMethod instance suitable for call-sites
 		/// * May return specialized members, where generics are involved.

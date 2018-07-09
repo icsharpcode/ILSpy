@@ -215,7 +215,7 @@ namespace ICSharpCode.ILSpy
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
 			} else {
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition, field.IsStatic);
-				decompiler.AstTransforms.Add(new SelectFieldTransform(field));
+				decompiler.AstTransforms.Add(new SelectFieldTransform(decompiler.TypeSystem.ResolveAsField(field.MetadataToken)));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			}
 		}
