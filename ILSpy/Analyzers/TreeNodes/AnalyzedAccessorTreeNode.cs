@@ -16,23 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
-	internal class AnalyzedPropertyAccessorTreeNode : AnalyzedMethodTreeNode
+	class AnalyzedAccessorTreeNode : AnalyzedMethodTreeNode
 	{
-		private readonly string name;
+		readonly string name;
 
-		public AnalyzedPropertyAccessorTreeNode(Decompiler.Metadata.PEFile module, MethodDefinitionHandle analyzedMethod, string name)
-			: base(module, analyzedMethod)
+		public AnalyzedAccessorTreeNode(IMethod analyzedMethod, string name)
+			: base(analyzedMethod)
 		{
+			if (string.IsNullOrWhiteSpace(name)) {
+				throw new System.ArgumentException("name must be a non-empty string", nameof(name));
+			}
+
 			this.name = name;
 		}
 
-		public override object Text
-		{
-			get { return name ?? base.Text; }
-		}
+		public override object Text => name;
 	}
 }
