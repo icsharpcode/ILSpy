@@ -416,17 +416,30 @@ namespace ICSharpCode.ILSpy
 			return TypeToStringInternal(type, includeNamespace, false);
 		}
 
-		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true)
+		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true, bool? isOutParameter = null)
 		{
 			TypeSystemAstBuilder builder = new TypeSystemAstBuilder();
 			builder.AlwaysUseShortTypeNames = !includeNamespace;
 			builder.AlwaysUseBuiltinTypeNames = useBuiltinTypeNames;
 
 			AstType astType = builder.ConvertType(t);
+			if (isOutParameter != null && astType is ComposedType ct && ct.HasRefSpecifier) {
+				ct.HasRefSpecifier = false;
+			} else {
+				isOutParameter = null;
+			}
+
 			StringWriter w = new StringWriter();
 
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
-			return w.ToString();
+			string output = w.ToString();
+
+			if (isOutParameter == true)
+				output = "out " + output;
+			else if (isOutParameter == false)
+				output = "ref " + output;
+
+			return output;
 		}
 
 		public override string FieldToString(IField field, bool includeTypeName, bool includeNamespace)
@@ -461,7 +474,7 @@ namespace ICSharpCode.ILSpy
 				foreach (var param in parameters) {
 					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append(TypeToStringInternal(param.Type, includeNamespace));
+					buffer.Append(TypeToStringInternal(param.Type, includeNamespace, isOutParameter: param.IsOut));
 					i++;
 				}
 
@@ -511,7 +524,7 @@ namespace ICSharpCode.ILSpy
 			foreach (var param in parameters) {
 				if (i > 0)
 					buffer.Append(", ");
-				buffer.Append(TypeToStringInternal(param.Type, includeNamespace));
+				buffer.Append(TypeToStringInternal(param.Type, includeNamespace, isOutParameter: param.IsOut));
 				i++;
 			}
 
