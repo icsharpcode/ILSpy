@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
 				this.Children.Add(new AssemblyReferenceTreeNode(r, parentAssembly));
 			foreach (var r in metadata.GetModuleReferences().OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
-				this.Children.Add(new ModuleReferenceTreeNode(r, metadata));
+				this.Children.Add(new ModuleReferenceTreeNode(parentAssembly, r, metadata));
 		}
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

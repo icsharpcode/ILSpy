@@ -220,7 +220,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		sealed class MyAssemblyResolver : Decompiler.Metadata.IAssemblyResolver
+		sealed class MyAssemblyResolver : IAssemblyResolver
 		{
 			readonly LoadedAssembly parent;
 			
@@ -232,6 +232,11 @@ namespace ICSharpCode.ILSpy
 			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
 			{
 				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();
+			}
+
+			public PEFile ResolveModule(PEFile mainModule, string moduleName)
+			{
+				return parent.LookupReferencedModule(mainModule, moduleName)?.GetPEFileOrNull();
 			}
 		}
 		
@@ -259,6 +264,15 @@ namespace ICSharpCode.ILSpy
 			} else {
 				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false), key => LookupReferencedAssemblyInternal(reference, false));
 			}
+		}
+
+		public LoadedAssembly LookupReferencedModule(PEFile mainModule, string moduleName)
+		{
+			if (mainModule == null)
+				throw new ArgumentNullException(nameof(mainModule));
+			if (moduleName == null)
+				throw new ArgumentNullException(nameof(moduleName));
+			return assemblyList.moduleLookupCache.GetOrAdd(mainModule.FileName + ";" + moduleName, _ => LookupReferencedModuleInternal(mainModule, moduleName));
 		}
 
 		class MyUniversalResolver : UniversalAssemblyResolver
@@ -326,7 +340,58 @@ namespace ICSharpCode.ILSpy
 			});
 			return asm;
 		}
-		
+
+		LoadedAssembly LookupReferencedModuleInternal(PEFile mainModule, string moduleName)
+		{
+			string file;
+			LoadedAssembly asm;
+			lock (loadingAssemblies) {
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					var reader = loaded.GetPEFileOrNull()?.Metadata;
+					if (reader == null || reader.IsAssembly) continue;
+					var moduleDef = reader.GetModuleDefinition();
+					if (moduleName.Equals(reader.GetString(moduleDef.Name), StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(moduleName, MessageKind.Info, "Success - Found in Assembly List");
+						return loaded;
+					}
+				}
+
+				file = Path.Combine(Path.GetDirectoryName(mainModule.FileName), moduleName);
+				if (!File.Exists(file))
+					return null;
+
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {
+						return loaded;
+					}
+				}
+
+				if (file != null && loadingAssemblies.TryGetValue(file, out asm))
+					return asm;
+
+				if (assemblyLoadDisableCount > 0)
+					return null;
+
+				if (file != null) {
+					LoadedAssemblyReferencesInfo.AddMessage(moduleName, MessageKind.Info, "Success - Loading from: " + file);
+					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
+				} else {
+					LoadedAssemblyReferencesInfo.AddMessageOnce(moduleName, MessageKind.Error, "Could not find reference: " + moduleName);
+					return null;
+				}
+				loadingAssemblies.Add(file, asm);
+			}
+			App.Current.Dispatcher.BeginInvoke((Action)delegate () {
+				lock (assemblyList.assemblies) {
+					assemblyList.assemblies.Add(asm);
+				}
+				lock (loadingAssemblies) {
+					loadingAssemblies.Remove(file);
+				}
+			});
+			return asm;
+		}
+
 		public Task ContinueWhenLoaded(Action<Task<PEFile>> onAssemblyLoaded, TaskScheduler taskScheduler)
 		{
 			return this.assemblyTask.ContinueWith(onAssemblyLoaded, default(CancellationToken), TaskContinuationOptions.RunContinuationsAsynchronously, taskScheduler);
