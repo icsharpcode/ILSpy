@@ -58,7 +58,6 @@
 
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
-    <Compile Include="CSharp\AstTypeBuilder.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
     <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
@@ -270,7 +269,6 @@
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
-    <Compile Include="Metadata\MetadataResolver.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
