@@ -8,6 +8,7 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -102,8 +103,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectNamespaces(@event.AddAccessor, typeSystem, namespaces);
 					CollectNamespaces(@event.RemoveAccessor, typeSystem, namespaces);
 					break;
-				default:
-					throw new NotImplementedException();
 			}
 		}
 
@@ -195,7 +194,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					case Metadata.OperandType.Sig:
 					case Metadata.OperandType.Tok:
 					case Metadata.OperandType.Type:
-						var handle = MetadataTokens.EntityHandle(instructions.ReadInt32());
+						var handle = MetadataTokenHelpers.EntityHandleOrNil(instructions.ReadInt32());
+						if (handle.IsNil) break;
 						switch (handle.Kind) {
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
@@ -218,8 +218,6 @@ namespace ICSharpCode.Decompiler.CSharp
 									}
 								}
 								break;
-							default:
-								throw new NotSupportedException();
 						}
 						break;
 					default:
@@ -250,8 +248,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreach (var arg in method.TypeArguments)
 						CollectNamespacesForTypeReference(arg, namespaces);
 					break;
-				default:
-					throw new NotImplementedException();
 			}
 		}
 	}

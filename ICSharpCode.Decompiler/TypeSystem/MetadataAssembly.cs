@@ -295,7 +295,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var method = GetDefinition(methodDefHandle);
 			if (method == null) {
-				throw new NotImplementedException();
+				throw new BadImageFormatException("MethodDef not found in current assembly.");
 			}
 			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList) {
 				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
