@@ -1563,7 +1563,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 				OpenBlock(false);
 				switch (exportedType.Implementation.Kind) {
 					case HandleKind.AssemblyFile:
-						throw new NotImplementedException();
+						var file = metadata.GetAssemblyFile((AssemblyFileHandle)exportedType.Implementation);
+						output.WriteLine(".file {0}", metadata.GetString(file.Name));
+						int typeDefId = exportedType.GetTypeDefinitionId();
+						if (typeDefId != 0)
+							output.WriteLine(".class 0x{0:x8}", typeDefId);
+						break;
 					case HandleKind.ExportedType:
 						output.Write(".class extern ");
 						var declaringType = metadata.GetExportedType((ExportedTypeHandle)exportedType.Implementation);
