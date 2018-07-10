@@ -93,6 +93,18 @@ namespace ICSharpCode.Decompiler.Metadata
 			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), options);
 		}
 
+		public PEFile ResolveModule(PEFile mainModule, string moduleName)
+		{
+			string baseDirectory = Path.GetDirectoryName(mainModule.FileName);
+			string moduleFileName = Path.Combine(baseDirectory, moduleName);
+			if (!File.Exists(moduleFileName)) {
+				if (throwOnError)
+					throw new Exception($"Module {moduleName} could not be found!");
+				return null;
+			}
+			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), options);
+		}
+
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
 			var targetFramework = TargetFramework.Split(new[] { ",Version=v" }, StringSplitOptions.None);

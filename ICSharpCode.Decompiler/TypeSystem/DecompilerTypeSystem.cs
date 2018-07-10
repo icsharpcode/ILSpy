@@ -104,20 +104,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IAssemblyReference>();
-			var assemblyReferenceQueue = new Queue<Metadata.AssemblyReference>(moduleDefinition.AssemblyReferences);
-			var processedAssemblyReferences = new HashSet<Metadata.AssemblyReference>(KeyComparer.Create((Metadata.AssemblyReference reference) => reference.FullName));
+			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
+			var mainMetadata = moduleDefinition.Metadata;
+			foreach (var h in mainMetadata.GetModuleReferences()) {
+				var moduleRef = mainMetadata.GetModuleReference(h);
+				assemblyReferenceQueue.Enqueue((false, moduleDefinition, mainMetadata.GetString(moduleRef.Name)));
+			}
+			foreach (var refs in moduleDefinition.AssemblyReferences) {
+				assemblyReferenceQueue.Enqueue((true, moduleDefinition, refs));
+			}
+			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+				reference.IsAssembly ? "A:" + reference.MainModule.FileName + ":" + ((AssemblyReference)reference.Reference).FullName :
+				                       "M:" + reference.MainModule.FileName + ":" + reference.Reference);
+			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			while (assemblyReferenceQueue.Count > 0) {
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
 					continue;
-				var asm = assemblyResolver.Resolve(asmRef);
+				PEFile asm;
+				if (asmRef.IsAssembly) {
+					asm = assemblyResolver.Resolve((AssemblyReference)asmRef.Reference);
+				} else {
+					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
+				}
 				if (asm != null) {
 					referencedAssemblies.Add(asm.WithOptions(typeSystemOptions));
 					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes) {
-						var forwarder = metadata.GetExportedType(h);
-						if (!forwarder.IsForwarder || forwarder.Implementation.Kind != SRM.HandleKind.AssemblyReference) continue;
-						assemblyReferenceQueue.Enqueue(new Metadata.AssemblyReference(asm, (SRM.AssemblyReferenceHandle)forwarder.Implementation));
+						var exportedType = metadata.GetExportedType(h);
+						switch (exportedType.Implementation.Kind) {
+							case SRM.HandleKind.AssemblyReference:
+								assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation)));
+								break;
+							case SRM.HandleKind.AssemblyFile:
+								var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
+								assemblyReferenceQueue.Enqueue((false, asm, metadata.GetString(file.Name)));
+								break;
+						}
 					}
 				}
 			}
