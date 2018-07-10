@@ -23,14 +23,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Represents a method or property.
 	/// </summary>
-	public interface IUnresolvedParameterizedMember : IUnresolvedMember
-	{
-		IList<IUnresolvedParameter> Parameters { get; }
-	}
-	
-	/// <summary>
-	/// Represents a method or property.
-	/// </summary>
 	public interface IParameterizedMember : IMember
 	{
 		IReadOnlyList<IParameter> Parameters { get; }

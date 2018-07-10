@@ -490,7 +490,6 @@
     <Compile Include="TypeSystem\IAttribute.cs" />
     <Compile Include="TypeSystem\ICodeContext.cs" />
     <Compile Include="TypeSystem\ICompilation.cs" />
-    <Compile Include="TypeSystem\IConstantValue.cs" />
     <Compile Include="TypeSystem\IEntity.cs" />
     <Compile Include="TypeSystem\IEvent.cs" />
     <Compile Include="TypeSystem\IField.cs" />
@@ -499,15 +498,9 @@
     <Compile Include="TypeSystem\IMember.cs" />
     <Compile Include="TypeSystem\IMethod.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractFreezable.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractResolvedEntity.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractResolvedMember.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractResolvedTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractType.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractUnresolvedEntity.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractUnresolvedMember.cs" />
-    <Compile Include="TypeSystem\Implementation\AccessorOwnerMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\BaseTypeCollector.cs" />
-    <Compile Include="TypeSystem\Implementation\BlobReader.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAssemblyReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAttribute.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultMemberReference.cs" />
@@ -521,8 +514,6 @@
     <Compile Include="TypeSystem\Implementation\MinimalCorlib.cs" />
     <Compile Include="TypeSystem\Implementation\NestedTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\SimpleCompilation.cs" />
-    <Compile Include="TypeSystem\Implementation\SimpleConstantValue.cs" />
-    <Compile Include="TypeSystem\Implementation\SimpleInterningProvider.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedEvent.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedField.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedMember.cs" />

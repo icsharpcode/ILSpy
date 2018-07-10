@@ -22,66 +22,6 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Represents an unresolved entity.
-	/// </summary>
-	public interface IUnresolvedEntity : INamedElement
-	{
-		/// <summary>
-		/// Gets the metadata token for this entity.
-		/// </summary>
-		/// <remarks>
-		/// The token is only valid within the context of the assembly defining this entity.
-		/// Token may be 0 if this is a generated member.
-		/// </remarks>
-		System.Reflection.Metadata.EntityHandle MetadataToken { get; }
-
-		/// <summary>
-		/// Gets the entity type.
-		/// </summary>
-		SymbolKind SymbolKind { get; }
-		
-		/// <summary>
-		/// Gets the declaring class.
-		/// For members, this is the class that contains the member.
-		/// For nested classes, this is the outer class. For top-level entities, this property returns null.
-		/// </summary>
-		IUnresolvedTypeDefinition DeclaringTypeDefinition { get; }
-		
-		/// <summary>
-		/// Gets the attributes on this entity.
-		/// </summary>
-		IList<IUnresolvedAttribute> Attributes { get; }
-
-		/// <summary>
-		/// Gets the accessibility of this entity.
-		/// </summary>
-		Accessibility Accessibility { get; }
-
-		/// <summary>
-		/// Gets whether this entity is static.
-		/// Returns true if either the 'static' or the 'const' modifier is set.
-		/// </summary>
-		bool IsStatic { get; }
-		
-		/// <summary>
-		/// Returns whether this entity is abstract.
-		/// </summary>
-		/// <remarks>Static classes also count as abstract classes.</remarks>
-		bool IsAbstract { get; }
-		
-		/// <summary>
-		/// Returns whether this entity is sealed.
-		/// </summary>
-		/// <remarks>Static classes also count as sealed classes.</remarks>
-		bool IsSealed { get; }
-		
-		/// <summary>
-		/// Gets whether this member is declared to be shadowing another member with the same name.
-		/// </summary>
-		bool IsShadowing { get; }
-	}
-	
-	/// <summary>
 	/// Represents a resolved entity.
 	/// </summary>
 	public interface IEntity : ISymbol, ICompilationProvider, INamedElement

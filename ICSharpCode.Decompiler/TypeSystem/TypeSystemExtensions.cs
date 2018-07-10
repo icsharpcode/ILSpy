@@ -257,15 +257,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		#region GetType/Member
 		/// <summary>
-		/// Gets all unresolved type definitions from the assembly.
-		/// For partial classes, each part is returned.
-		/// </summary>
-		public static IEnumerable<IUnresolvedTypeDefinition> GetAllTypeDefinitions (this IUnresolvedAssembly assembly)
-		{
-			return TreeTraversal.PreOrder(assembly.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
-		/// <summary>
 		/// Gets all type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
@@ -285,36 +276,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		#region Resolve on collections
-		public static IReadOnlyList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
-		{
-			if (attributes == null)
-				throw new ArgumentNullException("attributes");
-			if (attributes.Count == 0)
-				return EmptyList<IAttribute>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedAttribute, IAttribute>(context, attributes, (c, a) => a.CreateResolvedAttribute(c));
-		}
-		
-		public static IReadOnlyList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
-		{
-			if (typeParameters == null)
-				throw new ArgumentNullException("typeParameters");
-			if (typeParameters.Count == 0)
-				return EmptyList<ITypeParameter>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedTypeParameter, ITypeParameter>(context, typeParameters, (c, a) => a.CreateResolvedTypeParameter(c));
-		}
-		
-		public static IReadOnlyList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
-		{
-			if (parameters == null)
-				throw new ArgumentNullException("parameters");
-			if (parameters.Count == 0)
-				return EmptyList<IParameter>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedParameter, IParameter>(context, parameters, (c, a) => a.CreateResolvedParameter(c));
-		}
-		
 		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
 			if (typeReferences == null)
@@ -327,16 +288,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
-		
-		public static IReadOnlyList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
-		{
-			if (constantValues == null)
-				throw new ArgumentNullException("constantValues");
-			if (constantValues.Count == 0)
-				return EmptyList<ResolveResult>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IConstantValue, ResolveResult>(context, constantValues, (c, t) => t.Resolve(c));
-		}
 		#endregion
 		
 		#region GetSubTypeDefinitions
