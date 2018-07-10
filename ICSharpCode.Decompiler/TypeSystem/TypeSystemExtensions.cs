@@ -290,31 +290,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		// contains nulls when there are resolve errors.
 		#endregion
 		
-		#region GetSubTypeDefinitions
-		public static IEnumerable<ITypeDefinition> GetSubTypeDefinitions (this IType baseType)
-		{
-			if (baseType == null)
-				throw new ArgumentNullException ("baseType");
-			var def = baseType.GetDefinition ();
-			if (def == null)
-				return Enumerable.Empty<ITypeDefinition> ();
-			return def.GetSubTypeDefinitions ();
-		}
-		
-		/// <summary>
-		/// Gets all sub type definitions defined in a context.
-		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetSubTypeDefinitions (this ITypeDefinition baseType)
-		{
-			if (baseType == null)
-				throw new ArgumentNullException ("baseType");
-			foreach (var contextType in baseType.Compilation.GetAllTypeDefinitions ()) {
-				if (contextType.IsDerivedFrom (baseType))
-					yield return contextType;
-			}
-		}
-		#endregion
-		
 		#region IAssembly.GetTypeDefinition()
 		/// <summary>
 		/// Retrieves the specified type in this compilation.

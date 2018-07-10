@@ -503,7 +503,6 @@
     <Compile Include="TypeSystem\Implementation\BaseTypeCollector.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAssemblyReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAttribute.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
@@ -556,7 +555,6 @@
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
     <Compile Include="TypeSystem\TypeVisitor.cs" />
     <Compile Include="TypeSystem\VarArgInstanceMethod.cs" />
-    <Compile Include="Util\BitVector16.cs" />
     <Compile Include="Util\BusyManager.cs" />
     <Compile Include="Util\CacheManager.cs" />
     <Compile Include="Util\CallbackOnDispose.cs" />
