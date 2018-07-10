@@ -395,11 +395,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					int count = blob.ReadCompressedInteger();
 					for (int i = 0; i < count; i++) {
-						var typeName = blob.ReadSerializedString();
-						string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
+						var fullTypeName = blob.ReadSerializedString();
+						string[] nameParts = fullTypeName.Split(new[] { ", " }, StringSplitOptions.None);
 						if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
 							output.Write("class ");
-							output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
+							output.Write(DisassemblerHelpers.Escape(fullTypeName));
 						} else {
 							output.Write('[');
 							output.Write(nameParts[1]);
