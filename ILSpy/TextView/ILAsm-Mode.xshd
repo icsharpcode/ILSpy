@@ -332,6 +332,7 @@
 			<Word>forwardref</Word>
 			<Word>internalcall</Word>
 			<Word>noinlining</Word>
+			<Word>aggressiveinlining</Word>
 			<Word>nomangle</Word>
 			<Word>lasterr</Word>
 			<Word>winapi</Word>
@@ -494,6 +495,7 @@
 			<!-- Header flags keywords  -->
 			<Word>.subsystem</Word>
 			<Word>.corflags</Word>
+			<Word>.stackreserve</Word>
 			<Word>alignment</Word>
 			<Word>.imagebase</Word>
 		</Keywords>
