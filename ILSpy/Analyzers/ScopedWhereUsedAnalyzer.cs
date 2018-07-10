@@ -19,14 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Analyzers;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {

@@ -17,11 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Reflection;
-using System.Reflection.Metadata;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes

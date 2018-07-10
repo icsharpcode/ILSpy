@@ -20,9 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -33,25 +31,64 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public interface IAnalyzer<T> where T : IEntity
 	{
+		/// <summary>
+		/// The caption used in the analyzer tree view.
+		/// </summary>
 		string Text { get; }
+
+		/// <summary>
+		/// Returns true, if the analyzer should be shown for an entity, otherwise false.
+		/// </summary>
 		bool Show(T entity);
 	}
 
+	/// <summary>
+	/// This interface can be used to implement an analyzer that runs on a single entity.
+	/// For an example see <see cref="Builtin.MethodUsesAnalyzer"/>.
+	/// </summary>
+	/// <typeparam name="T">The type of enitities to be analyzed.</typeparam>
 	public interface IEntityAnalyzer<T> : IAnalyzer<T> where T : IEntity
 	{
+		/// <summary>
+		/// Returns all entities that the analyzer found in the given entity.
+		/// </summary>
 		IEnumerable<IEntity> Analyze(T analyzedEntity, AnalyzerContext context);
 	}
 
+	/// <summary>
+	/// This interface can be used to implement an analyzer that runs on multiple types.
+	/// </summary>
+	/// <typeparam name="T">The type of enitities to be analyzed.</typeparam>
 	public interface ITypeDefinitionAnalyzer<T> : IAnalyzer<T> where T : IEntity
 	{
+		/// <summary>
+		/// Returns all entities that the analyzer found in the given entity.
+		/// </summary>
+		/// <param name="analyzedEntity">The entity, which we are looking for.</param>
+		/// <param name="type">The type definition, we currently analyze.</param>
+		/// <param name="context">Context providing additional information.</param>
 		IEnumerable<IEntity> Analyze(T analyzedEntity, ITypeDefinition type, AnalyzerContext context);
 	}
 
+	/// <summary>
+	/// This interface can be used to implement an analyzer that runs on method bodies.
+	/// </summary>
+	/// <typeparam name="T">The type of enitities to be analyzed.</typeparam>
 	public interface IMethodBodyAnalyzer<T> : IAnalyzer<T> where T : IEntity
 	{
+		/// <summary>
+		/// Returns all entities that the analyzer found in the given method body.
+		/// </summary>
+		/// <param name="analyzedEntity">The entity, which we are looking for.</param>
+		/// <param name="method">The method we analyze.</param>
+		/// <param name="methodBody">The method body.</param>
+		/// <param name="context">Context providing additional information.</param>
 		IEnumerable<IEntity> Analyze(T analyzedEntity, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context);
 	}
 
+	/// <summary>
+	/// Provides additional context for analyzers.
+	/// </summary>
 	public class AnalyzerContext
 	{
 		public AnalyzerContext(IDecompilerTypeSystem typeSystem)
@@ -59,9 +96,24 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.TypeSystem = typeSystem;
 		}
 
+		/// <summary>
+		/// A type system where all entities of the current assembly and its references can be found.
+		/// </summary>
 		public IDecompilerTypeSystem TypeSystem { get; }
+
+		/// <summary>
+		/// CancellationToken. Currently Analyzers do not support cancellation from the UI, but it should be checked nonetheless.
+		/// </summary>
 		public CancellationToken CancellationToken { get; internal set; }
+
+		/// <summary>
+		/// Mapping info to find parts of a method.
+		/// </summary>
 		public CodeMappingInfo CodeMappingInfo { get; internal set; }
+
+		/// <summary>
+		/// Currently used language.
+		/// </summary>
 		public Language Language { get; internal set; }
 	}
 }
