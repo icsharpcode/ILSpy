@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
 			}
 			// Very simple loop detection: look for backward branches
-			(var allBranches, var isAfterConditionalBranch) = FindAllBranches(body.GetILReader());
+			(var allBranches, var isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
 			// We go through the branches in reverse so that we find the biggest possible loop boundary first (think loops with "continue;")
 			for (int i = allBranches.Count - 1; i >= 0; i--) {
 				int loopEnd = allBranches[i].Source.End;
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					int entryPoint = -1;
 
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
-					if (loopStart > 0 && !isAfterConditionalBranch[loopStart])
+					if (loopStart > 0 && !isAfterUnconditionalBranch[loopStart])
 						entryPoint = allBranches[i].Target;
 					
 					bool multipleEntryPoints = false;
@@ -221,7 +221,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			while (body.RemainingBytes > 0) {
 				var offset = body.Offset;
 				int endOffset;
-				var thisOpCode = ILParser.DecodeOpCode(ref body);
+				var thisOpCode = body.DecodeOpCode();
 				switch (thisOpCode.GetOperandType()) {
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
@@ -254,6 +254,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case ILOpCode.Endfinally:
 				case ILOpCode.Throw:
 				case ILOpCode.Rethrow:
+				case ILOpCode.Leave:
+				case ILOpCode.Leave_s:
 					return true;
 				default:
 					return false;
