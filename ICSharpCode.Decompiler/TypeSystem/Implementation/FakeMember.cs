@@ -158,5 +158,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			return SpecializedMethod.Create(this, substitution);
 		}
+
+		internal static IMethod CreateDummyConstructor(ICompilation compilation, IType declaringType, Accessibility accessibility = Accessibility.Public)
+		{
+			return new FakeMethod(compilation, SymbolKind.Constructor) {
+				DeclaringType = declaringType,
+				Name = ".ctor",
+				ReturnType = compilation.FindType(KnownTypeCode.Void),
+				Accessibility = accessibility,
+			};
+		}
 	}
 }

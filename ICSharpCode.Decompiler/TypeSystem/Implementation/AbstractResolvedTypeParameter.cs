@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint) {
-					var dummyCtor = DefaultResolvedMethod.GetDummyConstructor(compilation, this);
+					var dummyCtor = FakeMethod.CreateDummyConstructor(compilation, this);
 					if (filter == null || filter(dummyCtor)) {
 						return new [] { dummyCtor };
 					}

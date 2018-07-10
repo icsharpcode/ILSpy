@@ -30,21 +30,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class AnonymousType : AbstractType
 	{
 		ICompilation compilation;
-		IUnresolvedProperty[] unresolvedProperties;
-		IReadOnlyList<IProperty> resolvedProperties;
 		
-		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
+		public AnonymousType(ICompilation compilation)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
-			if (properties == null)
-				throw new ArgumentNullException("properties");
 			this.compilation = compilation;
-			this.unresolvedProperties = properties.ToArray();
-			var context = new SimpleTypeResolveContext(compilation.MainAssembly);
-			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
+			throw new NotImplementedException();
 		}
 		
+		/*
 		sealed class AnonymousTypeProperty : DefaultResolvedProperty
 		{
 			readonly AnonymousType declaringType;
@@ -105,7 +100,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return owner.DeclaringType.GetHashCode() ^ unchecked(27 * this.Name.GetHashCode());
 			}
 		}
-		
+		*/
+
 		public override string Name {
 			get { return "Anonymous Type"; }
 		}
@@ -124,6 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return true; }
 		}
 		
+		/*
 		public IReadOnlyList<IProperty> Properties {
 			get { return resolvedProperties; }
 		}
@@ -190,6 +187,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return false;
 			}
 			return true;
-		}
+		}*/
 	}
 }

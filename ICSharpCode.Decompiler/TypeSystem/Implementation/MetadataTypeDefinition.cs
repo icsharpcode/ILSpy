@@ -220,12 +220,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					}
 				}
 				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
-					methodsList.Add(new FakeMethod(Compilation, SymbolKind.Constructor) {
-						DeclaringType = this,
-						Name = ".ctor",
-						ReturnType = Compilation.FindType(KnownTypeCode.Void),
-						Accessibility = IsAbstract ? Accessibility.Protected : Accessibility.Public,
-					});
+					methodsList.Add(FakeMethod.CreateDummyConstructor(Compilation, this, IsAbstract ? Accessibility.Protected : Accessibility.Public));
 				}
 				return LazyInit.GetOrSet(ref this.methods, methodsList.ToArray());
 			}

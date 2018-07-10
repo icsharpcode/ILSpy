@@ -350,6 +350,7 @@
     <Compile Include="TypeSystem\GenericContext.cs" />
     <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
     <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
+    <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataField.cs" />
@@ -511,21 +512,6 @@
     <Compile Include="TypeSystem\Implementation\DefaultAttribute.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedEvent.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedField.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedMethod.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedProperty.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedTypeDefinition.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedAssembly.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedAttribute.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedEvent.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedField.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedMethod.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedProperty.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedTypeDefinition.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
@@ -534,7 +520,6 @@
     <Compile Include="TypeSystem\Implementation\MergedNamespace.cs" />
     <Compile Include="TypeSystem\Implementation\MinimalCorlib.cs" />
     <Compile Include="TypeSystem\Implementation\NestedTypeReference.cs" />
-    <Compile Include="TypeSystem\Implementation\ResolvedAttributeBlob.cs" />
     <Compile Include="TypeSystem\Implementation\SimpleCompilation.cs" />
     <Compile Include="TypeSystem\Implementation\SimpleConstantValue.cs" />
     <Compile Include="TypeSystem\Implementation\SimpleInterningProvider.cs" />
@@ -546,8 +531,6 @@
     <Compile Include="TypeSystem\Implementation\TypeParameterReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeWithElementType.cs" />
     <Compile Include="TypeSystem\Implementation\UnknownType.cs" />
-    <Compile Include="TypeSystem\Implementation\UnresolvedAttributeBlob.cs" />
-    <Compile Include="TypeSystem\Implementation\VoidTypeDefinition.cs" />
     <Compile Include="TypeSystem\INamedElement.cs" />
     <Compile Include="TypeSystem\INamespace.cs" />
     <Compile Include="TypeSystem\InheritanceHelper.cs" />
