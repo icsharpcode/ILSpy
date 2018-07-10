@@ -370,68 +370,67 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(secdecl.Action.ToString());
 						break;
 				}
+				var blob = metadata.GetBlobReader(secdecl.PermissionSet);
 				if (AssemblyResolver == null) {
 					output.Write(" = ");
-					WriteBlob(secdecl.PermissionSet, metadata);
+					WriteBlob(blob);
+					output.WriteLine();
+				} else if ((char)blob.ReadByte() != '.') {
+					blob.Reset();
+					output.WriteLine();
+					output.Indent();
+					output.Write("bytearray");
+					WriteBlob(blob);
+					output.WriteLine();
+					output.Unindent();
 				} else {
 					output.WriteLine(" = {");
 					output.Indent();
-					var blob = metadata.GetBlobReader(secdecl.PermissionSet);
-					if ((char)blob.ReadByte() != '.') {
-						blob.Reset();
-						WriteXmlSecurityDeclaration(blob.ReadUTF8(blob.RemainingBytes));
-					} else {
-						string currentAssemblyName = null;
-						string currentFullAssemblyName = null;
-						if (metadata.IsAssembly) {
-							currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
-							currentFullAssemblyName = metadata.GetFullAssemblyName();
+
+					string currentAssemblyName = null;
+					string currentFullAssemblyName = null;
+					if (metadata.IsAssembly) {
+						currentAssemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+						currentFullAssemblyName = metadata.GetFullAssemblyName();
+					}
+					int count = blob.ReadCompressedInteger();
+					for (int i = 0; i < count; i++) {
+						var typeName = blob.ReadSerializedString();
+						string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
+						if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
+							output.Write("class ");
+							output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
+						} else {
+							output.Write('[');
+							output.Write(nameParts[1]);
+							output.Write(']');
+							output.Write(nameParts[0]);
 						}
-						int count = blob.ReadCompressedInteger();
-						for (int i = 0; i < count; i++) {
-							var typeName = blob.ReadSerializedString();
-							string[] nameParts = typeName.Split(new[] { ", " }, StringSplitOptions.None);
-							if (nameParts.Length < 2 || nameParts[1] == currentAssemblyName) {
-								output.Write("class ");
-								output.Write(DisassemblerHelpers.Escape(typeName + ", " + currentFullAssemblyName));
-							} else {
-								output.Write('[');
-								output.Write(nameParts[1]);
-								output.Write(']');
-								output.Write(nameParts[0]);
-							}
-							output.Write(" = {");
-							blob.ReadCompressedInteger(); // ?
-														  // The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
-							int argCount = blob.ReadCompressedInteger();
-							if (argCount > 0) {
-								output.WriteLine();
-								output.Indent();
-
-								for (int j = 0; j < argCount; j++) {
-									WriteSecurityDeclarationArgument(module, ref blob);
-									output.WriteLine();
-								}
-
-								output.Unindent();
-							}
-							output.Write('}');
-
-							if (i + 1 < count)
-								output.Write(',');
+						output.Write(" = {");
+						blob.ReadCompressedInteger(); // ?
+													  // The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
+						int argCount = blob.ReadCompressedInteger();
+						if (argCount > 0) {
 							output.WriteLine();
+							output.Indent();
+
+							for (int j = 0; j < argCount; j++) {
+								WriteSecurityDeclarationArgument(module, ref blob);
+								output.WriteLine();
+							}
+
+							output.Unindent();
 						}
+						output.Write('}');
+
+						if (i + 1 < count)
+							output.Write(',');
+						output.WriteLine();
 					}
 					output.Unindent();
 					output.WriteLine("}");
 				}
 			}
-		}
-
-		void WriteXmlSecurityDeclaration(string xml)
-		{
-			output.Write("property string XML = ");
-			output.Write("string('{0}')", DisassemblerHelpers.EscapeString(xml).Replace("'", "\'"));
 		}
 
 		enum TypeKind
@@ -1373,6 +1372,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteBlob(BlobHandle blob, MetadataReader metadata)
 		{
 			var reader = metadata.GetBlobReader(blob);
+			WriteBlob(reader);
+		}
+
+		void WriteBlob(BlobReader reader)
+		{
 			output.Write("(");
 			output.Indent();
 
