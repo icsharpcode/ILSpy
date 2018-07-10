@@ -68,20 +68,25 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string ToILNameString(this FullTypeName typeName)
 		{
-			string escapedName;
+			string name;
 			if (typeName.IsNested) {
-				escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
-				if (typeName.TypeParameterCount > 0)
-					escapedName += "`" + typeName.TypeParameterCount;
-				return $"{typeName.GetDeclaringType().ToILNameString()}/{escapedName}";
-			} else if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {
-				escapedName = Disassembler.DisassemblerHelpers.Escape($"{typeName.TopLevelTypeName.Namespace}.{typeName.Name}");
-				if (typeName.TypeParameterCount > 0)
-					escapedName += "`" + typeName.TypeParameterCount;
-			} else {
-				escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
+				name = typeName.Name;
+				int localTypeParameterCount = typeName.GetNestedTypeAdditionalTypeParameterCount(typeName.NestingLevel - 1);
+				if (localTypeParameterCount > 0)
+					name += "`" + localTypeParameterCount;
+				name = Disassembler.DisassemblerHelpers.Escape(name);
+				return $"{typeName.GetDeclaringType().ToILNameString()}/{name}";
 			}
-			return escapedName;
+			if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {
+				name = $"{typeName.TopLevelTypeName.Namespace}.{typeName.Name}";
+				if (typeName.TypeParameterCount > 0)
+					name += "`" + typeName.TypeParameterCount;
+			} else {
+				name = typeName.Name;
+				if (typeName.TypeParameterCount > 0)
+					name += "`" + typeName.TypeParameterCount;
+			}
+			return Disassembler.DisassemblerHelpers.Escape(name);
 		}
 
 		public static AssemblyReferenceHandle GetDeclaringAssembly(this TypeReferenceHandle handle, MetadataReader reader)
