@@ -63,12 +63,14 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
+			dis.AssemblyResolver = method.ParentAssembly.PEFile.GetAssemblyResolver();
 			dis.DisassembleMethod(method.ParentAssembly.PEFile, (MethodDefinitionHandle)method.MetadataToken);
 		}
 		
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
+			dis.AssemblyResolver = field.ParentAssembly.PEFile.GetAssemblyResolver();
 			dis.DisassembleField(field.ParentAssembly.PEFile, (FieldDefinitionHandle)field.MetadataToken);
 		}
 		
@@ -76,6 +78,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var dis = CreateDisassembler(output, options);
 			PEFile module = property.ParentAssembly.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
 			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
 			var accessors = pd.GetAccessors();
@@ -98,6 +101,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var dis = CreateDisassembler(output, options);
 			PEFile module = ev.ParentAssembly.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
 			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
@@ -124,6 +128,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var dis = CreateDisassembler(output, options);
 			PEFile module = type.ParentAssembly.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
 		}
 
@@ -131,6 +136,7 @@ namespace ICSharpCode.ILSpy
 		{
 			var dis = CreateDisassembler(output, options);
 			PEFile module = types.FirstOrDefault()?.ParentAssembly.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
@@ -141,6 +147,7 @@ namespace ICSharpCode.ILSpy
 			var module = assembly.GetPEFileOrNull();
 			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			if (options.FullDecompilation)
 				dis.WriteAssemblyReferences(metadata);
 			if (metadata.IsAssembly)
