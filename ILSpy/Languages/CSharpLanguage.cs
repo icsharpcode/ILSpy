@@ -380,6 +380,7 @@ namespace ICSharpCode.ILSpy
 				this.assembly = assembly;
 				this.options = options;
 				base.Settings = options.DecompilerSettings;
+				base.AssemblyResolver = assembly.GetAssemblyResolver();
 			}
 
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)

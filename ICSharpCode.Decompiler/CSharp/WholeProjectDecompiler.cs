@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		protected string targetDirectory;
 
-		public void DecompileProject(Metadata.PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
+		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Name) + ".csproj");
 			using (var writer = new StreamWriter(projectFileName)) {
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		public void DecompileProject(Metadata.PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
+		public void DecompileProject(PEFile moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory)) {
 				throw new InvalidOperationException("Must set TargetDirectory");
