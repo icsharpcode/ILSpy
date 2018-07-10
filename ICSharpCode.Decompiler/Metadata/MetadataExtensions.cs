@@ -89,16 +89,20 @@ namespace ICSharpCode.Decompiler.Metadata
 			return Disassembler.DisassemblerHelpers.Escape(name);
 		}
 
-		public static AssemblyReferenceHandle GetDeclaringAssembly(this TypeReferenceHandle handle, MetadataReader reader)
+		public static TypeSystem.IAssemblyReference GetDeclaringAssembly(this TypeReferenceHandle handle, MetadataReader reader)
 		{
 			var tr = reader.GetTypeReference(handle);
 			switch (tr.ResolutionScope.Kind) {
 				case HandleKind.TypeReference:
 					return ((TypeReferenceHandle)tr.ResolutionScope).GetDeclaringAssembly(reader);
 				case HandleKind.AssemblyReference:
-					return (AssemblyReferenceHandle)tr.ResolutionScope;
+					var asmRef = reader.GetAssemblyReference((AssemblyReferenceHandle)tr.ResolutionScope);
+					return new DefaultAssemblyReference(reader.GetString(asmRef.Name));
+				case HandleKind.ModuleReference:
+					var modRef = reader.GetModuleReference((ModuleReferenceHandle)tr.ResolutionScope);
+					return new DefaultAssemblyReference(reader.GetString(modRef.Name));
 				default:
-					return default;
+					return DefaultAssemblyReference.CurrentAssembly;
 			}
 		}
 

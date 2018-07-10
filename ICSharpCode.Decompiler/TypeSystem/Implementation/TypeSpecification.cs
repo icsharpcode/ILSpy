@@ -184,11 +184,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			var asmref = handle.GetDeclaringAssembly(reader);
-			if (asmref.IsNil)
-				return new GetClassTypeReference(handle.GetFullTypeName(reader), DefaultAssemblyReference.CurrentAssembly);
-			var asm = reader.GetAssemblyReference(asmref);
-			return new GetClassTypeReference(handle.GetFullTypeName(reader), new DefaultAssemblyReference(reader.GetString(asm.Name)));
+			return new GetClassTypeReference(handle.GetFullTypeName(reader), handle.GetDeclaringAssembly(reader));
 		}
 
 		public ITypeReference GetTypeFromSpecification(SRM.MetadataReader reader, Unit genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
