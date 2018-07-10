@@ -89,12 +89,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
-		IReadOnlyList<IAttribute> AssemblyAttributes { get; }
+		IEnumerable<IAttribute> GetAssemblyAttributes();
 
 		/// <summary>
 		/// Gets the list of all module attributes in the project.
 		/// </summary>
-		IReadOnlyList<IAttribute> ModuleAttributes { get; }
+		IEnumerable<IAttribute> GetModuleAttributes();
 		
 		/// <summary>
 		/// Gets whether the internals of this assembly are visible in the specified assembly.

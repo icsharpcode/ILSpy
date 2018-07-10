@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (referencedType == null)
 				throw new ArgumentNullException("referencedType");
 			FreezableHelper.ThrowIfFrozen(this);
-			var attribute = new DefaultUnresolvedAttribute(typeForwardedToAttributeTypeRef, new[] { KnownTypeReference.Type });
+			var attribute = new DefaultUnresolvedAttribute(typeForwardedToAttributeTypeRef, new[] { KnownTypeReference.Get(KnownTypeCode.Type) });
 			attribute.PositionalArguments.Add(new TypeOfConstantValue(referencedType));
 			assemblyAttributes.Add(attribute);
 			
@@ -479,6 +479,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override string ToString()
 			{
 				return "[DefaultResolvedAssembly " + AssemblyName + "]";
+			}
+
+			IEnumerable<IAttribute> IAssembly.GetAssemblyAttributes()
+			{
+				throw new NotImplementedException();
+			}
+
+			IEnumerable<IAttribute> IAssembly.GetModuleAttributes()
+			{
+				throw new NotImplementedException();
 			}
 			
 			sealed class NS : INamespace

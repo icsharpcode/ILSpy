@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
-			new TypeProvider(MinimalCorlib.Instance.CreateCompilation());
+			new TypeProvider(new SimpleCompilation(MinimalCorlib.Instance));
 
 		/// <summary>
 		/// An attribute type provider that can be used to decode attribute signatures

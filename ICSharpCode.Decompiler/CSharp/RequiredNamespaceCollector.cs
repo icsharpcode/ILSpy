@@ -29,8 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static void CollectAttributeNamespaces(DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
-			HandleAttributes(typeSystem.MainAssembly.AssemblyAttributes, namespaces);
-			HandleAttributes(typeSystem.MainAssembly.ModuleAttributes, namespaces);
+			HandleAttributes(typeSystem.MainAssembly.GetAssemblyAttributes(), namespaces);
+			HandleAttributes(typeSystem.MainAssembly.GetModuleAttributes(), namespaces);
 		}
 
 		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)

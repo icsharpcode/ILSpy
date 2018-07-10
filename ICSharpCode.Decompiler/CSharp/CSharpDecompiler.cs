@@ -394,13 +394,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes) {
+			foreach (var a in typeSystem.Compilation.MainAssembly.GetAssemblyAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
-			foreach (var a in typeSystem.Compilation.MainAssembly.ModuleAttributes) {
+			foreach (var a in typeSystem.Compilation.MainAssembly.GetModuleAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "module";

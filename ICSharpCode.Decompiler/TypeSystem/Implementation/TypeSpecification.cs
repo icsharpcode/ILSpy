@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetFunctionPointerType(SRM.MethodSignature<ITypeReference> signature)
 		{
-			return KnownTypeReference.IntPtr;
+			return KnownTypeReference.Get(KnownTypeCode.IntPtr);
 		}
 
 		public ITypeReference GetGenericInstantiation(ITypeReference genericType, ImmutableArray<ITypeReference> typeArguments)

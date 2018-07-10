@@ -524,49 +524,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Module / Assembly attributes
-		IAttribute[] assemblyAttributes;
-		IAttribute[] moduleAttributes;
-
 		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
-		public IReadOnlyList<IAttribute> AssemblyAttributes {
-			get {
-				var attrs = LazyInit.VolatileRead(ref this.assemblyAttributes);
-				if (attrs != null)
-					return attrs;
-				var b = new AttributeListBuilder(this);
-				if (metadata.IsAssembly) {
-					var assembly = metadata.GetAssemblyDefinition();
-					b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition));
-					b.AddSecurityAttributes(assembly.GetDeclarativeSecurityAttributes());
+		public IEnumerable<IAttribute> GetAssemblyAttributes()
+		{
+			var b = new AttributeListBuilder(this);
+			if (metadata.IsAssembly) {
+				var assembly = metadata.GetAssemblyDefinition();
+				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition));
+				b.AddSecurityAttributes(assembly.GetDeclarativeSecurityAttributes());
 
-					// AssemblyVersionAttribute
-					if (assembly.Version != null) {
-						b.Add(KnownAttribute.AssemblyVersion, KnownTypeCode.String, assembly.Version.ToString());
-					}
-
-					AddTypeForwarderAttributes(ref b);
+				// AssemblyVersionAttribute
+				if (assembly.Version != null) {
+					b.Add(KnownAttribute.AssemblyVersion, KnownTypeCode.String, assembly.Version.ToString());
 				}
-				return LazyInit.GetOrSet(ref this.assemblyAttributes, b.Build());
+
+				AddTypeForwarderAttributes(ref b);
 			}
+			return b.Build();
 		}
 
 		/// <summary>
 		/// Gets the list of all module attributes in the project.
 		/// </summary>
-		public IReadOnlyList<IAttribute> ModuleAttributes {
-			get {
-				var attrs = LazyInit.VolatileRead(ref this.moduleAttributes);
-				if (attrs != null)
-					return attrs;
-				var b = new AttributeListBuilder(this);
-				b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition));
-				if (!metadata.IsAssembly) {
-					AddTypeForwarderAttributes(ref b);
-				}
-				return LazyInit.GetOrSet(ref this.moduleAttributes, b.Build());
+		public IEnumerable<IAttribute> GetModuleAttributes()
+		{
+			var b = new AttributeListBuilder(this);
+			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition));
+			if (!metadata.IsAssembly) {
+				AddTypeForwarderAttributes(ref b);
 			}
+			return b.Build();
 		}
 
 		void AddTypeForwarderAttributes(ref AttributeListBuilder b)

@@ -123,15 +123,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		TypeParameterSubstitution GetSubstitution();
 		
 		/// <summary>
-		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
-		/// of this parameterized type,
-		/// and also substitutes method type parameters with the specified method type arguments.
-		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.
-		/// </summary>
-		TypeParameterSubstitution GetSubstitution(IReadOnlyList<IType> methodTypeArguments);
-
-		
-		/// <summary>
 		/// Gets inner classes (including inherited inner classes).
 		/// </summary>
 		/// <param name="filter">The filter used to select which types to return.

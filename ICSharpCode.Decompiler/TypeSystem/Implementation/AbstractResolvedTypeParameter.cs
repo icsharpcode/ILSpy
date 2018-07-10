@@ -328,11 +328,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return TypeParameterSubstitution.Identity;
 		}
 		
-		TypeParameterSubstitution IType.GetSubstitution(IReadOnlyList<IType> methodTypeArguments)
-		{
-			return TypeParameterSubstitution.Identity;
-		}
-
 		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IMember
 		{
 			if (filter == null)

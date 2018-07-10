@@ -416,7 +416,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ITypeDefinition IType.GetDefinition() => this;
 		TypeParameterSubstitution IType.GetSubstitution() => TypeParameterSubstitution.Identity;
-		TypeParameterSubstitution IType.GetSubstitution(IReadOnlyList<IType> methodTypeArguments) => TypeParameterSubstitution.Identity;
 
 		public IType AcceptVisitor(TypeVisitor visitor)
 		{

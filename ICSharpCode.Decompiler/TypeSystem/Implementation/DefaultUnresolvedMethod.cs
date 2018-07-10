@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				Accessibility = typeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public,
 				HasBody = true,
 				MetadataToken = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(0), // initialize with properly typed nil token, to avoid InvalidCastExceptions
-				ReturnType = KnownTypeReference.Void
+				ReturnType = KnownTypeReference.Get(KnownTypeCode.Void)
 			};
 		}
 		
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				SymbolKind = SymbolKind.Constructor,
 				Name = ".ctor",
 				Accessibility = Accessibility.Public,
-				ReturnType = KnownTypeReference.Void
+				ReturnType = KnownTypeReference.Get(KnownTypeCode.Void)
 			};
 			m.Freeze();
 			return m;
