@@ -157,7 +157,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				case KnownTypeCode.UIntPtr:
 					return PrimitiveTypeCode.UIntPtr;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 

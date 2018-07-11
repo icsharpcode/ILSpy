@@ -588,6 +588,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				switch (type.Implementation.Kind) {
 					case HandleKind.AssemblyFile:
+						// TODO : Resolve assembly file (module)...
 						return this;
 					case HandleKind.ExportedType:
 						var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
@@ -602,7 +603,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						}
 						return null;
 					default:
-						throw new NotSupportedException();
+						throw new BadImageFormatException("Expected implementation to be either an AssemblyFile, ExportedType or AssemblyReference.");
 				}
 			}
 		}

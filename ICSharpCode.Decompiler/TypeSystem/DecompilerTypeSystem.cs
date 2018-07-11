@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						case SRM.MemberReferenceKind.Field:
 							return ResolveAsField(memberReference);
 					}
-					throw new NotSupportedException();
+					throw new BadImageFormatException("MemberReference must be either a method or a field");
 				case SRM.HandleKind.EventDefinition:
 					return ResolveAsEvent(memberReference);
 				case SRM.HandleKind.PropertyDefinition:
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case SRM.HandleKind.MethodSpecification:
 					return ResolveAsMethod(memberReference);
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException(nameof(memberReference), "HandleKind not allowed: " + memberReference.Kind);
 			}
 		}
 

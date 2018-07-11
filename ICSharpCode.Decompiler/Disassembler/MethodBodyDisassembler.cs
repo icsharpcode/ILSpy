@@ -215,7 +215,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 							output.WriteLine("fault");
 							break;
 						default:
-							throw new NotSupportedException();
+							throw new ArgumentOutOfRangeException();
 					}
 					output.WriteLine("{");
 					break;
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine("{");
 					break;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 			output.Indent();
 		}

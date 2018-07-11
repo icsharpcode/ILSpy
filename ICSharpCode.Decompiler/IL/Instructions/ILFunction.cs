@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.IL
 						name = "I_";
 						break;
 					default:
-						throw new NotSupportedException();
+						throw new ArgumentOutOfRangeException(nameof(kind));
 				}
 				name += index;
 				variable.HasGeneratedName = true;

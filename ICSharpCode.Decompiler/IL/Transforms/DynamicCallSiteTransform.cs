@@ -419,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							callSiteInfo.Kind = BinderMethodKind.Invoke;
 							break;
 						default:
-							throw new NotSupportedException();
+							throw new ArgumentOutOfRangeException();
 					}
 					if (binderCall.Arguments.Count != 3)
 						return false;
