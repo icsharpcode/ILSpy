@@ -138,6 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static void CollectNamespaces(EntityHandle entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
+			if (entity.IsNil) return;
 			if (entity.Kind.IsTypeKind()) {
 				CollectNamespaces(typeSystem.ResolveAsType(entity).GetDefinition(), typeSystem, namespaces);
 			} else {

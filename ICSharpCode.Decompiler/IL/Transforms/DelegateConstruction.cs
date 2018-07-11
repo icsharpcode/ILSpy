@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// TODO : it is probably not a good idea to remove *all* display-classes
 						// is there a way to minimize the false-positives?
 						if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
-							targetVariable.CaptureScope = FindBlockContainer(block);
+							targetVariable.CaptureScope = BlockContainer.FindClosestContainer(block);
 							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
 							translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
 						}
@@ -70,11 +70,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (store.Parent is Block containingBlock)
 					containingBlock.Instructions.Remove(store);
 			}
-		}
-
-		private BlockContainer FindBlockContainer(Block block)
-		{
-			return BlockContainer.FindClosestContainer(block) ?? throw new NotSupportedException();
 		}
 
 		static bool IsInSimpleDisplayClass(IMethod method)
