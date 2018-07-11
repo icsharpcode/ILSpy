@@ -256,7 +256,6 @@
     <Compile Include="CSharp\TranslatedExpression.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
-    <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
     <Compile Include="CSharp\Transforms\AddCheckedBlocks.cs" />
     <Compile Include="CSharp\Transforms\ConvertConstructorCallIntoInitializer.cs" />
@@ -267,7 +266,6 @@
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
-    <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />

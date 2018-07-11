@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				case HandleKind.MethodDefinition:
 					var methodHandle = (MethodDefinitionHandle)member;
 					var method = metadata.GetMethodDefinition(methodHandle);
-					var methodSemantics = ((MethodDefinitionHandle)member).GetMethodSemanticsAttributes(metadata);
+					var methodSemantics = module.MethodSemanticsLookup.GetSemantics(methodHandle).Item2;
 					if (methodSemantics != 0 && methodSemantics != System.Reflection.MethodSemanticsAttributes.Other)
 						return true;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))

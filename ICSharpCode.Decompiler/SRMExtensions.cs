@@ -84,14 +84,6 @@ namespace ICSharpCode.Decompiler
 			var baseType = typeDefinition.BaseType;
 			return !baseType.IsNil && baseType.IsKnownType(reader, KnownTypeCode.MulticastDelegate);
 		}
-
-		public static bool IsExtensionMethod(this MethodDefinition methodDefinition, MetadataReader reader)
-		{
-			if (methodDefinition.HasFlag(MethodAttributes.Static)) {
-				return methodDefinition.GetCustomAttributes().HasKnownAttribute(reader, KnownAttribute.Extension);
-			}
-			return false;
-		}
 		
 		public static bool HasBody(this MethodDefinition methodDefinition)
 		{

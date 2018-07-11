@@ -106,18 +106,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static bool IsConstructor(this SRM.MethodDefinition methodDefinition, MetadataReader reader)
-		{
-			string name = reader.GetString(methodDefinition.Name);
-			return (methodDefinition.Attributes & (MethodAttributes.RTSpecialName | MethodAttributes.SpecialName)) != 0
-				&& (name == ".cctor" || name == ".ctor");
-		}
-
-		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader)
-		{
-			return type.GetDefaultMemberName(reader, out var attr);
-		}
-
 		internal static readonly TypeProvider minimalCorlibTypeProvider =
 			new TypeProvider(new SimpleCompilation(MinimalCorlib.Instance));
 
@@ -127,48 +115,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// </summary>
 		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
 			get => minimalCorlibTypeProvider;
-		}
-
-		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader, out CustomAttributeHandle defaultMemberAttribute)
-		{
-			var td = reader.GetTypeDefinition(type);
-
-			foreach (var h in td.GetCustomAttributes()) {
-				var ca = reader.GetCustomAttribute(h);
-				if (ca.IsKnownAttribute(reader, KnownAttribute.DefaultMember)) {
-					var decodedValues = ca.DecodeValue(minimalCorlibTypeProvider);
-					if (decodedValues.FixedArguments.Length == 1 && decodedValues.FixedArguments[0].Value is string value) {
-						defaultMemberAttribute = h;
-						return value;
-					}
-				}
-			}
-
-			defaultMemberAttribute = default(CustomAttributeHandle);
-			return null;
-		}
-		
-		public static bool HasOverrides(this MethodDefinitionHandle handle, MetadataReader reader)
-		{
-			for (int row = 1; row <= reader.GetTableRowCount(TableIndex.MethodImpl); row++) {
-				var impl = reader.GetMethodImplementation(MetadataTokens.MethodImplementationHandle(row));
-				if (impl.MethodBody == handle) return true;
-			}
-			return false;
-		}
-
-		public static bool HasParameters(this PropertyDefinitionHandle handle, MetadataReader reader)
-		{
-			var a = reader.GetPropertyDefinition(handle).GetAccessors();
-			if (!a.Getter.IsNil) {
-				var m = reader.GetMethodDefinition(a.Getter);
-				return m.GetParameters().Count > 0;
-			}
-			if (!a.Setter.IsNil) {
-				var m = reader.GetMethodDefinition(a.Setter);
-				return m.GetParameters().Count > 1;
-			}
-			return false;
 		}
 
 		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
@@ -259,68 +205,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static bool IsSmallReference(this MetadataReader reader, TableIndex table)
-		{
-			// TODO detect whether #JTD is present (EnC)
-			return reader.GetTableRowCount(table) <= ushort.MaxValue;
-		}
-
-		public static int GetReferenceSize(this MetadataReader reader, TableIndex table)
-		{
-			return IsSmallReference(reader, table) ? 2 : 4;
-		}
-
-		public static unsafe (int startRow, int endRow) BinarySearchRange(this MetadataReader reader, TableIndex table, int valueOffset, uint referenceValue, bool small)
-		{
-			int offset = reader.GetTableMetadataOffset(table);
-			int rowSize = reader.GetTableRowSize(table);
-			int rowCount = reader.GetTableRowCount(table);
-			int tableLength = rowSize * rowCount;
-			byte* startPointer = reader.MetadataPointer;
-
-			int result = BinarySearch();
-			if (result == -1)
-				return (-1, -1);
-
-			int start = result;
-
-			while (start > 0 && GetValue(start - 1) == referenceValue)
-				start--;
-
-			int end = result;
-
-			while (end + 1 < tableLength && GetValue(end + 1) == referenceValue)
-				end++;
-
-			return (start, end);
-
-			uint GetValue(int row)
-			{
-				if (small)
-					return *(ushort*)(startPointer + offset + row * rowSize + valueOffset);
-				else
-					return *(uint*)(startPointer + offset + row * rowSize + valueOffset);
-			}
-
-			int BinarySearch()
-			{
-				int startRow = 0;
-				int endRow = rowCount - 1;
-				while (startRow <= endRow) {
-					int row = (startRow + endRow) / 2;
-					uint currentValue = GetValue(row);
-					if (referenceValue > currentValue) {
-						startRow = row + 1;
-					} else if (referenceValue < currentValue) {
-						endRow = row - 1;
-					} else {
-						return row;
-					}
-				}
-				return -1;
-			}
-		}
-
 		public static AssemblyDefinition? GetAssemblyDefinition(this PEReader reader)
 		{
 			var metadata = reader.GetMetadataReader();
@@ -328,21 +212,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				return metadata.GetAssemblyDefinition();
 			return null;
 		}
-
-		public unsafe static ParameterHandle At(this ParameterHandleCollection collection, MetadataReader metadata, int index)
-		{
-			if (metadata.GetTableRowCount(TableIndex.ParamPtr) > 0) {
-				int rowSize = metadata.GetTableRowSize(TableIndex.ParamPtr);
-				int paramRefSize = (metadata.GetReferenceSize(TableIndex.ParamPtr) > 2) ? 4 : metadata.GetReferenceSize(TableIndex.Param);
-				int offset = metadata.GetTableMetadataOffset(TableIndex.ParamPtr) + index * rowSize;
-				byte* ptr = metadata.MetadataPointer + offset;
-				if (paramRefSize == 2)
-					return MetadataTokens.ParameterHandle(*(ushort*)ptr);
-				return MetadataTokens.ParameterHandle((int)*(uint*)ptr);
-			}
-			return MetadataTokens.ParameterHandle((index + 1) & 0xFFFFFF);
-		}
-
 
 		public static IEnumerable<ModuleReferenceHandle> GetModuleReferences(this MetadataReader metadata)
 		{
