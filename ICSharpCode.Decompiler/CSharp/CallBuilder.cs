@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				acrr.SizeArguments.Count == 1 &&
 				acrr.SizeArguments[0].IsCompileTimeConstant &&
 				acrr.SizeArguments[0].ConstantValue is int length) {
-				var expandedParameters = expectedParameters.Take(expectedParameters.Count - 1).ToList();
+				var expandedParameters = new List<IParameter>(expectedParameters);
 				var expandedArguments = new List<TranslatedExpression>(arguments);
 				if (length > 0) {
 					var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
