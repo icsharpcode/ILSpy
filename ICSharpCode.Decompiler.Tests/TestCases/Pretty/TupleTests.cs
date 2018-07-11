@@ -62,6 +62,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public (int a, int b, int c, int d, int e, int f, int g, int h, (int i, int j)) Nested4;
 
 		public Dictionary<(int a, string b), (string c, int d)> TupleDict;
+		public List<(int, string)> List;
+		public bool HasItems => List.Any(((int, string) a) => a.Item1 > 0);
 
 		public int VT1Member => VT1.Item1;
 		public int AccessUnnamed8 => Unnamed8.Item8;

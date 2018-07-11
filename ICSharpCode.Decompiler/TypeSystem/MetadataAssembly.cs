@@ -306,7 +306,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodSpecification(MethodSpecificationHandle methodSpecHandle, GenericContext context, bool expandVarArgs)
 		{
 			var methodSpec = metadata.GetMethodSpecification(methodSpecHandle);
-			var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context);
+			var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context)
+				.SelectReadOnlyArray(ta => ApplyAttributeTypeVisitor.ApplyAttributesToType(ta, Compilation,
+					methodSpec.GetCustomAttributes(), metadata, this.TypeSystemOptions));
 			IMethod method;
 			if (methodSpec.Method.Kind == HandleKind.MethodDefinition) {
 				// generic instance of a methoddef (=generic method in non-generic class in current assembly)

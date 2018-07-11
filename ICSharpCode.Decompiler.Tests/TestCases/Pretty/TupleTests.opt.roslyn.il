@@ -83,8 +83,9 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' '<>9'
-    .field public static class [mscorlib]System.Action '<>9__45_0'
-    .field public static class [mscorlib]System.Action '<>9__47_0'
+    .field public static class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> '<>9__22_0'
+    .field public static class [mscorlib]System.Action '<>9__48_0'
+    .field public static class [mscorlib]System.Action '<>9__50_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -105,21 +106,33 @@
       IL_0006:  ret
     } // end of method '<>c'::.ctor
 
-    .method assembly hidebysig instance void 
-            '<get_TargetTyping>b__45_0'() cil managed
+    .method assembly hidebysig instance bool 
+            '<get_HasItems>b__22_0'(valuetype [mscorlib]System.ValueTuple`2<int32,string> a) cil managed
     {
-      // Code size       1 (0x1)
+      // Code size       10 (0xa)
       .maxstack  8
-      IL_0000:  ret
-    } // end of method '<>c'::'<get_TargetTyping>b__45_0'
+      IL_0000:  ldarg.1
+      IL_0001:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0006:  ldc.i4.0
+      IL_0007:  cgt
+      IL_0009:  ret
+    } // end of method '<>c'::'<get_HasItems>b__22_0'
 
     .method assembly hidebysig instance void 
-            '<get_NotTargetTyping>b__47_0'() cil managed
+            '<get_TargetTyping>b__48_0'() cil managed
     {
       // Code size       1 (0x1)
       .maxstack  8
       IL_0000:  ret
-    } // end of method '<>c'::'<get_NotTargetTyping>b__47_0'
+    } // end of method '<>c'::'<get_TargetTyping>b__48_0'
+
+    .method assembly hidebysig instance void 
+            '<get_NotTargetTyping>b__50_0'() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method '<>c'::'<get_NotTargetTyping>b__50_0'
 
   } // end of class '<>c'
 
@@ -157,6 +170,30 @@
                                                                                                                   01 66 01 67 01 68 FF FF FF 01 69 01 6A 00 00 )    // .f.g.h....i.j..
   .field public class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> TupleDict
   .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 04 00 00 00 01 61 01 62 01 63 01 64 00 00 ) // .......a.b.c.d..
+  .field public class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> List
+  .method public hidebysig specialname instance bool 
+          get_HasItems() cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::List
+    IL_0006:  ldsfld     class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
+    IL_000b:  dup
+    IL_000c:  brtrue.s   IL_0025
+
+    IL_000e:  pop
+    IL_000f:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
+    IL_0014:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_HasItems>b__22_0'(valuetype [mscorlib]System.ValueTuple`2<int32,string>)
+    IL_001a:  newobj     instance void class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool>::.ctor(object,
+                                                                                                                                        native int)
+    IL_001f:  dup
+    IL_0020:  stsfld     class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
+    IL_0025:  call       bool [System.Core]System.Linq.Enumerable::Any<valuetype [mscorlib]System.ValueTuple`2<int32,string>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
+                                                                                                                              class [mscorlib]System.Func`2<!!0,bool>)
+    IL_002a:  ret
+  } // end of method TupleTests::get_HasItems
+
   .method public hidebysig specialname instance int32 
           get_VT1Member() cil managed
   {
@@ -360,17 +397,17 @@
     IL_0000:  ldnull
     IL_0001:  ldc.i4.1
     IL_0002:  box        [mscorlib]System.Int32
-    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__45_0'
+    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__48_0'
     IL_000c:  dup
     IL_000d:  brtrue.s   IL_0026
 
     IL_000f:  pop
     IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
-    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_TargetTyping>b__45_0'()
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_TargetTyping>b__48_0'()
     IL_001b:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                       native int)
     IL_0020:  dup
-    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__45_0'
+    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__48_0'
     IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
                                                                                                                                    !1,
                                                                                                                                    !2)
@@ -385,17 +422,17 @@
     IL_0000:  ldnull
     IL_0001:  ldc.i4.1
     IL_0002:  box        [mscorlib]System.Int32
-    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__47_0'
+    IL_0007:  ldsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__50_0'
     IL_000c:  dup
     IL_000d:  brtrue.s   IL_0026
 
     IL_000f:  pop
     IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
-    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_NotTargetTyping>b__47_0'()
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_NotTargetTyping>b__50_0'()
     IL_001b:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                       native int)
     IL_0020:  dup
-    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__47_0'
+    IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__50_0'
     IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
                                                                                                                                    !1,
                                                                                                                                    !2)
@@ -668,6 +705,10 @@
     IL_0006:  ret
   } // end of method TupleTests::.ctor
 
+  .property instance bool HasItems()
+  {
+    .get instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_HasItems()
+  } // end of property TupleTests::HasItems
   .property instance int32 VT1Member()
   {
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_VT1Member()
