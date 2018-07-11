@@ -143,6 +143,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return result;
 		}
 
+		public override int GetHashCode()
+		{
+			return 0x51fc5b83 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+		}
+
+		public override bool Equals(IType other)
+		{
+			return other is MetadataTypeParameter tp && handle == tp.handle && assembly.PEFile == tp.assembly.PEFile;
+		}
+
 		public override string ToString()
 		{
 			return $"{MetadataTokens.GetToken(handle):X8} Index={Index} Owner={Owner}";

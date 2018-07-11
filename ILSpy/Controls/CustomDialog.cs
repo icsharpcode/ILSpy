@@ -158,10 +158,5 @@ namespace ICSharpCode.ILSpy.Controls
 			this.AutoScaleMode = AutoScaleMode.Dpi;
 			this.AutoScaleDimensions = new SizeF(96, 96);
 		}
-
-		private void CustomDialog_KeyDown(object sender, KeyEventArgs e)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

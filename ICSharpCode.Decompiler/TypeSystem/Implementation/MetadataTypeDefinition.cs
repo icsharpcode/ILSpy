@@ -422,9 +422,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return this;
 		}
 
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataTypeDefinition td) {
+				return handle == td.handle && assembly.PEFile == td.assembly.PEFile;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x2e0520f2 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+		}
+
 		bool IEquatable<IType>.Equals(IType other)
 		{
-			return this == other;
+			return Equals(other);
 		}
 
 		#region GetNestedTypes

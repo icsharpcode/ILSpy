@@ -255,9 +255,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 
-		public bool Equals(IMember obj, TypeVisitor typeNormalization)
+		public override bool Equals(object obj)
 		{
-			return this == obj;
+			if (obj is MetadataField f) {
+				return handle == f.handle && assembly.PEFile == f.assembly.PEFile;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x11dda32b ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+		}
+
+		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
+		{
+			return Equals(obj);
 		}
 
 		public IMember Specialize(TypeParameterSubstitution substitution)

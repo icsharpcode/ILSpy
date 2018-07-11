@@ -36,8 +36,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		readonly MetadataAssembly assembly;
 		readonly PropertyDefinitionHandle propertyHandle;
-		readonly MethodDefinitionHandle getterHandle;
-		readonly MethodDefinitionHandle setterHandle;
+		readonly IMethod getter;
+		readonly IMethod setter;
 		readonly string name;
 		readonly SymbolKind symbolKind;
 
@@ -56,8 +56,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = assembly.metadata;
 			var prop = metadata.GetPropertyDefinition(handle);
 			var accessors = prop.GetAccessors();
-			getterHandle = accessors.Getter;
-			setterHandle = accessors.Setter;
+			getter = assembly.GetDefinition(accessors.Getter);
+			setter = assembly.GetDefinition(accessors.Setter);
 			name = metadata.GetString(prop.Name);
 			if (name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName) {
 				symbolKind = SymbolKind.Indexer;
@@ -78,12 +78,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public EntityHandle MetadataToken => propertyHandle;
 		public string Name => name;
 
-		public bool CanGet => !getterHandle.IsNil;
-		public bool CanSet => !setterHandle.IsNil;
+		public bool CanGet => getter != null;
+		public bool CanSet => setter != null;
 
-		public IMethod Getter => assembly.GetDefinition(getterHandle);
-		public IMethod Setter => assembly.GetDefinition(setterHandle);
-		IMethod AnyAccessor => assembly.GetDefinition(getterHandle.IsNil ? setterHandle : getterHandle);
+		public IMethod Getter => getter;
+		public IMethod Setter => setter;
+		IMethod AnyAccessor => getter ?? setter;
 
 		public bool IsIndexer => symbolKind == SymbolKind.Indexer;
 		public SymbolKind SymbolKind => symbolKind;
@@ -114,11 +114,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var propertyDef = assembly.metadata.GetPropertyDefinition(propertyHandle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters);
 			var signature = propertyDef.DecodeSignature(assembly.TypeProvider, genericContext);
+			var accessors = propertyDef.GetAccessors();
 			ParameterHandleCollection? parameterHandles;
-			if (!getterHandle.IsNil)
-				parameterHandles = assembly.metadata.GetMethodDefinition(getterHandle).GetParameters();
-			else if (!setterHandle.IsNil)
-				parameterHandles = assembly.metadata.GetMethodDefinition(setterHandle).GetParameters();
+			if (!accessors.Getter.IsNil)
+				parameterHandles = assembly.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
+			else if (!accessors.Setter.IsNil)
+				parameterHandles = assembly.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
 			else
 				parameterHandles = null;
 			var (returnType, parameters) = MetadataMethod.DecodeSignature(assembly, this, signature, parameterHandles);
@@ -169,7 +170,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		Accessibility ComputeAccessibility()
 		{
-			if (IsOverride && (getterHandle.IsNil || setterHandle.IsNil)) {
+			if (IsOverride && (getter == null || setter == null)) {
 				foreach (var baseMember in InheritanceHelper.GetBaseMembers(this, includeImplementedInterfaces: false)) {
 					if (!baseMember.IsOverride)
 						return baseMember.Accessibility;
@@ -219,9 +220,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataProperty p) {
+				return propertyHandle == p.propertyHandle && assembly.PEFile == p.assembly.PEFile;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x32b6a76c ^ assembly.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
+		}
+
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			return this == obj;
+			return Equals(obj);
 		}
 
 		public IMember Specialize(TypeParameterSubstitution substitution)

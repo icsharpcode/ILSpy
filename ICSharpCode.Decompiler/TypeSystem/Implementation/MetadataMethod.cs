@@ -406,9 +406,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
 		public string Namespace => DeclaringType?.Namespace ?? string.Empty;
 
+		public override bool Equals(object obj)
+		{
+			if (obj is MetadataMethod m) {
+				return handle == m.handle && assembly.PEFile == m.assembly.PEFile;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return 0x5a00d671 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+		}
+
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)
 		{
-			return obj == this;
+			return Equals(obj);
 		}
 
 		public IMethod Specialize(TypeParameterSubstitution substitution)
