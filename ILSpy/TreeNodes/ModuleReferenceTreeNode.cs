@@ -34,6 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly AssemblyFileHandle fileHandle;
 		readonly AssemblyFile file;
 		readonly string moduleName;
+		readonly bool containsMetadata;
 		
 		public ModuleReferenceTreeNode(AssemblyTreeNode parentAssembly, ModuleReferenceHandle r, MetadataReader module)
 		{
@@ -50,6 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (module.StringComparer.Equals(file.Name, moduleName)) {
 					this.file = file;
 					this.fileHandle = h;
+					this.containsMetadata = file.ContainsMetadata;
 					break;
 				}
 			}
@@ -64,7 +66,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null && file.ContainsMetadata) {
+			if (assemblyListNode != null && containsMetadata) {
 				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedModule(parentAssembly.LoadedAssembly.GetPEFileOrNull(), metadata.GetString(reference.Name))));
 				e.Handled = true;
 			}
@@ -73,7 +75,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, moduleName);
-			language.WriteCommentLine(output, file.ContainsMetadata ? "contains metadata" : "contains no metadata");
+			language.WriteCommentLine(output, containsMetadata ? "contains metadata" : "contains no metadata");
 		}
 	}
 }
