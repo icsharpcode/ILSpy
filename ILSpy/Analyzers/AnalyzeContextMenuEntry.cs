@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
 					break;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
 			}
 		}
 	}

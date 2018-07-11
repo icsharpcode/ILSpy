@@ -467,7 +467,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				int s = reader.ReadInt32();
 				int t = reader.ReadInt32();
 				if (((r != 0x600000) || (s != 0x600000)) || (t != 0x600000))
-					throw new NotSupportedException();
+					throw new BadImageFormatException("Magic value mismatch!");
 
 				initialized = true;
 			}

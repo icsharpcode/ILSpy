@@ -1589,7 +1589,7 @@ namespace ICSharpCode.Decompiler.IL
 				return new LdTypeToken(typeSystem.ResolveAsType(token));
 			if (token.Kind.IsMemberKind())
 				return new LdMemberToken(typeSystem.ResolveAsMember(token));
-			throw new NotImplementedException();
+			throw new BadImageFormatException("Invalid metadata token for ldtoken instruction.");
 		}
 	}
 }

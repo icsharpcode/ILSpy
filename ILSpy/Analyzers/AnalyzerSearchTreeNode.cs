@@ -68,9 +68,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 		}
 
-		AnalyzerTreeNode EntityTreeNodeFactory(IEntity result)
+		AnalyzerTreeNode EntityTreeNodeFactory(IEntity entity)
 		{
-			switch (result) {
+			if (entity == null) {
+				throw new ArgumentNullException(nameof(entity));
+			}
+
+			switch (entity) {
 				case ITypeDefinition td:
 					return new AnalyzedTypeTreeNode(td) {
 						Language = this.Language
@@ -92,7 +96,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 						Language = this.Language
 					};
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
 			}
 		}
 

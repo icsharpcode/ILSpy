@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		void CloneVariables()
 		{
-			throw new NotImplementedException();
+			throw new NotSupportedException("ILFunction.CloneVariables is currently not supported!");
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
