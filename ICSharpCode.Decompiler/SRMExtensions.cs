@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
 				return default;
 			int rva = field.GetRelativeVirtualAddress();
-			int size = field.DecodeSignature(new FieldValueSizeDecoder(resolver), default);
+			int size = field.DecodeSignature(new FieldValueSizeDecoder(typeSystem), default);
 			return pefile.GetSectionData(rva).GetReader(0, size);
 		}
 

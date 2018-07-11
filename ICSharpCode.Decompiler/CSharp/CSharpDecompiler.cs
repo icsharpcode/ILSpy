@@ -1076,7 +1076,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
 				// .data I_X = int32(123)
 				// .field public static int32 _x at I_X
-				var initVal = fieldDefinition.GetInitialValue(typeSystem.ModuleDefinition.Reader);
+				var initVal = fieldDefinition.GetInitialValue(typeSystem.ModuleDefinition.Reader, TypeSystem);
 				var message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
 				((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
 			}
