@@ -248,6 +248,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			return version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0;
 		}
 
+		internal static Version ZeroVersion = new Version(0,0,0,0);
+
 		string GetCorlib(IAssemblyReference reference)
 		{
 			var version = reference.Version;

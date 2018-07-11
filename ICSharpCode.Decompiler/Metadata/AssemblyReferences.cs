@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				builder.Append(Name);
 				builder.Append(sep);
 				builder.Append("Version=");
-				builder.Append(Version.ToString(fieldCount: 4));
+				builder.Append((Version ?? UniversalAssemblyResolver.ZeroVersion).ToString(fieldCount: 4));
 				builder.Append(sep);
 				builder.Append("Culture=");
 				builder.Append(string.IsNullOrEmpty(Culture) ? "neutral" : Culture);
