@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp;
@@ -320,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else if (info.value is LdLoc l) {
 					inst.ReplaceWith(new LdLoca(l.Variable));
 				} else {
-					throw new NotImplementedException();
+					Debug.Fail("LdFlda pattern not supported!");
 				}
 			}
 
