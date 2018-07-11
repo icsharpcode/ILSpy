@@ -489,8 +489,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			syntaxTree = new SyntaxTree();
 
-			foreach (var type in types)
+			foreach (var type in types) {
+				if (type.IsNil)
+					throw new ArgumentException("types contains null element");
 				RequiredNamespaceCollector.CollectNamespaces(type, typeSystem, decompileRun.Namespaces);
+			}
+
 			DoDecompileTypes(types, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
@@ -708,7 +712,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						addNewModifier = members.Any(m => SignatureComparer.Ordinal.Equals(m, (IMember)entity));
 						break;
 					default:
-						throw new NotSupportedException();
+						throw new ArgumentOutOfRangeException();
 				}
 			}
 

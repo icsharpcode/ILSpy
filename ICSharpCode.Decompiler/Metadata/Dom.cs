@@ -87,7 +87,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			var headers = Module.Reader.PEHeaders;
 			var resources = headers.CorHeader.ResourcesDirectory;
 			int index = headers.GetContainingSectionIndex(resources.RelativeVirtualAddress);
-			if (index < 0) throw new NotSupportedException();
+			if (index < 0)
+				throw new BadImageFormatException("RVA could not be found in any section!");
 			var sectionHeader = headers.SectionHeaders[index];
 			var sectionData = Module.Reader.GetEntireImage();
 			int totalOffset = resources.RelativeVirtualAddress + sectionHeader.PointerToRawData - sectionHeader.VirtualAddress;
