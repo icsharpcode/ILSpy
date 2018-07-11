@@ -108,7 +108,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var mainMetadata = moduleDefinition.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences()) {
 				var moduleRef = mainMetadata.GetModuleReference(h);
-				assemblyReferenceQueue.Enqueue((false, moduleDefinition, mainMetadata.GetString(moduleRef.Name)));
+				var moduleName = mainMetadata.GetString(moduleRef.Name);
+				foreach (var fileHandle in mainMetadata.AssemblyFiles) {
+					var file = mainMetadata.GetAssemblyFile(fileHandle);
+					if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata) {
+						assemblyReferenceQueue.Enqueue((false, moduleDefinition, moduleName));
+						break;
+					}
+				}
 			}
 			foreach (var refs in moduleDefinition.AssemblyReferences) {
 				assemblyReferenceQueue.Enqueue((true, moduleDefinition, refs));
