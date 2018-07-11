@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.TypeSystem.ModuleDefinition.Reader);
+					var initialValue = field.GetInitialValue(context.TypeSystem.ModuleDefinition.Reader, context.TypeSystem);
 					if (DecodeArrayInitializer(arrayType, array, initialValue, arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;

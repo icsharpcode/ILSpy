@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine("} // end filter");
 					break;
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
