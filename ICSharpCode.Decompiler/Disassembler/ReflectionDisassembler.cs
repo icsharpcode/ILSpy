@@ -1235,7 +1235,22 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteReference(module, handle, ".event", true);
 			output.Write(" ");
 			WriteFlags(eventDefinition.Attributes, eventAttributes);
-			var signature = eventDefinition.DecodeSignature(module.Metadata, new DisassemblerSignatureProvider(module, output), new GenericContext(declaringType, module));
+			var provider = new DisassemblerSignatureProvider(module, output);
+			Action<ILNameSyntax> signature;
+			switch (eventDefinition.Type.Kind) {
+				case HandleKind.TypeDefinition:
+					signature = provider.GetTypeFromDefinition(module.Metadata, (TypeDefinitionHandle)eventDefinition.Type, 0);
+					break;
+				case HandleKind.TypeReference:
+					signature = provider.GetTypeFromReference(module.Metadata, (TypeReferenceHandle)eventDefinition.Type, 0);
+					break;
+				case HandleKind.TypeSpecification:
+					signature = provider.GetTypeFromSpecification(module.Metadata, new GenericContext(declaringType, module),
+						(TypeSpecificationHandle)eventDefinition.Type, 0);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException("Expected a TypeDef, TypeRef or TypeSpec handle!");
+			}
 			signature(ILNameSyntax.TypeName);
 			output.Write(' ');
 			output.Write(DisassemblerHelpers.Escape(module.Metadata.GetString(eventDefinition.Name)));

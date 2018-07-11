@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler
 				case HandleKind.TypeSpecification:
 					return ((TypeSpecificationHandle)handle).GetFullTypeName(reader);
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
@@ -225,20 +225,6 @@ namespace ICSharpCode.Decompiler
 			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(type.Name), out int typeParameterCount);
 			return new TopLevelTypeName(ns, name, typeParameterCount);
-		}
-
-		public static TType DecodeSignature<TType, TGenericContext>(this EventDefinition ev, MetadataReader reader, ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			switch (ev.Type.Kind) {
-				case HandleKind.TypeDefinition:
-					return provider.GetTypeFromDefinition(reader, (TypeDefinitionHandle)ev.Type, 0);
-				case HandleKind.TypeReference:
-					return provider.GetTypeFromReference(reader, (TypeReferenceHandle)ev.Type, 0);
-				case HandleKind.TypeSpecification:
-					return provider.GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)ev.Type, 0);
-				default:
-					throw new NotSupportedException();
-			}
 		}
 
 		public static bool IsAnonymousType(this TypeDefinition type, MetadataReader metadata)
@@ -327,7 +313,7 @@ namespace ICSharpCode.Decompiler
 					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
 					return mr.Parent;
 				default:
-					throw new NotSupportedException();
+					throw new BadImageFormatException("Unexpected token kind for attribute constructor: " + attribute.Constructor.Kind);
 			}
 		}
 		
@@ -347,17 +333,24 @@ namespace ICSharpCode.Decompiler
 		}
 		#endregion
 
-		public static unsafe SRM.BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile)
+		public static unsafe SRM.BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile, IDecompilerTypeSystem typeSystem)
 		{
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
 				return default;
 			int rva = field.GetRelativeVirtualAddress();
-			int size = field.DecodeSignature(new FieldValueSizeDecoder(), default);
+			int size = field.DecodeSignature(new FieldValueSizeDecoder(resolver), default);
 			return pefile.GetSectionData(rva).GetReader(0, size);
 		}
 
 		class FieldValueSizeDecoder : ISignatureTypeProvider<int, Unit>
 		{
+			IDecompilerTypeSystem typeSystem;
+
+			public FieldValueSizeDecoder(IDecompilerTypeSystem typeSystem)
+			{
+				this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+			}
+
 			public int GetArrayType(int elementType, ArrayShape shape) => elementType;
 			public int GetByReferenceType(int elementType) => elementType;
 			public int GetFunctionPointerType(MethodSignature<int> signature) => IntPtr.Size;
@@ -389,9 +382,11 @@ namespace ICSharpCode.Decompiler
 						return 8;
 					case PrimitiveTypeCode.IntPtr:
 					case PrimitiveTypeCode.UIntPtr:
+						// this is the same as Cecil does.
 						return IntPtr.Size;
 					default:
-						throw new NotSupportedException();
+						// we assume pointer size for object, string and typedref
+						return IntPtr.Size;
 				}
 			}
 
@@ -405,12 +400,22 @@ namespace ICSharpCode.Decompiler
 
 			public int GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
-				return 0;
+				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
+				if (typeDef == null || typeDef.MetadataToken.IsNil)
+					return 0;
+				reader = typeDef.ParentAssembly.PEFile.Metadata;
+				var td = reader.GetTypeDefinition((TypeDefinitionHandle)typeDef.MetadataToken);
+				return td.GetLayout().Size;
 			}
 
 			public int GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 			{
-				return 0;
+				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
+				if (typeDef == null || typeDef.MetadataToken.IsNil)
+					return 0;
+				reader = typeDef.ParentAssembly.PEFile.Metadata;
+				var td = reader.GetTypeDefinition((TypeDefinitionHandle)typeDef.MetadataToken);
+				return td.GetLayout().Size;
 			}
 		}
 	}
