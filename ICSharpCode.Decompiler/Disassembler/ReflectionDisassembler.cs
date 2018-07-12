@@ -452,37 +452,58 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			Primitive,
 			Type,
-			Boxed,
 			Enum
 		}
 
-		static (PrimitiveSerializationTypeCode TypeCode, TypeKind Kind, bool IsArray, string TypeName) ReadArgumentType(ref BlobReader blob)
+		struct TypeInfo
+		{
+			public PrimitiveSerializationTypeCode TypeCode;
+			public TypeKind Kind;
+			public bool IsArray;
+			public bool IsBoxed;
+			public string TypeName;
+
+			public TypeInfo(PrimitiveSerializationTypeCode typeCode, TypeKind kind, bool isArray, bool isBoxed, string typeName)
+			{
+				TypeCode = typeCode;
+				Kind = kind;
+				IsArray = isArray;
+				IsBoxed = isBoxed;
+				TypeName = typeName;
+			}
+		}
+
+		static TypeInfo ReadArgumentType(ref BlobReader blob)
 		{
 			var b = blob.ReadByte();
 			if (2 <= b && b <= 14) {
-				return ((PrimitiveSerializationTypeCode)b, TypeKind.Primitive, false, null);
+				return new TypeInfo((PrimitiveSerializationTypeCode)b, TypeKind.Primitive, false, false, null);
 			}
 			switch (b) {
 				case 0x1d:
 					var result = ReadArgumentType(ref blob);
-					return (result.TypeCode, result.Kind, true, result.TypeName);
+					return new TypeInfo(result.TypeCode, result.Kind, true, false, result.TypeName);
 				case 0x50:
-					return (0, TypeKind.Type, false, null);
-				case 0x51: // boxed value type
-					return (0, TypeKind.Boxed, false, null);
+					return new TypeInfo(0, TypeKind.Type, false, false, null);
+				case 0x51: // boxed primitive type
+					return new TypeInfo(0, TypeKind.Primitive, false, true, null);
 				case 0x55: // enum
-					return (0, TypeKind.Enum, false, blob.ReadSerializedString());
+					return new TypeInfo(0, TypeKind.Enum, false, false, blob.ReadSerializedString());
 				default:
 					throw new BadImageFormatException($"Unexpected custom attribute type 0x{b:x}.");
 			}
 		}
 
-		static object ReadSimpleArgumentValue(ref BlobReader blob, PrimitiveSerializationTypeCode typeCode, TypeKind kind, string typeName)
+		object ReadSimpleArgumentValue(ref BlobReader blob, PEFile module, ref TypeInfo typeInfo)
 		{
-			switch (kind) {
+			switch (typeInfo.Kind) {
 				case TypeKind.Enum:
+					if (typeInfo.TypeCode == 0 && typeInfo.TypeName != null) {
+						typeInfo.TypeCode = ResolveEnumUnderlyingType(typeInfo.TypeName, module, out _);
+					}
+					goto case TypeKind.Primitive;
 				case TypeKind.Primitive:
-					switch (typeCode) {
+					switch (typeInfo.TypeCode) {
 						case PrimitiveSerializationTypeCode.Boolean:	return blob.ReadBoolean();
 						case PrimitiveSerializationTypeCode.Byte:		return blob.ReadByte();
 						case PrimitiveSerializationTypeCode.SByte:		return blob.ReadSByte();
@@ -496,15 +517,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						case PrimitiveSerializationTypeCode.Single:		return blob.ReadSingle();
 						case PrimitiveSerializationTypeCode.Double:		return blob.ReadDouble();
 						case PrimitiveSerializationTypeCode.String:		return blob.ReadSerializedString();
-						default: throw new ArgumentOutOfRangeException(nameof(typeCode));
+						default: throw new ArgumentOutOfRangeException(nameof(typeInfo.TypeCode));
 					}
 				case TypeKind.Type:
 					return blob.ReadSerializedString();
-				case TypeKind.Boxed:
-					var typeInfo = ReadArgumentType(ref blob);
-					return ReadArgumentValue(ref blob, typeInfo.TypeCode, typeInfo.Kind, typeInfo.IsArray, typeInfo.TypeName);
 				default:
-					throw new ArgumentOutOfRangeException(nameof(kind));
+					throw new ArgumentOutOfRangeException(nameof(typeInfo.Kind));
 			}
 		}
 
@@ -586,21 +604,29 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return this.mscorlib != null;
 		}
 
-		static object ReadArgumentValue(ref BlobReader blob, PrimitiveSerializationTypeCode typeCode, TypeKind kind, bool isArray, string typeName)
+		object ReadArgumentValue(ref BlobReader blob, PEFile module, ref TypeInfo typeInfo)
 		{
-			if (isArray) {
+			if (typeInfo.IsArray) {
 				uint elementCount = blob.ReadUInt32();
 				if (elementCount == 0xFFFF_FFFF) {
 					return null;
 				} else {
 					var array = new object[elementCount];
 					for (int i = 0; i < elementCount; i++) {
-						array[i] = ReadSimpleArgumentValue(ref blob, typeCode, kind, typeName);
+						array[i] = ReadSimpleArgumentValue(ref blob, module, ref typeInfo);
 					}
 					return array;
 				}
+			} else if (typeInfo.IsBoxed) {
+				typeInfo = ReadArgumentType(ref blob);
+				typeInfo.IsBoxed = true;
+				if (typeInfo.IsArray) {
+					return ReadArgumentValue(ref blob, module, ref typeInfo);
+				} else {
+					return ReadSimpleArgumentValue(ref blob, module, ref typeInfo);
+				}
 			} else {
-				return ReadSimpleArgumentValue(ref blob, typeCode, kind, typeName);
+				return ReadSimpleArgumentValue(ref blob, module, ref typeInfo);
 			}
 		}
 
@@ -702,80 +728,110 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 			}
 			var typeInfo = ReadArgumentType(ref blob);
-			var typeCode = typeInfo.TypeCode;
 			var typeDefinition = default((PEFile Module, EntityHandle Handle));
 			if (typeInfo.Kind == TypeKind.Enum) {
-				typeCode = ResolveEnumUnderlyingType(typeInfo.TypeName, module, out typeDefinition);
+				typeInfo.TypeCode = ResolveEnumUnderlyingType(typeInfo.TypeName, module, out typeDefinition);
 			}
 			var name = blob.ReadSerializedString();
-			object value = ReadArgumentValue(ref blob, typeCode, typeInfo.Kind, typeInfo.IsArray, typeInfo.TypeName);
+			object value = ReadArgumentValue(ref blob, module, ref typeInfo);
 
-			WriteTypeInfo(output, module, typeInfo.TypeCode, typeInfo.Kind, typeInfo.IsArray, typeInfo.TypeName, typeDefinition.Module, typeDefinition.Handle);
+			WriteTypeInfo(output, module, typeInfo, typeDefinition.Module, typeDefinition.Handle);
 
 			output.Write(' ');
 			output.Write(DisassemblerHelpers.Escape(name));
 			output.Write(" = ");
 
-			if (typeInfo.Kind == TypeKind.Type) {
-				output.Write($"type({value})");
-			} else if (value is string) {
-				// secdecls use special syntax for strings
-				output.Write("string('{0}')", DisassemblerHelpers.EscapeString((string)value).Replace("'", "\'"));
-			} else {
-				if (typeInfo.Kind == TypeKind.Enum || typeInfo.Kind == TypeKind.Primitive) {
-					WritePrimitiveTypeCode(output, typeCode);
-				} else if (typeInfo.Kind == TypeKind.Boxed) {
-					output.Write("object");
-				} else {
-					WriteTypeInfo(output, module, typeInfo.TypeCode, typeInfo.Kind, typeInfo.IsArray, typeInfo.TypeName, typeDefinition.Module, typeDefinition.Handle);
-				}
+			if (typeInfo.IsBoxed) {
+				output.Write("object(");
+			}
+
+			WriteTypeInfo(output, module, typeInfo, typeDefinition.Module, typeDefinition.Handle, isValue: true);
+
+			if (typeInfo.IsArray && ((object[])value).Length >= 0) {
+				output.Write(((object[])value).Length.ToString());
+				output.Write(']');
 				output.Write('(');
-				if (typeInfo.Kind == TypeKind.Boxed) {
-					WritePrimitiveTypeCode(output, Type.GetTypeCode(value.GetType()));
-					output.Write('(');
+				bool first = true;
+				foreach (var item in (object[])value) {
+					if (!first) output.Write(' ');
+					WriteValue(output, item, typeInfo);
+					first = false;
 				}
-				DisassemblerHelpers.WriteOperand(output, value);
-				if (typeInfo.Kind == TypeKind.Boxed) {
-					output.Write(')');
-				}
+				output.Write(')');
+			} else {
+				output.Write('(');
+				WriteValue(output, value, typeInfo);
+				output.Write(')');
+			}
+
+			if (typeInfo.IsBoxed) {
 				output.Write(')');
 			}
 		}
 
-		static void WriteTypeInfo(ITextOutput output, PEFile currentModule, PrimitiveSerializationTypeCode typeCode, TypeKind kind,
-			bool isArray, string typeName, PEFile referencedModule, EntityHandle type)
+		static void WriteValue(ITextOutput output, object value, TypeInfo typeInfo)
 		{
-			switch (kind) {
+			switch (typeInfo.Kind) {
 				case TypeKind.Primitive:
-					WritePrimitiveTypeCode(output, typeCode);
+					if (value is string) {
+						output.Write("'" + DisassemblerHelpers.EscapeString((string)value).Replace("'", "\'") + "'");
+					} else {
+						DisassemblerHelpers.WriteOperand(output, value);
+					}
+					break;
+				case TypeKind.Type:
+					output.Write(value.ToString());
+					break;
+				case TypeKind.Enum:
+					DisassemblerHelpers.WriteOperand(output, value);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(typeInfo.Kind));
+			}
+		}
+
+		static void WriteTypeInfo(ITextOutput output, PEFile currentModule, TypeInfo typeInfo, PEFile referencedModule, EntityHandle type, bool isValue = false)
+		{
+			if (typeInfo.IsBoxed && !isValue) {
+				output.Write("object");
+				return;
+			}
+			switch (typeInfo.Kind) {
+				case TypeKind.Primitive:
+					WritePrimitiveTypeCode(output, typeInfo.TypeCode);
 					break;
 				case TypeKind.Type:
 					output.Write("type");
 					break;
-				case TypeKind.Boxed:
-					output.Write("object");
-					break;
 				case TypeKind.Enum:
-					output.Write("enum ");
-					if (type.IsNil) {
-						output.Write(DisassemblerHelpers.Escape(typeName));
-						break;
-					}
-					if (referencedModule != currentModule) {
-						output.Write('[');
-						output.Write(referencedModule.Name);
-						output.Write(']');
-						output.WriteReference(referencedModule, type, type.GetFullTypeName(referencedModule.Metadata).ToString());
+					if (isValue) {
+						WritePrimitiveTypeCode(output, typeInfo.TypeCode);
 					} else {
-						output.Write(DisassemblerHelpers.Escape(typeName));
+						output.Write("enum ");
+						if (type.IsNil) {
+							output.Write(DisassemblerHelpers.Escape(typeInfo.TypeName));
+							break;
+						}
+						if (referencedModule != currentModule) {
+							output.Write('[');
+							output.Write(referencedModule.Name);
+							output.Write(']');
+							output.WriteReference(referencedModule, type, type.GetFullTypeName(referencedModule.Metadata).ToString());
+						} else {
+							output.Write(DisassemblerHelpers.Escape(typeInfo.TypeName));
+						}
 					}
 					break;
 				default:
 					break;
 			}
 
-			if (isArray) {
-				output.Write("[]");
+			if (typeInfo.IsArray) {
+				if (isValue) {
+					output.Write('[');
+				} else {
+					output.Write("[]");
+				}
 			}
 		}
 		#endregion
