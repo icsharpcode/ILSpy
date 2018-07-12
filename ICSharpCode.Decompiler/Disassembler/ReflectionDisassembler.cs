@@ -389,7 +389,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					try {
 						TryDecodeSecurityDeclaration(outputWithRollback, blob, module);
 						outputWithRollback.Commit();
-					} catch (Exception ex) when (ex is BadImageFormatException || ex is NotSupportedException || ex is ArgumentException) {
+					} catch (Exception ex) when (ex is BadImageFormatException || ex is EnumUnderlyingTypeResolveException) {
 						blob.Reset();
 						output.Write(" = ");
 						WriteBlob(blob);
@@ -473,7 +473,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case 0x55: // enum
 					return (0, TypeKind.Enum, false, blob.ReadSerializedString());
 				default:
-					throw new NotSupportedException($"Custom attribute type 0x{b:x} is not supported.");
+					throw new BadImageFormatException($"Unexpected custom attribute type 0x{b:x}.");
 			}
 		}
 
@@ -565,7 +565,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			if (typeDefHandle.IsNil || !typeDefHandle.IsEnum(containingModule.Metadata, out var typeCode))
-				throw new NotSupportedException("Enum type cannot be resolved, cannot decode security declaration blob!");
+				throw new EnumUnderlyingTypeResolveException();
 			typeDefinition = (containingModule, typeDefHandle);
 			return (PrimitiveSerializationTypeCode)typeCode;
 		}
@@ -1249,7 +1249,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						(TypeSpecificationHandle)eventDefinition.Type, 0);
 					break;
 				default:
-					throw new ArgumentOutOfRangeException("Expected a TypeDef, TypeRef or TypeSpec handle!");
+					throw new BadImageFormatException("Expected a TypeDef, TypeRef or TypeSpec handle!");
 			}
 			signature(ILNameSyntax.TypeName);
 			output.Write(' ');
@@ -1922,7 +1922,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("class ");
 						break;
 					default:
-						throw new NotSupportedException($"rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
+						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
 				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
 			};
@@ -1941,7 +1941,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("class ");
 						break;
 					default:
-						throw new NotSupportedException($"rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
+						throw new BadImageFormatException($"Unexpected rawTypeKind: {rawTypeKind} (0x{rawTypeKind:x})");
 				}
 				((EntityHandle)handle).WriteTo(module, output, GenericContext.Empty);
 			};

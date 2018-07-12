@@ -267,6 +267,7 @@
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\EnumUnderlyingTypeResolveException.cs" />
     <Compile Include="Metadata\MetadataTokenHelpers.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
