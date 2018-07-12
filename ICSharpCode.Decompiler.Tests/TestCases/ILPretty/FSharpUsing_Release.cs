@@ -31,7 +31,7 @@ public static class FSharpUsingPatterns
 	public static void sample4()
 	{
 		Console.WriteLine("some text");
-		int num = default(int);
+		int num;
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
 			num = fileStream.ReadByte();
 		}
@@ -42,12 +42,12 @@ public static class FSharpUsingPatterns
 	public static void sample5()
 	{
 		Console.WriteLine("some text");
-		int num = default(int);
+		int num;
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
 			num = fileStream.ReadByte();
 		}
 		int num2 = num;
-		int num3 = default(int);
+		int num3;
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
 			fileStream.ReadByte();
 			num3 = fileStream.ReadByte();

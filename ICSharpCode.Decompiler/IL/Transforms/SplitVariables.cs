@@ -99,6 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
 							return AddressUse.Unknown;
 					}
+					/* Currently there's not really any need to distinguish between readonly and readwrite method calls:
 					var addrParam = call.GetParameter(addressLoadingInstruction.ChildIndex);
 					bool isReadOnly;
 					if (addrParam == null) {
@@ -106,8 +107,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							|| (call.Method.DeclaringType?.IsKnownType(KnownTypeCode.NullableOfT) ?? false);
 					} else {
 						isReadOnly = false;
-					}
-					return isReadOnly ? AddressUse.LocalRead : AddressUse.Unknown; // TODO AddressUse.LocalReadWrite;
+					}*/
+					return AddressUse.LocalReadWrite;
 				default:
 					return AddressUse.Unknown;
 			}
@@ -122,7 +123,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		class GroupStores : ReachingDefinitionsVisitor
 		{
 			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
-			readonly HashSet<IInstructionWithVariableOperand> uninitVariableUsage = new HashSet<IInstructionWithVariableOperand>();
+
+			/// <summary>
+			/// For each uninitialized variable, one representative instruction that
+			/// potentially observes the unintialized value of the variable.
+			/// Used to merge together all such loads of the same uninitialized value.
+			/// </summary>
+			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new Dictionary<ILVariable, IInstructionWithVariableOperand>();
 			
 			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
 			{
@@ -144,7 +151,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (IsAnalyzedVariable(inst.Variable)) {
 					if (IsPotentiallyUninitialized(state, inst.Variable)) {
-						uninitVariableUsage.Add(inst);
+						// merge all uninit loads together:
+						if (uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad)) {
+							unionFind.Merge(inst, uninitLoad);
+						} else {
+							uninitVariableUsage.Add(inst.Variable, inst);
+						}
 					}
 					foreach (var store in GetStores(state, inst.Variable)) {
 						unionFind.Merge(inst, (IInstructionWithVariableOperand)store);
@@ -170,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}
-				if (uninitVariableUsage.Contains(inst)) {
+				if (inst.Variable.HasInitialValue && uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst) {
 					v.HasInitialValue = true;
 				}
 				return v;
