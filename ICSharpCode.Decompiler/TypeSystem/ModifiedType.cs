@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string NameSuffix => (kind == TypeKind.ModReq ? "modreq" : "modopt") + $"({modifier.FullName})";
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;
+		public override bool IsByRefLike => elementType.IsByRefLike;
 
 		public override ITypeDefinition GetDefinition()
 		{

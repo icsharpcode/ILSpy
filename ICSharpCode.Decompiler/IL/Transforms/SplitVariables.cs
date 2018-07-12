@@ -21,6 +21,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -48,7 +49,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case VariableKind.Local:
 				case VariableKind.Exception:
 					foreach (var ldloca in v.AddressInstructions) {
-						if (!AddressUsedOnlyForReading(ldloca)) {
+						if (DetermineAddressUse(ldloca) == AddressUse.Unknown) {
+							// If the address isn't used immediately,
+							// we'd need to deal with aliases.
 							return false;
 						}
 					}
@@ -67,29 +70,46 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool AddressUsedOnlyForReading(ILInstruction addressLoadingInstruction)
+		enum AddressUse
+		{
+			Unknown,
+			LocalRead,
+			LocalReadWrite
+		}
+
+		static AddressUse DetermineAddressUse(ILInstruction addressLoadingInstruction)
 		{
 			switch (addressLoadingInstruction.Parent) {
 				case LdObj ldobj:
-					return true;
+					return AddressUse.LocalRead;
 				case LdFlda ldflda:
-					return AddressUsedOnlyForReading(ldflda);
+					return DetermineAddressUse(ldflda);
 				case Await await:
-					// Not strictly true as GetAwaiter() could have side-effects,
-					// but we need to split awaiter variables to make async/await pretty.
-					return true;
+					// GetAwaiter() may write to the struct, but shouldn't store the address for later use
+					return AddressUse.LocalReadWrite;
 				case Call call:
-					if (call.Method.DeclaringTypeDefinition?.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
-						switch (call.Method.Name) {
-							case "get_HasValue":
-							case "get_Value":
-							case "GetValueOrDefault":
-								return true;
-						}
+					// Address is passed to method.
+					// We'll assume the method only uses the address locally,
+					// unless we can see an address being returned from the method:
+					if (call.Method.ReturnType.IsByRefLike) {
+						return AddressUse.Unknown;
 					}
-					return false;
+					foreach (var p in call.Method.Parameters) {
+						// catch "out Span<int>" and similar
+						if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
+							return AddressUse.Unknown;
+					}
+					var addrParam = call.GetParameter(addressLoadingInstruction.ChildIndex);
+					bool isReadOnly;
+					if (addrParam == null) {
+						isReadOnly = (call.Method.DeclaringTypeDefinition?.HasAttribute(KnownAttribute.IsReadOnly) ?? false)
+							|| (call.Method.DeclaringType?.IsKnownType(KnownTypeCode.NullableOfT) ?? false);
+					} else {
+						isReadOnly = false;
+					}
+					return isReadOnly ? AddressUse.LocalRead : AddressUse.Unknown; // TODO AddressUse.LocalReadWrite;
 				default:
-					return false;
+					return AddressUse.Unknown;
 			}
 		}
 

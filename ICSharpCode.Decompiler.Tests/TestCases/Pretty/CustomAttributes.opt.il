@@ -306,11 +306,18 @@
 
   .method public hidebysig static void  BoxedLiteralsArray() cil managed
   {
-    .custom instance void CustomAttributes.CustomAttributes/MyAttribute::.ctor(object) = ( 01 00 1D 51 10 00 00 00 08 01 00 00 00 09 02 00   // ...Q............
+    .custom instance void CustomAttributes.CustomAttributes/MyAttribute::.ctor(object) = ( 01 00 1D 51 13 00 00 00 08 01 00 00 00 09 02 00   // ...Q............
                                                                                            00 00 0A 03 00 00 00 00 00 00 00 0B 04 00 00 00 
                                                                                            00 00 00 00 06 05 00 07 06 00 05 07 04 08 03 61   // ...............a
                                                                                            00 03 00 00 03 FF FE 03 FF FF 0C 00 00 80 3F 0D   // ..............?.
                                                                                            00 00 00 00 00 00 00 40 0E 04 74 65 78 74 0E FF   // .......@..text..
+                                                                                           50 59 53 79 73 74 65 6D 2E 49 6E 74 33 32 2C 20   // PYSystem.Int32, 
+                                                                                           6D 73 63 6F 72 6C 69 62 2C 20 56 65 72 73 69 6F   // mscorlib, Versio
+                                                                                           6E 3D 34 2E 30 2E 30 2E 30 2C 20 43 75 6C 74 75   // n=4.0.0.0, Cultu
+                                                                                           72 65 3D 6E 65 75 74 72 61 6C 2C 20 50 75 62 6C   // re=neutral, Publ
+                                                                                           69 63 4B 65 79 54 6F 6B 65 6E 3D 62 37 37 61 35   // icKeyToken=b77a5
+                                                                                           63 35 36 31 39 33 34 65 30 38 39 1D 51 01 00 00   // c561934e089.Q...
+                                                                                           00 08 01 00 00 00 1D 08 01 00 00 00 01 00 00 00 
                                                                                            00 00 ) 
     // Code size       1 (0x1)
     .maxstack  8

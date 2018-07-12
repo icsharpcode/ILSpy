@@ -82,9 +82,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return genericType; }
 		}
 		
-		public bool? IsReferenceType {
-			get { return genericType.IsReferenceType; }
-		}
+		public bool? IsReferenceType => genericType.IsReferenceType;
+		public bool IsByRefLike => genericType.IsByRefLike;
 		
 		public IType DeclaringType {
 			get {

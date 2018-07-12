@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override string NameSuffix => " pinned";
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;
+		public override bool IsByRefLike => elementType.IsByRefLike;
 
 		public override TypeKind Kind => TypeKind.Other;
 

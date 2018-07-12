@@ -65,6 +65,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool? IsReferenceType { get; }
 		
 		/// <summary>
+		/// Gets whether this type is "ref-like": a ByReferenceType or "ref struct".
+		/// </summary>
+		bool IsByRefLike { get; }
+
+		/// <summary>
 		/// Gets the underlying type definition.
 		/// Can return null for types which do not have a type definition (for example arrays, pointers, type parameters).
 		/// </summary>

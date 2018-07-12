@@ -190,6 +190,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return null;
 			}
 		}
+
+		bool IType.IsByRefLike => false;
 		
 		IType IType.DeclaringType {
 			get { return null; }

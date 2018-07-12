@@ -496,7 +496,7 @@
     <Compile Include="TypeSystem\IMember.cs" />
     <Compile Include="TypeSystem\IMethod.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractFreezable.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractResolvedTypeParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\AbstractTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractType.cs" />
     <Compile Include="TypeSystem\Implementation\BaseTypeCollector.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAssemblyReference.cs" />
