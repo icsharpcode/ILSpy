@@ -211,6 +211,8 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field private uint64 '<UlongProp>k__BackingField'
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private string '<StringProp>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field private class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass '<CustomClassProp>k__BackingField'
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomStruct '<CustomStructProp>k__BackingField'
@@ -398,6 +400,29 @@
       IL_0002:  stfld      uint64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::'<UlongProp>k__BackingField'
       IL_0007:  ret
     } // end of method CustomClass::set_UlongProp
+
+    .method public hidebysig specialname 
+            instance string  get_StringProp() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::'<StringProp>k__BackingField'
+      IL_0006:  ret
+    } // end of method CustomClass::get_StringProp
+
+    .method public hidebysig specialname 
+            instance void  set_StringProp(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::'<StringProp>k__BackingField'
+      IL_0007:  ret
+    } // end of method CustomClass::set_StringProp
 
     .method public hidebysig specialname 
             instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass 
@@ -638,6 +663,11 @@
       .get instance uint64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::get_UlongProp()
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::set_UlongProp(uint64)
     } // end of property CustomClass::UlongProp
+    .property instance string StringProp()
+    {
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::get_StringProp()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::set_StringProp(string)
+    } // end of property CustomClass::StringProp
     .property instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass
             CustomClassProp()
     {
@@ -1430,6 +1460,8 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum '<StaticShortProperty>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private static string '<StaticStringProperty>k__BackingField'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method private hidebysig specialname static 
           class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass 
           get_CustomClassProp() cil managed
@@ -1684,6 +1716,27 @@
     IL_0001:  stsfld     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::'<StaticShortProperty>k__BackingField'
     IL_0006:  ret
   } // end of method CompoundAssignmentTest::set_StaticShortProperty
+
+  .method public hidebysig specialname static 
+          string  get_StaticStringProperty() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldsfld     string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::'<StaticStringProperty>k__BackingField'
+    IL_0005:  ret
+  } // end of method CompoundAssignmentTest::get_StaticStringProperty
+
+  .method public hidebysig specialname static 
+          void  set_StaticStringProperty(string 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  stsfld     string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::'<StaticStringProperty>k__BackingField'
+    IL_0006:  ret
+  } // end of method CompoundAssignmentTest::set_StaticStringProperty
 
   .method private hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomStruct2& 
           GetStruct() cil managed
@@ -23089,6 +23142,83 @@
     IL_001a:  ret
   } // end of method CompoundAssignmentTest::Issue1007
 
+  .method private hidebysig static void  Issue1082(string[] strings,
+                                                   class [mscorlib]System.Collections.Generic.List`1<char> chars,
+                                                   bool flag,
+                                                   int32 i) cil managed
+  {
+    // Code size       65 (0x41)
+    .maxstack  4
+    .locals init (char V_0)
+    IL_0000:  ldarg.2
+    IL_0001:  brfalse.s  IL_0022
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  ldelema    [mscorlib]System.String
+    IL_000a:  dup
+    IL_000b:  ldind.ref
+    IL_000c:  ldarg.1
+    IL_000d:  ldarg.3
+    IL_000e:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.List`1<char>::get_Item(int32)
+    IL_0013:  stloc.0
+    IL_0014:  ldloca.s   V_0
+    IL_0016:  call       instance string [mscorlib]System.Char::ToString()
+    IL_001b:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_0020:  stind.ref
+    IL_0021:  ret
+
+    IL_0022:  ldarg.0
+    IL_0023:  ldc.i4.0
+    IL_0024:  ldelema    [mscorlib]System.String
+    IL_0029:  dup
+    IL_002a:  ldind.ref
+    IL_002b:  ldarg.1
+    IL_002c:  ldarg.3
+    IL_002d:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.List`1<char>::get_Item(int32)
+    IL_0032:  stloc.0
+    IL_0033:  ldloca.s   V_0
+    IL_0035:  call       instance string [mscorlib]System.Char::ToString()
+    IL_003a:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_003f:  stind.ref
+    IL_0040:  ret
+  } // end of method CompoundAssignmentTest::Issue1082
+
+  .method private hidebysig static void  StringPropertyCompoundAssign() cil managed
+  {
+    // Code size       95 (0x5f)
+    .maxstack  3
+    IL_0000:  call       string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticStringProperty()
+    IL_0005:  ldstr      "a"
+    IL_000a:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_000f:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticStringProperty(string)
+    IL_0014:  call       string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticStringProperty()
+    IL_0019:  ldc.i4.1
+    IL_001a:  box        [mscorlib]System.Int32
+    IL_001f:  call       string [mscorlib]System.String::Concat(object,
+                                                                object)
+    IL_0024:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticStringProperty(string)
+    IL_0029:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::.ctor()
+    IL_002e:  dup
+    IL_002f:  callvirt   instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::get_StringProp()
+    IL_0034:  ldstr      "a"
+    IL_0039:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_003e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::set_StringProp(string)
+    IL_0043:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::.ctor()
+    IL_0048:  dup
+    IL_0049:  callvirt   instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::get_StringProp()
+    IL_004e:  ldc.i4.1
+    IL_004f:  box        [mscorlib]System.Int32
+    IL_0054:  call       string [mscorlib]System.String::Concat(object,
+                                                                object)
+    IL_0059:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/CustomClass::set_StringProp(string)
+    IL_005e:  ret
+  } // end of method CompoundAssignmentTest::StringPropertyCompoundAssign
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -23165,6 +23295,11 @@
     .get valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticShortProperty()
     .set void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticShortProperty(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum)
   } // end of property CompoundAssignmentTest::StaticShortProperty
+  .property string StaticStringProperty()
+  {
+    .get string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticStringProperty()
+    .set void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticStringProperty(string)
+  } // end of property CompoundAssignmentTest::StaticStringProperty
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest
 
 

@@ -1111,7 +1111,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitUserDefinedCompoundAssign(UserDefinedCompoundAssign inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
-			if (inst.Method.Parameters.Count == 2) {
+			if (UserDefinedCompoundAssign.IsStringConcat(inst.Method)) {
+				Debug.Assert(inst.Method.Parameters.Count == 2);
+				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this, allowImplicitConversion: true);
+				return new AssignmentExpression(target, AssignmentOperatorType.Add, value)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.AddAssign, inst.Method, inst.IsLifted, new[] { target.ResolveResult, value.ResolveResult }));
+			} else if (inst.Method.Parameters.Count == 2) {
 				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this);
 				AssignmentOperatorType? op = GetAssignmentOperatorTypeFromMetadataName(inst.Method.Name);
 				Debug.Assert(op != null);

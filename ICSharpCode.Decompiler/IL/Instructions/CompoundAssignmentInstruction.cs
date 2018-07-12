@@ -196,15 +196,20 @@ namespace ICSharpCode.Decompiler.IL
 	public partial class UserDefinedCompoundAssign : CompoundAssignmentInstruction
 	{
 		public readonly IMethod Method;
-		public bool IsLifted => false; // TODO: implement ILi
+		public bool IsLifted => false; // TODO: implement lifted user-defined compound assignments
 
 		public UserDefinedCompoundAssign(IMethod method, CompoundAssignmentType compoundAssignmentType, ILInstruction target, ILInstruction value)
 			: base(OpCode.UserDefinedCompoundAssign, compoundAssignmentType, target, value)
 		{
 			this.Method = method;
-			Debug.Assert(Method.IsOperator);
+			Debug.Assert(Method.IsOperator || IsStringConcat(method));
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Method.Name == "op_Increment" || Method.Name == "op_Decrement"));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
+		}
+
+		public static bool IsStringConcat(IMethod method)
+		{
+			return method.Name == "Concat" && method.IsStatic && method.DeclaringType.IsKnownType(KnownTypeCode.String);
 		}
 
 		public override StackType ResultType => Method.ReturnType.GetStackType();
