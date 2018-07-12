@@ -121,8 +121,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				assemblyReferenceQueue.Enqueue((true, moduleDefinition, refs));
 			}
 			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
-				reference.IsAssembly ? "A:" + reference.MainModule.FileName + ":" + ((AssemblyReference)reference.Reference).FullName :
-				                       "M:" + reference.MainModule.FileName + ":" + reference.Reference);
+				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
+				                       "M:" + reference.Reference);
 			var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
 			while (assemblyReferenceQueue.Count > 0) {
 				var asmRef = assemblyReferenceQueue.Dequeue();

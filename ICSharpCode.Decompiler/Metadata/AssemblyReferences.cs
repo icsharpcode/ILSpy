@@ -195,5 +195,10 @@ namespace ICSharpCode.Decompiler.Metadata
 				throw new ArgumentNullException(nameof(handle));
 			Handle = handle;
 		}
+
+		public override string ToString()
+		{
+			return FullName;
+		}
 	}
 }
