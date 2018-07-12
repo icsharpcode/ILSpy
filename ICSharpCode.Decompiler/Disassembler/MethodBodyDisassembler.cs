@@ -341,6 +341,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 							case HandleKind.FieldDefinition:
 								output.Write("field ");
 								break;
+							case HandleKind.MethodDefinition:
+								output.Write("method ");
+								break;
 						}
 						try {
 							handle?.WriteTo(module, output, genericContext);
