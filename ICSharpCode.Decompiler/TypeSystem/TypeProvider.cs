@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			if (def == null)
-				throw new InvalidOperationException();
+				throw new EnumUnderlyingTypeResolveException();
 			return def.KnownTypeCode.ToPrimitiveTypeCode();
 		}
 
