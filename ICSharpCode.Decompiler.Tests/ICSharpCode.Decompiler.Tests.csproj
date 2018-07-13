@@ -62,11 +62,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
+    <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />
     <Compile Include="TestCases\Pretty\CustomAttributeConflicts.cs" />
     <Compile Include="TestCases\Pretty\DynamicTests.cs" />
     <Compile Include="TestCases\Pretty\Issue1080.cs" />

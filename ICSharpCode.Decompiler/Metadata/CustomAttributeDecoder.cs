@@ -18,11 +18,13 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		private readonly ICustomAttributeTypeProvider<TType> _provider;
 		private readonly MetadataReader _reader;
+		private readonly bool _provideBoxingTypeInfo;
 
-		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader)
+		public CustomAttributeDecoder(ICustomAttributeTypeProvider<TType> provider, MetadataReader reader, bool provideBoxingTypeInfo = false)
 		{
 			_reader = reader;
 			_provider = provider;
+			_provideBoxingTypeInfo = provideBoxingTypeInfo;
 		}
 		
 		public ImmutableArray<CustomAttributeNamedArgument<TType>> DecodeNamedArguments(ref BlobReader valueReader, int count)
@@ -109,6 +111,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		private CustomAttributeTypedArgument<TType> DecodeArgument(ref BlobReader valueReader, ArgumentTypeInfo info)
 		{
+			var outer = info;
 			if (info.TypeCode == SerializationTypeCode.TaggedObject) {
 				info = DecodeNamedArgumentType(ref valueReader);
 			}
@@ -180,6 +183,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 				default:
 					throw new BadImageFormatException();
+			}
+
+			if (_provideBoxingTypeInfo && outer.TypeCode == SerializationTypeCode.TaggedObject) {
+				return new CustomAttributeTypedArgument<TType>(outer.Type, new CustomAttributeTypedArgument<TType>(info.Type, value));
 			}
 
 			return new CustomAttributeTypedArgument<TType>(info.Type, value);

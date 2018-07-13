@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			PEStreamOptions options = PEStreamOptions.Default)
 		{
 			this.options = options;
-			this.TargetFramework = targetFramework;
+			this.TargetFramework = targetFramework ?? string.Empty;
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
 			this.throwOnError = throwOnError;
@@ -245,7 +245,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static bool IsZero(Version version)
 		{
-			return version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0;
+			return version == null || (version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0);
 		}
 
 		internal static Version ZeroVersion = new Version(0,0,0,0);
