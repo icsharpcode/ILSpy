@@ -356,6 +356,10 @@ namespace ICSharpCode.ILSpy
 					if (runtimeName != null) {
 						output.WriteLine("// Runtime: " + runtimeName);
 					}
+					var debugInfo = assembly.GetDebugInfoOrNull();
+					if (debugInfo != null) {
+						output.WriteLine("// Debug info: " + debugInfo.Description);
+					}
 					output.WriteLine();
 
 					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, assemblyResolver, options.DecompilerSettings);

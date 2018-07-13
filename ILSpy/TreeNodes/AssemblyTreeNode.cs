@@ -103,6 +103,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						tooltip.Inlines.Add(new Bold(new Run("Runtime: ")));
 						tooltip.Inlines.Add(new Run(runtimeName));
 					}
+					var debugInfo = LoadedAssembly.GetDebugInfoOrNull();
+					tooltip.Inlines.Add(new LineBreak());
+					tooltip.Inlines.Add(new Bold(new Run("Debug info: ")));
+					tooltip.Inlines.Add(new Run(debugInfo?.Description ?? "none"));
 				}
 
 				return tooltip;
