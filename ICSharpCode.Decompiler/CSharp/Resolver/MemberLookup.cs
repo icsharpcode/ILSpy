@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			
 			IType targetType = targetResolveResult.Type;
 			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
-			Predicate<IProperty> filter = p => p.IsIndexer;
+			Predicate<IProperty> filter = p => p.IsIndexer && !p.IsExplicitInterfaceImplementation;
 			
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
 			foreach (IType type in targetType.GetNonInterfaceBaseTypes()) {
