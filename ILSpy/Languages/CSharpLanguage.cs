@@ -564,55 +564,7 @@ namespace ICSharpCode.ILSpy
 
 		public override CodeMappingInfo GetCodeMappingInfo(PEFile module, EntityHandle member)
 		{
-			var declaringType = member.GetDeclaringType(module.Metadata);
-
-			if (declaringType.IsNil && member.Kind == HandleKind.TypeDefinition) {
-				declaringType = (TypeDefinitionHandle)member;
-			}
-
-			var info = new CodeMappingInfo(this, module, declaringType);
-
-			var td = module.Metadata.GetTypeDefinition(declaringType);
-
-			foreach (var method in td.GetMethods()) {
-				var parent = method;
-				var part = method;
-
-				var connectedMethods = new Queue<MethodDefinitionHandle>();
-				connectedMethods.Enqueue(part);
-
-				while (connectedMethods.Count > 0) {
-					part = connectedMethods.Dequeue();
-					var md = module.Metadata.GetMethodDefinition(part);
-
-					if (!md.HasBody()) {
-						info.AddMapping(parent, part);
-					} else {
-						// TODO : async and yield fsms
-
-						// deal with ldftn instructions, i.e., lambdas
-						var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
-						while (blob.RemainingBytes > 0) {
-							var code = blob.DecodeOpCode();
-							if (code == ILOpCode.Ldftn) {
-								var token = MetadataTokens.EntityHandle(blob.ReadInt32());
-								if (token.Kind == HandleKind.MethodDefinition) {
-									if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
-										connectedMethods.Enqueue((MethodDefinitionHandle)token);
-								}
-							} else {
-								blob.SkipOperand(code);
-							}
-						}
-
-						info.AddMapping(parent, part);
-					}
-				}
-
-
-			}
-
-			return info;
+			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
 	}
 }

@@ -34,12 +34,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			HandleAttributes(typeSystem.MainAssembly.GetModuleAttributes(), namespaces);
 		}
 
-		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem, HashSet<string> namespaces, bool scanningFullType = false)
+		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem,
+			HashSet<string> namespaces, CodeMappingInfo mappingInfo = null, bool scanningFullType = false)
 		{
-			if (entity == null)
+			if (entity == null || entity.MetadataToken.IsNil)
 				return;
 			switch (entity) {
 				case ITypeDefinition td:
+					if (mappingInfo == null)
+						mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentAssembly.PEFile, entity.MetadataToken);
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.GetAttributes(), namespaces);
 
@@ -52,23 +55,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 
 					foreach (var nestedType in td.NestedTypes) {
-						CollectNamespaces(nestedType, typeSystem, namespaces, scanningFullType: true);
+						CollectNamespaces(nestedType, typeSystem, namespaces, mappingInfo, scanningFullType: true);
 					}
 
 					foreach (var field in td.Fields) {
-						CollectNamespaces(field, typeSystem, namespaces, scanningFullType: true);
+						CollectNamespaces(field, typeSystem, namespaces, mappingInfo, scanningFullType: true);
 					}
 
 					foreach (var property in td.Properties) {
-						CollectNamespaces(property, typeSystem, namespaces, scanningFullType: true);
+						CollectNamespaces(property, typeSystem, namespaces, mappingInfo, scanningFullType: true);
 					}
 
 					foreach (var @event in td.Events) {
-						CollectNamespaces(@event, typeSystem, namespaces, scanningFullType: true);
+						CollectNamespaces(@event, typeSystem, namespaces, mappingInfo, scanningFullType: true);
 					}
 
 					foreach (var method in td.Methods) {
-						CollectNamespaces(method, typeSystem, namespaces, scanningFullType: true);
+						CollectNamespaces(method, typeSystem, namespaces, mappingInfo, scanningFullType: true);
 					}
 					break;
 				case IField field:
@@ -87,10 +90,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						HandleAttributes(typeParam.GetAttributes(), namespaces);
 					}
 					if (!method.MetadataToken.IsNil && method.HasBody) {
+						if (mappingInfo == null)
+							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentAssembly.PEFile, entity.MetadataToken);
 						var reader = typeSystem.ModuleDefinition.Reader;
-						var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-						var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-						CollectNamespacesFromMethodBody(body, reader, typeSystem, namespaces, scanningFullType: scanningFullType);
+						var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
+						foreach (var part in parts) {
+							var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition(part);
+							var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+							CollectNamespacesFromMethodBody(body, reader, typeSystem, namespaces, scanningFullType: scanningFullType);
+						}
 					}
 					break;
 				case IProperty property:

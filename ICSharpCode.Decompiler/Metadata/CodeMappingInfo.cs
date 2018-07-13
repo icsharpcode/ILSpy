@@ -5,30 +5,22 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.Decompiler.Metadata
 {
 	public class CodeMappingInfo
 	{
-		public Decompiler.Metadata.PEFile Module { get; }
-		public Language Language { get; }
+		public PEFile Module { get; }
 		public TypeDefinitionHandle TypeDefinition { get; }
 
 		Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>> parts;
 		Dictionary<MethodDefinitionHandle, MethodDefinitionHandle> parents;
 
-		public CodeMappingInfo(Language language, Decompiler.Metadata.PEFile module, TypeDefinitionHandle type)
+		public CodeMappingInfo(PEFile module, TypeDefinitionHandle type)
 		{
-			this.Language = language;
 			this.Module = module;
 			this.TypeDefinition = type;
 			this.parts = new Dictionary<MethodDefinitionHandle, List<MethodDefinitionHandle>>();
 			this.parents = new Dictionary<MethodDefinitionHandle, MethodDefinitionHandle>();
-		}
-
-		public bool ShowMember(EntityHandle entity)
-		{
-			throw null;
-			//return Language.ShowMember(new Decompiler.Metadata.Entity(Module, entity));
 		}
 
 		public IEnumerable<MethodDefinitionHandle> GetMethodParts(MethodDefinitionHandle method)

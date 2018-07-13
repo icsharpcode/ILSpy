@@ -130,7 +130,6 @@
       <DependentUpon>DebugSteps.xaml</DependentUpon>
     </Compile>
     <Compile Include="ILSpyTraceListener.cs" />
-    <Compile Include="Languages\CodeMappingInfo.cs" />
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FilterSettings.cs" />
