@@ -35,6 +35,8 @@ namespace ICSharpCode.ILSpy.DebugInfo
 			this.provider = provider;
 		}
 
+		public string Description => pdbFileName == null ? "Embedded in this assembly" : $"Loaded from portable PDB: {pdbFileName}";
+
 		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle method)
 		{
 			var metadata = provider.GetMetadataReader();

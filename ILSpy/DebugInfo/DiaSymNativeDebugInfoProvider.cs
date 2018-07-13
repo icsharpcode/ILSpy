@@ -49,6 +49,8 @@ namespace ICSharpCode.ILSpy.DebugInfo
 			this.reader = SymUnmanagedReaderFactory.CreateReader<ISymUnmanagedReader5>(stream, this);
 		}
 
+		public string Description => $"Loaded from PDB file: {pdbFileName}";
+
 		public IList<Decompiler.DebugInfo.SequencePoint> GetSequencePoints(MethodDefinitionHandle handle)
 		{
 			var method = reader.GetMethod(MetadataTokens.GetToken(handle));

@@ -31,16 +31,19 @@ namespace ICSharpCode.Decompiler.PdbProvider.Cecil
 {
 	public class MonoCecilDebugInfoProvider : IDebugInfoProvider
 	{
-		ModuleDefinition module;
+		readonly ModuleDefinition module;
 
-		public MonoCecilDebugInfoProvider(ModuleDefinition module)
+		public MonoCecilDebugInfoProvider(ModuleDefinition module, string description = null)
 		{
 			this.module = module;
+			this.Description = description ?? "none";
 		}
+
+		public string Description { get; }
 
 		public IList<SequencePoint> GetSequencePoints(SRM.MethodDefinitionHandle handle)
 		{
-			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as Mono.Cecil.MethodDefinition;
+			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as MethodDefinition;
 			if (method?.DebugInformation == null || !method.DebugInformation.HasSequencePoints)
 				return EmptyList<SequencePoint>.Instance;
 			return method.DebugInformation.SequencePoints.Select(point => new SequencePoint {
@@ -55,7 +58,7 @@ namespace ICSharpCode.Decompiler.PdbProvider.Cecil
 
 		public IList<Variable> GetVariables(SRM.MethodDefinitionHandle handle)
 		{
-			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as Mono.Cecil.MethodDefinition;
+			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as MethodDefinition;
 			if (method?.DebugInformation == null)
 				return EmptyList<Variable>.Instance;
 			return method.DebugInformation.GetScopes()
@@ -65,7 +68,7 @@ namespace ICSharpCode.Decompiler.PdbProvider.Cecil
 
 		public bool TryGetName(SRM.MethodDefinitionHandle handle, int index, out string name)
 		{
-			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as Mono.Cecil.MethodDefinition;
+			var method = this.module.LookupToken(MetadataTokens.GetToken(handle)) as MethodDefinition;
 			name = null;
 			if (method?.DebugInformation == null || !method.HasBody)
 				return false;
