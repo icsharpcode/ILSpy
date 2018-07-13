@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		static bool IsSameMember(IMember analyzedMethod, IMember m)
 		{
 			return m.MetadataToken == analyzedMethod.MetadataToken
-				&& m.ParentAssembly.PEFile == analyzedMethod.ParentAssembly.PEFile;
+				&& m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile;
 		}
 	}
 }

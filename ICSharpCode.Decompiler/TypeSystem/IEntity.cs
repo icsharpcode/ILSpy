@@ -56,10 +56,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IType DeclaringType { get; }
 		
 		/// <summary>
-		/// The assembly in which this entity is defined.
-		/// This property never returns null.
+		/// The module in which this entity is defined.
 		/// </summary>
-		IAssembly ParentAssembly { get; }
+		IModule ParentModule { get; }
 
 		/// <summary>
 		/// Gets the attributes on this entity.

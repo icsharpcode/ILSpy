@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataParameter : IParameter
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly ParameterHandle handle;
 		readonly ParameterAttributes attributes;
 
@@ -38,14 +38,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded:
 		string name;
 
-		internal MetadataParameter(MetadataAssembly assembly, IParameterizedMember owner, IType type, ParameterHandle handle)
+		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
-			this.assembly = assembly;
+			this.module = module;
 			this.Owner = owner;
 			this.Type = type;
 			this.handle = handle;
 
-			var param = assembly.metadata.GetParameter(handle);
+			var param = module.metadata.GetParameter(handle);
 			this.attributes = param.Attributes;
 		}
 
@@ -54,8 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Attributes
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
 
 			if (!IsOut) {
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (Type.Kind != TypeKind.Array)
 					return false;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var propertyDef = metadata.GetParameter(handle);
 				return propertyDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
 			}
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				string name = LazyInit.VolatileRead(ref this.name);
 				if (name != null)
 					return name;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var propertyDef = metadata.GetParameter(handle);
 				return LazyInit.GetOrSet(ref this.name, metadata.GetString(propertyDef.Name));
 			}
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public object ConstantValue {
 			get {
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var propertyDef = metadata.GetParameter(handle);
 				var constantHandle = propertyDef.GetDefaultValue();
 				if (constantHandle.IsNil)

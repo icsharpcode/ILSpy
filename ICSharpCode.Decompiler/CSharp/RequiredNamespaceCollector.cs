@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public static void CollectNamespaces(DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
-			foreach (var type in typeSystem.MainAssembly.TypeDefinitions) {
+			foreach (var type in typeSystem.MainModule.TypeDefinitions) {
 				CollectNamespaces(type, typeSystem, namespaces);
 			}
 			CollectAttributeNamespaces(typeSystem, namespaces);
@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public static void CollectAttributeNamespaces(DecompilerTypeSystem typeSystem, HashSet<string> namespaces)
 		{
-			HandleAttributes(typeSystem.MainAssembly.GetAssemblyAttributes(), namespaces);
-			HandleAttributes(typeSystem.MainAssembly.GetModuleAttributes(), namespaces);
+			HandleAttributes(typeSystem.MainModule.GetAssemblyAttributes(), namespaces);
+			HandleAttributes(typeSystem.MainModule.GetModuleAttributes(), namespaces);
 		}
 
 		public static void CollectNamespaces(IEntity entity, DecompilerTypeSystem typeSystem,
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (entity) {
 				case ITypeDefinition td:
 					if (mappingInfo == null)
-						mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentAssembly.PEFile, entity.MetadataToken);
+						mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.GetAttributes(), namespaces);
 
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (!method.MetadataToken.IsNil && method.HasBody) {
 						if (mappingInfo == null)
-							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentAssembly.PEFile, entity.MetadataToken);
+							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 						var reader = typeSystem.ModuleDefinition.Reader;
 						var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
 						foreach (var part in parts) {

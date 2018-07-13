@@ -126,13 +126,13 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			if (scope == null)
 				return default;
 
-			Dictionary<IAssembly, AssemblyReferenceHandle> assemblyReferences = new Dictionary<IAssembly, AssemblyReferenceHandle>();
+			Dictionary<IModule, AssemblyReferenceHandle> assemblyReferences = new Dictionary<IModule, AssemblyReferenceHandle>();
 
 			var writer = new BlobBuilder();
 
 			foreach (var import in scope.Usings) {
-				foreach (var asm in import.ContributingAssemblies) {
-					if (asm == compilation.MainAssembly) {
+				foreach (var asm in import.ContributingModules) {
+					if (asm == compilation.MainModule) {
 						writer.WriteByte(1);
 						writer.WriteCompressedInteger(MetadataTokens.GetHeapOffset(metadata.GetOrAddBlobUTF8(import.FullName)));
 					} else {

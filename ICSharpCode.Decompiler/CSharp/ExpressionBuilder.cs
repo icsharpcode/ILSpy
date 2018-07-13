@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
-			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
+			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainModule, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 			this.astBuilder.AlwaysUseShortTypeNames = true;
 			this.astBuilder.AddResolveResultAnnotations = true;
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				}

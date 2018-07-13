@@ -17,23 +17,35 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	public interface IAssemblyReference
+	/// <summary>
+	/// Interface used to help with construction of the type system.
+	/// </summary>
+	/// <remarks>
+	/// The type system is an immutable cyclic data structure:
+	/// the compilation (ICompilation) has references to all modules,
+	/// and each module has a reference back to the compilation.
+	/// 
+	/// Module references are used to solve this cyclic dependency:
+	/// The compilation constructor accepts module references,
+	/// and only the IModuleReference.Resolve() function can observe a
+	/// partially-constructed compilation; but not any user code.
+	/// </remarks>
+	public interface IModuleReference
 	{
 		/// <summary>
-		/// Resolves this assembly.
+		/// Resolves this metadata module.
 		/// </summary>
-		IAssembly Resolve(ITypeResolveContext context);
+		IModule Resolve(ITypeResolveContext context);
 	}
 	
 	/// <summary>
-	/// Represents an assembly.
+	/// Represents a metadata module.
 	/// </summary>
-	public interface IAssembly : ICompilationProvider
+	public interface IModule : ICompilationProvider
 	{
 		/// <summary>
 		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.
@@ -43,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether this assembly is the main assembly of the compilation.
 		/// </summary>
-		bool IsMainAssembly { get; }
+		bool IsMainModule { get; }
 		
 		/// <summary>
 		/// Gets the assembly name (short name).
@@ -68,13 +80,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets whether the internals of this assembly are visible in the specified assembly.
 		/// </summary>
-		bool InternalsVisibleTo(IAssembly assembly);
+		bool InternalsVisibleTo(IModule module);
 		
 		/// <summary>
-		/// Gets the root namespace for this assembly.
+		/// Gets the root namespace for this module.
 		/// </summary>
 		/// <remarks>
 		/// This always is the namespace without a name - it's unrelated to the 'root namespace' project setting.
+		/// It contains only subnamespaces and types defined in this module -- use ICompilation.RootNamespace
+		/// to get the combined view of all referenced assemblies.
 		/// </remarks>
 		INamespace RootNamespace { get; }
 		

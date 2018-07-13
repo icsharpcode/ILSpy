@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
+			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.Compilation.MainModule, context.UsingScope);
 			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, resolveContext, possibleIndexVariables);
 			if (kind == AccessPathKind.Invalid || target != targetVariable)
 				return false;

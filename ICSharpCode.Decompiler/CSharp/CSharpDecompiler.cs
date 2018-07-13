@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree DecompileModuleAndAssemblyAttributes()
 		{
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
@@ -396,13 +396,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			foreach (var a in typeSystem.Compilation.MainAssembly.GetAssemblyAttributes()) {
+			foreach (var a in typeSystem.Compilation.MainModule.GetAssemblyAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
-			foreach (var a in typeSystem.Compilation.MainAssembly.GetModuleAttributes()) {
+			foreach (var a in typeSystem.Compilation.MainModule.GetModuleAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "module";
@@ -439,7 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
@@ -566,7 +566,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (types == null)
 				throw new ArgumentNullException(nameof(types));
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
@@ -606,7 +606,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var type = typeSystem.Compilation.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
 			if (type == null)
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
 				CancellationToken = CancellationToken
@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new NotSupportedException(entity.Kind.ToString());
 				}
 			}
-			RunTransforms(syntaxTree, decompileRun, parentTypeDef != null ? new SimpleTypeResolveContext(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainAssembly));
+			RunTransforms(syntaxTree, decompileRun, parentTypeDef != null ? new SimpleTypeResolveContext(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainModule));
 			return syntaxTree;
 		}
 
@@ -776,7 +776,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			bool addNewModifier = false;
 			var entity = (IEntity)member.GetSymbol();
-			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentAssembly);
+			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
 
 			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t);
 			if (entity is ITypeDefinition) {

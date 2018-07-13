@@ -30,29 +30,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly ITypeResolveContext context;
 		readonly CacheManager cacheManager = new CacheManager();
 		readonly KnownTypeCache knownTypeCache;
-		readonly IAssembly mainAssembly;
-		readonly IList<IAssembly> assemblies;
-		readonly IList<IAssembly> referencedAssemblies;
+		readonly IModule mainModule;
+		readonly IList<IModule> assemblies;
+		readonly IList<IModule> referencedAssemblies;
 		INamespace rootNamespace;
 		
-		public SimpleCompilation(IAssemblyReference mainAssembly, params IAssemblyReference[] assemblyReferences)
-			: this(mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
+		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
+			: this(mainAssembly, (IEnumerable<IModuleReference>)assemblyReferences)
 		{
 		}
 		
-		public SimpleCompilation(IAssemblyReference mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
+		public SimpleCompilation(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
 		{
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");
 			if (assemblyReferences == null)
 				throw new ArgumentNullException("assemblyReferences");
 			this.context = new SimpleTypeResolveContext(this);
-			this.mainAssembly = mainAssembly.Resolve(context);
-			List<IAssembly> assemblies = new List<IAssembly>();
-			assemblies.Add(this.mainAssembly);
-			List<IAssembly> referencedAssemblies = new List<IAssembly>();
+			this.mainModule = mainAssembly.Resolve(context);
+			List<IModule> assemblies = new List<IModule>();
+			assemblies.Add(this.mainModule);
+			List<IModule> referencedAssemblies = new List<IModule>();
 			foreach (var asmRef in assemblyReferences) {
-				IAssembly asm;
+				IModule asm;
 				try {
 					asm = asmRef.Resolve(context);
 				} catch (InvalidOperationException) {
@@ -68,15 +68,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.knownTypeCache = new KnownTypeCache(this);
 		}
 		
-		public IAssembly MainAssembly {
+		public IModule MainModule {
 			get {
-				if (mainAssembly == null)
+				if (mainModule == null)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
-				return mainAssembly;
+				return mainModule;
 			}
 		}
 		
-		public IList<IAssembly> Assemblies {
+		public IList<IModule> Modules {
 			get {
 				if (assemblies == null)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public IList<IAssembly> ReferencedAssemblies {
+		public IList<IModule> ReferencedModules {
 			get {
 				if (referencedAssemblies == null)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
 			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
-			namespaces[0] = mainAssembly.RootNamespace;
+			namespaces[0] = mainModule.RootNamespace;
 			for (int i = 0; i < referencedAssemblies.Count; i++) {
 				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
 			}
@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return "[SimpleCompilation " + mainAssembly.AssemblyName + "]";
+			return "[SimpleCompilation " + mainModule.AssemblyName + "]";
 		}
 	}
 }

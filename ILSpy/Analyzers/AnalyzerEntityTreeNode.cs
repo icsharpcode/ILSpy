@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
 			foreach (LoadedAssembly asm in removedAssemblies) {
-				if (this.Member.ParentAssembly.PEFile == asm.GetPEFileOrNull())
+				if (this.Member.ParentModule.PEFile == asm.GetPEFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(

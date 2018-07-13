@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				throw new ArgumentNullException("compilation");
 			this.compilation = compilation;
 			this.conversions = CSharpConversions.Get(compilation);
-			this.context = new CSharpTypeResolveContext(compilation.MainAssembly);
+			this.context = new CSharpTypeResolveContext(compilation.MainModule);
 		}
 		
 		public CSharpResolver(CSharpTypeResolveContext context)
@@ -94,8 +94,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			get { return context; }
 		}
 
-		IAssembly ITypeResolveContext.CurrentAssembly {
-			get { return context.CurrentAssembly; }
+		IModule ITypeResolveContext.CurrentModule {
+			get { return context.CurrentModule; }
 		}
 		
 		CSharpResolver WithContext(CSharpTypeResolveContext newContext)
@@ -1536,7 +1536,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		bool TopLevelTypeDefinitionIsAccessible(ITypeDefinition typeDef)
 		{
 			if (typeDef.Accessibility == Accessibility.Internal) {
-				return typeDef.ParentAssembly.InternalsVisibleTo(compilation.MainAssembly);
+				return typeDef.ParentModule.InternalsVisibleTo(compilation.MainModule);
 			}
 			return true;
 		}
@@ -1651,7 +1651,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			ITypeDefinition currentTypeDefinition = this.CurrentTypeDefinition;
 			bool isInEnumMemberInitializer = this.CurrentMember != null && this.CurrentMember.SymbolKind == SymbolKind.Field
 				&& currentTypeDefinition != null && currentTypeDefinition.Kind == TypeKind.Enum;
-			return new MemberLookup(currentTypeDefinition, this.Compilation.MainAssembly, isInEnumMemberInitializer);
+			return new MemberLookup(currentTypeDefinition, this.Compilation.MainModule, isInEnumMemberInitializer);
 		}
 		
 		/// <summary>
@@ -1664,7 +1664,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// for accessibility purposes.
 				// This avoids a stack overflow when referencing a protected class nested inside the base class
 				// of a parent class. (NameLookupTests.InnerClassInheritingFromProtectedBaseInnerClassShouldNotCauseStackOverflow)
-				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainAssembly, false);
+				return new MemberLookup(this.CurrentTypeDefinition.DeclaringTypeDefinition, this.Compilation.MainModule, false);
 			} else {
 				return CreateMemberLookup();
 			}

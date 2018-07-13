@@ -611,7 +611,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			out IParameterizedMember foundMember)
 		{
 			foundMember = null;
-			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 			var or = new OverloadResolution(resolver.Compilation,
 				arguments.SelectArray(a => a.ResolveResult),
 				argumentNames: argumentNames,
@@ -674,7 +674,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				foundMember = result.Member;
 			} else {
-				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 				if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer) {
 					var or = new OverloadResolution(resolver.Compilation,
 						arguments.SelectArray(a => a.ResolveResult),
@@ -848,7 +848,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			MemberLookup lookup = null;
 			if (requireTarget) {
-				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false) ;
 				needsCast = true;
 				result = rr;

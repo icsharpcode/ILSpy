@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataMethod : IMethod
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly MethodDefinitionHandle handle;
 
 		// eagerly loaded fields:
@@ -48,18 +48,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IParameter[] parameters;
 		IType returnType;
 
-		internal MetadataMethod(MetadataAssembly assembly, MethodDefinitionHandle handle)
+		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.handle = handle;
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var def = metadata.GetMethodDefinition(handle);
 			this.attributes = def.Attributes;
 
 			this.symbolKind = SymbolKind.Method;
-			var (accessorOwner, semanticsAttribute) = assembly.PEFile.MethodSemanticsLookup.GetSemantics(handle);
+			var (accessorOwner, semanticsAttribute) = module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
 			if (semanticsAttribute != 0) {
 				this.symbolKind = SymbolKind.Accessor;
 				this.accessorOwner = accessorOwner;
@@ -70,9 +70,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else if (name.StartsWith("op_", StringComparison.Ordinal))
 					this.symbolKind = SymbolKind.Operator;
 			}
-			this.typeParameters = MetadataTypeParameter.Create(assembly, this, def.GetGenericParameters());
+			this.typeParameters = MetadataTypeParameter.Create(module, this, def.GetGenericParameters());
 			this.IsExtensionMethod = (attributes & MethodAttributes.Static) == MethodAttributes.Static
-				&& (assembly.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
+				&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 				&& def.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 		}
 
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				string name = LazyInit.VolatileRead(ref this.name);
 				if (name != null)
 					return name;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var methodDef = metadata.GetMethodDefinition(handle);
 				return LazyInit.GetOrSet(ref this.name, metadata.GetString(methodDef.Name));
 			}
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOperator => symbolKind == SymbolKind.Operator;
 		public bool IsAccessor => symbolKind == SymbolKind.Accessor;
 
-		public bool HasBody => assembly.metadata.GetMethodDefinition(handle).HasBody();
+		public bool HasBody => module.metadata.GetMethodDefinition(handle).HasBody();
 
 
 		public IMember AccessorOwner {
@@ -111,9 +111,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (accessorOwner.IsNil)
 					return null;
 				if (accessorOwner.Kind == HandleKind.PropertyDefinition)
-					return assembly.GetDefinition((PropertyDefinitionHandle)accessorOwner);
+					return module.GetDefinition((PropertyDefinitionHandle)accessorOwner);
 				else if (accessorOwner.Kind == HandleKind.EventDefinition)
-					return assembly.GetDefinition((EventDefinitionHandle)accessorOwner);
+					return module.GetDefinition((EventDefinitionHandle)accessorOwner);
 				else
 					return null;
 			}
@@ -142,17 +142,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private void DecodeSignature()
 		{
-			var methodDef = assembly.metadata.GetMethodDefinition(handle);
+			var methodDef = module.metadata.GetMethodDefinition(handle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters, this.TypeParameters);
-			var signature = methodDef.DecodeSignature(assembly.TypeProvider, genericContext);
-			var (returnType, parameters) = DecodeSignature(assembly, this, signature, methodDef.GetParameters());
+			var signature = methodDef.DecodeSignature(module.TypeProvider, genericContext);
+			var (returnType, parameters) = DecodeSignature(module, this, signature, methodDef.GetParameters());
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
 
-		internal static (IType, IParameter[]) DecodeSignature(MetadataAssembly assembly, IParameterizedMember owner, MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles)
+		internal static (IType, IParameter[]) DecodeSignature(MetadataModule module, IParameterizedMember owner, MethodSignature<IType> signature, ParameterHandleCollection? parameterHandles)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			int i = 0;
 			CustomAttributeHandleCollection? returnTypeAttributes = null;
 			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
@@ -166,16 +166,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					} else if (par.SequenceNumber > 0 && i < signature.RequiredParameterCount) {
 						Debug.Assert(par.SequenceNumber - 1 == i);
 						var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-							signature.ParameterTypes[i], assembly.Compilation,
-							par.GetCustomAttributes(), metadata, assembly.TypeSystemOptions);
-						parameters[i] = new MetadataParameter(assembly, owner, parameterType, parameterHandle);
+							signature.ParameterTypes[i], module.Compilation,
+							par.GetCustomAttributes(), metadata, module.TypeSystemOptions);
+						parameters[i] = new MetadataParameter(module, owner, parameterType, parameterHandle);
 						i++;
 					}
 				}
 			}
 			while (i < signature.RequiredParameterCount) {
 				var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
-					signature.ParameterTypes[i], assembly.Compilation, null, metadata, assembly.TypeSystemOptions);
+					signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions);
 				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
 					isRef: parameterType.Kind == TypeKind.ByReference);
 				i++;
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			Debug.Assert(i == parameters.Length);
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
-				assembly.Compilation, returnTypeAttributes, metadata, assembly.TypeSystemOptions);
+				module.Compilation, returnTypeAttributes, metadata, module.TypeSystemOptions);
 			return (returnType, parameters);
 		}
 		#endregion
@@ -217,38 +217,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (declType != null) {
 					return declType;
 				} else {
-					var def = assembly.metadata.GetMethodDefinition(handle);
+					var def = module.metadata.GetMethodDefinition(handle);
 					return LazyInit.GetOrSet(ref this.declaringType,
-						assembly.GetDefinition(def.GetDeclaringType()));
+						module.GetDefinition(def.GetDeclaringType()));
 				}
 			}
 		}
 
 		public IType DeclaringType => DeclaringTypeDefinition;
 
-		public IAssembly ParentAssembly => assembly;
-		public ICompilation Compilation => assembly.Compilation;
+		public IModule ParentModule => module;
+		public ICompilation Compilation => module.Compilation;
 
 		#region Attributes
 		IType FindInteropType(string name)
 		{
-			return assembly.Compilation.FindType(new TopLevelTypeName(
+			return module.Compilation.FindType(new TopLevelTypeName(
 				"System.Runtime.InteropServices", name, 0
 			));
 		}
 
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
+			var b = new AttributeListBuilder(module);
 
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var def = metadata.GetMethodDefinition(handle);
 			MethodImplAttributes implAttributes = def.ImplAttributes & ~MethodImplAttributes.CodeTypeMask;
 
 			#region DllImportAttribute
 			var info = def.GetImport();
 			if ((attributes & MethodAttributes.PinvokeImpl) == MethodAttributes.PinvokeImpl && !info.Module.IsNil) {
-				var dllImport = new AttributeBuilder(assembly, KnownAttribute.DllImport);
+				var dllImport = new AttributeBuilder(module, KnownAttribute.DllImport);
 				dllImport.AddFixedArg(KnownTypeCode.String,
 					metadata.GetString(metadata.GetModuleReference(info.Module).Name));
 
@@ -356,8 +356,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Return type attributes
 		public IEnumerable<IAttribute> GetReturnTypeAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var methodDefinition = metadata.GetMethodDefinition(handle);
 			var parameters = methodDefinition.GetParameters();
 			if (parameters.Count > 0) {
@@ -409,14 +409,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataMethod m) {
-				return handle == m.handle && assembly.PEFile == m.assembly.PEFile;
+				return handle == m.handle && module.PEFile == m.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x5a00d671 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x5a00d671 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

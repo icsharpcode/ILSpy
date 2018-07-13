@@ -29,9 +29,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// An artificial "assembly" that contains all known types (<see cref="KnownTypeCode"/>) and no other types.
 	/// It does not contain any members.
 	/// </summary>
-	public sealed class MinimalCorlib : IAssembly
+	public sealed class MinimalCorlib : IModule
 	{
-		public static readonly IAssemblyReference Instance = new CorlibAssemblyReference();
+		public static readonly IModuleReference Instance = new CorlibModuleReference();
 
 		public ICompilation Compilation { get; }
 		CorlibTypeDefinition[] typeDefinitions;
@@ -49,13 +49,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		bool IAssembly.IsMainAssembly => Compilation.MainAssembly == this;
+		bool IModule.IsMainModule => Compilation.MainModule == this;
 
-		string IAssembly.AssemblyName => "corlib";
-		string IAssembly.FullAssemblyName => "corlib";
+		string IModule.AssemblyName => "corlib";
+		string IModule.FullAssemblyName => "corlib";
 
-		Metadata.PEFile IAssembly.PEFile => null;
-		INamespace IAssembly.RootNamespace => rootNamespace;
+		Metadata.PEFile IModule.PEFile => null;
+		INamespace IModule.RootNamespace => rootNamespace;
 
 		public IEnumerable<ITypeDefinition> TopLevelTypeDefinitions => typeDefinitions.Where(td => td != null);
 		public IEnumerable<ITypeDefinition> TypeDefinitions => TopLevelTypeDefinitions;
@@ -69,17 +69,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return null;
 		}
 
-		IEnumerable<IAttribute> IAssembly.GetAssemblyAttributes() => EmptyList<IAttribute>.Instance;
-		IEnumerable<IAttribute> IAssembly.GetModuleAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute> IModule.GetAssemblyAttributes() => EmptyList<IAttribute>.Instance;
+		IEnumerable<IAttribute> IModule.GetModuleAttributes() => EmptyList<IAttribute>.Instance;
 
-		bool IAssembly.InternalsVisibleTo(IAssembly assembly)
+		bool IModule.InternalsVisibleTo(IModule module)
 		{
-			return assembly == this;
+			return module == this;
 		}
 
-		sealed class CorlibAssemblyReference : IAssemblyReference
+		sealed class CorlibModuleReference : IModuleReference
 		{
-			IAssembly IAssemblyReference.Resolve(ITypeResolveContext context)
+			IModule IModuleReference.Resolve(ITypeResolveContext context)
 			{
 				return new MinimalCorlib(context.Compilation);
 			}
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			IEnumerable<INamespace> INamespace.ChildNamespaces => childNamespaces;
 			IEnumerable<ITypeDefinition> INamespace.Types => corlib.TopLevelTypeDefinitions.Where(td => td.Namespace == FullName);
 
-			IEnumerable<IAssembly> INamespace.ContributingAssemblies => new[] { corlib };
+			IEnumerable<IModule> INamespace.ContributingModules => new[] { corlib };
 
 			SymbolKind ISymbol.SymbolKind => SymbolKind.Namespace;
 			ICompilation ICompilationProvider.Compilation => corlib.Compilation;
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			public string Name => KnownTypeReference.Get(typeCode).Name;
 
-			IAssembly IEntity.ParentAssembly => corlib;
+			IModule IEntity.ParentModule => corlib;
 
 			Accessibility IEntity.Accessibility => Accessibility.Public;
 

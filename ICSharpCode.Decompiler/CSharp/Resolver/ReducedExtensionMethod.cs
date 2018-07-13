@@ -231,9 +231,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public IAssembly ParentAssembly {
+		public IModule ParentModule {
 			get {
-				return baseMethod.ParentAssembly;
+				return baseMethod.ParentModule;
 			}
 		}
 

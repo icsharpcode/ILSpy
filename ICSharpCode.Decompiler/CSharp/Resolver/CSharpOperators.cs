@@ -175,8 +175,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return false; }
 			}
 			
-			IAssembly IEntity.ParentAssembly {
-				get { return compilation.MainAssembly; }
+			IModule IEntity.ParentModule {
+				get { return compilation.MainModule; }
 			}
 			
 			TypeParameterSubstitution IMember.Substitution {

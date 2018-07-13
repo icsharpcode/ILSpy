@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		protected IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
 			if (analyzer is IEntityAnalyzer<T> entityAnalyzer) {
-				var module = analyzedEntity.ParentAssembly.PEFile;
+				var module = analyzedEntity.ParentModule.PEFile;
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 				var context = new AnalyzerContext(ts) {
 					CancellationToken = ct,

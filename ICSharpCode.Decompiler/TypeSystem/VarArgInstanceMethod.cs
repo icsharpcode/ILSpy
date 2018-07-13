@@ -220,8 +220,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.DeclaringType; }
 		}
 
-		public IAssembly ParentAssembly {
-			get { return baseMethod.ParentAssembly; }
+		public IModule ParentModule {
+			get { return baseMethod.ParentModule; }
 		}
 
 		public bool IsStatic {

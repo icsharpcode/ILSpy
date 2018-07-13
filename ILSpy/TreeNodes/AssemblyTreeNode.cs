@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			}
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
-			var assembly = (MetadataAssembly)typeSystem.MainAssembly;
+			var assembly = (MetadataModule)typeSystem.MainModule;
 			var metadata = module.Metadata;
 
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));

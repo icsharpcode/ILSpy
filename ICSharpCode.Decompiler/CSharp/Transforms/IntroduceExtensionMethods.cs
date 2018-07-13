@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
 			this.resolveContextStack.Push(currentContext);
 			this.resolver = new CSharpResolver(currentContext);
 		}
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (string ident in namespaceDeclaration.Identifiers) {
 				usingScope = new UsingScope(usingScope, ident);
 			}
-			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 			resolveContextStack.Push(currentContext);
 			try {
 				this.resolver = new CSharpResolver(currentContext);

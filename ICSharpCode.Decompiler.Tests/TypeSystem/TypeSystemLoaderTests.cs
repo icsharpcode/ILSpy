@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[Test]
 		public void AssemblyAttribute()
 		{
-			var attributes = compilation.MainAssembly.GetAssemblyAttributes().ToList();
+			var attributes = compilation.MainModule.GetAssemblyAttributes().ToList();
 			var typeTest = attributes.Single(a => a.AttributeType.FullName == typeof(TypeTestAttribute).FullName);
 			Assert.AreEqual(3, typeTest.FixedArguments.Length);
 			// first argument is (int)42
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[Test]
 		public void TypeForwardedTo_Attribute()
 		{
-			var attributes = compilation.MainAssembly.GetAssemblyAttributes().ToList();
+			var attributes = compilation.MainModule.GetAssemblyAttributes().ToList();
 			var forwardAttribute = attributes.Single(a => a.AttributeType.FullName == typeof(TypeForwardedToAttribute).FullName);
 			Assert.AreEqual(1, forwardAttribute.FixedArguments.Length);
 			var rt = (IType)forwardAttribute.FixedArguments[0].Value;
@@ -1813,7 +1813,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var typeRef = ReflectionHelper.ParseReflectionName("System.Func`2, System.Core");
 			ITypeDefinition c = typeRef.Resolve(compilationWithSystemCore.TypeResolveContext).GetDefinition();
 			Assert.IsNotNull(c, "System.Func<,> not found");
-			Assert.AreEqual("mscorlib", c.ParentAssembly.AssemblyName);
+			Assert.AreEqual("mscorlib", c.ParentModule.AssemblyName);
 		}
 
 		public void DelegateIsClass()

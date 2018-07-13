@@ -360,9 +360,9 @@
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedParameter.cs" />
-    <Compile Include="TypeSystem\MetadataAssembly.cs" />
+    <Compile Include="TypeSystem\MetadataModule.cs" />
     <Compile Include="TypeSystem\ModifiedType.cs" />
-    <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
+    <Compile Include="TypeSystem\Implementation\PinnedType.cs" />
     <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />

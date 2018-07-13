@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		IMethod MakeMethod(params object[] parameterTypesOrDefaultValues)
 		{
-			var context = new SimpleTypeResolveContext(compilation.MainAssembly);
+			var context = new SimpleTypeResolveContext(compilation.MainModule);
 			var m = new FakeMethod(compilation, SymbolKind.Method);
 			m.Name = "Method";
 			var parameters = new List<IParameter>();

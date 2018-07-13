@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					continue;
 
 				found = field.MetadataToken == analyzedField.MetadataToken
-					&& field.ParentAssembly.PEFile == analyzedField.ParentAssembly.PEFile;
+					&& field.ParentModule.PEFile == analyzedField.ParentModule.PEFile;
 			}
 
 			if (found) {

@@ -211,9 +211,9 @@ namespace ICSharpCode.ILSpy.TextView
 				XmlDocRenderer renderer = new XmlDocRenderer();
 				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
 				try {
-					if (entity.ParentAssembly == null || entity.ParentAssembly.PEFile == null)
+					if (entity.ParentModule == null || entity.ParentModule.PEFile == null)
 						return null;
-					var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentAssembly.PEFile);
+					var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
 					if (docProvider != null) {
 						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
 						if (documentation != null) {
@@ -237,9 +237,9 @@ namespace ICSharpCode.ILSpy.TextView
 				XmlDocRenderer renderer = new XmlDocRenderer();
 				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
 				try {
-					if (resolved.ParentAssembly == null || resolved.ParentAssembly.PEFile == null)
+					if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
 						return null;
-					var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentAssembly.PEFile);
+					var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
 					if (docProvider != null) {
 						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(resolved));
 						if (documentation != null) {

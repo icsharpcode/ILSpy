@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		readonly Language language;
 		readonly IAnalyzer<T> analyzer;
-		readonly IAssembly assemblyScope;
+		readonly IModule assemblyScope;
 		readonly T analyzedEntity;
 		ITypeDefinition typeScope;
 
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.language = language ?? throw new ArgumentNullException(nameof(language));
 			this.analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
 			this.analyzedEntity = analyzedEntity;
-			this.assemblyScope = analyzedEntity.ParentAssembly;
+			this.assemblyScope = analyzedEntity.ParentModule;
 			if (analyzedEntity is ITypeDefinition type) {
 				this.typeScope = type;
 				this.typeAccessibility = type.Accessibility;
@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 			var context = new AnalyzerContext(ts) { CancellationToken = ct, Language = language };
-			foreach (var type in ts.MainAssembly.TypeDefinitions) {
+			foreach (var type in ts.MainModule.TypeDefinitions) {
 				ct.ThrowIfCancellationRequested();
 				if (type.MetadataToken.IsNil) continue;
 				context.CodeMappingInfo = language.GetCodeMappingInfo(module, type.MetadataToken);

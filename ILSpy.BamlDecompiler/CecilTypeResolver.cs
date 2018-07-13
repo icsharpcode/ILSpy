@@ -27,7 +27,7 @@ namespace ILSpy.BamlDecompiler
 		
 		public bool IsLocalAssembly(string name)
 		{
-			return MakeShort(name) == compilation.MainAssembly.AssemblyName;
+			return MakeShort(name) == compilation.MainModule.AssemblyName;
 		}
 		
 		string MakeShort(string name)

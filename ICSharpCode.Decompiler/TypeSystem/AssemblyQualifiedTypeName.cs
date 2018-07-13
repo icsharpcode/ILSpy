@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public AssemblyQualifiedTypeName(ITypeDefinition typeDefinition)
 		{
-			this.AssemblyName = typeDefinition.ParentAssembly.AssemblyName;
+			this.AssemblyName = typeDefinition.ParentModule.AssemblyName;
 			this.TypeName = typeDefinition.FullTypeName;
 		}
 		

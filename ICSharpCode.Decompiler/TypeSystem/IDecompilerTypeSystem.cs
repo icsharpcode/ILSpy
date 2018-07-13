@@ -28,6 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IDecompilerTypeSystem
 	{
 		ICompilation Compilation { get; }
+		MetadataModule MainModule { get; }
 
 		MethodSignature<IType> DecodeMethodSignature(StandaloneSignatureHandle standaloneSignatureHandle);
 		ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle standaloneSignatureHandle);
@@ -39,7 +40,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		MetadataReader GetMetadata();
 		PEFile ModuleDefinition { get; }
-		PEFile GetModuleDefinition(IAssembly assembly);
 
 		/// <summary>
 		/// Gets a type system instance that automatically specializes the results

@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler
 				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
 				if (typeDef == null || typeDef.MetadataToken.IsNil)
 					return 0;
-				reader = typeDef.ParentAssembly.PEFile.Metadata;
+				reader = typeDef.ParentModule.PEFile.Metadata;
 				var td = reader.GetTypeDefinition((TypeDefinitionHandle)typeDef.MetadataToken);
 				return td.GetLayout().Size;
 			}
@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler
 				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
 				if (typeDef == null || typeDef.MetadataToken.IsNil)
 					return 0;
-				reader = typeDef.ParentAssembly.PEFile.Metadata;
+				reader = typeDef.ParentModule.PEFile.Metadata;
 				var td = reader.GetTypeDefinition((TypeDefinitionHandle)typeDef.MetadataToken);
 				return td.GetLayout().Size;
 			}

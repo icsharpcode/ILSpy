@@ -131,7 +131,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = method.ParentAssembly.PEFile;
+			PEFile assembly = method.ParentModule.PEFile;
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -198,7 +198,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = property.ParentAssembly.PEFile;
+			PEFile assembly = property.ParentModule.PEFile;
 			AddReferenceWarningMessage(assembly, output);
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = field.ParentAssembly.PEFile;
+			PEFile assembly = field.ParentModule.PEFile;
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -266,7 +266,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = @event.ParentAssembly.PEFile;
+			PEFile assembly = @event.ParentModule.PEFile;
 			AddReferenceWarningMessage(assembly, output);
 			base.WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -275,7 +275,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			PEFile assembly = type.ParentAssembly.PEFile;
+			PEFile assembly = type.ParentModule.PEFile;
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -331,7 +331,7 @@ namespace ICSharpCode.ILSpy
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
 					IAssemblyResolver assemblyResolver = assembly.GetAssemblyResolver();
 					var typeSystem = new DecompilerTypeSystem(module, assemblyResolver, options.DecompilerSettings);
-					var globalType = typeSystem.MainAssembly.TypeDefinitions.FirstOrDefault();
+					var globalType = typeSystem.MainModule.TypeDefinitions.FirstOrDefault();
 					if (globalType != null) {
 						output.Write("// Global type: ");
 						output.WriteReference(globalType, globalType.FullName);
@@ -556,7 +556,7 @@ namespace ICSharpCode.ILSpy
 
 		public override bool ShowMember(IEntity member)
 		{
-			PEFile assembly = member.ParentAssembly.PEFile;
+			PEFile assembly = member.ParentModule.PEFile;
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilationOptions().DecompilerSettings);
 		}
 

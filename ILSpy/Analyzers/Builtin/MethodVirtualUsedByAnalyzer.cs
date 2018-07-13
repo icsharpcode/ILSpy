@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 								var m = context.TypeSystem.ResolveAsMember(member)?.MemberDefinition;
-								if (m.MetadataToken == analyzedMethod.MetadataToken && m.ParentAssembly.PEFile == analyzedMethod.ParentAssembly.PEFile) {
+								if (m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile) {
 									yield return method;
 									yield break;
 								}

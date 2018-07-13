@@ -32,20 +32,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	readonly struct AttributeListBuilder
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly List<IAttribute> attributes;
 
-		public AttributeListBuilder(MetadataAssembly assembly)
+		public AttributeListBuilder(MetadataModule module)
 		{
-			Debug.Assert(assembly != null);
-			this.assembly = assembly;
+			Debug.Assert(module != null);
+			this.module = module;
 			this.attributes = new List<IAttribute>();
 		}
 
-		public AttributeListBuilder(MetadataAssembly assembly, int capacity)
+		public AttributeListBuilder(MetadataModule module, int capacity)
 		{
-			Debug.Assert(assembly != null);
-			this.assembly = assembly;
+			Debug.Assert(module != null);
+			this.module = module;
 			this.attributes = new List<IAttribute>(capacity);
 		}
 
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public void Add(KnownAttribute type)
 		{
 			// use the assemblies' cache for simple attributes
-			Add(assembly.MakeAttribute(type));
+			Add(module.MakeAttribute(type));
 		}
 
 		/// <summary>
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, KnownTypeCode argType, object argValue)
 		{
-			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(assembly.Compilation.FindType(argType), argValue)));
+			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
 		}
 
 		/// <summary>
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, TopLevelTypeName argType, object argValue)
 		{
-			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(assembly.Compilation.FindType(argType), argValue)));
+			Add(type, ImmutableArray.Create(new CustomAttributeTypedArgument<IType>(module.Compilation.FindType(argType), argValue)));
 		}
 
 		/// <summary>
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public void Add(KnownAttribute type, ImmutableArray<CustomAttributeTypedArgument<IType>> fixedArguments)
 		{
-			Add(new DefaultAttribute(assembly.GetAttributeType(type), fixedArguments,
+			Add(new DefaultAttribute(module.GetAttributeType(type), fixedArguments,
 				ImmutableArray.Create<CustomAttributeNamedArgument<IType>>()));
 		}
 		
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		internal void AddMarshalInfo(BlobHandle marshalInfo)
 		{
 			if (marshalInfo.IsNil) return;
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			Add(ConvertMarshalInfo(metadata.GetBlobReader(marshalInfo)));
 		}
 
@@ -100,8 +100,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		IAttribute ConvertMarshalInfo(SRM.BlobReader marshalInfo)
 		{
-			var b = new AttributeBuilder(assembly, KnownAttribute.MarshalAs);
-			IType unmanagedTypeType = assembly.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
+			var b = new AttributeBuilder(module, KnownAttribute.MarshalAs);
+			IType unmanagedTypeType = module.Compilation.FindType(new TopLevelTypeName(InteropServices, nameof(UnmanagedType)));
 
 			int type = marshalInfo.ReadByte();
 			b.AddFixedArg(unmanagedTypeType, type);
@@ -170,15 +170,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Custom Attributes (ReadAttribute)
 		public void Add(CustomAttributeHandleCollection attributes)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			foreach (var handle in attributes) {
 				var attribute = metadata.GetCustomAttribute(handle);
-				var ctor = assembly.ResolveMethod(attribute.Constructor);
+				var ctor = module.ResolveMethod(attribute.Constructor);
 				var type = ctor.DeclaringType;
 				if (IgnoreAttribute(type)) {
 					continue;
 				}
-				Add(new CustomAttribute(assembly, ctor, handle));
+				Add(new CustomAttribute(module, ctor, handle));
 			}
 		}
 
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return false;
 			switch (attributeType.Namespace) {
 				case "System.Runtime.CompilerServices":
-					var options = assembly.TypeSystemOptions;
+					var options = module.TypeSystemOptions;
 					switch (attributeType.Name) {
 						case "DynamicAttribute":
 							return (options & TypeSystemOptions.Dynamic) != 0;
@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Security Attributes
 		public void AddSecurityAttributes(DeclarativeSecurityAttributeHandleCollection securityDeclarations)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			foreach (var secDecl in securityDeclarations) {
 				if (secDecl.IsNil)
 					continue;
@@ -222,9 +222,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public void AddSecurityAttributes(DeclarativeSecurityAttribute secDecl)
 		{
-			var securityActionType = assembly.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
+			var securityActionType = module.Compilation.FindType(new TopLevelTypeName("System.Security.Permissions", "SecurityAction"));
 			var securityAction = new CustomAttributeTypedArgument<IType>(securityActionType, (int)secDecl.Action);
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var reader = metadata.GetBlobReader(secDecl.PermissionSet);
 			if (reader.ReadByte() == '.') {
 				// binary attribute
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
-			var b = new AttributeBuilder(assembly, KnownAttribute.PermissionSet);
+			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
 			b.AddFixedArg(securityAction);
 			b.AddNamedArg("XML", KnownTypeCode.String, xml);
 		}
@@ -250,13 +250,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string attributeTypeName = reader.ReadSerializedString();
-			IType attributeType = assembly.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
+			IType attributeType = module.TypeProvider.GetTypeFromSerializedName(attributeTypeName);
 
 			reader.ReadCompressedInteger(); // ??
 											// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
 			int numNamed = reader.ReadCompressedInteger();
 
-			var decoder = new Metadata.CustomAttributeDecoder<IType>(assembly.TypeProvider, assembly.metadata);
+			var decoder = new Metadata.CustomAttributeDecoder<IType>(module.TypeProvider, module.metadata);
 			var namedArgs = decoder.DecodeNamedArguments(ref reader, numNamed);
 
 			return new DefaultAttribute(
@@ -282,14 +282,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		ImmutableArray<CustomAttributeTypedArgument<IType>>.Builder fixedArgs;
 		ImmutableArray<CustomAttributeNamedArgument<IType>>.Builder namedArgs;
 
-		public AttributeBuilder(MetadataAssembly assembly, KnownAttribute attributeType)
-			: this(assembly, assembly.GetAttributeType(attributeType))
+		public AttributeBuilder(MetadataModule module, KnownAttribute attributeType)
+			: this(module, module.GetAttributeType(attributeType))
 		{
 		}
 
-		public AttributeBuilder(MetadataAssembly assembly, IType attributeType)
+		public AttributeBuilder(MetadataModule module, IType attributeType)
 		{
-			this.compilation = assembly.Compilation;
+			this.compilation = module.Compilation;
 			this.attributeType = attributeType;
 			this.fixedArgs = ImmutableArray.CreateBuilder<CustomAttributeTypedArgument<IType>>();
 			this.namedArgs = ImmutableArray.CreateBuilder<CustomAttributeNamedArgument<IType>>();

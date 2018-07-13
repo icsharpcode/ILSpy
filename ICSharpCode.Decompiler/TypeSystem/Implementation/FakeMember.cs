@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public IType DeclaringType { get; set; }
 
-		IAssembly IEntity.ParentAssembly => DeclaringType?.GetDefinition()?.ParentAssembly;
+		IModule IEntity.ParentModule => DeclaringType?.GetDefinition()?.ParentModule;
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => EmptyList<IAttribute>.Instance;
 

@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, ITypeDefinition type, AnalyzerContext context)
 		{
-			if (analyzedEntity.ParentAssembly.PEFile == type.ParentAssembly.PEFile
+			if (analyzedEntity.ParentModule.PEFile == type.ParentModule.PEFile
 				&& analyzedEntity.MetadataToken == type.MetadataToken)
 				yield break;
 
@@ -185,7 +185,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			Found |= typeDefinition.MetadataToken == type.MetadataToken
-				&& typeDefinition.ParentAssembly.PEFile == type.ParentAssembly.PEFile;
+				&& typeDefinition.ParentModule.PEFile == type.ParentModule.PEFile;
 			return base.VisitTypeDefinition(type);
 		}
 	}

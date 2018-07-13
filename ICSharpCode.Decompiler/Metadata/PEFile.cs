@@ -28,7 +28,20 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
-	public class PEFile : IDisposable, TypeSystem.IAssemblyReference
+	/// <summary>
+	/// PEFile is the main class the decompiler uses to represent a metadata assembly/module.
+	/// Every file on disk can be loaded into a standalone PEFile instance.
+	/// 
+	/// A PEFile can be combined with its referenced assemblies/modules to form a type system,
+	/// in that case the <see cref="MetadataModule"/> class is used instead.
+	/// </summary>
+	/// <remarks>
+	/// In addition to wrapping a <c>System.Reflection.Metadata.PEReader</c>, this class
+	/// contains a few decompiled-specific caches to allow efficiently constructing a type
+	/// system from multiple PEFiles. This allows the caches to be shared across multiple
+	/// decompiled type systems.
+	/// </remarks>
+	public class PEFile : IDisposable, TypeSystem.IModuleReference
 	{
 		public string FileName { get; }
 		public PEReader Reader { get; }
@@ -157,17 +170,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public TypeSystem.IAssemblyReference WithOptions(TypeSystemOptions options)
+		public TypeSystem.IModuleReference WithOptions(TypeSystemOptions options)
 		{
 			return new PEFileWithOptions(this, options);
 		}
 
-		IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
+		IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
 		{
-			return new MetadataAssembly(context.Compilation, this, TypeSystemOptions.Default);
+			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
 		}
 
-		private class PEFileWithOptions : TypeSystem.IAssemblyReference
+		private class PEFileWithOptions : TypeSystem.IModuleReference
 		{
 			readonly PEFile peFile;
 			readonly TypeSystemOptions options;
@@ -178,9 +191,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				this.options = options;
 			}
 
-			IAssembly TypeSystem.IAssemblyReference.Resolve(ITypeResolveContext context)
+			IModule TypeSystem.IModuleReference.Resolve(ITypeResolveContext context)
 			{
-				return new MetadataAssembly(context.Compilation, peFile, options);
+				return new MetadataModule(context.Compilation, peFile, options);
 			}
 		}
 	}

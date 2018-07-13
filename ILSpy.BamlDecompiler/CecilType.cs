@@ -22,7 +22,7 @@ namespace ILSpy.BamlDecompiler
 		public string AssemblyQualifiedName {
 			get {
 				return type.FullName +
-					", " + type.ParentAssembly.FullAssemblyName;
+					", " + type.ParentModule.FullAssemblyName;
 			}
 		}
 		

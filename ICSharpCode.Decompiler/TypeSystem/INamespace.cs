@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<ITypeDefinition> Types { get; }
 		
 		/// <summary>
-		/// Gets the assemblies that contribute types to this namespace (or to child namespaces).
+		/// Gets the modules that contribute types to this namespace (or to child namespaces).
 		/// </summary>
-		IEnumerable<IAssembly> ContributingAssemblies { get; }
+		IEnumerable<IModule> ContributingModules { get; }
 		
 		/// <summary>
 		/// Gets a direct child namespace by its short name.

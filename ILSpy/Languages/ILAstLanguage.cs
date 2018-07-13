@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy
 		{
 			base.DecompileMethod(method, output, options);
 			new ReflectionDisassembler(output, options.CancellationToken)
-				.DisassembleMethodHeader(method.ParentAssembly.PEFile, (SRM.MethodDefinitionHandle)method.MetadataToken);
+				.DisassembleMethodHeader(method.ParentModule.PEFile, (SRM.MethodDefinitionHandle)method.MetadataToken);
 			output.WriteLine();
 			output.WriteLine();
 		}
@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var module = method.ParentAssembly.PEFile;
+				var module = method.ParentModule.PEFile;
 				var methodDef = module.Metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)method.MetadataToken);
 				if (!methodDef.HasBody())
 					return;
@@ -109,7 +109,7 @@ namespace ICSharpCode.ILSpy
 			public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
-				var module = method.ParentAssembly.PEFile;
+				var module = method.ParentModule.PEFile;
 				var metadata = module.Metadata;
 				var methodDef = metadata.GetMethodDefinition((SRM.MethodDefinitionHandle)method.MetadataToken);
 				if (!methodDef.HasBody())

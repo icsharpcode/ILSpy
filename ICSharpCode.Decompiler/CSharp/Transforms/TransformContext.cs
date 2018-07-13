@@ -51,10 +51,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		/// <summary>
-		/// Returns the assembly that is being decompiled.
+		/// Returns the module that is being decompiled.
 		/// </summary>
-		public IAssembly DecompiledAssembly {
-			get { return decompilationContext.CurrentAssembly; }
+		public IModule DecompiledModule {
+			get { return decompilationContext.CurrentModule; }
 		}
 
 		/// <summary>

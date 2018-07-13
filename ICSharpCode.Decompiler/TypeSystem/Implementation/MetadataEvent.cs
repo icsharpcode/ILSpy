@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataEvent : IEvent
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly EventDefinitionHandle handle;
 		readonly EventAccessors accessors;
 		readonly string name;
@@ -40,14 +40,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded:
 		IType returnType;
 
-		internal MetadataEvent(MetadataAssembly assembly, EventDefinitionHandle handle)
+		internal MetadataEvent(MetadataModule module, EventDefinitionHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.handle = handle;
 
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var ev = metadata.GetEventDefinition(handle);
 			accessors = ev.GetAccessors();
 			name = metadata.GetString(ev.Name);
@@ -66,10 +66,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool CanAdd => !accessors.Adder.IsNil;
 		public bool CanRemove => !accessors.Remover.IsNil;
 		public bool CanInvoke => !accessors.Raiser.IsNil;
-		public IMethod AddAccessor => assembly.GetDefinition(accessors.Adder);
-		public IMethod RemoveAccessor => assembly.GetDefinition(accessors.Remover);
-		public IMethod InvokeAccessor => assembly.GetDefinition(accessors.Raiser);
-		IMethod AnyAccessor => assembly.GetDefinition(accessors.GetAny());
+		public IMethod AddAccessor => module.GetDefinition(accessors.Adder);
+		public IMethod RemoveAccessor => module.GetDefinition(accessors.Remover);
+		public IMethod InvokeAccessor => module.GetDefinition(accessors.Raiser);
+		IMethod AnyAccessor => module.GetDefinition(accessors.GetAny());
 
 		#region Signature (ReturnType + Parameters)
 		public IType ReturnType {
@@ -77,10 +77,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var returnType = LazyInit.VolatileRead(ref this.returnType);
 				if (returnType != null)
 					return returnType;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var ev = metadata.GetEventDefinition(handle);
 				var context = new GenericContext(DeclaringTypeDefinition?.TypeParameters);
-				returnType = assembly.ResolveType(ev.Type, context, ev.GetCustomAttributes());
+				returnType = module.ResolveType(ev.Type, context, ev.GetCustomAttributes());
 				return LazyInit.GetOrSet(ref this.returnType, returnType);
 			}
 		}
@@ -104,8 +104,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Attributes
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var eventDef = metadata.GetEventDefinition(handle);
 			b.Add(eventDef.GetCustomAttributes());
 			return b.Build();
@@ -120,8 +120,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
 		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
 
-		public IAssembly ParentAssembly => assembly;
-		public ICompilation Compilation => assembly.Compilation;
+		public IModule ParentModule => module;
+		public ICompilation Compilation => module.Compilation;
 
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
@@ -130,14 +130,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataEvent ev) {
-				return handle == ev.handle && assembly.PEFile == ev.assembly.PEFile;
+				return handle == ev.handle && module.PEFile == ev.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x7937039a ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x7937039a ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

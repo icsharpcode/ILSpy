@@ -31,11 +31,10 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Used as context object for metadata TS entities;
-	/// should be turned into IAssembly implementation when the TS refactoring is complete.
+	/// Type system implementation for Metadata.PEFile.
 	/// </summary>
-	[DebuggerDisplay("<MetadataAssembly: {AssemblyName}>")]
-	public class MetadataAssembly : IAssembly
+	[DebuggerDisplay("<MetadataModule: {AssemblyName}>")]
+	public class MetadataModule : IModule
 	{
 		public ICompilation Compilation { get; }
 		internal readonly MetadataReader metadata;
@@ -49,7 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly MetadataProperty[] propertyDefs;
 		readonly MetadataEvent[] eventDefs;
 
-		internal MetadataAssembly(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
+		internal MetadataModule(ICompilation compilation, Metadata.PEFile peFile, TypeSystemOptions options)
 		{
 			this.Compilation = compilation;
 			this.PEFile = peFile;
@@ -87,7 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region IAssembly interface
 		public PEFile PEFile { get; }
 
-		public bool IsMainAssembly => this == Compilation.MainAssembly;
+		public bool IsMainModule => this == Compilation.MainModule;
 
 		public string AssemblyName { get; }
 		public string FullAssemblyName { get; }
@@ -111,12 +110,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region InternalsVisibleTo
-		public bool InternalsVisibleTo(IAssembly assembly)
+		public bool InternalsVisibleTo(IModule module)
 		{
-			if (this == assembly)
+			if (this == module)
 				return true;
 			foreach (string shortName in GetInternalsVisibleTo()) {
-				if (string.Equals(assembly.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
+				if (string.Equals(module.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase))
 					return true;
 			}
 			return false;
@@ -572,13 +571,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IType ResolveForwardedType(ExportedType forwarder)
 		{
-			IAssembly assembly = ResolveAssembly(forwarder);
+			IModule module = ResolveModule(forwarder);
 			var typeName = forwarder.GetFullTypeName(metadata);
-			if (assembly == null)
+			if (module == null)
 				return new UnknownType(typeName);
 			using (var busyLock = BusyManager.Enter(this)) {
 				if (busyLock.Success) {
-					var td = assembly.GetTypeDefinition(typeName);
+					var td = module.GetTypeDefinition(typeName);
 					if (td != null) {
 						return td;
 					}
@@ -586,7 +585,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return new UnknownType(typeName);
 
-			IAssembly ResolveAssembly(ExportedType type)
+			IModule ResolveModule(ExportedType type)
 			{
 				switch (type.Implementation.Kind) {
 					case HandleKind.AssemblyFile:
@@ -594,11 +593,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						return this;
 					case HandleKind.ExportedType:
 						var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
-						return ResolveAssembly(outerType);
+						return ResolveModule(outerType);
 					case HandleKind.AssemblyReference:
 						var asmRef = metadata.GetAssemblyReference((AssemblyReferenceHandle)type.Implementation);
 						string shortName = metadata.GetString(asmRef.Name);
-						foreach (var asm in Compilation.Assemblies) {
+						foreach (var asm in Compilation.Modules) {
 							if (string.Equals(asm.AssemblyName, shortName, StringComparison.OrdinalIgnoreCase)) {
 								return asm;
 							}

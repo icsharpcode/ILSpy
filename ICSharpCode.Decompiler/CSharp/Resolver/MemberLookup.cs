@@ -47,13 +47,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		readonly ITypeDefinition currentTypeDefinition;
-		readonly IAssembly currentAssembly;
+		readonly IModule currentModule;
 		readonly bool isInEnumMemberInitializer;
 		
-		public MemberLookup(ITypeDefinition currentTypeDefinition, IAssembly currentAssembly, bool isInEnumMemberInitializer = false)
+		public MemberLookup(ITypeDefinition currentTypeDefinition, IModule currentModule, bool isInEnumMemberInitializer = false)
 		{
 			this.currentTypeDefinition = currentTypeDefinition;
-			this.currentAssembly = currentAssembly;
+			this.currentModule = currentModule;
 			this.isInEnumMemberInitializer = isInEnumMemberInitializer;
 		}
 		
@@ -116,19 +116,19 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case Accessibility.Protected:
 					return IsProtectedAccessible(allowProtectedAccess, entity);
 				case Accessibility.Internal:
-					return IsInternalAccessible(entity.ParentAssembly);
+					return IsInternalAccessible(entity.ParentModule);
 				case Accessibility.ProtectedOrInternal:
-					return IsInternalAccessible(entity.ParentAssembly) || IsProtectedAccessible(allowProtectedAccess, entity);
+					return IsInternalAccessible(entity.ParentModule) || IsProtectedAccessible(allowProtectedAccess, entity);
 				case Accessibility.ProtectedAndInternal:
-					return IsInternalAccessible(entity.ParentAssembly) && IsProtectedAccessible(allowProtectedAccess, entity);
+					return IsInternalAccessible(entity.ParentModule) && IsProtectedAccessible(allowProtectedAccess, entity);
 				default:
 					throw new Exception("Invalid value for Accessibility");
 			}
 		}
 		
-		bool IsInternalAccessible(IAssembly assembly)
+		bool IsInternalAccessible(IModule module)
 		{
-			return assembly != null && currentAssembly != null && assembly.InternalsVisibleTo(currentAssembly);
+			return module != null && currentModule != null && module.InternalsVisibleTo(currentModule);
 		}
 		
 		bool IsProtectedAccessible(bool allowProtectedAccess, IEntity entity)

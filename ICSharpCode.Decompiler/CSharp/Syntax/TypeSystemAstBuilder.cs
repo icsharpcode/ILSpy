@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstType ConvertType(FullTypeName fullTypeName)
 		{
 			if (resolver != null) {
-				foreach (var asm in resolver.Compilation.Assemblies) {
+				foreach (var asm in resolver.Compilation.Modules) {
 					var def = asm.GetTypeDefinition(fullTypeName);
 					if (def != null) {
 						return ConvertType(def);

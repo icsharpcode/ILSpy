@@ -26,22 +26,22 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataNamespace : INamespace
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly NamespaceDefinition ns;
 
 		public INamespace ParentNamespace { get; }
 		public string FullName { get; }
 		public string Name { get; }
 
-		public MetadataNamespace(MetadataAssembly assembly, INamespace parent, string fullName, NamespaceDefinition ns)
+		public MetadataNamespace(MetadataModule module, INamespace parent, string fullName, NamespaceDefinition ns)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(fullName != null);
-			this.assembly = assembly;
+			this.module = module;
 			this.ParentNamespace = parent;
 			this.ns = ns;
 			this.FullName = fullName;
-			this.Name = assembly.GetString(ns.Name);
+			this.Name = module.GetString(ns.Name);
 		}
 
 		string INamespace.ExternAlias => string.Empty;
@@ -58,9 +58,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				children = new INamespace[nsDefs.Length];
 				for (int i = 0; i < children.Length; i++) {
 					var nsHandle = nsDefs[i];
-					string fullName = assembly.metadata.GetString(nsHandle);
-					children[i] = new MetadataNamespace(assembly, this, fullName,
-						assembly.metadata.GetNamespaceDefinition(nsHandle));
+					string fullName = module.metadata.GetString(nsHandle);
+					children[i] = new MetadataNamespace(module, this, fullName,
+						module.metadata.GetNamespaceDefinition(nsHandle));
 				}
 				return LazyInit.GetOrSet(ref childNamespaces, children);
 			}
@@ -69,18 +69,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<ITypeDefinition> INamespace.Types {
 			get {
 				foreach (var typeHandle in ns.TypeDefinitions) {
-					var def = assembly.GetDefinition(typeHandle);
+					var def = module.GetDefinition(typeHandle);
 					if (def != null)
 						yield return def;
 				}
 			}
 		}
 
-		IEnumerable<IAssembly> INamespace.ContributingAssemblies => new[] { assembly };
+		IEnumerable<IModule> INamespace.ContributingModules => new[] { module };
 
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Namespace;
 
-		ICompilation ICompilationProvider.Compilation => assembly.Compilation;
+		ICompilation ICompilationProvider.Compilation => module.Compilation;
 
 		INamespace INamespace.GetChildNamespace(string name)
 		{
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		ITypeDefinition INamespace.GetTypeDefinition(string name, int typeParameterCount)
 		{
-			return assembly.GetTypeDefinition(FullName, name, typeParameterCount);
+			return module.GetTypeDefinition(FullName, name, typeParameterCount);
 		}
 	}
 }

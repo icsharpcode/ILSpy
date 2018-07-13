@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public TupleType(ICompilation compilation, ImmutableArray<IType> elementTypes,
 			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
-			IAssembly valueTupleAssembly = null)
+			IModule valueTupleAssembly = null)
 		{
 			this.Compilation = compilation;
 			this.UnderlyingType = CreateUnderlyingType(compilation, elementTypes, valueTupleAssembly);
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IAssembly valueTupleAssembly)
+		static ParameterizedType CreateUnderlyingType(ICompilation compilation, ImmutableArray<IType> elementTypes, IModule valueTupleAssembly)
 		{
 			int remainder = (elementTypes.Length - 1) % (RestPosition - 1) + 1;
 			Debug.Assert(remainder >= 1 && remainder < RestPosition);
@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return type;
 		}
 
-		private static IType FindValueTupleType(ICompilation compilation, IAssembly valueTupleAssembly, int tpc)
+		private static IType FindValueTupleType(ICompilation compilation, IModule valueTupleAssembly, int tpc)
 		{
 			FullTypeName typeName = new TopLevelTypeName("System", "ValueTuple", tpc);
 			if (valueTupleAssembly != null) {
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new TupleType(
 					compilation,
 					elementTypes,
-					valueTupleAssembly: type.GetDefinition()?.ParentAssembly
+					valueTupleAssembly: type.GetDefinition()?.ParentModule
 				);
 			} else {
 				return null;
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			if (newElementTypes != null) {
 				return new TupleType(this.Compilation, newElementTypes.ToImmutableArray(), this.ElementNames,
-					this.GetDefinition()?.ParentAssembly);
+					this.GetDefinition()?.ParentModule);
 			} else {
 				return this;
 			}
@@ -343,7 +343,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public ImmutableArray<string> ElementNames { get; }
 
-		public IAssemblyReference ValueTupleAssembly { get; }
+		public IModuleReference ValueTupleAssembly { get; }
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes)
 		{
@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public TupleTypeReference(ImmutableArray<ITypeReference> elementTypes,
 			ImmutableArray<string> elementNames = default(ImmutableArray<string>),
-			IAssemblyReference valueTupleAssembly = null)
+			IModuleReference valueTupleAssembly = null)
 		{
 			this.ValueTupleAssembly = valueTupleAssembly;
 			this.ElementTypes = elementTypes;

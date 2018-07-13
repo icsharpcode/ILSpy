@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class MetadataTypeParameter : AbstractTypeParameter
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly GenericParameterHandle handle;
 
 		readonly GenericParameterAttributes attr;
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded:
 		IReadOnlyList<IType> constraints;
 
-		public static ITypeParameter[] Create(MetadataAssembly assembly, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)
+		public static ITypeParameter[] Create(MetadataModule module, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
 				return Empty<ITypeParameter>.Array;
@@ -47,38 +47,38 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (i < outerTps.Count)
 					tps[i] = outerTps[i];
 				else
-					tps[i] = Create(assembly, owner, i, handle);
+					tps[i] = Create(module, owner, i, handle);
 				i++;
 			}
 			return tps;
 		}
 
-		public static ITypeParameter[] Create(MetadataAssembly assembly, IEntity owner, GenericParameterHandleCollection handles)
+		public static ITypeParameter[] Create(MetadataModule module, IEntity owner, GenericParameterHandleCollection handles)
 		{
 			if (handles.Count == 0)
 				return Empty<ITypeParameter>.Array;
 			var tps = new ITypeParameter[handles.Count];
 			int i = 0;
 			foreach (var handle in handles) {
-				tps[i] = Create(assembly, owner, i, handle);
+				tps[i] = Create(module, owner, i, handle);
 				i++;
 			}
 			return tps;
 		}
 
-		public static MetadataTypeParameter Create(MetadataAssembly assembly, IEntity owner, int index, GenericParameterHandle handle)
+		public static MetadataTypeParameter Create(MetadataModule module, IEntity owner, int index, GenericParameterHandle handle)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
 			Debug.Assert(gp.Index == index);
-			return new MetadataTypeParameter(assembly, owner, index, assembly.GetString(gp.Name), handle, gp.Attributes);
+			return new MetadataTypeParameter(module, owner, index, module.GetString(gp.Name), handle, gp.Attributes);
 		}
 
-		private MetadataTypeParameter(MetadataAssembly assembly, IEntity owner, int index, string name,
+		private MetadataTypeParameter(MetadataModule module, IEntity owner, int index, string name,
 			GenericParameterHandle handle, GenericParameterAttributes attr)
 			: base(owner, index, name, GetVariance(attr))
 		{
-			this.assembly = assembly;
+			this.module = module;
 			this.handle = handle;
 			this.attr = attr;
 		}
@@ -99,11 +99,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override IEnumerable<IAttribute> GetAttributes()
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
 
 			var attributes = gp.GetCustomAttributes();
-			var b = new AttributeListBuilder(assembly, attributes.Count);
+			var b = new AttributeListBuilder(module, attributes.Count);
 			b.Add(attributes);
 			return b.Build();
 		}
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private IReadOnlyList<IType> DecodeConstraints()
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var gp = metadata.GetGenericParameter(handle);
 
 			var constraintHandleCollection = gp.GetConstraints();
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			bool hasNonInterfaceConstraint = false;
 			foreach (var constraintHandle in constraintHandleCollection) {
 				var constraint = metadata.GetGenericParameterConstraint(constraintHandle);
-				var ty = assembly.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes());
+				var ty = module.ResolveType(constraint.Type, new GenericContext(Owner), constraint.GetCustomAttributes());
 				result.Add(ty);
 				hasNonInterfaceConstraint |= (ty.Kind != TypeKind.Interface);
 			}
@@ -145,12 +145,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override int GetHashCode()
 		{
-			return 0x51fc5b83 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x51fc5b83 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		public override bool Equals(IType other)
 		{
-			return other is MetadataTypeParameter tp && handle == tp.handle && assembly.PEFile == tp.assembly.PEFile;
+			return other is MetadataTypeParameter tp && handle == tp.handle && module.PEFile == tp.module.PEFile;
 		}
 
 		public override string ToString()

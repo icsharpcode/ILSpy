@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			if (analyzedType.Kind == TypeKind.Enum
 				&& type.MetadataToken == analyzedType.MetadataToken
-				&& type.ParentAssembly.PEFile == analyzedType.ParentAssembly.PEFile)
+				&& type.ParentModule.PEFile == analyzedType.ParentModule.PEFile)
 				yield break;
 
 			if (!context.Language.ShowMember(type))

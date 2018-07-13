@@ -201,8 +201,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return baseMember.Compilation; }
 		}
 		
-		public IAssembly ParentAssembly {
-			get { return baseMember.ParentAssembly; }
+		public IModule ParentModule {
+			get { return baseMember.ParentModule; }
 		}
 
 		public virtual IMember Specialize(TypeParameterSubstitution newSubstitution)

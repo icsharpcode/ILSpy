@@ -32,13 +32,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		SRM.ISignatureTypeProvider<IType, GenericContext>,
 		SRM.ICustomAttributeTypeProvider<IType>
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly ICompilation compilation;
 
-		public TypeProvider(IAssembly assembly)
+		public TypeProvider(MetadataModule module)
 		{
-			this.assembly = (MetadataAssembly)assembly; // TODO: change parameter type instead of casting
-			this.compilation = assembly.Compilation;
+			this.module = module;
+			this.compilation = module.Compilation;
 		}
 
 		public TypeProvider(ICompilation compilation)
@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			ITypeDefinition td = assembly?.GetDefinition(handle);
+			ITypeDefinition td = module?.GetDefinition(handle);
 			if (td != null)
 				return td;
 			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
@@ -131,10 +131,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			var asmref = handle.GetDeclaringAssembly(reader);
+			var asmref = handle.GetDeclaringModule(reader);
 			bool? isReferenceType = IsReferenceType(reader, handle, rawTypeKind);
-			var gctr = new GetClassTypeReference(handle.GetFullTypeName(reader), handle.GetDeclaringAssembly(reader), isReferenceType);
-			return gctr.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
+			var gctr = new GetClassTypeReference(handle.GetFullTypeName(reader), handle.GetDeclaringModule(reader), isReferenceType);
+			return gctr.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
 		}
 
 		public IType GetTypeFromSerializedName(string name)
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return null;
 			}
 			return ReflectionHelper.ParseReflectionName(name)
-				.Resolve(assembly != null ? new SimpleTypeResolveContext(assembly) : new SimpleTypeResolveContext(compilation));
+				.Resolve(module != null ? new SimpleTypeResolveContext(module) : new SimpleTypeResolveContext(compilation));
 		}
 		
 		public IType GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)

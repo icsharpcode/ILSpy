@@ -177,11 +177,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 
-		public AssemblyTreeNode FindAssemblyNode(IAssembly module)
+		public AssemblyTreeNode FindAssemblyNode(IModule module)
 		{
-			if (!(module is MetadataAssembly assembly))
-				return null;
-			return FindAssemblyNode(assembly.PEFile);
+			return FindAssemblyNode(module.PEFile);
 		}
 
 		public AssemblyTreeNode FindAssemblyNode(PEFile module)
@@ -224,7 +222,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.MetadataToken == def.MetadataToken && !t.IsHidden);
 				}
 			} else {
-				AssemblyTreeNode asm = FindAssemblyNode(def.ParentAssembly);
+				AssemblyTreeNode asm = FindAssemblyNode(def.ParentModule);
 				if (asm != null) {
 					return asm.FindTypeNode(def);
 				}

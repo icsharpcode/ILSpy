@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var t = typeSystem.ResolveAsType(handle).GetDefinition();
 			if (t != null) {
 				showExpander = t.DirectBaseTypes.Any();
-				var other = t.ParentAssembly.PEFile.GetTypeSystemOrNull();
+				var other = t.ParentModule.PEFile.GetTypeSystemOrNull();
 				Debug.Assert(other != null);
 				t = other.FindType(t.FullTypeName).GetDefinition();
 			} else {
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var t = TryResolve(module, handle, type, false);
 			if (t != null) {
-				BaseTypesTreeNode.AddBaseTypes(this.Children, t.ParentAssembly.PEFile, t);
+				BaseTypesTreeNode.AddBaseTypes(this.Children, t.ParentModule.PEFile, t);
 			}
 		}
 

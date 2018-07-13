@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public Metadata.PEFile ModuleDefinition => context.ModuleDefinition;
+		public MetadataModule MainModule => context.MainModule;
 
 		public TypeParameterSubstitution Substitution {
 			get { return substitution; }
@@ -96,11 +97,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (member != null)
 				member = member.Specialize(substitution);
 			return member;
-		}
-
-		public PEFile GetModuleDefinition(IAssembly assembly)
-		{
-			return context.GetModuleDefinition(assembly);
 		}
 		
 		MethodSignature<IType> IDecompilerTypeSystem.DecodeMethodSignature(StandaloneSignatureHandle standaloneSignatureHandle)

@@ -321,7 +321,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (method == null)
 				return false;
-			var module = ((MetadataAssembly)method.ParentAssembly).PEFile;
+			var module = ((MetadataModule)method.ParentModule).PEFile;
 			var m = (SRM.MethodDefinitionHandle)method.MetadataToken;
 			if (m.IsNil)
 				return false;

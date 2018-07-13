@@ -99,8 +99,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return compilation; }
 		}
 		
-		public IEnumerable<IAssembly> ContributingAssemblies {
-			get { return namespaces.SelectMany(ns => ns.ContributingAssemblies); }
+		public IEnumerable<IModule> ContributingModules {
+			get { return namespaces.SelectMany(ns => ns.ContributingModules); }
 		}
 		
 		public IEnumerable<INamespace> ChildNamespaces {

@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this ICompilation compilation)
 		{
-			return compilation.Assemblies.SelectMany(a => a.TypeDefinitions);
+			return compilation.Modules.SelectMany(a => a.TypeDefinitions);
 		}
 
 		/// <summary>
@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
 		{
-			return compilation.Assemblies.SelectMany(a => a.TopLevelTypeDefinitions);
+			return compilation.Modules.SelectMany(a => a.TopLevelTypeDefinitions);
 		}
 		#endregion
 		
@@ -299,14 +299,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// There can be multiple types with the same full name in a compilation, as a
 		/// full type name is only unique per assembly.
 		/// If there are multiple possible matches, this method will return just one of them.
-		/// When possible, use <see cref="IAssembly.GetTypeDefinition"/> instead to
+		/// When possible, use <see cref="IModule.GetTypeDefinition"/> instead to
 		/// retrieve a type from a specific assembly.
 		/// </remarks>
 		public static IType FindType(this ICompilation compilation, FullTypeName fullTypeName)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
-			foreach (IAssembly asm in compilation.Assemblies) {
+			foreach (IModule asm in compilation.Modules) {
 				ITypeDefinition def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)
 					return def;
@@ -318,12 +318,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type definition for the specified unresolved type.
 		/// Returns null if the unresolved type does not belong to this assembly.
 		/// </summary>
-		public static ITypeDefinition GetTypeDefinition(this IAssembly assembly, FullTypeName fullTypeName)
+		public static ITypeDefinition GetTypeDefinition(this IModule module, FullTypeName fullTypeName)
 		{
-			if (assembly == null)
+			if (module == null)
 				throw new ArgumentNullException("assembly");
 			TopLevelTypeName topLevelTypeName = fullTypeName.TopLevelTypeName;
-			ITypeDefinition typeDef = assembly.GetTypeDefinition(topLevelTypeName);
+			ITypeDefinition typeDef = module.GetTypeDefinition(topLevelTypeName);
 			if (typeDef == null)
 				return null;
 			int typeParameterCount = topLevelTypeName.TypeParameterCount;
@@ -418,11 +418,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type definition for a top-level type.
 		/// </summary>
 		/// <remarks>This method uses ordinal name comparison, not the compilation's name comparer.</remarks>
-		public static ITypeDefinition GetTypeDefinition(this IAssembly assembly, string namespaceName, string name, int typeParameterCount = 0)
+		public static ITypeDefinition GetTypeDefinition(this IModule module, string namespaceName, string name, int typeParameterCount = 0)
 		{
-			if (assembly == null)
+			if (module == null)
 				throw new ArgumentNullException ("assembly");
-			return assembly.GetTypeDefinition (new TopLevelTypeName (namespaceName, name, typeParameterCount));
+			return module.GetTypeDefinition (new TopLevelTypeName (namespaceName, name, typeParameterCount));
 		}
 		#endregion
 		

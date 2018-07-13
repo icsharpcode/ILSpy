@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality)) {
 				if (tupleCardinality > 1) {
-					var valueTupleAssembly = type.GetDefinition()?.ParentAssembly;
+					var valueTupleAssembly = type.GetDefinition()?.ParentModule;
 					ImmutableArray<string> elementNames = default;
 					if (tupleElementNames != null && tupleTypeIndex < tupleElementNames.Length) {
 						string[] extractedValues = new string[tupleCardinality];

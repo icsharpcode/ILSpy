@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		IEnumerable<IEntity> ScanMethod(IMethod analyzedMethod, MethodDefinitionHandle handle, AnalyzerContext context)
 		{
-			var module = analyzedMethod.ParentAssembly.PEFile;
+			var module = analyzedMethod.ParentModule.PEFile;
 			var md = module.Metadata.GetMethodDefinition(handle);
 			if (!md.HasBody()) yield break;
 

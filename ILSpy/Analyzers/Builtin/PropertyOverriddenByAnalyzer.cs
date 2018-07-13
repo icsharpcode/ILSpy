@@ -37,14 +37,14 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<IEntity> Analyze(IProperty analyzedEntity, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (!analyzedEntity.DeclaringType.GetAllBaseTypeDefinitions()
-				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken && t.ParentAssembly.PEFile == type.ParentAssembly.PEFile))
+				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken && t.ParentModule.PEFile == type.ParentModule.PEFile))
 				yield break;
 
 			foreach (var property in type.Properties) {
 				if (!property.IsOverride) continue;
 				if (InheritanceHelper.GetBaseMembers(property, false)
 					.Any(p => p.MetadataToken == analyzedEntity.MetadataToken &&
-							  p.ParentAssembly.PEFile == analyzedEntity.ParentAssembly.PEFile)) {
+							  p.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile)) {
 					yield return property;
 				}
 			}

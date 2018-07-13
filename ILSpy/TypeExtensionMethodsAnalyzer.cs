@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				var firstParamType = method.Parameters[0].Type.GetDefinition();
 				if (firstParamType != null &&
 					firstParamType.MetadataToken == analyzedType.MetadataToken &&
-					firstParamType.ParentAssembly.PEFile == analyzedType.ParentAssembly.PEFile)
+					firstParamType.ParentModule.PEFile == analyzedType.ParentModule.PEFile)
 					yield return method;
 			}
 		}

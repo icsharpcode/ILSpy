@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					continue;
 
 				found = ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
-					&& ctor.ParentAssembly.PEFile == analyzedEntity.ParentAssembly.PEFile;
+					&& ctor.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile;
 			}
 
 			if (found) {

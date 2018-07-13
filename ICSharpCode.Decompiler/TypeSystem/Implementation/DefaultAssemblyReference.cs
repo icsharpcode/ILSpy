@@ -24,9 +24,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// References an existing assembly by name.
 	/// </summary>
 	[Serializable]
-	public sealed class DefaultAssemblyReference : IAssemblyReference, ISupportsInterning
+	public sealed class DefaultAssemblyReference : IModuleReference, ISupportsInterning
 	{
-		public static readonly IAssemblyReference CurrentAssembly = new CurrentAssemblyReference();
+		public static readonly IModuleReference CurrentAssembly = new CurrentModuleReference();
 		
 		readonly string shortName;
 		
@@ -39,12 +39,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				shortName = assemblyName;
 		}
 		
-		public IAssembly Resolve(ITypeResolveContext context)
+		public IModule Resolve(ITypeResolveContext context)
 		{
-			IAssembly current = context.CurrentAssembly;
+			IModule current = context.CurrentModule;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
 				return current;
-			foreach (IAssembly asm in context.Compilation.Assemblies) {
+			foreach (IModule asm in context.Compilation.Modules) {
 				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
@@ -70,11 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		[Serializable]
-		sealed class CurrentAssemblyReference : IAssemblyReference
+		sealed class CurrentModuleReference : IModuleReference
 		{
-			public IAssembly Resolve(ITypeResolveContext context)
+			public IModule Resolve(ITypeResolveContext context)
 			{
-				IAssembly asm = context.CurrentAssembly;
+				IModule asm = context.CurrentModule;
 				if (asm == null)
 					throw new ArgumentException("A reference to the current assembly cannot be resolved in the compilation's global type resolve context.");
 				return asm;

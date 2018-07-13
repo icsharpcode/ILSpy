@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class MetadataTypeDefinition : ITypeDefinition
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly TypeDefinitionHandle handle;
 
 		// eagerly loaded:
@@ -59,25 +59,25 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		List<IType> directBaseTypes;
 		string defaultMemberName;
 
-		internal MetadataTypeDefinition(MetadataAssembly assembly, TypeDefinitionHandle handle)
+		internal MetadataTypeDefinition(MetadataModule module, TypeDefinitionHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.handle = handle;
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
 			this.attributes = td.Attributes;
 			this.fullTypeName = td.GetFullTypeName(metadata);
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested) {
-				this.DeclaringTypeDefinition = assembly.GetDefinition(td.GetDeclaringType());
+				this.DeclaringTypeDefinition = module.GetDefinition(td.GetDeclaringType());
 				
 				// Create type parameters:
-				this.TypeParameters = MetadataTypeParameter.Create(assembly, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
+				this.TypeParameters = MetadataTypeParameter.Create(module, this.DeclaringTypeDefinition, this, td.GetGenericParameters());
 			} else {
 				// Create type parameters:
-				this.TypeParameters = MetadataTypeParameter.Create(assembly, this, td.GetGenericParameters());
+				this.TypeParameters = MetadataTypeParameter.Create(module, this, td.GetGenericParameters());
 
 				var topLevelTypeName = fullTypeName.TopLevelTypeName;
 				for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Kind = TypeKind.Interface;
 			} else if (td.IsEnum(metadata, out var underlyingType)) {
 				this.Kind = TypeKind.Enum;
-				this.EnumUnderlyingType = assembly.Compilation.FindType(underlyingType.ToKnownTypeCode());
+				this.EnumUnderlyingType = module.Compilation.FindType(underlyingType.ToKnownTypeCode());
 			} else if (td.IsValueType(metadata)) {
 				if (KnownTypeCode == KnownTypeCode.Void) {
 					this.Kind = TypeKind.Void;
@@ -121,11 +121,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var nestedTypes = LazyInit.VolatileRead(ref this.nestedTypes);
 				if (nestedTypes != null)
 					return nestedTypes;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var nestedTypeCollection = metadata.GetTypeDefinition(handle).GetNestedTypes();
 				var nestedTypeList = new List<ITypeDefinition>(nestedTypeCollection.Length);
 				foreach (TypeDefinitionHandle h in nestedTypeCollection) {
-					nestedTypeList.Add(assembly.GetDefinition(h));
+					nestedTypeList.Add(module.GetDefinition(h));
 				}
 				return LazyInit.GetOrSet(ref this.nestedTypes, nestedTypeList.ToArray());
 			}
@@ -147,14 +147,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var fields = LazyInit.VolatileRead(ref this.fields);
 				if (fields != null)
 					return fields;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var fieldCollection = metadata.GetTypeDefinition(handle).GetFields();
 				var fieldList = new List<IField>(fieldCollection.Count);
 				foreach (FieldDefinitionHandle h in fieldCollection) {
 					var field = metadata.GetFieldDefinition(h);
 					var attr = field.Attributes;
-					if (assembly.IsVisible(attr) && (attr & FieldAttributes.SpecialName) == 0) {
-						fieldList.Add(assembly.GetDefinition(h));
+					if (module.IsVisible(attr) && (attr & FieldAttributes.SpecialName) == 0) {
+						fieldList.Add(module.GetDefinition(h));
 					}
 				}
 				return LazyInit.GetOrSet(ref this.fields, fieldList.ToArray());
@@ -166,16 +166,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var properties = LazyInit.VolatileRead(ref this.properties);
 				if (properties != null)
 					return properties;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var propertyCollection = metadata.GetTypeDefinition(handle).GetProperties();
 				var propertyList = new List<IProperty>(propertyCollection.Count);
 				foreach (PropertyDefinitionHandle h in propertyCollection) {
 					var property = metadata.GetPropertyDefinition(h);
 					var accessors = property.GetAccessors();
-					bool getterVisible = !accessors.Getter.IsNil && assembly.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
-					bool setterVisible = !accessors.Setter.IsNil && assembly.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
+					bool getterVisible = !accessors.Getter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Getter).Attributes);
+					bool setterVisible = !accessors.Setter.IsNil && module.IsVisible(metadata.GetMethodDefinition(accessors.Setter).Attributes);
 					if (getterVisible || setterVisible) {
-						propertyList.Add(assembly.GetDefinition(h));
+						propertyList.Add(module.GetDefinition(h));
 					}
 				}
 				return LazyInit.GetOrSet(ref this.properties, propertyList.ToArray());
@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var events = LazyInit.VolatileRead(ref this.events);
 				if (events != null)
 					return events;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var eventCollection = metadata.GetTypeDefinition(handle).GetEvents();
 				var eventList = new List<IEvent>(eventCollection.Count);
 				foreach (EventDefinitionHandle h in eventCollection) {
@@ -196,8 +196,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					if (accessors.Adder.IsNil)
 						continue;
 					var addMethod = metadata.GetMethodDefinition(accessors.Adder);
-					if (assembly.IsVisible(addMethod.Attributes)) {
-						eventList.Add(assembly.GetDefinition(h));
+					if (module.IsVisible(addMethod.Attributes)) {
+						eventList.Add(module.GetDefinition(h));
 					}
 				}
 				return LazyInit.GetOrSet(ref this.events, eventList.ToArray());
@@ -209,14 +209,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var methods = LazyInit.VolatileRead(ref this.methods);
 				if (methods != null)
 					return methods;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var methodsCollection = metadata.GetTypeDefinition(handle).GetMethods();
 				var methodsList = new List<IMethod>(methodsCollection.Count);
-				var methodSemantics = assembly.PEFile.MethodSemanticsLookup;
+				var methodSemantics = module.PEFile.MethodSemanticsLookup;
 				foreach (MethodDefinitionHandle h in methodsCollection) {
 					var md = metadata.GetMethodDefinition(h);
-					if (methodSemantics.GetSemantics(h).Item2 == 0 && assembly.IsVisible(md.Attributes)) {
-						methodsList.Add(assembly.GetDefinition(h));
+					if (methodSemantics.GetSemantics(h).Item2 == 0 && module.IsVisible(md.Attributes)) {
+						methodsList.Add(module.GetDefinition(h));
 					}
 				}
 				if (this.Kind == TypeKind.Struct || this.Kind == TypeKind.Enum) {
@@ -251,13 +251,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var baseTypes = LazyInit.VolatileRead(ref this.directBaseTypes);
 				if (baseTypes != null)
 					return baseTypes;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var td = metadata.GetTypeDefinition(handle);
 				var context = new GenericContext(TypeParameters);
 				var interfaceImplCollection = td.GetInterfaceImplementations();
 				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
 				if (!td.BaseType.IsNil) {
-					baseTypes.Add(assembly.ResolveType(td.BaseType, context));
+					baseTypes.Add(module.ResolveType(td.BaseType, context));
 				} else if (Kind == TypeKind.Interface) {
 					// td.BaseType.IsNil is always true for interfaces,
 					// but the type system expects every interface to derive from System.Object as well.
@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 				foreach (var h in interfaceImplCollection) {
 					var iface = metadata.GetInterfaceImplementation(h);
-					baseTypes.Add(assembly.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
+					baseTypes.Add(module.ResolveType(iface.Interface, context, iface.GetCustomAttributes()));
 				}
 				return LazyInit.GetOrSet(ref this.directBaseTypes, baseTypes);
 			}
@@ -276,13 +276,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public FullTypeName FullTypeName => fullTypeName;
 		public string Name => fullTypeName.Name;
 
-		public IAssembly ParentAssembly => assembly;
+		public IModule ParentModule => module;
 
 		#region Type Attributes
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var typeDefinition = metadata.GetTypeDefinition(handle);
 
 			// SerializableAttribute
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var layout = typeDefinition.GetLayout();
 			LayoutKind defaultLayoutKind = Kind == TypeKind.Struct ? LayoutKind.Sequential : LayoutKind.Auto;
 			if (layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0) {
-				var structLayout = new AttributeBuilder(assembly, KnownAttribute.StructLayout);
+				var structLayout = new AttributeBuilder(module, KnownAttribute.StructLayout);
 				structLayout.AddFixedArg(
 					new TopLevelTypeName("System.Runtime.InteropServices", "LayoutKind"),
 					(int)layoutKind);
@@ -347,13 +347,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				string defaultMemberName = LazyInit.VolatileRead(ref this.defaultMemberName);
 				if (defaultMemberName != null)
 					return defaultMemberName;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var typeDefinition = metadata.GetTypeDefinition(handle);
 				foreach (var h in typeDefinition.GetCustomAttributes()) {
 					var a = metadata.GetCustomAttribute(h);
 					if (!a.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
 						continue;
-					var value = a.DecodeValue(assembly.TypeProvider);
+					var value = a.DecodeValue(module.TypeProvider);
 					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name) {
 						defaultMemberName = name;
 						break;
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
-		public ICompilation Compilation => assembly.Compilation;
+		public ICompilation Compilation => module.Compilation;
 
 		public string FullName {
 			get {
@@ -425,14 +425,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataTypeDefinition td) {
-				return handle == td.handle && assembly.PEFile == td.assembly.PEFile;
+				return handle == td.handle && module.PEFile == td.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x2e0520f2 ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x2e0520f2 ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IEquatable<IType>.Equals(IType other)
@@ -595,18 +595,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region GetOverrides
 		internal IEnumerable<IMethod> GetOverrides(MethodDefinitionHandle method)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
 			foreach (var implHandle in td.GetMethodImplementations()) {
 				var impl = metadata.GetMethodImplementation(implHandle);
 				if (impl.MethodBody == method)
-					yield return assembly.ResolveMethod(impl.MethodDeclaration, new GenericContext(this.TypeParameters));
+					yield return module.ResolveMethod(impl.MethodDeclaration, new GenericContext(this.TypeParameters));
 			}
 		}
 
 		internal bool HasOverrides(MethodDefinitionHandle method)
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
 			foreach (var implHandle in td.GetMethodImplementations()) {
 				var impl = metadata.GetMethodImplementation(implHandle);

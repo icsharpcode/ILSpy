@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class MetadataField : IField
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly FieldDefinitionHandle handle;
 		readonly FieldAttributes attributes;
 
@@ -44,13 +44,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool isVolatile; // initialized together with this.type
 		byte decimalConstant; // 0=no, 1=yes, 2=unknown
 
-		internal MetadataField(MetadataAssembly assembly, FieldDefinitionHandle handle)
+		internal MetadataField(MetadataModule module, FieldDefinitionHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.handle = handle;
-			var def = assembly.metadata.GetFieldDefinition(handle);
+			var def = module.metadata.GetFieldDefinition(handle);
 			this.attributes = def.Attributes;
 			if ((attributes & (FieldAttributes.Static | FieldAttributes.InitOnly)) == (FieldAttributes.Static | FieldAttributes.InitOnly)) {
 				decimalConstant = 2; // may be decimal constant
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				string name = LazyInit.VolatileRead(ref this.name);
 				if (name != null)
 					return name;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var fieldDef = metadata.GetFieldDefinition(handle);
 				return LazyInit.GetOrSet(ref this.name, metadata.GetString(fieldDef.Name));
 			}
@@ -116,21 +116,21 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (declType != null) {
 					return declType;
 				} else {
-					var def = assembly.metadata.GetFieldDefinition(handle);
+					var def = module.metadata.GetFieldDefinition(handle);
 					return LazyInit.GetOrSet(ref this.declaringType,
-						assembly.GetDefinition(def.GetDeclaringType()));
+						module.GetDefinition(def.GetDeclaringType()));
 				}
 			}
 		}
 
 		public IType DeclaringType => DeclaringTypeDefinition;
-		public IAssembly ParentAssembly => assembly;
-		public ICompilation Compilation => assembly.Compilation;
+		public IModule ParentModule => module;
+		public ICompilation Compilation => module.Compilation;
 		
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var fieldDef = metadata.GetFieldDefinition(handle);
 
 			// FieldOffsetAttribute
@@ -175,15 +175,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private IType DecodeTypeAndVolatileFlag()
 		{
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var fieldDef = metadata.GetFieldDefinition(handle);
-			var ty = fieldDef.DecodeSignature(assembly.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
+			var ty = fieldDef.DecodeSignature(module.TypeProvider, new GenericContext(DeclaringType?.TypeParameters));
 			if (ty is ModifiedType mod && mod.Modifier.Name == "IsVolatile" && mod.Modifier.Namespace == "System.Runtime.CompilerServices") {
 				Volatile.Write(ref this.isVolatile, true);
 				ty = mod.ElementType;
 			}
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation,
-				fieldDef.GetCustomAttributes(), metadata, assembly.TypeSystemOptions);
+				fieldDef.GetCustomAttributes(), metadata, module.TypeSystemOptions);
 			return LazyInit.GetOrSet(ref this.type, ty);
 		}
 
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IsDecimalConstant {
 			get {
 				if (decimalConstant == 2) {
-					var metadata = assembly.metadata;
+					var metadata = module.metadata;
 					var fieldDef = metadata.GetFieldDefinition(handle);
 					if (fieldDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.DecimalConstant))
 						decimalConstant = 1;
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				object val = LazyInit.VolatileRead(ref this.constantValue);
 				if (val != null)
 					return val;
-				var metadata = assembly.metadata;
+				var metadata = module.metadata;
 				var fieldDef = metadata.GetFieldDefinition(handle);
 				if (IsDecimalConstant) {
 					foreach (var attrHandle in fieldDef.GetCustomAttributes()) {
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		decimal? TryDecodeDecimalConstantAttribute(System.Reflection.Metadata.CustomAttribute attribute)
 		{
-			var attrValue = attribute.DecodeValue(assembly.TypeProvider);
+			var attrValue = attribute.DecodeValue(module.TypeProvider);
 			if (attrValue.FixedArguments.Length != 5)
 				return null;
 			// DecimalConstantAttribute has the arguments (byte scale, byte sign, uint hi, uint mid, uint low) or (byte scale, byte sign, int hi, int mid, int low)
@@ -258,14 +258,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataField f) {
-				return handle == f.handle && assembly.PEFile == f.assembly.PEFile;
+				return handle == f.handle && module.PEFile == f.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x11dda32b ^ assembly.PEFile.GetHashCode() ^ handle.GetHashCode();
+			return 0x11dda32b ^ module.PEFile.GetHashCode() ^ handle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

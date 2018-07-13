@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	sealed class CustomAttribute : IAttribute
 	{
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly SRM.CustomAttributeHandle handle;
 		public IMethod Constructor { get; }
 
@@ -42,12 +42,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		SRM.CustomAttributeValue<IType> value;
 		bool valueDecoded;
 
-		internal CustomAttribute(MetadataAssembly assembly, IMethod attrCtor, SRM.CustomAttributeHandle handle)
+		internal CustomAttribute(MetadataModule module, IMethod attrCtor, SRM.CustomAttributeHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(attrCtor != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.Constructor = attrCtor;
 			this.handle = handle;
 		}
@@ -72,9 +72,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			lock (this) {
 				if (!valueDecoded) {
-					var metadata = assembly.metadata;
+					var metadata = module.metadata;
 					var attr = metadata.GetCustomAttribute(handle);
-					value = attr.DecodeValue(assembly.TypeProvider);
+					value = attr.DecodeValue(module.TypeProvider);
 					valueDecoded = true;
 				}
 			}

@@ -33,7 +33,7 @@ namespace TestPlugin
 		// There are several methods available to override; in this sample, we deal with methods only
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
-			var module = ((MetadataAssembly)method.ParentAssembly).PEFile;
+			var module = ((MetadataModule)method.ParentModule).PEFile;
 			var methodDef = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 			if (methodDef.HasBody()) {
 				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);

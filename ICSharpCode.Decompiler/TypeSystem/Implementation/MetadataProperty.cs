@@ -16,16 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -34,7 +29,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	{
 		const Accessibility InvalidAccessibility = (Accessibility)0xff;
 
-		readonly MetadataAssembly assembly;
+		readonly MetadataModule module;
 		readonly PropertyDefinitionHandle propertyHandle;
 		readonly IMethod getter;
 		readonly IMethod setter;
@@ -46,18 +41,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IParameter[] parameters;
 		IType returnType;
 
-		internal MetadataProperty(MetadataAssembly assembly, PropertyDefinitionHandle handle)
+		internal MetadataProperty(MetadataModule module, PropertyDefinitionHandle handle)
 		{
-			Debug.Assert(assembly != null);
+			Debug.Assert(module != null);
 			Debug.Assert(!handle.IsNil);
-			this.assembly = assembly;
+			this.module = module;
 			this.propertyHandle = handle;
 
-			var metadata = assembly.metadata;
+			var metadata = module.metadata;
 			var prop = metadata.GetPropertyDefinition(handle);
 			var accessors = prop.GetAccessors();
-			getter = assembly.GetDefinition(accessors.Getter);
-			setter = assembly.GetDefinition(accessors.Setter);
+			getter = module.GetDefinition(accessors.Getter);
+			setter = module.GetDefinition(accessors.Setter);
 			name = metadata.GetString(prop.Name);
 			if (name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName) {
 				symbolKind = SymbolKind.Indexer;
@@ -111,18 +106,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		private void DecodeSignature()
 		{
-			var propertyDef = assembly.metadata.GetPropertyDefinition(propertyHandle);
+			var propertyDef = module.metadata.GetPropertyDefinition(propertyHandle);
 			var genericContext = new GenericContext(DeclaringType.TypeParameters);
-			var signature = propertyDef.DecodeSignature(assembly.TypeProvider, genericContext);
+			var signature = propertyDef.DecodeSignature(module.TypeProvider, genericContext);
 			var accessors = propertyDef.GetAccessors();
 			ParameterHandleCollection? parameterHandles;
 			if (!accessors.Getter.IsNil)
-				parameterHandles = assembly.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
+				parameterHandles = module.metadata.GetMethodDefinition(accessors.Getter).GetParameters();
 			else if (!accessors.Setter.IsNil)
-				parameterHandles = assembly.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
+				parameterHandles = module.metadata.GetMethodDefinition(accessors.Setter).GetParameters();
 			else
 				parameterHandles = null;
-			var (returnType, parameters) = MetadataMethod.DecodeSignature(assembly, this, signature, parameterHandles);
+			var (returnType, parameters) = MetadataMethod.DecodeSignature(module, this, signature, parameterHandles);
 			LazyInit.GetOrSet(ref this.returnType, returnType);
 			LazyInit.GetOrSet(ref this.parameters, parameters);
 		}
@@ -146,8 +141,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#region Attributes
 		public IEnumerable<IAttribute> GetAttributes()
 		{
-			var b = new AttributeListBuilder(assembly);
-			var metadata = assembly.metadata;
+			var b = new AttributeListBuilder(module);
+			var metadata = module.metadata;
 			var propertyDef = metadata.GetPropertyDefinition(propertyHandle);
 			if (IsIndexer && Name != "Item" && !IsExplicitInterfaceImplementation) {
 				b.Add(KnownAttribute.IndexerName, KnownTypeCode.String, Name);
@@ -213,8 +208,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsOverride => AnyAccessor?.IsOverride ?? false;
 		public bool IsOverridable => AnyAccessor?.IsOverridable ?? false;
 
-		public IAssembly ParentAssembly => assembly;
-		public ICompilation Compilation => assembly.Compilation;
+		public IModule ParentModule => module;
+		public ICompilation Compilation => module.Compilation;
 
 		public string FullName => $"{DeclaringType?.FullName}.{Name}";
 		public string ReflectionName => $"{DeclaringType?.ReflectionName}.{Name}";
@@ -223,14 +218,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool Equals(object obj)
 		{
 			if (obj is MetadataProperty p) {
-				return propertyHandle == p.propertyHandle && assembly.PEFile == p.assembly.PEFile;
+				return propertyHandle == p.propertyHandle && module.PEFile == p.module.PEFile;
 			}
 			return false;
 		}
 
 		public override int GetHashCode()
 		{
-			return 0x32b6a76c ^ assembly.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
+			return 0x32b6a76c ^ module.PEFile.GetHashCode() ^ propertyHandle.GetHashCode();
 		}
 
 		bool IMember.Equals(IMember obj, TypeVisitor typeNormalization)

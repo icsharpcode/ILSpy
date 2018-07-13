@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <returns>A member reference that represents the ID string.</returns>
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
 		/// <remarks>
-		/// The member reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// The member reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
 		/// and if the member is not found there,
 		/// it will look in all other assemblies of the compilation.
 		/// </remarks>
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
 		/// <remarks>
 		/// <para>
-		/// The type reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// The type reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
 		/// and if the type is not found there,
 		/// it will look in all other assemblies of the compilation.
 		/// </para>

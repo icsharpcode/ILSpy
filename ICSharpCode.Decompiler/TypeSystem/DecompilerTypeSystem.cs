@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly ICompilation compilation;
 		readonly IAssemblyResolver assemblyResolver;
 		readonly TypeSystemOptions typeSystemOptions;
-		readonly MetadataAssembly mainAssembly;
+		readonly MetadataModule mainModule;
 
 		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition, IAssemblyResolver assemblyResolver)
 			: this(moduleDefinition, assemblyResolver, new DecompilerSettings())
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var mainAssembly = moduleDefinition.WithOptions(typeSystemOptions);
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
-			var referencedAssemblies = new List<IAssemblyReference>();
+			var referencedAssemblies = new List<IModuleReference>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
 			var mainMetadata = moduleDefinition.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences()) {
@@ -158,15 +158,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				referencedAssemblies.Add(MinimalCorlib.Instance);
 				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			}
-			this.mainAssembly = (MetadataAssembly)compilation.MainAssembly;
+			this.mainModule = (MetadataModule)compilation.MainModule;
 		}
 
 		public ICompilation Compilation {
 			get { return compilation; }
 		}
 		
-		public MetadataAssembly MainAssembly {
-			get { return mainAssembly; }
+		public MetadataModule MainModule {
+			get { return mainModule; }
 		}
 
 		public Metadata.PEFile ModuleDefinition {
@@ -174,14 +174,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public SRM.MetadataReader GetMetadata() => moduleDefinition.Metadata;
-
-		public Metadata.PEFile GetModuleDefinition(IAssembly assembly)
-		{
-			if (assembly is MetadataAssembly asm) {
-				return asm.PEFile;
-			}
-			return null;
-		}
 		
 		public IMember ResolveAsMember(SRM.EntityHandle memberReference)
 		{
@@ -212,27 +204,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IType ResolveAsType(SRM.EntityHandle typeReference)
 		{
-			return mainAssembly.ResolveType(typeReference, new GenericContext());
+			return mainModule.ResolveType(typeReference, new GenericContext());
 		}
 
 		public IMethod ResolveAsMethod(SRM.EntityHandle methodReference)
 		{
-			return mainAssembly.ResolveMethod(methodReference);
+			return mainModule.ResolveMethod(methodReference);
 		}
 
 		public IField ResolveAsField(SRM.EntityHandle fieldReference)
 		{
-			return mainAssembly.ResolveEntity(fieldReference, new GenericContext()) as IField;
+			return mainModule.ResolveEntity(fieldReference, new GenericContext()) as IField;
 		}
 
 		public IProperty ResolveAsProperty(SRM.EntityHandle propertyReference)
 		{
-			return mainAssembly.ResolveEntity(propertyReference, new GenericContext()) as IProperty;
+			return mainModule.ResolveEntity(propertyReference, new GenericContext()) as IProperty;
 		}
 
 		public IEvent ResolveAsEvent(SRM.EntityHandle eventReference)
 		{
-			return mainAssembly.ResolveEntity(eventReference, new GenericContext()) as IEvent;
+			return mainModule.ResolveEntity(eventReference, new GenericContext()) as IEvent;
 		}
 
 		public SRM.MethodSignature<IType> DecodeMethodSignature(SRM.StandaloneSignatureHandle handle)
@@ -241,7 +233,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.Method)
 				throw new InvalidOperationException("Expected Method signature");
 			var sig = standaloneSignature.DecodeMethodSignature(
-				mainAssembly.TypeProvider,
+				mainModule.TypeProvider,
 				new GenericContext()
 			);
 			return new SRM.MethodSignature<IType>(
@@ -261,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (standaloneSignature.GetKind() != SRM.StandaloneSignatureKind.LocalVariables)
 				throw new InvalidOperationException("Expected Local signature");
 			var types = standaloneSignature.DecodeLocalSignature(
-				mainAssembly.TypeProvider,
+				mainModule.TypeProvider,
 				new GenericContext()
 			);
 			return ImmutableArray.CreateRange(types, ApplyAttributesToType);

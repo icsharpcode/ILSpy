@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -61,10 +62,10 @@ namespace ICSharpCode.Decompiler.Documentation
 				AppendTypeName(b, member.DeclaringType, false);
 				b.Append('.');
 			}
-			/*if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ImplementedInterfaceMembers.Count == 1) {
-				AppendTypeName(b, member.ImplementedInterfaceMembers[0].DeclaringType, true);
+			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ExplicitlyImplementedInterfaceMembers.Count() == 1) {
+				AppendTypeName(b, member.ExplicitlyImplementedInterfaceMembers.First().DeclaringType, true);
 				b.Append('#');
-			}*/
+			}
 			b.Append(member.Name.Replace('.', '#'));
 			IMethod method = member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0) {
@@ -186,7 +187,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <returns>A member reference that represents the ID string.</returns>
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
 		/// <remarks>
-		/// The member reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// The member reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
 		/// and if the member is not found there,
 		/// it will look in all other assemblies of the compilation.
 		/// </remarks>
@@ -228,7 +229,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
 		/// <remarks>
 		/// <para>
-		/// The type reference will look in <see cref="ITypeResolveContext.CurrentAssembly"/> first,
+		/// The type reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
 		/// and if the type is not found there,
 		/// it will look in all other assemblies of the compilation.
 		/// </para>
