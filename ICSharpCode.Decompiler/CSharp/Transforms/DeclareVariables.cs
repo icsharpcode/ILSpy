@@ -386,14 +386,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
 		{
-			assignment = v.InsertionPoint.nextNode as AssignmentExpression ?? (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
-			Expression expectedExpr = new IdentifierExpression(v.Name);
-			if (v.Type.Kind == TypeKind.ByReference) {
-				expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
+			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
+			if (assignment == null) {
+				assignment = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
+				if (assignment == null)
+					return false;
 			}
-			if (assignment != null && assignment.Operator == AssignmentOperatorType.Assign && assignment.Left.IsMatch(expectedExpr))
-				return true;
-			return false;
+			return assignment.Operator == AssignmentOperatorType.Assign
+				&& assignment.Left is IdentifierExpression identExpr
+				&& identExpr.Identifier == v.Name
+				&& identExpr.TypeArguments.Count == 0;
 		}
 
 		void InsertVariableDeclarations(TransformContext context)
