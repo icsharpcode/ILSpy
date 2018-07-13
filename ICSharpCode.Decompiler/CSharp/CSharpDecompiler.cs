@@ -483,6 +483,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var part = method;
 
 				var connectedMethods = new Queue<MethodDefinitionHandle>();
+				var processedNestedTypes = new HashSet<TypeDefinitionHandle>();
 				connectedMethods.Enqueue(part);
 
 				while (connectedMethods.Count > 0) {
@@ -492,20 +493,48 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!md.HasBody()) {
 						info.AddMapping(parent, part);
 					} else {
-						// TODO : async and yield fsms
-
-						// deal with ldftn instructions, i.e., lambdas
 						var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 						while (blob.RemainingBytes > 0) {
 							var code = blob.DecodeOpCode();
-							if (code == ILOpCode.Ldftn) {
-								var token = MetadataTokens.EntityHandle(blob.ReadInt32());
-								if (token.Kind == HandleKind.MethodDefinition) {
-									if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
-										connectedMethods.Enqueue((MethodDefinitionHandle)token);
-								}
-							} else {
-								blob.SkipOperand(code);
+							switch (code) {
+								case ILOpCode.Stfld:
+									// async and yield fsms:
+									var token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+									if (!token.IsNil && token.Kind == HandleKind.FieldDefinition) {
+										var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
+										var fsmTypeDef = fsmField.GetDeclaringType();
+										if (!fsmTypeDef.IsNil) {
+											var fsmType = module.Metadata.GetTypeDefinition(fsmTypeDef);
+											// Must be a nested type of the containing type.
+											if (fsmType.GetDeclaringType() != declaringType)
+												break;
+											if (!processedNestedTypes.Add(fsmTypeDef))
+												break;
+											if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
+												|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
+												foreach (var h in fsmType.GetMethods()) {
+													if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
+														continue;
+													var otherMethod = module.Metadata.GetMethodDefinition(h);
+													if (!otherMethod.GetCustomAttributes().HasKnownAttribute(module.Metadata, KnownAttribute.DebuggerHidden)) {
+														connectedMethods.Enqueue(h);
+													}
+												}
+											}
+										}
+									}
+									break;
+								case ILOpCode.Ldftn:
+									// deal with ldftn instructions, i.e., lambdas
+									token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+									if (!token.IsNil && token.Kind == HandleKind.MethodDefinition) {
+										if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
+											connectedMethods.Enqueue((MethodDefinitionHandle)token);
+									}
+									break;
+								default:
+									blob.SkipOperand(code);
+									break;
 							}
 						}
 
