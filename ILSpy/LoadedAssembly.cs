@@ -168,20 +168,24 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(PEFile module)
 		{
-			var reader = module.Reader;
-			// try to open portable pdb file/embedded pdb info:
-			if (reader.TryOpenAssociatedPortablePdb(fileName, OpenStream, out var provider, out var pdbFileName)) {
-				debugInfoProvider = new PortableDebugInfoProvider(pdbFileName, provider);
-			} else {
-				// search for pdb in same directory as dll
-				string pdbDirectory = Path.GetDirectoryName(fileName);
-				pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
-				if (File.Exists(pdbFileName)) {
-					debugInfoProvider = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
-					return;
-				}
+			try {
+				var reader = module.Reader;
+				// try to open portable pdb file/embedded pdb info:
+				if (reader.TryOpenAssociatedPortablePdb(fileName, OpenStream, out var provider, out var pdbFileName)) {
+					debugInfoProvider = new PortableDebugInfoProvider(pdbFileName, provider);
+				} else {
+					// search for pdb in same directory as dll
+					string pdbDirectory = Path.GetDirectoryName(fileName);
+					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
+					if (File.Exists(pdbFileName)) {
+						debugInfoProvider = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
+						return;
+					}
 
-				// TODO: use symbol cache, get symbols from microsoft
+					// TODO: use symbol cache, get symbols from microsoft
+				}
+			} catch (BadImageFormatException) {
+				// Ignore PDB load errors
 			}
 
 			Stream OpenStream(string fileName)
