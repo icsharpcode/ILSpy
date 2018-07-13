@@ -4553,6 +4553,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !LEGACY_CSC
 		// Legacy csc generates a slightly different pattern for string compound assignment
 		// as for all other compound assignments. We'll ignore that edge case.
+		// Note: it's possible that the pre-CopyPropagation run of TransformAssignments is causing trouble there,
+		// and that the compound assignment transform would be fine if it didn't get disrupted.
 
 		private static void Issue1082(string[] strings, List<char> chars, bool flag, int i)
 		{

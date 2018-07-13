@@ -350,6 +350,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// 'stloc l' is implicitly truncating the stack value
 				return false;
 			}
+			if (nextInst.Variable.StackType == StackType.Ref) {
+				// ref locals need to be initialized when they are declared, so
+				// we can only use inline assignments when we know that the
+				// ref local is definitely assigned.
+				// We don't have an easy way to check for that in this transform,
+				// so avoid inline assignments to ref locals for now.
+				return false;
+			}
 			context.Step("Inline assignment to local variable", inst);
 			var value = inst.Value;
 			var var = nextInst.Variable;
