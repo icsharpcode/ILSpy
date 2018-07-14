@@ -41,6 +41,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod Constructor { get; }
 
 		/// <summary>
+		/// Gets whether there were errors decoding the attribute.
+		/// </summary>
+		bool HasDecodeErrors { get; }
+
+		/// <summary>
 		/// Gets the positional arguments.
 		/// </summary>
 		ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }

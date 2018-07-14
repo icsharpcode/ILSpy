@@ -66,7 +66,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public IType AttributeType {
 			get { return attributeType; }
 		}
-		
+
+		bool IAttribute.HasDecodeErrors => false;
+
 		public IMethod Constructor {
 			get {
 				IMethod ctor = this.constructor;

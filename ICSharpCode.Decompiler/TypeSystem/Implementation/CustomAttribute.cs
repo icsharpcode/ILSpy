@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		// lazy-loaded:
 		CustomAttributeValue<IType> value;
 		bool valueDecoded;
+		bool hasDecodeErrors;
 
 		internal CustomAttribute(MetadataModule module, IMethod attrCtor, CustomAttributeHandle handle)
 		{
@@ -65,6 +66,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
+		public bool HasDecodeErrors {
+			get {
+				DecodeValue();
+				return hasDecodeErrors;
+			}
+		}
+
 		void DecodeValue()
 		{
 			lock (this) {
@@ -80,6 +88,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
 						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
 					);
+					hasDecodeErrors = true;
 					valueDecoded = true; // in case of errors, never try again.
 				}
 			}

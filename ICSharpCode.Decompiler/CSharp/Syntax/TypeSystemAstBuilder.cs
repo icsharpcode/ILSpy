@@ -471,8 +471,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				mt.MemberName = mt.MemberName.Substring(0, mt.MemberName.Length - 9);
 			}
 			var parameters = attribute.Constructor?.Parameters ?? EmptyList<IParameter>.Instance;
-			foreach (var (arg, p) in attribute.FixedArguments.ZipLongest(parameters)) {
+			for (int i = 0; i < attribute.FixedArguments.Length; i++) {
+				var arg = attribute.FixedArguments[i];
+				var p = (i < parameters.Count) ? parameters[i] : null;
 				attr.Arguments.Add(ConvertConstantValue(p?.Type ?? arg.Type, arg.Type, arg.Value));
+			}
+			if (attribute.HasDecodeErrors) {
+				attr.HasArgumentList = true;
+				attr.AddChild(new Comment("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
+				attr.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
 			}
 			if (attribute.NamedArguments.Length > 0) {
 				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
