@@ -61,6 +61,9 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Base class for language-specific decompiler implementations.
 	/// </summary>
+	/// <remarks>
+	/// Implementations of this class must be thread-safe.
+	/// </remarks>
 	public abstract class Language
 	{
 		/// <summary>
