@@ -32,23 +32,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IModule MainModule { get; }
 		
 		/// <summary>
-		/// Gets the type resolve context that specifies this compilation and no current assembly or entity.
-		/// </summary>
-		ITypeResolveContext TypeResolveContext { get; }
-
-		/// <summary>
 		/// Gets the list of all modules in the compilation.
 		/// </summary>
 		/// <remarks>
 		/// This main module is the first entry in the list.
 		/// </remarks>
-		IList<IModule> Modules { get; }
-		
+		IReadOnlyList<IModule> Modules { get; }
+
 		/// <summary>
 		/// Gets the referenced modules.
 		/// This list does not include the main module.
 		/// </summary>
-		IList<IModule> ReferencedModules { get; }
+		IReadOnlyList<IModule> ReferencedModules { get; }
 		
 		/// <summary>
 		/// Gets the root namespace of this compilation.

@@ -1811,7 +1811,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			var compilationWithSystemCore = new SimpleCompilation(SystemCore, Mscorlib);
 
 			var typeRef = ReflectionHelper.ParseReflectionName("System.Func`2, System.Core");
-			ITypeDefinition c = typeRef.Resolve(compilationWithSystemCore.TypeResolveContext).GetDefinition();
+			ITypeDefinition c = typeRef.Resolve(new SimpleTypeResolveContext(compilationWithSystemCore)).GetDefinition();
 			Assert.IsNotNull(c, "System.Func<,> not found");
 			Assert.AreEqual("mscorlib", c.ParentModule.AssemblyName);
 		}

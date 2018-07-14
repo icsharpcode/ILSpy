@@ -74,51 +74,54 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <remarks>
 	/// This class is thread-safe.
 	/// </remarks>
-	public class DecompilerTypeSystem : IDecompilerTypeSystem
+	public class DecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
-		readonly Metadata.PEFile moduleDefinition;
-		readonly ICompilation compilation;
-		readonly IAssemblyResolver assemblyResolver;
-		readonly TypeSystemOptions typeSystemOptions;
-		readonly MetadataModule mainModule;
-
-		public DecompilerTypeSystem(Metadata.PEFile moduleDefinition, IAssemblyResolver assemblyResolver)
-			: this(moduleDefinition, assemblyResolver, new DecompilerSettings())
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
 		{
 		}
 
-		public DecompilerTypeSystem(PEFile moduleDefinition, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+		static TypeSystemOptions GetOptions(DecompilerSettings settings)
 		{
-			if (settings == null)
-				throw new ArgumentNullException(nameof(settings));
-			this.moduleDefinition = moduleDefinition ?? throw new ArgumentNullException(nameof(moduleDefinition));
-			this.assemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
-			typeSystemOptions = TypeSystemOptions.None;
+			var typeSystemOptions = TypeSystemOptions.None;
 			if (settings.Dynamic)
 				typeSystemOptions |= TypeSystemOptions.Dynamic;
 			if (settings.TupleTypes)
 				typeSystemOptions |= TypeSystemOptions.Tuple;
 			if (settings.ExtensionMethods)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
-			var mainAssembly = moduleDefinition.WithOptions(typeSystemOptions);
+			return typeSystemOptions;
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
+			: this(mainModule, assemblyResolver, GetOptions(settings ?? throw new ArgumentNullException(nameof(settings))))
+		{
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, TypeSystemOptions typeSystemOptions)
+		{
+			if (mainModule == null)
+				throw new ArgumentNullException(nameof(mainModule));
+			if (assemblyResolver == null)
+				throw new ArgumentNullException(nameof(assemblyResolver));
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
-			var referencedAssemblies = new List<IModuleReference>();
+			var referencedAssemblies = new List<PEFile>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
-			var mainMetadata = moduleDefinition.Metadata;
+			var mainMetadata = mainModule.Metadata;
 			foreach (var h in mainMetadata.GetModuleReferences()) {
 				var moduleRef = mainMetadata.GetModuleReference(h);
 				var moduleName = mainMetadata.GetString(moduleRef.Name);
 				foreach (var fileHandle in mainMetadata.AssemblyFiles) {
 					var file = mainMetadata.GetAssemblyFile(fileHandle);
 					if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata) {
-						assemblyReferenceQueue.Enqueue((false, moduleDefinition, moduleName));
+						assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
 						break;
 					}
 				}
 			}
-			foreach (var refs in moduleDefinition.AssemblyReferences) {
-				assemblyReferenceQueue.Enqueue((true, moduleDefinition, refs));
+			foreach (var refs in mainModule.AssemblyReferences) {
+				assemblyReferenceQueue.Enqueue((true, mainModule, refs));
 			}
 			var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((AssemblyReference)reference.Reference).FullName :
@@ -135,7 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
 				}
 				if (asm != null) {
-					referencedAssemblies.Add(asm.WithOptions(typeSystemOptions));
+					referencedAssemblies.Add(asm);
 					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes) {
 						var exportedType = metadata.GetExportedType(h);
@@ -151,27 +154,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
+			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(typeSystemOptions));
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Fallback to MinimalCorlib to provide the primitive types.
-			if (compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || compilation.FindType(KnownTypeCode.Int32).Kind == TypeKind.Unknown) {
-				referencedAssemblies.Add(MinimalCorlib.Instance);
-				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			if (!HasType(KnownTypeCode.Void) || !HasType(KnownTypeCode.Int32)) {
+				Init(mainModule.WithOptions(typeSystemOptions), referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.Instance }));
+			} else {
+				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
-			this.mainModule = (MetadataModule)compilation.MainModule;
-		}
+			this.MainModule = (MetadataModule)base.MainModule;
 
-		public ICompilation Compilation {
-			get { return compilation; }
+			bool HasType(KnownTypeCode code)
+			{
+				TopLevelTypeName name = KnownTypeReference.Get(code).TypeName;
+				if (mainModule.GetTypeDefinition(name) != null)
+					return true;
+				foreach (var file in referencedAssemblies) {
+					if (file.GetTypeDefinition(name) != null)
+						return true;
+				}
+				return false;
+			}
 		}
 		
-		public MetadataModule MainModule {
-			get { return mainModule; }
-		}
-
-		public Metadata.PEFile ModuleDefinition {
-			get { return moduleDefinition; }
-		}
-
+		public new MetadataModule MainModule { get; }
 	}
 }

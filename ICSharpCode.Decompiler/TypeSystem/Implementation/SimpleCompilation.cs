@@ -27,26 +27,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly ITypeResolveContext context;
 		readonly CacheManager cacheManager = new CacheManager();
-		readonly KnownTypeCache knownTypeCache;
-		readonly IModule mainModule;
-		readonly IList<IModule> assemblies;
-		readonly IList<IModule> referencedAssemblies;
+		IModule mainModule;
+		KnownTypeCache knownTypeCache;
+		IReadOnlyList<IModule> assemblies;
+		IReadOnlyList<IModule> referencedAssemblies;
+		bool initialized;
 		INamespace rootNamespace;
 		
 		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
-			: this(mainAssembly, (IEnumerable<IModuleReference>)assemblyReferences)
+		{
+			Init(mainAssembly, assemblyReferences);
+		}
+
+		public SimpleCompilation(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
+		{
+			Init(mainAssembly, assemblyReferences);
+		}
+
+		protected SimpleCompilation()
 		{
 		}
-		
-		public SimpleCompilation(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
+
+		protected void Init(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
 		{
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");
 			if (assemblyReferences == null)
 				throw new ArgumentNullException("assemblyReferences");
-			this.context = new SimpleTypeResolveContext(this);
+			var context = new SimpleTypeResolveContext(this);
 			this.mainModule = mainAssembly.Resolve(context);
 			List<IModule> assemblies = new List<IModule>();
 			assemblies.Add(this.mainModule);
@@ -66,34 +75,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.assemblies = assemblies.AsReadOnly();
 			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
 			this.knownTypeCache = new KnownTypeCache(this);
+			this.initialized = true;
 		}
-		
+
 		public IModule MainModule {
 			get {
-				if (mainModule == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return mainModule;
 			}
 		}
 		
-		public IList<IModule> Modules {
+		public IReadOnlyList<IModule> Modules {
 			get {
-				if (assemblies == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return assemblies;
 			}
 		}
 		
-		public IList<IModule> ReferencedModules {
+		public IReadOnlyList<IModule> ReferencedModules {
 			get {
-				if (referencedAssemblies == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return referencedAssemblies;
 			}
-		}
-		
-		public ITypeResolveContext TypeResolveContext {
-			get { return context; }
 		}
 		
 		public INamespace RootNamespace {
@@ -102,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (ns != null) {
 					return ns;
 				} else {
-					if (referencedAssemblies == null)
+					if (!initialized)
 						throw new InvalidOperationException("Compilation isn't initialized yet");
 					return LazyInit.GetOrSet(ref this.rootNamespace, CreateRootNamespace());
 				}
@@ -144,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return "[SimpleCompilation " + mainModule.AssemblyName + "]";
+			return "[" + GetType().Name + " " + mainModule.AssemblyName + "]";
 		}
 	}
 }

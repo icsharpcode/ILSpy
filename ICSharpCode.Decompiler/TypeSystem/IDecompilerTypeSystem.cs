@@ -23,11 +23,12 @@ using ICSharpCode.Decompiler.Metadata;
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
-	/// Allows resolving cecil types into the NRefactory type system.
+	/// Main interface for the decompiler type system.
+	/// 
+	/// The MetadataModule class allows decoding/resolving metadata tokens into type system entities.
 	/// </summary>
-	public interface IDecompilerTypeSystem
+	public interface IDecompilerTypeSystem : ICompilation
 	{
-		ICompilation Compilation { get; }
-		MetadataModule MainModule { get; }
+		new MetadataModule MainModule { get; }
 	}
 }

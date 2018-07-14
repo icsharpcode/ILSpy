@@ -16,18 +16,16 @@ namespace ILSpy.BamlDecompiler
 	{
 		readonly PEFile module;
 		readonly DecompilerTypeSystem typeSystem;
-		readonly ICompilation compilation;
 	
 		public NRTypeResolver(PEFile module, IAssemblyResolver resolver)
 		{
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
 			this.typeSystem = new DecompilerTypeSystem(module, resolver);
-			this.compilation = typeSystem.Compilation;
 		}
 		
 		public bool IsLocalAssembly(string name)
 		{
-			return MakeShort(name) == compilation.MainModule.AssemblyName;
+			return MakeShort(name) == typeSystem.MainModule.AssemblyName;
 		}
 		
 		string MakeShort(string name)
@@ -50,7 +48,7 @@ namespace ILSpy.BamlDecompiler
 			string fullName = bracket > -1 ? name.Substring(0, name.IndexOf('[')) : name.Substring(0, comma);
 			string assemblyName = name.Substring(comma + 1).Trim();
 
-			var type = compilation.FindType(new FullTypeName(fullName)).GetDefinition();
+			var type = typeSystem.FindType(new FullTypeName(fullName)).GetDefinition();
 			
 			if (type == null)
 				return new UnresolvableType(name);

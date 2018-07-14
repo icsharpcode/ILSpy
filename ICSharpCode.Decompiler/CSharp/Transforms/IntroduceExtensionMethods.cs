@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
-			this.conversions = CSharpConversions.Get(context.TypeSystem.Compilation);
+			this.conversions = CSharpConversions.Get(context.TypeSystem);
 			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.DecompiledTypeDefinition);
 			this.resolveContextStack.Push(currentContext);
 			this.resolver = new CSharpResolver(currentContext);
 		}

@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem.Compilation, true, out var isGeneric);
+			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
 			return new YieldReturnStatement {
 				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
 			};

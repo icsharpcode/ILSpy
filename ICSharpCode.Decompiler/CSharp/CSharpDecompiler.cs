@@ -397,13 +397,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			foreach (var a in typeSystem.Compilation.MainModule.GetAssemblyAttributes()) {
+			foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
-			foreach (var a in typeSystem.Compilation.MainModule.GetModuleAttributes()) {
+			foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "module";
@@ -603,7 +603,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		public SyntaxTree DecompileType(FullTypeName fullTypeName)
 		{
-			var type = typeSystem.Compilation.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
+			var type = typeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
 			if (type == null)
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
@@ -933,12 +933,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			MethodDeclaration method = new MethodDeclaration();
 			method.Name = name;
 			method.Modifiers = Modifiers.Private | Modifiers.Static;
-			method.Parameters.Add(new ParameterDeclaration(typeSystemAstBuilder.ConvertType(typeSystem.Compilation.FindType(source)), "input"));
-			method.ReturnType = typeSystemAstBuilder.ConvertType(typeSystem.Compilation.FindType(target));
+			method.Parameters.Add(new ParameterDeclaration(typeSystemAstBuilder.ConvertType(typeSystem.FindType(source)), "input"));
+			method.ReturnType = typeSystemAstBuilder.ConvertType(typeSystem.FindType(target));
 			method.Body = new BlockStatement {
 				new IfElseStatement {
 					Condition = new BinaryOperatorExpression {
-						Left = new MemberReferenceExpression(new TypeReferenceExpression(typeSystemAstBuilder.ConvertType(typeSystem.Compilation.FindType(KnownTypeCode.IntPtr))), "Size"),
+						Left = new MemberReferenceExpression(new TypeReferenceExpression(typeSystemAstBuilder.ConvertType(typeSystem.FindType(KnownTypeCode.IntPtr))), "Size"),
 						Operator = BinaryOperatorType.Equality,
 						Right = new PrimitiveExpression(4)
 					},

@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						sequencePointBlobs.Add(method, (default, default));
 					else
 						sequencePointBlobs.Add(method, (document, EncodeSequencePoints(metadata, localSignatureRowId, points)));
-					importScopeBlobs.Add(method, (document, EncodeImportScope(metadata, reader, ast, decompiler.TypeSystem.Compilation)));
+					importScopeBlobs.Add(method, (document, EncodeImportScope(metadata, reader, ast, decompiler.TypeSystem)));
 				}
 
 				foreach (var nestedTypeHandle in type.GetNestedTypes()) {

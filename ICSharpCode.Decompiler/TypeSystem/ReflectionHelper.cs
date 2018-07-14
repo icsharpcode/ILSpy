@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static IType FindType(this ICompilation compilation, Type type)
 		{
-			return type.ToTypeReference().Resolve(compilation.TypeResolveContext);
+			return type.ToTypeReference().Resolve(new SimpleTypeResolveContext(compilation));
 		}
 		#endregion
 		

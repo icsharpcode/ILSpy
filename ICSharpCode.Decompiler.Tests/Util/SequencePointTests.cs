@@ -24,8 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		{
 			var decompiler = Tester.GetDecompilerForSnippet(code);
 
-			var firstType = decompiler.TypeSystem.Compilation.GetTopLevelTypeDefinitions().First(t => code.Contains(t.Name));
-			var tree = decompiler.DecompileType(firstType.FullTypeName);
+			var tree = decompiler.DecompileType(new FullTypeName("C"));
 
 			var output = new StringWriter();
 			tree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });

@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						usingScope = new UsingScope(usingScope, ns);
 					}
 				}
-				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.DecompiledTypeDefinition);
 				this.context.Push(currentContext);
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}

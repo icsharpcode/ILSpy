@@ -37,7 +37,7 @@ namespace ILSpy.BamlDecompiler
 			var result = new List<(LongSet, EventRegistration[])>();
 			var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
 
-			var typeDefinition = typeSystem.Compilation.FindType(new FullTypeName(fullTypeName)).GetDefinition();
+			var typeDefinition = typeSystem.FindType(new FullTypeName(fullTypeName)).GetDefinition();
 			if (typeDefinition == null)
 				return result;
 		

@@ -197,12 +197,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			} else if (taskType.IsKnownType(KnownTypeCode.Task)) {
 				methodType = AsyncMethodType.Task;
-				underlyingReturnType = context.TypeSystem.Compilation.FindType(KnownTypeCode.Void);
+				underlyingReturnType = context.TypeSystem.FindType(KnownTypeCode.Void);
 				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 0))
 					return false;
 			} else if (taskType.IsKnownType(KnownTypeCode.TaskOfT)) {
 				methodType = AsyncMethodType.TaskOfT;
-				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem.Compilation, taskType);
+				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
 				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1))
 					return false;
 			} else {
