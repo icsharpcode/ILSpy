@@ -1005,10 +1005,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					UseDebugSymbols = settings.UseDebugSymbols,
 					DebugInfo = DebugInfoProvider
 				};
-				var genericContext = new Decompiler.TypeSystem.GenericContext(decompilationContext);
 				var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 				var methodBody = typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, genericContext, CancellationToken);
+				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null) {

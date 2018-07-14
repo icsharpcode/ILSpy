@@ -117,21 +117,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		static void CollectNamespacesForTypeReference(IType type, HashSet<string> namespaces)
 		{
 			switch (type) {
-				case ArrayType arrayType:
-					namespaces.Add(arrayType.Namespace);
-					CollectNamespacesForTypeReference(arrayType.ElementType, namespaces);
-					break;
 				case ParameterizedType parameterizedType:
 					namespaces.Add(parameterizedType.Namespace);
 					CollectNamespacesForTypeReference(parameterizedType.GenericType, namespaces);
 					foreach (var arg in parameterizedType.TypeArguments)
 						CollectNamespacesForTypeReference(arg, namespaces);
 					break;
-				case ByReferenceType byReferenceType:
-					CollectNamespacesForTypeReference(byReferenceType.ElementType, namespaces);
-					break;
-				case PointerType pointerType:
-					CollectNamespacesForTypeReference(pointerType.ElementType, namespaces);
+				case TypeWithElementType typeWithElementType:
+					CollectNamespacesForTypeReference(typeWithElementType.ElementType, namespaces);
 					break;
 				case TupleType tupleType:
 					foreach (var elementType in tupleType.ElementTypes) {

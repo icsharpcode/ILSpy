@@ -92,13 +92,11 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentException("methodDefinitionHandle.IsNil");
 			this.method = module.GetDefinition(methodDefinitionHandle);
 			if (genericContext.ClassTypeParameters == null && genericContext.MethodTypeParameters == null) {
-				if (method.DeclaringType.TypeParameterCount > 0 || method.TypeParameters.Count > 0) {
-					// no generic context specified, but it's a generic method: use the method's own type parameters
-					genericContext = new GenericContext(method);
-				}
+				// no generic context specified: use the method's own type parameters
+				genericContext = new GenericContext(method);
 			} else {
 				// generic context specified, so specialize the method for it:
-				this.method = this.method.Specialize(new TypeParameterSubstitution(genericContext.ClassTypeParameters, genericContext.MethodTypeParameters));
+				this.method = this.method.Specialize(genericContext.ToSubstitution());
 			}
 			this.genericContext = genericContext;
 			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
@@ -177,7 +175,13 @@ namespace ICSharpCode.Decompiler.IL
 			int offset = 0;
 			if (!method.IsStatic) {
 				offset = 1;
-				parameterVariables[paramIndex++] = CreateILVariable(-1, method.DeclaringType, "this");
+				IType declaringType = method.DeclaringType;
+				if (declaringType.IsUnbound()) {
+					// If method is a definition (and not specialized), the declaring type is also just a definition,
+					// and needs to be converted into a normally usable type.
+					declaringType = new ParameterizedType(declaringType, declaringType.TypeParameters);
+				}
+				parameterVariables[paramIndex++] = CreateILVariable(-1, declaringType, "this");
 			}
 			while (paramIndex < parameterVariables.Length) {
 				IType type = method.Parameters[paramIndex - offset].Type;
@@ -480,7 +484,7 @@ namespace ICSharpCode.Decompiler.IL
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var function = new ILFunction(this.method, body.GetCodeSize(), genericContext, mainContainer);
+			var function = new ILFunction(this.method, body.GetCodeSize(), this.genericContext, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);

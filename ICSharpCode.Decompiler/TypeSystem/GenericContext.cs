@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -69,6 +70,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return MethodTypeParameters[index];
 			else
 				return DummyTypeParameter.GetMethodTypeParameter(index);
+		}
+
+		internal TypeParameterSubstitution ToSubstitution()
+		{
+			// The TS prefers 'null' over empty lists in substitutions, and we need our substitution
+			// to compare equal to the ones created by the TS.
+			return new TypeParameterSubstitution(
+				classTypeArguments: ClassTypeParameters?.Count > 0 ? ClassTypeParameters : null,
+				methodTypeArguments: MethodTypeParameters?.Count > 0 ? MethodTypeParameters : null
+			);
 		}
 	}
 }

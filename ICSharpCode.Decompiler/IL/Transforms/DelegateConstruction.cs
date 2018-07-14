@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (subst.MethodTypeArguments != null) {
 				foreach (var t in subst.MethodTypeArguments) {
 					if (t is ITypeParameter tp)
-						classTypeParameters.Add(tp);
+						methodTypeParameters.Add(tp);
 					else
 						return null;
 				}
