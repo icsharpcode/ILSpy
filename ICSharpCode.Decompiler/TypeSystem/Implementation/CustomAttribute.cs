@@ -22,10 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.Semantics;
-using ICSharpCode.Decompiler.Util;
-using SRM = System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -35,14 +32,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	sealed class CustomAttribute : IAttribute
 	{
 		readonly MetadataModule module;
-		readonly SRM.CustomAttributeHandle handle;
+		readonly CustomAttributeHandle handle;
 		public IMethod Constructor { get; }
 
 		// lazy-loaded:
-		SRM.CustomAttributeValue<IType> value;
+		CustomAttributeValue<IType> value;
 		bool valueDecoded;
 
-		internal CustomAttribute(MetadataModule module, IMethod attrCtor, SRM.CustomAttributeHandle handle)
+		internal CustomAttribute(MetadataModule module, IMethod attrCtor, CustomAttributeHandle handle)
 		{
 			Debug.Assert(module != null);
 			Debug.Assert(attrCtor != null);
@@ -71,11 +68,19 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		void DecodeValue()
 		{
 			lock (this) {
-				if (!valueDecoded) {
-					var metadata = module.metadata;
-					var attr = metadata.GetCustomAttribute(handle);
-					value = attr.DecodeValue(module.TypeProvider);
-					valueDecoded = true;
+				try {
+					if (!valueDecoded) {
+						var metadata = module.metadata;
+						var attr = metadata.GetCustomAttribute(handle);
+						value = attr.DecodeValue(module.TypeProvider);
+						valueDecoded = true;
+					}
+				} catch (EnumUnderlyingTypeResolveException) {
+					value = new CustomAttributeValue<IType>(
+						ImmutableArray<CustomAttributeTypedArgument<IType>>.Empty,
+						ImmutableArray<CustomAttributeNamedArgument<IType>>.Empty
+					);
+					valueDecoded = true; // in case of errors, never try again.
 				}
 			}
 		}
