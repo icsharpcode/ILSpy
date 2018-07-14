@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));
-			return GetDocumentation(XmlDocKeyProvider.GetKey(entity));
+			return GetDocumentation(entity.GetIdString());
 		}
 
 		string GetDocumentation(string key, bool allowReload)

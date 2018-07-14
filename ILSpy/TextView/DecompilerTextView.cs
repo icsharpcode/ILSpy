@@ -208,23 +208,7 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 				return $"{code.Name} (0x{code.Code:x})";
 			} else if (segment.Reference is IEntity entity) {
-				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(entity));
-				try {
-					if (entity.ParentModule == null || entity.ParentModule.PEFile == null)
-						return null;
-					var docProvider = XmlDocLoader.LoadDocumentation(entity.ParentModule.PEFile);
-					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(entity));
-						if (documentation != null) {
-							renderer.AppendText(Environment.NewLine);
-							renderer.AddXmlDocumentation(documentation);
-						}
-					}
-				} catch (XmlException) {
-					// ignore
-				}
-				return renderer.CreateTextBlock();
+				return CreateTextBlockForEntity(entity);
 			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
 				IEntity resolved;
@@ -234,28 +218,33 @@ namespace ICSharpCode.ILSpy.TextView
 					resolved = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
 				if (resolved == null)
 					return null;
-				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
-				try {
-					if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
-						return null;
-					var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
-					if (docProvider != null) {
-						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(resolved));
-						if (documentation != null) {
-							renderer.AppendText(Environment.NewLine);
-							renderer.AddXmlDocumentation(documentation);
-						}
-					}
-				} catch (XmlException) {
-					// ignore
-				}
-				return renderer.CreateTextBlock();
+				return CreateTextBlockForEntity(resolved);
 			}
 			return null;
 		}
+
+		static TextBlock CreateTextBlockForEntity(IEntity resolved)
+		{
+			XmlDocRenderer renderer = new XmlDocRenderer();
+			renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(resolved));
+			try {
+				if (resolved.ParentModule == null || resolved.ParentModule.PEFile == null)
+					return null;
+				var docProvider = XmlDocLoader.LoadDocumentation(resolved.ParentModule.PEFile);
+				if (docProvider != null) {
+					string documentation = docProvider.GetDocumentation(resolved.GetIdString());
+					if (documentation != null) {
+						renderer.AppendText(Environment.NewLine);
+						renderer.AddXmlDocumentation(documentation);
+					}
+				}
+			} catch (XmlException) {
+				// ignore
+			}
+			return renderer.CreateTextBlock();
+		}
 		#endregion
-		
+
 		#region RunWithCancellation
 		/// <summary>
 		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create

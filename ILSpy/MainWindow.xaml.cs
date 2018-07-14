@@ -289,7 +289,7 @@ namespace ICSharpCode.ILSpy
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							var mr = XmlDocKeyProvider.FindEntity(args.NavigateTo, new SimpleCompilation(def, MinimalCorlib.Instance).TypeResolveContext);
+							var mr = IdStringProvider.FindEntity(args.NavigateTo, new SimpleCompilation(def, MinimalCorlib.Instance).TypeResolveContext);
 							if (mr != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
