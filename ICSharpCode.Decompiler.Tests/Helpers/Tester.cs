@@ -395,12 +395,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
+			if (settings == null)
+				settings = new DecompilerSettings();
 			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
-				var typeSystem = new DecompilerTypeSystem(module, resolver);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());

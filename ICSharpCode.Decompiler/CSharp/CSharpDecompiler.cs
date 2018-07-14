@@ -225,6 +225,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.module = typeSystem.MainModule;
 			this.metadata = module.PEFile.Metadata;
+			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
+				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
 		}
 
 		#region MemberIsHidden

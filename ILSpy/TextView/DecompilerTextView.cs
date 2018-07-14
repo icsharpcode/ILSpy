@@ -210,7 +210,7 @@ namespace ICSharpCode.ILSpy.TextView
 			} else if (segment.Reference is IEntity entity) {
 				return CreateTextBlockForEntity(entity);
 			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
-				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
+				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 				IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 				if (resolved == null)
 					return null;

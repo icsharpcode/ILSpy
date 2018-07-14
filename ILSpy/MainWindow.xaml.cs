@@ -637,7 +637,8 @@ namespace ICSharpCode.ILSpy
 					OpenLink(opCode.Link);
 					break;
 				case ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity:
-					var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
+					var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver(),
+						TypeSystemOptions.Default | TypeSystemOptions.Uncached);
 					reference = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 					goto default;
 				default:

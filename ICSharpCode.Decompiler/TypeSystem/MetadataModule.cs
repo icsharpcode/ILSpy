@@ -68,12 +68,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
-			// create arrays for resolved entities, indexed by row index
-			this.typeDefs = new MetadataTypeDefinition[metadata.TypeDefinitions.Count + 1];
-			this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
-			this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
-			this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
-			this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
+			if (!options.HasFlag(TypeSystemOptions.Uncached)) {
+				// create arrays for resolved entities, indexed by row index
+				this.typeDefs = new MetadataTypeDefinition[metadata.TypeDefinitions.Count + 1];
+				this.fieldDefs = new MetadataField[metadata.FieldDefinitions.Count + 1];
+				this.methodDefs = new MetadataMethod[metadata.MethodDefinitions.Count + 1];
+				this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
+				this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
+			}
 		}
 
 		internal string GetString(StringHandle name)
@@ -156,14 +158,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public IEnumerable<ITypeDefinition> TypeDefinitions {
 			get {
-				for (int row = 1; row < typeDefs.Length; row++) {
-					var typeDef = LazyInit.VolatileRead(ref typeDefs[row]);
-					if (typeDef != null) {
-						yield return typeDef;
-					} else {
-						typeDef = new MetadataTypeDefinition(this, MetadataTokens.TypeDefinitionHandle(row));
-						yield return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
-					}
+				foreach (var tdHandle in metadata.TypeDefinitions) {
+					yield return GetDefinition(tdHandle);
 				}
 			}
 		}
@@ -172,6 +168,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
+			if (typeDefs == null)
+				return new MetadataTypeDefinition(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			if (row >= typeDefs.Length)
 				HandleOutOfRange(handle);
@@ -186,6 +184,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
+			if (fieldDefs == null)
+				return new MetadataField(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			if (row >= fieldDefs.Length)
 				HandleOutOfRange(handle);
@@ -200,6 +200,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
+			if (methodDefs == null)
+				return new MetadataMethod(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			Debug.Assert(row != 0);
 			if (row >= methodDefs.Length)
@@ -215,6 +217,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
+			if (propertyDefs == null)
+				return new MetadataProperty(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			Debug.Assert(row != 0);
 			if (row >= methodDefs.Length)
@@ -230,6 +234,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (handle.IsNil)
 				return null;
+			if (eventDefs == null)
+				return new MetadataEvent(this, handle);
 			int row = MetadataTokens.GetRowNumber(handle);
 			Debug.Assert(row != 0);
 			if (row >= methodDefs.Length)

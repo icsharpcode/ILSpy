@@ -63,6 +63,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		OnlyPublicAPI = 8,
 		/// <summary>
+		/// Do not cache accessed entities.
+		/// In a normal type system (without this option), every type or member definition has exactly one ITypeDefinition/IMember
+		/// instance. This instance is kept alive until the whole type system can be garbage-collected.
+		/// When this option is specified, the type system avoids these caches.
+		/// This reduces the memory usage in many cases, but increases the number of allocations.
+		/// Also, some code in the decompiler expects to be able to compare type/member definitions by reference equality,
+		/// and thus will fail with uncached type systems.
+		/// </summary>
+		Uncached = 0x10,
+		/// <summary>
 		/// Default settings: all features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods
@@ -76,12 +86,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// </remarks>
 	public class DecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 	{
-		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
-			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
-		{
-		}
-
-		static TypeSystemOptions GetOptions(DecompilerSettings settings)
+		public static TypeSystemOptions GetOptions(DecompilerSettings settings)
 		{
 			var typeSystemOptions = TypeSystemOptions.None;
 			if (settings.Dynamic)
@@ -91,6 +96,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (settings.ExtensionMethods)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
 			return typeSystemOptions;
+		}
+
+		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+			: this(mainModule, assemblyResolver, TypeSystemOptions.Default)
+		{
 		}
 
 		public DecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver, DecompilerSettings settings)

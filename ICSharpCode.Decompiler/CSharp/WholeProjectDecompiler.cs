@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver);
+			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, settings);
 			Parallel.ForEach(
 				files,
 				new ParallelOptions {

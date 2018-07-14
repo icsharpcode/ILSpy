@@ -99,6 +99,9 @@ namespace ICSharpCode.ILSpy
 		/// Gets a type system containing all types from this assembly + primitve types from mscorlib.
 		/// Returns null in case of load errors.
 		/// </summary>
+		/// <remarks>
+		/// This is an uncached type system.
+		/// </remarks>
 		public ICompilation GetTypeSystemOrNull()
 		{
 			if (typeSystem != null)
@@ -106,7 +109,9 @@ namespace ICSharpCode.ILSpy
 			var module = GetPEFileOrNull();
 			if (module == null)
 				return null;
-			return typeSystem = new SimpleCompilation(module, MinimalCorlib.Instance);
+			return typeSystem = new SimpleCompilation(
+				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached),
+				MinimalCorlib.Instance);
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
