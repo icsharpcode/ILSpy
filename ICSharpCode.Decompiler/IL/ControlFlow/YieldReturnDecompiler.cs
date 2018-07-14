@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.YieldReturn)
 				return; // abort if enumerator decompilation is disabled
 			this.context = context;
-			this.metadata = context.TypeSystem.GetMetadata();
+			this.metadata = context.PEFile.Metadata;
 			this.currentType = metadata.GetMethodDefinition((MethodDefinitionHandle)context.Function.Method.MetadataToken).GetDeclaringType();
 			this.enumeratorType = default;
 			this.enumeratorCtor = default;
@@ -364,8 +364,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		internal static ILFunction CreateILAst(MethodDefinitionHandle method, ILTransformContext context)
 		{
-			var typeSystem = context.TypeSystem;
-			var metadata = typeSystem.GetMetadata();
+			var metadata = context.PEFile.Metadata;
 			if (method.IsNil)
 				throw new SymbolicAnalysisFailedException();
 
@@ -382,7 +381,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var il = context.CreateILReader()
 				.ReadIL(method, body, genericContext, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
-				new ILTransformContext(il, typeSystem, context.DebugInfo, context.Settings) {
+				new ILTransformContext(il, context.TypeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
 					DecompileRun = context.DecompileRun
 				});

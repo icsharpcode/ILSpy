@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		CSharpDecompiler CreateDecompiler(DecompilerTypeSystem ts)
 		{
-			var decompiler = new CSharpDecompiler(ts, AssemblyResolver, settings);
+			var decompiler = new CSharpDecompiler(ts, settings);
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;

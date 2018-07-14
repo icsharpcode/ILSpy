@@ -40,6 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		public IEnumerable<IEntity> Analyze(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
 		{
 			var blob = methodBody.GetILReader();
+			var genericContext = new Decompiler.TypeSystem.GenericContext();
 
 			while (blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
@@ -55,7 +56,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
-								var m = context.TypeSystem.ResolveAsMember(member)?.MemberDefinition;
+								var m = (context.TypeSystem.MainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
 								if (m.MetadataToken == analyzedMethod.MetadataToken && m.ParentModule.PEFile == analyzedMethod.ParentModule.PEFile) {
 									yield return method;
 									yield break;

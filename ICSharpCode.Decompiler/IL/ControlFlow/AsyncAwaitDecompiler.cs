@@ -62,7 +62,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		ILTransformContext context;
-		MetadataReader metadata;
 
 		// These fields are set by MatchTaskCreationPattern()
 		IType taskType; // return type of the async method
@@ -98,7 +97,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.AsyncAwait)
 				return; // abort if async/await decompilation is disabled
 			this.context = context;
-			this.metadata = context.TypeSystem.GetMetadata();
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
@@ -334,7 +332,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (stateMachineType.MetadataToken.IsNil)
 				throw new SymbolicAnalysisFailedException();
-			var moveNextMethod = metadata.GetTypeDefinition((TypeDefinitionHandle)stateMachineType.MetadataToken).GetMethods().FirstOrDefault(f => metadata.GetString(metadata.GetMethodDefinition(f).Name)== "MoveNext");
+			var metadata = context.PEFile.Metadata;
+			var moveNextMethod = metadata.GetTypeDefinition((TypeDefinitionHandle)stateMachineType.MetadataToken)
+				.GetMethods().FirstOrDefault(f => metadata.GetString(metadata.GetMethodDefinition(f).Name) == "MoveNext");
 			if (moveNextMethod == null)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);

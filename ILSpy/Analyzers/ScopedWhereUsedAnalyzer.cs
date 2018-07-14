@@ -258,7 +258,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				var parentHandle = context.CodeMappingInfo.GetParentMethod((MethodDefinitionHandle)entity.MetadataToken);
 				if (entity.MetadataToken == parentHandle)
 					return entity;
-				var method = context.TypeSystem.ResolveAsMethod(parentHandle);
+				var method = context.TypeSystem.MainModule.ResolveMethod(parentHandle, new Decompiler.TypeSystem.GenericContext());
 				if (method != null) {
 					return method.AccessorOwner ?? method;
 				}

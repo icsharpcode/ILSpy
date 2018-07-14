@@ -118,7 +118,10 @@ namespace ICSharpCode.ILSpy
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					string version = GetPEFileOrNull()?.Reader.GetAssemblyDefinition()?.Version.ToString();
+					var metadata = GetPEFileOrNull()?.Metadata;
+					string version = null;
+					if (metadata != null && metadata.IsAssembly)
+						version = metadata.GetAssemblyDefinition().Version?.ToString();
 					if (version == null)
 						return ShortName;
 					return String.Format("{0} ({1})", ShortName, version);

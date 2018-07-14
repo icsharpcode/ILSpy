@@ -74,6 +74,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		{
 			bool found = false;
 			var blob = methodBody.GetILReader();
+			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (!found && blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
@@ -84,7 +85,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				EntityHandle fieldHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!fieldHandle.Kind.IsMemberKind())
 					continue;
-				var field = context.TypeSystem.ResolveAsField(fieldHandle);
+				var field = context.TypeSystem.MainModule.ResolveEntity(fieldHandle, genericContext) as IField;
 				if (field == null)
 					continue;
 

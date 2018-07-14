@@ -38,11 +38,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
 		{
-			var typeSystem = context.TypeSystem;
+			var module = context.TypeSystem.MainModule;
 			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity);
+			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			if (!methodBody.LocalSignature.IsNil) {
-				foreach (var type in typeSystem.DecodeLocalSignature(methodBody.LocalSignature)) {
+				foreach (var type in module.DecodeLocalSignature(methodBody.LocalSignature, genericContext)) {
 					type.AcceptVisitor(visitor);
 
 					if (visitor.Found) {
@@ -68,7 +69,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
 							case HandleKind.TypeDefinition:
-								typeSystem.ResolveAsType(member).AcceptVisitor(visitor);
+								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
 								if (visitor.Found) {
 									yield return method;
 									yield break;
@@ -79,7 +80,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodDefinition:
 							case HandleKind.MemberReference:
 							case HandleKind.MethodSpecification:
-								VisitMember(visitor, typeSystem.ResolveAsMember(member));
+								VisitMember(visitor, module.ResolveEntity(member, genericContext) as IMember);
 
 								if (visitor.Found) {
 									yield return method;
@@ -88,7 +89,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 								break;
 
 							case HandleKind.StandaloneSignature:
-								var signature = typeSystem.DecodeMethodSignature((StandaloneSignatureHandle)member);
+								var signature = module.DecodeMethodSignature((StandaloneSignatureHandle)member, genericContext);
 								foreach (var type in signature.ParameterTypes) {
 									type.AcceptVisitor(visitor);
 								}

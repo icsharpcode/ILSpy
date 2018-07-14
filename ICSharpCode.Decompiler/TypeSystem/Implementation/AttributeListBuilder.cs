@@ -173,7 +173,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			foreach (var handle in attributes) {
 				var attribute = metadata.GetCustomAttribute(handle);
-				var ctor = module.ResolveMethod(attribute.Constructor);
+				// Attribute types shouldn't be generic (and certainly not open), so we don't need a generic context.
+				var ctor = module.ResolveMethod(attribute.Constructor, new GenericContext());
 				var type = ctor.DeclaringType;
 				if (IgnoreAttribute(type)) {
 					continue;

@@ -24,8 +24,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (!inst.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return;
-			var module = context.TypeSystem.ModuleDefinition;
-			var metadata = module.Metadata;
+			var metadata = context.PEFile.Metadata;
 			MethodDefinition methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)inst.Method.MetadataToken);
 			if (!methodDef.HasBody())
 				return;
@@ -34,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			// partially copied from CSharpDecompiler
 			var ilReader = context.CreateILReader();
-			var body = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var body = context.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
 			var proxyFunction = ilReader.ReadIL(handle, body, genericContext.Value, context.CancellationToken);
 			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);

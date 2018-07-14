@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
+		public Metadata.PEFile PEFile => TypeSystem.MainModule.PEFile;
 
 		internal DecompileRun DecompileRun { get; set; }
 		internal ResolvedUsingScope UsingScope => DecompileRun.UsingScope.Resolve(TypeSystem.Compilation);
@@ -71,7 +72,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.Stepper = context.Stepper;
 		}
 
-		public ILReader CreateILReader()
+		/// <summary>
+		/// Creates a new ILReader instance for decompiling another method in the same assembly.
+		/// </summary>
+		internal ILReader CreateILReader()
 		{
 			return new ILReader(TypeSystem.MainModule) {
 				UseDebugSymbols = Settings.UseDebugSymbols,

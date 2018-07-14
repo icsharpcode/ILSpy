@@ -205,14 +205,6 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public static AssemblyDefinition? GetAssemblyDefinition(this PEReader reader)
-		{
-			var metadata = reader.GetMetadataReader();
-			if (metadata.IsAssembly)
-				return metadata.GetAssemblyDefinition();
-			return null;
-		}
-
 		public static IEnumerable<ModuleReferenceHandle> GetModuleReferences(this MetadataReader metadata)
 		{
 			var rowCount = metadata.GetTableRowCount(TableIndex.ModuleRef);

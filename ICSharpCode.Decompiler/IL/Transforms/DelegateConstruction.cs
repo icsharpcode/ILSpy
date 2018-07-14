@@ -159,15 +159,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			target = value.Arguments[0];
 			if (targetMethod.MetadataToken.IsNil)
 				return null;
-			var metadata = context.TypeSystem.GetMetadata();
-			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+			var methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
 			var genericContext = GenericContextFromTypeArguments(targetMethod.Substitution);
 			if (genericContext == null)
 				return null;
 			var ilReader = context.CreateILReader();
-			var body = context.TypeSystem.ModuleDefinition.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			var body = context.PEFile.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);

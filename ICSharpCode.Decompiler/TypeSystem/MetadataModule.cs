@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region Resolve Method
-		public IMethod ResolveMethod(EntityHandle methodReference, GenericContext context = default)
+		public IMethod ResolveMethod(EntityHandle methodReference, GenericContext context)
 		{
 			if (methodReference.IsNil)
 				throw new ArgumentNullException(nameof(methodReference));

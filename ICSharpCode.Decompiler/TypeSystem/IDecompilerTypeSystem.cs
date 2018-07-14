@@ -29,16 +29,5 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		ICompilation Compilation { get; }
 		MetadataModule MainModule { get; }
-
-		MethodSignature<IType> DecodeMethodSignature(StandaloneSignatureHandle standaloneSignatureHandle);
-		ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle standaloneSignatureHandle);
-
-		IType ResolveAsType(EntityHandle typeReference);
-		IField ResolveAsField(EntityHandle fieldReference);
-		IMethod ResolveAsMethod(EntityHandle methodReference);
-		IMember ResolveAsMember(EntityHandle memberReference);
-
-		MetadataReader GetMetadata();
-		PEFile ModuleDefinition { get; }
 	}
 }

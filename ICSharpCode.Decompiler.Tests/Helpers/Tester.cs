@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
 				var typeSystem = new DecompilerTypeSystem(module, resolver);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, resolver, settings ?? new DecompilerSettings());
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());

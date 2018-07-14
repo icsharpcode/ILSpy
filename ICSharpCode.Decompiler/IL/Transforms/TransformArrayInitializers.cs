@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out System.Reflection.Metadata.FieldDefinition field)
+		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out FieldDefinition field)
 		{
 			method = null;
 			array = null;
@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (member.MetadataToken.IsNil)
 				return false;
-			field = context.TypeSystem.GetMetadata().GetFieldDefinition((System.Reflection.Metadata.FieldDefinitionHandle)member.MetadataToken);
+			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
 			return true;
 		}
 
@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
-					var initialValue = field.GetInitialValue(context.TypeSystem.ModuleDefinition.Reader, context.TypeSystem);
+					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
 					if (DecodeArrayInitializer(arrayType, array, initialValue, arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;

@@ -342,24 +342,25 @@ namespace ICSharpCode.Decompiler
 			return pefile.GetSectionData(rva).GetReader(0, size);
 		}
 
-		class FieldValueSizeDecoder : ISignatureTypeProvider<int, Unit>
+		sealed class FieldValueSizeDecoder : ISignatureTypeProvider<int, GenericContext>
 		{
-			IDecompilerTypeSystem typeSystem;
+			MetadataModule module;
 
 			public FieldValueSizeDecoder(IDecompilerTypeSystem typeSystem)
 			{
-				this.typeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+				this.module = typeSystem.MainModule;
 			}
 
-			public int GetArrayType(int elementType, ArrayShape shape) => elementType;
-			public int GetByReferenceType(int elementType) => elementType;
-			public int GetFunctionPointerType(MethodSignature<int> signature) => IntPtr.Size;
+			public int GetArrayType(int elementType, ArrayShape shape) => GetPrimitiveType(PrimitiveTypeCode.Object);
+			public int GetSZArrayType(int elementType) => GetPrimitiveType(PrimitiveTypeCode.Object);
+			public int GetByReferenceType(int elementType) => GetPointerType(elementType);
+			public int GetFunctionPointerType(MethodSignature<int> signature) => GetPrimitiveType(PrimitiveTypeCode.IntPtr);
 			public int GetGenericInstantiation(int genericType, ImmutableArray<int> typeArguments) => genericType;
-			public int GetGenericMethodParameter(Unit genericContext, int index) => 0;
-			public int GetGenericTypeParameter(Unit genericContext, int index) => 0;
+			public int GetGenericMethodParameter(GenericContext genericContext, int index) => 0;
+			public int GetGenericTypeParameter(GenericContext genericContext, int index) => 0;
 			public int GetModifiedType(int modifier, int unmodifiedType, bool isRequired) => unmodifiedType;
 			public int GetPinnedType(int elementType) => elementType;
-			public int GetPointerType(int elementType) => elementType;
+			public int GetPointerType(int elementType) => GetPrimitiveType(PrimitiveTypeCode.IntPtr);
 
 			public int GetPrimitiveType(PrimitiveTypeCode typeCode) 
 			{
@@ -382,15 +383,12 @@ namespace ICSharpCode.Decompiler
 						return 8;
 					case PrimitiveTypeCode.IntPtr:
 					case PrimitiveTypeCode.UIntPtr:
-						// this is the same as Cecil does.
+						// This is the same as Cecil does, but probably not a good idea.
 						return IntPtr.Size;
 					default:
-						// we assume pointer size for object, string and typedref
-						return IntPtr.Size;
+						return 0;
 				}
 			}
-
-			public int GetSZArrayType(int elementType) => 0;
 
 			public int GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 			{
@@ -400,7 +398,7 @@ namespace ICSharpCode.Decompiler
 
 			public int GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 			{
-				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
+				var typeDef = module.ResolveType(handle, new GenericContext()).GetDefinition();
 				if (typeDef == null || typeDef.MetadataToken.IsNil)
 					return 0;
 				reader = typeDef.ParentModule.PEFile.Metadata;
@@ -408,14 +406,9 @@ namespace ICSharpCode.Decompiler
 				return td.GetLayout().Size;
 			}
 
-			public int GetTypeFromSpecification(MetadataReader reader, Unit genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+			public int GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 			{
-				var typeDef = typeSystem.ResolveAsType(handle).GetDefinition();
-				if (typeDef == null || typeDef.MetadataToken.IsNil)
-					return 0;
-				reader = typeDef.ParentModule.PEFile.Metadata;
-				var td = reader.GetTypeDefinition((TypeDefinitionHandle)typeDef.MetadataToken);
-				return td.GetLayout().Size;
+				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 			}
 		}
 	}
