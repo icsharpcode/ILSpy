@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 							case HandleKind.FieldDefinition:
-								var m = module.ResolveMethod(member, genericContext);
+								var m = module.ResolveEntity(member, genericContext);
 								if (m != null)
 									yield return m;
 								break;
