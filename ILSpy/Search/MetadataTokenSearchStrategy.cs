@@ -1,24 +1,37 @@
-﻿using System.Globalization;
-using SRM = System.Reflection.Metadata;
+﻿using System;
+using System.Globalization;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.Search
 {
-	class MetadataTokenSearchStrategy : TypeAndMemberSearchStrategy
+	class MetadataTokenSearchStrategy : AbstractSearchStrategy
 	{
-		readonly int searchTermToken;
+		readonly EntityHandle searchTermToken;
 
-		public MetadataTokenSearchStrategy(params string[] terms)
-			: base(terms)
+		public MetadataTokenSearchStrategy(Language language, Action<SearchResult> addResult, params string[] terms)
+			: base(language, addResult, terms)
 		{
-			if (searchTerm.Length == 1) {
-				int.TryParse(searchTerm[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out searchTermToken);
+			if (terms.Length == 1) {
+				int.TryParse(terms[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var token);
+				searchTermToken = MetadataTokenHelpers.EntityHandleOrNil(token);
 			}
 		}
 
-		protected override bool MatchName(IEntity m, Language language)
+		public override void Search(PEFile module)
 		{
-			return SRM.Ecma335.MetadataTokens.GetToken(m.MetadataToken) == searchTermToken;
+			if (searchTermToken.IsNil) return;
+			var typeSystem = module.GetTypeSystemOrNull();
+			if (typeSystem == null) return;
+
+			switch (searchTermToken.Kind) {
+				case HandleKind.TypeDefinition:
+					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition((TypeDefinitionHandle)searchTermToken);
+					addResult(ResultFromEntity(type));
+					break;
+			}
 		}
 	}
 }

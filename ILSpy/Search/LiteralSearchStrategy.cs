@@ -7,19 +7,22 @@ using ICSharpCode.Decompiler;
 
 using static System.Reflection.Metadata.PEReaderExtensions;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Metadata;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.Search
 {
 	class LiteralSearchStrategy : AbstractSearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;
 
-		public LiteralSearchStrategy(params string[] terms)
-			: base(terms)
+		public LiteralSearchStrategy(Language language, Action<SearchResult> addResult, params string[] terms)
+			: base(language, addResult, terms)
 		{
-			if (searchTerm.Length == 1) {
-				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(searchTerm[0])));
+			if (terms.Length == 1) {
+				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
 				var value = lexer.NextToken();
 
 				if (value != null && value.LiteralValue != null) {
@@ -47,27 +50,31 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		protected override bool IsMatch(IField field, Language language)
+		public override void Search(PEFile module)
 		{
-			return IsLiteralMatch(field.ConstantValue);
+			var metadata = module.Metadata;
+			var typeSystem = module.GetTypeSystemOrNull();
+			if (typeSystem == null) return;
+
+			foreach (var handle in metadata.MethodDefinitions) {
+				var md = metadata.GetMethodDefinition(handle);
+				if (!md.HasBody() || !MethodIsLiteralMatch(module, md)) continue;
+				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+				addResult(ResultFromEntity(method));
+			}
+
+			foreach (var handle in metadata.FieldDefinitions) {
+				var fd = metadata.GetFieldDefinition(handle);
+				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA) || !fd.HasFlag(System.Reflection.FieldAttributes.Literal))
+					continue;
+				// TODO
+				//fd.GetInitialValue(module.Reader, typeSystem);
+				//IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+				//addResult(ResultFromEntity(field));
+			}
 		}
 
-		protected override bool IsMatch(IProperty property, Language language)
-		{
-			return MethodIsLiteralMatch(property.Getter) || MethodIsLiteralMatch(property.Setter);
-		}
-
-		protected override bool IsMatch(IEvent ev, Language language)
-		{
-			return MethodIsLiteralMatch(ev.AddAccessor) || MethodIsLiteralMatch(ev.RemoveAccessor) || MethodIsLiteralMatch(ev.InvokeAccessor);
-		}
-
-		protected override bool IsMatch(IMethod m, Language language)
-		{
-			return MethodIsLiteralMatch(m);
-		}
-
-		bool IsLiteralMatch(object val)
+		bool IsLiteralMatch(PEFile module, object val)
 		{
 			if (val == null)
 				return false;
@@ -84,21 +91,12 @@ namespace ICSharpCode.ILSpy
 					return searchTermLiteralValue.Equals(val);
 				default:
 					// substring search with searchTerm
-					return IsMatch(t => val.ToString());
+					return IsMatch(module.Metadata, MetadataTokens.StringHandle(0), val.ToString());
 			}
 		}
 
-		bool MethodIsLiteralMatch(IMethod method)
+		bool MethodIsLiteralMatch(PEFile module, MethodDefinition methodDefinition)
 		{
-			if (method == null)
-				return false;
-			var module = ((MetadataModule)method.ParentModule).PEFile;
-			var m = (SRM.MethodDefinitionHandle)method.MetadataToken;
-			if (m.IsNil)
-				return false;
-			var methodDefinition = module.Metadata.GetMethodDefinition(m);
-			if (!methodDefinition.HasBody())
-				return false;
 			var blob = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress).GetILReader();
 			if (searchTermLiteralType == TypeCode.Int64) {
 				long val = (long)searchTermLiteralValue;
@@ -205,7 +203,7 @@ namespace ICSharpCode.ILSpy
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					if (base.IsMatch(t => ILParser.DecodeUserString(ref blob, module.Metadata)))
+					if (IsMatch(module.Metadata, MetadataTokens.StringHandle(0), ILParser.DecodeUserString(ref blob, module.Metadata)))
 						return true;
 				}
 			}

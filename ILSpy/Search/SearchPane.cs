@@ -19,15 +19,14 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
@@ -128,7 +127,8 @@ namespace ICSharpCode.ILSpy
 				listBox.ItemsSource = null;
 			} else {
 				MainWindow mainWindow = MainWindow.Instance;
-				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, (SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
+				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm,
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
 				listBox.ItemsSource = currentSearch.Results;
 				new Thread(currentSearch.Run).Start();
 			}
@@ -216,16 +216,13 @@ namespace ICSharpCode.ILSpy
 			{
 				try {
 					var searcher = GetSearchStrategy(searchMode, searchTerm);
+					// TODO : parallelize
 					foreach (var loadedAssembly in assemblies) {
-						var typeSystem = loadedAssembly.GetTypeSystemOrNull();
-						if (typeSystem == null)
+						var module = loadedAssembly.GetPEFileOrNull();
+						if (module == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;
-
-						foreach (var type in typeSystem.MainModule.TopLevelTypeDefinitions) {
-							cancellationToken.ThrowIfCancellationRequested();
-							searcher.Search(type, language, AddResult);
-						}
+						searcher.Search(module);
 					}
 				} catch (OperationCanceledException) {
 					// ignore cancellation
@@ -276,53 +273,53 @@ namespace ICSharpCode.ILSpy
 			{
 				if (terms.Length == 1) {
 					if (terms[0].StartsWith("tm:", StringComparison.Ordinal))
-						return new TypeAndMemberSearchStrategy(terms[0].Substring(3));
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(3));
 
 					if (terms[0].StartsWith("t:", StringComparison.Ordinal))
-						return new TypeSearchStrategy(terms[0].Substring(2));
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(2), MemberSearchKind.Type);
 
 					if (terms[0].StartsWith("m:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(terms[0].Substring(2));
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(2), MemberSearchKind.Member);
 
 					if (terms[0].StartsWith("md:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(terms[0].Substring(3), MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(3), MemberSearchKind.Method);
 
 					if (terms[0].StartsWith("f:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(2), MemberSearchKind.Field);
 
 					if (terms[0].StartsWith("p:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(2), MemberSearchKind.Property);
 
 					if (terms[0].StartsWith("e:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, AddResult, terms[0].Substring(2), MemberSearchKind.Event);
 
 					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(terms[0].Substring(2));
+						return new LiteralSearchStrategy(language, AddResult, terms[0].Substring(2));
 
 					if (terms[0].StartsWith("@", StringComparison.Ordinal))
-						return new MetadataTokenSearchStrategy(terms[0].Substring(1));
+						return new MetadataTokenSearchStrategy(language, AddResult, terms[0].Substring(1));
 				}
 
 				switch (mode)
 				{
 					case SearchMode.TypeAndMember:
-						return new TypeAndMemberSearchStrategy(terms);
+						return new MemberSearchStrategy(language, AddResult, terms);
 					case SearchMode.Type:
-						return new TypeSearchStrategy(terms);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Type);
 					case SearchMode.Member:
-						return new MemberSearchStrategy(terms);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Member);
 					case SearchMode.Literal:
-						return new LiteralSearchStrategy(terms);
+						return new LiteralSearchStrategy(language, AddResult, terms);
 					case SearchMode.Method:
-						return new MemberSearchStrategy(terms, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Method);
 					case SearchMode.Field:
-						return new MemberSearchStrategy(terms, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Field);
 					case SearchMode.Property:
-						return new MemberSearchStrategy(terms, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Property);
 					case SearchMode.Event:
-						return new MemberSearchStrategy(terms, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, AddResult, terms, MemberSearchKind.Event);
 					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(terms);
+						return new MetadataTokenSearchStrategy(language, AddResult, terms);
 				}
 
 				return null;

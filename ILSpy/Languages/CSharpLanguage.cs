@@ -555,6 +555,11 @@ namespace ICSharpCode.ILSpy
 			return buffer.ToString();
 		}
 
+		public override bool SearchCanUseILNames(string text)
+		{
+			return !text.Contains("<");
+		}
+
 		public override bool ShowMember(IEntity member)
 		{
 			PEFile assembly = member.ParentModule.PEFile;

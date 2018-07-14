@@ -7,33 +7,45 @@ using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.Metadata;
 using System.Reflection;
 using ICSharpCode.Decompiler.TypeSystem;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.ILSpy.Search
 {
 	abstract class AbstractSearchStrategy
 	{
-		protected string[] searchTerm;
-		protected Regex regex;
-		protected bool fullNameSearch;
+		protected readonly (string Term, bool CanUseILNames)[] searchTerm;
+		protected readonly Regex regex;
+		protected readonly bool fullNameSearch;
+		protected readonly bool needsLanguageSpecificNames;
+		protected readonly Language language;
+		protected readonly Action<SearchResult> addResult;
 
-		protected AbstractSearchStrategy(params string[] terms)
+		protected AbstractSearchStrategy(Language language, Action<SearchResult> addResult, params string[] terms)
 		{
+			this.language = language;
+			this.addResult = addResult;
+
 			if (terms.Length == 1 && terms[0].Length > 2) {
-				var search = terms[0];
+				string search = terms[0];
 				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
 					var regexString = search.Substring(1, search.Length - 1);
 					fullNameSearch = search.Contains("\\.");
 					if (regexString.EndsWith("/", StringComparison.Ordinal))
 						regexString = regexString.Substring(0, regexString.Length - 1);
 					regex = SafeNewRegex(regexString);
+					needsLanguageSpecificNames = true;
+					searchTerm = new[] { (search, false) };
 				} else {
 					fullNameSearch = search.Contains(".");
+					needsLanguageSpecificNames = fullNameSearch || !language.SearchCanUseILNames(search);
+					searchTerm = new[] { (search, !needsLanguageSpecificNames) };
 				}
-
-				terms[0] = search;
+			} else {
+				searchTerm = terms.SelectArray(t => (t, language.SearchCanUseILNames(t)));
+				needsLanguageSpecificNames = searchTerm.Any(t => !t.CanUseILNames);
 			}
-
-			searchTerm = terms;
 		}
 
 		protected float CalculateFitness(IEntity member)
@@ -57,42 +69,17 @@ namespace ICSharpCode.ILSpy
 			return 1.0f / text.Length;
 		}
 
-		protected virtual bool IsMatch(IField field, Language language)
-		{
-			return false;
-		}
-
-		protected virtual bool IsMatch(IProperty property, Language language)
-		{
-			return false;
-		}
-
-		protected virtual bool IsMatch(IEvent ev, Language language)
-		{
-			return false;
-		}
-
-		protected virtual bool IsMatch(IMethod m, Language language)
-		{
-			return false;
-		}
-
-		protected virtual bool MatchName(IEntity m, Language language)
-		{
-			return IsMatch(t => GetLanguageSpecificName(language, m, regex != null ? fullNameSearch : t.Contains(".")));
-		}
-
-		protected virtual bool IsMatch(Func<string, string> getText)
+		protected virtual bool IsMatch(MetadataReader metadata, StringHandle nameHandle, string languageSpecificName)
 		{
 			if (regex != null) {
-				return regex.IsMatch(getText(""));
+				return regex.IsMatch(languageSpecificName);
 			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
-				var term = searchTerm[i];
+				var term = searchTerm[i].Term;
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = getText(term);
+				string text = nameHandle.IsNil || !searchTerm[i].CanUseILNames || term.Contains(".") ? languageSpecificName : metadata.GetString(nameHandle);
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);
@@ -107,7 +94,8 @@ namespace ICSharpCode.ILSpy
 							if (equalCompareLength == -1)
 								equalCompareLength = text.Length;
 
-							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength), StringComparison.OrdinalIgnoreCase) != 0)
+							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength),
+								StringComparison.OrdinalIgnoreCase) != 0)
 								return false;
 						}
 						break;
@@ -151,7 +139,7 @@ namespace ICSharpCode.ILSpy
 			return false;
 		}
 
-		string GetLanguageSpecificName(Language language, IEntity member, bool fullName = false)
+		protected string GetLanguageSpecificName(IEntity member, bool fullName)
 		{
 			switch (member) {
 				case ITypeDefinition t:
@@ -169,39 +157,25 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void Add<T>(Func<IEnumerable<T>> itemsGetter, ITypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IEntity
+		protected ImageSource GetIcon(IEntity member)
 		{
-			IEnumerable<T> items = Enumerable.Empty<T>();
-			try {
-				items = itemsGetter();
-			} catch (Exception ex) {
-				System.Diagnostics.Debug.Print(ex.ToString());
-			}
-			foreach (var item in items) {
-				if (matcher(item, language)) {
-					addResult(new SearchResult {
-						Member = item,
-						Fitness = CalculateFitness(item),
-						Image = image(item),
-						Name = GetLanguageSpecificName(language, item),
-						LocationImage = TypeTreeNode.GetIcon(type),
-						Location = language.TypeToString(type, includeNamespace: true)
-					});
-				}
+			switch (member) {
+				case ITypeDefinition t:
+					return TypeTreeNode.GetIcon(t);
+				case IField f:
+					return FieldTreeNode.GetIcon(f);
+				case IProperty p:
+					return PropertyTreeNode.GetIcon(p);
+				case IMethod m:
+					return MethodTreeNode.GetIcon(m);
+				case IEvent e:
+					return EventTreeNode.GetIcon(e);
+				default:
+					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}
 		}
 
-		public virtual void Search(ITypeDefinition type, Language language, Action<SearchResult> addResult)
-		{
-			Add(() => type.Fields, type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
-			Add(() => type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
-			Add(() => type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
-			Add(() => type.Methods.Where(m => !m.IsAccessor), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
-
-			foreach (var nestedType in type.NestedTypes) {
-				Search(nestedType, language, addResult);
-			}
-		}
+		public abstract void Search(PEFile module);
 
 		Regex SafeNewRegex(string unsafePattern)
 		{
@@ -210,6 +184,19 @@ namespace ICSharpCode.ILSpy
 			} catch (ArgumentException) {
 				return null;
 			}
+		}
+
+		protected SearchResult ResultFromEntity(IEntity item)
+		{
+			var declaringType = item.DeclaringTypeDefinition;
+			return new SearchResult {
+				Member = item,
+				Fitness = CalculateFitness(item),
+				Image = GetIcon(item),
+				Name = GetLanguageSpecificName(item, fullName: false),
+				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
+				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace
+			};
 		}
 	}
 }

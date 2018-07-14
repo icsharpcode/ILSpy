@@ -266,6 +266,11 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
+		public virtual bool SearchCanUseILNames(string text)
+		{
+			return true;
+		}
+
 		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)
 		{
 			var parts = new Dictionary<SRM.MethodDefinitionHandle, SRM.MethodDefinitionHandle[]>();

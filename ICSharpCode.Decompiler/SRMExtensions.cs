@@ -333,7 +333,7 @@ namespace ICSharpCode.Decompiler
 		}
 		#endregion
 
-		public static unsafe SRM.BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile, IDecompilerTypeSystem typeSystem)
+		public static unsafe SRM.BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile, ICompilation typeSystem)
 		{
 			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
 				return default;
@@ -346,9 +346,9 @@ namespace ICSharpCode.Decompiler
 		{
 			MetadataModule module;
 
-			public FieldValueSizeDecoder(IDecompilerTypeSystem typeSystem)
+			public FieldValueSizeDecoder(ICompilation typeSystem)
 			{
-				this.module = typeSystem.MainModule;
+				this.module = (MetadataModule)typeSystem.MainModule;
 			}
 
 			public int GetArrayType(int elementType, ArrayShape shape) => GetPrimitiveType(PrimitiveTypeCode.Object);

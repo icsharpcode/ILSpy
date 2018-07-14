@@ -204,7 +204,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
-    <Compile Include="Search\SearchStrategies.cs" />
+    <Compile Include="Search\AbstractSearchStrategy.cs" />
     <Compile Include="TaskHelper.cs" />
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
@@ -235,9 +235,7 @@
     <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
-    <Compile Include="Search\TypeAndMemberSearchStrategy.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
-    <Compile Include="Search\TypeSearchStrategy.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
