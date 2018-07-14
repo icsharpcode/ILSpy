@@ -153,9 +153,12 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
     <Compile Include="LoadedNugetPackage.cs" />
+    <Compile Include="Search\MemberSearchStrategy.cs" />
+    <Compile Include="Search\MetadataTokenSearchStrategy.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
     <Compile Include="NavigationState.cs" />
@@ -196,12 +199,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\RefreshCommand.cs" />
     <Compile Include="Commands\SaveCommand.cs" />
-    <Compile Include="SearchPane.cs">
+    <Compile Include="Search\SearchPane.cs">
       <DependentUpon>SearchPane.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
-    <Compile Include="SearchStrategies.cs" />
+    <Compile Include="Search\SearchStrategies.cs" />
     <Compile Include="TaskHelper.cs" />
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
@@ -232,7 +235,9 @@
     <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
-    <Compile Include="TypeExtensionMethodsAnalyzer.cs" />
+    <Compile Include="Search\TypeAndMemberSearchStrategy.cs" />
+    <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
+    <Compile Include="Search\TypeSearchStrategy.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
@@ -311,7 +316,7 @@
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
     <Page Include="Options\OptionsDialog.xaml" />
-    <Page Include="SearchPane.xaml" />
+    <Page Include="Search\SearchPane.xaml" />
     <Page Include="TextView\DecompilerTextView.xaml" />
     <Page Include="themes\generic.xaml" />
   </ItemGroup>
@@ -382,7 +387,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="@(Page)" />
+    <None Include="Search\SearchPane.xaml" />
     <None Include="@(Resource)" />
   </ItemGroup>
 
