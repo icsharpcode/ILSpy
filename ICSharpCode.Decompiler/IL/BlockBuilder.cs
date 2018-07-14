@@ -21,17 +21,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	class BlockBuilder
 	{
-		readonly System.Reflection.Metadata.MethodBodyBlock body;
-		readonly IDecompilerTypeSystem typeSystem;
-		readonly Dictionary<System.Reflection.Metadata.ExceptionRegion, ILVariable> variableByExceptionHandler;
+		readonly MethodBodyBlock body;
+		readonly Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
 
 		/// <summary>
 		/// Gets/Sets whether to create extended basic blocks instead of basic blocks.
@@ -39,14 +38,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool CreateExtendedBlocks;
 		
-		internal BlockBuilder(System.Reflection.Metadata.MethodBodyBlock body, IDecompilerTypeSystem typeSystem,
-		                      Dictionary<System.Reflection.Metadata.ExceptionRegion, ILVariable> variableByExceptionHandler)
+		internal BlockBuilder(MethodBodyBlock body,
+		                      Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler)
 		{
 			Debug.Assert(body != null);
-			Debug.Assert(typeSystem != null);
 			Debug.Assert(variableByExceptionHandler != null);
 			this.body = body;
-			this.typeSystem = typeSystem;
 			this.variableByExceptionHandler = variableByExceptionHandler;
 		}
 		

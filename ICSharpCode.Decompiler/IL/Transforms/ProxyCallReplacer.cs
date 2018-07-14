@@ -29,15 +29,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			MethodDefinition methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)inst.Method.MetadataToken);
 			if (!methodDef.HasBody())
 				return;
+			var genericContext = DelegateConstruction.GenericContextFromTypeArguments(inst.Method.Substitution);
+			if (genericContext == null)
+				return;
 			// partially copied from CSharpDecompiler
-			var specializingTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(inst.Method.Substitution);
-			var ilReader = context.CreateILReader(specializingTypeSystem);
+			var ilReader = context.CreateILReader();
 			var body = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-			var proxyFunction = ilReader.ReadIL(module, handle, body, context.CancellationToken);
-			var transformContext = new ILTransformContext(proxyFunction, specializingTypeSystem, context.DebugInfo, context.Settings) {
-				CancellationToken = context.CancellationToken,
-				DecompileRun = context.DecompileRun
-			};
+			var proxyFunction = ilReader.ReadIL(handle, body, genericContext.Value, context.CancellationToken);
+			var transformContext = new ILTransformContext(context, proxyFunction);
 			proxyFunction.RunTransforms(CSharp.CSharpDecompiler.EarlyILTransforms(), transformContext);
 			if (!(proxyFunction.Body is BlockContainer blockContainer))
 				return;

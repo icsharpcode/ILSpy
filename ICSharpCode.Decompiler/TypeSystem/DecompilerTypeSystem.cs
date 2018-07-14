@@ -264,14 +264,5 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ApplyAttributeTypeVisitor.ApplyAttributesToType(t, compilation, null,
 				moduleDefinition.Metadata, typeSystemOptions);
 		}
-
-		public IDecompilerTypeSystem GetSpecializingTypeSystem(TypeParameterSubstitution substitution)
-		{
-			if (substitution.Equals(TypeParameterSubstitution.Identity)) {
-				return this;
-			} else {
-				return new SpecializingDecompilerTypeSystem(this, substitution);
-			}
-		}
 	}
 }

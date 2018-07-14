@@ -547,7 +547,6 @@
     <Compile Include="TypeSystem\TypeParameterSubstitution.cs" />
     <Compile Include="TypeSystem\TypeSystemExtensions.cs" />
     <Compile Include="TypeSystem\TypeUtils.cs" />
-    <Compile Include="TypeSystem\SpecializingDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
     <Compile Include="TypeSystem\TypeVisitor.cs" />

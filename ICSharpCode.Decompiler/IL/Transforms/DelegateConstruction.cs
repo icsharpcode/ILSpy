@@ -125,6 +125,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
+		internal static GenericContext? GenericContextFromTypeArguments(TypeParameterSubstitution subst)
+		{
+			var classTypeParameters = new List<ITypeParameter>();
+			var methodTypeParameters = new List<ITypeParameter>();
+			if (subst.ClassTypeArguments != null) {
+				foreach (var t in subst.ClassTypeArguments) {
+					if (t is ITypeParameter tp)
+						classTypeParameters.Add(tp);
+					else
+						return null;
+				}
+			}
+			if (subst.MethodTypeArguments != null) {
+				foreach (var t in subst.MethodTypeArguments) {
+					if (t is ITypeParameter tp)
+						classTypeParameters.Add(tp);
+					else
+						return null;
+				}
+			}
+			return new GenericContext(classTypeParameters, methodTypeParameters);
+		}
+
 		ILFunction TransformDelegateConstruction(NewObj value, out ILInstruction target)
 		{
 			target = null;
@@ -140,9 +163,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
 			if (!methodDefinition.HasBody())
 				return null;
-			var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(targetMethod.Substitution);
-			var ilReader = context.CreateILReader(localTypeSystem);
-			var function = ilReader.ReadIL(context.TypeSystem.ModuleDefinition, (MethodDefinitionHandle)targetMethod.MetadataToken, context.TypeSystem.ModuleDefinition.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress), context.CancellationToken);
+			var genericContext = GenericContextFromTypeArguments(targetMethod.Substitution);
+			if (genericContext == null)
+				return null;
+			var ilReader = context.CreateILReader();
+			var body = context.TypeSystem.ModuleDefinition.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
 
@@ -151,10 +177,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				v.Name = contextPrefix + v.Name;
 			}
 
-			var nestedContext = new ILTransformContext(function, localTypeSystem, context.DebugInfo, context.Settings) {
-				CancellationToken = context.CancellationToken,
-				DecompileRun = context.DecompileRun
-			};
+			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas

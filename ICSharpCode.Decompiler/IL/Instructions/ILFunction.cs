@@ -29,6 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class ILFunction
 	{
 		public readonly IMethod Method;
+		public readonly GenericContext GenericContext;
 		public readonly int CodeSize;
 		public readonly ILVariableCollection Variables;
 
@@ -52,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether this function is async.
 		/// This flag gets set by the AsyncAwaitDecompiler.
 		/// </summary>
-		public bool IsAsync { get => AsyncReturnType != null; }
+		public bool IsAsync => AsyncReturnType != null;
 
 		/// <summary>
 		/// Return element type -- if the async method returns Task{T}, this field stores T.
@@ -72,17 +73,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly IReadOnlyList<IParameter> Parameters;
 
-		public ILFunction(IMethod method, int codeSize, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
-			this.Body = body;
 			this.Method = method;
+			this.CodeSize = codeSize;
+			this.GenericContext = genericContext;
+			this.Body = body;
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
 		}
 
-		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
+			this.GenericContext = genericContext;
 			this.Body = body;
 			this.ReturnType = returnType;
 			this.Parameters = parameters;

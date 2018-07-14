@@ -151,7 +151,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			var container = new BlockContainer();
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
-			var function = new ILFunction(functionType.GetDelegateInvokeMethod()?.ReturnType, parameterList, container);
+			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType;
+			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container);
 			function.DelegateType = functionType;
 			function.Variables.AddRange(parameterVariablesList);
 			lambdaStack.Push(function);

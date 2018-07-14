@@ -60,9 +60,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Stepper = new Stepper();
 		}
 
-		public ILTransformContext(ILTransformContext context)
+		public ILTransformContext(ILTransformContext context, ILFunction function = null)
 		{
-			this.Function = context.Function;
+			this.Function = function ?? context.Function;
 			this.TypeSystem = context.TypeSystem;
 			this.DebugInfo = context.DebugInfo;
 			this.Settings = context.Settings;
@@ -71,11 +71,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.Stepper = context.Stepper;
 		}
 
-		public ILReader CreateILReader(IDecompilerTypeSystem typeSystem = null)
+		public ILReader CreateILReader()
 		{
-			if (typeSystem == null)
-				typeSystem = this.TypeSystem;
-			return new ILReader(typeSystem) {
+			return new ILReader(TypeSystem.MainModule) {
 				UseDebugSymbols = Settings.UseDebugSymbols,
 				DebugInfo = DebugInfo
 			};

@@ -34,24 +34,38 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>
+	/// Reads IL bytecodes and converts them into ILAst instructions.
+	/// </summary>
+	/// <remarks>
+	/// Instances of this class are not thread-safe. Use separate instances to decompile multiple members in parallel.
+	/// </remarks>
 	public class ILReader
 	{
 		readonly ICompilation compilation;
-		readonly IDecompilerTypeSystem typeSystem;
+		readonly MetadataModule module;
+		readonly MetadataReader metadata;
 
 		public bool UseDebugSymbols { get; set; }
 		public DebugInfo.IDebugInfoProvider DebugInfo { get; set; }
 		public List<string> Warnings { get; } = new List<string>();
 
-		public ILReader(IDecompilerTypeSystem typeSystem)
+		/// <summary>
+		/// Creates a new ILReader instance.
+		/// </summary>
+		/// <param name="module">
+		/// The module used to resolve metadata tokens in the type system.
+		/// </param>
+		public ILReader(MetadataModule module)
 		{
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
-			this.typeSystem = typeSystem;
-			this.compilation = typeSystem.Compilation;
+			if (module == null)
+				throw new ArgumentNullException(nameof(module));
+			this.module = module;
+			this.compilation = module.Compilation;
+			this.metadata = module.metadata;
 		}
 
-		MetadataReader metadata;
+		GenericContext genericContext;
 		IMethod method;
 		MethodBodyBlock body;
 		StackType methodReturnStackType;
@@ -70,12 +84,23 @@ namespace ICSharpCode.Decompiler.IL
 		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		
-		void Init(Metadata.PEFile module, MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body)
+		void Init(MethodDefinitionHandle methodDefinitionHandle, MethodBodyBlock body, GenericContext genericContext)
 		{
 			if (body == null)
 				throw new ArgumentNullException(nameof(body));
-			this.metadata = module.Metadata;
-			this.method = typeSystem.ResolveAsMethod(methodDefinitionHandle);
+			if (methodDefinitionHandle.IsNil)
+				throw new ArgumentException("methodDefinitionHandle.IsNil");
+			this.method = module.GetDefinition(methodDefinitionHandle);
+			if (genericContext.ClassTypeParameters == null && genericContext.MethodTypeParameters == null) {
+				if (method.DeclaringType.TypeParameterCount > 0 || method.TypeParameters.Count > 0) {
+					// no generic context specified, but it's a generic method: use the method's own type parameters
+					genericContext = new GenericContext(method);
+				}
+			} else {
+				// generic context specified, so specialize the method for it:
+				this.method = this.method.Specialize(new TypeParameterSubstitution(genericContext.ClassTypeParameters, genericContext.MethodTypeParameters));
+			}
+			this.genericContext = genericContext;
 			var methodDefinition = metadata.GetMethodDefinition(methodDefinitionHandle);
 			this.body = body;
 			this.reader = body.GetILReader();
@@ -111,22 +136,19 @@ namespace ICSharpCode.Decompiler.IL
 		IType ReadAndDecodeTypeReference()
 		{
 			var typeReference = ReadAndDecodeMetadataToken();
-			return typeSystem.ResolveAsType(typeReference);
+			return module.ResolveType(typeReference, genericContext);
 		}
 
 		IMethod ReadAndDecodeMethodReference()
 		{
 			var methodReference = ReadAndDecodeMetadataToken();
-			IMethod m = typeSystem.ResolveAsMethod(methodReference);
-			if (m == null)
-				throw new BadImageFormatException("Invalid method token");
-			return m;
+			return module.ResolveMethod(methodReference, genericContext);
 		}
 
 		IField ReadAndDecodeFieldReference()
 		{
 			var fieldReference = ReadAndDecodeMetadataToken();
-			IField f = typeSystem.ResolveAsField(fieldReference);
+			var f = module.ResolveEntity(fieldReference, genericContext) as IField;
 			if (f == null)
 				throw new BadImageFormatException("Invalid field token");
 			return f;
@@ -135,7 +157,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable[] InitLocalVariables()
 		{
 			if (body.LocalSignature.IsNil) return Empty<ILVariable>.Array;
-			var variableTypes = typeSystem.DecodeLocalSignature(body.LocalSignature);
+			var variableTypes = module.DecodeLocalSignature(body.LocalSignature, genericContext);
 			var localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
 				localVariables[index] = CreateILVariable(index, type);
@@ -317,14 +339,15 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var eh in body.ExceptionRegions) {
 				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.Kind == ExceptionRegionKind.Catch) {
-					var v = new ILVariable(VariableKind.Exception, typeSystem.ResolveAsType(eh.CatchType), eh.HandlerOffset) {
+					var catchType = module.ResolveType(eh.CatchType, genericContext);
+					var v = new ILVariable(VariableKind.Exception, catchType, eh.HandlerOffset) {
 						Name = "E_" + eh.HandlerOffset,
 						HasGeneratedName = true
 					};
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else if (eh.Kind == ExceptionRegionKind.Filter) {
-					var v = new ILVariable(VariableKind.Exception, typeSystem.Compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
+					var v = new ILVariable(VariableKind.Exception, compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
 						Name = "E_" + eh.HandlerOffset,
 						HasGeneratedName = true
 					};
@@ -409,10 +432,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
 		/// </summary>
-		public void WriteTypedIL(Metadata.PEFile module,
-			MethodDefinitionHandle method, MethodBodyBlock body, ITextOutput output, CancellationToken cancellationToken = default)
+		public void WriteTypedIL(MethodDefinitionHandle method, MethodBodyBlock body,
+			ITextOutput output, GenericContext genericContext = default, CancellationToken cancellationToken = default)
 		{
-			Init(module, method, body);
+			Init(method, body, genericContext);
 			ReadInstructions(cancellationToken);
 			foreach (var inst in instructionBuilder) {
 				if (inst is StLoc stloc && stloc.IsStackAdjustment) {
@@ -444,21 +467,20 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
-				.WriteExceptionHandlers(module, method, body);
+				.WriteExceptionHandlers(module.PEFile, method, body);
 		}
 
 		/// <summary>
 		/// Decodes the specified method body and returns an ILFunction.
 		/// </summary>
-		public ILFunction ReadIL(Metadata.PEFile module, MethodDefinitionHandle method, MethodBodyBlock body, CancellationToken cancellationToken = default(CancellationToken))
+		public ILFunction ReadIL(MethodDefinitionHandle method, MethodBodyBlock body, GenericContext genericContext = default, CancellationToken cancellationToken = default)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			Init(module, method, body);
+			Init(method, body, genericContext);
 			ReadInstructions(cancellationToken);
-			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
+			var blockBuilder = new BlockBuilder(body, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var resolvedMethod = typeSystem.ResolveAsMethod(method);
-			var function = new ILFunction(resolvedMethod, body.GetCodeSize(), mainContainer);
+			var function = new ILFunction(this.method, body.GetCodeSize(), genericContext, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);
@@ -1358,7 +1380,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction DecodeCallIndirect()
 		{
 			var signatureHandle = (StandaloneSignatureHandle)ReadAndDecodeMetadataToken();
-			var signature = typeSystem.DecodeMethodSignature(signatureHandle);
+			var signature = module.DecodeMethodSignature(signatureHandle, genericContext);
 			var functionPointer = Pop(StackType.I);
 			Debug.Assert(!signature.Header.IsInstance);
 			var arguments = new ILInstruction[signature.ParameterTypes.Length];
@@ -1586,9 +1608,12 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction LdToken(EntityHandle token)
 		{
 			if (token.Kind.IsTypeKind())
-				return new LdTypeToken(typeSystem.ResolveAsType(token));
-			if (token.Kind.IsMemberKind())
-				return new LdMemberToken(typeSystem.ResolveAsMember(token));
+				return new LdTypeToken(module.ResolveType(token, genericContext));
+			if (token.Kind.IsMemberKind()) {
+				var entity = module.ResolveEntity(token, genericContext);
+				if (entity is IMember member)
+					return new LdMemberToken(member);
+			}
 			throw new BadImageFormatException("Invalid metadata token for ldtoken instruction.");
 		}
 	}

@@ -47,5 +47,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IVariable.IsConst => baseParameter.IsConst;
 		object IVariable.ConstantValue => baseParameter.ConstantValue;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
+
+		public override string ToString()
+		{
+			return DefaultParameter.ToString(this);
+		}
 	}
 }

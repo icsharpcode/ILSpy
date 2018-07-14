@@ -54,11 +54,14 @@ namespace ILSpy.BamlDecompiler
 			
 			if (method == null || metadataEntry.RelativeVirtualAddress <= 0)
 				return result;
-			
+
+			var body = module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress);
+			var genericContext = new ICSharpCode.Decompiler.TypeSystem.GenericContext(
+				classTypeParameters: method.DeclaringType?.TypeParameters,
+				methodTypeParameters: method.TypeParameters);
 			// decompile method and optimize the switch
-			var ilReader = new ILReader(typeSystem);
-			var function = ilReader.ReadIL(module, (MethodDefinitionHandle)method.MetadataToken,
-				module.Reader.GetMethodBody(metadataEntry.RelativeVirtualAddress), cancellationToken);
+			var ilReader = new ILReader(typeSystem.MainModule);
+			var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, body, genericContext, cancellationToken);
 
 			var context = new ILTransformContext(function, typeSystem, null) {
 				CancellationToken = cancellationToken

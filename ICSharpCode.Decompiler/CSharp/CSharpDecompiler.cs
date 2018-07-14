@@ -1001,14 +1001,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		void DecompileBody(IMethod method, EntityDeclaration entityDecl, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			try {
-				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
-				var ilReader = new ILReader(specializingTypeSystem) {
+				var ilReader = new ILReader(typeSystem.MainModule) {
 					UseDebugSymbols = settings.UseDebugSymbols,
 					DebugInfo = DebugInfoProvider
 				};
+				var genericContext = new Decompiler.TypeSystem.GenericContext(decompilationContext);
 				var methodDef = typeSystem.ModuleDefinition.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 				var methodBody = typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				var function = ilReader.ReadIL(typeSystem.ModuleDefinition, (MethodDefinitionHandle)method.MetadataToken, methodBody, CancellationToken);
+				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, genericContext, CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
 				if (entityDecl != null) {
@@ -1029,7 +1029,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
 				}
 
-				var context = new ILTransformContext(function, specializingTypeSystem, DebugInfoProvider, localSettings) {
+				var context = new ILTransformContext(function, typeSystem, DebugInfoProvider, localSettings) {
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
@@ -1047,8 +1047,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var body = BlockStatement.Null;
 				// Generate C# AST only if bodies should be displayed.
 				if (localSettings.DecompileMemberBodies) {
-					AddDefinesForConditionalAttributes(function, decompileRun, decompilationContext);
-					var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, localSettings, CancellationToken);
+					AddDefinesForConditionalAttributes(function, decompileRun);
+					var statementBuilder = new StatementBuilder(typeSystem, decompilationContext, function, localSettings, CancellationToken);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
 					Comment prev = null;
@@ -1112,7 +1112,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
+		void AddDefinesForConditionalAttributes(ILFunction function, DecompileRun decompileRun)
 		{
 			foreach (var call in function.Descendants.OfType<CallInstruction>()) {
 				var attr = call.Method.GetAttribute(KnownAttribute.Conditional, inherit: true);

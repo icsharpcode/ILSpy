@@ -91,9 +91,9 @@ namespace ICSharpCode.ILSpy
 				if (!methodDef.HasBody())
 					return;
 				var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-				ILReader reader = new ILReader(typeSystem);
+				ILReader reader = new ILReader(typeSystem.MainModule);
 				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				reader.WriteTypedIL(module, (SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, output, options.CancellationToken);
+				reader.WriteTypedIL((SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, output, cancellationToken: options.CancellationToken);
 			}
 		}
 
@@ -116,11 +116,10 @@ namespace ICSharpCode.ILSpy
 					return;
 				IAssemblyResolver assemblyResolver = module.GetAssemblyResolver();
 				var typeSystem = new DecompilerTypeSystem(module, assemblyResolver);
-				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.ResolveAsMethod(method.MetadataToken)));
-				var reader = new ILReader(specializingTypeSystem);
+				var reader = new ILReader(typeSystem.MainModule);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
 				var methodBody = module.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-				ILFunction il = reader.ReadIL(module, (SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, options.CancellationToken);
+				ILFunction il = reader.ReadIL((SRM.MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: options.CancellationToken);
 				var namespaces = new HashSet<string>();
 				var decompiler = new CSharpDecompiler(typeSystem, assemblyResolver, options.DecompilerSettings) { CancellationToken = options.CancellationToken };
 				ILTransformContext context = decompiler.CreateILTransformContext(il);

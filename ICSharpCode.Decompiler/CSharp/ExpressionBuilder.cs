@@ -1491,8 +1491,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
-			var targetTS = method == null ? typeSystem : typeSystem.GetSpecializingTypeSystem(method.Substitution);
-			StatementBuilder builder = new StatementBuilder(targetTS, this.decompilationContext, function, settings, cancellationToken);
+			StatementBuilder builder = new StatementBuilder(typeSystem, this.decompilationContext, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;

@@ -476,11 +476,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				var p = (i < parameters.Count) ? parameters[i] : null;
 				attr.Arguments.Add(ConvertConstantValue(p?.Type ?? arg.Type, arg.Type, arg.Value));
 			}
-			if (attribute.HasDecodeErrors) {
-				attr.HasArgumentList = true;
-				attr.AddChild(new Comment("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
-				attr.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
-			}
 			if (attribute.NamedArguments.Length > 0) {
 				InitializedObjectResolveResult targetResult = new InitializedObjectResolveResult(attribute.AttributeType);
 				foreach (var namedArg in attribute.NamedArguments) {
@@ -493,6 +488,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					}
 					attr.Arguments.Add(namedArgument);
 				}
+			}
+			if (attribute.HasDecodeErrors) {
+				attr.HasArgumentList = true;
+				attr.AddChild(new Comment("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
+				// insert explicit rpar token to make the comment appear within the parentheses
+				attr.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
 			}
 			return attr;
 		}

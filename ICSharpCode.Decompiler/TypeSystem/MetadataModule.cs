@@ -170,11 +170,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public ITypeDefinition GetDefinition(TypeDefinitionHandle handle)
 		{
+			if (handle.IsNil)
+				return null;
 			int row = MetadataTokens.GetRowNumber(handle);
 			if (row >= typeDefs.Length)
-				return null;
+				HandleOutOfRange(handle);
 			var typeDef = LazyInit.VolatileRead(ref typeDefs[row]);
-			if (typeDef != null || handle.IsNil)
+			if (typeDef != null)
 				return typeDef;
 			typeDef = new MetadataTypeDefinition(this, handle);
 			return LazyInit.GetOrSet(ref typeDefs[row], typeDef);
@@ -182,11 +184,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IField GetDefinition(FieldDefinitionHandle handle)
 		{
+			if (handle.IsNil)
+				return null;
 			int row = MetadataTokens.GetRowNumber(handle);
 			if (row >= fieldDefs.Length)
-				return null;
+				HandleOutOfRange(handle);
 			var field = LazyInit.VolatileRead(ref fieldDefs[row]);
-			if (field != null || handle.IsNil)
+			if (field != null)
 				return field;
 			field = new MetadataField(this, handle);
 			return LazyInit.GetOrSet(ref fieldDefs[row], field);
@@ -194,11 +198,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IMethod GetDefinition(MethodDefinitionHandle handle)
 		{
-			int row = MetadataTokens.GetRowNumber(handle);
-			if (row >= methodDefs.Length)
+			if (handle.IsNil)
 				return null;
+			int row = MetadataTokens.GetRowNumber(handle);
+			Debug.Assert(row != 0);
+			if (row >= methodDefs.Length)
+				HandleOutOfRange(handle);
 			var method = LazyInit.VolatileRead(ref methodDefs[row]);
-			if (method != null || handle.IsNil)
+			if (method != null)
 				return method;
 			method = new MetadataMethod(this, handle);
 			return LazyInit.GetOrSet(ref methodDefs[row], method);
@@ -206,11 +213,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IProperty GetDefinition(PropertyDefinitionHandle handle)
 		{
-			int row = MetadataTokens.GetRowNumber(handle);
-			if (row >= methodDefs.Length)
+			if (handle.IsNil)
 				return null;
+			int row = MetadataTokens.GetRowNumber(handle);
+			Debug.Assert(row != 0);
+			if (row >= methodDefs.Length)
+				HandleOutOfRange(handle);
 			var property = LazyInit.VolatileRead(ref propertyDefs[row]);
-			if (property != null || handle.IsNil)
+			if (property != null)
 				return property;
 			property = new MetadataProperty(this, handle);
 			return LazyInit.GetOrSet(ref propertyDefs[row], property);
@@ -218,14 +228,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public IEvent GetDefinition(EventDefinitionHandle handle)
 		{
-			int row = MetadataTokens.GetRowNumber(handle);
-			if (row >= methodDefs.Length)
+			if (handle.IsNil)
 				return null;
+			int row = MetadataTokens.GetRowNumber(handle);
+			Debug.Assert(row != 0);
+			if (row >= methodDefs.Length)
+				HandleOutOfRange(handle);
 			var ev = LazyInit.VolatileRead(ref eventDefs[row]);
-			if (ev != null || handle.IsNil)
+			if (ev != null)
 				return ev;
 			ev = new MetadataEvent(this, handle);
 			return LazyInit.GetOrSet(ref eventDefs[row], ev);
+		}
+
+		void HandleOutOfRange(EntityHandle handle)
+		{
+			throw new BadImageFormatException("Handle with invalid row number.");
 		}
 		#endregion
 
@@ -271,6 +289,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, typeChildrenOnly: true);
 			return ty;
 		}
+
+		IType IntroduceTupleTypes(IType ty)
+		{
+			// run ApplyAttributeTypeVisitor without attributes, in order to introduce tuple types
+			return ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options);
+		}
 		#endregion
 
 		#region Resolve Method
@@ -293,9 +317,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod ResolveMethodDefinition(MethodDefinitionHandle methodDefHandle, bool expandVarArgs)
 		{
 			var method = GetDefinition(methodDefHandle);
-			if (method == null) {
-				throw new BadImageFormatException("MethodDef not found in current assembly.");
-			}
 			if (expandVarArgs && method.Parameters.LastOrDefault()?.Type.Kind == TypeKind.ArgList) {
 				method = new VarArgInstanceMethod(method, EmptyList<IType>.Instance);
 			}
@@ -306,13 +327,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var methodSpec = metadata.GetMethodSpecification(methodSpecHandle);
 			var methodTypeArgs = methodSpec.DecodeSignature(TypeProvider, context)
-				.SelectReadOnlyArray(ta => ApplyAttributeTypeVisitor.ApplyAttributesToType(ta, Compilation,
-					methodSpec.GetCustomAttributes(), metadata, this.TypeSystemOptions));
+				.SelectReadOnlyArray(IntroduceTupleTypes);
 			IMethod method;
 			if (methodSpec.Method.Kind == HandleKind.MethodDefinition) {
 				// generic instance of a methoddef (=generic method in non-generic class in current assembly)
 				method = ResolveMethodDefinition((MethodDefinitionHandle)methodSpec.Method, expandVarArgs);
-				method = method.Specialize(new TypeParameterSubstitution(context.ClassTypeParameters, methodTypeArgs));
+				method = method.Specialize(new TypeParameterSubstitution(null, methodTypeArgs));
 			} else {
 				method = ResolveMethodReference((MemberReferenceHandle)methodSpec.Method, context, methodTypeArgs, expandVarArgs);
 			}
@@ -521,6 +541,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				};
 			}
 			return field;
+		}
+		#endregion
+
+		#region Decode Standalone Signature
+		public MethodSignature<IType> DecodeMethodSignature(StandaloneSignatureHandle handle, GenericContext genericContext)
+		{
+			var standaloneSignature = metadata.GetStandaloneSignature(handle);
+			if (standaloneSignature.GetKind() != StandaloneSignatureKind.Method)
+				throw new InvalidOperationException("Expected Method signature");
+			var sig = standaloneSignature.DecodeMethodSignature(TypeProvider, genericContext);
+			return new MethodSignature<IType>(
+				sig.Header,
+				IntroduceTupleTypes(sig.ReturnType),
+				sig.RequiredParameterCount,
+				sig.GenericParameterCount,
+				ImmutableArray.CreateRange(
+					sig.ParameterTypes, IntroduceTupleTypes
+				)
+			);
+		}
+
+		public ImmutableArray<IType> DecodeLocalSignature(StandaloneSignatureHandle handle, GenericContext genericContext)
+		{
+			var standaloneSignature = metadata.GetStandaloneSignature(handle);
+			if (standaloneSignature.GetKind() != StandaloneSignatureKind.LocalVariables)
+				throw new InvalidOperationException("Expected Local signature");
+			var types = standaloneSignature.DecodeLocalSignature(TypeProvider, genericContext);
+			return ImmutableArray.CreateRange(types, IntroduceTupleTypes);
 		}
 		#endregion
 

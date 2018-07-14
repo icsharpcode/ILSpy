@@ -373,20 +373,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!methodDef.HasBody())
 				throw new SymbolicAnalysisFailedException();
 
-			var sdtp = typeSystem as SpecializingDecompilerTypeSystem;
-			if (sdtp != null) {
-				typeSystem = new SpecializingDecompilerTypeSystem(
-					sdtp.Context,
-					new TypeParameterSubstitution(
-						(sdtp.Substitution.ClassTypeArguments ?? EmptyList<IType>.Instance)
-						.Concat(sdtp.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance).ToArray(),
-						EmptyList<IType>.Instance
-					)
-				);
-			}
-			var body = typeSystem.ModuleDefinition.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-			var il = context.CreateILReader(typeSystem)
-				.ReadIL(typeSystem.ModuleDefinition, method, body, context.CancellationToken);
+			GenericContext genericContext = context.Function.GenericContext;
+			genericContext = new GenericContext(
+				classTypeParameters: (genericContext.ClassTypeParameters ?? EmptyList<ITypeParameter>.Instance)
+						.Concat(genericContext.MethodTypeParameters ?? EmptyList<ITypeParameter>.Instance).ToArray(),
+				methodTypeParameters: null);
+			var body = context.TypeSystem.MainModule.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var il = context.CreateILReader()
+				.ReadIL(method, body, genericContext, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true),
 				new ILTransformContext(il, typeSystem, context.DebugInfo, context.Settings) {
 					CancellationToken = context.CancellationToken,
