@@ -487,7 +487,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// * May return specialized members, where generics are involved.
 		/// * Other types of handles that don't correspond to TS entities, will return <c>null</c>.
 		/// </remarks>
-		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context)
+		public IEntity ResolveEntity(EntityHandle entityHandle, GenericContext context = default)
 		{
 			switch (entityHandle.Kind) {
 				case HandleKind.TypeReference:

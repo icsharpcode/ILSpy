@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		ITypeDefinition TryResolve(PEFile module, EntityHandle handle, IType type, bool mayRetry = true)
 		{
 			DecompilerTypeSystem typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-			var t = typeSystem.ResolveAsType(handle).GetDefinition();
+			var t = typeSystem.MainModule.ResolveEntity(handle) as ITypeDefinition;
 			if (t != null) {
 				showExpander = t.DirectBaseTypes.Any();
 				var other = t.ParentModule.PEFile.GetTypeSystemOrNull();

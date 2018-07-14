@@ -48,12 +48,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		IEnumerable<IEntity> ScanMethod(IMethod analyzedMethod, MethodDefinitionHandle handle, AnalyzerContext context)
 		{
-			var module = analyzedMethod.ParentModule.PEFile;
-			var md = module.Metadata.GetMethodDefinition(handle);
+			var module = (MetadataModule)analyzedMethod.ParentModule;
+			var md = module.PEFile.Metadata.GetMethodDefinition(handle);
 			if (!md.HasBody()) yield break;
 
-			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			var blob = module.PEFile.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 			var visitor = new TypeDefinitionCollector();
+			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
@@ -71,13 +72,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
-								context.TypeSystem.ResolveAsType(member).AcceptVisitor(visitor);
+								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
 								break;
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 							case HandleKind.FieldDefinition:
-								var m = context.TypeSystem.ResolveAsMember(member);
+								var m = module.ResolveMethod(member, genericContext);
 								if (m != null)
 									yield return m;
 								break;

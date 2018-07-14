@@ -135,7 +135,7 @@ namespace ICSharpCode.ILSpy
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			var methodDefinition = decompiler.TypeSystem.ResolveAsMethod(method.MetadataToken);
+			var methodDefinition = decompiler.TypeSystem.MainModule.ResolveEntity(method.MetadataToken) as IMethod;
 			if (methodDefinition.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false) {
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
@@ -215,7 +215,8 @@ namespace ICSharpCode.ILSpy
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
 			} else {
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition, field.IsStatic);
-				decompiler.AstTransforms.Add(new SelectFieldTransform(decompiler.TypeSystem.ResolveAsField(field.MetadataToken)));
+				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
+				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			}
 		}
@@ -341,7 +342,7 @@ namespace ICSharpCode.ILSpy
 					var corHeader = module.Reader.PEHeaders.CorHeader;
 					var entrypointHandle = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
 					if (!entrypointHandle.IsNil && entrypointHandle.Kind == HandleKind.MethodDefinition) {
-						var entrypoint = typeSystem.ResolveAsMethod(entrypointHandle);
+						var entrypoint = typeSystem.MainModule.ResolveMethod(entrypointHandle, new Decompiler.TypeSystem.GenericContext());
 						if (entrypoint != null) {
 							output.Write("// Entry point: ");
 							output.WriteReference(entrypoint, entrypoint.DeclaringType.FullName + "." + entrypoint.Name);
@@ -362,7 +363,7 @@ namespace ICSharpCode.ILSpy
 					}
 					output.WriteLine();
 
-					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, assemblyResolver, options.DecompilerSettings);
+					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
 					SyntaxTree st;
 					if (options.FullDecompilation) {

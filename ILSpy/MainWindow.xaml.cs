@@ -289,7 +289,8 @@ namespace ICSharpCode.ILSpy
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							var mr = IdStringProvider.FindEntity(args.NavigateTo, new SimpleCompilation(def, MinimalCorlib.Instance).TypeResolveContext);
+							var compilation = new SimpleCompilation(def, MinimalCorlib.Instance);
+							var mr = IdStringProvider.FindEntity(args.NavigateTo, new SimpleTypeResolveContext(compilation));
 							if (mr != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
@@ -637,10 +638,7 @@ namespace ICSharpCode.ILSpy
 					break;
 				case ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity:
 					var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
-					if (unresolvedEntity.Item2.Kind.IsTypeKind())
-						reference = typeSystem.ResolveAsType(unresolvedEntity.Item2).GetDefinition();
-					else
-						reference = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
+					reference = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 					goto default;
 				default:
 					ILSpyTreeNode treeNode = FindTreeNode(reference);

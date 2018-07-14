@@ -211,11 +211,7 @@ namespace ICSharpCode.ILSpy.TextView
 				return CreateTextBlockForEntity(entity);
 			} else if (segment.Reference is ValueTuple<PEFile, System.Reflection.Metadata.EntityHandle> unresolvedEntity) {
 				var typeSystem = new DecompilerTypeSystem(unresolvedEntity.Item1, unresolvedEntity.Item1.GetAssemblyResolver());
-				IEntity resolved;
-				if (unresolvedEntity.Item2.Kind.IsTypeKind())
-					resolved = typeSystem.ResolveAsType(unresolvedEntity.Item2).GetDefinition();
-				else
-					resolved = typeSystem.ResolveAsMember(unresolvedEntity.Item2);
+				IEntity resolved = typeSystem.MainModule.ResolveEntity(unresolvedEntity.Item2);
 				if (resolved == null)
 					return null;
 				return CreateTextBlockForEntity(resolved);
