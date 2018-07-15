@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void HandleIfInstruction(Block block, IfInstruction ifInst)
 		{
-			while (InlineTrueBranch(ifInst) || InlineExitBranch(block)) {
+			while (InlineTrueBranch(block, ifInst) || InlineExitBranch(block)) {
 				PickBetterBlockExit(block, ifInst);
 				MergeCommonBranches(block, ifInst);
 				SwapEmptyThen(ifInst);
@@ -105,10 +105,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Only inlines branches that are strictly dominated by this block (incoming edge count == 1)
 		/// </summary>
-		private bool InlineTrueBranch(IfInstruction ifInst)
+		private bool InlineTrueBranch(Block block, IfInstruction ifInst)
 		{
-			if (!CanInline(ifInst.TrueInst))
+			if (!CanInline(ifInst.TrueInst)) {
+				if (block.Instructions.SecondToLastOrDefault() == ifInst && ifInst.FalseInst.MatchNop()) {
+					var exitInst = block.Instructions.Last();
+					if (DetectExitPoints.CompatibleExitInstruction(ifInst.TrueInst, exitInst)) {
+						// if (...) exitInst; exitInst;
+						context.Step("Use empty block as then-branch", ifInst.TrueInst);
+						ifInst.TrueInst = new Nop() { ILRange = ifInst.TrueInst.ILRange };
+						// false, because we didn't inline a real block
+						// this will cause HandleIfInstruction() to attempt to inline the exitInst.
+						return false;
+					}
+				}
 				return false;
+			}
 
 			context.Step("Inline block as then-branch", ifInst.TrueInst);
 			// The targetBlock was already processed, and is ready to embed

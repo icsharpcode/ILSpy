@@ -1193,6 +1193,112 @@
     IL_0036:  ret
   } // end of method ShortCircuit::StmtComplex6
 
+  .method public hidebysig instance void 
+          EmptyIf() cil managed
+  {
+    // Code size       145 (0x91)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1,
+             bool V_2,
+             bool V_3,
+             bool V_4)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0008:  stloc.0
+    IL_0009:  ldloc.0
+    IL_000a:  brfalse.s  IL_000e
+
+    IL_000c:  nop
+    IL_000d:  nop
+    IL_000e:  ldarg.0
+    IL_000f:  ldc.i4.1
+    IL_0010:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0015:  ldc.i4.0
+    IL_0016:  ceq
+    IL_0018:  stloc.1
+    IL_0019:  ldloc.1
+    IL_001a:  brfalse.s  IL_001e
+
+    IL_001c:  nop
+    IL_001d:  nop
+    IL_001e:  ldarg.0
+    IL_001f:  ldc.i4.2
+    IL_0020:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0025:  brfalse.s  IL_0030
+
+    IL_0027:  ldarg.0
+    IL_0028:  ldc.i4.3
+    IL_0029:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_002e:  br.s       IL_0031
+
+    IL_0030:  ldc.i4.0
+    IL_0031:  stloc.2
+    IL_0032:  ldloc.2
+    IL_0033:  brfalse.s  IL_0037
+
+    IL_0035:  nop
+    IL_0036:  nop
+    IL_0037:  ldarg.0
+    IL_0038:  ldc.i4.4
+    IL_0039:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_003e:  brtrue.s   IL_0049
+
+    IL_0040:  ldarg.0
+    IL_0041:  ldc.i4.5
+    IL_0042:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0047:  br.s       IL_004a
+
+    IL_0049:  ldc.i4.1
+    IL_004a:  stloc.3
+    IL_004b:  ldloc.3
+    IL_004c:  brfalse.s  IL_0050
+
+    IL_004e:  nop
+    IL_004f:  nop
+    IL_0050:  ldarg.0
+    IL_0051:  ldc.i4.0
+    IL_0052:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0057:  brfalse.s  IL_0080
+
+    IL_0059:  ldarg.0
+    IL_005a:  ldc.i4.1
+    IL_005b:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0060:  brfalse.s  IL_0080
+
+    IL_0062:  ldarg.0
+    IL_0063:  ldc.i4.2
+    IL_0064:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0069:  brtrue.s   IL_0080
+
+    IL_006b:  ldarg.0
+    IL_006c:  ldc.i4.3
+    IL_006d:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0072:  brtrue.s   IL_007d
+
+    IL_0074:  ldarg.0
+    IL_0075:  ldc.i4.4
+    IL_0076:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_007b:  br.s       IL_007e
+
+    IL_007d:  ldc.i4.1
+    IL_007e:  br.s       IL_0081
+
+    IL_0080:  ldc.i4.0
+    IL_0081:  stloc.s    V_4
+    IL_0083:  ldloc.s    V_4
+    IL_0085:  brfalse.s  IL_0089
+
+    IL_0087:  nop
+    IL_0088:  nop
+    IL_0089:  ldarg.0
+    IL_008a:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::E()
+    IL_008f:  nop
+    IL_0090:  ret
+  } // end of method ShortCircuit::EmptyIf
+
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
