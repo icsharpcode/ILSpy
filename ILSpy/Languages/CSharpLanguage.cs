@@ -40,6 +40,7 @@ using ICSharpCode.Decompiler.Util;
 using System.Reflection;
 using ICSharpCode.Decompiler.Disassembler;
 using GenericContext = ICSharpCode.Decompiler.Metadata.GenericContext;
+using System.Text;
 
 namespace ICSharpCode.ILSpy
 {
@@ -555,9 +556,86 @@ namespace ICSharpCode.ILSpy
 			return buffer.ToString();
 		}
 
-		public override bool SearchCanUseILNames(string text)
+		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName)
 		{
-			return !text.Contains("<");
+			StringBuilder builder = new StringBuilder();
+			var currentTypeDefHandle = handle;
+			var typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
+
+			while (!currentTypeDefHandle.IsNil) {
+				if (builder.Length > 0)
+					builder.Insert(0, '.');
+				typeDef = metadata.GetTypeDefinition(currentTypeDefHandle);
+				var part = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(typeDef.Name), out int typeParamCount);
+				var genericParams = typeDef.GetGenericParameters();
+				if (genericParams.Count > 0) {
+					builder.Insert(0, '>');
+					int firstIndex = genericParams.Count - typeParamCount;
+					for (int i = genericParams.Count - 1; i >= genericParams.Count - typeParamCount; i--) {
+						builder.Insert(0, metadata.GetString(metadata.GetGenericParameter(genericParams[i]).Name));
+						builder.Insert(0, i == firstIndex ? '<' : ',');
+					}
+				}
+				builder.Insert(0, part);
+				currentTypeDefHandle = typeDef.GetDeclaringType();
+				if (!fullName) break;
+			}
+
+			if (fullName && !typeDef.Namespace.IsNil) {
+				builder.Insert(0, '.');
+				builder.Insert(0, metadata.GetString(typeDef.Namespace));
+			}
+
+			return builder.ToString();
+		}
+
+		public override string GetEntityName(PEFile module, EntityHandle handle, bool fullName)
+		{
+			MetadataReader metadata = module.Metadata;
+			switch (handle.Kind) {
+				case HandleKind.TypeDefinition:
+					return ToCSharpString(metadata, (TypeDefinitionHandle)handle, fullName);
+				case HandleKind.FieldDefinition:
+					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
+					var declaringType = fd.GetDeclaringType();
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(fd.Name);
+					return metadata.GetString(fd.Name);
+				case HandleKind.MethodDefinition:
+					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
+					declaringType = md.GetDeclaringType();
+					string methodName = metadata.GetString(md.Name);
+					var genericParams = md.GetGenericParameters();
+					if (genericParams.Count > 0) {
+						methodName += "<";
+						int i = 0;
+						foreach (var h in genericParams) {
+							if (i > 0)
+								methodName += ",";
+							var gp = metadata.GetGenericParameter(h);
+							methodName += metadata.GetString(gp.Name);
+						}
+						methodName += ">";
+					}
+
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName) + "." + methodName;
+					return methodName;
+				case HandleKind.EventDefinition:
+					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(ed.Name);
+					return metadata.GetString(ed.Name);
+				case HandleKind.PropertyDefinition:
+					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName)
+						return ToCSharpString(metadata, declaringType, fullName) + "." + metadata.GetString(pd.Name);
+					return metadata.GetString(pd.Name);
+				default:
+					return null;
+			}
 		}
 
 		public override bool ShowMember(IEntity member)

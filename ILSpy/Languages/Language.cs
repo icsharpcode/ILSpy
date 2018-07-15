@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -266,9 +267,49 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		public virtual bool SearchCanUseILNames(string text)
+		/// <summary>
+		/// This should produce a string representation of the entity for search to match search strings against.
+		/// </summary>
+		public virtual string GetEntityName(PEFile module, EntityHandle handle, bool fullName)
 		{
-			return true;
+			MetadataReader metadata = module.Metadata;
+			switch (handle.Kind) {
+				case HandleKind.TypeDefinition:
+					if (fullName)
+						return ((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString();
+					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)handle);
+					return metadata.GetString(td.Name);
+				case HandleKind.FieldDefinition:
+					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
+					var declaringType = fd.GetDeclaringType();
+					if (fullName)
+						return fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(fd.Name);
+					return metadata.GetString(fd.Name);
+				case HandleKind.MethodDefinition:
+					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
+					declaringType = md.GetDeclaringType();
+					string methodName = metadata.GetString(md.Name);
+					int genericParamCount = md.GetGenericParameters().Count;
+					if (genericParamCount > 0)
+						methodName += "``" + genericParamCount;
+					if (fullName)
+						return md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + methodName;
+					return methodName;
+				case HandleKind.EventDefinition:
+					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName)
+						return declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(ed.Name);
+					return metadata.GetString(ed.Name);
+				case HandleKind.PropertyDefinition:
+					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
+					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+					if (fullName)
+						return declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(pd.Name);
+					return metadata.GetString(pd.Name);
+				default:
+					return null;
+			}
 		}
 
 		public virtual CodeMappingInfo GetCodeMappingInfo(PEFile module, SRM.EntityHandle member)

@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Search
 					return searchTermLiteralValue.Equals(val);
 				default:
 					// substring search with searchTerm
-					return IsMatch(metadata, MetadataTokens.StringHandle(0), val.ToString());
+					return IsMatch(val.ToString());
 			}
 		}
 
@@ -208,7 +208,7 @@ namespace ICSharpCode.ILSpy.Search
 						ILParser.SkipOperand(ref blob, code);
 						continue;
 					}
-					if (IsMatch(module.Metadata, MetadataTokens.StringHandle(0), ILParser.DecodeUserString(ref blob, module.Metadata)))
+					if (IsMatch(ILParser.DecodeUserString(ref blob, module.Metadata)))
 						return true;
 				}
 			}

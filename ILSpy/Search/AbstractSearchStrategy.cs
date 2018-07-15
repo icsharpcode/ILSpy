@@ -15,10 +15,9 @@ namespace ICSharpCode.ILSpy.Search
 {
 	abstract class AbstractSearchStrategy
 	{
-		protected readonly (string Term, bool CanUseILNames)[] searchTerm;
+		protected readonly string[] searchTerm;
 		protected readonly Regex regex;
 		protected readonly bool fullNameSearch;
-		protected readonly bool needsLanguageSpecificNames;
 		protected readonly Language language;
 		protected readonly Action<SearchResult> addResult;
 
@@ -35,17 +34,11 @@ namespace ICSharpCode.ILSpy.Search
 					if (regexString.EndsWith("/", StringComparison.Ordinal))
 						regexString = regexString.Substring(0, regexString.Length - 1);
 					regex = SafeNewRegex(regexString);
-					needsLanguageSpecificNames = true;
-					searchTerm = new[] { (search, false) };
 				} else {
 					fullNameSearch = search.Contains(".");
-					needsLanguageSpecificNames = fullNameSearch || !language.SearchCanUseILNames(search);
-					searchTerm = new[] { (search, !needsLanguageSpecificNames) };
 				}
-			} else {
-				searchTerm = terms.SelectArray(t => (t, language.SearchCanUseILNames(t)));
-				needsLanguageSpecificNames = searchTerm.Any(t => !t.CanUseILNames);
 			}
+			searchTerm = terms;
 		}
 
 		protected float CalculateFitness(IEntity member)
@@ -69,17 +62,17 @@ namespace ICSharpCode.ILSpy.Search
 			return 1.0f / text.Length;
 		}
 
-		protected virtual bool IsMatch(MetadataReader metadata, StringHandle nameHandle, string languageSpecificName)
+		protected virtual bool IsMatch(string entityName)
 		{
 			if (regex != null) {
-				return regex.IsMatch(languageSpecificName);
+				return regex.IsMatch(entityName);
 			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
-				var term = searchTerm[i].Term;
+				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = nameHandle.IsNil || !searchTerm[i].CanUseILNames || term.Contains(".") ? languageSpecificName : metadata.GetString(nameHandle);
+				string text = entityName;
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);

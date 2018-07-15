@@ -27,18 +27,10 @@ namespace ICSharpCode.ILSpy.Search
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Type) {
 				foreach (var handle in metadata.TypeDefinitions) {
-					var td = metadata.GetTypeDefinition(handle);
-					string languageSpecificName = null;
-					ITypeDefinition type = null;
-					if (needsLanguageSpecificNames) {
-						type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-						languageSpecificName = GetLanguageSpecificName(type, fullName: true);
-					}
-					if (!IsMatch(module.Metadata, td.Name, languageSpecificName))
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
-					if (type == null) {
-						type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					}
+					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 					addResult(ResultFromEntity(type));
 				}
 			}
@@ -46,72 +38,40 @@ namespace ICSharpCode.ILSpy.Search
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Method) {
 				foreach (var handle in metadata.MethodDefinitions) {
 					// TODO use method semantics to skip accessors
-					var md = metadata.GetMethodDefinition(handle);
-					string languageSpecificName = null;
-					IMethod method = null;
-					if (needsLanguageSpecificNames) {
-						method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-						languageSpecificName = GetLanguageSpecificName(method, fullName: true);
-					}
-					if (!IsMatch(module.Metadata, md.Name, languageSpecificName))
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
-					if (method == null) {
-						method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					}
+					var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 					addResult(ResultFromEntity(method));
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Field) {
 				foreach (var handle in metadata.FieldDefinitions) {
-					var fd = metadata.GetFieldDefinition(handle);
-					string languageSpecificName = null;
-					IField field = null;
-					if (needsLanguageSpecificNames) {
-						field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-						languageSpecificName = GetLanguageSpecificName(field, fullName: true);
-					}
-					if (!IsMatch(module.Metadata, fd.Name, languageSpecificName))
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
-					if (field == null) {
-						field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					}
+					var field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 					addResult(ResultFromEntity(field));
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Property) {
 				foreach (var handle in metadata.PropertyDefinitions) {
-					var pd = metadata.GetPropertyDefinition(handle);
-					string languageSpecificName = null;
-					IProperty property = null;
-					if (needsLanguageSpecificNames) {
-						property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-						languageSpecificName = GetLanguageSpecificName(property, fullName: true);
-					}
-					if (!IsMatch(module.Metadata, pd.Name, languageSpecificName))
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
-					if (property == null) {
-						property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					}
+					var property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 					addResult(ResultFromEntity(property));
 				}
 			}
 
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Event) {
 				foreach (var handle in metadata.EventDefinitions) {
-					var ed = metadata.GetEventDefinition(handle);
-					string languageSpecificName = null;
-					IEvent @event = null;
-					if (needsLanguageSpecificNames) {
-						@event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-						languageSpecificName = GetLanguageSpecificName(@event, fullName: true);
-					}
-					if (!IsMatch(module.Metadata, ed.Name, languageSpecificName))
+					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
+					if (!IsMatch(languageSpecificName))
 						continue;
-					if (@event == null) {
-						@event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-					}
+					var @event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
 					addResult(ResultFromEntity(@event));
 				}
 			}
