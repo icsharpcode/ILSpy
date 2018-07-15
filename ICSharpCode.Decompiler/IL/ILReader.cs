@@ -989,7 +989,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Unbox_any:
 					return Push(new UnboxAny(Pop(), ReadAndDecodeTypeReference()));
 				default:
-					return new InvalidBranch("Unknown opcode: " + opCode.ToString());
+					return new InvalidBranch($"Unknown opcode: 0x{(int)opCode:X2}");
 			}
 		}
 		
