@@ -36,7 +36,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DiffLib" Version="1.0.0.55" />
+    <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.8.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.8.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
