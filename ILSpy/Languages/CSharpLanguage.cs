@@ -605,19 +605,23 @@ namespace ICSharpCode.ILSpy
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					declaringType = md.GetDeclaringType();
 					string methodName = metadata.GetString(md.Name);
-					var genericParams = md.GetGenericParameters();
-					if (genericParams.Count > 0) {
-						methodName += "<";
-						int i = 0;
-						foreach (var h in genericParams) {
-							if (i > 0)
-								methodName += ",";
-							var gp = metadata.GetGenericParameter(h);
-							methodName += metadata.GetString(gp.Name);
+					if (methodName == ".ctor" || methodName == ".cctor") {
+						var td = metadata.GetTypeDefinition(declaringType);
+						methodName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
+					} else {
+						var genericParams = md.GetGenericParameters();
+						if (genericParams.Count > 0) {
+							methodName += "<";
+							int i = 0;
+							foreach (var h in genericParams) {
+								if (i > 0)
+									methodName += ",";
+								var gp = metadata.GetGenericParameter(h);
+								methodName += metadata.GetString(gp.Name);
+							}
+							methodName += ">";
 						}
-						methodName += ">";
 					}
-
 					if (fullName)
 						return ToCSharpString(metadata, declaringType, fullName) + "." + methodName;
 					return methodName;

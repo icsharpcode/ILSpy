@@ -132,15 +132,22 @@ namespace ICSharpCode.ILSpy.Search
 			return false;
 		}
 
-		protected string GetLanguageSpecificName(IEntity member, bool fullName)
+		protected string GetLanguageSpecificName(IEntity member)
 		{
-			if (member is ITypeDefinition t)
-				return language.TypeToString(t, includeNamespace: fullName);
-			if (fullName)
-				return (member.DeclaringTypeDefinition != null
-					? language.TypeToString(member.DeclaringTypeDefinition, includeNamespace: fullName) + "." : "")
-					+ member.Name;
-			return member.Name;
+			switch (member) {
+				case ITypeDefinition t:
+					return language.TypeToString(t, false);
+				case IField f:
+					return language.FieldToString(f, true, false);
+				case IProperty p:
+					return language.PropertyToString(p, true, false);
+				case IMethod m:
+					return language.MethodToString(m, true, false);
+				case IEvent e:
+					return language.EventToString(e, true, false);
+				default:
+					throw new NotSupportedException(member?.GetType() + " not supported!");
+			}
 		}
 
 		protected ImageSource GetIcon(IEntity member)
@@ -179,7 +186,7 @@ namespace ICSharpCode.ILSpy.Search
 				Member = item,
 				Fitness = CalculateFitness(item),
 				Image = GetIcon(item),
-				Name = GetLanguageSpecificName(item, fullName: false),
+				Name = GetLanguageSpecificName(item),
 				LocationImage = declaringType != null ? TypeTreeNode.GetIcon(declaringType) : Images.Namespace,
 				Location = declaringType != null ? language.TypeToString(declaringType, includeNamespace: true) : item.Namespace
 			};
