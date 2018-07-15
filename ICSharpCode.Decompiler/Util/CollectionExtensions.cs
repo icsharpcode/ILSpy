@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Util
 {
-	public static class CollectionExtensions
+	static class CollectionExtensions
 	{
 		public static void Deconstruct<K, V>(this KeyValuePair<K, V> pair, out K key, out V value)
 		{
