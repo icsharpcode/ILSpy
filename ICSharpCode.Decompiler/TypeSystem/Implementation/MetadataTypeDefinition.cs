@@ -44,6 +44,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly FullTypeName fullTypeName;
 		readonly TypeAttributes attributes;
 		public TypeKind Kind { get; }
+		public bool IsByRefLike { get; }
 		public ITypeDefinition DeclaringTypeDefinition { get; }
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
@@ -99,6 +100,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.Kind = TypeKind.Void;
 				} else {
 					this.Kind = TypeKind.Struct;
+					this.IsByRefLike = td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
 				}
 			} else if (td.IsDelegate(metadata)) {
 				this.Kind = TypeKind.Delegate;

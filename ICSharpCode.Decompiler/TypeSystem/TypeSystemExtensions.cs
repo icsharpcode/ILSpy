@@ -255,6 +255,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 		
+		public static IType SkipModifiers(this IType ty)
+		{
+			while (ty is ModifiedType mt) {
+				ty = mt.ElementType;
+			}
+			return ty;
+		}
+
 		#region GetType/Member
 		/// <summary>
 		/// Gets all type definitions in the compilation.

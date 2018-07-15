@@ -238,7 +238,7 @@
 
   } // end of class ITest
 
-  .class abstract auto ansi sealed nested private beforefieldinit '<>o__26'
+  .class abstract auto ansi sealed nested private beforefieldinit '<>o__27'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -246,7 +246,7 @@
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__1'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> '<>p__2'
     .field public static class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> '<>p__3'
-  } // end of class '<>o__26'
+  } // end of class '<>o__27'
 
   .method private hidebysig instance int32 
           GetInt() cil managed
@@ -467,33 +467,197 @@
   .method public hidebysig instance void 
           CallDoneStruct() cil managed
   {
-    // Code size       33 (0x21)
+    // Code size       388 (0x184)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0,
-             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_1)
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_1,
+             valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_2)
     IL_0000:  ldarg.0
     IL_0001:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
     IL_0006:  stloc.0
     IL_0007:  ldloca.s   V_0
     IL_0009:  dup
     IL_000a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
-    IL_000f:  brtrue.s   IL_0013
+    IL_000f:  brtrue.s   IL_0014
 
     IL_0011:  pop
-    IL_0012:  ret
+    IL_0012:  br.s       IL_0021
 
-    IL_0013:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
-    IL_0018:  stloc.1
-    IL_0019:  ldloca.s   V_1
-    IL_001b:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
-    IL_0020:  ret
+    IL_0014:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0019:  stloc.1
+    IL_001a:  ldloca.s   V_1
+    IL_001c:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_0021:  ldarg.0
+    IL_0022:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0027:  stloc.0
+    IL_0028:  ldloca.s   V_0
+    IL_002a:  dup
+    IL_002b:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0030:  brtrue.s   IL_0035
+
+    IL_0032:  pop
+    IL_0033:  br.s       IL_004a
+
+    IL_0035:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_003a:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Field
+    IL_003f:  dup
+    IL_0040:  brtrue.s   IL_0045
+
+    IL_0042:  pop
+    IL_0043:  br.s       IL_004a
+
+    IL_0045:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::Done()
+    IL_004a:  ldarg.0
+    IL_004b:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0050:  stloc.0
+    IL_0051:  ldloca.s   V_0
+    IL_0053:  dup
+    IL_0054:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0059:  brtrue.s   IL_005e
+
+    IL_005b:  pop
+    IL_005c:  br.s       IL_006d
+
+    IL_005e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0063:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Field
+    IL_0068:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::Done()
+    IL_006d:  ldarg.0
+    IL_006e:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0073:  stloc.0
+    IL_0074:  ldloca.s   V_0
+    IL_0076:  dup
+    IL_0077:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_007c:  brtrue.s   IL_0081
+
+    IL_007e:  pop
+    IL_007f:  br.s       IL_00a9
+
+    IL_0081:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0086:  stloc.1
+    IL_0087:  ldloca.s   V_1
+    IL_0089:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Property1()
+    IL_008e:  stloc.2
+    IL_008f:  ldloca.s   V_2
+    IL_0091:  dup
+    IL_0092:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0097:  brtrue.s   IL_009c
+
+    IL_0099:  pop
+    IL_009a:  br.s       IL_00a9
+
+    IL_009c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_00a1:  stloc.1
+    IL_00a2:  ldloca.s   V_1
+    IL_00a4:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_00a9:  ldarg.0
+    IL_00aa:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_00af:  stloc.0
+    IL_00b0:  ldloca.s   V_0
+    IL_00b2:  dup
+    IL_00b3:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_00b8:  brtrue.s   IL_00bd
+
+    IL_00ba:  pop
+    IL_00bb:  br.s       IL_00d2
+
+    IL_00bd:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_00c2:  stloc.1
+    IL_00c3:  ldloca.s   V_1
+    IL_00c5:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Property2()
+    IL_00ca:  stloc.1
+    IL_00cb:  ldloca.s   V_1
+    IL_00cd:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_00d2:  ldarg.0
+    IL_00d3:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_00d8:  stloc.0
+    IL_00d9:  ldloca.s   V_0
+    IL_00db:  dup
+    IL_00dc:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_00e1:  brtrue.s   IL_00e6
+
+    IL_00e3:  pop
+    IL_00e4:  br.s       IL_0114
+
+    IL_00e6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_00eb:  stloc.1
+    IL_00ec:  ldloca.s   V_1
+    IL_00ee:  ldarg.0
+    IL_00ef:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_00f4:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Method1(int32)
+    IL_00f9:  stloc.2
+    IL_00fa:  ldloca.s   V_2
+    IL_00fc:  dup
+    IL_00fd:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0102:  brtrue.s   IL_0107
+
+    IL_0104:  pop
+    IL_0105:  br.s       IL_0114
+
+    IL_0107:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_010c:  stloc.1
+    IL_010d:  ldloca.s   V_1
+    IL_010f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_0114:  ldarg.0
+    IL_0115:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_011a:  stloc.0
+    IL_011b:  ldloca.s   V_0
+    IL_011d:  dup
+    IL_011e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0123:  brtrue.s   IL_0128
+
+    IL_0125:  pop
+    IL_0126:  br.s       IL_0143
+
+    IL_0128:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_012d:  stloc.1
+    IL_012e:  ldloca.s   V_1
+    IL_0130:  ldarg.0
+    IL_0131:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_0136:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Method2(int32)
+    IL_013b:  stloc.1
+    IL_013c:  ldloca.s   V_1
+    IL_013e:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_0143:  ldarg.0
+    IL_0144:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0149:  stloc.0
+    IL_014a:  ldloca.s   V_0
+    IL_014c:  dup
+    IL_014d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0152:  brtrue.s   IL_0156
+
+    IL_0154:  pop
+    IL_0155:  ret
+
+    IL_0156:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_015b:  stloc.1
+    IL_015c:  ldloca.s   V_1
+    IL_015e:  ldarg.0
+    IL_015f:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_0164:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Item(int32)
+    IL_0169:  stloc.2
+    IL_016a:  ldloca.s   V_2
+    IL_016c:  dup
+    IL_016d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0172:  brtrue.s   IL_0176
+
+    IL_0174:  pop
+    IL_0175:  ret
+
+    IL_0176:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_017b:  stloc.1
+    IL_017c:  ldloca.s   V_1
+    IL_017e:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_0183:  ret
   } // end of method NullPropagation::CallDoneStruct
 
   .method public hidebysig instance void 
           RequiredParentheses() cil managed
   {
-    // Code size       53 (0x35)
-    .maxstack  8
+    // Code size       126 (0x7e)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0,
+             valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_1,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_2)
     IL_0000:  ldarg.0
     IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyClass()
     IL_0006:  dup
@@ -518,7 +682,39 @@
     IL_0025:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
     IL_002a:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::Method(int32)
     IL_002f:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::Done()
-    IL_0034:  ret
+    IL_0034:  ldarg.0
+    IL_0035:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_003a:  stloc.0
+    IL_003b:  ldloca.s   V_0
+    IL_003d:  dup
+    IL_003e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0043:  brtrue.s   IL_0051
+
+    IL_0045:  pop
+    IL_0046:  ldloca.s   V_1
+    IL_0048:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>
+    IL_004e:  ldloc.1
+    IL_004f:  br.s       IL_0063
+
+    IL_0051:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0056:  stloc.2
+    IL_0057:  ldloca.s   V_2
+    IL_0059:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Property2()
+    IL_005e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::.ctor(!0)
+    IL_0063:  stloc.0
+    IL_0064:  ldloca.s   V_0
+    IL_0066:  dup
+    IL_0067:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_006c:  brtrue.s   IL_0070
+
+    IL_006e:  pop
+    IL_006f:  ret
+
+    IL_0070:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0075:  stloc.2
+    IL_0076:  ldloca.s   V_2
+    IL_0078:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Done()
+    IL_007d:  ret
   } // end of method NullPropagation::RequiredParentheses
 
   .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<int32>[] 
@@ -727,6 +923,251 @@
     IL_01d4:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
     IL_01d9:  ret
   } // end of method NullPropagation::ChainsOnClass
+
+  .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<int32>[] 
+          ChainsStruct() cil managed
+  {
+    // Code size       582 (0x246)
+    .maxstack  5
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct V_2,
+             valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_3)
+    IL_0000:  ldc.i4.8
+    IL_0001:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0006:  dup
+    IL_0007:  ldc.i4.0
+    IL_0008:  ldarg.0
+    IL_0009:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_000e:  stloc.0
+    IL_000f:  ldloca.s   V_0
+    IL_0011:  dup
+    IL_0012:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0017:  brtrue.s   IL_0025
+
+    IL_0019:  pop
+    IL_001a:  ldloca.s   V_1
+    IL_001c:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0022:  ldloc.1
+    IL_0023:  br.s       IL_0034
+
+    IL_0025:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_002a:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_002f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0034:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0039:  dup
+    IL_003a:  ldc.i4.1
+    IL_003b:  ldarg.0
+    IL_003c:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0041:  stloc.0
+    IL_0042:  ldloca.s   V_0
+    IL_0044:  dup
+    IL_0045:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_004a:  brtrue.s   IL_0058
+
+    IL_004c:  pop
+    IL_004d:  ldloca.s   V_1
+    IL_004f:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0055:  ldloc.1
+    IL_0056:  br.s       IL_006c
+
+    IL_0058:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_005d:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Field
+    IL_0062:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_0067:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_006c:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0071:  dup
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldarg.0
+    IL_0074:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0079:  stloc.0
+    IL_007a:  ldloca.s   V_0
+    IL_007c:  dup
+    IL_007d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0082:  brtrue.s   IL_0090
+
+    IL_0084:  pop
+    IL_0085:  ldloca.s   V_1
+    IL_0087:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_008d:  ldloc.1
+    IL_008e:  br.s       IL_00b3
+
+    IL_0090:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0095:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Field
+    IL_009a:  dup
+    IL_009b:  brtrue.s   IL_00a9
+
+    IL_009d:  pop
+    IL_009e:  ldloca.s   V_1
+    IL_00a0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00a6:  ldloc.1
+    IL_00a7:  br.s       IL_00b3
+
+    IL_00a9:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_00ae:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00b3:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00b8:  dup
+    IL_00b9:  ldc.i4.3
+    IL_00ba:  ldarg.0
+    IL_00bb:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_00c0:  stloc.0
+    IL_00c1:  ldloca.s   V_0
+    IL_00c3:  dup
+    IL_00c4:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_00c9:  brtrue.s   IL_00d7
+
+    IL_00cb:  pop
+    IL_00cc:  ldloca.s   V_1
+    IL_00ce:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00d4:  ldloc.1
+    IL_00d5:  br.s       IL_00ee
+
+    IL_00d7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_00dc:  stloc.2
+    IL_00dd:  ldloca.s   V_2
+    IL_00df:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Property2()
+    IL_00e4:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_00e9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00ee:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00f3:  dup
+    IL_00f4:  ldc.i4.4
+    IL_00f5:  ldarg.0
+    IL_00f6:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_00fb:  stloc.0
+    IL_00fc:  ldloca.s   V_0
+    IL_00fe:  dup
+    IL_00ff:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0104:  brtrue.s   IL_0112
+
+    IL_0106:  pop
+    IL_0107:  ldloca.s   V_1
+    IL_0109:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_010f:  ldloc.1
+    IL_0110:  br.s       IL_0145
+
+    IL_0112:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0117:  stloc.2
+    IL_0118:  ldloca.s   V_2
+    IL_011a:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Property1()
+    IL_011f:  stloc.3
+    IL_0120:  ldloca.s   V_3
+    IL_0122:  dup
+    IL_0123:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0128:  brtrue.s   IL_0136
+
+    IL_012a:  pop
+    IL_012b:  ldloca.s   V_1
+    IL_012d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0133:  ldloc.1
+    IL_0134:  br.s       IL_0145
+
+    IL_0136:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_013b:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_0140:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0145:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_014a:  dup
+    IL_014b:  ldc.i4.5
+    IL_014c:  ldarg.0
+    IL_014d:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0152:  stloc.0
+    IL_0153:  ldloca.s   V_0
+    IL_0155:  dup
+    IL_0156:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_015b:  brtrue.s   IL_0169
+
+    IL_015d:  pop
+    IL_015e:  ldloca.s   V_1
+    IL_0160:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0166:  ldloc.1
+    IL_0167:  br.s       IL_0186
+
+    IL_0169:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_016e:  stloc.2
+    IL_016f:  ldloca.s   V_2
+    IL_0171:  ldarg.0
+    IL_0172:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_0177:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Method2(int32)
+    IL_017c:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_0181:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0186:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_018b:  dup
+    IL_018c:  ldc.i4.6
+    IL_018d:  ldarg.0
+    IL_018e:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_0193:  stloc.0
+    IL_0194:  ldloca.s   V_0
+    IL_0196:  dup
+    IL_0197:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_019c:  brtrue.s   IL_01aa
+
+    IL_019e:  pop
+    IL_019f:  ldloca.s   V_1
+    IL_01a1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01a7:  ldloc.1
+    IL_01a8:  br.s       IL_01e3
+
+    IL_01aa:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_01af:  stloc.2
+    IL_01b0:  ldloca.s   V_2
+    IL_01b2:  ldarg.0
+    IL_01b3:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_01b8:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::Method1(int32)
+    IL_01bd:  stloc.3
+    IL_01be:  ldloca.s   V_3
+    IL_01c0:  dup
+    IL_01c1:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_01c6:  brtrue.s   IL_01d4
+
+    IL_01c8:  pop
+    IL_01c9:  ldloca.s   V_1
+    IL_01cb:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01d1:  ldloc.1
+    IL_01d2:  br.s       IL_01e3
+
+    IL_01d4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_01d9:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_01de:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01e3:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01e8:  dup
+    IL_01e9:  ldc.i4.7
+    IL_01ea:  ldarg.0
+    IL_01eb:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetMyStruct()
+    IL_01f0:  stloc.0
+    IL_01f1:  ldloca.s   V_0
+    IL_01f3:  dup
+    IL_01f4:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_01f9:  brtrue.s   IL_0207
+
+    IL_01fb:  pop
+    IL_01fc:  ldloca.s   V_1
+    IL_01fe:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0204:  ldloc.1
+    IL_0205:  br.s       IL_0240
+
+    IL_0207:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_020c:  stloc.2
+    IL_020d:  ldloca.s   V_2
+    IL_020f:  ldarg.0
+    IL_0210:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation::GetInt()
+    IL_0215:  call       instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::get_Item(int32)
+    IL_021a:  stloc.3
+    IL_021b:  ldloca.s   V_3
+    IL_021d:  dup
+    IL_021e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::get_HasValue()
+    IL_0223:  brtrue.s   IL_0231
+
+    IL_0225:  pop
+    IL_0226:  ldloca.s   V_1
+    IL_0228:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_022e:  ldloc.1
+    IL_022f:  br.s       IL_0240
+
+    IL_0231:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>::GetValueOrDefault()
+    IL_0236:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct::IntVal
+    IL_023b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0240:  stelem     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0245:  ret
+  } // end of method NullPropagation::ChainsStruct
 
   .method public hidebysig instance int32 
           CoalescingReturn() cil managed
@@ -1015,7 +1456,7 @@
     IL_0005:  ldnull
     IL_0006:  ret
 
-    IL_0007:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__1'
+    IL_0007:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__1'
     IL_000c:  brtrue.s   IL_0048
 
     IL_000e:  ldc.i4.0
@@ -1045,11 +1486,11 @@
                                                                                                                                                                  class [mscorlib]System.Type,
                                                                                                                                                                  class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_003e:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__1'
-    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__1'
+    IL_0043:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__1'
+    IL_0048:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__1'
     IL_004d:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__1'
-    IL_0057:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__0'
+    IL_0052:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__1'
+    IL_0057:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__0'
     IL_005c:  brtrue.s   IL_008d
 
     IL_005e:  ldc.i4.0
@@ -1070,10 +1511,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0083:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0088:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__0'
-    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__0'
+    IL_0088:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__0'
+    IL_008d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__0'
     IL_0092:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0097:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__0'
+    IL_0097:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__0'
     IL_009c:  ldloc.0
     IL_009d:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)
@@ -1088,7 +1529,7 @@
     IL_00ac:  ldnull
     IL_00ad:  ret
 
-    IL_00ae:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__3'
+    IL_00ae:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__3'
     IL_00b3:  brtrue.s   IL_00e9
 
     IL_00b5:  ldc.i4.0
@@ -1114,11 +1555,11 @@
                                                                                                                                                              class [mscorlib]System.Type,
                                                                                                                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_00df:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_00e4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__3'
-    IL_00e9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__3'
+    IL_00e4:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__3'
+    IL_00e9:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__3'
     IL_00ee:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>>::Target
-    IL_00f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__3'
-    IL_00f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__2'
+    IL_00f3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,int32,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__3'
+    IL_00f8:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__2'
     IL_00fd:  brtrue.s   IL_012f
 
     IL_00ff:  ldc.i4.s   64
@@ -1139,10 +1580,10 @@
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
     IL_0125:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_012a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__2'
-    IL_012f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__2'
+    IL_012a:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__2'
+    IL_012f:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__2'
     IL_0134:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>>::Target
-    IL_0139:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__26'::'<>p__2'
+    IL_0139:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/'<>o__27'::'<>p__2'
     IL_013e:  ldloc.1
     IL_013f:  callvirt   instance !2 class [mscorlib]System.Func`3<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object>::Invoke(!0,
                                                                                                                                                       !1)

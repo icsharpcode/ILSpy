@@ -40,7 +40,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override bool? IsReferenceType {
 			get { return null; }
 		}
-		
+
+		public override bool IsByRefLike => true;
+
 		public override int GetHashCode()
 		{
 			return elementType.GetHashCode() ^ 91725813;

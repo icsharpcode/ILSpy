@@ -52,7 +52,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public abstract bool? IsReferenceType  { get; }
-		
+
+		public virtual bool IsByRefLike => false;
+
 		public abstract TypeKind Kind { get; }
 		
 		public virtual int TypeParameterCount {

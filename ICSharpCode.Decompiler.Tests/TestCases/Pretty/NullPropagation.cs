@@ -127,7 +127,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CallDoneStruct()
 		{
 			GetMyStruct()?.Done();
-#if STRUCT_SPLITTING_IMPROVED
 			GetMyStruct()?.Field?.Done();
 			GetMyStruct()?.Field.Done();
 			GetMyStruct()?.Property1?.Done();
@@ -135,16 +134,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetMyStruct()?.Method1(GetInt())?.Done();
 			GetMyStruct()?.Method2(GetInt()).Done();
 			GetMyStruct()?[GetInt()]?.Done();
-#endif
 		}
 
 		public void RequiredParentheses()
 		{
 			(GetMyClass()?.Field).Done();
 			(GetMyClass()?.Method(GetInt())).Done();
-#if STRUCT_SPLITTING_IMPROVED
 			(GetMyStruct()?.Property2)?.Done();
-#endif
 		}
 
 		public int?[] ChainsOnClass()
@@ -162,7 +158,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 		}
 
-#if STRUCT_SPLITTING_IMPROVED
 		public int?[] ChainsStruct()
 		{
 			return new int?[8] {
@@ -176,7 +171,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				GetMyStruct()?[GetInt()]?.IntVal
 			};
 		}
-#endif
 
 		public int CoalescingReturn()
 		{

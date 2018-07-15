@@ -21,6 +21,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -48,7 +49,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case VariableKind.Local:
 				case VariableKind.Exception:
 					foreach (var ldloca in v.AddressInstructions) {
-						if (!AddressUsedOnlyForReading(ldloca)) {
+						if (DetermineAddressUse(ldloca, ldloca.Variable) == AddressUse.Unknown) {
+							// If we don't understand how the address is being used,
+							// we can't split the variable.
 							return false;
 						}
 					}
@@ -67,30 +70,91 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool AddressUsedOnlyForReading(ILInstruction addressLoadingInstruction)
+		enum AddressUse
+		{
+			Unknown,
+			/// <summary>
+			/// Address is immediately used for reading and/or writing,
+			/// without the possibility of the variable being directly stored to (via 'stloc')
+			/// in between the 'ldloca' and the use of the address.
+			/// </summary>
+			Immediate,
+			/// <summary>
+			/// We support some limited form of ref locals referring to a target variable,
+			/// without giving up splitting of the target variable.
+			/// Requirements:
+			///  * the ref local is single-assignment
+			///  * the ref local is initialized directly with 'ldloca target; stloc ref_local',
+			///       not a derived pointer (e.g. 'ldloca target; ldflda F; stloc ref_local').
+			///  * all uses of the ref_local are immediate.
+			/// There may be stores to the target variable in between the 'stloc ref_local' and its uses,
+			/// but we handle that case by treating each use of the ref_local as an address access
+			/// of the target variable (as if the ref_local was eliminated via copy propagation).
+			/// </summary>
+			WithSupportedRefLocals,
+		}
+
+		static AddressUse DetermineAddressUse(ILInstruction addressLoadingInstruction, ILVariable targetVar)
 		{
 			switch (addressLoadingInstruction.Parent) {
 				case LdObj ldobj:
-					return true;
+					return AddressUse.Immediate;
 				case LdFlda ldflda:
-					return AddressUsedOnlyForReading(ldflda);
+					return DetermineAddressUse(ldflda, targetVar);
 				case Await await:
-					// Not strictly true as GetAwaiter() could have side-effects,
-					// but we need to split awaiter variables to make async/await pretty.
-					return true;
+					// GetAwaiter() may write to the struct, but shouldn't store the address for later use
+					return AddressUse.Immediate;
 				case Call call:
-					if (call.Method.DeclaringTypeDefinition?.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
-						switch (call.Method.Name) {
-							case "get_HasValue":
-							case "get_Value":
-							case "GetValueOrDefault":
-								return true;
+					// Address is passed to method.
+					// We'll assume the method only uses the address locally,
+					// unless we can see an address being returned from the method:
+					if (call.Method.ReturnType.IsByRefLike) {
+						return AddressUse.Unknown;
+					}
+					foreach (var p in call.Method.Parameters) {
+						// catch "out Span<int>" and similar
+						if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
+							return AddressUse.Unknown;
+					}
+					// ensure there's no 'stloc target' in between the ldloca and the call consuming the address
+					for (int i = addressLoadingInstruction.ChildIndex + 1; i < call.Arguments.Count; i++) {
+						foreach (var inst in call.Arguments[i].Descendants) {
+							if (inst is StLoc store && store.Variable == targetVar)
+								return AddressUse.Unknown;
 						}
 					}
-					return false;
+					return AddressUse.Immediate;
+				case StLoc stloc when stloc.Variable.IsSingleDefinition:
+					// Address stored in local variable: also check all uses of that variable.
+					if (!(stloc.Variable.Kind == VariableKind.StackSlot || stloc.Variable.Kind == VariableKind.Local))
+						return AddressUse.Unknown;
+					if (stloc.Value.OpCode != OpCode.LdLoca) {
+						// GroupStores.HandleLoad() only detects ref-locals when they are directly initialized with ldloca
+						return AddressUse.Unknown;
+					}
+					foreach (var load in stloc.Variable.LoadInstructions) {
+						if (DetermineAddressUse(load, targetVar) != AddressUse.Immediate)
+							return AddressUse.Unknown;
+					}
+					return AddressUse.WithSupportedRefLocals;
 				default:
-					return false;
+					return AddressUse.Unknown;
 			}
+		}
+
+		/// <summary>
+		/// Given 'ldloc ref_local' and 'ldloca target; stloc ref_local', returns the ldloca.
+		/// This function must return a non-null LdLoca for every use of a SupportedRefLocal.
+		/// </summary>
+		static LdLoca GetAddressLoadForRefLocalUse(LdLoc ldloc)
+		{
+			if (!ldloc.Variable.IsSingleDefinition)
+				return null; // only single-definition variables can be supported ref locals
+			var store = ldloc.Variable.StoreInstructions.SingleOrDefault();
+			if (store is StLoc stloc) {
+				return stloc.Value as LdLoca;
+			}
+			return null;
 		}
 
 		/// <summary>
@@ -102,7 +166,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		class GroupStores : ReachingDefinitionsVisitor
 		{
 			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
-			readonly HashSet<IInstructionWithVariableOperand> uninitVariableUsage = new HashSet<IInstructionWithVariableOperand>();
+
+			/// <summary>
+			/// For each uninitialized variable, one representative instruction that
+			/// potentially observes the unintialized value of the variable.
+			/// Used to merge together all such loads of the same uninitialized value.
+			/// </summary>
+			readonly Dictionary<ILVariable, IInstructionWithVariableOperand> uninitVariableUsage = new Dictionary<ILVariable, IInstructionWithVariableOperand>();
 			
 			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
 			{
@@ -112,6 +182,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				base.VisitLdLoc(inst);
 				HandleLoad(inst);
+				var refLocalAddressLoad = GetAddressLoadForRefLocalUse(inst);
+				if (refLocalAddressLoad != null) {
+					// SupportedRefLocal: act as if we copy-propagated the ldloca
+					// to the point of use:
+					HandleLoad(refLocalAddressLoad);
+				}
 			}
 
 			protected internal override void VisitLdLoca(LdLoca inst)
@@ -124,7 +200,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (IsAnalyzedVariable(inst.Variable)) {
 					if (IsPotentiallyUninitialized(state, inst.Variable)) {
-						uninitVariableUsage.Add(inst);
+						// merge all uninit loads together:
+						if (uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad)) {
+							unionFind.Merge(inst, uninitLoad);
+						} else {
+							uninitVariableUsage.Add(inst.Variable, inst);
+						}
 					}
 					foreach (var store in GetStores(state, inst.Variable)) {
 						unionFind.Merge(inst, (IInstructionWithVariableOperand)store);
@@ -150,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);
 				}
-				if (uninitVariableUsage.Contains(inst)) {
+				if (inst.Variable.HasInitialValue && uninitVariableUsage.TryGetValue(inst.Variable, out var uninitLoad) && uninitLoad == inst) {
 					v.HasInitialValue = true;
 				}
 				return v;

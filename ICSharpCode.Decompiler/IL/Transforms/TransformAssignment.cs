@@ -298,9 +298,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				context.Step($"Compound assignment (dynamic binary)", compoundStore);
 				newInst = new DynamicCompoundAssign(dynamicBinaryOp.Operation, dynamicBinaryOp.BinderFlags, dynamicBinaryOp.Left, dynamicBinaryOp.LeftArgumentInfo, dynamicBinaryOp.Right, dynamicBinaryOp.RightArgumentInfo);
+			} else if (setterValue is Call concatCall && UserDefinedCompoundAssign.IsStringConcat(concatCall.Method)) {
+				// setterValue is a string.Concat() invocation
+				if (concatCall.Arguments.Count != 2)
+					return false; // for now we only support binary compound assignments
+				if (!targetType.IsKnownType(KnownTypeCode.String))
+					return false;
+				if (!IsMatchingCompoundLoad(concatCall.Arguments[0], compoundStore, forbiddenVariable: storeInSetter?.Variable))
+					return false;
+				context.Step($"Compound assignment (string concatenation)", compoundStore);
+				newInst = new UserDefinedCompoundAssign(concatCall.Method, CompoundAssignmentType.EvaluatesToNewValue,
+					concatCall.Arguments[0], concatCall.Arguments[1]);
 			} else {
 				return false;
 			}
+			newInst.AddILRange(setterValue.ILRange);
 			if (storeInSetter != null) {
 				storeInSetter.Value = newInst;
 				newInst = storeInSetter;
@@ -336,6 +348,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type)) {
 				// 'stloc l' is implicitly truncating the stack value
+				return false;
+			}
+			if (nextInst.Variable.StackType == StackType.Ref) {
+				// ref locals need to be initialized when they are declared, so
+				// we can only use inline assignments when we know that the
+				// ref local is definitely assigned.
+				// We don't have an easy way to check for that in this transform,
+				// so avoid inline assignments to ref locals for now.
 				return false;
 			}
 			context.Step("Inline assignment to local variable", inst);

@@ -172,6 +172,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 
+			bool IType.IsByRefLike => false;
+
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 
 			IReadOnlyList<ITypeParameter> IType.TypeParameters => DummyTypeParameter.GetClassTypeParameterList(KnownTypeReference.Get(typeCode).TypeParameterCount);
