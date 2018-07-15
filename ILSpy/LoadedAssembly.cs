@@ -19,13 +19,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.ILSpy.DebugInfo;
 using ICSharpCode.ILSpy.Options;
-using Mono.Cecil;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
 
 namespace ICSharpCode.ILSpy
 {
@@ -34,21 +41,19 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public sealed class LoadedAssembly
 	{
-		readonly Task<ModuleDefinition> assemblyTask;
+		internal static readonly ConditionalWeakTable<PEFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<PEFile, LoadedAssembly>();
+
+		readonly Task<PEFile> assemblyTask;
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
-			if (assemblyList == null)
-				throw new ArgumentNullException(nameof(assemblyList));
-			if (fileName == null)
-				throw new ArgumentNullException(nameof(fileName));
-			this.assemblyList = assemblyList;
-			this.fileName = fileName;
+			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
+			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			
-			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
+			this.assemblyTask = Task.Factory.StartNew(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
@@ -58,16 +63,18 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public async Task<string> GetTargetFrameworkIdAsync()
 		{
-			var assembly = await GetAssemblyDefinitionAsync().ConfigureAwait(false);
-			return assembly?.DetectTargetFrameworkId() ?? string.Empty;
+			var assembly = await GetPEFileAsync().ConfigureAwait(false);
+			return assembly.Reader.DetectTargetFrameworkId() ?? string.Empty;
 		}
 
 		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
 
+		IDebugInfoProvider debugInfoProvider;
+
 		/// <summary>
 		/// Gets the Cecil ModuleDefinition.
 		/// </summary>
-		public Task<ModuleDefinition> GetModuleDefinitionAsync()
+		public Task<PEFile> GetPEFileAsync()
 		{
 			return assemblyTask;
 		}
@@ -76,37 +83,35 @@ namespace ICSharpCode.ILSpy
 		/// Gets the Cecil ModuleDefinition.
 		/// Returns null in case of load errors.
 		/// </summary>
-		public ModuleDefinition GetModuleDefinitionOrNull()
+		public PEFile GetPEFileOrNull()
 		{
 			try {
-				return GetModuleDefinitionAsync().Result;
+				return GetPEFileAsync().Result;
 			} catch (Exception ex) {
 				System.Diagnostics.Trace.TraceError(ex.ToString());
 				return null;
 			}
 		}
 
-		/// <summary>
-		/// Gets the Cecil AssemblyDefinition.
-		/// </summary>
-		public async Task<AssemblyDefinition> GetAssemblyDefinitionAsync()
-		{
-			var module = await assemblyTask.ConfigureAwait(false);
-			return module != null ? module.Assembly : null;
-		}
+		ICompilation typeSystem;
 
 		/// <summary>
-		/// Gets the Cecil AssemblyDefinition.
-		/// Returns null when there was a load error; or when opening a netmodule.
+		/// Gets a type system containing all types from this assembly + primitve types from mscorlib.
+		/// Returns null in case of load errors.
 		/// </summary>
-		public AssemblyDefinition GetAssemblyDefinitionOrNull()
+		/// <remarks>
+		/// This is an uncached type system.
+		/// </remarks>
+		public ICompilation GetTypeSystemOrNull()
 		{
-			try {
-				return GetAssemblyDefinitionAsync().Result;
-			} catch (Exception ex) {
-				System.Diagnostics.Trace.TraceError(ex.ToString());
+			if (typeSystem != null)
+				return typeSystem;
+			var module = GetPEFileOrNull();
+			if (module == null)
 				return null;
-			}
+			return typeSystem = new SimpleCompilation(
+				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached),
+				MinimalCorlib.Instance);
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
@@ -118,7 +123,10 @@ namespace ICSharpCode.ILSpy
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					string version = GetAssemblyDefinitionOrNull()?.Name.Version.ToString();
+					var metadata = GetPEFileOrNull()?.Metadata;
+					string version = null;
+					if (metadata != null && metadata.IsAssembly)
+						version = metadata.GetAssemblyDefinition().Version?.ToString();
 					if (version == null)
 						return ShortName;
 					return String.Format("{0} ({1})", ShortName, version);
@@ -134,25 +142,21 @@ namespace ICSharpCode.ILSpy
 
 		public bool IsAutoLoaded { get; set; }
 
-		ModuleDefinition LoadAssembly(object state)
+		PEFile LoadAssembly(object state)
 		{
 			var stream = state as Stream;
-			ModuleDefinition module;
+			PEFile module;
 
 			// runs on background thread
-			ReaderParameters p = new ReaderParameters();
-			p.AssemblyResolver = new MyAssemblyResolver(this);
-			p.InMemory = true;
-
 			if (stream != null)
 			{
 				// Read the module from a precrafted stream
-				module = ModuleDefinition.ReadModule(stream, p);
+				module = new PEFile(fileName, stream);
 			}
 			else
 			{
 				// Read the module from disk (by default)
-				module = ModuleDefinition.ReadModule(fileName, p);
+				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), PEStreamOptions.PrefetchEntireImage);
 			}
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
@@ -164,27 +168,46 @@ namespace ICSharpCode.ILSpy
 					// ignore any errors during symbol loading
 				}
 			}
+			lock (loadedAssemblies) {
+				loadedAssemblies.Add(module, this);
+			}
 			return module;
 		}
 		
-		private void LoadSymbols(ModuleDefinition module)
+		private void LoadSymbols(PEFile module)
 		{
-			if (!module.HasDebugHeader) {
-				return;
+			try {
+				var reader = module.Reader;
+				// try to open portable pdb file/embedded pdb info:
+				if (reader.TryOpenAssociatedPortablePdb(fileName, OpenStream, out var provider, out var pdbFileName)) {
+					debugInfoProvider = new PortableDebugInfoProvider(pdbFileName, provider);
+				} else {
+					// search for pdb in same directory as dll
+					string pdbDirectory = Path.GetDirectoryName(fileName);
+					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
+					if (File.Exists(pdbFileName)) {
+						debugInfoProvider = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
+						return;
+					}
+
+					// TODO: use symbol cache, get symbols from microsoft
+				}
+			} catch (BadImageFormatException) {
+				// Ignore PDB load errors
 			}
 
-			// search for pdb in same directory as dll
-			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
-			if (File.Exists(pdbName)) {
-				using (Stream s = File.OpenRead(pdbName)) {
-					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
-				}
-				return;
+			Stream OpenStream(string fileName)
+			{
+				if (!File.Exists(fileName))
+					return null;
+				var memory = new MemoryStream();
+				using (var stream = File.OpenRead(fileName))
+					stream.CopyTo(memory);
+				memory.Position = 0;
+				return memory;
 			}
-			
-			// TODO: use symbol cache, get symbols from microsoft
 		}
-		
+
 		[ThreadStatic]
 		static int assemblyLoadDisableCount;
 		
@@ -218,18 +241,14 @@ namespace ICSharpCode.ILSpy
 				this.parent = parent;
 			}
 			
-			public AssemblyDefinition Resolve(AssemblyNameReference name)
+			public PEFile Resolve(Decompiler.Metadata.IAssemblyReference reference)
 			{
-				return parent.LookupReferencedAssembly(name)?.GetAssemblyDefinitionOrNull();
-			}
-			
-			public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
-			{
-				return parent.LookupReferencedAssembly(name)?.GetAssemblyDefinitionOrNull();
+				return parent.LookupReferencedAssembly(reference)?.GetPEFileOrNull();
 			}
 
-			public void Dispose()
+			public PEFile ResolveModule(PEFile mainModule, string moduleName)
 			{
+				return parent.LookupReferencedModule(mainModule, moduleName)?.GetPEFileOrNull();
 			}
 		}
 		
@@ -237,39 +256,60 @@ namespace ICSharpCode.ILSpy
 		{
 			return new MyAssemblyResolver(this);
 		}
-		
-		public LoadedAssembly LookupReferencedAssembly(AssemblyNameReference name)
+
+		/// <summary>
+		/// Returns the debug info for this assembly. Returns null in case of load errors or no debug info is available.
+		/// </summary>
+		public IDebugInfoProvider GetDebugInfoOrNull()
 		{
-			if (name == null)
-				throw new ArgumentNullException(nameof(name));
-			if (name.IsWindowsRuntime) {
-				return assemblyList.assemblyLookupCache.GetOrAdd((name.Name, true), key => LookupReferencedAssemblyInternal(name, true));
+			if (GetPEFileOrNull() == null)
+				return null;
+			return debugInfoProvider;
+		}
+		
+		public LoadedAssembly LookupReferencedAssembly(Decompiler.Metadata.IAssemblyReference reference)
+		{
+			if (reference == null)
+				throw new ArgumentNullException(nameof(reference));
+			if (reference.IsWindowsRuntime) {
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.Name, true), key => LookupReferencedAssemblyInternal(reference, true));
 			} else {
-				return assemblyList.assemblyLookupCache.GetOrAdd((name.FullName, false), key => LookupReferencedAssemblyInternal(name, false));
+				return assemblyList.assemblyLookupCache.GetOrAdd((reference.FullName, false), key => LookupReferencedAssemblyInternal(reference, false));
 			}
+		}
+
+		public LoadedAssembly LookupReferencedModule(PEFile mainModule, string moduleName)
+		{
+			if (mainModule == null)
+				throw new ArgumentNullException(nameof(mainModule));
+			if (moduleName == null)
+				throw new ArgumentNullException(nameof(moduleName));
+			return assemblyList.moduleLookupCache.GetOrAdd(mainModule.FileName + ";" + moduleName, _ => LookupReferencedModuleInternal(mainModule, moduleName));
 		}
 
 		class MyUniversalResolver : UniversalAssemblyResolver
 		{
 			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false)
+				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage)
 			{
 			}
 		}
 
 		static Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
 
-		LoadedAssembly LookupReferencedAssemblyInternal(AssemblyNameReference fullName, bool isWinRT)
+		LoadedAssembly LookupReferencedAssemblyInternal(Decompiler.Metadata.IAssemblyReference fullName, bool isWinRT)
 		{
-			string GetName(AssemblyNameReference name) => isWinRT ? name.Name : name.FullName;
+			string GetName(Decompiler.Metadata.IAssemblyReference name) => isWinRT ? name.Name : name.FullName;
 
 			string file;
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
-					var asmDef = loaded.GetAssemblyDefinitionOrNull();
-					if (asmDef != null && GetName(fullName).Equals(GetName(asmDef.Name), StringComparison.OrdinalIgnoreCase)) {
-						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.ToString(), MessageKind.Info, "Success - Found in Assembly List");
+					var reader = loaded.GetPEFileOrNull()?.Metadata;
+					if (reader == null || !reader.IsAssembly) continue;
+					var asmDef = reader.GetAssemblyDefinition();
+					if (GetName(fullName).Equals(isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}
 				}
@@ -277,7 +317,7 @@ namespace ICSharpCode.ILSpy
 				if (isWinRT) {
 					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", fullName.Name + ".winmd");
 				} else {
-					var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
+					var resolver = new MyUniversalResolver(this);
 					file = resolver.FindAssemblyFile(fullName);
 				}
 
@@ -312,8 +352,59 @@ namespace ICSharpCode.ILSpy
 			});
 			return asm;
 		}
-		
-		public Task ContinueWhenLoaded(Action<Task<ModuleDefinition>> onAssemblyLoaded, TaskScheduler taskScheduler)
+
+		LoadedAssembly LookupReferencedModuleInternal(PEFile mainModule, string moduleName)
+		{
+			string file;
+			LoadedAssembly asm;
+			lock (loadingAssemblies) {
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					var reader = loaded.GetPEFileOrNull()?.Metadata;
+					if (reader == null || reader.IsAssembly) continue;
+					var moduleDef = reader.GetModuleDefinition();
+					if (moduleName.Equals(reader.GetString(moduleDef.Name), StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(moduleName, MessageKind.Info, "Success - Found in Assembly List");
+						return loaded;
+					}
+				}
+
+				file = Path.Combine(Path.GetDirectoryName(mainModule.FileName), moduleName);
+				if (!File.Exists(file))
+					return null;
+
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {
+						return loaded;
+					}
+				}
+
+				if (file != null && loadingAssemblies.TryGetValue(file, out asm))
+					return asm;
+
+				if (assemblyLoadDisableCount > 0)
+					return null;
+
+				if (file != null) {
+					LoadedAssemblyReferencesInfo.AddMessage(moduleName, MessageKind.Info, "Success - Loading from: " + file);
+					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
+				} else {
+					LoadedAssemblyReferencesInfo.AddMessageOnce(moduleName, MessageKind.Error, "Could not find reference: " + moduleName);
+					return null;
+				}
+				loadingAssemblies.Add(file, asm);
+			}
+			App.Current.Dispatcher.BeginInvoke((Action)delegate () {
+				lock (assemblyList.assemblies) {
+					assemblyList.assemblies.Add(asm);
+				}
+				lock (loadingAssemblies) {
+					loadingAssemblies.Remove(file);
+				}
+			});
+			return asm;
+		}
+
+		public Task ContinueWhenLoaded(Action<Task<PEFile>> onAssemblyLoaded, TaskScheduler taskScheduler)
 		{
 			return this.assemblyTask.ContinueWith(onAssemblyLoaded, default(CancellationToken), TaskContinuationOptions.RunContinuationsAsynchronously, taskScheduler);
 		}

@@ -19,18 +19,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly TypeDefinition analyzedType;
+		private readonly Decompiler.Metadata.TypeDefinition analyzedType;
 
 		public AnalyzedTypeExposedByTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
@@ -99,7 +99,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(PropertyDefinition property)
+		private bool TypeIsExposedBy(Decompiler.Metadata.PropertyDefinition property)
 		{
 			if (IsPrivate(property))
 				return false;
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(EventDefinition eventDef)
+		private bool TypeIsExposedBy(Decompiler.Metadata.EventDefinition eventDef)
 		{
 			if (IsPrivate(eventDef))
 				return false;
@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private bool TypeIsExposedBy(MethodDefinition method)
+		private bool TypeIsExposedBy(Decompiler.Metadata.MethodDefinition method)
 		{
 			// if the method has overrides, it is probably an explicit interface member
 			// and should be considered part of the public API even though it is marked private.
@@ -135,7 +135,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			// exclude methods with 'semantics'. for example, property getters & setters.
 			// HACK: this is a potentially fragile implementation, as the MethodSemantics may be extended to other uses at a later date.
-			if (method.SemanticsAttributes != MethodSemanticsAttributes.None)
+			if (method.GetMethodSemanticsAttributes() != 0)
 				return false;
 
 			if (method.ReturnType.Resolve() == analyzedType)
@@ -151,21 +151,21 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return false;
 		}
 
-		private static bool IsPrivate(PropertyDefinition property)
+		private static bool IsPrivate(Decompiler.Metadata.PropertyDefinition property)
 		{
-			bool isGetterPublic = (property.GetMethod != null && !property.GetMethod.IsPrivate);
-			bool isSetterPublic = (property.SetMethod != null && !property.SetMethod.IsPrivate);
+			bool isGetterPublic = (!property.GetMethod.IsNil && !property.GetMethod.IsPrivate);
+			bool isSetterPublic = (!property.SetMethod.IsNil && !property.SetMethod.IsPrivate);
 			return !(isGetterPublic || isSetterPublic);
 		}
 
-		private static bool IsPrivate(EventDefinition eventDef)
+		private static bool IsPrivate(Decompiler.Metadata.EventDefinition eventDef)
 		{
 			bool isAdderPublic = (eventDef.AddMethod != null && !eventDef.AddMethod.IsPrivate);
 			bool isRemoverPublic = (eventDef.RemoveMethod != null && !eventDef.RemoveMethod.IsPrivate);
 			return !(isAdderPublic || isRemoverPublic);
 		}
 
-		public static bool CanShow(TypeDefinition type)
+		public static bool CanShow(Decompiler.Metadata.TypeDefinition type)
 		{
 			return true;
 		}

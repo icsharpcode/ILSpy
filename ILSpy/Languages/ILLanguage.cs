@@ -19,8 +19,14 @@
 using System.Collections.Generic;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
-using Mono.Cecil;
 using System.ComponentModel.Composition;
+using System.Reflection.PortableExecutable;
+using System.Reflection.Metadata;
+using System.IO;
+using System.Reflection.Metadata.Ecma335;
+using System.Linq;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy
 {
@@ -49,81 +55,103 @@ namespace ICSharpCode.ILSpy
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
+				ShowMetadataTokens = Options.DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens,
 				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions
 			};
 		}
 
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleMethod(method);
+			dis.AssemblyResolver = method.ParentModule.PEFile.GetAssemblyResolver();
+			dis.DisassembleMethod(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken);
 		}
 		
-		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
+		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleField(field);
+			dis.AssemblyResolver = field.ParentModule.PEFile.GetAssemblyResolver();
+			dis.DisassembleField(field.ParentModule.PEFile, (FieldDefinitionHandle)field.MetadataToken);
 		}
 		
-		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
-		{
-			ReflectionDisassembler rd = CreateDisassembler(output, options);
-			rd.DisassembleProperty(property);
-			if (property.GetMethod != null) {
-				output.WriteLine();
-				rd.DisassembleMethod(property.GetMethod);
-			}
-			if (property.SetMethod != null) {
-				output.WriteLine();
-				rd.DisassembleMethod(property.SetMethod);
-			}
-			foreach (var m in property.OtherMethods) {
-				output.WriteLine();
-				rd.DisassembleMethod(m);
-			}
-		}
-		
-		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
-		{
-			ReflectionDisassembler rd = CreateDisassembler(output, options);
-			rd.DisassembleEvent(ev);
-			if (ev.AddMethod != null) {
-				output.WriteLine();
-				rd.DisassembleMethod(ev.AddMethod);
-			}
-			if (ev.RemoveMethod != null) {
-				output.WriteLine();
-				rd.DisassembleMethod(ev.RemoveMethod);
-			}
-			foreach (var m in ev.OtherMethods) {
-				output.WriteLine();
-				rd.DisassembleMethod(m);
-			}
-		}
-		
-		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
+		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleType(type);
+			PEFile module = property.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
+			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
+			var accessors = pd.GetAccessors();
+
+			if (!accessors.Getter.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(module, accessors.Getter);
+			}
+			if (!accessors.Setter.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(module, accessors.Setter);
+			}
+			/*foreach (var m in property.OtherMethods) {
+				output.WriteLine();
+				dis.DisassembleMethod(m);
+			}*/
 		}
 		
-		public override void DecompileNamespace(string nameSpace, IEnumerable<TypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.DisassembleNamespace(nameSpace, types);
+			PEFile module = ev.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
+
+			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
+			var accessors = ed.GetAccessors();
+			if (!accessors.Adder.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(module, accessors.Adder);
+			}
+			if (!accessors.Remover.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(module, accessors.Remover);
+			}
+			if (!accessors.Raiser.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(module, accessors.Raiser);
+			}
+			/*foreach (var m in ev.OtherMethods) {
+				output.WriteLine();
+				dis.DisassembleMethod(m);
+			}*/
+		}
+		
+		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
+		{
+			var dis = CreateDisassembler(output, options);
+			PEFile module = type.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
+		}
+
+		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		{
+			var dis = CreateDisassembler(output, options);
+			PEFile module = types.FirstOrDefault()?.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
-			
+			var module = assembly.GetPEFileOrNull();
+			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
-			var module = assembly.GetModuleDefinitionAsync().Result;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
 			if (options.FullDecompilation)
-				dis.WriteAssemblyReferences(module);
-			if (module.Assembly != null)
-				dis.WriteAssemblyHeader(module.Assembly);
+				dis.WriteAssemblyReferences(metadata);
+			if (metadata.IsAssembly)
+				dis.WriteAssemblyHeader(module);
 			output.WriteLine();
 			dis.WriteModuleHeader(module);
 			if (options.FullDecompilation) {
@@ -131,13 +159,6 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine();
 				dis.WriteModuleContents(module);
 			}
-		}
-		
-		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
-		{
-			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
-			return output.ToString();
 		}
 	}
 }

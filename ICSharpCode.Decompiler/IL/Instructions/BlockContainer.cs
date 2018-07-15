@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
-			output.WriteDefinition("BlockContainer", this);
+			output.WriteLocalReference("BlockContainer", this, isDefinition: true);
 			output.Write(' ');
 			switch (Kind) {
 				case ContainerKind.Loop:
@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL
 					inst.WriteTo(output, options);
 				} else {
 					output.Write("stale reference to ");
-					output.WriteReference(inst.Label, inst, isLocal: true);
+					output.WriteLocalReference(inst.Label, inst);
 				}
 				output.WriteLine();
 				output.WriteLine();

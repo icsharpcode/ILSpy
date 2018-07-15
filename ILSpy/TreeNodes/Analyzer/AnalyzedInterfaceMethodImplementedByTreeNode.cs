@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
@@ -27,9 +28,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal sealed class AnalyzedInterfaceMethodImplementedByTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly MethodDefinition analyzedMethod;
+		private readonly MethodDefinitionHandle analyzedMethod;
 
-		public AnalyzedInterfaceMethodImplementedByTreeNode(MethodDefinition analyzedMethod)
+		public AnalyzedInterfaceMethodImplementedByTreeNode(MethodDefinitionHandle analyzedMethod)
 		{
 			if (analyzedMethod == null)
 				throw new ArgumentNullException(nameof(analyzedMethod));

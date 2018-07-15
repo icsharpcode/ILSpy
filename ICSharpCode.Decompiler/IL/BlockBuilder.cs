@@ -21,17 +21,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	class BlockBuilder
 	{
-		readonly Mono.Cecil.Cil.MethodBody body;
-		readonly IDecompilerTypeSystem typeSystem;
-		readonly Dictionary<Mono.Cecil.Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
+		readonly MethodBodyBlock body;
+		readonly Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler;
 
 		/// <summary>
 		/// Gets/Sets whether to create extended basic blocks instead of basic blocks.
@@ -39,14 +38,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool CreateExtendedBlocks;
 		
-		internal BlockBuilder(Mono.Cecil.Cil.MethodBody body, IDecompilerTypeSystem typeSystem,
-		                      Dictionary<Mono.Cecil.Cil.ExceptionHandler, ILVariable> variableByExceptionHandler)
+		internal BlockBuilder(MethodBodyBlock body,
+		                      Dictionary<ExceptionRegion, ILVariable> variableByExceptionHandler)
 		{
 			Debug.Assert(body != null);
-			Debug.Assert(typeSystem != null);
 			Debug.Assert(variableByExceptionHandler != null);
 			this.body = body;
-			this.typeSystem = typeSystem;
 			this.variableByExceptionHandler = variableByExceptionHandler;
 		}
 		
@@ -56,17 +53,17 @@ namespace ICSharpCode.Decompiler.IL
 		void CreateContainerStructure()
 		{
 			List<TryCatch> tryCatchList = new List<TryCatch>();
-			foreach (var eh in body.ExceptionHandlers) {
-				var tryRange = new Interval(eh.TryStart.Offset, eh.TryEnd != null ? eh.TryEnd.Offset : body.CodeSize);
+			foreach (var eh in body.ExceptionRegions) {
+				var tryRange = new Interval(eh.TryOffset, eh.TryOffset + eh.TryLength);
 				var handlerBlock = new BlockContainer();
-				handlerBlock.ILRange = new Interval(eh.HandlerStart.Offset, eh.HandlerEnd != null ? eh.HandlerEnd.Offset : body.CodeSize);
+				handlerBlock.ILRange = new Interval(eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength);
 				handlerBlock.Blocks.Add(new Block());
 				handlerContainers.Add(handlerBlock.ILRange.Start, handlerBlock);
 				
-				if (eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Fault || eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Finally) {
+				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Fault || eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally) {
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
-					if (eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Finally)
+					if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally)
 						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock));
 					else
 						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock));
@@ -83,9 +80,9 @@ namespace ICSharpCode.Decompiler.IL
 				}
 
 				ILInstruction filter;
-				if (eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Filter) {
+				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Filter) {
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
-					filterBlock.ILRange = new Interval(eh.FilterStart.Offset, eh.HandlerStart.Offset);
+					filterBlock.ILRange = new Interval(eh.FilterOffset, eh.HandlerOffset);
 					filterBlock.Blocks.Add(new Block());
 					handlerContainers.Add(filterBlock.ILRange.Start, filterBlock);
 					filter = filterBlock;
@@ -111,7 +108,7 @@ namespace ICSharpCode.Decompiler.IL
 		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
-			mainContainer.ILRange = new Interval(0, body.CodeSize);
+			mainContainer.ILRange = new Interval(0, body.GetCodeSize());
 			currentContainer = mainContainer;
 			if (instructions.Count == 0) {
 				currentContainer.Blocks.Add(new Block {
@@ -161,7 +158,7 @@ namespace ICSharpCode.Decompiler.IL
 				else if (!CreateExtendedBlocks && inst.HasFlag(InstructionFlags.MayBranch))
 					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: true);
 			}
-			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
+			FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
 			containerStack.Clear();
 			ConnectBranches(mainContainer, cancellationToken);
 		}

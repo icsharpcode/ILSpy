@@ -16,51 +16,44 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
 using ICSharpCode.Decompiler.TypeSystem;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	static class ILTypeExtensions
 	{
-		public static StackType GetStackType(this MetadataType typeCode)
+		public static StackType GetStackType(this PrimitiveType primitiveType)
 		{
-			switch (typeCode) {
-				case MetadataType.Boolean:
-				case MetadataType.Char:
-				case MetadataType.SByte:
-				case MetadataType.Byte:
-				case MetadataType.Int16:
-				case MetadataType.UInt16:
-				case MetadataType.Int32:
-				case MetadataType.UInt32:
+			switch (primitiveType) {
+				case PrimitiveType.I1:
+				case PrimitiveType.U1:
+				case PrimitiveType.I2:
+				case PrimitiveType.U2:
+				case PrimitiveType.I4:
+				case PrimitiveType.U4:
 					return StackType.I4;
-				case MetadataType.Int64:
-				case MetadataType.UInt64:
+				case PrimitiveType.I8:
+				case PrimitiveType.U8:
 					return StackType.I8;
-				case MetadataType.IntPtr:
-				case MetadataType.UIntPtr:
-				case MetadataType.Pointer:
-				case MetadataType.FunctionPointer:
+				case PrimitiveType.I:
+				case PrimitiveType.U:
+				case (PrimitiveType)0x0f: // Ptr
+				case (PrimitiveType)0x1b: // FnPtr
 					return StackType.I;
-				case MetadataType.Single:
+				case PrimitiveType.R4:
 					return StackType.F4;
-				case MetadataType.Double:
+				case PrimitiveType.R8:
 					return StackType.F8;
-				case MetadataType.ByReference:
+				case (PrimitiveType)0x10: // ByRef
 					return StackType.Ref;
-				case MetadataType.Void:
+				case (PrimitiveType)0x01: // Void
 					return StackType.Void;
-				case (MetadataType)PrimitiveType.Unknown:
+				case PrimitiveType.Unknown:
 					return StackType.Unknown;
 				default:
 					return StackType.O;
 			}
-		}
-
-		public static StackType GetStackType(this PrimitiveType primitiveType)
-		{
-			return ((MetadataType)primitiveType).GetStackType();
 		}
 		
 		public static Sign GetSign(this PrimitiveType primitiveType)

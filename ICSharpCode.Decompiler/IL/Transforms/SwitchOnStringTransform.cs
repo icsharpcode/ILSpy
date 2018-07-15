@@ -169,21 +169,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			values.Add((firstBlockValue, firstBlock));
 
 			bool extraLoad = false;
+			bool keepAssignmentBefore = false;
 			if (instructions[i - 1].MatchStLoc(switchValueVar, out switchValue)) {
 				// stloc switchValueVar(switchValue)
 				// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
-			} else if (instructions[i - 1] is StLoc stloc && stloc.Value.MatchLdLoc(switchValueVar)) {
-				// in case of optimized legacy code there are two stlocs:
-				// stloc otherSwitchValueVar(ldloc switchValue)
-				// stloc switchValueVar(ldloc otherSwitchValueVar)
-				// if (call op_Equality(ldloc otherSwitchValueVar, ldstr value)) br firstBlock
-				var otherSwitchValueVar = switchValueVar;
-				switchValueVar = stloc.Variable;
-				if (i >= 2 && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
-					&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
-					extraLoad = true;
+			} else if (instructions[i - 1] is StLoc stloc) {
+				if (stloc.Value.MatchLdLoc(switchValueVar)) {
+					// in case of optimized legacy code there are two stlocs:
+					// stloc otherSwitchValueVar(ldloc switchValue)
+					// stloc switchValueVar(ldloc otherSwitchValueVar)
+					// if (call op_Equality(ldloc otherSwitchValueVar, ldstr value)) br firstBlock
+					var otherSwitchValueVar = switchValueVar;
+					switchValueVar = stloc.Variable;
+					if (i >= 2 && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
+						&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
+						extraLoad = true;
+					} else {
+						switchValue = new LdLoc(otherSwitchValueVar);
+					}
 				} else {
-					switchValue = new LdLoc(otherSwitchValueVar);
+					// Variable before the start of the switch is not related to the switch.
+					keepAssignmentBefore = true;
+					switchValue = new LdLoc(switchValueVar);
 				}
 			} else {
 				switchValue = new LdLoc(switchValueVar);
@@ -202,7 +209,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (values.Count < 3)
 				return false;
 			// if the switchValueVar is used in other places as well, do not eliminate the store.
-			bool keepAssignmentBefore = false;
 			if (switchValueVar.LoadCount > values.Count) {
 				keepAssignmentBefore = true;
 				switchValue = new LdLoc(switchValueVar);

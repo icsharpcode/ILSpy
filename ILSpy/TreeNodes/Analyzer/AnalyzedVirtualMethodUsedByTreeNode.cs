@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					if (mr != null && mr.Name == name) {
 						// explicit call to the requested method 
 						if (instr.OpCode.Code == Code.Call
-							&& Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType)
+							&& Helpers.IsSameType(analyzedMethod.DeclaringType, mr.DeclaringType)
 							&& mr.Resolve() == analyzedMethod) {
 							found = true;
 							prefix = "(as base) ";

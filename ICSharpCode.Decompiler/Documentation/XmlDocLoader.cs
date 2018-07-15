@@ -20,8 +20,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using ICSharpCode.Decompiler.Documentation;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Documentation
 {
@@ -31,7 +30,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	public static class XmlDocLoader
 	{
 		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
-		static readonly ConditionalWeakTable<ModuleDefinition, XmlDocumentationProvider> cache = new ConditionalWeakTable<ModuleDefinition, XmlDocumentationProvider>();
+		static readonly ConditionalWeakTable<PEFile, XmlDocumentationProvider> cache = new ConditionalWeakTable<PEFile, XmlDocumentationProvider>();
 		
 		static XmlDocumentationProvider LoadMscorlibDocumentation()
 		{
@@ -47,7 +46,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			get { return mscorlibDocumentation.Value; }
 		}
 		
-		public static XmlDocumentationProvider LoadDocumentation(ModuleDefinition module)
+		public static XmlDocumentationProvider LoadDocumentation(PEFile module)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
@@ -56,7 +55,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				if (!cache.TryGetValue(module, out xmlDoc)) {
 					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
 					if (xmlDocFile == null) {
-						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.Runtime);
+						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.GetRuntime());
 					}
 					if (xmlDocFile != null) {
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);

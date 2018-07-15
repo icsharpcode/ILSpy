@@ -31,13 +31,13 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 		}
 
-		public KnownInfo(ITypeResolver resolver)
+		public KnownInfo(IDotNetTypeResolver resolver)
 		{
 			switch (resolver.RuntimeVersion) {
-				case "Net_2_0":
+				case ICSharpCode.Decompiler.Metadata.TargetRuntime.Net_2_0:
 					LoadKnownAssemblies30();
 					break;
-				case "Net_4_0":
+				case ICSharpCode.Decompiler.Metadata.TargetRuntime.Net_4_0:
 					LoadKnownAssemblies40();
 					break;
 				default:

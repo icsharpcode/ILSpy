@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler
 				anonymousTypes = false;
 				objectCollectionInitializers = false;
 				automaticProperties = false;
+				extensionMethods = false;
 				queryExpressions = false;
 				expressionTrees = false;
 			}
@@ -350,6 +351,18 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (usingDeclarations != value) {
 					usingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool extensionMethods = true;
+
+		public bool ExtensionMethods {
+			get { return extensionMethods; }
+			set {
+				if (extensionMethods != value) {
+					extensionMethods = value;
 					OnPropertyChanged();
 				}
 			}

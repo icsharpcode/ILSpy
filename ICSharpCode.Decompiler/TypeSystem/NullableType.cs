@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (elementType == null)
 				throw new ArgumentNullException("elementType");
-			return new ParameterizedTypeReference(KnownTypeReference.NullableOfT, new [] { elementType });
+			return new ParameterizedTypeReference(KnownTypeReference.Get(KnownTypeCode.NullableOfT), new [] { elementType });
 		}
 	}
 }

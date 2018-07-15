@@ -18,9 +18,10 @@
 
 using System;
 using System.Linq;
+using SRM = System.Reflection.Metadata;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,10 +30,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ReferenceFolderTreeNode : ILSpyTreeNode
 	{
-		readonly ModuleDefinition module;
+		readonly PEFile module;
 		readonly AssemblyTreeNode parentAssembly;
 		
-		public ReferenceFolderTreeNode(ModuleDefinition module, AssemblyTreeNode parentAssembly)
+		public ReferenceFolderTreeNode(PEFile module, AssemblyTreeNode parentAssembly)
 		{
 			this.module = module;
 			this.parentAssembly = parentAssembly;
@@ -53,10 +54,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
+			var metadata = module.Metadata;
 			foreach (var r in module.AssemblyReferences.OrderBy(r => r.Name))
 				this.Children.Add(new AssemblyReferenceTreeNode(r, parentAssembly));
-			foreach (var r in module.ModuleReferences.OrderBy(r => r.Name))
-				this.Children.Add(new ModuleReferenceTreeNode(r));
+			foreach (var r in metadata.GetModuleReferences().OrderBy(r => metadata.GetString(metadata.GetModuleReference(r).Name)))
+				this.Children.Add(new ModuleReferenceTreeNode(parentAssembly, r, metadata));
 		}
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
@@ -66,10 +68,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			output.WriteLine();
 			language.WriteCommentLine(output, "Referenced assemblies (in metadata order):");
 			// Show metadata order of references
-			foreach (var r in module.AssemblyReferences)
-				new AssemblyReferenceTreeNode(r, parentAssembly).Decompile(language, output, options);
-			foreach (var r in module.ModuleReferences)
-				language.WriteCommentLine(output, r.Name);
+			foreach (var node in this.Children.OfType<ILSpyTreeNode>())
+				node.Decompile(language, output, options);
 		}
 	}
 }

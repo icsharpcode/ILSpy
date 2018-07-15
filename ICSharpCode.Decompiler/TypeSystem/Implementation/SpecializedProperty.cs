@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
@@ -23,6 +25,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SpecializedProperty : SpecializedParameterizedMember, IProperty
 	{
+		internal static IProperty Create(IProperty propertyDefinition, TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution) || propertyDefinition.DeclaringType.TypeParameterCount == 0) {
+				return propertyDefinition;
+			}
+			if (substitution.MethodTypeArguments != null && substitution.MethodTypeArguments.Count > 0)
+				substitution = new TypeParameterSubstitution(substitution.ClassTypeArguments, EmptyList<IType>.Instance);
+			return new SpecializedProperty(propertyDefinition, substitution);
+		}
+
 		readonly IProperty propertyDefinition;
 		
 		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution substitution)

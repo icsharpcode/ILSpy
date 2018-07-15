@@ -17,27 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	/// <summary>
-	/// Represents an unresolved attribute.
-	/// </summary>
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix")]
-	public interface IUnresolvedAttribute
-	{
-		/// <summary>
-		/// Gets the code region of this attribute.
-		/// </summary>
-		DomRegion Region { get; }
-		
-		/// <summary>
-		/// Resolves the attribute.
-		/// </summary>
-		IAttribute CreateResolvedAttribute(ITypeResolveContext context);
-	}
-	
 	/// <summary>
 	/// Represents an attribute.
 	/// </summary>
@@ -56,13 +41,18 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMethod Constructor { get; }
 
 		/// <summary>
+		/// Gets whether there were errors decoding the attribute.
+		/// </summary>
+		bool HasDecodeErrors { get; }
+
+		/// <summary>
 		/// Gets the positional arguments.
 		/// </summary>
-		IReadOnlyList<ResolveResult> PositionalArguments { get; }
+		ImmutableArray<CustomAttributeTypedArgument<IType>> FixedArguments { get; }
 
 		/// <summary>
 		/// Gets the named arguments passed to the attribute.
 		/// </summary>
-		IReadOnlyList<KeyValuePair<IMember, ResolveResult>> NamedArguments { get; }
+		ImmutableArray<CustomAttributeNamedArgument<IType>> NamedArguments { get; }
 	}
 }

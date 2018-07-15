@@ -7,10 +7,6 @@ using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.ILSpy
 {
-
-	/// <summary>
-	/// Interaktionslogik für DebugSteps.xaml
-	/// </summary>
 	public partial class DebugSteps : UserControl, IPane
 	{
 		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {

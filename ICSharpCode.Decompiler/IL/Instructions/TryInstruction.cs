@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.Write("catch ");
 			if (variable != null) {
-				output.WriteDefinition(variable.Name, variable);
+				output.WriteLocalReference(variable.Name, variable, isDefinition: true);
 				output.Write(" : ");
 				Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
 			}

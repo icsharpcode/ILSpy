@@ -205,8 +205,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var def = type.GetDefinition();
 			return def != null && def.KnownTypeCode == knownType;
 		}
+
+		/// <summary>
+		/// Gets whether the type is the specified known type.
+		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// </summary>
+		internal static bool IsKnownType(this IType type, KnownAttribute knownType)
+		{
+			var def = type.GetDefinition();
+			return def != null && def.FullTypeName.IsKnownType(knownType);
+		}
+
+		public static bool IsKnownType(this FullTypeName typeName, KnownTypeCode knownType)
+		{
+			return typeName == KnownTypeReference.Get(knownType).TypeName;
+		}
+
+		public static bool IsKnownType(this TopLevelTypeName typeName, KnownTypeCode knownType)
+		{
+			return typeName == KnownTypeReference.Get(knownType).TypeName;
+		}
+
+		internal static bool IsKnownType(this FullTypeName typeName, KnownAttribute knownType)
+		{
+			return typeName == knownType.GetTypeName();
+		}
+
+		internal static bool IsKnownType(this TopLevelTypeName typeName, KnownAttribute knownType)
+		{
+			return typeName == knownType.GetTypeName();
+		}
 		#endregion
-		
+
 		#region GetDelegateInvokeMethod
 		/// <summary>
 		/// Gets the invoke method for a delegate type.
@@ -227,35 +257,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		#region GetType/Member
 		/// <summary>
-		/// Gets all unresolved type definitions from the file.
-		/// For partial classes, each part is returned.
-		/// </summary>
-		public static IEnumerable<IUnresolvedTypeDefinition> GetAllTypeDefinitions (this IUnresolvedFile file)
-		{
-			return TreeTraversal.PreOrder(file.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
-		/// <summary>
-		/// Gets all unresolved type definitions from the assembly.
-		/// For partial classes, each part is returned.
-		/// </summary>
-		public static IEnumerable<IUnresolvedTypeDefinition> GetAllTypeDefinitions (this IUnresolvedAssembly assembly)
-		{
-			return TreeTraversal.PreOrder(assembly.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
-		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this IAssembly assembly)
-		{
-			return TreeTraversal.PreOrder(assembly.TopLevelTypeDefinitions, t => t.NestedTypes);
-		}
-		
-		/// <summary>
 		/// Gets all type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetAllTypeDefinitions (this ICompilation compilation)
 		{
-			return compilation.Assemblies.SelectMany(a => a.GetAllTypeDefinitions());
+			return compilation.Modules.SelectMany(a => a.TypeDefinitions);
 		}
 
 		/// <summary>
@@ -264,59 +271,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
 		{
-			return compilation.Assemblies.SelectMany(a => a.TopLevelTypeDefinitions);
-		}
-		
-		/// <summary>
-		/// Gets the type (potentially a nested type) defined at the specified location.
-		/// Returns null if no type is defined at that location.
-		/// </summary>
-		public static IUnresolvedTypeDefinition GetInnermostTypeDefinition (this IUnresolvedFile file, int line, int column)
-		{
-			return file.GetInnermostTypeDefinition (new TextLocation (line, column));
-		}
-		
-		/// <summary>
-		/// Gets the member defined at the specified location.
-		/// Returns null if no member is defined at that location.
-		/// </summary>
-		public static IUnresolvedMember GetMember (this IUnresolvedFile file, int line, int column)
-		{
-			return file.GetMember (new TextLocation (line, column));
+			return compilation.Modules.SelectMany(a => a.TopLevelTypeDefinitions);
 		}
 		#endregion
 		
 		#region Resolve on collections
-		public static IReadOnlyList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
-		{
-			if (attributes == null)
-				throw new ArgumentNullException("attributes");
-			if (attributes.Count == 0)
-				return EmptyList<IAttribute>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedAttribute, IAttribute>(context, attributes, (c, a) => a.CreateResolvedAttribute(c));
-		}
-		
-		public static IReadOnlyList<ITypeParameter> CreateResolvedTypeParameters(this IList<IUnresolvedTypeParameter> typeParameters, ITypeResolveContext context)
-		{
-			if (typeParameters == null)
-				throw new ArgumentNullException("typeParameters");
-			if (typeParameters.Count == 0)
-				return EmptyList<ITypeParameter>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedTypeParameter, ITypeParameter>(context, typeParameters, (c, a) => a.CreateResolvedTypeParameter(c));
-		}
-		
-		public static IReadOnlyList<IParameter> CreateResolvedParameters(this IList<IUnresolvedParameter> parameters, ITypeResolveContext context)
-		{
-			if (parameters == null)
-				throw new ArgumentNullException("parameters");
-			if (parameters.Count == 0)
-				return EmptyList<IParameter>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IUnresolvedParameter, IParameter>(context, parameters, (c, a) => a.CreateResolvedParameter(c));
-		}
-		
 		public static IReadOnlyList<IType> Resolve(this IList<ITypeReference> typeReferences, ITypeResolveContext context)
 		{
 			if (typeReferences == null)
@@ -329,41 +288,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
-		
-		public static IReadOnlyList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
-		{
-			if (constantValues == null)
-				throw new ArgumentNullException("constantValues");
-			if (constantValues.Count == 0)
-				return EmptyList<ResolveResult>.Instance;
-			else
-				return new ProjectedList<ITypeResolveContext, IConstantValue, ResolveResult>(context, constantValues, (c, t) => t.Resolve(c));
-		}
-		#endregion
-		
-		#region GetSubTypeDefinitions
-		public static IEnumerable<ITypeDefinition> GetSubTypeDefinitions (this IType baseType)
-		{
-			if (baseType == null)
-				throw new ArgumentNullException ("baseType");
-			var def = baseType.GetDefinition ();
-			if (def == null)
-				return Enumerable.Empty<ITypeDefinition> ();
-			return def.GetSubTypeDefinitions ();
-		}
-		
-		/// <summary>
-		/// Gets all sub type definitions defined in a context.
-		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetSubTypeDefinitions (this ITypeDefinition baseType)
-		{
-			if (baseType == null)
-				throw new ArgumentNullException ("baseType");
-			foreach (var contextType in baseType.Compilation.GetAllTypeDefinitions ()) {
-				if (contextType.IsDerivedFrom (baseType))
-					yield return contextType;
-			}
-		}
 		#endregion
 		
 		#region IAssembly.GetTypeDefinition()
@@ -375,14 +299,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// There can be multiple types with the same full name in a compilation, as a
 		/// full type name is only unique per assembly.
 		/// If there are multiple possible matches, this method will return just one of them.
-		/// When possible, use <see cref="IAssembly.GetTypeDefinition"/> instead to
+		/// When possible, use <see cref="IModule.GetTypeDefinition"/> instead to
 		/// retrieve a type from a specific assembly.
 		/// </remarks>
 		public static IType FindType(this ICompilation compilation, FullTypeName fullTypeName)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
-			foreach (IAssembly asm in compilation.Assemblies) {
+			foreach (IModule asm in compilation.Modules) {
 				ITypeDefinition def = asm.GetTypeDefinition(fullTypeName);
 				if (def != null)
 					return def;
@@ -394,12 +318,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets the type definition for the specified unresolved type.
 		/// Returns null if the unresolved type does not belong to this assembly.
 		/// </summary>
-		public static ITypeDefinition GetTypeDefinition(this IAssembly assembly, FullTypeName fullTypeName)
+		public static ITypeDefinition GetTypeDefinition(this IModule module, FullTypeName fullTypeName)
 		{
-			if (assembly == null)
+			if (module == null)
 				throw new ArgumentNullException("assembly");
 			TopLevelTypeName topLevelTypeName = fullTypeName.TopLevelTypeName;
-			ITypeDefinition typeDef = assembly.GetTypeDefinition(topLevelTypeName);
+			ITypeDefinition typeDef = module.GetTypeDefinition(topLevelTypeName);
 			if (typeDef == null)
 				return null;
 			int typeParameterCount = topLevelTypeName.TypeParameterCount;
@@ -422,184 +346,83 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 		#endregion
-
-		#region ITypeReference.Resolve(ICompilation)
-
-		/// <summary>
-		/// Resolves a type reference in the compilation's main type resolve context.
-		/// Some type references require a more specific type resolve context and will not resolve using this method.
-		/// </summary>
-		/// <returns>
-		/// Returns the resolved type.
-		/// In case of an error, returns <see cref="SpecialType.UnknownType"/>.
-		/// Never returns null.
-		/// </returns>
-		public static IType Resolve (this ITypeReference reference, ICompilation compilation)
-		{
-			if (reference == null)
-				throw new ArgumentNullException ("reference");
-			if (compilation == null)
-				throw new ArgumentNullException ("compilation");
-			return reference.Resolve (compilation.TypeResolveContext);
-		}
-		#endregion
 		
-		#region ITypeDefinition.GetAttribute
+		#region IEntity.GetAttribute
+		/// <summary>
+		/// Gets whether the entity has an attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="entity">The entity on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		/// <param name="inherit">
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
+		/// </param>
+		public static bool HasAttribute(this IEntity entity, KnownAttribute attrType, bool inherit=false)
+		{
+			return GetAttribute(entity, attrType, inherit) != null;
+		}
+
 		/// <summary>
 		/// Gets the attribute of the specified attribute type (or derived attribute types).
 		/// </summary>
 		/// <param name="entity">The entity on which the attributes are declared.</param>
 		/// <param name="attributeType">The attribute type to look for.</param>
 		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
 		/// </param>
 		/// <returns>
 		/// Returns the attribute that was found; or <c>null</c> if none was found.
 		/// If inherit is true, an from the entity itself will be returned if possible;
 		/// and the base entity will only be searched if none exists.
 		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, IType attributeType, bool inherit = true)
+		public static IAttribute GetAttribute(this IEntity entity, KnownAttribute attributeType, bool inherit=false)
 		{
-			return GetAttributes(entity, attributeType, inherit).FirstOrDefault();
+			return GetAttributes(entity, inherit).FirstOrDefault(a => a.AttributeType.IsKnownType(attributeType));
 		}
-		
+
 		/// <summary>
-		/// Gets the attributes of the specified attribute type (or derived attribute types).
+		/// Gets the attributes on the entity.
 		/// </summary>
 		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
 		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
+		/// Specifies whether attributes inherited from base classes and base members
+		/// (if the given <paramref name="entity"/> in an <c>override</c>)
+		/// should be returned.
 		/// </param>
 		/// <returns>
 		/// Returns the list of attributes that were found.
-		/// If inherit is true, attributes from the entity itself are returned first; followed by attributes inherited from the base entity.
+		/// If inherit is true, attributes from the entity itself are returned first;
+		/// followed by attributes inherited from the base entity.
 		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, IType attributeType, bool inherit = true)
+		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, bool inherit)
 		{
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-			if (attributeType == null)
-				throw new ArgumentNullException("attributeType");
-			return GetAttributes(entity, attributeType.Equals, inherit);
-		}
-		
-		/// <summary>
-		/// Gets the attribute of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the attribute that was found; or <c>null</c> if none was found.
-		/// If inherit is true, an from the entity itself will be returned if possible;
-		/// and the base entity will only be searched if none exists.
-		/// </returns>
-		public static IAttribute GetAttribute(this IEntity entity, FullTypeName attributeType, bool inherit = true)
-		{
-			return GetAttributes(entity, attributeType, inherit).FirstOrDefault();
-		}
-		
-		/// <summary>
-		/// Gets the attributes of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="attributeType">The attribute type to look for.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the list of attributes that were found.
-		/// If inherit is true, attributes from the entity itself are returned first; followed by attributes inherited from the base entity.
-		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, FullTypeName attributeType, bool inherit = true)
-		{
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-			return GetAttributes(entity, attrType => {
-			                     	ITypeDefinition typeDef = attrType.GetDefinition();
-			                     	return typeDef != null && typeDef.FullTypeName == attributeType;
-			                     }, inherit);
-		}
-
-		/// <summary>
-		/// Gets the attribute of the specified attribute type (or derived attribute types).
-		/// </summary>
-		/// <param name="entity">The entity on which the attributes are declared.</param>
-		/// <param name="inherit">
-		/// Specifies whether attributes inherited from base classes and base members (if the given <paramref name="entity"/> in an <c>override</c>)
-		/// should be returned. The default is <c>true</c>.
-		/// </param>
-		/// <returns>
-		/// Returns the attribute that was found; or <c>null</c> if none was found.
-		/// If inherit is true, an from the entity itself will be returned if possible;
-		/// and the base entity will only be searched if none exists.
-		/// </returns>
-		public static IEnumerable<IAttribute> GetAttributes(this IEntity entity, bool inherit = true)
-		{
-			if (entity == null)
-				throw new ArgumentNullException ("entity");
-			return GetAttributes(entity, a => true, inherit);
-		}
-		
-		static IEnumerable<IAttribute> GetAttributes(IEntity entity, Predicate<IType> attributeTypePredicate, bool inherit)
-		{
-			if (!inherit) {
-				foreach (var attr in entity.Attributes) {
-					if (attributeTypePredicate(attr.AttributeType))
-						yield return attr;
+			if (inherit) {
+				if (entity is ITypeDefinition td) {
+					return InheritanceHelper.GetAttributes(td);
+				} else if (entity is IMember m) {
+					return InheritanceHelper.GetAttributes(m);
+				} else {
+					throw new NotSupportedException("Unknown entity type");
 				}
-				yield break;
+			} else {
+				return entity.GetAttributes();
 			}
-			ITypeDefinition typeDef = entity as ITypeDefinition;
-			if (typeDef != null) {
-				foreach (var baseType in typeDef.GetNonInterfaceBaseTypes().Reverse()) {
-					ITypeDefinition baseTypeDef = baseType.GetDefinition();
-					if (baseTypeDef == null)
-						continue;
-					foreach (var attr in baseTypeDef.Attributes) {
-						if (attributeTypePredicate(attr.AttributeType))
-							yield return attr;
-					}
-				}
-				yield break;
-			}
-			IMember member = entity as IMember;
-			if (member != null) {
-				HashSet<IMember> visitedMembers = new HashSet<IMember>();
-				do {
-					member = member.MemberDefinition; // it's sufficient to look at the definitions
-					if (!visitedMembers.Add(member)) {
-						// abort if we seem to be in an infinite loop (cyclic inheritance)
-						break;
-					}
-					foreach (var attr in member.Attributes) {
-						if (attributeTypePredicate(attr.AttributeType))
-							yield return attr;
-					}
-				} while (member.IsOverride && (member = InheritanceHelper.GetBaseMember(member)) != null);
-				yield break;
-			}
-			throw new NotSupportedException("Unknown entity type");
 		}
 		#endregion
-		
+
 		#region IAssembly.GetTypeDefinition(string,string,int)
 		/// <summary>
 		/// Gets the type definition for a top-level type.
 		/// </summary>
 		/// <remarks>This method uses ordinal name comparison, not the compilation's name comparer.</remarks>
-		public static ITypeDefinition GetTypeDefinition(this IAssembly assembly, string namespaceName, string name, int typeParameterCount = 0)
+		public static ITypeDefinition GetTypeDefinition(this IModule module, string namespaceName, string name, int typeParameterCount = 0)
 		{
-			if (assembly == null)
+			if (module == null)
 				throw new ArgumentNullException ("assembly");
-			return assembly.GetTypeDefinition (new TopLevelTypeName (namespaceName, name, typeParameterCount));
+			return module.GetTypeDefinition (new TopLevelTypeName (namespaceName, name, typeParameterCount));
 		}
 		#endregion
 		

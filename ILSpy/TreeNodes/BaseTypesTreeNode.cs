@@ -17,10 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
+using System.Reflection.Metadata;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,35 +32,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class BaseTypesTreeNode : ILSpyTreeNode
 	{
-		readonly TypeDefinition type;
+		readonly PEFile module;
+		readonly ITypeDefinition type;
 
-		public BaseTypesTreeNode(TypeDefinition type)
+		public BaseTypesTreeNode(PEFile module, ITypeDefinition type)
 		{
+			this.module = module;
 			this.type = type;
 			this.LazyLoading = true;
 		}
 
-		public override object Text
-		{
-			get { return "Base Types"; }
-		}
+		public override object Text => "Base Types";
 
-		public override object Icon
-		{
-			get { return Images.SuperTypes; }
-		}
+		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
 		{
-			AddBaseTypes(this.Children, type);
+			AddBaseTypes(this.Children, module, type);
 		}
 
-		internal static void AddBaseTypes(SharpTreeNodeCollection children, TypeDefinition type)
+		internal static void AddBaseTypes(SharpTreeNodeCollection children, PEFile module, ITypeDefinition typeDefinition)
 		{
-			if (type.BaseType != null)
-				children.Add(new BaseTypesEntryNode(type.BaseType, false));
-			foreach (var i in type.Interfaces) {
-				children.Add(new BaseTypesEntryNode(i.InterfaceType, true));
+			var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeDefinition.MetadataToken);
+			var baseTypes = typeDefinition.DirectBaseTypes.ToArray();
+			int i = 0;
+			if (typeDefinition.Kind == TypeKind.Interface) {
+				i++;
+			} else if (!typeDef.BaseType.IsNil) {
+				children.Add(new BaseTypesEntryNode(module, typeDef.BaseType, baseTypes[i], false));
+				i++;
+			}
+			foreach (var h in typeDef.GetInterfaceImplementations()) {
+				var impl = module.Metadata.GetInterfaceImplementation(h);
+				children.Add(new BaseTypesEntryNode(module, impl.Interface, baseTypes[i], true));
+				i++;
 			}
 		}
 

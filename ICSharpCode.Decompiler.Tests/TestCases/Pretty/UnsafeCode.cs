@@ -180,6 +180,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public unsafe void FixedStringNoPointerUse(string text)
+		{
+			fixed (char* ptr = text) {
+			}
+		}
+
 		public unsafe void PutDoubleIntoLongArray1(long[] array, int index, double val)
 		{
 			fixed (long* ptr = array) {

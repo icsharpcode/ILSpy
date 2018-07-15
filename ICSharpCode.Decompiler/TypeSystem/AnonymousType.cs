@@ -30,21 +30,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public class AnonymousType : AbstractType
 	{
 		ICompilation compilation;
-		IUnresolvedProperty[] unresolvedProperties;
-		IReadOnlyList<IProperty> resolvedProperties;
 		
-		public AnonymousType(ICompilation compilation, IList<IUnresolvedProperty> properties)
+		public AnonymousType(ICompilation compilation)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
-			if (properties == null)
-				throw new ArgumentNullException("properties");
 			this.compilation = compilation;
-			this.unresolvedProperties = properties.ToArray();
-			var context = new SimpleTypeResolveContext(compilation.MainAssembly);
-			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
+			throw new NotImplementedException();
 		}
 		
+		/*
 		sealed class AnonymousTypeProperty : DefaultResolvedProperty
 		{
 			readonly AnonymousType declaringType;
@@ -105,7 +100,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return owner.DeclaringType.GetHashCode() ^ unchecked(27 * this.Name.GetHashCode());
 			}
 		}
-		
+		*/
+
 		public override string Name {
 			get { return "Anonymous Type"; }
 		}
@@ -124,11 +120,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return true; }
 		}
 		
+		/*
 		public IReadOnlyList<IProperty> Properties {
 			get { return resolvedProperties; }
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -136,7 +133,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Object).GetMethods(filter, options);
 		}
 		
-		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IMethod> GetMethods(IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
 				return EmptyList<IMethod>.Instance;
@@ -144,23 +141,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return compilation.FindType(KnownTypeCode.Object).GetMethods(typeArguments, filter, options);
 		}
 		
-		public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		public override IEnumerable<IProperty> GetProperties(Predicate<IProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			for (int i = 0; i < unresolvedProperties.Length; i++) {
-				if (filter == null || filter(unresolvedProperties[i]))
+				if (filter == null || filter(resolvedProperties[i]))
 					yield return resolvedProperties[i];
 			}
 		}
 		
-		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			for (int i = 0; i < unresolvedProperties.Length; i++) {
 				if (unresolvedProperties[i].CanGet) {
-					if (filter == null || filter(unresolvedProperties[i].Getter))
+					if (filter == null || filter(resolvedProperties[i].Getter))
 						yield return resolvedProperties[i].Getter;
 				}
 				if (unresolvedProperties[i].CanSet) {
-					if (filter == null || filter(unresolvedProperties[i].Setter))
+					if (filter == null || filter(resolvedProperties[i].Setter))
 						yield return resolvedProperties[i].Setter;
 				}
 			}
@@ -190,6 +187,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return false;
 			}
 			return true;
-		}
+		}*/
 	}
 }

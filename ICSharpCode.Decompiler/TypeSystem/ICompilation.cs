@@ -25,28 +25,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface ICompilation
 	{
 		/// <summary>
-		/// Gets the current assembly.
+		/// Gets the primary module.
+		/// This is the module being (de)compiled; all other modules in the compilation are the other assemblies/modules
+		/// referenced by the main module.
 		/// </summary>
-		IAssembly MainAssembly { get; }
+		IModule MainModule { get; }
 		
 		/// <summary>
-		/// Gets the type resolve context that specifies this compilation and no current assembly or entity.
-		/// </summary>
-		ITypeResolveContext TypeResolveContext { get; }
-		
-		/// <summary>
-		/// Gets the list of all assemblies in the compilation.
+		/// Gets the list of all modules in the compilation.
 		/// </summary>
 		/// <remarks>
-		/// This main assembly is the first entry in the list.
+		/// This main module is the first entry in the list.
 		/// </remarks>
-		IList<IAssembly> Assemblies { get; }
-		
+		IReadOnlyList<IModule> Modules { get; }
+
 		/// <summary>
-		/// Gets the referenced assemblies.
-		/// This list does not include the main assembly.
+		/// Gets the referenced modules.
+		/// This list does not include the main module.
 		/// </summary>
-		IList<IAssembly> ReferencedAssemblies { get; }
+		IReadOnlyList<IModule> ReferencedModules { get; }
 		
 		/// <summary>
 		/// Gets the root namespace of this compilation.

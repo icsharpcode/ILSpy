@@ -27,32 +27,41 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// </summary>
 	public class SimpleCompilation : ICompilation
 	{
-		readonly ITypeResolveContext context;
 		readonly CacheManager cacheManager = new CacheManager();
-		readonly KnownTypeCache knownTypeCache;
-		readonly IAssembly mainAssembly;
-		readonly IList<IAssembly> assemblies;
-		readonly IList<IAssembly> referencedAssemblies;
+		IModule mainModule;
+		KnownTypeCache knownTypeCache;
+		IReadOnlyList<IModule> assemblies;
+		IReadOnlyList<IModule> referencedAssemblies;
+		bool initialized;
 		INamespace rootNamespace;
 		
-		public SimpleCompilation(IUnresolvedAssembly mainAssembly, params IAssemblyReference[] assemblyReferences)
-			: this(mainAssembly, (IEnumerable<IAssemblyReference>)assemblyReferences)
+		public SimpleCompilation(IModuleReference mainAssembly, params IModuleReference[] assemblyReferences)
+		{
+			Init(mainAssembly, assemblyReferences);
+		}
+
+		public SimpleCompilation(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
+		{
+			Init(mainAssembly, assemblyReferences);
+		}
+
+		protected SimpleCompilation()
 		{
 		}
-		
-		public SimpleCompilation(IUnresolvedAssembly mainAssembly, IEnumerable<IAssemblyReference> assemblyReferences)
+
+		protected void Init(IModuleReference mainAssembly, IEnumerable<IModuleReference> assemblyReferences)
 		{
 			if (mainAssembly == null)
 				throw new ArgumentNullException("mainAssembly");
 			if (assemblyReferences == null)
 				throw new ArgumentNullException("assemblyReferences");
-			this.context = new SimpleTypeResolveContext(this);
-			this.mainAssembly = mainAssembly.Resolve(context);
-			List<IAssembly> assemblies = new List<IAssembly>();
-			assemblies.Add(this.mainAssembly);
-			List<IAssembly> referencedAssemblies = new List<IAssembly>();
+			var context = new SimpleTypeResolveContext(this);
+			this.mainModule = mainAssembly.Resolve(context);
+			List<IModule> assemblies = new List<IModule>();
+			assemblies.Add(this.mainModule);
+			List<IModule> referencedAssemblies = new List<IModule>();
 			foreach (var asmRef in assemblyReferences) {
-				IAssembly asm;
+				IModule asm;
 				try {
 					asm = asmRef.Resolve(context);
 				} catch (InvalidOperationException) {
@@ -66,34 +75,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.assemblies = assemblies.AsReadOnly();
 			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
 			this.knownTypeCache = new KnownTypeCache(this);
+			this.initialized = true;
 		}
-		
-		public IAssembly MainAssembly {
+
+		public IModule MainModule {
 			get {
-				if (mainAssembly == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
-				return mainAssembly;
+				return mainModule;
 			}
 		}
 		
-		public IList<IAssembly> Assemblies {
+		public IReadOnlyList<IModule> Modules {
 			get {
-				if (assemblies == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return assemblies;
 			}
 		}
 		
-		public IList<IAssembly> ReferencedAssemblies {
+		public IReadOnlyList<IModule> ReferencedModules {
 			get {
-				if (referencedAssemblies == null)
+				if (!initialized)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return referencedAssemblies;
 			}
-		}
-		
-		public ITypeResolveContext TypeResolveContext {
-			get { return context; }
 		}
 		
 		public INamespace RootNamespace {
@@ -102,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (ns != null) {
 					return ns;
 				} else {
-					if (referencedAssemblies == null)
+					if (!initialized)
 						throw new InvalidOperationException("Compilation isn't initialized yet");
 					return LazyInit.GetOrSet(ref this.rootNamespace, CreateRootNamespace());
 				}
@@ -114,7 +120,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// SimpleCompilation does not support extern aliases; but derived classes might.
 			// CreateRootNamespace() is virtual so that derived classes can change the global namespace.
 			INamespace[] namespaces = new INamespace[referencedAssemblies.Count + 1];
-			namespaces[0] = mainAssembly.RootNamespace;
+			namespaces[0] = mainModule.RootNamespace;
 			for (int i = 0; i < referencedAssemblies.Count; i++) {
 				namespaces[i + 1] = referencedAssemblies[i].RootNamespace;
 			}
@@ -144,7 +150,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return "[SimpleCompilation " + mainAssembly.AssemblyName + "]";
+			return "[" + GetType().Name + " " + mainModule.AssemblyName + "]";
 		}
 	}
 }

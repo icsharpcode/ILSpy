@@ -20,8 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy
 {

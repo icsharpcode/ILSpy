@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						usingScope = new UsingScope(usingScope, ns);
 					}
 				}
-				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.DecompiledTypeDefinition);
 				this.context.Push(currentContext);
 				this.astBuilder = CreateAstBuilder(currentContext);
 			}
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				foreach (string ident in namespaceDeclaration.Identifiers) {
 					usingScope = new UsingScope(usingScope, ident);
 				}
-				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (methodDeclaration.GetSymbol() is IMethod method && CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(method)) {
 					var previousContext = context.Peek();
-					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly);
+					var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule);
 					context.Push(currentContext);
 					try {
 						astBuilder = CreateAstBuilder(currentContext);

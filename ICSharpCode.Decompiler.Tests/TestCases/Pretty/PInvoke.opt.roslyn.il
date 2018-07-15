@@ -28,7 +28,11 @@
 	.ver 0:0:0:0
 }
 
-.module PInvoke.opt.roslyn
+.module PInvoke.dll
+.imagebase 0x10000000
+.file alignment 0x00000200
+.stackreserve 0x00100000
+.subsystem 0x0003 // WindowsCui
 .corflags 0x00000001 // ILOnly
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = (
 	01 00 00 00

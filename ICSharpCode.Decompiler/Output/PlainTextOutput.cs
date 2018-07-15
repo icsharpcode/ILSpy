@@ -17,8 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {
@@ -96,23 +101,117 @@ namespace ICSharpCode.Decompiler
 			line++;
 			column = 1;
 		}
-		
-		public void WriteDefinition(string text, object definition, bool isLocal = true)
+
+		public void WriteReference(Disassembler.OpCodeInfo opCode)
+		{
+			Write(opCode.Name);
+		}
+
+		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
 		{
 			Write(text);
 		}
-		
-		public void WriteReference(string text, object reference, bool isLocal = false)
+
+		public void WriteReference(IType type, string text, bool isDefinition = false)
 		{
 			Write(text);
 		}
-		
+
+		public void WriteReference(IMember member, string text, bool isDefinition = false)
+		{
+			Write(text);
+		}
+
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		{
+			Write(text);
+		}
+
 		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed)
 		{
 		}
 		
 		void ITextOutput.MarkFoldEnd()
 		{
+		}
+	}
+
+	internal class TextOutputWithRollback : ITextOutput
+	{
+		List<Action<ITextOutput>> actions;
+		ITextOutput target;
+
+		public TextOutputWithRollback(ITextOutput target)
+		{
+			this.target = target;
+			this.actions = new List<Action<ITextOutput>>();
+		}
+
+		public void Commit()
+		{
+			foreach (var action in actions) {
+				action(target);
+			}
+		}
+
+		public void Indent()
+		{
+			actions.Add(target => target.Indent());
+		}
+
+		public void MarkFoldEnd()
+		{
+			actions.Add(target => target.MarkFoldEnd());
+		}
+
+		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
+		{
+			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed));
+		}
+
+		public void Unindent()
+		{
+			actions.Add(target => target.Unindent());
+		}
+
+		public void Write(char ch)
+		{
+			actions.Add(target => target.Write(ch));
+		}
+
+		public void Write(string text)
+		{
+			actions.Add(target => target.Write(text));
+		}
+
+		public void WriteLine()
+		{
+			actions.Add(target => target.WriteLine());
+		}
+
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		{
+			actions.Add(target => target.WriteLocalReference(text, reference, isDefinition));
+		}
+
+		public void WriteReference(OpCodeInfo opCode)
+		{
+			actions.Add(target => target.WriteReference(opCode));
+		}
+
+		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
+		{
+			actions.Add(target => target.WriteReference(module, handle, text, isDefinition));
+		}
+
+		public void WriteReference(IType type, string text, bool isDefinition = false)
+		{
+			actions.Add(target => target.WriteReference(type, text, isDefinition));
+		}
+
+		public void WriteReference(IMember member, string text, bool isDefinition = false)
+		{
+			actions.Add(target => target.WriteReference(member, text, isDefinition));
 		}
 	}
 }

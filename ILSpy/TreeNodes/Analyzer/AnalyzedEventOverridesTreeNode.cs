@@ -19,9 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -31,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedEventOverridesTreeNode(EventDefinition analyzedEvent)
 		{
-			if (analyzedEvent == null)
+			if (analyzedEvent.IsNil)
 				throw new ArgumentNullException(nameof(analyzedEvent));
 
 			this.analyzedEvent = analyzedEvent;
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			if (!TypesHierarchyHelpers.IsBaseType(analyzedEvent.DeclaringType, type, resolveTypeArguments: false))
+			if (!analyzedEvent.DeclaringType.IsBaseTypeOf(type))
 				yield break;
 
 			foreach (EventDefinition eventDef in type.Events) {
@@ -66,8 +67,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public static bool CanShow(EventDefinition property)
 		{
-			var accessor = property.AddMethod ?? property.RemoveMethod;
-			return accessor.IsVirtual && !accessor.IsFinal && !accessor.DeclaringType.IsInterface;
+			var accessor = property.GetAccessors().First().Method;
+			return accessor.HasFlag(MethodAttributes.Virtual) && !accessor.HasFlag(MethodAttributes.Final) && !accessor.DeclaringType.IsInterface;
 		}
 	}
 }

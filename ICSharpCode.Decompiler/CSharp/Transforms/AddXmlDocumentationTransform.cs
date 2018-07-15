@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Documentation;
@@ -33,30 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			if (!context.Settings.ShowXmlDocumentation)
+			if (!context.Settings.ShowXmlDocumentation || context.DecompileRun.DocumentationProvider == null)
 				return;
 			try {
-				var xmldoc = XmlDocLoader.LoadDocumentation(context.TypeSystem.ModuleDefinition);
-				if (xmldoc == null)
-					return;
-				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
-					var symbol = entity.GetSymbol();
-					Mono.Cecil.MemberReference mr;
-					switch (symbol) {
-						case IMember member:
-							mr = context.TypeSystem.GetCecil(member);
-							break;
-						case IType type:
-							mr = context.TypeSystem.GetCecil(type.GetDefinition());
-							break;
-						default:
-							continue;
-					}
-					if (mr == null)
+				var provider = context.DecompileRun.DocumentationProvider;
+				foreach (var entityDecl in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
+					if (!(entityDecl.GetSymbol() is IEntity entity))
 						continue;
-					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+					string doc = provider.GetDocumentation(entity);
 					if (doc != null) {
-						InsertXmlDocumentation(entity, new StringReader(doc));
+						InsertXmlDocumentation(entityDecl, new StringReader(doc));
 					}
 				}
 			} catch (XmlException ex) {

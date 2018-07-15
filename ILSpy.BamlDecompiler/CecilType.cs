@@ -2,68 +2,48 @@
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
 using System;
-using Mono.Cecil;
+using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler
 {
-	public class CecilType : IType
+	public class NRType : IDotNetType
 	{
-		internal readonly TypeDefinition type;
+		readonly ITypeDefinition type;
+
+		public ITypeDefinition Type => type;
 		
-		public CecilType(TypeDefinition type)
+		public NRType(ITypeDefinition type)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
-			this.type = type;
+			this.type = type ?? throw new ArgumentNullException(nameof(type));
 		}
 		
 		public string AssemblyQualifiedName {
 			get {
 				return type.FullName +
-					", " + type.Module.Assembly.FullName;
+					", " + type.ParentModule.FullAssemblyName;
 			}
 		}
 		
-		public bool IsSubclassOf(IType type)
+		public bool IsSubclassOf(IDotNetType type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
-			if (!(type is CecilType))
+				throw new ArgumentNullException(nameof(type));
+			if (!(type is NRType baseType))
 				return false;
-			
-			CecilType ct = (CecilType)type;
-			
-			var t = this.type;
-			
-			if (t == ct.type)
-				return false;
-			
-			while (t != null) {
-				if (t == ct.type)
-					return true;
-				foreach (var @interface in t.Interfaces) {
-					var resolved = @interface.InterfaceType.Resolve();
-					if (resolved == ct.type)
-						return true;
-				}
-				if (t.BaseType == null)
-					break;
-				
-				t = t.BaseType.Resolve();
-			}
-			
-			return false;
+
+			return this.type.GetAllBaseTypeDefinitions().Any(t => t.Equals(baseType.type));
 		}
 		
-		public bool Equals(IType type)
+		public bool Equals(IDotNetType type)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			if (!(type is CecilType))
+			if (!(type is NRType))
 				return false;
 			
-			return this.type == ((CecilType)type).type;
+			return this.type.Equals(((NRType)type).type);
 		}
 		
 		public override string ToString()
@@ -71,13 +51,14 @@ namespace ILSpy.BamlDecompiler
 			return string.Format("[CecilType Type={0}]", type);
 		}
 		
-		public IType BaseType {
+		public IDotNetType BaseType {
 			get {
-				TypeDefinition td = type.BaseType.Resolve();
+				var t = type.DirectBaseTypes.First();
+				var td = t.GetDefinition();
 				if (td == null)
-					throw new Exception("could not resolve '" + type.BaseType.FullName + "'!");
+					throw new Exception($"Could not resolve '{t.FullName}'!");
 				
-				return new CecilType(td);
+				return new NRType(td);
 			}
 		}
 	}

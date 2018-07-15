@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			ILRange.WriteTo(output, options);
 			output.Write("Block ");
-			output.WriteDefinition(Label, this);
+			output.WriteLocalReference(Label, this, isDefinition: true);
 			if (Kind != BlockKind.ControlFlow)
 				output.Write($" ({Kind})");
 			if (Parent is BlockContainer)

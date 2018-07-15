@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EnvDTE;
+using ICSharpCode.Decompiler.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;

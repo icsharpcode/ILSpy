@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// This struct cannot refer to nested classes.
 	/// </summary>
 	[Serializable]
-	public struct TopLevelTypeName : IEquatable<TopLevelTypeName>
+	public readonly struct TopLevelTypeName : IEquatable<TopLevelTypeName>
 	{
 		readonly string namespaceName;
 		readonly string name;

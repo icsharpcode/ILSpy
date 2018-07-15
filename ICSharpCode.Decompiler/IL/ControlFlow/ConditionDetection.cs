@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void HandleIfInstruction(Block block, IfInstruction ifInst)
 		{
-			while (InlineTrueBranch(ifInst) || InlineExitBranch(block)) {
+			while (InlineTrueBranch(block, ifInst) || InlineExitBranch(block)) {
 				PickBetterBlockExit(block, ifInst);
 				MergeCommonBranches(block, ifInst);
 				SwapEmptyThen(ifInst);
@@ -105,16 +105,30 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Only inlines branches that are strictly dominated by this block (incoming edge count == 1)
 		/// </summary>
-		private bool InlineTrueBranch(IfInstruction ifInst)
+		private bool InlineTrueBranch(Block block, IfInstruction ifInst)
 		{
-			if (!CanInline(ifInst.TrueInst))
+			if (!CanInline(ifInst.TrueInst)) {
+				if (block.Instructions.SecondToLastOrDefault() == ifInst && ifInst.FalseInst.MatchNop()) {
+					var exitInst = block.Instructions.Last();
+					if (DetectExitPoints.CompatibleExitInstruction(ifInst.TrueInst, exitInst)) {
+						// if (...) exitInst; exitInst;
+						context.Step("Use empty block as then-branch", ifInst.TrueInst);
+						ifInst.TrueInst = new Nop() { ILRange = ifInst.TrueInst.ILRange };
+						// false, because we didn't inline a real block
+						// this will cause HandleIfInstruction() to attempt to inline the exitInst.
+						return false;
+					}
+				}
 				return false;
+			}
 
 			context.Step("Inline block as then-branch", ifInst.TrueInst);
 			// The targetBlock was already processed, and is ready to embed
 			var targetBlock = ((Branch)ifInst.TrueInst).TargetBlock;
+			targetBlock.AddRef();  // Peformance: avoid temporarily disconnecting targetBlock
 			targetBlock.Remove();
 			ifInst.TrueInst = targetBlock;
+			targetBlock.ReleaseRef();
 
 			return true;
 		}
@@ -418,8 +432,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Swap then-branch with else-branch to match IL order", ifInst);
 			var oldTrue = ifInst.TrueInst;
+			oldTrue.AddRef(); // Peformance: avoid temporarily disconnecting oldTrue
 			ifInst.TrueInst = ifInst.FalseInst;
 			ifInst.FalseInst = oldTrue;
+			oldTrue.ReleaseRef();
 			ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 		}
 
@@ -587,14 +603,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// continue blocks have exactly 2 incoming edges
 			if (currentContainer.EntryPoint.IncomingEdgeCount == 2) {
-				try {
-					var forIncrement = HighLevelLoopTransform.GetIncrementBlock(currentContainer, currentContainer.EntryPoint);
-					if (forIncrement != null)
-						return forIncrement;
-				} catch (InvalidOperationException) {
-					// multiple potential increment blocks. Can get this because we don't check that the while loop
-					// has a condition first, as we don't need to do too much of HighLevelLoopTransform's job.
-				}
+				var forIncrement = HighLevelLoopTransform.GetIncrementBlock(currentContainer, currentContainer.EntryPoint);
+				if (forIncrement != null)
+					return forIncrement;
 			}
 
 			return currentContainer.EntryPoint;

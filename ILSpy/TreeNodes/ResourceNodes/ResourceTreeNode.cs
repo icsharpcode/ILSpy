@@ -18,13 +18,14 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -38,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public ResourceTreeNode(Resource r)
 		{
-			if (r == null)
+			if (r.IsNil)
 				throw new ArgumentNullException(nameof(r));
 			this.r = r;
 		}
@@ -70,7 +71,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, string.Format("{0} ({1}, {2})", r.Name, r.ResourceType, r.Attributes));
 			
 			ISmartTextOutput smartOutput = output as ISmartTextOutput;
-			if (smartOutput != null && r is EmbeddedResource) {
+			if (smartOutput != null) {
 				smartOutput.AddButton(Images.Save, "Save", delegate { Save(null); });
 				output.WriteLine();
 			}
@@ -78,24 +79,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool View(DecompilerTextView textView)
 		{
-			EmbeddedResource er = r as EmbeddedResource;
-			if (er != null) {
-				Stream s = er.GetResourceStream();
-				if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit) {
+			Stream s = Resource.TryOpenStream();
+			if (s != null && s.Length < DecompilerTextView.DefaultOutputLengthLimit) {
+				s.Position = 0;
+				FileType type = GuessFileType.DetectFileType(s);
+				if (type != FileType.Binary) {
 					s.Position = 0;
-					FileType type = GuessFileType.DetectFileType(s);
-					if (type != FileType.Binary) {
-						s.Position = 0;
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
-						output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
-						string ext;
-						if (type == FileType.Xml)
-							ext = ".xml";
-						else
-							ext = Path.GetExtension(DecompilerTextView.CleanUpName(er.Name));
-						textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext));
-						return true;
-					}
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.Write(FileReader.OpenStream(s, Encoding.UTF8).ReadToEnd());
+					string ext;
+					if (type == FileType.Xml)
+						ext = ".xml";
+					else
+						ext = Path.GetExtension(DecompilerTextView.CleanUpName(Resource.Name));
+					textView.ShowNode(output, this, HighlightingManager.Instance.GetDefinitionByExtension(ext));
+					return true;
 				}
 			}
 			return false;
@@ -103,20 +101,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool Save(DecompilerTextView textView)
 		{
-			EmbeddedResource er = r as EmbeddedResource;
-			if (er != null) {
-				SaveFileDialog dlg = new SaveFileDialog();
-				dlg.FileName = DecompilerTextView.CleanUpName(er.Name);
-				if (dlg.ShowDialog() == true) {
-					Stream s = er.GetResourceStream();
-					s.Position = 0;
-					using (var fs = dlg.OpenFile()) {
-						s.CopyTo(fs);
-					}
+			Stream s = Resource.TryOpenStream();
+			if (s == null)
+				return false;
+			SaveFileDialog dlg = new SaveFileDialog();
+			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
+			if (dlg.ShowDialog() == true) {
+				s.Position = 0;
+				using (var fs = dlg.OpenFile()) {
+					s.CopyTo(fs);
 				}
-				return true;
 			}
-			return false;
+			return true;
 		}
 		
 		public static ILSpyTreeNode Create(Resource resource)

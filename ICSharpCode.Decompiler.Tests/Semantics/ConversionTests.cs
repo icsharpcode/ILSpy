@@ -524,6 +524,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.AreEqual(0, BetterConversion(typeof(sbyte), typeof(int?), typeof(uint?)));
 		}
 
+		/* TODO: we should probably revive these tests somehow
 		[Test]
 		public void ExpansiveInheritance()
 		{
@@ -549,7 +550,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.IsFalse(conversions.ImplicitConversion(type1, type2).IsValid);
 		}
 
-		/* TODO: we should probably revive these tests somehow
 		[Test]
 		public void ImplicitTypeParameterConversion()
 		{

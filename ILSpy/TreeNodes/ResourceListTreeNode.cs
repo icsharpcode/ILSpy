@@ -20,7 +20,7 @@ using System;
 using System.Linq;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -29,9 +29,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ResourceListTreeNode : ILSpyTreeNode
 	{
-		readonly ModuleDefinition module;
+		readonly PEFile module;
 		
-		public ResourceListTreeNode(ModuleDefinition module)
+		public ResourceListTreeNode(PEFile module)
 		{
 			this.LazyLoading = true;
 			this.module = module;

@@ -237,9 +237,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						operand: targetInvokeCall.Arguments[2]
 					);
 				default:
-					throw new NotSupportedException();
+					throw new ArgumentOutOfRangeException($"Value {callsite.Kind} is not supported!");
 			}
-			throw new NotImplementedException();
 		}
 
 		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
@@ -420,7 +419,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							callSiteInfo.Kind = BinderMethodKind.Invoke;
 							break;
 						default:
-							throw new NotSupportedException();
+							throw new ArgumentOutOfRangeException();
 					}
 					if (binderCall.Arguments.Count != 3)
 						return false;
@@ -501,7 +500,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			int i = 0;
 			callSiteInfo.ArgumentInfos = new CSharpArgumentInfo[numberOfArguments];
-			var compileTimeTypes = callSiteInfo.DelegateType.GetDelegateInvokeMethod().Parameters.SelectArray(p => p.Type);
+			var compileTimeTypes = callSiteInfo.DelegateType.GetDelegateInvokeMethod().Parameters.SelectReadOnlyArray(p => p.Type);
 			foreach (var arg in arguments) {
 				if (!(arg is Call createCall))
 					return false;

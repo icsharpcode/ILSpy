@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -308,11 +308,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out Mono.Cecil.FieldReference field)
+		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out FieldDefinition field)
 		{
 			method = null;
 			array = null;
-			field = null;
+			field = default;
 			Call call = instruction as Call;
 			if (call == null || call.Arguments.Count != 2)
 				return false;
@@ -326,22 +326,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IMember member;
 			if (!call.Arguments[1].MatchLdMemberToken(out member))
 				return false;
-			field = context.TypeSystem.GetCecil(member) as Mono.Cecil.FieldReference;
-			if (field == null)
+			if (member.MetadataToken.IsNil)
 				return false;
+			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
 			return true;
 		}
 
 		bool ForwardScanInitializeArrayRuntimeHelper(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
 		{
-			ILVariable v2;
-			IMethod method;
-			Mono.Cecil.FieldReference field;
-			if (MatchInitializeArrayCall(body.Instructions[pos], out method, out v2, out field) && array == v2) {
-				var fieldDef = field.ResolveWithinSameModule();
-				if (fieldDef != null && fieldDef.InitialValue != null) {
+			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
+				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
-					if (DecodeArrayInitializer(arrayType, array, fieldDef.InitialValue, arrayLength, valuesList)) {
+					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+					if (DecodeArrayInitializer(arrayType, array, initialValue, arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;
 						return true;
@@ -353,30 +350,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool DecodeArrayInitializer(IType type, ILVariable array, byte[] initialValue, int[] arrayLength, List<ILInstruction> output)
+		static bool DecodeArrayInitializer(IType type, ILVariable array, BlobReader initialValue, int[] arrayLength, List<ILInstruction> output)
 		{
 			TypeCode typeCode = ReflectionHelper.GetTypeCode(type);
 			switch (typeCode) {
 				case TypeCode.Boolean:
 				case TypeCode.Byte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)d[i]));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadByte()));
 				case TypeCode.SByte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)unchecked((sbyte)d[i])));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadSByte()));
 				case TypeCode.Int16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)BitConverter.ToInt16(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt16()));
 				case TypeCode.Char:
 				case TypeCode.UInt16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)BitConverter.ToUInt16(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadUInt16()));
 				case TypeCode.Int32:
 				case TypeCode.UInt32:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4(BitConverter.ToInt32(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt32()));
 				case TypeCode.Int64:
 				case TypeCode.UInt64:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI8(BitConverter.ToInt64(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI8(r.ReadInt64()));
 				case TypeCode.Single:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF4(BitConverter.ToSingle(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r)  => new LdcF4(r.ReadSingle()));
 				case TypeCode.Double:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF8(BitConverter.ToDouble(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcF8(r.ReadDouble()));
 				case TypeCode.Object:
 				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();
@@ -388,15 +385,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool DecodeArrayInitializer(byte[] initialValue, ILVariable array, int[] arrayLength, List<ILInstruction> output, TypeCode elementType, IType type, Func<byte[], int, ILInstruction> decoder)
+		delegate ILInstruction ValueDecoder(ref BlobReader reader);
+
+		static bool DecodeArrayInitializer(BlobReader initialValue, ILVariable array, int[] arrayLength,
+			List<ILInstruction> output, TypeCode elementType, IType type, ValueDecoder decoder)
 		{
 			int elementSize = ElementSizeOf(elementType);
 			var totalLength = arrayLength.Aggregate(1, (t, l) => t * l);
-			if (initialValue.Length < (totalLength * elementSize))
+			if (initialValue.RemainingBytes < (totalLength * elementSize))
 				return false;
 
 			for (int i = 0; i < totalLength; i++) {
-				output.Add(decoder(initialValue, i * elementSize));
+				output.Add(decoder(ref initialValue));
 				int next = i;
 				for (int j = arrayLength.Length - 1; j >= 0; j--) {
 					output.Add(new LdcI4(next % arrayLength[j]));

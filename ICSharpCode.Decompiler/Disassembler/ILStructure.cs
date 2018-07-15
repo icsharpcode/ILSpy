@@ -19,7 +19,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Mono.Cecil.Cil;
+using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
@@ -55,6 +57,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// </summary>
 	public class ILStructure
 	{
+		public readonly PEFile Module;
+		public readonly MethodDefinitionHandle MethodHandle;
+		public readonly GenericContext GenericContext;
 		public readonly ILStructureType Type;
 
 		/// <summary>
@@ -70,82 +75,87 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// <summary>
 		/// The exception handler associated with the Try, Filter or Handler block.
 		/// </summary>
-		public readonly ExceptionHandler ExceptionHandler;
+		public readonly ExceptionRegion ExceptionHandler;
 
 		/// <summary>
 		/// The loop's entry point.
 		/// </summary>
-		public readonly Instruction LoopEntryPoint;
+		public readonly int LoopEntryPointOffset;
 
 		/// <summary>
 		/// The list of child structures.
 		/// </summary>
 		public readonly List<ILStructure> Children = new List<ILStructure>();
 
-		public ILStructure(MethodBody body)
-			: this(ILStructureType.Root, 0, body.CodeSize)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, MethodBodyBlock body)
+			: this(module, handle, genericContext, ILStructureType.Root, 0, body.GetILReader().Length)
 		{
 			// Build the tree of exception structures:
-			for (int i = 0; i < body.ExceptionHandlers.Count; i++) {
-				ExceptionHandler eh = body.ExceptionHandlers[i];
-				if (!body.ExceptionHandlers.Take(i).Any(oldEh => oldEh.TryStart == eh.TryStart && oldEh.TryEnd == eh.TryEnd))
-					AddNestedStructure(new ILStructure(ILStructureType.Try, eh.TryStart.Offset, eh.TryEnd.Offset, eh));
-				if (eh.HandlerType == ExceptionHandlerType.Filter)
-					AddNestedStructure(new ILStructure(ILStructureType.Filter, eh.FilterStart.Offset, eh.HandlerStart.Offset, eh));
-				AddNestedStructure(new ILStructure(ILStructureType.Handler, eh.HandlerStart.Offset, eh.HandlerEnd == null ? body.CodeSize : eh.HandlerEnd.Offset, eh));
+			for (int i = 0; i < body.ExceptionRegions.Length; i++) {
+				ExceptionRegion eh = body.ExceptionRegions[i];
+				if (!body.ExceptionRegions.Take(i).Any(oldEh => oldEh.TryOffset == eh.TryOffset && oldEh.TryLength == eh.TryLength))
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Try, eh.TryOffset, eh.TryOffset + eh.TryLength, eh));
+				if (eh.Kind == ExceptionRegionKind.Filter)
+					AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Filter, eh.FilterOffset, eh.HandlerOffset, eh));
+				AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Handler, eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength, eh));
 			}
 			// Very simple loop detection: look for backward branches
-			List<KeyValuePair<Instruction, Instruction>> allBranches = FindAllBranches(body);
+			(var allBranches, var isAfterUnconditionalBranch) = FindAllBranches(body.GetILReader());
 			// We go through the branches in reverse so that we find the biggest possible loop boundary first (think loops with "continue;")
 			for (int i = allBranches.Count - 1; i >= 0; i--) {
-				int loopEnd = allBranches[i].Key.GetEndOffset();
-				int loopStart = allBranches[i].Value.Offset;
+				int loopEnd = allBranches[i].Source.End;
+				int loopStart = allBranches[i].Target;
 				if (loopStart < loopEnd) {
 					// We found a backward branch. This is a potential loop.
 					// Check that is has only one entry point:
-					Instruction entryPoint = null;
+					int entryPoint = -1;
 
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
-					Instruction prev = allBranches[i].Value.Previous;
-					if (prev != null && !prev.OpCode.IsUnconditionalBranch())
-						entryPoint = allBranches[i].Value;
+					if (loopStart > 0 && !isAfterUnconditionalBranch[loopStart])
+						entryPoint = allBranches[i].Target;
 					
 					bool multipleEntryPoints = false;
-					foreach (var pair in allBranches) {
-						if (pair.Key.Offset < loopStart || pair.Key.Offset >= loopEnd) {
-							if (loopStart <= pair.Value.Offset && pair.Value.Offset < loopEnd) {
+					foreach (var branch in allBranches) {
+						if (branch.Source.Start < loopStart || branch.Source.Start >= loopEnd) {
+							if (loopStart <= branch.Target && branch.Target < loopEnd) {
 								// jump from outside the loop into the loop
-								if (entryPoint == null)
-									entryPoint = pair.Value;
-								else if (pair.Value != entryPoint)
+								if (entryPoint < 0)
+									entryPoint = branch.Target;
+								else if (branch.Target != entryPoint)
 									multipleEntryPoints = true;
 							}
 						}
 					}
 					if (!multipleEntryPoints) {
-						AddNestedStructure(new ILStructure(ILStructureType.Loop, loopStart, loopEnd, entryPoint));
+						AddNestedStructure(new ILStructure(module, handle, genericContext, ILStructureType.Loop, loopStart, loopEnd, entryPoint));
 					}
 				}
 			}
 			SortChildren();
 		}
 
-		public ILStructure(ILStructureType type, int startOffset, int endOffset, ExceptionHandler handler = null)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, ILStructureType type, int startOffset, int endOffset, ExceptionRegion handler = default)
 		{
 			Debug.Assert(startOffset < endOffset);
+			this.Module = module;
+			this.MethodHandle = handle;
+			this.GenericContext = genericContext;
 			this.Type = type;
 			this.StartOffset = startOffset;
 			this.EndOffset = endOffset;
 			this.ExceptionHandler = handler;
 		}
 
-		public ILStructure(ILStructureType type, int startOffset, int endOffset, Instruction loopEntryPoint)
+		public ILStructure(PEFile module, MethodDefinitionHandle handle, GenericContext genericContext, ILStructureType type, int startOffset, int endOffset, int loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);
+			this.Module = module;
+			this.MethodHandle = handle;
+			this.GenericContext = genericContext;
 			this.Type = type;
 			this.StartOffset = startOffset;
 			this.EndOffset = endOffset;
-			this.LoopEntryPoint = loopEntryPoint;
+			this.LoopEntryPointOffset = loopEntryPoint;
 		}
 
 		bool AddNestedStructure(ILStructure newStructure)
@@ -180,29 +190,76 @@ namespace ICSharpCode.Decompiler.Disassembler
 			return true;
 		}
 
+		struct Branch
+		{
+			public Interval Source;
+			public int Target;
+
+			public Branch(int start, int end, int target)
+			{
+				this.Source = new Interval(start, end);
+				this.Target = target;
+			}
+
+			public override string ToString()
+			{
+				return $"[Branch Source={Source}, Target={Target}]";
+			}
+		}
+
 		/// <summary>
 		/// Finds all branches. Returns list of source offset->target offset mapping.
 		/// Multiple entries for the same source offset are possible (switch statements).
 		/// The result is sorted by source offset.
 		/// </summary>
-		List<KeyValuePair<Instruction, Instruction>> FindAllBranches(MethodBody body)
+		(List<Branch> Branches, BitSet IsAfterUnconditionalBranch) FindAllBranches(BlobReader body)
 		{
-			var result = new List<KeyValuePair<Instruction, Instruction>>();
-			foreach (Instruction inst in body.Instructions) {
-				switch (inst.OpCode.OperandType) {
-					case OperandType.InlineBrTarget:
-					case OperandType.ShortInlineBrTarget:
-						result.Add(new KeyValuePair<Instruction, Instruction>(inst, (Instruction)inst.Operand));
+			var result = new List<Branch>();
+			var bitset = new BitSet(body.Length + 1);
+			body.Reset();
+			int target;
+			while (body.RemainingBytes > 0) {
+				var offset = body.Offset;
+				int endOffset;
+				var thisOpCode = body.DecodeOpCode();
+				switch (thisOpCode.GetOperandType()) {
+					case OperandType.BrTarget:
+					case OperandType.ShortBrTarget:
+						target = ILParser.DecodeBranchTarget(ref body, thisOpCode);
+						endOffset = body.Offset;
+						result.Add(new Branch(offset, endOffset, target));
+						bitset[endOffset] = IsUnconditionalBranch(thisOpCode);
 						break;
-					case OperandType.InlineSwitch:
-						foreach (Instruction target in (Instruction[])inst.Operand)
-							result.Add(new KeyValuePair<Instruction, Instruction>(inst, target));
+					case OperandType.Switch:
+						var targets = ILParser.DecodeSwitchTargets(ref body);
+						foreach (int t in targets)
+							result.Add(new Branch(offset, body.Offset, t));
+						break;
+					default:
+						ILParser.SkipOperand(ref body, thisOpCode);
+						bitset[body.Offset] = IsUnconditionalBranch(thisOpCode);
 						break;
 				}
 			}
-			// ignore the branches where Cecil doesn't decode the target
-			result.RemoveAll(x => x.Value == null);
-			return result;
+			return (result, bitset);
+		}
+
+		static bool IsUnconditionalBranch(ILOpCode opCode)
+		{
+			switch (opCode) {
+				case ILOpCode.Br:
+				case ILOpCode.Br_s:
+				case ILOpCode.Ret:
+				case ILOpCode.Endfilter:
+				case ILOpCode.Endfinally:
+				case ILOpCode.Throw:
+				case ILOpCode.Rethrow:
+				case ILOpCode.Leave:
+				case ILOpCode.Leave_s:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		void SortChildren()

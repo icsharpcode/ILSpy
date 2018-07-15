@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.IL.Transforms;
-using Mono.Cecil;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -30,7 +29,8 @@ namespace ICSharpCode.Decompiler.IL
 	partial class ILFunction
 	{
 		public readonly IMethod Method;
-		public readonly MethodDefinition CecilMethod;
+		public readonly GenericContext GenericContext;
+		public readonly int CodeSize;
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether this function is async.
 		/// This flag gets set by the AsyncAwaitDecompiler.
 		/// </summary>
-		public bool IsAsync { get => AsyncReturnType != null; }
+		public bool IsAsync => AsyncReturnType != null;
 
 		/// <summary>
 		/// Return element type -- if the async method returns Task{T}, this field stores T.
@@ -73,18 +73,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public readonly IReadOnlyList<IParameter> Parameters;
 
-		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, int codeSize, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
-			this.Body = body;
 			this.Method = method;
-			this.CecilMethod = cecilMethod;
+			this.CodeSize = codeSize;
+			this.GenericContext = genericContext;
+			this.Body = body;
 			this.ReturnType = Method?.ReturnType;
 			this.Parameters = Method?.Parameters;
 			this.Variables = new ILVariableCollection(this);
 		}
 
-		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IType returnType, IReadOnlyList<IParameter> parameters, GenericContext genericContext, ILInstruction body) : base(OpCode.ILFunction)
 		{
+			this.GenericContext = genericContext;
 			this.Body = body;
 			this.ReturnType = returnType;
 			this.Parameters = parameters;
@@ -102,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		void CloneVariables()
 		{
-			throw new NotImplementedException();
+			throw new NotSupportedException("ILFunction.CloneVariables is currently not supported!");
 		}
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
@@ -164,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var usedILRanges = new List<LongInterval>();
 			MarkUsedILRanges(body);
-			return new LongSet(new LongInterval(0, CecilMethod.Body.CodeSize)).ExceptWith(new LongSet(usedILRanges));
+			return new LongSet(new LongInterval(0, CodeSize)).ExceptWith(new LongSet(usedILRanges));
 
 			void MarkUsedILRanges(ILInstruction inst)
 			{
@@ -234,7 +236,7 @@ namespace ICSharpCode.Decompiler.IL
 						name = "I_";
 						break;
 					default:
-						throw new NotSupportedException();
+						throw new ArgumentOutOfRangeException(nameof(kind));
 				}
 				name += index;
 				variable.HasGeneratedName = true;

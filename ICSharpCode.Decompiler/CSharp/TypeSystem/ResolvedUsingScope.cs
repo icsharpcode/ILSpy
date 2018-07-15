@@ -184,8 +184,8 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 				get { return EmptyList<ITypeDefinition>.Instance; }
 			}
 			
-			IEnumerable<IAssembly> INamespace.ContributingAssemblies {
-				get { return EmptyList<IAssembly>.Instance; }
+			IEnumerable<IModule> INamespace.ContributingModules {
+				get { return EmptyList<IModule>.Instance; }
 			}
 			
 			ICompilation ICompilationProvider.Compilation {

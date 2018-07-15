@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Mono.Cecil;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -88,7 +87,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return ~start;
 		}
-
+		/*
 		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
 			while (type.FullName != "System.Object") {
@@ -101,13 +100,53 @@ namespace ICSharpCode.ILSpy
 			}
 			return false;
 		}
-		
-		public static string ToSuffixString(this MetadataToken token)
+		*/
+		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle token)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
 				return string.Empty;
-			
-			return " @" + token.ToInt32().ToString("x8");
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.MethodDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.PropertyDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.EventDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.FieldDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.TypeDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
 		}
 
 		/// <summary>
@@ -119,6 +158,20 @@ namespace ICSharpCode.ILSpy
 			if (string.IsNullOrEmpty(s) || length >= s.Length)
 				return s;
 			return s.Substring(0, length) + "...";
+		}
+
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToArray()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static U[] SelectArray<T, U>(this ICollection<T> collection, Func<T, U> func)
+		{
+			U[] result = new U[collection.Count];
+			int index = 0;
+			foreach (var element in collection) {
+				result[index++] = func(element);
+			}
+			return result;
 		}
 	}
 }

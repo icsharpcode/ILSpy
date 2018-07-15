@@ -110,13 +110,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				parameters.Skip(baseMethod.Parameters.Count - 1).Select(p => p.Type.AcceptVisitor(substitution)).ToList());
 		}
 
-		public IReadOnlyList<IUnresolvedMethod> Parts {
-			get { return baseMethod.Parts; }
-		}
-
-		public IReadOnlyList<IAttribute> ReturnTypeAttributes {
-			get { return baseMethod.ReturnTypeAttributes; }
-		}
+		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
+		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
 
 		public IReadOnlyList<ITypeParameter> TypeParameters {
 			get { return baseMethod.TypeParameters; }
@@ -126,7 +121,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.TypeArguments; }
 		}
 
-		public Mono.Cecil.MetadataToken MetadataToken => baseMethod.MetadataToken;
+		public System.Reflection.Metadata.EntityHandle MetadataToken => baseMethod.MetadataToken;
 
 		public bool IsExtensionMethod {
 			get { return baseMethod.IsExtensionMethod; }
@@ -143,15 +138,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool IsOperator {
 			get { return baseMethod.IsOperator; }
 		}
-
-		public bool IsPartial {
-			get { return baseMethod.IsPartial; }
-		}
-
-		public bool IsAsync {
-			get { return baseMethod.IsAsync; }
-		}
-
+		
 		public bool HasBody {
 			get { return baseMethod.HasBody; }
 		}
@@ -181,16 +168,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.MemberDefinition; }
 		}
 
-		public IUnresolvedMember UnresolvedMember {
-			get { return baseMethod.UnresolvedMember; }
-		}
-
 		public IType ReturnType {
 			get { return baseMethod.ReturnType; }
 		}
 
-		public IReadOnlyList<IMember> ImplementedInterfaceMembers {
-			get { return baseMethod.ImplementedInterfaceMembers; }
+		public IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers {
+			get { return baseMethod.ExplicitlyImplementedInterfaceMembers; }
 		}
 
 		public bool IsExplicitInterfaceImplementation {
@@ -237,12 +220,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.DeclaringType; }
 		}
 
-		public IAssembly ParentAssembly {
-			get { return baseMethod.ParentAssembly; }
-		}
-
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return baseMethod.Attributes; }
+		public IModule ParentModule {
+			get { return baseMethod.ParentModule; }
 		}
 
 		public bool IsStatic {
@@ -257,14 +236,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.IsSealed; }
 		}
 
-		public bool IsShadowing {
-			get { return baseMethod.IsShadowing; }
-		}
-
-		public bool IsSynthetic {
-			get { return baseMethod.IsSynthetic; }
-		}
-
 		#endregion
 
 		#region IHasAccessibility implementation
@@ -272,31 +243,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public Accessibility Accessibility {
 			get { return baseMethod.Accessibility; }
 		}
-
-		public bool IsPrivate {
-			get { return baseMethod.IsPrivate; }
-		}
-
-		public bool IsPublic {
-			get { return baseMethod.IsPublic; }
-		}
-
-		public bool IsProtected {
-			get { return baseMethod.IsProtected; }
-		}
-
-		public bool IsInternal {
-			get { return baseMethod.IsInternal; }
-		}
-
-		public bool IsProtectedOrInternal {
-			get { return baseMethod.IsProtectedOrInternal; }
-		}
-
-		public bool IsProtectedAndInternal {
-			get { return baseMethod.IsProtectedAndInternal; }
-		}
-
+		
 		#endregion
 
 		#region INamedElement implementation

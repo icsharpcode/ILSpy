@@ -20,11 +20,11 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -33,21 +33,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class AsyncAwaitDecompiler : IILTransform
 	{
-		public static bool IsCompilerGeneratedStateMachine(Mono.Cecil.TypeDefinition type)
+		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
-			if (!(type.DeclaringType != null && type.IsCompilerGenerated()))
+			TypeDefinition td;
+			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
 				return false;
-			foreach (var i in type.Interfaces) {
-				var iface = i.InterfaceType;
-				if (iface.Namespace == "System.Runtime.CompilerServices" && iface.Name == "IAsyncStateMachine")
+			foreach (var i in td.GetInterfaceImplementations()) {
+				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
+				if (!tr.IsNested && tr.TopLevelTypeName.Namespace == "System.Runtime.CompilerServices" && tr.TopLevelTypeName.Name == "IAsyncStateMachine")
 					return true;
 			}
 			return false;
 		}
 
-		public static bool IsCompilerGeneratedMainMethod(MethodDefinition method)
+		public static bool IsCompilerGeneratedMainMethod(Metadata.PEFile module, MethodDefinitionHandle method)
 		{
-			return method == method.Module.Assembly?.EntryPoint && method.Name.Equals("<Main>", StringComparison.Ordinal);
+			var metadata = module.Metadata;
+			var definition = metadata.GetMethodDefinition(method);
+			var entrypoint = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(module.Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress);
+			return method == entrypoint && metadata.GetString(definition.Name).Equals("<Main>", StringComparison.Ordinal);
 		}
 
 		enum AsyncMethodType
@@ -193,12 +197,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 			} else if (taskType.IsKnownType(KnownTypeCode.Task)) {
 				methodType = AsyncMethodType.Task;
-				underlyingReturnType = context.TypeSystem.Compilation.FindType(KnownTypeCode.Void);
+				underlyingReturnType = context.TypeSystem.FindType(KnownTypeCode.Void);
 				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 0))
 					return false;
 			} else if (taskType.IsKnownType(KnownTypeCode.TaskOfT)) {
 				methodType = AsyncMethodType.TaskOfT;
-				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem.Compilation, taskType);
+				underlyingReturnType = TaskType.UnpackTask(context.TypeSystem, taskType);
 				if (builderType?.FullTypeName != new TopLevelTypeName(ns, "AsyncTaskMethodBuilder", 1))
 					return false;
 			} else {
@@ -326,7 +330,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeMoveNext()
 		{
-			var moveNextMethod = context.TypeSystem.GetCecil(stateMachineType)?.Methods.FirstOrDefault(f => f.Name == "MoveNext");
+			if (stateMachineType.MetadataToken.IsNil)
+				throw new SymbolicAnalysisFailedException();
+			var metadata = context.PEFile.Metadata;
+			var moveNextMethod = metadata.GetTypeDefinition((TypeDefinitionHandle)stateMachineType.MetadataToken)
+				.GetMethods().FirstOrDefault(f => metadata.GetString(metadata.GetMethodDefinition(f).Name) == "MoveNext");
 			if (moveNextMethod == null)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);

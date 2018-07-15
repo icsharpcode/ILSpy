@@ -927,7 +927,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult fromResult, IType fromType, IType toType, bool isExplicit)
 		{
 			// Find the candidate operators:
-			Predicate<IUnresolvedMethod> opFilter;
+			Predicate<IMethod> opFilter;
 			if (isExplicit)
 				opFilter = m => m.IsStatic && m.IsOperator && (m.Name == "op_Explicit" || m.Name == "op_Implicit") && m.Parameters.Count == 1;
 			else

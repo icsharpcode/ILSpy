@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
-			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
+			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainModule, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 			this.astBuilder.AlwaysUseShortTypeNames = true;
 			this.astBuilder.AddResolveResultAnnotations = true;
@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				} else {
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 					var result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
 					return !(result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure));
 				}
@@ -1491,8 +1491,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
-			var targetTS = method == null ? typeSystem : typeSystem.GetSpecializingTypeSystem(method.Substitution);
-			StatementBuilder builder = new StatementBuilder(targetTS, this.decompilationContext, function, settings, cancellationToken);
+			StatementBuilder builder = new StatementBuilder(typeSystem, this.decompilationContext, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;

@@ -22,9 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -486,42 +484,39 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
+		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration propertyDeclaration)
 		{
-			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
-			if (cecilProperty == null || cecilProperty.GetMethod == null)
+			IProperty property = propertyDeclaration.GetSymbol() as IProperty;
+			if (!property.CanGet || (!property.Getter.IsCompilerGenerated() && (property.Setter?.IsCompilerGenerated() == false)))
 				return null;
-			if (!cecilProperty.GetMethod.IsCompilerGenerated() && (cecilProperty.SetMethod?.IsCompilerGenerated() == false))
-				return null;
-			IField fieldInfo = null;
-			Match m = automaticPropertyPattern.Match(property);
+			IField field = null;
+			Match m = automaticPropertyPattern.Match(propertyDeclaration);
 			if (m.Success) {
-				fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+				field = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 			} else {
-				Match m2 = automaticReadonlyPropertyPattern.Match(property);
+				Match m2 = automaticReadonlyPropertyPattern.Match(propertyDeclaration);
 				if (m2.Success) {
-					fieldInfo = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+					field = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
 			}
-			if (fieldInfo == null)
+			if (field == null)
 				return null;
-			FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
-			if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
-				RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
-				RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
-				property.Getter.Body = null;
-				property.Setter.Body = null;
+			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition) {
+				RemoveCompilerGeneratedAttribute(propertyDeclaration.Getter.Attributes);
+				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
+				propertyDeclaration.Getter.Body = null;
+				propertyDeclaration.Setter.Body = null;
 
 				// Add C# 7.3 attributes on backing field:
-				var attributes = fieldInfo.Attributes
-					.Where(a => !attributeTypesToRemoveFromAutoProperties.Any(t => t == a.AttributeType.FullName))
+				var attributes = field.GetAttributes()
+					.Where(a => !attributeTypesToRemoveFromAutoProperties.Contains(a.AttributeType.FullName))
 					.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 				if (attributes.Length > 0) {
 					var section = new AttributeSection {
 						AttributeTarget = "field"
 					};
 					section.Attributes.AddRange(attributes);
-					property.Attributes.Add(section);
+					propertyDeclaration.Attributes.Add(section);
 				}
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
@@ -793,8 +788,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
-					var attributes = field.Attributes
-							.Where(a => !attributeTypesToRemoveFromAutoEvents.Any(t => t == a.AttributeType.FullName))
+					var attributes = field.GetAttributes()
+							.Where(a => !attributeTypesToRemoveFromAutoEvents.Contains(a.AttributeType.FullName))
 							.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
 					if (attributes.Length > 0) {
 						var section = new AttributeSection {

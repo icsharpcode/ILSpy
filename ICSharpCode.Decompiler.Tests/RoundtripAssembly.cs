@@ -20,12 +20,13 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.Win32;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -142,19 +143,19 @@ namespace ICSharpCode.Decompiler.Tests
 				if (relFile.Equals(fileToRoundtrip, StringComparison.OrdinalIgnoreCase)) {
 					Console.WriteLine($"Decompiling {fileToRoundtrip}...");
 					Stopwatch w = Stopwatch.StartNew();
-					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
-					resolver.AddSearchDirectory(inputDir);
-					resolver.RemoveSearchDirectory(".");
-					var module = ModuleDefinition.ReadModule(file, new ReaderParameters {
-						AssemblyResolver = resolver,
-						InMemory  = true
-					});
-					var decompiler = new TestProjectDecompiler(inputDir);
-					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
-					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
-					decompiler.DecompileProject(module, decompiledDir);
-					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
-					projectFile = Path.Combine(decompiledDir, module.Assembly.Name.Name + ".csproj");
+					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
+						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
+						UniversalAssemblyResolver resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+						resolver.AddSearchDirectory(inputDir);
+						resolver.RemoveSearchDirectory(".");
+						var decompiler = new TestProjectDecompiler(inputDir);
+						decompiler.AssemblyResolver = resolver;
+						// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+						decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
+						decompiler.DecompileProject(module, decompiledDir);
+						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
+						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
+					}
 				} else {
 					File.Copy(file, Path.Combine(outputDir, relFile));
 				}
@@ -263,11 +264,11 @@ namespace ICSharpCode.Decompiler.Tests
 				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.FullName).ToArray();
 			}
 
-			protected override bool IsGacAssembly(AssemblyNameReference r, AssemblyDefinition asm)
+			protected override bool IsGacAssembly(IAssemblyReference r, PEFile asm)
 			{
 				if (asm == null)
 					return false;
-				return !localAssemblies.Contains(asm.MainModule.FileName);
+				return !localAssemblies.Contains(asm.FileName);
 			}
 		}
 

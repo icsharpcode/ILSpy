@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 			// nested compilation and not in this, we wouldn't be able to map it anyways.
 			var ctx = context as CSharpTypeResolveContext;
 			if (ctx == null) {
-				ctx = new CSharpTypeResolveContext(context.CurrentAssembly ?? context.Compilation.MainAssembly, null, context.CurrentTypeDefinition, context.CurrentMember);
+				ctx = new CSharpTypeResolveContext(context.CurrentModule ?? context.Compilation.MainModule, null, context.CurrentTypeDefinition, context.CurrentMember);
 			}
 			return ResolveType(new CSharpResolver(ctx));
 			

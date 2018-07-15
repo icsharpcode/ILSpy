@@ -472,6 +472,21 @@
   } // end of method UnsafeCode::FixedStringAccess
 
   .method public hidebysig instance void 
+          FixedStringNoPointerUse(string text) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  1
+    .locals init (string pinned V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    IL_0002:  ldloc.0
+    IL_0003:  pop
+    IL_0004:  ldnull
+    IL_0005:  stloc.0
+    IL_0006:  ret
+  } // end of method UnsafeCode::FixedStringNoPointerUse
+
+  .method public hidebysig instance void 
           PutDoubleIntoLongArray1(int64[] 'array',
                                   int32 index,
                                   float64 val) cil managed

@@ -7,41 +7,31 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 	/// <summary>
 	/// Interface representing a DotNet type
 	/// </summary>
-	public interface IType
+	public interface IDotNetType
 	{
-		IType BaseType { get; }
+		IDotNetType BaseType { get; }
 		string AssemblyQualifiedName { get; }
-		bool IsSubclassOf(IType type);
-		bool Equals(IType type);
+		bool IsSubclassOf(IDotNetType type);
+		bool Equals(IDotNetType type);
 	}
-	
-	public class UnresolvableType : IType
+
+	public class UnresolvableType : IDotNetType
 	{
-		string assemblyQualifiedName;
-		
 		public UnresolvableType(string assemblyQualifiedName)
 		{
-			this.assemblyQualifiedName = assemblyQualifiedName;
+			this.AssemblyQualifiedName = assemblyQualifiedName;
 		}
-		
-		public IType BaseType {
-			get {
-				return null;
-			}
-		}
-		
-		public string AssemblyQualifiedName {
-			get {
-				return assemblyQualifiedName;
-			}
-		}
-		
-		public bool IsSubclassOf(IType type)
+
+		public IDotNetType BaseType => null;
+
+		public string AssemblyQualifiedName { get; }
+
+		public bool IsSubclassOf(IDotNetType type)
 		{
 			return Equals(type);
 		}
-		
-		public bool Equals(IType type)
+
+		public bool Equals(IDotNetType type)
 		{
 			return type is UnresolvableType && type.AssemblyQualifiedName == AssemblyQualifiedName;
 		}

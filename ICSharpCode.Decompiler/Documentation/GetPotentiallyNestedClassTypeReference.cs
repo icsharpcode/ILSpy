@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		public IType Resolve(ITypeResolveContext context)
 		{
 			string[] parts = typeName.Split('.');
-			var assemblies = new [] { context.CurrentAssembly }.Concat(context.Compilation.Assemblies);
+			var assemblies = new [] { context.CurrentModule }.Concat(context.Compilation.Modules);
 			for (int i = parts.Length - 1; i >= 0; i--) {
 				string ns = string.Join(".", parts, 0, i);
 				string name = parts[i];

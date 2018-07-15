@@ -17,42 +17,38 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		
-		public TypeTreeNode(TypeDefinition type, AssemblyTreeNode parentAssemblyNode)
+		public TypeTreeNode(ITypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
 		{
-			if (parentAssemblyNode == null)
-				throw new ArgumentNullException(nameof(parentAssemblyNode));
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.TypeDefinition = type;
-			this.ParentAssemblyNode = parentAssemblyNode;
+			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
+			this.TypeDefinition = typeDefinition ?? throw new ArgumentNullException(nameof(typeDefinition));
 			this.LazyLoading = true;
 		}
 
-		public TypeDefinition TypeDefinition { get; }
+		public ITypeDefinition TypeDefinition { get; }
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => HighlightSearchMatch(this.Language.FormatTypeName(TypeDefinition), TypeDefinition.MetadataToken.ToSuffixString());
+		public override object Text => this.Language.TypeToString(TypeDefinition, includeNamespace: false)
+			+ TypeDefinition.MetadataToken.ToSuffixString();
 
 		public override bool IsPublicAPI {
 			get {
-				switch (TypeDefinition.Attributes & TypeAttributes.VisibilityMask) {
-					case TypeAttributes.Public:
-					case TypeAttributes.NestedPublic:
-					case TypeAttributes.NestedFamily:
-					case TypeAttributes.NestedFamORAssem:
+				switch (TypeDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.Protected:
+					case Accessibility.ProtectedOrInternal:
 						return true;
 					default:
 						return false;
@@ -76,28 +72,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			if (TypeDefinition.BaseType != null || TypeDefinition.HasInterfaces)
-				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
+			if (TypeDefinition.DirectBaseTypes.Any())
+				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetPEFileOrNull(), TypeDefinition));
 			if (!TypeDefinition.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			foreach (TypeDefinition nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
 			}
-			foreach (FieldDefinition field in TypeDefinition.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var field in TypeDefinition.Fields.OrderBy(f => f.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new FieldTreeNode(field));
 			}
 			
-			foreach (PropertyDefinition property in TypeDefinition.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var property in TypeDefinition.Properties.OrderBy(p => p.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (EventDefinition ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (var ev in TypeDefinition.Events.OrderBy(e => e.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			HashSet<MethodDefinition> accessorMethods = TypeDefinition.GetAccessorMethods();
-			foreach (MethodDefinition method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				if (!accessorMethods.Contains(method)) {
-					this.Children.Add(new MethodTreeNode(method));
-				}
+			foreach (var method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+				if (method.MetadataToken.IsNil) continue;
+				this.Children.Add(new MethodTreeNode(method));
 			}
 		}
 
@@ -110,71 +104,48 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(TypeDefinition);
 
-		public static ImageSource GetIcon(TypeDefinition type)
+		public static ImageSource GetIcon(ITypeDefinition type)
 		{
-			TypeIcon typeIcon = GetTypeIcon(type);
-			AccessOverlayIcon overlayIcon = GetOverlayIcon(type);
-
-			return Images.GetIcon(typeIcon, overlayIcon);
+			return Images.GetIcon(GetTypeIcon(type), GetOverlayIcon(type));
 		}
 
-		static TypeIcon GetTypeIcon(TypeDefinition type)
+		internal static TypeIcon GetTypeIcon(IType type)
 		{
-			if (type.IsValueType) {
-				if (type.IsEnum)
-					return TypeIcon.Enum;
-				else
-					return TypeIcon.Struct;
-			} else {
-				if (type.IsInterface)
+			switch (type.Kind) {
+				case TypeKind.Interface:
 					return TypeIcon.Interface;
-				else if (IsDelegate(type))
+				case TypeKind.Struct:
+					return TypeIcon.Struct;
+				case TypeKind.Delegate:
 					return TypeIcon.Delegate;
-				else if (IsStaticClass(type))
-					return TypeIcon.StaticClass;
-				else
+				case TypeKind.Enum:
+					return TypeIcon.Enum;
+				default:
+					if (type.GetDefinition()?.IsStatic == true)
+						return TypeIcon.StaticClass;
 					return TypeIcon.Class;
 			}
 		}
 
-		private static AccessOverlayIcon GetOverlayIcon(TypeDefinition type)
+		static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
 		{
-			AccessOverlayIcon overlay;
-			switch (type.Attributes & TypeAttributes.VisibilityMask) {
-				case TypeAttributes.Public:
-				case TypeAttributes.NestedPublic:
-					overlay = AccessOverlayIcon.Public;
-					break;
-				case TypeAttributes.NotPublic:
-				case TypeAttributes.NestedAssembly:
-					overlay = AccessOverlayIcon.Internal;
-					break;
-				case TypeAttributes.NestedFamANDAssem:
-					overlay = AccessOverlayIcon.PrivateProtected;
-					break;
-				case TypeAttributes.NestedFamily:
-				case TypeAttributes.NestedFamORAssem:
-					overlay = AccessOverlayIcon.Protected;
-					break;
-				case TypeAttributes.NestedPrivate:
-					overlay = AccessOverlayIcon.Private;
-					break;
+			switch (type.Accessibility) {
+				case Accessibility.Public:
+					return AccessOverlayIcon.Public;
+				case Accessibility.Internal:
+					return AccessOverlayIcon.Internal;
+				case Accessibility.ProtectedAndInternal:
+					return AccessOverlayIcon.PrivateProtected;
+				case Accessibility.Protected:
+				case Accessibility.ProtectedOrInternal:
+					return AccessOverlayIcon.Protected;
+				case Accessibility.Private:
+					return AccessOverlayIcon.Private;
 				default:
-					throw new NotSupportedException();
+					return AccessOverlayIcon.CompilerControlled;
 			}
-			return overlay;
 		}
 
-		private static bool IsDelegate(TypeDefinition type)
-		{
-			return type.BaseType != null && type.BaseType.FullName == typeof(MulticastDelegate).FullName;
-		}
-
-		private static bool IsStaticClass(TypeDefinition type)
-		{
-			return type.IsSealed && type.IsAbstract;
-		}
-
-		MemberReference IMemberTreeNode.Member => TypeDefinition;
+		IEntity IMemberTreeNode.Member => TypeDefinition;
 	}
 }

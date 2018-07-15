@@ -19,176 +19,221 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
-using Mono.Cecil;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal sealed class AnalyzedTypeUsedByTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly TypeDefinition analyzedType;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly TypeDefinitionHandle analyzedType;
+		readonly FullTypeName analyzedTypeName;
 
-		public AnalyzedTypeUsedByTreeNode(TypeDefinition analyzedType)
+		public AnalyzedTypeUsedByTreeNode(Decompiler.Metadata.PEFile module, TypeDefinitionHandle analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
+			this.module = module;
 			this.analyzedType = analyzedType;
+			this.analyzedTypeName = analyzedType.GetFullTypeName(module.Metadata);
 		}
 
-		public override object Text
-		{
-			get { return "Used By"; }
-		}
+		public override object Text => "Used By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedType, FindTypeUsage);
-			return analyzer.PerformAnalysis(ct)
-				.Cast<AnalyzerEntityTreeNode>()
-				.Where(n => n.Member.DeclaringType != analyzedType)
-				.Distinct(new AnalyzerEntityTreeNodeComparer())
-				.OrderBy(n => n.Text);
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerEntityTreeNode>(this.Language, module, analyzedType, provideTypeSystem: true, FindTypeUsage);
+			return analyzer.PerformAnalysis(ct).Distinct(AnalyzerEntityTreeNodeComparer.Instance).OrderBy(n => n.Text);
 		}
 
-		private IEnumerable<AnalyzerEntityTreeNode> FindTypeUsage(TypeDefinition type)
+		IEnumerable<AnalyzerEntityTreeNode> FindTypeUsage(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, CodeMappingInfo codeMapping, IDecompilerTypeSystem typeSystem)
 		{
-			if (type == analyzedType)
+			if (type == this.analyzedType && module == this.module)
 				yield break;
 
-			if (IsUsedInTypeDefinition(type))
-				yield return new AnalyzedTypeTreeNode(type) { Language = Language };
+			// TODO : cache / optimize this per assembly
+			var analyzedTypeDefinition = typeSystem.Compilation.FindType(analyzedTypeName).GetDefinition();
+			var typeDefinition = typeSystem.ResolveAsType(type).GetDefinition();
 
-			foreach (var field in type.Fields.Where(IsUsedInFieldReference))
-				yield return new AnalyzedFieldTreeNode(field) { Language = Language };
+			if (analyzedTypeDefinition == null || typeDefinition == null)
+				yield break;
 
-			foreach (var method in type.Methods.Where(IsUsedInMethodDefinition))
-				yield return HandleSpecialMethodNode(method);
+			var visitor = new TypeDefinitionUsedVisitor(analyzedTypeDefinition);
+
+			if (typeDefinition.DirectBaseTypes.Any(bt => analyzedTypeDefinition.Equals(bt.GetDefinition())))
+				yield return new AnalyzedTypeTreeNode(new Decompiler.Metadata.TypeDefinition(module, type)) { Language = Language };
+
+			foreach (var field in typeDefinition.Fields.Where(f => IsUsedInField(f, visitor)))
+				yield return new AnalyzedFieldTreeNode(module, (FieldDefinitionHandle)field.MetadataToken) { Language = Language };
+
+			foreach (var method in typeDefinition.Methods.Where(m => IsUsedInMethodDefinition(m, visitor, typeSystem, module)))
+				yield return new AnalyzedMethodTreeNode(module, (MethodDefinitionHandle)method.MetadataToken) { Language = Language };
+
+			foreach (var property in typeDefinition.Properties.Where(p => IsUsedInProperty(p, visitor, typeSystem, module)))
+				yield return new AnalyzedPropertyTreeNode(module, (PropertyDefinitionHandle)property.MetadataToken) { Language = Language };
 		}
 
-		private AnalyzerEntityTreeNode HandleSpecialMethodNode(MethodDefinition method)
+		bool IsUsedInField(IField field, TypeDefinitionUsedVisitor visitor)
 		{
-			var property = method.DeclaringType.Properties.FirstOrDefault(p => p.GetMethod == method || p.SetMethod == method);
-			if (property != null)
-				return new AnalyzedPropertyTreeNode(property) { Language = Language };
-
-			return new AnalyzedMethodTreeNode(method) { Language = Language };
+			visitor.Found = false;
+			field.ReturnType.AcceptVisitor(visitor);
+			return visitor.Found;
 		}
 
-		private bool IsUsedInTypeReferences(IEnumerable<TypeReference> types)
+		bool IsUsedInProperty(IProperty property, TypeDefinitionUsedVisitor visitor, IDecompilerTypeSystem typeSystem, PEFile module)
 		{
-			return types.Any(IsUsedInTypeReference);
+			visitor.Found = false;
+			property.ReturnType.AcceptVisitor(visitor);
+			for (int i = 0; i < property.Parameters.Count && !visitor.Found; i++)
+				property.Parameters[i].Type.AcceptVisitor(visitor);
+			return visitor.Found
+				|| (property.CanGet && IsUsedInMethodBody(module, visitor, typeSystem, (MethodDefinitionHandle)property.Getter.MetadataToken))
+				|| (property.CanSet && IsUsedInMethodBody(module, visitor, typeSystem, (MethodDefinitionHandle)property.Setter.MetadataToken));
 		}
 
-		private bool IsUsedInTypeReference(TypeReference type)
+		bool IsUsedInMethodDefinition(IMethod method, TypeDefinitionUsedVisitor visitor, IDecompilerTypeSystem typeSystem, PEFile module)
 		{
-			if (type == null)
+			visitor.Found = false;
+			method.ReturnType.AcceptVisitor(visitor);
+			for (int i = 0; i < method.Parameters.Count && !visitor.Found; i++)
+				method.Parameters[i].Type.AcceptVisitor(visitor);
+			return visitor.Found || IsUsedInMethodBody(module, visitor, typeSystem, (MethodDefinitionHandle)method.MetadataToken);
+		}
+
+		bool IsUsedInMethod(IMethod method, TypeDefinitionUsedVisitor visitor)
+		{
+			visitor.Found = false;
+			method.ReturnType.AcceptVisitor(visitor);
+			for (int i = 0; i < method.Parameters.Count && !visitor.Found; i++)
+				method.Parameters[i].Type.AcceptVisitor(visitor);
+			return visitor.Found;
+		}
+
+		bool IsUsedInMethodBody(PEFile module, TypeDefinitionUsedVisitor visitor, IDecompilerTypeSystem typeSystem, MethodDefinitionHandle method)
+		{
+			if (method.IsNil)
+				return false;
+			var md = module.Metadata.GetMethodDefinition(method);
+			if (!md.HasBody())
 				return false;
 
-			return TypeMatches(type.DeclaringType)
-				|| TypeMatches(type);
-		}
+			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			while (blob.RemainingBytes > 0) {
+				var opCode = blob.DecodeOpCode();
+				switch (opCode.GetOperandType()) {
+					case OperandType.Field:
+					case OperandType.Method:
+					case OperandType.Sig:
+					case OperandType.Tok:
+					case OperandType.Type:
+						var member = MetadataTokens.EntityHandle(blob.ReadInt32());
+						switch (member.Kind) {
+							case HandleKind.TypeReference:
+							case HandleKind.TypeSpecification:
+								var resolvedType = typeSystem.ResolveAsType(member);
+								resolvedType.AcceptVisitor(visitor);
+								if (visitor.Found)
+									return true;
+								break;
 
-		private bool IsUsedInTypeDefinition(TypeDefinition type)
-		{
-			return IsUsedInTypeReference(type)
-				   || TypeMatches(type.BaseType)
-				   || IsUsedInTypeReferences(type.Interfaces.Select(i => i.InterfaceType));
-		}
+							case HandleKind.TypeDefinition:
+								if (this.module != module)
+									break;
+								if (member == analyzedType)
+									return true;
+								break;
 
-		private bool IsUsedInFieldReference(FieldReference field)
-		{
-			if (field == null)
-				return false;
+							case HandleKind.FieldDefinition:
+								if (this.module != module)
+									break;
+								var resolvedField = typeSystem.ResolveAsField(member);
+								if (IsUsedInField(resolvedField, visitor))
+									return true;
+								break;
 
-			return TypeMatches(field.DeclaringType)
-				|| TypeMatches(field.FieldType);
-		}
+							case HandleKind.MethodDefinition:
+								var resolvedMethod = typeSystem.ResolveAsMethod(member);
+								if (resolvedMethod == null)
+									break;
+								if (IsUsedInMethod(resolvedMethod, visitor))
+									return true;
+								break;
 
-		private bool IsUsedInMethodReference(MethodReference method)
-		{
-			if (method == null)
-				return false;
+							case HandleKind.MemberReference:
+								var resolvedMember = typeSystem.ResolveAsMember(member);
+								if (resolvedMember == null)
+									break;
+								if (resolvedMember is IField f && IsUsedInField(f, visitor))
+									return true;
+								if (resolvedMember is IMethod m && IsUsedInMethod(m, visitor))
+									return true;
+								break;
 
-			return TypeMatches(method.DeclaringType)
-				   || TypeMatches(method.ReturnType)
-				   || IsUsedInMethodParameters(method.Parameters);
-		}
+							case HandleKind.MethodSpecification:
+								resolvedMethod = typeSystem.ResolveAsMethod(member);
+								if (resolvedMethod == null)
+									break;
+								if (IsUsedInMethod(resolvedMethod, visitor))
+									return true;
+								break;
 
-		private bool IsUsedInMethodDefinition(MethodDefinition method)
-		{
-			return IsUsedInMethodReference(method)
-				   || IsUsedInMethodBody(method);
-		}
-
-		private bool IsUsedInMethodBody(MethodDefinition method)
-		{
-			if (method.Body == null)
-				return false;
-
-			bool found = false;
-
-			foreach (var instruction in method.Body.Instructions) {
-				TypeReference tr = instruction.Operand as TypeReference;
-				if (IsUsedInTypeReference(tr)) {
-					found = true;
-					break;
-				}
-				FieldReference fr = instruction.Operand as FieldReference;
-				if (IsUsedInFieldReference(fr)) {
-					found = true;
-					break;
-				}
-				MethodReference mr = instruction.Operand as MethodReference;
-				if (IsUsedInMethodReference(mr)) {
-					found = true;
-					break;
+							default:
+								break;
+						}
+						break;
+					default:
+						blob.SkipOperand(opCode);
+						break;
 				}
 			}
 
-			method.Body = null; // discard body to reduce memory pressure & higher GC gen collections
-
-			return found;
-		}
-
-		private bool IsUsedInMethodParameters(IEnumerable<ParameterDefinition> parameters)
-		{
-			return parameters.Any(IsUsedInMethodParameter);
-		}
-
-		private bool IsUsedInMethodParameter(ParameterDefinition parameter)
-		{
-			return TypeMatches(parameter.ParameterType);
-		}
-
-		private bool TypeMatches(TypeReference tref)
-		{
-			if (tref != null && tref.Name == analyzedType.Name) {
-				var tdef = tref.Resolve();
-				if (tdef != null) {
-					return (tdef == analyzedType);
-				}
-			}
 			return false;
 		}
 
-		public static bool CanShow(TypeDefinition type)
+		public static bool CanShow(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type)
 		{
-			return type != null;
+			return !type.IsNil;
 		}
 	}
 
-	internal class AnalyzerEntityTreeNodeComparer : IEqualityComparer<AnalyzerEntityTreeNode>
+	class AnalyzerEntityTreeNodeComparer : IEqualityComparer<AnalyzerEntityTreeNode>
 	{
+		public static readonly AnalyzerEntityTreeNodeComparer Instance = new AnalyzerEntityTreeNodeComparer();
+
 		public bool Equals(AnalyzerEntityTreeNode x, AnalyzerEntityTreeNode y)
 		{
 			return x.Member == y.Member;
 		}
 
-		public int GetHashCode(AnalyzerEntityTreeNode node)
+		public int GetHashCode(AnalyzerEntityTreeNode obj)
 		{
-			return node.Member.GetHashCode();
+			return obj.Member.GetHashCode();
 		}
 	}
 
+	class TypeDefinitionUsedVisitor : TypeVisitor
+	{
+		readonly ITypeDefinition typeDefinition;
+
+		public bool Found { get; set; }
+
+		public TypeDefinitionUsedVisitor(ITypeDefinition definition)
+		{
+			this.typeDefinition = definition;
+		}
+
+		public override IType VisitTypeDefinition(ITypeDefinition type)
+		{
+			Found |= typeDefinition.Equals(type);
+			return base.VisitTypeDefinition(type);
+		}
+	}
 }

@@ -87,12 +87,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetMethods
-		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			return GetMethods(type, null, filter, options);
 		}
 		
-		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetMethods(IType type, IReadOnlyList<IType> typeArguments, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			if (typeArguments != null && typeArguments.Count > 0) {
 				filter = FilterTypeParameterCount(typeArguments.Count).And(filter);
@@ -105,14 +105,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static Predicate<IUnresolvedMethod> FilterTypeParameterCount(int expectedTypeParameterCount)
+		static Predicate<IMethod> FilterTypeParameterCount(int expectedTypeParameterCount)
 		{
 			return m => m.TypeParameters.Count == expectedTypeParameterCount;
 		}
 		
 		const GetMemberOptions declaredMembers = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 		
-		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType> methodTypeArguments, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetMethodsImpl(IType baseType, IReadOnlyList<IType> methodTypeArguments, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			IEnumerable<IMethod> declaredMethods = baseType.GetMethods(filter, options | declaredMembers);
 			
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetAccessors
-		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetAccessorsImpl(type, filter, options);
@@ -152,14 +152,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IMethod> GetAccessorsImpl(IType baseType, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetAccessorsImpl(IType baseType, Predicate<IMethod> filter, GetMemberOptions options)
 		{
-			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetAccessors(filter, options | declaredMembers), filter, options);
+			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetAccessors(filter, options | declaredMembers), options);
 		}
 		#endregion
 		
 		#region GetConstructors
-		public static IEnumerable<IMethod> GetConstructors(IType type, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		public static IEnumerable<IMethod> GetConstructors(IType type, Predicate<IMethod> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetConstructorsImpl(type, filter, options);
@@ -168,12 +168,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IMethod> filter, GetMemberOptions options)
 		{
-			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetConstructors(filter, options | declaredMembers), filter, options);
+			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetConstructors(filter, options | declaredMembers), options);
 		}
 		
-		static IEnumerable<IMethod> GetConstructorsOrAccessorsImpl(IType baseType, IEnumerable<IMethod> declaredMembers, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		static IEnumerable<IMethod> GetConstructorsOrAccessorsImpl(IType baseType, IEnumerable<IMethod> declaredMembers, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
 				return declaredMembers;
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetProperties
-		public static IEnumerable<IProperty> GetProperties(IType type, Predicate<IUnresolvedProperty> filter, GetMemberOptions options)
+		public static IEnumerable<IProperty> GetProperties(IType type, Predicate<IProperty> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetPropertiesImpl(type, filter, options);
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IProperty> GetPropertiesImpl(IType baseType, Predicate<IUnresolvedProperty> filter, GetMemberOptions options)
+		static IEnumerable<IProperty> GetPropertiesImpl(IType baseType, Predicate<IProperty> filter, GetMemberOptions options)
 		{
 			IEnumerable<IProperty> declaredProperties = baseType.GetProperties(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetFields
-		public static IEnumerable<IField> GetFields(IType type, Predicate<IUnresolvedField> filter, GetMemberOptions options)
+		public static IEnumerable<IField> GetFields(IType type, Predicate<IField> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetFieldsImpl(type, filter, options);
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IUnresolvedField> filter, GetMemberOptions options)
+		static IEnumerable<IField> GetFieldsImpl(IType baseType, Predicate<IField> filter, GetMemberOptions options)
 		{
 			IEnumerable<IField> declaredFields = baseType.GetFields(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetEvents
-		public static IEnumerable<IEvent> GetEvents(IType type, Predicate<IUnresolvedEvent> filter, GetMemberOptions options)
+		public static IEnumerable<IEvent> GetEvents(IType type, Predicate<IEvent> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetEventsImpl(type, filter, options);
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IEvent> GetEventsImpl(IType baseType, Predicate<IUnresolvedEvent> filter, GetMemberOptions options)
+		static IEnumerable<IEvent> GetEventsImpl(IType baseType, Predicate<IEvent> filter, GetMemberOptions options)
 		{
 			IEnumerable<IEvent> declaredEvents = baseType.GetEvents(filter, options | declaredMembers);
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 		
 		#region GetMembers
-		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IUnresolvedMember> filter, GetMemberOptions options)
+		public static IEnumerable<IMember> GetMembers(IType type, Predicate<IMember> filter, GetMemberOptions options)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				return GetMembersImpl(type, filter, options);
@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IUnresolvedMember> filter, GetMemberOptions options)
+		static IEnumerable<IMember> GetMembersImpl(IType baseType, Predicate<IMember> filter, GetMemberOptions options)
 		{
 			foreach (var m in GetMethodsImpl(baseType, null, filter, options))
 				yield return m;

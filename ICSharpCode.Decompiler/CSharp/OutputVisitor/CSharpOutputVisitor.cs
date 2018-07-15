@@ -1288,7 +1288,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(attribute);
 			attribute.Type.AcceptVisitor(this);
-			if (attribute.Arguments.Count != 0 || !attribute.GetChildByRole(Roles.LPar).IsNull) {
+			if (attribute.Arguments.Count != 0 || attribute.HasArgumentList) {
 				Space(policy.SpaceBeforeMethodCallParentheses);
 				WriteCommaSeparatedListInParenthesis(attribute.Arguments, policy.SpaceWithinMethodCallParentheses);
 			}

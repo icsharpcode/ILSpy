@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, context.UsingScope);
+			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, context.UsingScope);
 			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, context.Settings, resolveContext, possibleIndexVariables);
 			if (kind == AccessPathKind.Invalid || target != targetVariable)
 				return false;
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!targetType.GetAllBaseTypes().Any(i => i.IsKnownType(KnownTypeCode.IEnumerable) || i.IsKnownType(KnownTypeCode.IEnumerableOfT)))
 				return false;
 			return CSharp.CallBuilder.CanInferTypeArgumentsFromParameters(
-				method, method.Parameters.SelectArray(p => new ResolveResult(p.Type)),
+				method, method.Parameters.SelectReadOnlyArray(p => new ResolveResult(p.Type)),
 				new TypeInference(resolveContext.Compilation));
 		}
 

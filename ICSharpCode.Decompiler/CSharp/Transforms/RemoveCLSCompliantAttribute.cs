@@ -34,10 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			if (context.DecompiledAssembly.AssemblyAttributes.Any(a => a.AttributeType.FullName == "System.CLSCompliantAttribute"))
-				return;
-
-			foreach (var section in rootNode.Descendants.OfType<AttributeSection>()) {
+			foreach (var section in rootNode.Children.OfType<AttributeSection>()) {
 				if (section.AttributeTarget == "assembly")
 					continue;
 				foreach (var attribute in section.Attributes) {

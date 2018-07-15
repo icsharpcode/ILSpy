@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -59,6 +62,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public virtual IType VisitOtherType(IType type)
+		{
+			return type.VisitChildren(this);
+		}
+
+		public virtual IType VisitModReq(ModifiedType type)
+		{
+			return type.VisitChildren(this);
+		}
+
+		public virtual IType VisitModOpt(ModifiedType type)
 		{
 			return type.VisitChildren(this);
 		}

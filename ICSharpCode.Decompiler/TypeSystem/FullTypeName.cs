@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <c>NamespaceName '.' TopLevelTypeName ['`'#] { '+' NestedTypeName ['`'#] }</c>
 	/// </remarks>
 	[Serializable]
-	public struct FullTypeName : IEquatable<FullTypeName>
+	public readonly struct FullTypeName : IEquatable<FullTypeName>
 	{
 		[Serializable]
-		struct NestedTypeName
+		readonly struct NestedTypeName
 		{
 			public readonly string Name;
 			public readonly int AdditionalTypeParameterCount;
@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return topLevelType;
 			NestedTypeName[] outerNestedTypeNames = new NestedTypeName[nestedTypes.Length - 1];
 			Array.Copy(nestedTypes, 0, outerNestedTypeNames, 0, outerNestedTypeNames.Length);
-			return new FullTypeName(topLevelType, nestedTypes);
+			return new FullTypeName(topLevelType, outerNestedTypeNames);
 		}
 		
 		/// <summary>

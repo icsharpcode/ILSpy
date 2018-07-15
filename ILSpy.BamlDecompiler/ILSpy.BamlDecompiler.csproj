@@ -5,6 +5,7 @@
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>ILSpy.BamlDecompiler.Plugin</AssemblyName>
+    <LangVersion>7.2</LangVersion>
 
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
@@ -54,7 +55,7 @@
   <ItemGroup>
     <Compile Include="BamlResourceNodeFactory.cs" />
     <Compile Include="BamlResourceEntryNode.cs" />
-    <Compile Include="CecilDependencyPropertyDescriptor.cs" />
+    <Compile Include="SRMDependencyPropertyDescriptor.cs" />
     <Compile Include="CecilType.cs" />
     <Compile Include="CecilTypeResolver.cs" />
     <Compile Include="ConnectMethodDecompiler.cs" />

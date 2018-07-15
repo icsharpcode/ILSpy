@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 			if (resolvedPath != null) {
 				return new ILSpyParameters(new[] { $"{resolvedPath}" });
 			} else if (!string.IsNullOrWhiteSpace(fusionName)) {
-				return new ILSpyParameters(new string[] { GacInterop.FindAssemblyInNetGac(AssemblyNameReference.Parse(fusionName)) });
+				return new ILSpyParameters(new string[] { GacInterop.FindAssemblyInNetGac(Decompiler.Metadata.AssemblyNameReference.Parse(fusionName)) });
 			}
 
 			return null;

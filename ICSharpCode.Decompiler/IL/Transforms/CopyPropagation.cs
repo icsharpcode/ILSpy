@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 			for (int j = 0; j < uninlinedArgs.Length; j++) {
 				var arg = copiedExpr.Children[j];
-				var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
+				var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
 					Name = "C_" + arg.ILRange.Start
 				};

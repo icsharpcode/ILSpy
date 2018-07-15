@@ -4,11 +4,11 @@
 
 namespace Ricciolo.StylesExplorer.MarkupReflection
 {
-	public interface ITypeResolver
+	public interface IDotNetTypeResolver
 	{
-		string RuntimeVersion { get; }
+		ICSharpCode.Decompiler.Metadata.TargetRuntime RuntimeVersion { get; }
 		bool IsLocalAssembly(string name);
-		IType GetTypeByAssemblyQualifiedName(string name);
-		IDependencyPropertyDescriptor GetDependencyPropertyDescriptor(string name, IType ownerType, IType targetType);
+		IDotNetType GetTypeByAssemblyQualifiedName(string name);
+		IDependencyPropertyDescriptor GetDependencyPropertyDescriptor(string name, IDotNetType ownerType, IDotNetType targetType);
 	}
 }

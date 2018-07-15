@@ -21,8 +21,8 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -31,11 +31,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null) {
-				return CreateNode(er.Name, er.GetResourceStream());
-			}
-			return null;
+			Stream stream = resource.TryOpenStream();
+			if (stream == null)
+				return null;
+			return CreateNode(resource.Name, stream);
 		}
 
 		public ILSpyTreeNode CreateNode(string key, object data)

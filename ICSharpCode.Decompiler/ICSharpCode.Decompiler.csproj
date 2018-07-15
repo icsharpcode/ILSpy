@@ -16,6 +16,7 @@
     <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
+    <LangVersion>7.2</LangVersion>
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
@@ -50,8 +51,8 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
+    <PackageReference Include="System.Reflection.Metadata" Version="1.4.2" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
 
@@ -59,6 +60,7 @@
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
     <Compile Include="CSharp\CSharpLanguageVersion.cs" />
+    <Compile Include="CSharp\RequiredNamespaceCollector.cs" />
     <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
@@ -235,10 +237,8 @@
     <Compile Include="CSharp\Transforms\RemoveCLSCompliantAttribute.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
     <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
     <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
-    <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
     <Compile Include="CSharp\TypeSystem\ResolvedUsingScope.cs" />
     <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
@@ -256,7 +256,6 @@
     <Compile Include="CSharp\TranslatedExpression.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
-    <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
     <Compile Include="CSharp\Transforms\AddCheckedBlocks.cs" />
     <Compile Include="CSharp\Transforms\ConvertConstructorCallIntoInitializer.cs" />
@@ -267,32 +266,44 @@
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
+    <Compile Include="Metadata\AssemblyReferences.cs" />
+    <Compile Include="Metadata\CodeMappingInfo.cs" />
+    <Compile Include="Metadata\EnumUnderlyingTypeResolveException.cs" />
+    <Compile Include="Metadata\MetadataTokenHelpers.cs" />
+    <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />
-    <Compile Include="Documentation\XmlDocKeyProvider.cs" />
     <Compile Include="Documentation\XmlDocLoader.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
-    <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
-    <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonArray.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonObject.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonValue.cs" />
-    <Compile Include="DotNetCore\LightJson\JsonValueType.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonParseException.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\JsonReader.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\TextPosition.cs" />
-    <Compile Include="DotNetCore\LightJson\Serialization\TextScanner.cs" />
-    <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
-    <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
+    <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
+    <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
+    <Compile Include="Metadata\CustomAttributeDecoder.cs" />
+    <Compile Include="Metadata\Dom.cs" />
+    <Compile Include="Metadata\DotNetCorePathFinder.cs" />
+    <Compile Include="Metadata\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="Metadata\LightJson\JsonArray.cs" />
+    <Compile Include="Metadata\LightJson\JsonObject.cs" />
+    <Compile Include="Metadata\LightJson\JsonValue.cs" />
+    <Compile Include="Metadata\LightJson\JsonValueType.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonParseException.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\JsonReader.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\TextPosition.cs" />
+    <Compile Include="Metadata\LightJson\Serialization\TextScanner.cs" />
+    <Compile Include="Metadata\MethodSemanticsLookup.cs" />
+    <Compile Include="Metadata\OperandType.cs" />
+    <Compile Include="Metadata\PEFile.cs" />
+    <Compile Include="Metadata\SignatureBlobComparer.cs" />
+    <Compile Include="Metadata\UniversalAssemblyResolver.cs" />
+    <Compile Include="Metadata\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\Instructions\DynamicInstructions.cs" />
     <Compile Include="IL\PointerArithmeticOffset.cs" />
-    <Compile Include="IL\ControlFlow\AwaitInCatchTransform.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\NullableInstructions.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
-    <Compile Include="IL\SequencePoint.cs" />
+    <Compile Include="DebugInfo\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\DynamicCallSiteTransform.cs" />
@@ -311,7 +322,6 @@
     <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
     <Compile Include="IL\Transforms\TupleTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
-    <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
@@ -321,7 +331,6 @@
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
     <Compile Include="IL\Instructions\ThreeValuedLogicInstructions.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
-    <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />
     <Compile Include="IL\Transforms\LockTransform.cs" />
@@ -330,9 +339,34 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
+    <Compile Include="DebugInfo\PortablePdbWriter.cs" />
+    <Compile Include="SRMExtensions.cs" />
+    <Compile Include="SRMHacks.cs" />
+    <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\GenericContext.cs" />
+    <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
+    <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
+    <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
+    <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataField.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataMethod.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataNamespace.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataEvent.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataProperty.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
+    <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\SpecializedParameter.cs" />
+    <Compile Include="TypeSystem\MetadataModule.cs" />
+    <Compile Include="TypeSystem\ModifiedType.cs" />
+    <Compile Include="TypeSystem\Implementation\PinnedType.cs" />
+    <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
     <Compile Include="TypeSystem\TupleType.cs" />
+    <Compile Include="TypeSystem\TypeProvider.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
@@ -393,14 +427,13 @@
     <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\Stepper.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
-    <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
     <Compile Include="Disassembler\ILStructure.cs" />
     <Compile Include="Disassembler\MethodBodyDisassembler.cs" />
     <Compile Include="Disassembler\ReflectionDisassembler.cs" />
     <Compile Include="IL\SemanticHelper.cs" />
     <Compile Include="IL\BlockBuilder.cs" />
-    <Compile Include="IL\ILOpCodes.cs">
+    <Compile Include="Metadata\ILOpCodes.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ILOpCodes.tt</DependentUpon>
@@ -444,21 +477,16 @@
     <Compile Include="TypeSystem\Accessibility.cs" />
     <Compile Include="TypeSystem\AnonymousType.cs" />
     <Compile Include="TypeSystem\ArrayType.cs" />
-    <Compile Include="TypeSystem\AssemblyLoader.cs" />
     <Compile Include="TypeSystem\AssemblyQualifiedTypeName.cs" />
     <Compile Include="TypeSystem\ByReferenceType.cs" />
-    <Compile Include="TypeSystem\CecilLoader.cs" />
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
-    <Compile Include="TypeSystem\DomRegion.cs" />
-    <Compile Include="TypeSystem\Error.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
     <Compile Include="TypeSystem\IAmbience.cs" />
     <Compile Include="TypeSystem\IAssembly.cs" />
     <Compile Include="TypeSystem\IAttribute.cs" />
     <Compile Include="TypeSystem\ICodeContext.cs" />
     <Compile Include="TypeSystem\ICompilation.cs" />
-    <Compile Include="TypeSystem\IConstantValue.cs" />
     <Compile Include="TypeSystem\IEntity.cs" />
     <Compile Include="TypeSystem\IEvent.cs" />
     <Compile Include="TypeSystem\IField.cs" />
@@ -467,34 +495,12 @@
     <Compile Include="TypeSystem\IMember.cs" />
     <Compile Include="TypeSystem\IMethod.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractFreezable.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractResolvedEntity.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractResolvedMember.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractResolvedTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\AbstractType.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractUnresolvedEntity.cs" />
-    <Compile Include="TypeSystem\Implementation\AbstractUnresolvedMember.cs" />
-    <Compile Include="TypeSystem\Implementation\AccessorOwnerMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\BaseTypeCollector.cs" />
-    <Compile Include="TypeSystem\Implementation\BlobReader.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAssemblyReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultAttribute.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultMemberReference.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedEvent.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedField.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedMethod.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedProperty.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedTypeDefinition.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultResolvedTypeParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedAssembly.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedAttribute.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedEvent.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedField.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedMethod.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedParameter.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedProperty.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedTypeDefinition.cs" />
-    <Compile Include="TypeSystem\Implementation\DefaultUnresolvedTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
@@ -503,10 +509,7 @@
     <Compile Include="TypeSystem\Implementation\MergedNamespace.cs" />
     <Compile Include="TypeSystem\Implementation\MinimalCorlib.cs" />
     <Compile Include="TypeSystem\Implementation\NestedTypeReference.cs" />
-    <Compile Include="TypeSystem\Implementation\ResolvedAttributeBlob.cs" />
     <Compile Include="TypeSystem\Implementation\SimpleCompilation.cs" />
-    <Compile Include="TypeSystem\Implementation\SimpleConstantValue.cs" />
-    <Compile Include="TypeSystem\Implementation\SimpleInterningProvider.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedEvent.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedField.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedMember.cs" />
@@ -515,9 +518,6 @@
     <Compile Include="TypeSystem\Implementation\TypeParameterReference.cs" />
     <Compile Include="TypeSystem\Implementation\TypeWithElementType.cs" />
     <Compile Include="TypeSystem\Implementation\UnknownType.cs" />
-    <Compile Include="TypeSystem\Implementation\UnresolvedAttributeBlob.cs" />
-    <Compile Include="TypeSystem\Implementation\UnresolvedSecurityDeclarationBlob.cs" />
-    <Compile Include="TypeSystem\Implementation\VoidTypeDefinition.cs" />
     <Compile Include="TypeSystem\INamedElement.cs" />
     <Compile Include="TypeSystem\INamespace.cs" />
     <Compile Include="TypeSystem\InheritanceHelper.cs" />
@@ -531,7 +531,6 @@
     <Compile Include="TypeSystem\ITypeDefinition.cs" />
     <Compile Include="TypeSystem\ITypeParameter.cs" />
     <Compile Include="TypeSystem\ITypeReference.cs" />
-    <Compile Include="TypeSystem\IUnresolvedFile.cs" />
     <Compile Include="TypeSystem\IVariable.cs" />
     <Compile Include="TypeSystem\KnownTypeReference.cs" />
     <Compile Include="TypeSystem\NullableType.cs" />
@@ -548,13 +547,10 @@
     <Compile Include="TypeSystem\TypeParameterSubstitution.cs" />
     <Compile Include="TypeSystem\TypeSystemExtensions.cs" />
     <Compile Include="TypeSystem\TypeUtils.cs" />
-    <Compile Include="TypeSystem\SpecializingDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
-    <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
     <Compile Include="TypeSystem\TypeVisitor.cs" />
     <Compile Include="TypeSystem\VarArgInstanceMethod.cs" />
-    <Compile Include="Util\BitVector16.cs" />
     <Compile Include="Util\BusyManager.cs" />
     <Compile Include="Util\CacheManager.cs" />
     <Compile Include="Util\CallbackOnDispose.cs" />
@@ -576,7 +572,7 @@
     <None Include="ICSharpCode.Decompiler.nuspec.template" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
     <None Include="ICSharpCode.Decompiler.snk" />
-    <None Include="IL\ILOpCodes.tt">
+    <None Include="Metadata\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>
     </None>

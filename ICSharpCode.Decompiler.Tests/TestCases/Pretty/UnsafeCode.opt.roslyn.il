@@ -481,6 +481,30 @@
   } // end of method UnsafeCode::FixedStringAccess
 
   .method public hidebysig instance void 
+          FixedStringNoPointerUse(string text) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  2
+    .locals init (char* V_0,
+             string pinned V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldloc.1
+    IL_0003:  conv.u
+    IL_0004:  stloc.0
+    IL_0005:  ldloc.0
+    IL_0006:  brfalse.s  IL_0010
+
+    IL_0008:  ldloc.0
+    IL_0009:  call       int32 [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::get_OffsetToStringData()
+    IL_000e:  add
+    IL_000f:  stloc.0
+    IL_0010:  ldnull
+    IL_0011:  stloc.1
+    IL_0012:  ret
+  } // end of method UnsafeCode::FixedStringNoPointerUse
+
+  .method public hidebysig instance void 
           PutDoubleIntoLongArray1(int64[] 'array',
                                   int32 index,
                                   float64 val) cil managed

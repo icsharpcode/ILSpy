@@ -21,66 +21,6 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	/// <summary>
-	/// Method/field/property/event.
-	/// </summary>
-	public interface IUnresolvedMember : IUnresolvedEntity, IMemberReference
-	{
-		/// <summary>
-		/// Gets the return type of this member.
-		/// This property never returns null.
-		/// </summary>
-		ITypeReference ReturnType { get; }
-		
-		/// <summary>
-		/// Gets whether this member is explicitly implementing an interface.
-		/// If this property is true, the member can only be called through the interfaces it implements.
-		/// </summary>
-		bool IsExplicitInterfaceImplementation { get; }
-		
-		/// <summary>
-		/// Gets the interfaces that are explicitly implemented by this member.
-		/// </summary>
-		IList<IMemberReference> ExplicitInterfaceImplementations { get; }
-		
-		/// <summary>
-		/// Gets if the member is virtual. Is true only if the "virtual" modifier was used, but non-virtual
-		/// members can be overridden, too; if they are abstract or overriding a method.
-		/// </summary>
-		bool IsVirtual { get; }
-		
-		/// <summary>
-		/// Gets whether this member is overriding another member.
-		/// </summary>
-		bool IsOverride { get; }
-		
-		/// <summary>
-		/// Gets if the member can be overridden. Returns true when the member is "abstract", "virtual" or "override" but not "sealed".
-		/// </summary>
-		bool IsOverridable { get; }
-		
-		/// <summary>
-		/// Resolves the member.
-		/// </summary>
-		/// <param name="context">
-		/// Context for looking up the member. The context must specify the current assembly.
-		/// A <see cref="SimpleTypeResolveContext"/> that specifies the current assembly is sufficient.
-		/// </param>
-		/// <returns>
-		/// Returns the resolved member, or <c>null</c> if the member could not be found.
-		/// </returns>
-		new IMember Resolve(ITypeResolveContext context);
-		
-		/// <summary>
-		/// Creates the resolved member.
-		/// </summary>
-		/// <param name="context">
-		/// The language-specific context that includes the parent type definition.
-		/// <see cref="IUnresolvedTypeDefinition.CreateResolveContext"/>
-		/// </param>
-		IMember CreateResolved(ITypeResolveContext context);
-	}
-	
 	public interface IMemberReference
 	{
 		/// <summary>
@@ -116,27 +56,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IMember MemberDefinition { get; }
 		
 		/// <summary>
-		/// Gets the unresolved member instance from which this member was created.
-		/// This property may return <c>null</c> for special members that do not have a corresponding unresolved member instance.
-		/// </summary>
-		/// <remarks>
-		/// For specialized members, this property returns the unresolved member for the original member definition.
-		/// For partial methods, this property returns the implementing partial method declaration, if one exists, and the
-		/// defining partial method declaration otherwise.
-		/// For the members used to represent the built-in C# operators like "operator +(int, int);", this property returns <c>null</c>.
-		/// </remarks>
-		IUnresolvedMember UnresolvedMember { get; }
-		
-		/// <summary>
 		/// Gets the return type of this member.
 		/// This property never returns <c>null</c>.
 		/// </summary>
 		IType ReturnType { get; }
 
 		/// <summary>
-		/// Gets the interface members implemented by this member (both implicitly and explicitly).
+		/// Gets the interface members explicitly implemented by this member.
 		/// </summary>
-		IReadOnlyList<IMember> ImplementedInterfaceMembers { get; }
+		/// <remarks>
+		/// For methods, equivalent to (
+		///		from impl in DeclaringTypeDefinition.GetExplicitInterfaceImplementations()
+		///		where impl.Implementation == this
+		///		select impl.InterfaceMethod
+		/// ),
+		/// but may be more efficient than searching the whole list.
+		/// 
+		/// Note that it is possible for a class to implement an interface using members in a
+		/// base class unrelated to that interface:
+		///   class BaseClass { public void Dispose() {} }
+		///   class C : BaseClass, IDisposable { }
+		/// In this case, the interface member will not show up in (BaseClass.Dispose).ImplementedInterfaceMembers,
+		/// so use (C).GetInterfaceImplementations() instead to handle this case.
+		/// </remarks>
+		IEnumerable<IMember> ExplicitlyImplementedInterfaceMembers { get; }
 		
 		/// <summary>
 		/// Gets whether this member is explicitly implementing an interface.

@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			if (targetContainer != null) {
 				output.Write(' ');
-				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
+				output.WriteLocalReference(TargetLabel, targetContainer);
 				output.Write(" (");
 				value.WriteTo(output, options);
 				output.Write(')');

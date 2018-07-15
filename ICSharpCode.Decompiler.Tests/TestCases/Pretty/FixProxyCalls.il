@@ -308,6 +308,211 @@
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B
 
+.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1<T>
+       extends ICSharpCode.Decompiler.Tests.TestCases.ILPretty.A
+{
+  .class auto ansi sealed nested private beforefieldinit '<Test>d__0'<T>
+         extends [mscorlib]System.ValueType
+         implements [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public int32 '<>1__state'
+    .field public valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> '<>t__builder'
+    .field public class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1<!T> '<>4__this'
+    .field public string test
+    .field private valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> '<>u__$awaiter1'
+    .field private object '<>t__stack'
+    .method private hidebysig newslot virtual final 
+            instance void  MoveNext() cil managed
+    {
+      .override [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine::MoveNext
+      // Code size       184 (0xb8)
+      .maxstack  3
+      .locals init (bool V_0,
+               string V_1,
+               class [mscorlib]System.Exception V_2,
+               int32 V_3,
+               valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> V_4,
+               valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> V_5)
+      .try
+      {
+        IL_0000:  ldc.i4.1
+        IL_0001:  stloc.0
+        IL_0002:  ldarg.0
+        IL_0003:  ldfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+        IL_0008:  stloc.3
+        IL_0009:  ldloc.3
+        IL_000a:  ldc.i4.0
+        IL_000b:  beq.s      IL_000f
+
+        IL_000d:  br.s       IL_0011
+
+        IL_000f:  br.s       IL_0057
+
+        IL_0011:  br.s       IL_0013
+
+        IL_0013:  nop
+        IL_0014:  ldarg.0
+        IL_0015:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1<!0> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>4__this'
+        IL_001a:  ldarg.0
+        IL_001b:  ldfld      string valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::test
+        IL_0020:  call       instance class [mscorlib]System.Threading.Tasks.Task`1<string> class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1<!T>::'<>n__FabricatedMethod2'(string)
+        IL_0025:  callvirt   instance valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<!0> class [mscorlib]System.Threading.Tasks.Task`1<string>::GetAwaiter()
+        IL_002a:  stloc.s    V_4
+        IL_002c:  ldloca.s   V_4
+        IL_002e:  call       instance bool valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string>::get_IsCompleted()
+        IL_0033:  brtrue.s   IL_0076
+
+        IL_0035:  ldarg.0
+        IL_0036:  ldc.i4.0
+        IL_0037:  stfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+        IL_003c:  ldarg.0
+        IL_003d:  ldloc.s    V_4
+        IL_003f:  stfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>u__$awaiter1'
+        IL_0044:  ldarg.0
+        IL_0045:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+        IL_004a:  ldloca.s   V_4
+        IL_004c:  ldarg.0
+        IL_004d:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::AwaitUnsafeOnCompleted<valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string>,valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!0>>(!!0&,
+                                                                                                                                                                                                                                                                                                                   !!1&)
+        IL_0052:  nop
+        IL_0053:  ldc.i4.0
+        IL_0054:  stloc.0
+        IL_0055:  leave.s    IL_00b6
+
+        IL_0057:  ldarg.0
+        IL_0058:  ldfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>u__$awaiter1'
+        IL_005d:  stloc.s    V_4
+        IL_005f:  ldarg.0
+        IL_0060:  ldloca.s   V_5
+        IL_0062:  initobj    valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string>
+        IL_0068:  ldloc.s    V_5
+        IL_006a:  stfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>u__$awaiter1'
+        IL_006f:  ldarg.0
+        IL_0070:  ldc.i4.m1
+        IL_0071:  stfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+        IL_0076:  ldloca.s   V_4
+        IL_0078:  call       instance !0 valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string>::GetResult()
+        IL_007d:  ldloca.s   V_4
+        IL_007f:  initobj    valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<string>
+        IL_0085:  stloc.1
+        IL_0086:  leave.s    IL_00a0
+
+      }  // end .try
+      catch [mscorlib]System.Exception 
+      {
+        IL_0088:  stloc.2
+        IL_0089:  ldarg.0
+        IL_008a:  ldc.i4.s   -2
+        IL_008c:  stfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+        IL_0091:  ldarg.0
+        IL_0092:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+        IL_0097:  ldloc.2
+        IL_0098:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::SetException(class [mscorlib]System.Exception)
+        IL_009d:  nop
+        IL_009e:  leave.s    IL_00b6
+
+      }  // end handler
+      IL_00a0:  nop
+      IL_00a1:  ldarg.0
+      IL_00a2:  ldc.i4.s   -2
+      IL_00a4:  stfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+      IL_00a9:  ldarg.0
+      IL_00aa:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+      IL_00af:  ldloc.1
+      IL_00b0:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::SetResult(!0)
+      IL_00b5:  nop
+      IL_00b6:  nop
+      IL_00b7:  ret
+    } // end of method '<Test>d__0'::MoveNext
+
+    .method private hidebysig newslot virtual final 
+            instance void  SetStateMachine(class [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine param0) cil managed
+    {
+      .custom instance void [mscorlib]System.Diagnostics.DebuggerHiddenAttribute::.ctor() = ( 01 00 00 00 ) 
+      .override [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine::SetStateMachine
+      // Code size       13 (0xd)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+      IL_0006:  ldarg.1
+      IL_0007:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::SetStateMachine(class [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine)
+      IL_000c:  ret
+    } // end of method '<Test>d__0'::SetStateMachine
+
+  } // end of class '<Test>d__0'
+
+  .method famorassem hidebysig virtual instance class [mscorlib]System.Threading.Tasks.Task`1<string> 
+          Test(string test) cil managed
+  {
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerStepThroughAttribute::.ctor() = ( 01 00 00 00 ) 
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.AsyncStateMachineAttribute::.ctor(class [mscorlib]System.Type) = ( 01 00 3F 49 43 53 68 61 72 70 43 6F 64 65 2E 44   // ..?ICSharpCode.D
+                                                                                                                                       65 63 6F 6D 70 69 6C 65 72 2E 54 65 73 74 73 2E   // ecompiler.Tests.
+                                                                                                                                       54 65 73 74 43 61 73 65 73 2E 49 4C 50 72 65 74   // TestCases.ILPret
+                                                                                                                                       74 79 2E 42 32 60 31 2B 3C 54 65 73 74 3E 64 5F   // ty.B2`1+<Test>d_
+                                                                                                                                       5F 30 00 00 )                                     // _0..
+    // Code size       70 (0x46)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T> V_0,
+             class [mscorlib]System.Threading.Tasks.Task`1<string> V_1,
+             valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> V_2)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  ldarg.0
+    IL_0003:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1<!0> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>4__this'
+    IL_0008:  ldloca.s   V_0
+    IL_000a:  ldarg.1
+    IL_000b:  stfld      string valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::test
+    IL_0010:  ldloca.s   V_0
+    IL_0012:  call       valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<!0> valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::Create()
+    IL_0017:  stfld      valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+    IL_001c:  ldloca.s   V_0
+    IL_001e:  ldc.i4.m1
+    IL_001f:  stfld      int32 valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>1__state'
+    IL_0024:  ldloca.s   V_0
+    IL_0026:  ldfld      valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+    IL_002b:  stloc.2
+    IL_002c:  ldloca.s   V_2
+    IL_002e:  ldloca.s   V_0
+    IL_0030:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::Start<valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!0>>(!!0&)
+    IL_0035:  ldloca.s   V_0
+    IL_0037:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string> valuetype ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1/'<Test>d__0'<!T>::'<>t__builder'
+    IL_003c:  call       instance class [mscorlib]System.Threading.Tasks.Task`1<!0> valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<string>::get_Task()
+    IL_0041:  stloc.1
+    IL_0042:  br.s       IL_0044
+
+    IL_0044:  ldloc.1
+    IL_0045:  ret
+  } // end of method B2`1::Test
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.ILPretty.A::.ctor()
+    IL_0006:  ret
+  } // end of method B2`1::.ctor
+
+  .method private hidebysig instance class [mscorlib]System.Threading.Tasks.Task`1<string> 
+          '<>n__FabricatedMethod2'(string A_1) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       12 (0xc)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Threading.Tasks.Task`1<string> V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance class [mscorlib]System.Threading.Tasks.Task`1<string> ICSharpCode.Decompiler.Tests.TestCases.ILPretty.A::Test(string)
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method B2`1::'<>n__FabricatedMethod2'
+
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.ILPretty.B2`1
+
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.ILPretty.C
        extends [mscorlib]System.Object
 {

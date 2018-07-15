@@ -20,65 +20,59 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
+	/// <summary>
+	/// Finds members where this method is referenced.
+	/// </summary>
 	internal sealed class AnalyzedMethodUsedByTreeNode : AnalyzerSearchTreeNode
 	{
-		private readonly MethodDefinition analyzedMethod;
-		private ConcurrentDictionary<MethodDefinition, int> foundMethods;
+		readonly Decompiler.Metadata.PEFile module;
+		readonly MethodDefinitionHandle analyzedMethod;
 
-		public AnalyzedMethodUsedByTreeNode(MethodDefinition analyzedMethod)
+		public AnalyzedMethodUsedByTreeNode(Decompiler.Metadata.PEFile module, MethodDefinitionHandle analyzedMethod)
 		{
-			if (analyzedMethod == null)
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			if (analyzedMethod.IsNil)
 				throw new ArgumentNullException(nameof(analyzedMethod));
-
 			this.analyzedMethod = analyzedMethod;
 		}
 
-		public override object Text
-		{
-			get { return "Used By"; }
-		}
+		public override object Text => "Used By";
 
 		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			foundMethods = new ConcurrentDictionary<MethodDefinition, int>();
-
-			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedMethod, FindReferencesInType);
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(this.Language, module, analyzedMethod, provideTypeSystem: false, FindReferencesInType);
 			foreach (var child in analyzer.PerformAnalysis(ct).OrderBy(n => n.Text)) {
 				yield return child;
 			}
-
-			foundMethods = null;
 		}
 
-		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
+		IEnumerable<AnalyzerTreeNode> FindReferencesInType(Decompiler.Metadata.PEFile module, TypeDefinitionHandle type, CodeMappingInfo codeMapping, IDecompilerTypeSystem typeSystem)
 		{
-			string name = analyzedMethod.Name;
-			foreach (MethodDefinition method in type.Methods) {
-				bool found = false;
-				if (!method.HasBody)
+			var methodDef = this.module.Metadata.GetMethodDefinition(analyzedMethod);
+			var name = this.module.Metadata.GetString(methodDef.Name);
+
+			var td = module.Metadata.GetTypeDefinition(type);
+
+			HashSet<MethodDefinitionHandle> alreadyFoundMethods = new HashSet<MethodDefinitionHandle>();
+
+			foreach (var method in td.GetMethods()) {
+				var currentMethod = module.Metadata.GetMethodDefinition(method);
+				if (!currentMethod.HasBody())
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
-					if (mr != null && mr.Name == name &&
-						Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
-						mr.Resolve() == analyzedMethod) {
-						found = true;
-						break;
-					}
-				}
-
-				method.Body = null;
-
-				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
-					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
-						var node= new AnalyzedMethodTreeNode(codeLocation);
+				if (ScanMethodBody(module, currentMethod.RelativeVirtualAddress)) {
+					var parentMethod = codeMapping.GetParentMethod(method);
+					if (!parentMethod.IsNil && alreadyFoundMethods.Add(parentMethod)) {
+						var node = new AnalyzedMethodTreeNode(module, parentMethod);
 						node.Language = this.Language;
 						yield return node;
 					}
@@ -86,9 +80,39 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private bool HasAlreadyBeenFound(MethodDefinition method)
+		bool ScanMethodBody(PEFile module, int rva)
 		{
-			return !foundMethods.TryAdd(method, 0);
+			var blob = module.Reader.GetMethodBody(rva).GetILReader();
+			while (blob.RemainingBytes > 0) {
+				var opCode = blob.DecodeOpCode();
+				switch (opCode.GetOperandType()) {
+					case OperandType.Field:
+					case OperandType.Method:
+					case OperandType.Sig:
+					case OperandType.Tok:
+					case OperandType.Type:
+						var member = MetadataTokens.EntityHandle(blob.ReadInt32());
+						switch (member.Kind) {
+							case HandleKind.MethodDefinition:
+								if (this.module != module || analyzedMethod != (MethodDefinitionHandle)member)
+									break;
+								return true;
+							case HandleKind.MemberReference:
+								var mr = module.Metadata.GetMemberReference((MemberReferenceHandle)member);
+								if (mr.GetKind() != MemberReferenceKind.Method)
+									break;
+								return Helpers.IsSameMethod(analyzedMethod, this.module, member, module);
+							case HandleKind.MethodSpecification:
+								return Helpers.IsSameMethod(analyzedMethod, this.module, member, module);
+						}
+						break;
+					default:
+						blob.SkipOperand(opCode);
+						break;
+				}
+			}
+
+			return false;
 		}
 	}
 }

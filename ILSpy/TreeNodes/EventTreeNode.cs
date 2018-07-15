@@ -19,7 +19,7 @@
 using System;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,65 +28,33 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		
-		public EventTreeNode(EventDefinition ev)
+		public EventTreeNode(IEvent @event)
 		{
-			if (ev == null)
-				throw new ArgumentNullException(nameof(ev));
-			this.EventDefinition = ev;
-			
-			if (ev.AddMethod != null)
-				this.Children.Add(new MethodTreeNode(ev.AddMethod));
-			if (ev.RemoveMethod != null)
-				this.Children.Add(new MethodTreeNode(ev.RemoveMethod));
-			if (ev.InvokeMethod != null)
-				this.Children.Add(new MethodTreeNode(ev.InvokeMethod));
-			if (ev.HasOtherMethods) {
-				foreach (var m in ev.OtherMethods)
-					this.Children.Add(new MethodTreeNode(m));
-			}
+			this.EventDefinition = @event ?? throw new ArgumentNullException(nameof(@event));
+			if (@event.CanAdd)
+				this.Children.Add(new MethodTreeNode(@event.AddAccessor));
+			if (@event.CanRemove)
+				this.Children.Add(new MethodTreeNode(@event.RemoveAccessor));
+			if (@event.CanInvoke)
+				this.Children.Add(new MethodTreeNode(@event.InvokeAccessor));
+			//foreach (var m in ev.OtherMethods)
+			//	this.Children.Add(new MethodTreeNode(m));
 		}
 
-		public EventDefinition EventDefinition { get; }
+		public IEvent EventDefinition { get; }
 
 		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.MetadataToken.ToSuffixString();
 
-		public static object GetText(EventDefinition eventDef, Language language)
+		public static object GetText(IEvent ev, Language language)
 		{
-			return HighlightSearchMatch(eventDef.Name, " : " + language.TypeToString(eventDef.EventType, false, eventDef));
+			return language.EventToString(ev, false, false);
 		}
 
 		public override object Icon => GetIcon(EventDefinition);
 
-		public static ImageSource GetIcon(EventDefinition eventDef)
+		public static ImageSource GetIcon(IEvent @event)
 		{
-			MethodDefinition accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
-			if (accessor != null)
-				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(eventDef.AddMethod.Attributes), eventDef.AddMethod.IsStatic);
-			else
-				return Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
-		}
-
-		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
-		{
-			switch (methodAttributes & MethodAttributes.MemberAccessMask) {
-				case MethodAttributes.Public:
-					return AccessOverlayIcon.Public;
-				case MethodAttributes.Assembly:
-					return AccessOverlayIcon.Internal;
-				case MethodAttributes.FamANDAssem:
-					return AccessOverlayIcon.PrivateProtected;
-				case MethodAttributes.Family:
-					return AccessOverlayIcon.Protected;
-				case MethodAttributes.FamORAssem:
-					return AccessOverlayIcon.ProtectedInternal;
-				case MethodAttributes.Private:
-					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
-					return AccessOverlayIcon.CompilerControlled;
-				default:
-					throw new NotSupportedException();
-			}
+			return Images.GetIcon(MemberIcon.Event, MethodTreeNode.GetOverlayIcon(@event.Accessibility), @event.IsStatic);
 		}
 
 		public override FilterResult Filter(FilterSettings settings)
@@ -104,14 +72,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileEvent(EventDefinition, output, options);
 		}
 		
-		
 		public override bool IsPublicAPI {
 			get {
-				MethodDefinition accessor = EventDefinition.AddMethod ?? EventDefinition.RemoveMethod;
-				return accessor != null && (accessor.IsPublic || accessor.IsFamilyOrAssembly || accessor.IsFamily);
+				switch (EventDefinition.Accessibility) {
+					case Accessibility.Public:
+					case Accessibility.ProtectedOrInternal:
+					case Accessibility.Protected:
+						return true;
+					default:
+						return false;
+				}
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member => EventDefinition;
+		IEntity IMemberTreeNode.Member => EventDefinition;
 	}
 }

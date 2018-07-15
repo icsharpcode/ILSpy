@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				throw new ArgumentNullException("name");
 			this.type = type;
 			this.name = name;
+			this.attributes = EmptyList<IAttribute>.Instance;
 		}
 		
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
@@ -55,7 +56,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.type = type;
 			this.name = name;
 			this.owner = owner;
-			this.attributes = attributes;
+			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.isRef = isRef;
 			this.isOut = isOut;
 			this.isParams = isParams;
@@ -71,9 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return owner; }
 		}
 		
-		public IReadOnlyList<IAttribute> Attributes {
-			get { return attributes; }
-		}
+		public IEnumerable<IAttribute> GetAttributes() => attributes;
 		
 		public bool IsRef {
 			get { return isRef; }

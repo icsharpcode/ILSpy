@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
-			this.conversions = CSharpConversions.Get(context.TypeSystem.Compilation);
+			this.conversions = CSharpConversions.Get(context.TypeSystem);
 			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.DecompiledTypeDefinition);
 			this.resolveContextStack.Push(currentContext);
 			this.resolver = new CSharpResolver(currentContext);
 		}
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (string ident in namespaceDeclaration.Identifiers) {
 				usingScope = new UsingScope(usingScope, ident);
 			}
-			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentModule, usingScope.Resolve(previousContext.Compilation));
 			resolveContextStack.Push(currentContext);
 			try {
 				this.resolver = new CSharpResolver(currentContext);
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (method.Parameters.Count == 0) return false;
 			var targetType = method.Parameters.Select(p => new ResolveResult(p.Type)).First();
 			var paramTypes = method.Parameters.Skip(1).Select(p => new ResolveResult(p.Type)).ToArray();
-			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectArray(p => p.Name);
+			var paramNames = ignoreArgumentNames ? null : method.Parameters.SelectReadOnlyArray(p => p.Name);
 			var typeArgs = ignoreTypeArguments ? Empty<IType>.Array : method.TypeArguments.ToArray();
 			var resolver = new CSharpResolver(resolveContext);
 			return CanTransformToExtensionMethodCall(resolver, method, typeArgs, targetType, paramTypes, argumentNames: paramNames);

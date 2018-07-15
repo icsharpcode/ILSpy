@@ -6,14 +6,11 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
-using System.IO;
-using Mono.Cecil;
-using System.Collections.Generic;
-using System.Linq;
 using ICSharpCode.ILSpy.AddIn.Commands;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using EnvDTE;
+using System.Collections.Generic;
 
 namespace ICSharpCode.ILSpy.AddIn
 {

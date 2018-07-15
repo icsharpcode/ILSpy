@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,11 +32,11 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CSharp;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
@@ -113,19 +115,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
-				using (ModuleDefinition module = ModuleDefinition.ReadModule(sourceFileName))
+				using (var peFileStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
+				using (var peFile = new PEFile(sourceFileName, peFileStream))
 				using (var writer = new StringWriter()) {
-					module.Name = Path.GetFileNameWithoutExtension(outputFile);
+					var metadata = peFile.Metadata;
 					var output = new PlainTextOutput(writer);
 					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
+					rd.AssemblyResolver = new UniversalAssemblyResolver(sourceFileName, true, null);
 					rd.DetectControlStructure = false;
-					rd.WriteAssemblyReferences(module);
-					if (module.Assembly != null)
-						rd.WriteAssemblyHeader(module.Assembly);
+					rd.WriteAssemblyReferences(metadata);
+					if (metadata.IsAssembly)
+						rd.WriteAssemblyHeader(peFile);
 					output.WriteLine();
-					rd.WriteModuleHeader(module, skipMVID: true);
+					rd.WriteModuleHeader(peFile, skipMVID: true);
 					output.WriteLine();
-					rd.WriteModuleContents(module);
+					rd.WriteModuleContents(peFile);
 
 					File.WriteAllText(outputFile, ReplacePrivImplDetails(writer.ToString()));
 				}
@@ -345,8 +349,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var emitResult = compilation.Emit(peStream);
 			peStream.Position = 0;
 
-			var moduleDefinition = ModuleDefinition.ReadModule(peStream);
-			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
+			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, PEStreamOptions.PrefetchEntireImage);
+			var resolver = new UniversalAssemblyResolver("TestAssembly.dll", false, moduleDefinition.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
 
 			return decompiler;
 		}
@@ -390,9 +395,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
-				var typeSystem = new DecompilerTypeSystem(module);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
+			if (settings == null)
+				settings = new DecompilerSettings();
+			using (var file = new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read)) {
+				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
+				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
+					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());

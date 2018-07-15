@@ -242,8 +242,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 						// settings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls == true is used in Windows Forms' InitializeComponent methods.
 						if (method.IsExplicitInterfaceImplementation && (target.Expression is ThisReferenceExpression || settings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls)) {
-							var castExpression = new CastExpression(expressionBuilder.ConvertType(method.ImplementedInterfaceMembers[0].DeclaringType), target.Expression);
-							methodName = method.ImplementedInterfaceMembers[0].Name;
+							var interfaceMember = method.ExplicitlyImplementedInterfaceMembers.First();
+							var castExpression = new CastExpression(expressionBuilder.ConvertType(interfaceMember.DeclaringType), target.Expression);
+							methodName = interfaceMember.Name;
 							targetExpr = new MemberReferenceExpression(castExpression, methodName);
 							typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
 						}
@@ -347,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				acrr.SizeArguments.Count == 1 &&
 				acrr.SizeArguments[0].IsCompileTimeConstant &&
 				acrr.SizeArguments[0].ConstantValue is int length) {
-				var expandedParameters = expectedParameters.Take(expectedParameters.Count - 1).ToList();
+				var expandedParameters = new List<IParameter>(expectedParameters);
 				var expandedArguments = new List<TranslatedExpression>(arguments);
 				if (length > 0) {
 					var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
@@ -500,7 +501,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return true;
 			// always use unspecialized member, otherwise type inference fails
 			method = (IMethod)method.MemberDefinition;
-			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectArray(p => p.Type),
+			typeInference.InferTypeArguments(method.TypeParameters, arguments, method.Parameters.SelectReadOnlyArray(p => p.Type),
 				out bool success);
 			return success;
 		}
@@ -610,7 +611,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			out IParameterizedMember foundMember)
 		{
 			foundMember = null;
-			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 			var or = new OverloadResolution(resolver.Compilation,
 				arguments.SelectArray(a => a.ResolveResult),
 				argumentNames: argumentNames,
@@ -673,7 +674,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				foundMember = result.Member;
 			} else {
-				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+				var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 				if (method.AccessorOwner.SymbolKind == SymbolKind.Indexer) {
 					var or = new OverloadResolution(resolver.Compilation,
 						arguments.SelectArray(a => a.ResolveResult),
@@ -835,7 +836,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			bool needsCast = false;
 			ResolveResult result = null;
-			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
+			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)));
 			if (!requireTarget) {
 				result = resolver.ResolveSimpleName(method.Name, method.TypeArguments, isInvocationTarget: false);
 				if (result is MethodGroupResolveResult mgrr) {
@@ -847,7 +848,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			MemberLookup lookup = null;
 			if (requireTarget) {
-				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+				lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 				var rr = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false) ;
 				needsCast = true;
 				result = rr;

@@ -260,7 +260,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return CSharp.Transforms.IntroduceExtensionMethods.CanTransformToExtensionMethodCall(
 					call.Method, new CSharp.TypeSystem.CSharpTypeResolveContext(
-						context.TypeSystem.Compilation.MainAssembly, context.UsingScope
+						context.TypeSystem.MainModule, context.UsingScope
 					)
 				);
 			}

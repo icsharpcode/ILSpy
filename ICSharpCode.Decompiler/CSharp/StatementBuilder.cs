@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem.Compilation, true, out var isGeneric);
+			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
 			return new YieldReturnStatement {
 				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
 			};
@@ -454,6 +454,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// For example: foreach (ClassA item in nonGenericEnumerable)
 			var type = singleGetter.Method.ReturnType;
 			ILInstruction instToReplace = singleGetter;
+			bool useVar = false;
 			switch (instToReplace.Parent) {
 				case CastClass cc:
 					type = cc.Type;
@@ -463,7 +464,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					type = ua.Type;
 					instToReplace = ua;
 					break;
+				default:
+					if (TupleType.IsTupleCompatible(type, out _)) {
+						// foreach with get_Current returning a tuple type, let's check which type "var" would infer:
+						var foreachRR = exprBuilder.resolver.ResolveForeach(collectionExpr.GetResolveResult());
+						if (EqualErasedType(type, foreachRR.ElementType)) {
+							type = foreachRR.ElementType;
+							useVar = true;
+						}
+					}
+					break;
 			}
+
 			// Handle the required foreach-variable transformation:
 			switch (transformation) {
 				case RequiredGetCurrentTransformation.UseExistingVariable:
@@ -507,9 +519,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(firstStatement is ExpressionStatement);
 			firstStatement.Remove();
 
+			if (settings.AnonymousTypes && type.ContainsAnonymousType())
+				useVar = true;
+
 			// Construct the foreach loop.
 			var foreachStmt = new ForeachStatement {
-				VariableType = settings.AnonymousTypes && foreachVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(foreachVariable.Type),
+				VariableType = useVar ? new SimpleType("var") : exprBuilder.ConvertType(foreachVariable.Type),
 				VariableName = foreachVariable.Name,
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
@@ -527,6 +542,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 			}
 			return foreachStmt;
+		}
+
+		static bool EqualErasedType(IType a, IType b)
+		{
+			a = a.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			b = b.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
+			return a.Equals(b);
 		}
 
 		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
@@ -852,8 +874,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (continueTarget.IncomingEdgeCount > continueCount)
 						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
 					return forStmt;
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
-			throw new NotSupportedException();
 		}
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)

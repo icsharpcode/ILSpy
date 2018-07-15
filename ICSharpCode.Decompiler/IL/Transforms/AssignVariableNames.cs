@@ -25,6 +25,7 @@ using Humanizer;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -58,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
-			currentFieldNames = function.CecilMethod.DeclaringType.Fields.Select(f => f.Name).ToArray();
+			currentFieldNames = function.Method.DeclaringTypeDefinition.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var f in function.Descendants.OfType<ILFunction>()) {
@@ -368,9 +369,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static string GetNameByType(IType type)
 		{
-			var git = type as ParameterizedType;
-			if (git != null && git.FullName == "System.Nullable`1" && git.TypeArguments.Count == 1) {
-				type = git.TypeArguments[0];
+			type = NullableType.GetUnderlyingType(type);
+			while (type is ModifiedType || type is PinnedType) {
+				type = ((TypeWithElementType)type).ElementType;
 			}
 
 			string name;
@@ -467,7 +468,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, v.Name);
 				}
 			}
-			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in rootFunction.Method.DeclaringTypeDefinition.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 			return reservedVariableNames;
 		}

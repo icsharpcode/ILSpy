@@ -8,7 +8,6 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	internal class BamlBinaryReader : BinaryReader
 	{
-		// Methods
 		public BamlBinaryReader(Stream stream)
 			: base(stream)
 		{
@@ -16,7 +15,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public virtual double ReadCompressedDouble()
 		{
-			switch (this.ReadByte()) {
+			byte b = this.ReadByte();
+			switch (b) {
 				case 1:
 					return 0;
 				case 2:
@@ -27,8 +27,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					return ReadInt32() * 1E-06;
 				case 5:
 					return this.ReadDouble();
+				default:
+					throw new BadImageFormatException($"Unexpected byte sequence in ReadCompressedDouble: 0x{b:x}");
 			}
-			throw new NotSupportedException();
 		}
 
 		public int ReadCompressedInt32()

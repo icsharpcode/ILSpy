@@ -542,7 +542,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool isNullCoalescingWithNonNullableFallback = false;
 			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift)) {
 				isNullCoalescingWithNonNullableFallback = true;
-				utype = context.TypeSystem.Compilation.FindType(trueInst.ResultType.ToKnownTypeCode());
+				utype = context.TypeSystem.FindType(trueInst.ResultType.ToKnownTypeCode());
 				exprToLift = trueInst;
 				if (nullableVars.Count == 1 && exprToLift.MatchLdLoc(nullableVars[0])) {
 					// v.HasValue ? ldloc v : fallback
@@ -779,7 +779,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (underlyingType == SpecialType.UnknownType)
 				return inst;
-			var nullable = context.TypeSystem.Compilation.FindType(KnownTypeCode.NullableOfT).GetDefinition();
+			var nullable = context.TypeSystem.FindType(KnownTypeCode.NullableOfT).GetDefinition();
 			var ctor = nullable?.Methods.FirstOrDefault(m => m.IsConstructor && m.Parameters.Count == 1);
 			if (ctor != null) {
 				ctor = ctor.Specialize(new TypeParameterSubstitution(new[] { underlyingType }, null));

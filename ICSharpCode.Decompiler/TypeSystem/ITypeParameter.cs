@@ -23,35 +23,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Type parameter of a generic class/method.
 	/// </summary>
-	public interface IUnresolvedTypeParameter : INamedElement
-	{
-		/// <summary>
-		/// Get the type of this type parameter's owner.
-		/// </summary>
-		/// <returns>SymbolKind.TypeDefinition or SymbolKind.Method</returns>
-		SymbolKind OwnerType { get; }
-		
-		/// <summary>
-		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
-		/// </summary>
-		int Index { get; }
-		
-		/// <summary>
-		/// Gets the list of attributes declared on this type parameter.
-		/// </summary>
-		IList<IUnresolvedAttribute> Attributes { get; }
-		
-		/// <summary>
-		/// Gets the variance of this type parameter.
-		/// </summary>
-		VarianceModifier Variance { get; }
-		
-		ITypeParameter CreateResolvedTypeParameter(ITypeResolveContext context);
-	}
-	
-	/// <summary>
-	/// Type parameter of a generic class/method.
-	/// </summary>
 	public interface ITypeParameter : IType, ISymbol
 	{
 		/// <summary>
@@ -82,9 +53,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		new string Name { get; }
 
 		/// <summary>
-		/// Gets the list of attributes declared on this type parameter.
+		/// Gets the attributes declared on this type parameter.
 		/// </summary>
-		IReadOnlyList<IAttribute> Attributes { get; }
+		IEnumerable<IAttribute> GetAttributes();
 		
 		/// <summary>
 		/// Gets the variance of this type parameter.

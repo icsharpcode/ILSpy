@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -153,6 +154,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			loop.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return loop;
+		}
+
+		public static T CopyAnnotationsFrom<T>(this T node, AstNode other) where T : AstNode
+		{
+			foreach (object annotation in other.Annotations) {
+				node.AddAnnotation(annotation);
+			}
+			return node;
+		}
+
+		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
+		{
+			foreach (object annotation in other.Annotations.OfType<ILInstruction>()) {
+				node.AddAnnotation(annotation);
+			}
+			return node;
 		}
 	}
 	

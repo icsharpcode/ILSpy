@@ -1,9 +1,28 @@
-﻿using System;
+﻿// Copyright (c) 2018 Siegfried Pammer
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
@@ -13,14 +32,14 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
+	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
+
 	[Export(typeof(Language))]
 	class CSharpILMixedLanguage : ILLanguage
 	{
@@ -36,9 +55,9 @@ namespace ICSharpCode.ILSpy
 				options.CancellationToken);
 		}
 
-		static CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
+		static CSharpDecompiler CreateDecompiler(PEFile module, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
 			return decompiler;
 		}
@@ -55,7 +74,7 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly DecompilationOptions options;
 			// list sorted by IL offset
-			IList<Decompiler.IL.SequencePoint> sequencePoints;
+			IList<SequencePoint> sequencePoints;
 			// lines of raw c# source code
 			string[] codeLines;
 
@@ -65,27 +84,26 @@ namespace ICSharpCode.ILSpy
 				this.options = options;
 			}
 
-			public override void Disassemble(MethodBody body)
+			public override void Disassemble(PEFile module, MethodDefinitionHandle handle)
 			{
-				var method = body.Method;
 				try {
 					var csharpOutput = new StringWriter();
-					CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
-					var st = decompiler.Decompile(method);
+					CSharpDecompiler decompiler = CreateDecompiler(module, options);
+					var st = decompiler.Decompile(handle);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
-					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.CecilMethod == method);
-					this.sequencePoints = mapping.Value ?? (IList<Decompiler.IL.SequencePoint>)EmptyList<Decompiler.IL.SequencePoint>.Instance;
+					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.Method.MetadataToken == handle);
+					this.sequencePoints = mapping.Value ?? (IList<SequencePoint>)EmptyList<SequencePoint>.Instance;
 					this.codeLines = csharpOutput.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-					base.Disassemble(body);
+					base.Disassemble(module, handle);
 				} finally {
 					this.sequencePoints = null;
 					this.codeLines = null;
 				}
 			}
 
-			protected override void WriteInstruction(ITextOutput output, Instruction instruction)
+			protected override void WriteInstruction(ITextOutput output, MetadataReader metadata, MethodDefinitionHandle methodDefinition, ref BlobReader blob)
 			{
-				int index = sequencePoints.BinarySearch(instruction.Offset, seq => seq.Offset);
+				int index = sequencePoints.BinarySearch(blob.Offset, seq => seq.Offset);
 				if (index >= 0) {
 					var info = sequencePoints[index];
 					var highlightingOutput = output as ISmartTextOutput;
@@ -110,7 +128,7 @@ namespace ICSharpCode.ILSpy
 						highlightingOutput?.EndSpan();
 					}
 				}
-				base.WriteInstruction(output, instruction);
+				base.WriteInstruction(output, metadata, methodDefinition, ref blob);
 			}
 
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
