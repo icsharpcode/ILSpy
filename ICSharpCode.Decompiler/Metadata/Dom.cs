@@ -86,17 +86,25 @@ namespace ICSharpCode.Decompiler.Metadata
 				return null;
 			var headers = Module.Reader.PEHeaders;
 			var resources = headers.CorHeader.ResourcesDirectory;
-			int index = headers.GetContainingSectionIndex(resources.RelativeVirtualAddress);
-			if (index < 0)
+			var sectionData = Module.Reader.GetSectionData(resources.RelativeVirtualAddress);
+			if (sectionData.Length == 0)
 				throw new BadImageFormatException("RVA could not be found in any section!");
-			var sectionHeader = headers.SectionHeaders[index];
-			var sectionData = Module.Reader.GetEntireImage();
-			int totalOffset = resources.RelativeVirtualAddress + sectionHeader.PointerToRawData - sectionHeader.VirtualAddress;
 			var reader = sectionData.GetReader();
-			reader.Offset += totalOffset;
 			reader.Offset += (int)This().Offset;
 			int length = reader.ReadInt32();
-			return new MemoryStream(reader.ReadBytes(length));
+			return new ResourceMemoryStream(Module.Reader, reader.CurrentPointer, length);
+		}
+	}
+
+	sealed unsafe class ResourceMemoryStream : UnmanagedMemoryStream
+	{
+		readonly PEReader peReader;
+
+		public ResourceMemoryStream(PEReader peReader, byte* data, long length)
+			: base(data, length, length, FileAccess.Read)
+		{
+			// Keep the PEReader alive while the stream in in use.
+			this.peReader = peReader;
 		}
 	}
 
