@@ -141,20 +141,13 @@ namespace ICSharpCode.ILSpy.Search
 
 		protected string GetLanguageSpecificName(IEntity member, bool fullName)
 		{
-			switch (member) {
-				case ITypeDefinition t:
-					return language.TypeToString(t, includeNamespace: fullName);
-				case IField f:
-					return language.FieldToString(f, fullName, fullName);
-				case IProperty p:
-					return language.PropertyToString(p, fullName, fullName);
-				case IMethod m:
-					return language.MethodToString(m, fullName, fullName);
-				case IEvent e:
-					return language.EventToString(e, fullName, fullName);
-				default:
-					throw new NotSupportedException(member?.GetType() + " not supported!");
-			}
+			if (member is ITypeDefinition t)
+				return language.TypeToString(t, includeNamespace: fullName);
+			if (fullName)
+				return (member.DeclaringTypeDefinition != null
+					? language.TypeToString(member.DeclaringTypeDefinition, includeNamespace: fullName) + "." : "")
+					+ member.Name;
+			return member.Name;
 		}
 
 		protected ImageSource GetIcon(IEntity member)
