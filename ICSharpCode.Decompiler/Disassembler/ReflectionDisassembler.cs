@@ -989,12 +989,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void WriteConstant(MetadataReader metadata, Constant constant)
 		{
-			var blob = metadata.GetBlobReader(constant.Value);
 			switch (constant.TypeCode) {
 				case ConstantTypeCode.NullReference:
 					output.Write("nullref");
 					break;
 				default:
+					var blob = metadata.GetBlobReader(constant.Value);
 					var value = blob.ReadConstant(constant.TypeCode);
 					if (value is string) {
 						DisassemblerHelpers.WriteOperand(output, value);

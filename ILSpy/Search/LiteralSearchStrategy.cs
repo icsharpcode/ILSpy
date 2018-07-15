@@ -65,16 +65,21 @@ namespace ICSharpCode.ILSpy.Search
 
 			foreach (var handle in metadata.FieldDefinitions) {
 				var fd = metadata.GetFieldDefinition(handle);
-				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA) || !fd.HasFlag(System.Reflection.FieldAttributes.Literal))
+				if (!fd.HasFlag(System.Reflection.FieldAttributes.Literal))
 					continue;
-				// TODO
-				//fd.GetInitialValue(module.Reader, typeSystem);
-				//IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-				//addResult(ResultFromEntity(field));
+				var constantHandle = fd.GetDefaultValue();
+				if (constantHandle.IsNil)
+					continue;
+				var constant = metadata.GetConstant(constantHandle);
+				var blob = metadata.GetBlobReader(constant.Value);
+				if (!IsLiteralMatch(metadata, blob.ReadConstant(constant.TypeCode)))
+					continue;
+				IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+				addResult(ResultFromEntity(field));
 			}
 		}
 
-		bool IsLiteralMatch(PEFile module, object val)
+		bool IsLiteralMatch(MetadataReader metadata, object val)
 		{
 			if (val == null)
 				return false;
@@ -91,7 +96,7 @@ namespace ICSharpCode.ILSpy.Search
 					return searchTermLiteralValue.Equals(val);
 				default:
 					// substring search with searchTerm
-					return IsMatch(module.Metadata, MetadataTokens.StringHandle(0), val.ToString());
+					return IsMatch(metadata, MetadataTokens.StringHandle(0), val.ToString());
 			}
 		}
 
