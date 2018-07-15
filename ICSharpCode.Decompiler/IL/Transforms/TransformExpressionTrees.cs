@@ -130,6 +130,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				return false;
 			}
+			if (instruction is Block block && block.Kind == BlockKind.ControlFlow)
+				return false;  // don't look into nested blocks
 			foreach (var child in instruction.Children) {
 				if (TryConvertExpressionTree(child, statement))
 					return true;

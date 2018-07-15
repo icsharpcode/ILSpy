@@ -40,26 +40,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var orphanedVariableInits = new List<ILInstruction>();
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			var translatedDisplayClasses = new HashSet<ITypeDefinition>();
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					context.CancellationToken.ThrowIfCancellationRequested();
-					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
-						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-						if (f != null) {
-							call.ReplaceWith(f);
-							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-								targetsToReplace.Add((IInstructionWithVariableOperand)target);
-						}
+			var cancellationToken = context.CancellationToken;
+			foreach (var inst in function.Descendants) {
+				cancellationToken.ThrowIfCancellationRequested();
+				if (inst is NewObj call) {
+					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
+					if (f != null) {
+						call.ReplaceWith(f);
+						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
-					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
-						var newObj = value as NewObj;
-						// TODO : it is probably not a good idea to remove *all* display-classes
-						// is there a way to minimize the false-positives?
-						if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
-							targetVariable.CaptureScope = BlockContainer.FindClosestContainer(block);
-							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
-							translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
-						}
+				}
+				if (inst.MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
+					var newObj = value as NewObj;
+					// TODO : it is probably not a good idea to remove *all* display-classes
+					// is there a way to minimize the false-positives?
+					if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
+						targetVariable.CaptureScope = BlockContainer.FindClosestContainer(inst);
+						targetsToReplace.Add((IInstructionWithVariableOperand)inst);
+						translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
 					}
 				}
 			}
