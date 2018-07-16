@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.LazyLoading = true;
 		}
 
-		public override object Text => analyzer.Text;
+		public override object Text => analyzer.Text + (Children.Count > 0 ? " (" + Children.Count + ")" : "");
 
 		public override object Icon => Images.Search;
 

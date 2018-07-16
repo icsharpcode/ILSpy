@@ -82,6 +82,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						delegate {
 							if (loadChildrenTask == thisTask) {
 								node.Children.RemoveAt(node.Children.Count - 1); // remove 'Loading...'
+								node.RaisePropertyChanged(nameof(node.Text));
 							}
 							if (continuation.Exception != null) { // observe exception even when task isn't current
 								if (loadChildrenTask == thisTask) {
