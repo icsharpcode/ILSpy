@@ -305,7 +305,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!(initialState == -2 || initialState == 0))
 				return false;
-			enumeratorCtor = (MethodDefinitionHandle)newObj.Method.MetadataToken;
+			var handle = newObj.Method.MetadataToken;
+			enumeratorCtor = handle.IsNil || handle.Kind != HandleKind.MethodDefinition ? default : (MethodDefinitionHandle)handle;
 			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
 			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
 				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
@@ -318,7 +319,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (newObj.Arguments.Count != 0)
 				return false;
-			enumeratorCtor = (MethodDefinitionHandle)newObj.Method.MetadataToken;
+			var handle = newObj.Method.MetadataToken;
+			enumeratorCtor = handle.IsNil || handle.Kind != HandleKind.MethodDefinition ? default : (MethodDefinitionHandle)handle;
 			enumeratorType = enumeratorCtor.IsNil ? default : metadata.GetMethodDefinition(enumeratorCtor).GetDeclaringType();
 			return (enumeratorType.IsNil ? default : metadata.GetTypeDefinition(enumeratorType).GetDeclaringType()) == currentType
 				&& IsCompilerGeneratorEnumerator(enumeratorType, metadata);
