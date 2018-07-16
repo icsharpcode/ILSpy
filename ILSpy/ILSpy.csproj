@@ -391,10 +391,6 @@
     <None Include="@(Resource)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="TreeNodes\Analyzer\" />
-  </ItemGroup>
-
   <!--
      Work around to fix Intellisense file generation for XAML projects
      https://github.com/dotnet/project-system/issues/2488
