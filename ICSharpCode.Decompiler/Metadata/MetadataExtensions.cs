@@ -18,6 +18,37 @@ namespace ICSharpCode.Decompiler.Metadata
 {
 	public static class MetadataExtensions
 	{
+		static HashAlgorithm GetHashAlgorithm(this MetadataReader reader)
+		{
+			switch (reader.GetAssemblyDefinition().HashAlgorithm) {
+				case AssemblyHashAlgorithm.None:
+					// only for multi-module assemblies?
+					return SHA1.Create();
+				case AssemblyHashAlgorithm.MD5:
+					return MD5.Create();
+				case AssemblyHashAlgorithm.Sha1:
+					return SHA1.Create();
+				case AssemblyHashAlgorithm.Sha256:
+					return SHA256.Create();
+				case AssemblyHashAlgorithm.Sha384:
+					return SHA384.Create();
+				case AssemblyHashAlgorithm.Sha512:
+					return SHA512.Create();
+				default:
+					return SHA1.Create(); // default?
+			}
+		}
+
+		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
+		{
+			// Calculate public key token:
+			// 1. hash the public key using the appropriate algorithm.
+			byte[] publicKeyTokenBytes = reader.GetHashAlgorithm().ComputeHash(reader.GetBlobBytes(blob));
+			// 2. take the last 8 bytes
+			// 3. according to Cecil we need to reverse them, other sources did not mention this.
+			return publicKeyTokenBytes.TakeLast(8).Reverse().ToHexString(8);
+		}
+
 		public static string GetFullAssemblyName(this MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
@@ -25,33 +56,37 @@ namespace ICSharpCode.Decompiler.Metadata
 			var asm = reader.GetAssemblyDefinition();
 			string publicKey = "null";
 			if (!asm.PublicKey.IsNil) {
-				SHA1 sha1 = SHA1.Create();
-				var publicKeyTokenBytes = sha1.ComputeHash(reader.GetBlobBytes(asm.PublicKey)).Skip(12).ToArray();
-				publicKey = publicKeyTokenBytes.ToHexString();
+				// AssemblyFlags.PublicKey does not apply to assembly definitions
+				publicKey = CalculatePublicKeyToken(asm.PublicKey, reader);
 			}
-			return $"{reader.GetString(asm.Name)}, Version={asm.Version}, Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, PublicKeyToken={publicKey}";
+			return $"{reader.GetString(asm.Name)}, " +
+				$"Version={asm.Version}, " +
+				$"Culture={(asm.Culture.IsNil ? "neutral" : reader.GetString(asm.Culture))}, " +
+				$"PublicKeyToken={publicKey}";
 		}
 
 		public static string GetFullAssemblyName(this SRM.AssemblyReference reference, MetadataReader reader)
 		{
 			string publicKey = "null";
 			if (!reference.PublicKeyOrToken.IsNil) {
-				byte[] publicKeyTokenBytes = reader.GetBlobBytes(reference.PublicKeyOrToken);
 				if ((reference.Flags & AssemblyFlags.PublicKey) != 0) {
-					SHA1 sha1 = SHA1.Create();
-					publicKeyTokenBytes = sha1.ComputeHash(publicKeyTokenBytes).Skip(12).ToArray();
+					publicKey = CalculatePublicKeyToken(reference.PublicKeyOrToken, reader);
+				} else {
+					publicKey = reader.GetBlobBytes(reference.PublicKeyOrToken).ToHexString(8);
 				}
-				publicKey = publicKeyTokenBytes.ToHexString();
 			}
 			string properties = "";
 			if ((reference.Flags & AssemblyFlags.Retargetable) != 0)
 				properties = ", Retargetable=true";
-			return $"{reader.GetString(reference.Name)}, Version={reference.Version}, Culture={(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture))}, PublicKeyToken={publicKey}{properties}";
+			return $"{reader.GetString(reference.Name)}, " +
+				$"Version={reference.Version}, " +
+				$"Culture={(reference.Culture.IsNil ? "neutral" : reader.GetString(reference.Culture))}, " +
+				$"PublicKeyToken={publicKey}{properties}";
 		}
 
-		static string ToHexString(this byte[] bytes)
+		static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
-			StringBuilder sb = new StringBuilder(bytes.Length * 2);
+			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)
 				sb.AppendFormat("{0:x2}", b);
 			return sb.ToString();

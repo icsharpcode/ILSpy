@@ -308,7 +308,8 @@ namespace ICSharpCode.ILSpy
 					var reader = loaded.GetPEFileOrNull()?.Metadata;
 					if (reader == null || !reader.IsAssembly) continue;
 					var asmDef = reader.GetAssemblyDefinition();
-					if (GetName(fullName).Equals(isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName(), StringComparison.OrdinalIgnoreCase)) {
+					var asmDefName = isWinRT ? reader.GetString(asmDef.Name) : reader.GetFullAssemblyName();
+					if (GetName(fullName).Equals(asmDefName, StringComparison.OrdinalIgnoreCase)) {
 						LoadedAssemblyReferencesInfo.AddMessageOnce(fullName.FullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}

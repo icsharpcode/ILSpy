@@ -60,7 +60,12 @@ namespace ICSharpCode.Decompiler.Util
 		{
 			return input.Take(input.Count - count);
 		}
-		
+
+		public static IEnumerable<T> TakeLast<T>(this IReadOnlyCollection<T> input, int count)
+		{
+			return input.Skip(input.Count - count);
+		}
+
 		public static T PopOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
