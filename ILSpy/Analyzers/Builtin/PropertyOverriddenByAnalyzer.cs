@@ -30,11 +30,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows properties that override a property.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
 	class PropertyOverriddenByAnalyzer : IAnalyzer
 	{
-		public string Text => "Overridden By";
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IProperty);

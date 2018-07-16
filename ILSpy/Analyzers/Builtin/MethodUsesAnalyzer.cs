@@ -33,12 +33,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that are used by a method.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Uses", Order = 10)]
 	class MethodUsesAnalyzer : IAnalyzer
 	{
-		public string Text => "Uses";
-
-		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual;
+		public bool Show(ISymbol symbol) => symbol is IMethod method && method.HasBody;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{

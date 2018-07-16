@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds methods where this field is read.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Assigned By", Order = 20)]
 	class AssignedByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public AssignedByFieldAccessAnalyzer() : base(true) { }
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds methods where this field is written.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Read By", Order = 10)]
 	class ReadByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public ReadByFieldAccessAnalyzer() : base(false) { }
@@ -60,8 +60,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
 		readonly bool showWrites; // true: show writes; false: show read access
-
-		public string Text => showWrites ? "Assigned By" : "Read By";
 
 		public FieldAccessAnalyzer(bool showWrites)
 		{

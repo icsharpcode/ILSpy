@@ -31,12 +31,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that are used by a method.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Used By", Order = 20)]
 	class MethodVirtualUsedByAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
-
-		public string Text => "Used By";
 
 		public bool Show(ISymbol symbol) => symbol is IMethod method && method.IsVirtual;
 

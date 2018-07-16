@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -38,10 +39,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer>()) {
+			var analyzers = App.ExportProvider.GetExports<IAnalyzer, IAnalyzerMetadata>("Analyzer");
+			foreach (var lazy in analyzers.OrderBy(item => item.Metadata.Order)) {
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedField)) {
-					this.Children.Add(new AnalyzerSearchTreeNode(analyzedField, analyzer));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedField, analyzer, lazy.Metadata.Header));
 				}
 			}
 		}

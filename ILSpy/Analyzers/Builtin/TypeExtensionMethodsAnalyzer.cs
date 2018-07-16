@@ -8,11 +8,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds all extension methods defined for a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Extension Methods", Order = 50)]
 	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
-		public string Text => "Extension Methods";
-
 		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

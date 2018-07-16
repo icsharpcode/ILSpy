@@ -27,12 +27,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows methods that override a method.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Overridden By", Order = 30)]
 	class MethodOverriddenByAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
-
-		public string Text => "Overridden By";
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{

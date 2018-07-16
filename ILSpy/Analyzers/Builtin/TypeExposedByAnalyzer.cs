@@ -30,11 +30,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds all entities that expose a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Exposed By", Order = 40)]
 	class TypeExposedByAnalyzer : IAnalyzer
 	{
-		public string Text => "Exposed By";
-
 		public bool Show(ISymbol entity) => entity is ITypeDefinition;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)

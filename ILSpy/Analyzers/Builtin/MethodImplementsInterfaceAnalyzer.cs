@@ -30,11 +30,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows methods that implement an interface method.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Implemented By", Order = 40)]
 	class MethodImplementsInterfaceAnalyzer : IAnalyzer
 	{
-		public string Text => "Implemented By";
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IMethod);

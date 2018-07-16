@@ -27,11 +27,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows events that override an event.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Overridden By", Order = 20)]
 	class EventOverriddenByAnalyzer : IAnalyzer
 	{
-		public string Text => "Overridden By";
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IEvent);

@@ -34,12 +34,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows methods that instantiate a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Instantiated By", Order = 20)]
 	class TypeInstantiatedByAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
-
-		public string Text => "Instantiated By";
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{

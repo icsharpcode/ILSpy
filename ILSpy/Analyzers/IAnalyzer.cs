@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
@@ -33,11 +34,6 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public interface IAnalyzer
 	{
-		/// <summary>
-		/// The caption used in the analyzer tree view.
-		/// </summary>
-		string Text { get; }
-
 		/// <summary>
 		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
 		/// </summary>
@@ -79,5 +75,23 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			return new AnalyzerScope(AssemblyList, entity);
 		}
+	}
+
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class ExportAnalyzerAttribute : ExportAttribute, IAnalyzerMetadata
+	{
+		public ExportAnalyzerAttribute() : base("Analyzer", typeof(IAnalyzer))
+		{ }
+
+		public string Header { get; set; }
+
+		public int Order { get; set; }
+	}
+
+	public interface IAnalyzerMetadata
+	{
+		string Header { get; }
+		int Order { get; }
 	}
 }

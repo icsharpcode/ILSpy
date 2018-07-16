@@ -32,11 +32,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that use a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Used By", Order = 30)]
 	class TypeUsedByAnalyzer : IAnalyzer
 	{
-		public string Text => "Used By";
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is ITypeDefinition);

@@ -27,11 +27,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows properties that implement an interface property.
 	/// </summary>
-	[Export(typeof(IAnalyzer))]
+	[ExportAnalyzer(Header = "Implemented By", Order = 10)]
 	class PropertyImplementsInterfaceAnalyzer : IAnalyzer
 	{
-		public string Text => "Implemented By";
-
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IProperty);

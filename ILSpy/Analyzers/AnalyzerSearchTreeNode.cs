@@ -31,15 +31,17 @@ namespace ICSharpCode.ILSpy.Analyzers
 		private readonly ThreadingSupport threading = new ThreadingSupport();
 		readonly ISymbol symbol;
 		readonly IAnalyzer analyzer;
+		readonly string analyzerHeader;
 
-		public AnalyzerSearchTreeNode(ISymbol symbol, IAnalyzer analyzer)
+		public AnalyzerSearchTreeNode(ISymbol symbol, IAnalyzer analyzer, string analyzerHeader)
 		{
 			this.symbol = symbol;
 			this.analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
 			this.LazyLoading = true;
+			this.analyzerHeader = analyzerHeader;
 		}
 
-		public override object Text => analyzer.Text + (Children.Count > 0 ? " (" + Children.Count + ")" : "");
+		public override object Text => analyzerHeader + (Children.Count > 0 ? " (" + Children.Count + ")" : "");
 
 		public override object Icon => Images.Search;
 
