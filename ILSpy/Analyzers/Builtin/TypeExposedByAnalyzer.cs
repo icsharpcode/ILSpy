@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			if (!context.Language.ShowMember(type))
 				yield break;
 
-			var visitor = new TypeDefinitionUsedVisitor(analyzedType);
+			var visitor = new TypeDefinitionUsedVisitor(analyzedType, true);
 
 			foreach (IField field in type.Fields) {
 				if (TypeIsExposedBy(visitor, field))
@@ -135,7 +135,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				p.Type.AcceptVisitor(visitor);
 			}
 
-			return false;
+			return visitor.Found;
 		}
 	}
 }

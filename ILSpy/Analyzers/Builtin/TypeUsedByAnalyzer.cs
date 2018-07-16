@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				&& analyzedEntity.MetadataToken == type.MetadataToken)
 				yield break;
 
-			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity);
+			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity, false);
 
 			foreach (var bt in type.DirectBaseTypes) {
 				bt.AcceptVisitor(visitor);
@@ -193,9 +193,12 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public bool Found { get; set; }
 
-		public TypeDefinitionUsedVisitor(ITypeDefinition definition)
+		readonly bool topLevelOnly;
+
+		public TypeDefinitionUsedVisitor(ITypeDefinition definition, bool topLevelOnly)
 		{
 			this.TypeDefinition = definition;
+			this.topLevelOnly = topLevelOnly;
 		}
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
@@ -203,6 +206,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			Found |= TypeDefinition.MetadataToken == type.MetadataToken
 				&& TypeDefinition.ParentModule.PEFile == type.ParentModule.PEFile;
 			return base.VisitTypeDefinition(type);
+		}
+
+		public override IType VisitParameterizedType(ParameterizedType type)
+		{
+			if (topLevelOnly)
+				return type.GenericType.AcceptVisitor(this);
+			return base.VisitParameterizedType(type);
 		}
 	}
 }
