@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="AboutPage.cs" />
     <Compile Include="Analyzers\AnalyzerScope.cs" />
+    <Compile Include="Analyzers\Builtin\AttributeAppliedToAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventImplementsInterfaceAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodImplementsInterfaceAnalyzer.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="Analyzers\TreeNodes\AnalyzedEventTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedMethodTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedPropertyTreeNode.cs" />
+    <Compile Include="Analyzers\TreeNodes\AnalyzedModuleTreeNode.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedTypeTreeNode.cs" />
     <Compile Include="App.xaml.cs">
       <SubType>Code</SubType>

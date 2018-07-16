@@ -75,6 +75,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 			}
 
 			switch (symbol) {
+				case IModule module:
+					return new AnalyzedModuleTreeNode(module) {
+						Language = this.Language
+					};
 				case ITypeDefinition td:
 					return new AnalyzedTypeTreeNode(td) {
 						Language = this.Language
