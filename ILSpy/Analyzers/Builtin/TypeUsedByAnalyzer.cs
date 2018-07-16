@@ -72,6 +72,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member, AnalyzerContext context, bool scanBodies = false)
 		{
+			member.DeclaringType.AcceptVisitor(visitor);
 			switch (member) {
 				case IField field:
 					field.ReturnType.AcceptVisitor(visitor);
@@ -183,12 +184,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		bool CanBeReference(ILOpCode opCode)
-		{
-			return opCode == ILOpCode.Newobj || opCode == ILOpCode.Initobj;
-		}
-
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity;
 	}
 
 	class TypeDefinitionUsedVisitor : TypeVisitor

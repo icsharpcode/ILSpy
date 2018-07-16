@@ -115,6 +115,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool IsUsedInMethod(IField analyzedField, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
 		{
+			if (method.MetadataToken.IsNil)
+				return false;
 			var module = method.ParentModule.PEFile;
 			foreach (var part in mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)) {
 				var md = module.Metadata.GetMethodDefinition(part);

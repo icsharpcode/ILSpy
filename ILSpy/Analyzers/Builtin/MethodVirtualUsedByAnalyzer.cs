@@ -38,9 +38,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		public string Text => "Used By";
 
-		public bool Show(IMethod entity) => entity.IsVirtual;
-
-		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual;
+		public bool Show(ISymbol symbol) => symbol is IMethod method && method.IsVirtual;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
@@ -85,6 +83,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
 		{
+			if (method.MetadataToken.IsNil)
+				return false;
 			var module = method.ParentModule.PEFile;
 			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 			if (!md.HasBody()) return false;

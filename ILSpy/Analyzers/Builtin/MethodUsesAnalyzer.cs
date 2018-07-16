@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		public string Text => "Uses";
 
-		public bool Show(ISymbol symbol) => symbol is IMethod;
+		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
