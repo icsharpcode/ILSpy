@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Semantics;
 using System.Runtime.InteropServices;
 using System.Linq;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
@@ -217,7 +218,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			foreach (var secDecl in securityDeclarations) {
 				if (secDecl.IsNil)
 					continue;
-				AddSecurityAttributes(metadata.GetDeclarativeSecurityAttribute(secDecl));
+				try {
+					AddSecurityAttributes(metadata.GetDeclarativeSecurityAttribute(secDecl));
+				} catch (EnumUnderlyingTypeResolveException) {
+					// ignore resolve errors
+				}
 			}
 		}
 
