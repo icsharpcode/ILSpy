@@ -502,18 +502,18 @@ namespace ICSharpCode.ILSpy
 			if (method == null)
 				throw new ArgumentNullException(nameof(method));
 			string name;
-			if (method.IsConstructor) {
-				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName);
+			if (includeDeclaringTypeName) {
+				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
 			} else {
-				if (includeDeclaringTypeName) {
-					name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
-				} else {
-					name = "";
-				}
+				name = "";
+			}
+			if (method.IsConstructor) {
+				name += TypeToString(method.DeclaringTypeDefinition, false);
+			} else {
 				name += method.Name;
 			}
 			int i = 0;
-			var buffer = new System.Text.StringBuilder(name);
+			var buffer = new StringBuilder(name);
 
 			if (method.TypeParameters.Count > 0) {
 				buffer.Append('<');
@@ -537,8 +537,10 @@ namespace ICSharpCode.ILSpy
 			}
 
 			buffer.Append(')');
-			buffer.Append(" : ");
-			buffer.Append(TypeToStringInternal(method.ReturnType, includeNamespace));
+			if (!method.IsConstructor) {
+				buffer.Append(" : ");
+				buffer.Append(TypeToStringInternal(method.ReturnType, includeNamespace));
+			}
 			return buffer.ToString();
 		}
 

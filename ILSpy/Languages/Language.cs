@@ -221,8 +221,10 @@ namespace ICSharpCode.ILSpy
 				i++;
 			}
 			buffer.Append(')');
-			buffer.Append(" : ");
-			buffer.Append(TypeToString(method.ReturnType, includeNamespace));
+			if (!method.IsConstructor) {
+				buffer.Append(" : ");
+				buffer.Append(TypeToString(method.ReturnType, includeNamespace));
+			}
 			return buffer.ToString();
 		}
 
