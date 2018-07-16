@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -26,12 +27,22 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows properties that implement an interface property.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IProperty>))]
-	class PropertyImplementsInterfaceAnalyzer : ITypeDefinitionAnalyzer<IProperty>
+	[Export(typeof(IAnalyzer))]
+	class PropertyImplementsInterfaceAnalyzer : IAnalyzer
 	{
 		public string Text => "Implemented By";
 
-		public IEnumerable<IEntity> Analyze(IProperty analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IProperty);
+			var scope = context.GetScopeOf((IProperty)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in AnalyzeType((IProperty)analyzedSymbol, type))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
 			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.PEFile;
@@ -46,9 +57,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(IProperty entity)
+		public bool Show(ISymbol symbol)
 		{
-			return entity.DeclaringType.Kind == TypeKind.Interface;
+			return symbol is IProperty entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

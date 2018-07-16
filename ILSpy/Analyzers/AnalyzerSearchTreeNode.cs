@@ -26,15 +26,15 @@ using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	class AnalyzerSearchTreeNode<T> : AnalyzerTreeNode where T : IEntity
+	class AnalyzerSearchTreeNode : AnalyzerTreeNode
 	{
 		private readonly ThreadingSupport threading = new ThreadingSupport();
-		readonly T analyzedEntity;
-		readonly IAnalyzer<T> analyzer;
+		readonly ISymbol symbol;
+		readonly IAnalyzer analyzer;
 
-		public AnalyzerSearchTreeNode(T entity, IAnalyzer<T> analyzer)
+		public AnalyzerSearchTreeNode(ISymbol symbol, IAnalyzer analyzer)
 		{
-			this.analyzedEntity = entity;
+			this.symbol = symbol;
 			this.analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
 			this.LazyLoading = true;
 		}
@@ -50,31 +50,29 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		protected IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			if (analyzer is IEntityAnalyzer<T> entityAnalyzer) {
-				var module = analyzedEntity.ParentModule.PEFile;
+			if (symbol is IEntity entity) {
+				var module = entity.ParentModule.PEFile;
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-				var context = new AnalyzerContext(ts) {
+				var context = new AnalyzerContext() {
 					CancellationToken = ct,
 					Language = Language,
-					CodeMappingInfo = Language.GetCodeMappingInfo(module, analyzedEntity.MetadataToken)
+					AssemblyList = MainWindow.Instance.CurrentAssemblyList
 				};
-				foreach (var result in entityAnalyzer.Analyze(analyzedEntity, context)) {
-					yield return EntityTreeNodeFactory(result);
+				foreach (var result in analyzer.Analyze(symbol, context)) {
+					yield return SymbolTreeNodeFactory(result);
 				}
 			} else {
-				foreach (var result in new ScopedWhereUsedAnalyzer<T>(Language, analyzedEntity, analyzer).PerformAnalysis(ct).Distinct()) {
-					yield return EntityTreeNodeFactory(result);
-				}
+				throw new NotSupportedException("Currently symbols that are not entities are not supported!");
 			}
 		}
 
-		AnalyzerTreeNode EntityTreeNodeFactory(IEntity entity)
+		AnalyzerTreeNode SymbolTreeNodeFactory(ISymbol symbol)
 		{
-			if (entity == null) {
-				throw new ArgumentNullException(nameof(entity));
+			if (symbol == null) {
+				throw new ArgumentNullException(nameof(symbol));
 			}
 
-			switch (entity) {
+			switch (symbol) {
 				case ITypeDefinition td:
 					return new AnalyzedTypeTreeNode(td) {
 						Language = this.Language
@@ -96,7 +94,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 						Language = this.Language
 					};
 				default:
-					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
+					throw new ArgumentOutOfRangeException(nameof(symbol), $"Symbol {symbol.GetType().FullName} is not supported.");
 			}
 		}
 

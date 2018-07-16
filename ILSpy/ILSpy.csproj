@@ -66,6 +66,7 @@
 
   <ItemGroup>
     <Compile Include="AboutPage.cs" />
+    <Compile Include="Analyzers\AnalyzerScope.cs" />
     <Compile Include="Analyzers\Builtin\EventImplementsInterfaceAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\EventOverriddenByAnalyzer.cs" />
     <Compile Include="Analyzers\Builtin\MethodImplementsInterfaceAnalyzer.cs" />
@@ -216,7 +217,6 @@
     <Compile Include="Analyzers\AnalyzerSearchTreeNode.cs" />
     <Compile Include="Analyzers\AnalyzerTreeNode.cs" />
     <Compile Include="Analyzers\RemoveAnalyzeContextMenuEntry.cs" />
-    <Compile Include="Analyzers\ScopedWhereUsedAnalyzer.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
     <Compile Include="TreeNodes\CopyFullyQualifiedNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -26,30 +27,40 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows events that override an event.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IEvent>))]
-	class EventOverriddenByAnalyzer : ITypeDefinitionAnalyzer<IEvent>
+	[Export(typeof(IAnalyzer))]
+	class EventOverriddenByAnalyzer : IAnalyzer
 	{
 		public string Text => "Overridden By";
 
-		public IEnumerable<IEntity> Analyze(IEvent analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IEvent);
+			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
 		{
 			if (!analyzedEntity.DeclaringType.GetAllBaseTypeDefinitions()
 				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken && t.ParentModule.PEFile == type.ParentModule.PEFile))
 				yield break;
 
-			foreach (var property in type.Properties) {
-				if (!property.IsOverride) continue;
-				if (InheritanceHelper.GetBaseMembers(property, false)
+			foreach (var @event in type.Events) {
+				if (!@event.IsOverride) continue;
+				if (InheritanceHelper.GetBaseMembers(@event, false)
 					.Any(p => p.MetadataToken == analyzedEntity.MetadataToken &&
 							  p.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile)) {
-					yield return property;
+					yield return @event;
 				}
 			}
 		}
 
-		public bool Show(IEvent entity)
+		public bool Show(ISymbol symbol)
 		{
-			return entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
+			return symbol is IEvent entity && entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

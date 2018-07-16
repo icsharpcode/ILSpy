@@ -38,10 +38,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IField>>()) {
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer>()) {
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedField)) {
-					this.Children.Add(new AnalyzerSearchTreeNode<IField>(analyzedField, analyzer));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedField, analyzer));
 				}
 			}
 		}

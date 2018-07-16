@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,12 +30,22 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows properties that override a property.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IProperty>))]
-	class PropertyOverriddenByAnalyzer : ITypeDefinitionAnalyzer<IProperty>
+	[Export(typeof(IAnalyzer))]
+	class PropertyOverriddenByAnalyzer : IAnalyzer
 	{
 		public string Text => "Overridden By";
 
-		public IEnumerable<IEntity> Analyze(IProperty analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IProperty);
+			var scope = context.GetScopeOf((IProperty)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in AnalyzeType((IProperty)analyzedSymbol, type))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> AnalyzeType(IProperty analyzedEntity, ITypeDefinition type)
 		{
 			if (!analyzedEntity.DeclaringType.GetAllBaseTypeDefinitions()
 				.Any(t => t.MetadataToken == analyzedEntity.DeclaringTypeDefinition.MetadataToken && t.ParentModule.PEFile == type.ParentModule.PEFile))
@@ -50,9 +61,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(IProperty entity)
+		public bool Show(ISymbol entity)
 		{
-			return entity.IsOverridable && entity.DeclaringType.Kind != TypeKind.Interface;
+			return entity is IProperty property && property.IsOverridable && property.DeclaringType.Kind != TypeKind.Interface;
 		}
 	}
 }

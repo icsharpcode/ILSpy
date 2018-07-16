@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
@@ -33,15 +34,66 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows methods that instantiate a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer<ITypeDefinition>))]
-	class TypeInstantiatedByAnalyzer : IMethodBodyAnalyzer<ITypeDefinition>
+	[Export(typeof(IAnalyzer))]
+	class TypeInstantiatedByAnalyzer : IAnalyzer
 	{
+		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+
 		public string Text => "Instantiated By";
 
-		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is ITypeDefinition);
+			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
+				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
+				foreach (var method in methods) {
+					if (IsUsedInMethod((ITypeDefinition)analyzedSymbol, method, mappingInfo, context))
+						yield return method;
+				}
+
+				foreach (var property in type.Properties) {
+					if (property.CanGet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Getter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+					if (property.CanSet && IsUsedInMethod((ITypeDefinition)analyzedSymbol, property.Setter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+				}
+
+				foreach (var @event in type.Events) {
+					if (@event.CanAdd && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.AddAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanRemove && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanInvoke && IsUsedInMethod((ITypeDefinition)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+				}
+			}
+		}
+
+		bool IsUsedInMethod(ITypeDefinition analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
+		{
+			var module = method.ParentModule.PEFile;
+			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (!md.HasBody()) return false;
+			return ScanMethodBody(analyzedEntity, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress));
+		}
+
+		bool ScanMethodBody(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody)
 		{
 			bool found = false;
 			var blob = methodBody.GetILReader();
+			var module = (MetadataModule)method.ParentModule;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (!found && blob.RemainingBytes > 0) {
@@ -53,17 +105,16 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				EntityHandle methodHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!methodHandle.Kind.IsMemberKind())
 					continue;
-				var ctor = context.TypeSystem.MainModule.ResolveMethod(methodHandle, genericContext);
+				var ctor = module.ResolveMethod(methodHandle, genericContext);
 				if (ctor == null || !ctor.IsConstructor)
 					continue;
 
-				found = ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
-					&& ctor.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile;
+				if (ctor.DeclaringTypeDefinition?.MetadataToken == analyzedEntity.MetadataToken
+					&& ctor.ParentModule.PEFile == analyzedEntity.ParentModule.PEFile)
+					return true;
 			}
 
-			if (found) {
-				yield return method;
-			}
+			return false;
 		}
 
 		bool CanBeReference(ILOpCode opCode)
@@ -71,6 +122,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			return opCode == ILOpCode.Newobj || opCode == ILOpCode.Initobj;
 		}
 
-		public bool Show(ITypeDefinition entity) => !entity.IsAbstract && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
 	}
 }

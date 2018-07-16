@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -26,12 +27,22 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows events that implement an interface event.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IEvent>))]
-	class EventImplementsInterfaceAnalyzer : ITypeDefinitionAnalyzer<IEvent>
+	[Export(typeof(IAnalyzer))]
+	class EventImplementsInterfaceAnalyzer : IAnalyzer
 	{
 		public string Text => "Implemented By";
 
-		public IEnumerable<IEntity> Analyze(IEvent analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IEvent);
+			var scope = context.GetScopeOf((IEvent)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in AnalyzeType((IEvent)analyzedSymbol, type))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> AnalyzeType(IEvent analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
 			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.PEFile;
@@ -46,9 +57,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(IEvent entity)
+		public bool Show(ISymbol symbol)
 		{
-			return entity.DeclaringType.Kind == TypeKind.Interface;
+			return symbol is IEvent entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

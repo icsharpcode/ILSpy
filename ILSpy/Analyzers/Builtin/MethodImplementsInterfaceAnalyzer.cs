@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,12 +30,22 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows methods that implement an interface method.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IMethod>))]
-	class MethodImplementsInterfaceAnalyzer : ITypeDefinitionAnalyzer<IMethod>
+	[Export(typeof(IAnalyzer))]
+	class MethodImplementsInterfaceAnalyzer : IAnalyzer
 	{
 		public string Text => "Implemented By";
 
-		public IEnumerable<IEntity> Analyze(IMethod analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is IMethod);
+			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in AnalyzeType((IMethod)analyzedSymbol, type))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> AnalyzeType(IMethod analyzedEntity, ITypeDefinition type)
 		{
 			var token = analyzedEntity.DeclaringTypeDefinition.MetadataToken;
 			var module = analyzedEntity.DeclaringTypeDefinition.ParentModule.PEFile;
@@ -49,9 +60,9 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(IMethod entity)
+		public bool Show(ISymbol entity)
 		{
-			return entity.DeclaringType.Kind == TypeKind.Interface;
+			return entity is IMethod method && method.DeclaringType.Kind == TypeKind.Interface;
 		}
 	}
 }

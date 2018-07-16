@@ -40,10 +40,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IMethod>>()) {
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer>()) {
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedMethod)) {
-					this.Children.Add(new AnalyzerSearchTreeNode<IMethod>(analyzedMethod, analyzer));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedMethod, analyzer));
 				}
 			}
 		}

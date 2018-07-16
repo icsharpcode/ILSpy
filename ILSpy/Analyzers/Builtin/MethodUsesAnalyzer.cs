@@ -33,17 +33,21 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that are used by a method.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IMethod>))]
-	class MethodUsesAnalyzer : IEntityAnalyzer<IMethod>
+	[Export(typeof(IAnalyzer))]
+	class MethodUsesAnalyzer : IAnalyzer
 	{
 		public string Text => "Uses";
 
-		public bool Show(IMethod entity) => true;
+		public bool Show(ISymbol symbol) => symbol is IMethod;
 
-		public IEnumerable<IEntity> Analyze(IMethod analyzedMethod, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol symbol, AnalyzerContext context)
 		{
-			return context.CodeMappingInfo.GetMethodParts((MethodDefinitionHandle)analyzedMethod.MetadataToken)
-				.SelectMany(h => ScanMethod(analyzedMethod, h, context)).Distinct();
+			if (symbol is IMethod method) {
+				return context.Language.GetCodeMappingInfo(method.ParentModule.PEFile, method.MetadataToken)
+					.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)
+					.SelectMany(h => ScanMethod(method, h, context)).Distinct();
+			}
+			throw new InvalidOperationException("Should never happen.");
 		}
 
 		IEnumerable<IEntity> ScanMethod(IMethod analyzedMethod, MethodDefinitionHandle handle, AnalyzerContext context)

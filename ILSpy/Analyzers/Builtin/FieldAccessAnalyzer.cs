@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -36,7 +37,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds methods where this field is read.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IField>))]
+	[Export(typeof(IAnalyzer))]
 	class AssignedByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public AssignedByFieldAccessAnalyzer() : base(true) { }
@@ -45,7 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds methods where this field is written.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IField>))]
+	[Export(typeof(IAnalyzer))]
 	class ReadByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
 		public ReadByFieldAccessAnalyzer() : base(false) { }
@@ -54,8 +55,10 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds methods where this field is read or written.
 	/// </summary>
-	class FieldAccessAnalyzer : IMethodBodyAnalyzer<IField>
+	class FieldAccessAnalyzer : IAnalyzer
 	{
+		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+
 		readonly bool showWrites; // true: show writes; false: show read access
 
 		public string Text => showWrites ? "Assigned By" : "Read By";
@@ -65,18 +68,73 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			this.showWrites = showWrites;
 		}
 
-		public bool Show(IField field)
+		public bool Show(ISymbol symbol)
 		{
-			return !showWrites || !field.IsConst;
+			return symbol is IField field && (!showWrites || !field.IsConst);
 		}
 
-		public IEnumerable<IEntity> Analyze(IField analyzedField, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			bool found = false;
+			Debug.Assert(analyzedSymbol is IField);
+			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
+				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
+				foreach (var method in methods) {
+					if (IsUsedInMethod((IField)analyzedSymbol, method, mappingInfo, context))
+						yield return method;
+				}
+
+				foreach (var property in type.Properties) {
+					if (property.CanGet && IsUsedInMethod((IField)analyzedSymbol, property.Getter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+					if (property.CanSet && IsUsedInMethod((IField)analyzedSymbol, property.Setter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+				}
+
+				foreach (var @event in type.Events) {
+					if (@event.CanAdd && IsUsedInMethod((IField)analyzedSymbol, @event.AddAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanRemove && IsUsedInMethod((IField)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanInvoke && IsUsedInMethod((IField)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+				}
+			}
+		}
+
+		bool IsUsedInMethod(IField analyzedField, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
+		{
+			var module = method.ParentModule.PEFile;
+			foreach (var part in mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)) {
+				var md = module.Metadata.GetMethodDefinition(part);
+				if (!md.HasBody()) continue;
+				if (ScanMethodBody(analyzedField, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress)))
+					return true;
+			}
+			return false;
+		}
+
+		bool ScanMethodBody(IField analyzedField, IMethod method, MethodBodyBlock methodBody)
+		{
+			if (methodBody == null)
+				return false;
+
+			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
-			while (!found && blob.RemainingBytes > 0) {
+			while (blob.RemainingBytes > 0) {
 				var opCode = blob.DecodeOpCode();
 				if (!CanBeReference(opCode)) {
 					blob.SkipOperand(opCode);
@@ -85,17 +143,16 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				EntityHandle fieldHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!fieldHandle.Kind.IsMemberKind())
 					continue;
-				var field = context.TypeSystem.MainModule.ResolveEntity(fieldHandle, genericContext) as IField;
+				var field = mainModule.ResolveEntity(fieldHandle, genericContext) as IField;
 				if (field == null)
 					continue;
 
-				found = field.MetadataToken == analyzedField.MetadataToken
-					&& field.ParentModule.PEFile == analyzedField.ParentModule.PEFile;
+				if (field.MetadataToken == analyzedField.MetadataToken
+					&& field.ParentModule.PEFile == analyzedField.ParentModule.PEFile)
+					return true;
 			}
 
-			if (found) {
-				yield return method;
-			}
+			return false;
 		}
 
 		bool CanBeReference(ILOpCode code)

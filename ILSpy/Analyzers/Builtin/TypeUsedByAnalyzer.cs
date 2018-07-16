@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
@@ -31,25 +32,103 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that use a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer<ITypeDefinition>))]
-	class TypeUsedByAnalyzer : IMethodBodyAnalyzer<ITypeDefinition>, ITypeDefinitionAnalyzer<ITypeDefinition>
+	[Export(typeof(IAnalyzer))]
+	class TypeUsedByAnalyzer : IAnalyzer
 	{
 		public string Text => "Used By";
 
-		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			var module = context.TypeSystem.MainModule;
+			Debug.Assert(analyzedSymbol is ITypeDefinition);
+			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedEntity, ITypeDefinition type, AnalyzerContext context)
+		{
+			if (analyzedEntity.ParentModule.PEFile == type.ParentModule.PEFile
+				&& analyzedEntity.MetadataToken == type.MetadataToken)
+				yield break;
+
 			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity);
+
+			foreach (var bt in type.DirectBaseTypes) {
+				bt.AcceptVisitor(visitor);
+			}
+
+			if (visitor.Found)
+				yield return type;
+
+			foreach (var member in type.Members) {
+				visitor.Found = false;
+				VisitMember(visitor, member, context, scanBodies: true);
+				if (visitor.Found)
+					yield return member;
+			}
+		}
+
+		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member, AnalyzerContext context, bool scanBodies = false)
+		{
+			switch (member) {
+				case IField field:
+					field.ReturnType.AcceptVisitor(visitor);
+					break;
+				case IMethod method:
+					foreach (var p in method.Parameters) {
+						p.Type.AcceptVisitor(visitor);
+					}
+
+					method.ReturnType.AcceptVisitor(visitor);
+
+					if (scanBodies && !visitor.Found)
+						ScanMethodBody(visitor, method, context.GetMethodBody(method), context);
+
+					break;
+				case IProperty property:
+					foreach (var p in property.Parameters) {
+						p.Type.AcceptVisitor(visitor);
+					}
+
+					property.ReturnType.AcceptVisitor(visitor);
+
+					if (scanBodies && !visitor.Found && property.CanGet)
+						ScanMethodBody(visitor, property.Getter, context.GetMethodBody(property.Getter), context);
+
+					if (scanBodies && !visitor.Found && property.CanSet)
+						ScanMethodBody(visitor, property.Setter, context.GetMethodBody(property.Setter), context);
+
+					break;
+				case IEvent @event:
+					@event.ReturnType.AcceptVisitor(visitor);
+
+					if (scanBodies && !visitor.Found && @event.CanAdd)
+						ScanMethodBody(visitor, @event.AddAccessor, context.GetMethodBody(@event.AddAccessor), context);
+
+					if (scanBodies && !visitor.Found && @event.CanRemove)
+						ScanMethodBody(visitor, @event.RemoveAccessor, context.GetMethodBody(@event.RemoveAccessor), context);
+
+					if (scanBodies && !visitor.Found && @event.CanInvoke)
+						ScanMethodBody(visitor, @event.InvokeAccessor, context.GetMethodBody(@event.InvokeAccessor), context);
+					break;
+			}
+		}
+
+		void ScanMethodBody(TypeDefinitionUsedVisitor visitor, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
+		{
+			if (methodBody == null)
+				return;
+
+			var module = (MetadataModule)method.ParentModule;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			if (!methodBody.LocalSignature.IsNil) {
 				foreach (var type in module.DecodeLocalSignature(methodBody.LocalSignature, genericContext)) {
 					type.AcceptVisitor(visitor);
 
-					if (visitor.Found) {
-						yield return method;
-						yield break;
-					}
+					if (visitor.Found) return;
 				}
 			}
 
@@ -70,22 +149,16 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeSpecification:
 							case HandleKind.TypeDefinition:
 								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
-								if (visitor.Found) {
-									yield return method;
-									yield break;
-								}
+								if (visitor.Found) return;
 								break;
 
 							case HandleKind.FieldDefinition:
 							case HandleKind.MethodDefinition:
 							case HandleKind.MemberReference:
 							case HandleKind.MethodSpecification:
-								VisitMember(visitor, module.ResolveEntity(member, genericContext) as IMember);
+								VisitMember(visitor, module.ResolveEntity(member, genericContext) as IMember, context);
 
-								if (visitor.Found) {
-									yield return method;
-									yield break;
-								}
+								if (visitor.Found) return;
 								break;
 
 							case HandleKind.StandaloneSignature:
@@ -96,10 +169,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 								signature.ReturnType.AcceptVisitor(visitor);
 
-								if (visitor.Found) {
-									yield return method;
-									yield break;
-								}
+								if (visitor.Found) return;
 								break;
 
 							default:
@@ -113,80 +183,29 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			}
 		}
 
-		void VisitMember(TypeDefinitionUsedVisitor visitor, IMember member)
-		{
-			switch (member) {
-				case IField field:
-					field.ReturnType.AcceptVisitor(visitor);
-					break;
-				case IMethod method:
-					foreach (var p in method.Parameters) {
-						p.Type.AcceptVisitor(visitor);
-					}
-
-					method.ReturnType.AcceptVisitor(visitor);
-					break;
-				case IProperty property:
-					foreach (var p in property.Parameters) {
-						p.Type.AcceptVisitor(visitor);
-					}
-
-					property.ReturnType.AcceptVisitor(visitor);
-					break;
-
-				case IEvent @event:
-					@event.ReturnType.AcceptVisitor(visitor);
-					break;
-			}
-		}
-
-		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedEntity, ITypeDefinition type, AnalyzerContext context)
-		{
-			if (analyzedEntity.ParentModule.PEFile == type.ParentModule.PEFile
-				&& analyzedEntity.MetadataToken == type.MetadataToken)
-				yield break;
-
-			var typeSystem = context.TypeSystem;
-			var visitor = new TypeDefinitionUsedVisitor(analyzedEntity);
-
-			foreach (var bt in type.DirectBaseTypes) {
-				bt.AcceptVisitor(visitor);
-			}
-
-			if (visitor.Found)
-				yield return type;
-
-			foreach (var member in type.Members) {
-				visitor.Found = false;
-				VisitMember(visitor, member);
-				if (visitor.Found)
-					yield return member;
-			}
-		}
-
 		bool CanBeReference(ILOpCode opCode)
 		{
 			return opCode == ILOpCode.Newobj || opCode == ILOpCode.Initobj;
 		}
 
-		public bool Show(ITypeDefinition entity) => !entity.IsAbstract && !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
 	}
 
 	class TypeDefinitionUsedVisitor : TypeVisitor
 	{
-		readonly ITypeDefinition typeDefinition;
+		public readonly ITypeDefinition TypeDefinition;
 
 		public bool Found { get; set; }
 
 		public TypeDefinitionUsedVisitor(ITypeDefinition definition)
 		{
-			this.typeDefinition = definition;
+			this.TypeDefinition = definition;
 		}
 
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
-			Found |= typeDefinition.MetadataToken == type.MetadataToken
-				&& typeDefinition.ParentModule.PEFile == type.ParentModule.PEFile;
+			Found |= TypeDefinition.MetadataToken == type.MetadataToken
+				&& TypeDefinition.ParentModule.PEFile == type.ParentModule.PEFile;
 			return base.VisitTypeDefinition(type);
 		}
 	}

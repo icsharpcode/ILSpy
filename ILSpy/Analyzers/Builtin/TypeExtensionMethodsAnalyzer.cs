@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -7,14 +8,24 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds all extension methods defined for a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer<ITypeDefinition>))]
-	class TypeExtensionMethodsAnalyzer : ITypeDefinitionAnalyzer<ITypeDefinition>
+	[Export(typeof(IAnalyzer))]
+	class TypeExtensionMethodsAnalyzer : IAnalyzer
 	{
 		public string Text => "Extension Methods";
 
-		public bool Show(ITypeDefinition entity) => !entity.IsStatic;
+		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsStatic;
 
-		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is ITypeDefinition);
+			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (!type.HasExtensionMethods)
 				yield break;

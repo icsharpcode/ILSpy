@@ -54,10 +54,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			//foreach (var accessor in analyzedEvent.OtherMethods)
 			//	this.Children.Add(new AnalyzedAccessorTreeNode(accessor, null));
 
-			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IEvent>>()) {
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer>()) {
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedEvent)) {
-					this.Children.Add(new AnalyzerSearchTreeNode<IEvent>(analyzedEvent, analyzer));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedEvent, analyzer));
 				}
 			}
 		}

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,14 +30,24 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Finds all entities that expose a type.
 	/// </summary>
-	[Export(typeof(IAnalyzer<ITypeDefinition>))]
-	class TypeExposedByAnalyzer : ITypeDefinitionAnalyzer<ITypeDefinition>
+	[Export(typeof(IAnalyzer))]
+	class TypeExposedByAnalyzer : IAnalyzer
 	{
 		public string Text => "Exposed By";
 
-		public bool Show(ITypeDefinition entity) => true;
+		public bool Show(ISymbol entity) => entity is ITypeDefinition;
 
-		public IEnumerable<IEntity> Analyze(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
+		{
+			Debug.Assert(analyzedSymbol is ITypeDefinition);
+			var scope = context.GetScopeOf((ITypeDefinition)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				foreach (var result in ScanType((ITypeDefinition)analyzedSymbol, type, context))
+					yield return result;
+			}
+		}
+
+		IEnumerable<IEntity> ScanType(ITypeDefinition analyzedType, ITypeDefinition type, AnalyzerContext context)
 		{
 			if (analyzedType.Kind == TypeKind.Enum
 				&& type.MetadataToken == analyzedType.MetadataToken

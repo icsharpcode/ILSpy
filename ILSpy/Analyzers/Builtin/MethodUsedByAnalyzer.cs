@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
@@ -30,15 +31,69 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	/// <summary>
 	/// Shows entities that are used by a method.
 	/// </summary>
-	[Export(typeof(IAnalyzer<IMethod>))]
-	class MethodUsedByAnalyzer : IMethodBodyAnalyzer<IMethod>
+	[Export(typeof(IAnalyzer))]
+	class MethodUsedByAnalyzer : IAnalyzer
 	{
+		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+
 		public string Text => "Used By";
 
-		public bool Show(IMethod entity) => !entity.IsVirtual;
+		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual;
 
-		public IEnumerable<IEntity> Analyze(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody, AnalyzerContext context)
+		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
+			Debug.Assert(analyzedSymbol is IMethod);
+			var scope = context.GetScopeOf((IEntity)analyzedSymbol);
+			foreach (var type in scope.GetTypesInScope(context.CancellationToken)) {
+				var mappingInfo = context.Language.GetCodeMappingInfo(type.ParentModule.PEFile, type.MetadataToken);
+				var methods = type.GetMembers(m => m is IMethod, Options).OfType<IMethod>();
+				foreach (var method in methods) {
+					if (IsUsedInMethod((IMethod)analyzedSymbol, method, mappingInfo, context))
+						yield return method;
+				}
+
+				foreach (var property in type.Properties) {
+					if (property.CanGet && IsUsedInMethod((IMethod)analyzedSymbol, property.Getter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+					if (property.CanSet && IsUsedInMethod((IMethod)analyzedSymbol, property.Setter, mappingInfo, context)) {
+						yield return property;
+						continue;
+					}
+				}
+
+				foreach (var @event in type.Events) {
+					if (@event.CanAdd && IsUsedInMethod((IMethod)analyzedSymbol, @event.AddAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanRemove && IsUsedInMethod((IMethod)analyzedSymbol, @event.RemoveAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+					if (@event.CanInvoke && IsUsedInMethod((IMethod)analyzedSymbol, @event.InvokeAccessor, mappingInfo, context)) {
+						yield return @event;
+						continue;
+					}
+				}
+			}
+		}
+
+		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
+		{
+			var module = method.ParentModule.PEFile;
+			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (!md.HasBody()) return false;
+			return ScanMethodBody(analyzedEntity, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress));
+		}
+
+		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody)
+		{
+			if (methodBody == null)
+				return false;
+
+			var mainModule = (MetadataModule)method.ParentModule;
 			var blob = methodBody.GetILReader();
 
 			var baseMethod = InheritanceHelper.GetBaseMember(analyzedMethod);
@@ -53,23 +108,23 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (member.IsNil || !member.Kind.IsMemberKind()) continue;
 
-				var m = (context.TypeSystem.MainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
+				var m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
 				if (m == null) continue;
 
 				if (opCode == ILOpCode.Call) {
 					if (IsSameMember(analyzedMethod, m)) {
-						yield return method;
-						yield break;
+						return true;
 					}
 				}
 
 				if (opCode == ILOpCode.Callvirt && baseMethod != null) {
 					if (IsSameMember(baseMethod, m)) {
-						yield return method;
-						yield break;
+						return true;
 					}
 				}
 			}
+
+			return false;
 		}
 
 		static bool IsSameMember(IMember analyzedMethod, IMember m)

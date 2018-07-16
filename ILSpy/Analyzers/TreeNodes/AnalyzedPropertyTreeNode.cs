@@ -48,10 +48,10 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 			//foreach (var accessor in analyzedProperty.OtherMethods)
 			//	this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
 
-			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer<IProperty>>()) {
+			foreach (var lazy in App.ExportProvider.GetExports<IAnalyzer>()) {
 				var analyzer = lazy.Value;
 				if (analyzer.Show(analyzedProperty)) {
-					this.Children.Add(new AnalyzerSearchTreeNode<IProperty>(analyzedProperty, analyzer));
+					this.Children.Add(new AnalyzerSearchTreeNode(analyzedProperty, analyzer));
 				}
 			}
 		}
