@@ -147,17 +147,21 @@ namespace ICSharpCode.ILSpy
 			var module = assembly.GetPEFileOrNull();
 			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			if (options.FullDecompilation)
-				dis.WriteAssemblyReferences(metadata);
-			if (metadata.IsAssembly)
-				dis.WriteAssemblyHeader(module);
-			output.WriteLine();
-			dis.WriteModuleHeader(module);
-			if (options.FullDecompilation) {
+
+			// don't automatically load additional assemblies when an assembly node is selected in the tree view
+			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
+				dis.AssemblyResolver = module.GetAssemblyResolver();
+				if (options.FullDecompilation)
+					dis.WriteAssemblyReferences(metadata);
+				if (metadata.IsAssembly)
+					dis.WriteAssemblyHeader(module);
 				output.WriteLine();
-				output.WriteLine();
-				dis.WriteModuleContents(module);
+				dis.WriteModuleHeader(module);
+				if (options.FullDecompilation) {
+					output.WriteLine();
+					output.WriteLine();
+					dis.WriteModuleContents(module);
+				}
 			}
 		}
 	}
