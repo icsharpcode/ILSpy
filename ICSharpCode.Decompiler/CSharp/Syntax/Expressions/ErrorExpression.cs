@@ -29,17 +29,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class ErrorExpression : Expression
 	{
-		TextLocation location;
+		public TextLocation Location { get; set; }
 
 		public override TextLocation StartLocation {
 			get {
-				return location;
+				return Location;
 			}
 		}
 		
 		public override TextLocation EndLocation {
 			get {
-				return location;
+				return Location;
 			}
 		}
 
@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ErrorExpression (TextLocation location)
 		{
-			this.location = location;
+			this.Location = location;
 		}
 
 		public ErrorExpression (string error)
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ErrorExpression (string error, TextLocation location)
 		{
-			this.location = location;
+			this.Location = location;
 			this.Error = error;
 		}
 

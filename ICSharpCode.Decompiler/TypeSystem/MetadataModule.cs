@@ -278,9 +278,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case HandleKind.ExportedType:
 					return ResolveForwardedType(metadata.GetExportedType((ExportedTypeHandle)typeRefDefSpec));
 				default:
-					Debug.Fail("Not a type handle");
-					ty = SpecialType.UnknownType;
-					break;
+					throw new BadImageFormatException("Not a type handle");
 			}
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, typeAttributes, metadata, customOptions);
 			return ty;

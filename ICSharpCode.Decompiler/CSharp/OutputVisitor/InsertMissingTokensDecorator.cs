@@ -68,13 +68,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WriteToken(Role role, string token)
 		{
-			EmptyStatement node = nodes.Peek().LastOrDefault() as EmptyStatement;
-			if (node == null) {
-				CSharpTokenNode t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
-				t.Role = role;
-				currentList.Add(t);
-			} else {
-				node.Location = locationProvider.Location;
+			switch (nodes.Peek().LastOrDefault()) {
+				case EmptyStatement emptyStatement:
+					emptyStatement.Location = locationProvider.Location;
+					break;
+				case ErrorExpression errorExpression:
+					errorExpression.Location = locationProvider.Location;
+					break;
+				default:
+					CSharpTokenNode t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
+					t.Role = role;
+					currentList.Add(t);
+					break;
 			}
 			base.WriteToken(role, token);
 		}

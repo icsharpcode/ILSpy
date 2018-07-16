@@ -188,12 +188,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			foreach (var region in method.ExceptionRegions) {
-				if (region.CatchType.IsNil) continue;
-				CollectNamespacesForTypeReference(module.ResolveType(region.CatchType, genericContext), namespaces);
+				if (region.CatchType.IsNil)
+					continue;
+				IType ty;
+				try {
+					ty = module.ResolveType(region.CatchType, genericContext);
+				} catch (BadImageFormatException) {
+					continue;
+				}
+				CollectNamespacesForTypeReference(ty, namespaces);
 			}
 
 			while (instructions.RemainingBytes > 0) {
-				var opCode = instructions.DecodeOpCode();
+				ILOpCode opCode;
+				try {
+					opCode = instructions.DecodeOpCode();
+				} catch (BadImageFormatException) {
+					return;
+				}
 				switch (opCode.GetOperandType()) {
 					case Metadata.OperandType.Field:
 					case Metadata.OperandType.Method:
@@ -201,24 +213,46 @@ namespace ICSharpCode.Decompiler.CSharp
 					case Metadata.OperandType.Tok:
 					case Metadata.OperandType.Type:
 						var handle = MetadataTokenHelpers.EntityHandleOrNil(instructions.ReadInt32());
-						if (handle.IsNil) break;
+						if (handle.IsNil)
+							break;
 						switch (handle.Kind) {
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
-								CollectNamespacesForTypeReference(module.ResolveType(handle, genericContext), namespaces);
+								IType type;
+								try {
+									type = module.ResolveType(handle, genericContext);
+								} catch (BadImageFormatException) {
+									break;
+								}
+								CollectNamespacesForTypeReference(type, namespaces);
 								break;
 							case HandleKind.FieldDefinition:
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
-								CollectNamespacesForMemberReference(module.ResolveEntity(handle, genericContext) as IMember,
-									module, namespaces);
+								IMember member;
+								try {
+									member = module.ResolveEntity(handle, genericContext) as IMember;
+								} catch (BadImageFormatException) {
+									break;
+								}
+								CollectNamespacesForMemberReference(member, module, namespaces);
 								break;
 							case HandleKind.StandaloneSignature:
-								var sig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)handle);
+								StandaloneSignature sig;
+								try {
+									sig = metadata.GetStandaloneSignature((StandaloneSignatureHandle)handle);
+								} catch (BadImageFormatException) {
+									break;
+								}
 								if (sig.GetKind() == StandaloneSignatureKind.Method) {
-									var methodSig = module.DecodeMethodSignature((StandaloneSignatureHandle)handle, genericContext);
+									MethodSignature<IType> methodSig;
+									try {
+										methodSig = module.DecodeMethodSignature((StandaloneSignatureHandle)handle, genericContext);
+									} catch (BadImageFormatException) {
+										break;
+									}
 									CollectNamespacesForTypeReference(methodSig.ReturnType, namespaces);
 									foreach (var paramType in methodSig.ParameterTypes) {
 										CollectNamespacesForTypeReference(paramType, namespaces);
@@ -228,7 +262,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						break;
 					default:
-						instructions.SkipOperand(opCode);
+						try {
+							instructions.SkipOperand(opCode);
+						} catch (BadImageFormatException) {
+							return;
+						}
 						break;
 				}
 			}

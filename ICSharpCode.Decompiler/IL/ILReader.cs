@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.IL
 				} catch (BadImageFormatException ex) {
 					decodedInstruction = new InvalidBranch(ex.Message);
 				}
-				if (decodedInstruction.ResultType == StackType.Unknown)
+				if (decodedInstruction.ResultType == StackType.Unknown && decodedInstruction.OpCode != OpCode.InvalidBranch && UnpackPush(decodedInstruction).OpCode != OpCode.InvalidExpression)
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
 				int end = reader.Offset;
