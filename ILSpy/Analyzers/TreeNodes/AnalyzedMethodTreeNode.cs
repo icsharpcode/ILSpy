@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => MethodTreeNode.GetIcon(analyzedMethod);
 
-		public override object Text => prefix + Language.MethodToString(analyzedMethod, true, true);
+		public override object Text => prefix + Language.MethodToString(analyzedMethod, true, false, true);
 
 		protected override void LoadChildren()
 		{

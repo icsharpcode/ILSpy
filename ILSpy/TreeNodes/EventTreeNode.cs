@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(IEvent ev, Language language)
 		{
-			return language.EventToString(ev, false, false);
+			return language.EventToString(ev, false, false, false);
 		}
 
 		public override object Icon => GetIcon(EventDefinition);

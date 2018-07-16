@@ -450,18 +450,18 @@ namespace ICSharpCode.ILSpy
 			return output;
 		}
 
-		public override string FieldToString(IField field, bool includeTypeName, bool includeNamespace)
+		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
 
 			string simple = field.Name + " : " + TypeToString(field.Type, includeNamespace);
-			if (!includeTypeName)
+			if (!includeDeclaringTypeName)
 				return simple;
-			return TypeToStringInternal(field.DeclaringTypeDefinition, includeNamespace) + "." + simple;
+			return TypeToStringInternal(field.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + simple;
 		}
 
-		public override string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace)
+		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
@@ -492,21 +492,21 @@ namespace ICSharpCode.ILSpy
 			}
 			buffer.Append(" : ");
 			buffer.Append(TypeToStringInternal(property.ReturnType, includeNamespace));
-			if (!includeTypeName)
+			if (!includeDeclaringTypeName)
 				return buffer.ToString();
-			return TypeToString(property.DeclaringTypeDefinition, includeNamespace) + "." + buffer.ToString();
+			return TypeToString(property.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + buffer.ToString();
 		}
 
-		public override string MethodToString(IMethod method, bool includeTypeName, bool includeNamespace)
+		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (method == null)
 				throw new ArgumentNullException(nameof(method));
 			string name;
 			if (method.IsConstructor) {
-				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace);
+				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName);
 			} else {
-				if (includeTypeName) {
-					name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespace) + ".";
+				if (includeDeclaringTypeName) {
+					name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
 				} else {
 					name = "";
 				}
@@ -542,13 +542,13 @@ namespace ICSharpCode.ILSpy
 			return buffer.ToString();
 		}
 
-		public override string EventToString(IEvent @event, bool includeTypeName, bool includeNamespace)
+		public override string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
 			var buffer = new System.Text.StringBuilder();
-			if (includeTypeName) {
-				buffer.Append(TypeToString(@event.DeclaringTypeDefinition, includeNamespace) + ".");
+			if (includeDeclaringTypeName) {
+				buffer.Append(TypeToString(@event.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + ".");
 			}
 			buffer.Append(@event.Name);
 			buffer.Append(" : ");

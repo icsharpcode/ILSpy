@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
-		public override object Text => Language.FieldToString(analyzedField, true, true);
+		public override object Text => Language.FieldToString(analyzedField, true, false, true);
 
 		protected override void LoadChildren()
 		{

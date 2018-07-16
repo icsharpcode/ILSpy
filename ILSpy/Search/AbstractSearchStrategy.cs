@@ -138,13 +138,13 @@ namespace ICSharpCode.ILSpy.Search
 				case ITypeDefinition t:
 					return language.TypeToString(t, false);
 				case IField f:
-					return language.FieldToString(f, true, false);
+					return language.FieldToString(f, true, false, false);
 				case IProperty p:
-					return language.PropertyToString(p, true, false);
+					return language.PropertyToString(p, true, false, false);
 				case IMethod m:
-					return language.MethodToString(m, true, false);
+					return language.MethodToString(m, true, false, false);
 				case IEvent e:
-					return language.EventToString(e, true, false);
+					return language.EventToString(e, true, false, false);
 				default:
 					throw new NotSupportedException(member?.GetType() + " not supported!");
 			}

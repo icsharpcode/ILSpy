@@ -174,31 +174,31 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public virtual string GetTooltip(IEntity entity)
 		{
-			return GetDisplayName(entity, true, true);
+			return GetDisplayName(entity, true, true, true);
 		}
 
-		public virtual string FieldToString(IField field, bool includeTypeName, bool includeNamespace)
+		public virtual string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
-			return GetDisplayName(field, includeTypeName, includeNamespace) + " : " + TypeToString(field.ReturnType, includeNamespace);
+			return GetDisplayName(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(field.ReturnType, includeNamespace);
 		}
 
-		public virtual string PropertyToString(IProperty property, bool includeTypeName, bool includeNamespace)
+		public virtual string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
-			return GetDisplayName(property, includeTypeName, includeNamespace) + " : " + TypeToString(property.ReturnType, includeNamespace);
+			return GetDisplayName(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName) + " : " + TypeToString(property.ReturnType, includeNamespace);
 		}
 
-		public virtual string MethodToString(IMethod method, bool includeTypeName, bool includeNamespace)
+		public virtual string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (method == null)
 				throw new ArgumentNullException(nameof(method));
 
 			int i = 0;
 			var buffer = new System.Text.StringBuilder();
-			buffer.Append(GetDisplayName(method, includeTypeName, includeNamespace));
+			buffer.Append(GetDisplayName(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			var typeParameters = method.TypeParameters;
 			if (typeParameters.Count > 0) {
 				buffer.Append('<');
@@ -226,22 +226,22 @@ namespace ICSharpCode.ILSpy
 			return buffer.ToString();
 		}
 
-		public virtual string EventToString(IEvent @event, bool includeTypeName, bool includeNamespace)
+		public virtual string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
 			var buffer = new System.Text.StringBuilder();
-			buffer.Append(GetDisplayName(@event, includeTypeName, includeNamespace));
+			buffer.Append(GetDisplayName(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			buffer.Append(" : ");
 			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
 			return buffer.ToString();
 		}
 
-		protected string GetDisplayName(IEntity entity, bool includeTypeName, bool includeNamespace)
+		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (includeTypeName && entity.DeclaringTypeDefinition != null) {
+			if (includeDeclaringTypeName && entity.DeclaringTypeDefinition != null) {
 				string name;
-				if (includeNamespace) {
+				if (includeNamespaceOfDeclaringTypeName) {
 					name = entity.DeclaringTypeDefinition.FullName;
 				} else {
 					name = entity.DeclaringTypeDefinition.Name;

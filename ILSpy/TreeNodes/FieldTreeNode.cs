@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(IField field, Language language)
 		{
-			return language.FieldToString(field, includeTypeName: false, includeNamespace: false);
+			return language.FieldToString(field, includeDeclaringTypeName: false, includeNamespace: false, includeNamespaceOfDeclaringTypeName: false);
 		}
 
 		public override object Icon => GetIcon(FieldDefinition);

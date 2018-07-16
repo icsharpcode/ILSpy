@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 
 		// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-		public override object Text => prefix + Language.EventToString(analyzedEvent, includeTypeName: true, includeNamespace: true);
+		public override object Text => prefix + Language.EventToString(analyzedEvent, includeDeclaringTypeName: true, includeNamespace: false, includeNamespaceOfDeclaringTypeName: true);
 
 		protected override void LoadChildren()
 		{

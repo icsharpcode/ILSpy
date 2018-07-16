@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 		public override object Icon => PropertyTreeNode.GetIcon(analyzedProperty);
 
 		// TODO: This way of formatting is not suitable for properties which explicitly implement interfaces.
-		public override object Text => prefix + Language.PropertyToString(analyzedProperty, includeNamespace: true, includeTypeName: true);
+		public override object Text => prefix + Language.PropertyToString(analyzedProperty, includeNamespace: false, includeDeclaringTypeName: true, includeNamespaceOfDeclaringTypeName: true);
 
 		protected override void LoadChildren()
 		{

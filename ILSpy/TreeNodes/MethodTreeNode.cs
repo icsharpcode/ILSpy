@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(IMethod method, Language language)
 		{
-			return language.MethodToString(method, false, false);
+			return language.MethodToString(method, false, false, false);
 		}
 
 		public override object Icon => GetIcon(MethodDefinition);

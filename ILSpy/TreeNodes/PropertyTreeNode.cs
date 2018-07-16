@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static object GetText(IProperty property, Language language)
 		{
-			return language.PropertyToString(property, false, false);
+			return language.PropertyToString(property, false, false, false);
 		}
 
 		public override object Icon => GetIcon(PropertyDefinition);
