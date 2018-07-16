@@ -92,6 +92,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public string AssemblyName { get; }
 		public string FullAssemblyName { get; }
+		string ISymbol.Name => AssemblyName;
+		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
 		public INamespace RootNamespace => rootNamespace;
 

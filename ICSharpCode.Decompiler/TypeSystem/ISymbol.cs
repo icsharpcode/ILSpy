@@ -21,6 +21,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public enum SymbolKind : byte
 	{
 		None,
+		/// <seealso cref="IModule"/>
+		Module,
 		/// <seealso cref="ITypeDefinition"/>
 		TypeDefinition,
 		/// <seealso cref="IField"/>

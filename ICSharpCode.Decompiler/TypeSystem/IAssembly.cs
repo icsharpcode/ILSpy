@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Represents a metadata module.
 	/// </summary>
-	public interface IModule : ICompilationProvider
+	public interface IModule : ISymbol, ICompilationProvider
 	{
 		/// <summary>
 		/// Gets the underlying metadata file. May return null, if the IAssembly was not created from a PE file.

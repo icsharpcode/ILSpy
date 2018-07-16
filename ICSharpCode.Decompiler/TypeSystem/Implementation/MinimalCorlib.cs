@@ -53,6 +53,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		string IModule.AssemblyName => "corlib";
 		string IModule.FullAssemblyName => "corlib";
+		string ISymbol.Name => "corlib";
+		SymbolKind ISymbol.SymbolKind => SymbolKind.Module;
 
 		Metadata.PEFile IModule.PEFile => null;
 		INamespace IModule.RootNamespace => rootNamespace;
