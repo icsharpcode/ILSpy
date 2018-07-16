@@ -154,8 +154,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable[] InitLocalVariables()
 		{
-			if (body.LocalSignature.IsNil) return Empty<ILVariable>.Array;
-			var variableTypes = module.DecodeLocalSignature(body.LocalSignature, genericContext);
+			if (body.LocalSignature.IsNil)
+				return Empty<ILVariable>.Array;
+			ImmutableArray<IType> variableTypes;
+			try {
+				variableTypes = module.DecodeLocalSignature(body.LocalSignature, genericContext);
+			} catch (BadImageFormatException ex) {
+				Warnings.Add("Error decoding local variables: " + ex.Message);
+				variableTypes = ImmutableArray<IType>.Empty;
+			}
 			var localVariables = new ILVariable[variableTypes.Length];
 			foreach (var (index, type) in variableTypes.WithIndex()) {
 				localVariables[index] = CreateILVariable(index, type);

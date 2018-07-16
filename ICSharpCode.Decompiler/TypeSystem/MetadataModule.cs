@@ -555,7 +555,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != StandaloneSignatureKind.Method)
-				throw new InvalidOperationException("Expected Method signature");
+				throw new BadImageFormatException("Expected Method signature");
 			var sig = standaloneSignature.DecodeMethodSignature(TypeProvider, genericContext);
 			return new MethodSignature<IType>(
 				sig.Header,
@@ -572,7 +572,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			var standaloneSignature = metadata.GetStandaloneSignature(handle);
 			if (standaloneSignature.GetKind() != StandaloneSignatureKind.LocalVariables)
-				throw new InvalidOperationException("Expected Local signature");
+				throw new BadImageFormatException("Expected LocalVariables signature");
 			var types = standaloneSignature.DecodeLocalSignature(TypeProvider, genericContext);
 			return ImmutableArray.CreateRange(types, IntroduceTupleTypes);
 		}

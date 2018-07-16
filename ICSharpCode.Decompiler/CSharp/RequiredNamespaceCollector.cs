@@ -176,7 +176,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			var instructions = method.GetILReader();
 
 			if (!method.LocalSignature.IsNil) {
-				var localSignature = module.DecodeLocalSignature(method.LocalSignature, genericContext);
+				ImmutableArray<IType> localSignature;
+				try {
+					localSignature = module.DecodeLocalSignature(method.LocalSignature, genericContext);
+				} catch (BadImageFormatException) {
+					// Issue #1211: ignore invalid local signatures
+					localSignature = ImmutableArray<IType>.Empty;
+				}
 				foreach (var type in localSignature)
 					CollectNamespacesForTypeReference(type, namespaces);
 			}

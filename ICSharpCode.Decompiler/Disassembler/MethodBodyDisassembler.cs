@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
@@ -124,15 +125,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (body.LocalVariablesInitialized)
 				output.Write(" init");
 			var blob = metadata.GetStandaloneSignature(body.LocalSignature);
-			if (blob.GetKind() != StandaloneSignatureKind.LocalVariables)
-				return;
-			var reader = metadata.GetBlobReader(blob.Signature);
-			if (reader.Length < 2)
-				return;
-			reader.Offset = 1;
-			if (reader.ReadCompressedInteger() == 0)
-				return;
-			var signature = blob.DecodeLocalSignature(signatureDecoder, genericContext);
+			var signature = ImmutableArray<Action<ILNameSyntax>>.Empty;
+			try {
+				if (blob.GetKind() == StandaloneSignatureKind.LocalVariables) {
+					signature = blob.DecodeLocalSignature(signatureDecoder, genericContext);
+				} else {
+					output.Write(" /* wrong signature kind */");
+				}
+			} catch (BadImageFormatException ex) {
+				output.Write($" /* {ex.Message} */");
+			}
 			output.Write(' ');
 			output.WriteLine("(");
 			output.Indent();
