@@ -16,10 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -82,7 +85,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			this.SelectedItem = node;
 			this.FocusNode(node);
 		}
-		
+
 		public void ShowOrFocus(AnalyzerTreeNode node)
 		{
 			if (node is AnalyzerEntityTreeNode) {
@@ -98,6 +101,33 @@ namespace ICSharpCode.ILSpy.Analyzers
 				}
 			}
 			Show(node);
+		}
+
+		public void Analyze(IEntity entity)
+		{
+			if (entity == null) {
+				throw new ArgumentNullException(nameof(entity));
+			}
+
+			switch (entity) {
+				case ITypeDefinition td:
+					ShowOrFocus(new AnalyzedTypeTreeNode(td));
+					break;
+				case IField fd:
+					ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+					break;
+				case IMethod md:
+					ShowOrFocus(new AnalyzedMethodTreeNode(md));
+					break;
+				case IProperty pd:
+					ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+					break;
+				case IEvent ed:
+					ShowOrFocus(new AnalyzedEventTreeNode(ed));
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
+			}
 		}
 
 		void IPane.Closed()

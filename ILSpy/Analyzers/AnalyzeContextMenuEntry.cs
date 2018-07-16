@@ -57,35 +57,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (context.SelectedTreeNodes != null) {
 				foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
-					Analyze(node.Member);
+					AnalyzerTreeView.Instance.Analyze(node.Member);
 				}
 			} else if (context.Reference != null && context.Reference.Reference is IEntity entity) {
-				Analyze(entity);
-			}
-		}
-
-		public static void Analyze(IEntity entity)
-		{
-			if (entity == null)
-				return;
-			switch (entity) {
-				case ITypeDefinition td:
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(td));
-					break;
-				case IField fd:
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
-					break;
-				case IMethod md:
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md));
-					break;
-				case IProperty pd:
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
-					break;
-				case IEvent ed:
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(entity), $"Entity {entity.GetType().FullName} is not supported.");
+				AnalyzerTreeView.Instance.Analyze(entity);
 			}
 		}
 	}
