@@ -111,5 +111,49 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return null;
 		}
+
+		protected internal override void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
+		{
+			if (inst.Operator != BinaryNumericOperator.BitAnd)
+				return;
+
+			if (PotentialSideEffects(inst.Left) || PotentialSideEffects(inst.Right))
+				return;
+
+			if (!IsBoolean(inst.Left) || !IsBoolean(inst.Right))
+				return;
+			
+			context.Step("Replace bit.and with logic.and", inst);
+			var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
+			inst.ReplaceWith(expr);
+			expr.AcceptVisitor(this);
+		}
+
+		private bool IsBoolean(ILInstruction inst) => inst is Comp || inst.InferType().IsKnownType(KnownTypeCode.Boolean);
+
+		private bool PotentialSideEffects(ILInstruction inst)
+		{
+			switch (inst) {
+				case LdLoc _:
+				case LdLoca _:
+				case LdcF4 _:
+				case LdcF8 _:
+				case LdcI4 _:
+				case LdcI8 _:
+				case LdcDecimal _:
+					return false;
+				case Comp c:
+					return PotentialSideEffects(c.Left) || PotentialSideEffects(c.Right);
+				case BinaryNumericInstruction b:
+					return PotentialSideEffects(b.Left) || PotentialSideEffects(b.Right);
+				case BitNot b:
+					return PotentialSideEffects(b.Argument);
+				case Conv c:
+					return PotentialSideEffects(c.Argument);
+
+			}
+
+			return true;
+		}
 	}
 }

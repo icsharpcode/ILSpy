@@ -879,6 +879,69 @@
     IL_0024:  ret
   } // end of method ShortCircuit::StmtComplex6
 
+  .method public hidebysig instance void 
+          PreferLogicalToBitwise(bool a,
+                                 bool b,
+                                 int32 i,
+                                 float32 f) cil managed
+  {
+    // Code size       79 (0x4f)
+    .maxstack  4
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  brfalse.s  IL_0007
+
+    IL_0004:  ldarg.2
+    IL_0005:  br.s       IL_0008
+
+    IL_0007:  ldc.i4.0
+    IL_0008:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_000d:  ldarg.0
+    IL_000e:  ldarg.1
+    IL_000f:  brfalse.s  IL_0017
+
+    IL_0011:  ldarg.3
+    IL_0012:  ldc.i4.1
+    IL_0013:  ceq
+    IL_0015:  br.s       IL_0018
+
+    IL_0017:  ldc.i4.0
+    IL_0018:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_001d:  ldarg.0
+    IL_001e:  ldarg.3
+    IL_001f:  ldc.i4.1
+    IL_0020:  bne.un.s   IL_0025
+
+    IL_0022:  ldarg.1
+    IL_0023:  br.s       IL_0026
+
+    IL_0025:  ldc.i4.0
+    IL_0026:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_002b:  ldarg.0
+    IL_002c:  ldarg.3
+    IL_002d:  ldarg.3
+    IL_002e:  ldc.i4.3
+    IL_002f:  sub
+    IL_0030:  ble.s      IL_0035
+
+    IL_0032:  ldarg.1
+    IL_0033:  br.s       IL_0036
+
+    IL_0035:  ldc.i4.0
+    IL_0036:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_003b:  ldarg.0
+    IL_003c:  ldarg.s    f
+    IL_003e:  ldc.r4     0.1
+    IL_0043:  bge.un.s   IL_0048
+
+    IL_0045:  ldarg.1
+    IL_0046:  br.s       IL_0049
+
+    IL_0048:  ldc.i4.0
+    IL_0049:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_004e:  ret
+  } // end of method ShortCircuit::PreferLogicalToBitwise
+
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
