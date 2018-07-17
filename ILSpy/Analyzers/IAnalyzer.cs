@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Base interface for all analyzers. You can register an analyzer for any <see cref="ISymbol"/> by implementing
-	/// this interface and adding an appropriate <see cref="System.ComponentModel.Composition.ExportAttribute"/>.
+	/// this interface and adding an <see cref="ExportAnalyzerAttribute"/>.
 	/// </summary>
 	public interface IAnalyzer
 	{
