@@ -59,8 +59,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
 		/// </summary>
 		public readonly List<Block> InnerBlocks = new List<Block>();
-
-		Block rootBlock;
+		
+		public Block RootBlock { get; private set; }
 
 		/// <summary>
 		/// Analyze the last two statements in the block and see if they can be turned into a
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public bool AnalyzeBlock(Block block)
 		{
 			switchVar = null;
-			rootBlock = block;
+			RootBlock = block;
 			targetBlockToSectionIndex.Clear();
 			targetContainerToSectionIndex.Clear();
 			Sections.Clear();
@@ -100,12 +100,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 			if (tailOnly) {
-				Debug.Assert(block == rootBlock);
+				Debug.Assert(block == RootBlock);
 			} else {
 				Debug.Assert(switchVar != null); // switchVar should always be determined by the top-level call
-				if (block.IncomingEdgeCount != 1 || block == rootBlock)
+				if (block.IncomingEdgeCount != 1 || block == RootBlock)
 					return false; // for now, let's only consider if-structures that form a tree
-				if (block.Parent != rootBlock.Parent)
+				if (block.Parent != RootBlock.Parent)
 					return false; // all blocks should belong to the same container
 			}
 			LongSet trueValues;

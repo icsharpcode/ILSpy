@@ -123,6 +123,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static bool SparseIntegerSwitch3(int i)
+		{
+			switch (i) {
+				case 0:
+				case 10:
+				case 11:
+				case 12:
+				case 100:
+				case 101:
+				case 200:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		public static string SwitchOverNullableInt(int? i)
 		{
 			switch (i) {
@@ -238,6 +254,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Console.WriteLine("thirty");
 					break;
 			}
+		}
+
+		// SwitchDetection.UseCSharpSwitch requires more complex heuristic to identify this when compiled with Roslyn
+		public static void CompactSwitchOverInt(int i)
+		{
+			switch (i) {
+				case 0:
+				case 1:
+				case 2:
+					Console.WriteLine("012");
+					break;
+				case 3:
+					Console.WriteLine("3");
+					break;
+				default:
+					Console.WriteLine("default");
+					break;
+			}
+			Console.WriteLine("end");
 		}
 
 		public static string ShortSwitchOverString(string text)
@@ -387,6 +422,45 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("End of method");
 		}
 
+		// Needs to be long enough to generate a hashtable
+		public static void SwitchWithGotoString(string s)
+		{
+			Console.WriteLine("SwitchWithGotoString: " + s);
+			switch (s) {
+				case "1":
+					Console.WriteLine("one");
+					goto default;
+				case "2":
+					Console.WriteLine("two");
+					goto case "3";
+				case "3":
+					Console.WriteLine("three");
+					break;
+				case "4":
+					Console.WriteLine("four");
+					return;
+				case "5":
+					Console.WriteLine("five");
+					return;
+				case "6":
+					Console.WriteLine("six");
+					return;
+				case "7":
+					Console.WriteLine("seven");
+					return;
+				case "8":
+					Console.WriteLine("eight");
+					return;
+				case "9":
+					Console.WriteLine("nine");
+					return;
+				default:
+					Console.WriteLine("default");
+					break;
+			}
+			Console.WriteLine("End of method");
+		}
+
 		private static SetProperty[] GetProperties()
 		{
 			return new SetProperty[0];
@@ -464,6 +538,132 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 			Console.WriteLine("end");
+		}
+
+		// These decompile poorly into switch statements and should be left as is
+		#region Overagressive Switch Use
+
+		#if ROSLYN || OPT
+		public static void SingleIf1(int i, bool a)
+		{
+			if (i == 1 || (i == 2 && a)) {
+				Console.WriteLine(1);
+			}
+			Console.WriteLine(2);
+		}
+		#endif
+		
+		public static void SingleIf2(int i, bool a, bool b)
+		{
+			if (i == 1 || (i == 2 && a) || (i == 3 && b)) {
+				Console.WriteLine(1);
+			}
+			Console.WriteLine(2);
+		}
+		
+		public static void SingleIf3(int i, bool a, bool b)
+		{
+			if (a || i == 1 || (i == 2 && b)) {
+				Console.WriteLine(1);
+			}
+			Console.WriteLine(2);
+		}
+		
+		public static void SingleIf4(int i, bool a)
+		{
+			if (i == 1 || i == 2 || (i != 3 && a) || i != 4) {
+				Console.WriteLine(1);
+			}
+			Console.WriteLine(2);
+		}
+
+		public static void NestedIf(int i)
+		{
+			if (i != 1) {
+				if (i == 2) {
+					Console.WriteLine(2);
+				}
+				Console.WriteLine("default");
+			}
+			Console.WriteLine();
+		}
+		
+		public static void IfChainWithCondition(int i)
+		{
+			if (i == 0) {
+				Console.WriteLine(0);
+			} else if (i == 1) {
+				Console.WriteLine(1);
+			} else if (i == 2) {
+				Console.WriteLine(2);
+			} else if (i == 3) {
+				Console.WriteLine(3);
+			} else if (i == 4) {
+				Console.WriteLine(4);
+			} else if (i == 5 && Console.CapsLock) {
+				Console.WriteLine("5A");
+			} else {
+				Console.WriteLine("default");
+			}
+
+			Console.WriteLine();
+		}
+		#endregion
+		
+		// Ensure correctness of SwitchDetection.FindBreakTarget
+		public static void SwitchWithReturnAndBreak(int i, bool b)
+		{
+			switch (i) {
+				case 0:
+					if (b) {
+						return;
+					}
+					break;
+				case 1:
+					if (!b) {
+						return;
+					}
+					break;
+			}
+			Console.WriteLine();
+		}
+		
+		public static int SwitchWithReturnAndBreak2(int i, bool b)
+		{
+			switch (i) {
+				case 4:
+				case 33:
+					Console.WriteLine();
+					return 1;
+				case 334:
+					if (b) {
+						return 2;
+					}
+					break;
+				case 395:
+				case 410:
+				case 455:
+					Console.WriteLine();
+					break;
+			}
+			Console.WriteLine();
+			return 0;
+		}
+		
+		// Ensure correctness of SwitchDetection.FindBreakTarget (default case has no associated block)
+		public static void SwitchWithReturnAndBreak3(int i)
+		{
+			switch (i) {
+				default:
+					return;
+				case 0:
+					Console.WriteLine(0);
+					break;
+				case 1:
+					Console.WriteLine(1);
+					break;
+			}
+			Console.WriteLine();
 		}
 	}
 }

@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -35,11 +36,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class SwitchDetection : IILTransform
 	{
+		private ILTransformContext context;
+		private BlockContainer currentContainer;
+		private ControlFlowGraph controlFlowGraph;
+
 		SwitchAnalysis analysis = new SwitchAnalysis();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			this.context = context;
+
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				currentContainer = container;
+				controlFlowGraph = null;
+
 				bool blockContainerNeedsCleanup = false;
 				foreach (var block in container.Blocks) {
 					context.CancellationToken.ThrowIfCancellationRequested();
@@ -56,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			bool analysisSuccess = analysis.AnalyzeBlock(block);
 			KeyValuePair<LongSet, ILInstruction> defaultSection;
-			if (analysisSuccess && UseCSharpSwitch(analysis, out defaultSection)) {
+			if (analysisSuccess && UseCSharpSwitch(out defaultSection)) {
 				// complex multi-block switch that can be combined into a single SwitchInstruction
 				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
 				if (switchValue.ResultType == StackType.Unknown) {
@@ -85,6 +95,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					Debug.Assert(innerBlock != ((BlockContainer)block.Parent).EntryPoint);
 					innerBlock.Instructions.Clear();
 				}
+
+				controlFlowGraph = null; // control flow graph is no-longer valid
 				blockContainerNeedsCleanup = true;
 				SortSwitchSections(sw);
 			} else {
@@ -156,7 +168,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Tests whether we should prefer a switch statement over an if statement.
 		/// </summary>
-		static bool UseCSharpSwitch(SwitchAnalysis analysis, out KeyValuePair<LongSet, ILInstruction> defaultSection)
+		private bool UseCSharpSwitch(out KeyValuePair<LongSet, ILInstruction> defaultSection)
 		{
 			if (!analysis.InnerBlocks.Any()) {
 				defaultSection = default(KeyValuePair<LongSet, ILInstruction>);
@@ -168,24 +180,174 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// This should never happen, as we'd need 2^64/MaxValuesPerSection sections to hit this case...
 				return false;
 			}
-			ulong valuePerSectionLimit = MaxValuesPerSection;
-			if (!analysis.ContainsILSwitch) {
-				// If there's no IL switch involved, limit the number of keys per section
-				// much more drastically to avoid generating switches where an if condition
-				// would be shorter.
-				valuePerSectionLimit = Math.Min(
-					valuePerSectionLimit,
-					(ulong)analysis.InnerBlocks.Count);
-			}
 			var defaultSectionKey = defaultSection.Key;
-			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey)
-										&& s.Key.Count() > valuePerSectionLimit)) {
+			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey) && s.Key.Count() > MaxValuesPerSection)) {
 				// Only the default section is allowed to have tons of keys.
 				// C# doesn't support "case 1 to 100000000", and we don't want to generate
 				// gigabytes of case labels.
 				return false;
 			}
-			return true;
+
+			// good enough indicator that the surrounding code also forms a switch statement
+			if (analysis.ContainsILSwitch || MatchRoslynSwitchOnString())
+				return true;
+
+			int ifCount = analysis.InnerBlocks.Count + 1;
+			int labelCount = analysis.Sections.Where(s => !s.Key.SetEquals(defaultSectionKey)).Sum(s => s.Key.Intervals.Length);
+			// heuristic to determine if a block would be better represented as an if statement rather than a case statement
+			if (ifCount < labelCount)
+				return false;
+			
+			// if there is no ILSwitch, there's still many control flow patterns that 
+			// match a switch statement but were originally just regular if statements,
+			// and converting them to switches results in poor quality code with goto statements
+			// 
+			// If a single break target cannot be identified, then the equivalent switch statement would require goto statements.
+			// These goto statements may be "goto case x" or "goto default", but these are a hint that the original code was not a switch,
+			// and that the switch statement may be very poor quality. 
+			// Thus the rule of thumb is no goto statements if the original code didn't include them
+			return !SwitchRequiresGoto();
+		}
+
+		/// <summary>
+		/// stloc switchValueVar(call ComputeStringHash(switchValue))
+		/// 
+		/// Previously, the roslyn case block heads were added to the flowBlocks for case control flow analysis.
+		/// This forbade goto case statements (as is the purpose of ValidatePotentialSwitchFlow)
+		/// Identifying the roslyn string switch head is a better indicator for UseCSharpSwitch
+		/// </summary>
+		private bool MatchRoslynSwitchOnString()
+		{
+			var insns = analysis.RootBlock.Instructions;
+			return insns.Count >= 3 && SwitchOnStringTransform.MatchComputeStringHashCall(insns[insns.Count - 3], analysis.SwitchVariable, out var switchLdLoc);
+		}
+
+		/// <summary>
+		/// Determines if the analysed switch can be constructed without any gotos
+		/// </summary>
+		private bool SwitchRequiresGoto()
+		{
+			if (controlFlowGraph == null)
+				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
+
+			// grab the control flow nodes for blocks targetted by each section
+			var caseNodes = new List<ControlFlowNode>();
+			ControlFlowNode defaultNode = null;
+
+			foreach (var s in analysis.Sections) {
+				// leave sections not considered
+				if (s.Value.MatchBranch(out var block) && !IsContinue(block)) {
+					if (s.Key.Count() > MaxValuesPerSection)
+						defaultNode = controlFlowGraph.GetNode(block);
+					else
+						caseNodes.Add(controlFlowGraph.GetNode(block));
+				}
+			}
+
+			var flowBlocks = analysis.InnerBlocks.Concat(new[] {analysis.RootBlock}).ToHashSet();
+			
+			AddNullCase(flowBlocks, caseNodes);
+			
+			// all predecessors of case blocks must be part of the switch logic (to avoid gotos)
+			foreach (var caseNode in caseNodes)
+				if (caseNode.Predecessors.Any(n => !flowBlocks.Contains(n.UserData)))
+					return true;
+
+			// determine if the switch would have a single exit point (break target)
+			return !FindBreakTarget(caseNodes, defaultNode, out var _);
+		}
+
+		/// <summary>
+		/// Does some of the analysis of SwitchOnNullableTransform to add the null case control flow
+		/// to the results of SwitchAnaylsis
+		/// </summary>
+		private void AddNullCase(HashSet<Block> flowBlocks, List<ControlFlowNode> caseNodes)
+		{
+			if (analysis.RootBlock.IncomingEdgeCount != 1)
+				return;
+			
+			// if (comp(logic.not(call get_HasValue(ldloca nullableVar))) br NullCase
+			// br RootBlock
+			var nullableBlock = (Block)controlFlowGraph.GetNode(analysis.RootBlock).Predecessors.SingleOrDefault()?.UserData;
+			if (nullableBlock == null ||
+			    nullableBlock.Instructions.Count < 2 ||
+			    !nullableBlock.Instructions.Last().MatchBranch(analysis.RootBlock) ||
+			    !nullableBlock.Instructions.SecondToLastOrDefault().MatchIfInstruction(out var cond, out var trueInst) ||
+			    !cond.MatchLogicNot(out var getHasValue) ||
+			    !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction nullableInst))
+				return;
+			
+			// could check that nullableInst is ldloc or ldloca and that the switch variable matches a GetValueOrDefault
+			// but the effect of adding an incorrect block to the flowBlock list would only be disasterous if it branched directly
+			// to a candidate case block
+
+			// must branch to a case label, otherwise we can proceed fine and let SwitchOnNullableTransform do all the work
+			if (!trueInst.MatchBranch(out var nullBlock) || !caseNodes.Exists(n => n.UserData == nullBlock))
+				return;
+
+			//add the null case logic to the incoming flow blocks
+			flowBlocks.Add(nullableBlock);
+		}
+
+		internal static bool IsContinue(Block block) => false;
+		
+		/// <summary>
+		/// Enumerates all nodes via which a domination tree can be exited. (Not distinct)
+		/// That is, all nodes with at least one dominated predecessor which are not dominated themselves
+		/// 
+		/// Note that while this construction appears less efficient than a recursive solution, 
+		/// a recursive solution would require the use of the Visted flag to avoid loops in the dominator tree
+		/// </summary>
+		internal static IEnumerable<ControlFlowNode> GetDominatorTreeExits(ControlFlowNode dominator) =>
+			dominator.DominatorTreeChildren.Concat(new[] {dominator})
+				.SelectMany(n => n.Successors)
+				.Where(n => !dominator.Dominates(n));
+
+		/// <summary>
+		/// Lists all potential targets for break; statements from a domination tree,
+		/// assuming the domination tree must be exited via either break; or continue;
+		/// </summary>
+		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) =>
+			GetDominatorTreeExits(dominator).Where(n => !IsContinue((Block)n.UserData));
+		
+		/// <summary>
+		/// Finds the target node of all branches leaving the dominator tree of the cases of a switch block.
+		/// Returns true if a single target was found, or if no break statements are required (breakTarget = null)
+		/// If the defaultNode is the breakTarget, then it should not be inlined.
+		/// 
+		/// Note that branches to case labels ("goto case x") are considered break targets, and will fail this method
+		/// 
+		/// defaultNode may be null if there is no control block associated with the default case. 
+		/// </summary>
+		/// <returns></returns>
+		internal static bool FindBreakTarget(List<ControlFlowNode> caseNodes, ControlFlowNode defaultNode, out ControlFlowNode breakTarget)
+		{
+			breakTarget = null;
+			var breakTargets = caseNodes.SelectMany(GetBreakTargets).ToHashSet();
+
+			// no cases require break statements, inlining of default case doesn't matter
+			if (breakTargets.Count == 0)
+				return true;
+			
+			if (defaultNode != null) {
+				// default case is break target, don't inline
+				if (breakTargets.Count == 1 && breakTargets.Single() == defaultNode) {
+					breakTarget = defaultNode;
+					return true;
+				}
+				
+				// default case requires inlining, ensure break target matches that of case statements
+				breakTargets.AddRange(GetBreakTargets(defaultNode));
+			}
+
+			// single break target found
+			if (breakTargets.Count == 1) {
+				breakTarget = breakTargets.Single();
+				return true;
+			}
+
+			// more than 1 break target found
+			return false;
 		}
 	}
 }
