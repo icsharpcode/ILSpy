@@ -209,6 +209,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return astTransforms; }
 		}
 
+		public CSharpDecompiler(string fileName, DecompilerSettings settings)
+			: this(CreateTypeSystemFromFile(fileName, settings), settings)
+		{
+		}
+
 		public CSharpDecompiler(string fileName, IAssemblyResolver assemblyResolver, DecompilerSettings settings)
 			: this(LoadPEFile(fileName, settings), assemblyResolver, settings)
 		{
@@ -338,6 +343,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				new FileStream(fileName, FileMode.Open, FileAccess.Read),
 				options: settings.LoadInMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default
 			);
+		}
+
+		static DecompilerTypeSystem CreateTypeSystemFromFile(string fileName, DecompilerSettings settings)
+		{
+			var file = LoadPEFile(fileName, settings);
+			var resolver = new UniversalAssemblyResolver(fileName, settings.ThrowOnAssemblyResolveErrors,
+				file.Reader.DetectTargetFrameworkId(),
+				settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default);
+			return new DecompilerTypeSystem(file, resolver);
 		}
 
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)

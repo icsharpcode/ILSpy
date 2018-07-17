@@ -47,9 +47,8 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEReader Reader { get; }
 		public MetadataReader Metadata { get; }
 
-		public PEFile(string fileName, bool metadataOnly = false)
-			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read),
-				metadataOnly ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.PrefetchEntireImage))
+		public PEFile(string fileName, PEStreamOptions options = PEStreamOptions.Default)
+			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), options))
 		{
 		}
 
