@@ -47,10 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 					namespaces.Add(td.Namespace);
 					HandleAttributes(td.GetAttributes(), namespaces);
-
-					foreach (var typeParam in td.TypeParameters) {
-						HandleAttributes(typeParam.GetAttributes(), namespaces);
-					}
+					HandleTypeParameters(td.TypeParameters, namespaces);
 
 					foreach (var baseType in td.DirectBaseTypes) {
 						CollectNamespacesForTypeReference(baseType, namespaces);
@@ -88,9 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						HandleAttributes(param.GetAttributes(), namespaces);
 						CollectNamespacesForTypeReference(param.Type, namespaces);
 					}
-					foreach (var typeParam in method.TypeParameters) {
-						HandleAttributes(typeParam.GetAttributes(), namespaces);
-					}
+					HandleTypeParameters(method.TypeParameters, namespaces);
 					if (!method.MetadataToken.IsNil && method.HasBody) {
 						if (mappingInfo == null)
 							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
@@ -166,6 +161,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (value is ImmutableArray<CustomAttributeTypedArgument<IType>> arr) {
 				foreach (var element in arr) {
 					HandleAttributeValue(element.Type, element.Value, namespaces);
+				}
+			}
+		}
+
+		static void HandleTypeParameters(IEnumerable<ITypeParameter> typeParameters, HashSet<string> namespaces)
+		{
+			foreach (var typeParam in typeParameters) {
+				HandleAttributes(typeParam.GetAttributes(), namespaces);
+
+				foreach (var constraint in typeParam.DirectBaseTypes) {
+					CollectNamespacesForTypeReference(constraint, namespaces);
 				}
 			}
 		}
