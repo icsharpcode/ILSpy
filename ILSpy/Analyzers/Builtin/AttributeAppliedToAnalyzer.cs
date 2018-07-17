@@ -37,17 +37,39 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var scope = context.GetScopeOf(attributeEntity);
 			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
 
-			foreach (var module in scope.GetModulesInScope(context.CancellationToken)) {
+			foreach (var module in scope.GetAllModules()) {
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+				var referencedParameters = new HashSet<ParameterHandle>();
 				foreach (var h in module.Metadata.CustomAttributes) {
 					var customAttribute = module.Metadata.GetCustomAttribute(h);
 					var attributeCtor = ts.MainModule.ResolveMethod(customAttribute.Constructor, genericContext);
 					if (attributeCtor.DeclaringTypeDefinition != null
 						&& attributeCtor.ParentModule.PEFile == attributeEntity.ParentModule.PEFile
 						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeEntity.MetadataToken) {
-						var parent = GetParentEntity(ts, customAttribute);
-						if (parent != null)
-							yield return parent;
+						if (customAttribute.Parent.Kind == HandleKind.Parameter) {
+							referencedParameters.Add((ParameterHandle)customAttribute.Parent);
+						} else {
+							var parent = GetParentEntity(ts, customAttribute);
+							if (parent != null)
+								yield return parent;
+						}
+					}
+				}
+				if (referencedParameters.Count > 0) {
+					foreach (var h in module.Metadata.MethodDefinitions) {
+						var md = module.Metadata.GetMethodDefinition(h);
+						foreach (var p in md.GetParameters()) {
+							if (referencedParameters.Contains(p)) {
+								var method = ts.MainModule.ResolveMethod(h, genericContext);
+								if (method != null) {
+									if (method.IsAccessor)
+										yield return method.AccessorOwner;
+									else
+										yield return method;
+								}
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -55,6 +77,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		ISymbol GetParentEntity(DecompilerTypeSystem ts, CustomAttribute customAttribute)
 		{
+			var metadata = ts.MainModule.PEFile.Metadata;
 			switch (customAttribute.Parent.Kind) {
 				case HandleKind.MethodDefinition:
 				case HandleKind.FieldDefinition:
@@ -65,6 +88,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				case HandleKind.AssemblyDefinition:
 				case HandleKind.ModuleDefinition:
 					return ts.MainModule;
+				case HandleKind.GenericParameterConstraint:
+					var gpc = metadata.GetGenericParameterConstraint((GenericParameterConstraintHandle)customAttribute.Parent);
+					var gp = metadata.GetGenericParameter(gpc.Parameter);
+					return ts.MainModule.ResolveEntity(gp.Parent);
+				case HandleKind.GenericParameter:
+					gp = metadata.GetGenericParameter((GenericParameterHandle)customAttribute.Parent);
+					return ts.MainModule.ResolveEntity(gp.Parent);
 				default:
 					return null;
 			}
