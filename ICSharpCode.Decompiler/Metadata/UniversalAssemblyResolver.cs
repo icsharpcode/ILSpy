@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				? new[] { framework_dir, Path.Combine(framework_dir, "Facades") }
 				: new[] { framework_dir };
 
-			if (IsZeroVersionOrRetargetable(name)) {
+			if (IsSpecialVersionOrRetargetable(name)) {
 				assembly = SearchDirectory(name, framework_dirs);
 				if (assembly != null)
 					return assembly;
@@ -222,9 +222,9 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		static bool IsZeroVersionOrRetargetable(IAssemblyReference reference)
+		static bool IsSpecialVersionOrRetargetable(IAssemblyReference reference)
 		{
-			return IsZero(reference.Version) || reference.IsRetargetable;
+			return IsZeroOrAllOnes(reference.Version) || reference.IsRetargetable;
 		}
 
 		string SearchDirectory(IAssemblyReference name, string directory)
@@ -243,9 +243,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		static bool IsZero(Version version)
+		static bool IsZeroOrAllOnes(Version version)
 		{
-			return version == null || (version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0);
+			return version == null
+				|| (version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0)
+				|| (version.Major == 65535 && version.Minor == 65535 && version.Build == 65535 && version.Revision == 65535);
 		}
 
 		internal static Version ZeroVersion = new Version(0,0,0,0);
@@ -255,7 +257,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			var version = reference.Version;
 			var corlib = typeof(object).Assembly.GetName();
 
-			if (corlib.Version == version || IsZeroVersionOrRetargetable(reference))
+			if (corlib.Version == version || IsSpecialVersionOrRetargetable(reference))
 				return typeof(object).Module.FullyQualifiedName;
 
 			string path;
