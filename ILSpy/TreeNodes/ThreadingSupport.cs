@@ -19,10 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -149,6 +152,33 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			
 			public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			{
+			}
+		}
+
+		[ExportContextMenuEntry(Header = "Copy error message")]
+		sealed class CopyErrorMessageContextMenu : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n is ErrorTreeNode))
+					return true;
+				return false;
+			}
+
+			public bool IsEnabled(TextViewContext context)
+			{
+				return true;
+			}
+
+			public void Execute(TextViewContext context)
+			{
+				StringBuilder builder = new StringBuilder();
+				if (context.SelectedTreeNodes != null) {
+					foreach (var node in context.SelectedTreeNodes.OfType<ErrorTreeNode>()) {
+						builder.AppendLine(node.Text.ToString());
+					}
+				}
+				Clipboard.SetText(builder.ToString());
 			}
 		}
 	}
