@@ -4,7 +4,7 @@
     <id>ICSharpCode.Decompiler</id>
     <version>$INSERTVERSION$$INSERTVERSIONNAMEPOSTFIX$$INSERTBUILDCONFIG$</version>
     <title>ILSpy Decompiler Engine</title>
-    <authors>Daniel Grunwald, David Srbecky, Ed Harvey, Siegfried Pammer</authors>
+    <authors>ILSpy Contributors</authors>
     <owners>Daniel Grunwald, SharpDevelop</owners>
     <licenseUrl>https://opensource.org/licenses/mit-license.php</licenseUrl>
     <projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>

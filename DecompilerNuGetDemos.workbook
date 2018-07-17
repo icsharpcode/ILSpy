@@ -6,18 +6,19 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 3.1.0.3652
+  version: 4.0.0.4193-alpha1-debug
 ---
 
 Setup: load the references required to work with the decompiler
 
 ```csharp
 #r "ICSharpCode.Decompiler"
-#r "Mono.Cecil"
+#r "System.Reflection.Metadata"
 
-using Mono.Cecil;
+using System.Reflection.Metadata;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
 // Version sanity check
@@ -29,13 +30,15 @@ You must have compiled **frontends.sln** first (run “dotnet build” in ICShar
 ```csharp
 string workbookBasePath = System.IO.Directory.GetCurrentDirectory();
 string fileName = System.IO.Path.Combine(workbookBasePath, "ICSharpCode.Decompiler.PowerShell", "bin", "Debug", "netstandard2.0", "ICSharpCode.Decompiler.dll");
-var decompiler = new CSharpDecompiler(fileName, new DecompilerSettings());
+var module = new PEFile(fileName);
+var assemblyResolver = new UniversalAssemblyResolver(fileName, true, module.Reader.DetectTargetFrameworkId());
+var decompiler = new CSharpDecompiler(module, assemblyResolver, new DecompilerSettings());
 ```
 
-Get the count of types in this assembly
+Get the count of types in this module
 
 ```csharp
-var types = decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions();
+var types = decompiler.TypeSystem.MainModule.TypeDefinitions;
 Console.WriteLine(types.Count());
 ```
 
@@ -43,7 +46,7 @@ Decompile a known type (as a whole)
 
 ```csharp
 // ICSharpCode.Decompiler.Util.Empty<T> -> translates to `n, where n is the # of generic parameters
-var nameOfGenericType =  new FullTypeName("ICSharpCode.Decompiler.Util.Empty`1");
+var nameOfGenericType = new FullTypeName("ICSharpCode.Decompiler.Util.Empty`1");
 Console.WriteLine(decompiler.DecompileTypeAsString(nameOfGenericType));
 ```
 
@@ -51,22 +54,22 @@ If you want to decompile one single member (sample: first property)
 
 ```csharp
 var nameOfUniResolver =  new FullTypeName("ICSharpCode.Decompiler.UniversalAssemblyResolver");
-ITypeDefinition typeInfo = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
-IMemberDefinition cecilProperty = decompiler.TypeSystem.GetCecil(typeInfo.Properties.First()).Resolve();
-Console.WriteLine(decompiler.DecompileAsString(cecilProperty));
+ITypeDefinition typeInfo = decompiler.TypeSystem.FindType(nameOfUniResolver).GetDefinition();
+var tokenOfFirstProperty = typeInfo.Properties.First().MetadataToken;
+Console.WriteLine(decompiler.DecompileAsString(tokenOfFirstProperty));
 ```
 
-If you need the Cecil ModuleDefinition
+If you need access to low-level metadata tables
 
 ```csharp
-ITypeDefinition type = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
-var module = decompiler.TypeSystem.GetCecil(type).Module
+ITypeDefinition type = decompiler.TypeSystem.FindType(nameOfUniResolver).GetDefinition();
+var module = type.ParentModule.PEFile;
 ```
 
 Get the child namespaces
 
 ```csharp
-var icsdns = decompiler.TypeSystem.Compilation.RootNamespace;
+var icsdns = decompiler.TypeSystem.RootNamespace;
 foreach (var ns in icsdns.ChildNamespaces) Console.WriteLine(ns.FullName);
 ```
 
