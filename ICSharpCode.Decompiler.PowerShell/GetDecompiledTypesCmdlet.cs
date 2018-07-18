@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
             try {
                 List<ITypeDefinition> output = new List<ITypeDefinition>();
-                foreach (var type in Decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions()) {
+                foreach (var type in Decompiler.TypeSystem.MainModule.TypeDefinitions) {
                     if (!kinds.Contains(type.Kind))
                         continue;
                     output.Add(type);

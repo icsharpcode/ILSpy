@@ -4,7 +4,6 @@ using System.IO;
 using System.Management.Automation;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.PowerShell
 {
@@ -31,10 +30,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 
             try
             {
-                string assemblyFileName = Decompiler.TypeSystem.Compilation.MainAssembly.UnresolvedAssembly.Location; // just to keep the API "the same" across all cmdlets
-                ModuleDefinition module = UniversalAssemblyResolver.LoadMainModule(assemblyFileName);
                 WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
-                decompiler.DecompileProject(module, path);
+                decompiler.DecompileProject(Decompiler.TypeSystem.MainModule.PEFile, path);
 
                 WriteObject("Decompilation finished");
             } catch (Exception e) {
