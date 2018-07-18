@@ -608,6 +608,65 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			Console.WriteLine();
 		}
+		
+		public static bool SwitchlikeIf(int i, int j)
+		{
+			if (i != 0 && j != 0) {
+				if (i == -1 && j == -1) {
+					Console.WriteLine("-1, -1");
+				}
+				if (i == -1 && j == 1) {
+					Console.WriteLine("-1, 1");
+				}
+				if (i == 1 && j == -1) {
+					Console.WriteLine("1, -1");
+				}
+				if (i == 1 && j == 1) {
+					Console.WriteLine("1, 1");
+				}
+				return false;
+			}
+
+			if (i != 0) {
+				if (i == -1) {
+					Console.WriteLine("-1, 0");
+				}
+				if (i == 1) {
+					Console.WriteLine("1, 0");
+				}
+				return false;
+			}
+
+			if (j != 0) {
+				if (j == -1) {
+					Console.WriteLine("0, -1");
+				}
+				if (j == 1) {
+					Console.WriteLine("0, 1");
+				}
+				return false;
+			}
+			
+			return true;
+		}
+
+		public static bool SwitchlikeIf2(int i)
+		{
+			if (i != 0) {
+				// note that using else-if in this chain creates a nice-looking switch here (as expected)
+				if (i == 1) {
+					Console.WriteLine(1);
+				}
+				if (i == 2) {
+					Console.WriteLine(2);
+				}
+				if (i == 3) {
+					Console.WriteLine(3);
+				}
+				return false;
+			}
+			return false;
+		}
 		#endregion
 		
 		// Ensure correctness of SwitchDetection.FindBreakTarget

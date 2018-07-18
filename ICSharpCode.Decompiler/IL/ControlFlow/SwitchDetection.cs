@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// These goto statements may be "goto case x" or "goto default", but these are a hint that the original code was not a switch,
 			// and that the switch statement may be very poor quality. 
 			// Thus the rule of thumb is no goto statements if the original code didn't include them
-			return !SwitchRequiresGoto();
+			return !SwitchUsesGoto();
 		}
 
 		/// <summary>
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Determines if the analysed switch can be constructed without any gotos
 		/// </summary>
-		private bool SwitchRequiresGoto()
+		private bool SwitchUsesGoto()
 		{
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
@@ -252,9 +252,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var caseNode in caseNodes)
 				if (caseNode.Predecessors.Any(n => !flowBlocks.Contains(n.UserData)))
 					return true;
+			
+			if (!FindBreakTarget(caseNodes, defaultNode, out var breakTarget))
+				return true; // more than one exit point, requires goto statements
 
-			// determine if the switch would have a single exit point (break target)
-			return !FindBreakTarget(caseNodes, defaultNode, out var _);
+			// if the switch has a single break target there is one more hint
+			// The break target cannot be inlined, and should have a higher IL offset than anything in the switch body
+			return breakTarget?.UserIndex < caseNodes.Select(c => c.UserIndex).Max();
 		}
 
 		/// <summary>
