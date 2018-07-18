@@ -39,6 +39,9 @@
 			Command="Search"
 			Executed="SearchCommandExecuted" />
 	</Window.CommandBindings>
+	<Window.InputBindings>
+		<KeyBinding Key="R" Modifiers="Control" Command="{x:Static local:ILSpyCommands.Analyze}" />
+	</Window.InputBindings>
 	<Window.TaskbarItemInfo>
 		<TaskbarItemInfo />
 	</Window.TaskbarItemInfo>

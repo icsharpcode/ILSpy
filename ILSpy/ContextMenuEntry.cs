@@ -98,7 +98,8 @@ namespace ICSharpCode.ILSpy
 		string Icon { get; }
 		string Header { get; }
 		string Category { get; }
-		
+		string InputGestureText { get; }
+
 		double Order { get; }
 	}
 	
@@ -116,6 +117,7 @@ namespace ICSharpCode.ILSpy
 		public string Icon { get; set; }
 		public string Header { get; set; }
 		public string Category { get; set; }
+		public string InputGestureText { get; set; }
 		public double Order { get; set; }
 	}
 	
@@ -218,6 +220,7 @@ namespace ICSharpCode.ILSpy
 						}
 						MenuItem menuItem = new MenuItem();
 						menuItem.Header = entryPair.Metadata.Header;
+						menuItem.InputGestureText = entryPair.Metadata.InputGestureText;
 						if (!string.IsNullOrEmpty(entryPair.Metadata.Icon)) {
 							menuItem.Icon = new Image {
 								Width = 16,

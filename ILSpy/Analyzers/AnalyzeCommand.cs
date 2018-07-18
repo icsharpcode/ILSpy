@@ -18,14 +18,14 @@
 
 using System;
 using System.Linq;
+using System.Windows.Input;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Analyzers
 {
-	[ExportContextMenuEntry(Header = "Analyze", Icon = "images/Search.png", Category = "Analyze", Order = 100)]
-	internal sealed class AnalyzeContextMenuEntry : IContextMenuEntry
+	[ExportContextMenuEntry(Header = "Analyze", Icon = "images/Search.png", Category = "Analyze", InputGestureText = "Ctrl+R", Order = 100)]
+	internal sealed class AnalyzeCommand : SimpleCommand, IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
@@ -61,6 +61,28 @@ namespace ICSharpCode.ILSpy.Analyzers
 				}
 			} else if (context.Reference != null && context.Reference.Reference is IEntity entity) {
 				AnalyzerTreeView.Instance.Analyze(entity);
+			}
+		}
+
+		public override bool CanExecute(object parameter)
+		{
+			if (AnalyzerTreeView.Instance.IsKeyboardFocusWithin) {
+				return AnalyzerTreeView.Instance.SelectedItems.OfType<object>().All(n => n is IMemberTreeNode);
+			} else {
+				return MainWindow.Instance.SelectedNodes.All(n => n is IMemberTreeNode);
+			}
+		}
+
+		public override void Execute(object parameter)
+		{
+			if (AnalyzerTreeView.Instance.IsKeyboardFocusWithin) {
+				foreach (IMemberTreeNode node in AnalyzerTreeView.Instance.SelectedItems.OfType<IMemberTreeNode>().ToArray()) {
+					AnalyzerTreeView.Instance.Analyze(node.Member);
+				}
+			} else {
+				foreach (IMemberTreeNode node in MainWindow.Instance.SelectedNodes) {
+					AnalyzerTreeView.Instance.Analyze(node.Member);
+				}
 			}
 		}
 	}

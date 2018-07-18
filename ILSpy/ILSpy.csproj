@@ -105,6 +105,7 @@
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
+    <Compile Include="Commands\ILSpyCommands.cs" />
     <Compile Include="Commands\OpenListCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
     <Compile Include="Commands\ShowDebugSteps.cs" />
@@ -212,7 +213,7 @@
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
-    <Compile Include="Analyzers\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="Analyzers\AnalyzeCommand.cs" />
     <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />
     <Compile Include="Analyzers\TreeNodes\AnalyzedFieldTreeNode.cs" />
     <Compile Include="Analyzers\AnalyzerEntityTreeNode.cs" />
