@@ -252,6 +252,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return 2;
 		}
 
+		public int InferCorrectOrder()
+		{
+			if (F(1) || F(2)) {
+				return 1;
+			}
+			return 2;
+		}
+
 #if !OPT
 		public void EmptyIf()
 		{
