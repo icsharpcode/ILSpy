@@ -33,7 +33,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <EmbedSources>true</EmbedSources>
+    <EmbedAllSources>true</EmbedAllSources>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
@@ -41,7 +41,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <EmbedSources>true</EmbedSources>
+    <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -606,12 +606,5 @@
       <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
-  </Target>
-
-  <!-- Workaround for EmbedSources support, see https://github.com/dotnet/roslyn/issues/19127 -->
-  <Target Name="PopulateEmbeddedFiles" AfterTargets="BeforeCompile" BeforeTargets="CoreCompile">
-    <ItemGroup>
-      <EmbeddedFiles Include="@(Compile)" />
-    </ItemGroup>
   </Target>
 </Project>
