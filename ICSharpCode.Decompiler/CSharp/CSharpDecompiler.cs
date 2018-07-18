@@ -1144,7 +1144,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
 				if (enumDec.Initializer is PrimitiveExpression primitive
 					&& (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
-						|| (initValue > 9 && ((initValue & (initValue - 1)) == 0 || (initValue & (initValue + 1)) == 0))))
+						|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0))))
 				{
 					primitive.SetValue(initValue, $"0x{initValue:X}");
 				}
