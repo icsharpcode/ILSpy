@@ -6,7 +6,7 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 4.0.0.4193-alpha1-debug
+  version: 4.0.0.4199-alpha1-debug
 ---
 
 Setup: load the references required to work with the decompiler
@@ -30,9 +30,7 @@ You must have compiled **frontends.sln** first (run “dotnet build” in ICShar
 ```csharp
 string workbookBasePath = System.IO.Directory.GetCurrentDirectory();
 string fileName = System.IO.Path.Combine(workbookBasePath, "ICSharpCode.Decompiler.PowerShell", "bin", "Debug", "netstandard2.0", "ICSharpCode.Decompiler.dll");
-var module = new PEFile(fileName);
-var assemblyResolver = new UniversalAssemblyResolver(fileName, true, module.Reader.DetectTargetFrameworkId());
-var decompiler = new CSharpDecompiler(module, assemblyResolver, new DecompilerSettings());
+var decompiler = new CSharpDecompiler(fileName, new DecompilerSettings());
 ```
 
 Get the count of types in this module
