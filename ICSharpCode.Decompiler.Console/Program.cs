@@ -5,7 +5,7 @@ using System.Linq;
 using McMaster.Extensions.CommandLineUtils;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.Console
 {
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Console
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
-			foreach (var type in decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions()) {
+			foreach (var type in decompiler.TypeSystem.MainModule.TypeDefinitions) {
 				if (!kinds.Contains(type.Kind))
 					continue;
 				output.WriteLine($"{type.Kind} {type.FullName}");
@@ -93,9 +93,8 @@ namespace ICSharpCode.Decompiler.Console
 
 		static void DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
-			ModuleDefinition module = UniversalAssemblyResolver.LoadMainModule(assemblyFileName);
 			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
-			decompiler.DecompileProject(module, outputDirectory);
+			decompiler.DecompileProject(new PEFile(assemblyFileName), outputDirectory);
 		}
 
 		static void Decompile(string assemblyFileName, TextWriter output, string typeName = null)
