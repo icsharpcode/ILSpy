@@ -365,7 +365,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IDocumentationProvider CreateDefaultDocumentationProvider()
 		{
-			return XmlDocLoader.LoadDocumentation(module.PEFile);
+			try {
+				return XmlDocLoader.LoadDocumentation(module.PEFile);
+			} catch (System.Xml.XmlException) {
+				return null;
+			}
 		}
 
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
