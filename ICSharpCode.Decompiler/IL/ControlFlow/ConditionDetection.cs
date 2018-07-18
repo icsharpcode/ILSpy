@@ -514,12 +514,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			if (strongly)
 				return 0;
-
-			if (exit1.MatchBranch(out var block1) && exit2.MatchBranch(out var block2)) {
-				// prefer arranging stuff in IL order
-				return block1.ILRange.Start.CompareTo(block2.ILRange.Start);
-			}
+			
 			// prefer arranging stuff in IL order
+			if (exit1.MatchBranch(out var block1) && exit2.MatchBranch(out var block2))
+				return block1.ILRange.Start.CompareTo(block2.ILRange.Start);
+
+			// use the IL offsets of the arguments of leave instructions instead of the leaves themselves if possible
+			if (exit1.MatchLeave(out var _, out var arg1) && exit2.MatchLeave(out var _, out var arg2))
+				return arg1.ILRange.Start.CompareTo(arg2.ILRange.Start);
+				
 			return exit1.ILRange.Start.CompareTo(exit2.ILRange.Start);
 		}
 

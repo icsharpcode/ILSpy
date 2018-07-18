@@ -879,6 +879,28 @@
     IL_0024:  ret
   } // end of method ShortCircuit::StmtComplex6
 
+  .method public hidebysig instance int32 
+          InferCorrectOrder() cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.1
+    IL_0002:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0007:  brtrue.s   IL_0012
+
+    IL_0009:  ldarg.0
+    IL_000a:  ldc.i4.2
+    IL_000b:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0010:  brfalse.s  IL_0014
+
+    IL_0012:  ldc.i4.1
+    IL_0013:  ret
+
+    IL_0014:  ldc.i4.2
+    IL_0015:  ret
+  } // end of method ShortCircuit::InferCorrectOrder
+
   .method public hidebysig instance void 
           PreferLogicalToBitwise(bool a,
                                  bool b,
