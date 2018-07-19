@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -14,6 +15,11 @@ namespace ICSharpCode.ILSpy
 		public static IAssemblyResolver GetAssemblyResolver(this PEFile file)
 		{
 			return GetLoadedAssembly(file).GetAssemblyResolver();
+		}
+
+		public static IDebugInfoProvider GetDebugInfoOrNull(this PEFile file)
+		{
+			return GetLoadedAssembly(file).GetDebugInfoOrNull();
 		}
 
 		public static ICompilation GetTypeSystemOrNull(this PEFile file)

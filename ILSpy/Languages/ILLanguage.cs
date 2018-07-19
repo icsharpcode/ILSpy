@@ -63,15 +63,19 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.AssemblyResolver = method.ParentModule.PEFile.GetAssemblyResolver();
-			dis.DisassembleMethod(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken);
+			PEFile module = method.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleMethod(module, (MethodDefinitionHandle)method.MetadataToken);
 		}
 		
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			dis.AssemblyResolver = field.ParentModule.PEFile.GetAssemblyResolver();
-			dis.DisassembleField(field.ParentModule.PEFile, (FieldDefinitionHandle)field.MetadataToken);
+			PEFile module = field.ParentModule.PEFile;
+			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
+			dis.DisassembleField(module, (FieldDefinitionHandle)field.MetadataToken);
 		}
 		
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
@@ -79,6 +83,7 @@ namespace ICSharpCode.ILSpy
 			var dis = CreateDisassembler(output, options);
 			PEFile module = property.ParentModule.PEFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
 			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
 			var accessors = pd.GetAccessors();
@@ -102,6 +107,7 @@ namespace ICSharpCode.ILSpy
 			var dis = CreateDisassembler(output, options);
 			PEFile module = ev.ParentModule.PEFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
 			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
@@ -129,6 +135,7 @@ namespace ICSharpCode.ILSpy
 			var dis = CreateDisassembler(output, options);
 			PEFile module = type.ParentModule.PEFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
 		}
 
@@ -137,6 +144,7 @@ namespace ICSharpCode.ILSpy
 			var dis = CreateDisassembler(output, options);
 			PEFile module = types.FirstOrDefault()?.ParentModule.PEFile;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
+			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 		
@@ -151,6 +159,7 @@ namespace ICSharpCode.ILSpy
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
 				dis.AssemblyResolver = module.GetAssemblyResolver();
+				dis.DebugInfo = module.GetDebugInfoOrNull();
 				if (options.FullDecompilation)
 					dis.WriteAssemblyReferences(metadata);
 				if (metadata.IsAssembly)
