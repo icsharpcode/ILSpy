@@ -95,16 +95,15 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			foreach (var method in reader.MethodDefinitions) {
 				if (sequencePointBlobs.TryGetValue(method, out var info)) {
 					metadata.AddMethodDebugInformation(info.Document, info.SequencePoints);
-					//metadata.AddMethodDebugInformation(default, default);
 				} else {
 					metadata.AddMethodDebugInformation(default, default);
 				}
-				if (importScopeBlobs.TryGetValue(method, out var scopeInfo)) {
+				/*if (importScopeBlobs.TryGetValue(method, out var scopeInfo)) {
 					//metadata.AddImportScope(default, scopeInfo.ImportScope);
-					metadata.AddMethodDebugInformation(default, default);
+					metadata.AddImportScope(default, default);
 				} else {
 					metadata.AddImportScope(default, default);
-				}
+				}*/
 			}
 
 			var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
