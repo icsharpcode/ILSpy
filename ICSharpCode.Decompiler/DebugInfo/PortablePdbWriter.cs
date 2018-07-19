@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp;
@@ -29,6 +30,10 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public static readonly Guid HashAlgorithmSHA256 = new Guid("8829d00f-11b8-4213-878b-770e8597ac16");
 		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
 
+		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
+		{
+			return file.Reader.ReadDebugDirectory().Any(entry => entry.Type == DebugDirectoryEntryType.CodeView);
+		}
 
 		public static void WritePdb(PEFile file, CSharpDecompiler decompiler, DecompilerSettings settings, Stream targetStream)
 		{
@@ -101,7 +106,8 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					metadata.AddImportScope(default, default);
 				}
 			}
-			var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.IsPortableCodeView);
+
+			var debugDir = file.Reader.ReadDebugDirectory().FirstOrDefault(dir => dir.Type == DebugDirectoryEntryType.CodeView);
 			var portable = file.Reader.ReadCodeViewDebugDirectoryData(debugDir);
 			var contentId = new BlobContentId(portable.Guid, debugDir.Stamp);
 			PortablePdbBuilder serializer = new PortablePdbBuilder(metadata, GetRowCounts(reader), entrypointHandle, blobs => contentId);

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
@@ -51,6 +52,11 @@ namespace ICSharpCode.ILSpy
 
 		internal static void GeneratePdbForAssembly(LoadedAssembly assembly)
 		{
+			var file = assembly.GetPEFileOrNull();
+			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(file)) {
+				MessageBox.Show($"Cannot create PDB file for {Path.GetFileName(assembly.FileName)}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
+				return;
+			}
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + ".pdb";
 			dlg.Filter = "Portable PDB|*.pdb|All files|*.*";
@@ -62,7 +68,6 @@ namespace ICSharpCode.ILSpy
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				using (FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write)) {
 					try {
-						var file = assembly.GetPEFileOrNull();
 						var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(), options.DecompilerSettings);
 						PortablePdbWriter.WritePdb(file, decompiler, options.DecompilerSettings, stream);
 					} catch (OperationCanceledException) {
