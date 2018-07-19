@@ -1369,6 +1369,80 @@
     IL_009b:  ret
   } // end of method ShortCircuit::EmptyIf
 
+  .method public hidebysig instance void 
+          PreferLogicalToBitwise(bool a,
+                                 bool b,
+                                 int32 i,
+                                 float32 f) cil managed
+  {
+    // Code size       90 (0x5a)
+    .maxstack  4
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  brfalse.s  IL_0008
+
+    IL_0005:  ldarg.2
+    IL_0006:  br.s       IL_0009
+
+    IL_0008:  ldc.i4.0
+    IL_0009:  nop
+    IL_000a:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_000f:  nop
+    IL_0010:  ldarg.0
+    IL_0011:  ldarg.1
+    IL_0012:  brfalse.s  IL_001a
+
+    IL_0014:  ldarg.3
+    IL_0015:  ldc.i4.1
+    IL_0016:  ceq
+    IL_0018:  br.s       IL_001b
+
+    IL_001a:  ldc.i4.0
+    IL_001b:  nop
+    IL_001c:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_0021:  nop
+    IL_0022:  ldarg.0
+    IL_0023:  ldarg.3
+    IL_0024:  ldc.i4.1
+    IL_0025:  bne.un.s   IL_002a
+
+    IL_0027:  ldarg.1
+    IL_0028:  br.s       IL_002b
+
+    IL_002a:  ldc.i4.0
+    IL_002b:  nop
+    IL_002c:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_0031:  nop
+    IL_0032:  ldarg.0
+    IL_0033:  ldarg.3
+    IL_0034:  ldarg.3
+    IL_0035:  ldc.i4.3
+    IL_0036:  sub
+    IL_0037:  ble.s      IL_003c
+
+    IL_0039:  ldarg.1
+    IL_003a:  br.s       IL_003d
+
+    IL_003c:  ldc.i4.0
+    IL_003d:  nop
+    IL_003e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_0043:  nop
+    IL_0044:  ldarg.0
+    IL_0045:  ldarg.s    f
+    IL_0047:  ldc.r4     0.1
+    IL_004c:  bge.un.s   IL_0051
+
+    IL_004e:  ldarg.1
+    IL_004f:  br.s       IL_0052
+
+    IL_0051:  ldc.i4.0
+    IL_0052:  nop
+    IL_0053:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::B(bool)
+    IL_0058:  nop
+    IL_0059:  ret
+  } // end of method ShortCircuit::PreferLogicalToBitwise
+
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {

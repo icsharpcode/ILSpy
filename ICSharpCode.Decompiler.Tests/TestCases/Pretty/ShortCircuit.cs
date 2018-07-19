@@ -268,5 +268,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			E();
 		}
 #endif
+
+		public void PreferLogicalToBitwise(bool a, bool b, int i, float f)
+		{
+			B(a && b);
+			B(a && i == 1);
+			B(i == 1 && a);
+			B(i > i - 3 && a);
+			B(f < 0.1f && a);
+		}
 	}
 }
