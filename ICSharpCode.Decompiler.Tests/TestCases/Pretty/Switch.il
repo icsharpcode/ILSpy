@@ -2468,6 +2468,54 @@
     IL_004f:  ret
   } // end of method Switch::SwitchlikeIf2
 
+  .method public hidebysig static void  SwitchWithBreakCase(int32 i,
+                                                            bool b) cil managed
+  {
+    // Code size       78 (0x4e)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.0
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  brtrue.s   IL_0042
+
+    IL_0009:  nop
+    IL_000a:  ldarg.0
+    IL_000b:  stloc.1
+    IL_000c:  ldloc.1
+    IL_000d:  ldc.i4.1
+    IL_000e:  sub
+    IL_000f:  switch     ( 
+                          IL_001e,
+                          IL_0034)
+    IL_001c:  br.s       IL_0027
+
+    IL_001e:  ldc.i4.1
+    IL_001f:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0024:  nop
+    IL_0025:  br.s       IL_0036
+
+    IL_0027:  ldstr      "default"
+    IL_002c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0031:  nop
+    IL_0032:  br.s       IL_0036
+
+    IL_0034:  br.s       IL_0036
+
+    IL_0036:  ldstr      "b"
+    IL_003b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0040:  nop
+    IL_0041:  nop
+    IL_0042:  ldstr      "end"
+    IL_0047:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004c:  nop
+    IL_004d:  ret
+  } // end of method Switch::SwitchWithBreakCase
+
   .method public hidebysig static void  SwitchWithReturnAndBreak(int32 i,
                                                                  bool b) cil managed
   {

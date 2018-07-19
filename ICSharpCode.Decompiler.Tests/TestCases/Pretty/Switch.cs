@@ -669,7 +669,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		#endregion
 		
-		// Ensure correctness of SwitchDetection.FindBreakTarget
+		// Ensure correctness of SwitchDetection.UseCSharpSwitch control flow heuristics
+		public static void SwitchWithBreakCase(int i, bool b)
+		{
+			if (b) {
+				switch (i) {
+					case 1:
+						Console.WriteLine(1);
+						break;
+					default:
+						Console.WriteLine("default");
+						break;
+					case 2:
+						break;
+				}
+				Console.WriteLine("b");
+			}
+			Console.WriteLine("end");
+		}
+
 		public static void SwitchWithReturnAndBreak(int i, bool b)
 		{
 			switch (i) {
@@ -709,7 +727,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return 0;
 		}
 		
-		// Ensure correctness of SwitchDetection.FindBreakTarget (default case has no associated block)
 		public static void SwitchWithReturnAndBreak3(int i)
 		{
 			switch (i) {

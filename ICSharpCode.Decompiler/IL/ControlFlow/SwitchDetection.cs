@@ -206,7 +206,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// These goto statements may be "goto case x" or "goto default", but these are a hint that the original code was not a switch,
 			// and that the switch statement may be very poor quality. 
 			// Thus the rule of thumb is no goto statements if the original code didn't include them
-			return !SwitchUsesGoto();
+			if (SwitchUsesGoto(out var breakBlock))
+				return false;
+
+			if (breakBlock == null)
+				return true;
+
+			// The switch has a single break target and there is one more hint
+			// The break target cannot be inlined, and should have the highest IL offset of everything targetted by the switch
+			return breakBlock.ChildIndex >= analysis.Sections.Select(s => s.Value.MatchBranch(out var b) ? b.ChildIndex : -1).Max();
 		}
 
 		/// <summary>
@@ -225,40 +233,46 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Determines if the analysed switch can be constructed without any gotos
 		/// </summary>
-		private bool SwitchUsesGoto()
+		private bool SwitchUsesGoto(out Block breakBlock)
 		{
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
 
 			// grab the control flow nodes for blocks targetted by each section
 			var caseNodes = new List<ControlFlowNode>();
-			ControlFlowNode defaultNode = null;
-
 			foreach (var s in analysis.Sections) {
-				// leave sections not considered
-				if (s.Value.MatchBranch(out var block) && !IsContinue(block)) {
-					if (s.Key.Count() > MaxValuesPerSection)
-						defaultNode = controlFlowGraph.GetNode(block);
-					else
-						caseNodes.Add(controlFlowGraph.GetNode(block));
-				}
+				if (!s.Value.MatchBranch(out var block)) 
+					continue;
+
+				var node = controlFlowGraph.GetNode(block);
+				if (!IsContinue(node))
+					caseNodes.Add(node);
 			}
 
-			var flowBlocks = analysis.InnerBlocks.Concat(new[] {analysis.RootBlock}).ToHashSet();
-			
+			var flowBlocks = analysis.InnerBlocks.ToHashSet();
+			flowBlocks.Add(analysis.RootBlock);
 			AddNullCase(flowBlocks, caseNodes);
 			
-			// all predecessors of case blocks must be part of the switch logic (to avoid gotos)
-			foreach (var caseNode in caseNodes)
-				if (caseNode.Predecessors.Any(n => !flowBlocks.Contains(n.UserData)))
-					return true;
-			
-			if (!FindBreakTarget(caseNodes, defaultNode, out var breakTarget))
-				return true; // more than one exit point, requires goto statements
+			// cases with predecessors that aren't part of the switch logic 
+			// must either require "goto case" statements, or consist of a single "break;"
+			var externalCases = caseNodes.Where(c => c.Predecessors.Any(n => !flowBlocks.Contains(n.UserData))).ToList();
 
-			// if the switch has a single break target there is one more hint
-			// The break target cannot be inlined, and should have a higher IL offset than anything in the switch body
-			return breakTarget?.UserIndex < caseNodes.Select(c => c.UserIndex).Max();
+			breakBlock = null;
+			if (externalCases.Count > 1)
+				return true; // cannot have more than one break case without gotos
+			
+			// check that case nodes flow through a single point
+			var breakTargets = caseNodes.Except(externalCases).SelectMany(GetBreakTargets).ToHashSet();
+
+			// if there are multiple break targets, then gotos are required
+			// if there are none, then the external case (if any) can be the break target
+			if (breakTargets.Count != 1)
+				return breakTargets.Count > 1;
+			
+			breakBlock = (Block) breakTargets.Single().UserData;
+
+			// external case must consist of a single "break;"
+			return externalCases.Count == 1 && breakBlock != externalCases.Single().UserData;
 		}
 
 		/// <summary>
@@ -293,65 +307,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			flowBlocks.Add(nullableBlock);
 		}
 
-		internal static bool IsContinue(Block block) => false;
+		internal static bool IsContinue(ControlFlowNode node) => false;
 		
-		/// <summary>
-		/// Enumerates all nodes via which a domination tree can be exited. (Not distinct)
-		/// That is, all nodes with at least one dominated predecessor which are not dominated themselves
-		/// 
-		/// Note that while this construction appears less efficient than a recursive solution, 
-		/// a recursive solution would require the use of the Visted flag to avoid loops in the dominator tree
-		/// </summary>
-		internal static IEnumerable<ControlFlowNode> GetDominatorTreeExits(ControlFlowNode dominator) =>
-			dominator.DominatorTreeChildren.Concat(new[] {dominator})
-				.SelectMany(n => n.Successors)
-				.Where(n => !dominator.Dominates(n));
-
 		/// <summary>
 		/// Lists all potential targets for break; statements from a domination tree,
 		/// assuming the domination tree must be exited via either break; or continue;
-		/// </summary>
-		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) =>
-			GetDominatorTreeExits(dominator).Where(n => !IsContinue((Block)n.UserData));
-		
-		/// <summary>
-		/// Finds the target node of all branches leaving the dominator tree of the cases of a switch block.
-		/// Returns true if a single target was found, or if no break statements are required (breakTarget = null)
-		/// If the defaultNode is the breakTarget, then it should not be inlined.
 		/// 
-		/// Note that branches to case labels ("goto case x") are considered break targets, and will fail this method
+		/// First list all nodes in the dominator tree (excluding continue nodes)
+		/// Then return the all successors not contained within said tree.
 		/// 
-		/// defaultNode may be null if there is no control block associated with the default case. 
+		/// Note that node will be returned once for every outgoing edge
 		/// </summary>
-		/// <returns></returns>
-		internal static bool FindBreakTarget(List<ControlFlowNode> caseNodes, ControlFlowNode defaultNode, out ControlFlowNode breakTarget)
-		{
-			breakTarget = null;
-			var breakTargets = caseNodes.SelectMany(GetBreakTargets).ToHashSet();
-
-			// no cases require break statements, inlining of default case doesn't matter
-			if (breakTargets.Count == 0)
-				return true;
-			
-			if (defaultNode != null) {
-				// default case is break target, don't inline
-				if (breakTargets.Count == 1 && breakTargets.Single() == defaultNode) {
-					breakTarget = defaultNode;
-					return true;
-				}
-				
-				// default case requires inlining, ensure break target matches that of case statements
-				breakTargets.AddRange(GetBreakTargets(defaultNode));
-			}
-
-			// single break target found
-			if (breakTargets.Count == 1) {
-				breakTarget = breakTargets.Single();
-				return true;
-			}
-
-			// more than 1 break target found
-			return false;
-		}
+		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) => 
+			TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !IsContinue(c)))
+			.SelectMany(n => n.Successors.Where(c => !dominator.Dominates(c) && !IsContinue(c)));
 	}
 }
