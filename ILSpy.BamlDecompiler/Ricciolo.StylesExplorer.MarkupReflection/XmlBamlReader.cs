@@ -909,11 +909,12 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					break;
 				default:
 					string recordName = stringTable[identifier];
-					if (recordName != "Key") throw new NotSupportedException(recordName);
 					pd = new PropertyDeclaration(recordName, XamlTypeDeclaration);
-					if (keys == null)
-						keys = new List<KeyMapping>();
-					keys.Add(new KeyMapping(text) { Position = -1 });
+					if (recordName == "Key") {
+						if (keys == null)
+							keys = new List<KeyMapping>();
+						keys.Add(new KeyMapping(text) { Position = -1 });
+					}
 					break;
 			}
 
@@ -1408,10 +1409,10 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		string GetTypeExtension(short typeIdentifier)
 		{
 			string prefix = LookupPrefix(XmlToClrNamespaceMapping.XamlNamespace, false);
-			if (String.IsNullOrEmpty(prefix))
-				return String.Format("{{Type {0}}}", FormatTypeDeclaration(GetTypeDeclaration(typeIdentifier)));
-			else
-				return String.Format("{{{0}:Type {1}}}", prefix, FormatTypeDeclaration(GetTypeDeclaration(typeIdentifier)));
+			string typeName = FormatTypeDeclaration(GetTypeDeclaration(typeIdentifier));
+			if (string.IsNullOrEmpty(prefix))
+				return string.Format("{{Type {0}}}", typeName);
+			return string.Format("{{{0}:Type {1}}}", prefix, typeName);
 		}
 
 		string FormatTypeDeclaration(TypeDeclaration typeDeclaration)
