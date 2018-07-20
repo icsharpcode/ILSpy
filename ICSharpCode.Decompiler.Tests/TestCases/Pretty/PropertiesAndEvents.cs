@@ -133,6 +133,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public object Item {
+			get {
+				return null;
+			}
+			set {
+
+			}
+		}
+
 #if ROSLYN
 		public int NotAnAutoProperty => someField;
 #else

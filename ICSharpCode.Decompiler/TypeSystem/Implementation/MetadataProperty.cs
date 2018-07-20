@@ -54,7 +54,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			getter = module.GetDefinition(accessors.Getter);
 			setter = module.GetDefinition(accessors.Setter);
 			name = metadata.GetString(prop.Name);
-			if (name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName) {
+			// Maybe we should defer the calculation of symbolKind?
+			if (DetermineIsIndexer(metadata, name, accessors)) {
 				symbolKind = SymbolKind.Indexer;
 			} else if (name.IndexOf('.') >= 0) {
 				// explicit interface implementation
@@ -63,6 +64,20 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				symbolKind = SymbolKind.Property;
 			}
+		}
+
+		bool DetermineIsIndexer(MetadataReader metadata, string name, PropertyAccessors accessors)
+		{
+			if (!accessors.Getter.IsNil) {
+				var md = metadata.GetMethodDefinition(accessors.Getter);
+				if (md.GetParameters().Count == 0)
+					return false;
+			} else if (!accessors.Setter.IsNil) {
+				var md = metadata.GetMethodDefinition(accessors.Setter);
+				if (md.GetParameters().Count <= 1)
+					return false;
+			}
+			return name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName;
 		}
 
 		public override string ToString()
