@@ -39,6 +39,16 @@
   .class interface abstract auto ansi nested private IBase
   {
     .method public hidebysig newslot specialname abstract virtual 
+            instance int32  get_GetterOnly() cil managed
+    {
+    } // end of method IBase::get_GetterOnly
+
+    .method public hidebysig newslot specialname abstract virtual 
+            instance void  set_SetterOnly(int32 'value') cil managed
+    {
+    } // end of method IBase::set_SetterOnly
+
+    .method public hidebysig newslot specialname abstract virtual 
             instance int32  get_Test() cil managed
     {
     } // end of method IBase::get_Test
@@ -65,6 +75,14 @@
       .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event(class [mscorlib]System.Action)
       .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event(class [mscorlib]System.Action)
     } // end of event IBase::Event
+    .property instance int32 GetterOnly()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::get_GetterOnly()
+    } // end of property IBase::GetterOnly
+    .property instance int32 SetterOnly()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::set_SetterOnly(int32)
+    } // end of property IBase::SetterOnly
     .property instance int32 Test()
     {
       .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::get_Test()
@@ -199,7 +217,7 @@
     } // end of event OtherClass::ThisIsAnAbstractEvent
   } // end of class OtherClass
 
-  .class auto ansi nested private beforefieldinit Impl
+  .class auto ansi nested private beforefieldinit ExplicitImpl
          extends [mscorlib]System.Object
          implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase
   {
@@ -212,7 +230,7 @@
       IL_0000:  nop
       IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
       IL_0006:  throw
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test
 
     .method private hidebysig newslot specialname virtual final 
             instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test(int32 'value') cil managed
@@ -222,7 +240,29 @@
       .maxstack  8
       IL_0000:  nop
       IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test
+
+    .method private hidebysig newslot specialname virtual final 
+            instance int32  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_GetterOnly() cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::get_GetterOnly
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_GetterOnly
+
+    .method private hidebysig newslot specialname virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_SetterOnly(int32 'value') cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::set_SetterOnly
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_SetterOnly
 
     .method private hidebysig newslot specialname virtual final 
             instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action 'value') cil managed
@@ -232,7 +272,7 @@
       .maxstack  8
       IL_0000:  nop
       IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event
 
     .method private hidebysig newslot specialname virtual final 
             instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action 'value') cil managed
@@ -242,7 +282,155 @@
       .maxstack  8
       IL_0000:  nop
       IL_0001:  ret
-    } // end of method Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
+    } // end of method ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  nop
+      IL_0007:  ret
+    } // end of method ExplicitImpl::.ctor
+
+    .event [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Event
+    {
+      .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action)
+      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action)
+    } // end of event ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Event
+    .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test(int32)
+    } // end of property ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test
+    .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.GetterOnly()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_GetterOnly()
+    } // end of property ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.GetterOnly
+    .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.SetterOnly()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_SetterOnly(int32)
+    } // end of property ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.SetterOnly
+  } // end of class ExplicitImpl
+
+  .class auto ansi nested private beforefieldinit Impl
+         extends [mscorlib]System.Object
+         implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase
+  {
+    .field private class [mscorlib]System.Action Event
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
+    .method public hidebysig newslot specialname virtual final 
+            instance int32  get_GetterOnly() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method Impl::get_GetterOnly
+
+    .method public hidebysig newslot specialname virtual final 
+            instance void  set_SetterOnly(int32 'value') cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method Impl::set_SetterOnly
+
+    .method public hidebysig newslot specialname virtual final 
+            instance int32  get_Test() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method Impl::get_Test
+
+    .method public hidebysig newslot specialname virtual final 
+            instance void  set_Test(int32 'value') cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0006:  throw
+    } // end of method Impl::set_Test
+
+    .method public hidebysig newslot specialname virtual final 
+            instance void  add_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       41 (0x29)
+      .maxstack  3
+      .locals init (class [mscorlib]System.Action V_0,
+               class [mscorlib]System.Action V_1,
+               class [mscorlib]System.Action V_2)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::Event
+      IL_0006:  stloc.0
+      IL_0007:  ldloc.0
+      IL_0008:  stloc.1
+      IL_0009:  ldloc.1
+      IL_000a:  ldarg.1
+      IL_000b:  call       class [mscorlib]System.Delegate [mscorlib]System.Delegate::Combine(class [mscorlib]System.Delegate,
+                                                                                              class [mscorlib]System.Delegate)
+      IL_0010:  castclass  [mscorlib]System.Action
+      IL_0015:  stloc.2
+      IL_0016:  ldarg.0
+      IL_0017:  ldflda     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::Event
+      IL_001c:  ldloc.2
+      IL_001d:  ldloc.1
+      IL_001e:  call       !!0 [mscorlib]System.Threading.Interlocked::CompareExchange<class [mscorlib]System.Action>(!!0&,
+                                                                                                                      !!0,
+                                                                                                                      !!0)
+      IL_0023:  stloc.0
+      IL_0024:  ldloc.0
+      IL_0025:  ldloc.1
+      IL_0026:  bne.un.s   IL_0007
+
+      IL_0028:  ret
+    } // end of method Impl::add_Event
+
+    .method public hidebysig newslot specialname virtual final 
+            instance void  remove_Event(class [mscorlib]System.Action 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       41 (0x29)
+      .maxstack  3
+      .locals init (class [mscorlib]System.Action V_0,
+               class [mscorlib]System.Action V_1,
+               class [mscorlib]System.Action V_2)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::Event
+      IL_0006:  stloc.0
+      IL_0007:  ldloc.0
+      IL_0008:  stloc.1
+      IL_0009:  ldloc.1
+      IL_000a:  ldarg.1
+      IL_000b:  call       class [mscorlib]System.Delegate [mscorlib]System.Delegate::Remove(class [mscorlib]System.Delegate,
+                                                                                             class [mscorlib]System.Delegate)
+      IL_0010:  castclass  [mscorlib]System.Action
+      IL_0015:  stloc.2
+      IL_0016:  ldarg.0
+      IL_0017:  ldflda     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::Event
+      IL_001c:  ldloc.2
+      IL_001d:  ldloc.1
+      IL_001e:  call       !!0 [mscorlib]System.Threading.Interlocked::CompareExchange<class [mscorlib]System.Action>(!!0&,
+                                                                                                                      !!0,
+                                                                                                                      !!0)
+      IL_0023:  stloc.0
+      IL_0024:  ldloc.0
+      IL_0025:  ldloc.1
+      IL_0026:  bne.un.s   IL_0007
+
+      IL_0028:  ret
+    } // end of method Impl::remove_Event
 
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
@@ -255,16 +443,24 @@
       IL_0007:  ret
     } // end of method Impl::.ctor
 
-    .event [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Event
+    .event [mscorlib]System.Action Event
     {
-      .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.add_Event(class [mscorlib]System.Action)
-      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.remove_Event(class [mscorlib]System.Action)
-    } // end of event Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Event
-    .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test()
+      .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::add_Event(class [mscorlib]System.Action)
+      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::remove_Event(class [mscorlib]System.Action)
+    } // end of event Impl::Event
+    .property instance int32 GetterOnly()
     {
-      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test()
-      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test(int32)
-    } // end of property Impl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::get_GetterOnly()
+    } // end of property Impl::GetterOnly
+    .property instance int32 SetterOnly()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::set_SetterOnly(int32)
+    } // end of property Impl::SetterOnly
+    .property instance int32 Test()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::get_Test()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::set_Test(int32)
+    } // end of property Impl::Test
   } // end of class Impl
 
   .class interface abstract auto ansi nested private IChange
@@ -400,7 +596,7 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c' '<>9'
-    .field public static class [mscorlib]System.EventHandler '<>9__25_0'
+    .field public static class [mscorlib]System.EventHandler '<>9__26_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -423,14 +619,14 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<.ctor>b__25_0'(object '<p0>',
+            '<.ctor>b__26_0'(object '<p0>',
                              class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       2 (0x2)
       .maxstack  8
       IL_0000:  nop
       IL_0001:  ret
-    } // end of method '<>c'::'<.ctor>b__25_0'
+    } // end of method '<>c'::'<.ctor>b__26_0'
 
   } // end of class '<>c'
 
@@ -662,18 +858,18 @@
     // Code size       45 (0x2d)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__25_0'
+    IL_0001:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__26_0'
     IL_0006:  dup
     IL_0007:  brtrue.s   IL_0020
 
     IL_0009:  pop
     IL_000a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9'
-    IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<.ctor>b__25_0'(object,
+    IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<.ctor>b__26_0'(object,
                                                                                                                                  class [mscorlib]System.EventArgs)
     IL_0015:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
                                                                             native int)
     IL_001a:  dup
-    IL_001b:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__25_0'
+    IL_001b:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__26_0'
     IL_0020:  stfld      class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::AutomaticEventWithInitializer
     IL_0025:  ldarg.0
     IL_0026:  call       instance void [mscorlib]System.Object::.ctor()

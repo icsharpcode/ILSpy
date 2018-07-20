@@ -6,6 +6,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private interface IBase
 		{
+			int GetterOnly {
+				get;
+			}
+
+			int SetterOnly {
+				set;
+			}
+
 			int Test {
 				get;
 				set;
@@ -24,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public override event EventHandler ThisIsAnAbstractEvent;
 		}
 
-		private class Impl : IBase
+		private class ExplicitImpl : IBase
 		{
 			int IBase.Test {
 				get {
@@ -34,12 +42,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 
+			int IBase.GetterOnly {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			int IBase.SetterOnly {
+				set {
+					throw new NotImplementedException();
+				}
+			}
+
 			event Action IBase.Event {
 				add {
 				}
 				remove {
 				}
 			}
+		}
+
+		private class Impl : IBase
+		{
+			public int GetterOnly {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public int SetterOnly {
+				set {
+					throw new NotImplementedException();
+				}
+			}
+
+			public int Test {
+				get {
+					throw new NotImplementedException();
+				}
+				set {
+					throw new NotImplementedException();
+				}
+			}
+
+			public event Action Event;
 		}
 
 		private interface IChange
