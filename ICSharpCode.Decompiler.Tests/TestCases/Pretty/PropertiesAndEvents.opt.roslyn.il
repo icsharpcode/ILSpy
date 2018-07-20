@@ -388,7 +388,7 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c' '<>9'
-    .field public static class [mscorlib]System.EventHandler '<>9__22_0'
+    .field public static class [mscorlib]System.EventHandler '<>9__25_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -410,17 +410,18 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<.ctor>b__22_0'(object '<p0>',
+            '<.ctor>b__25_0'(object '<p0>',
                              class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       1 (0x1)
       .maxstack  8
       IL_0000:  ret
-    } // end of method '<>c'::'<.ctor>b__22_0'
+    } // end of method '<>c'::'<.ctor>b__25_0'
 
   } // end of class '<>c'
 
   .field private notserialized int32 someField
+  .field private object issue1221
   .field private int32 '<Value>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private class [mscorlib]System.EventHandler AutomaticEvent
@@ -449,6 +450,17 @@
     IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
     IL_0007:  ret
   } // end of method PropertiesAndEvents::set_Value
+
+  .method private hidebysig specialname instance void 
+          set_Issue1221(object 'value') cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  stfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::issue1221
+    IL_0007:  ret
+  } // end of method PropertiesAndEvents::set_Issue1221
 
   .method public hidebysig specialname instance int32 
           get_NotAnAutoProperty() cil managed
@@ -628,18 +640,18 @@
     // Code size       44 (0x2c)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__22_0'
+    IL_0001:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__25_0'
     IL_0006:  dup
     IL_0007:  brtrue.s   IL_0020
 
     IL_0009:  pop
     IL_000a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9'
-    IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<.ctor>b__22_0'(object,
+    IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<.ctor>b__25_0'(object,
                                                                                                                                  class [mscorlib]System.EventArgs)
     IL_0015:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
                                                                             native int)
     IL_001a:  dup
-    IL_001b:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__22_0'
+    IL_001b:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/'<>c'::'<>9__25_0'
     IL_0020:  stfld      class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::AutomaticEventWithInitializer
     IL_0025:  ldarg.0
     IL_0026:  call       instance void [mscorlib]System.Object::.ctor()
@@ -666,6 +678,10 @@
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_Value()
     .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_Value(int32)
   } // end of property PropertiesAndEvents::Value
+  .property instance object Issue1221()
+  {
+    .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_Issue1221(object)
+  } // end of property PropertiesAndEvents::Issue1221
   .property instance int32 NotAnAutoProperty()
   {
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_NotAnAutoProperty()

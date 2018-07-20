@@ -74,9 +74,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[NonSerialized]
 		private int someField;
 
+		private object issue1221;
+
 		public int Value {
 			get;
 			private set;
+		}
+
+		private object Issue1221 {
+			set {
+				issue1221 = value;
+			}
 		}
 
 #if ROSLYN

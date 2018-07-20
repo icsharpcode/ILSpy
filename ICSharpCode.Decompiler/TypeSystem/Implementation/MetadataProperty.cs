@@ -197,6 +197,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (left == Accessibility.ProtectedAndInternal || right == Accessibility.ProtectedAndInternal)
 				return Accessibility.ProtectedAndInternal;
 
+			if (left == Accessibility.Private || right == Accessibility.Private)
+				return Accessibility.Private;
+
 			return left;
 		}
 		#endregion
