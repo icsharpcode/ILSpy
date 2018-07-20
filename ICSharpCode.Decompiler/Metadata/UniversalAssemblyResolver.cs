@@ -107,12 +107,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
-			var targetFramework = TargetFramework.Split(new[] { ",Version=v" }, StringSplitOptions.None);
+			var targetFramework = TargetFramework.Split(new[] { ",Version=v", ",Profile=" }, StringSplitOptions.None);
 			string file = null;
 			switch (targetFramework[0]) {
 				case ".NETCoreApp":
 				case ".NETStandard":
-					if (targetFramework.Length != 2)
+					if (targetFramework.Length < 2)
 						goto default;
 					if (dotNetCorePathFinder == null) {
 						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						return file;
 					goto default;
 				case "Silverlight":
-					if (targetFramework.Length != 2)
+					if (targetFramework.Length < 2)
 						goto default;
 					file = ResolveSilverlight(name, new Version(targetFramework[1]));
 					if (file != null)
