@@ -57,7 +57,6 @@ namespace ICSharpCode.ILSpy.Options
 			s.ExpandMemberDefinitions = (bool?)e.Attribute("expandMemberDefinitions") ?? s.ExpandMemberDefinitions;
 			s.RemoveDeadCode = (bool?)e.Attribute("removeDeadCode") ?? s.RemoveDeadCode;
 			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
-			s.FullyQualifyAmbiguousTypeNames = (bool?)e.Attribute("fullyQualifyAmbiguousTypeNames") ?? s.FullyQualifyAmbiguousTypeNames;
 			s.AlwaysUseBraces = (bool?)e.Attribute("alwaysUseBraces") ?? s.AlwaysUseBraces;
 			return s;
 		}
@@ -73,7 +72,6 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("expandMemberDefinitions", s.ExpandMemberDefinitions);
 			section.SetAttributeValue("removeDeadCode", s.RemoveDeadCode);
 			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
-			section.SetAttributeValue("fullyQualifyAmbiguousTypeNames", s.FullyQualifyAmbiguousTypeNames);
 			section.SetAttributeValue("alwaysUseBraces", s.AlwaysUseBraces);
 
 			XElement existingElement = root.Element("DecompilerSettings");
@@ -137,18 +135,6 @@ namespace ICSharpCode.ILSpy.Options
 			set {
 				if (decompileMemberBodies != value) {
 					decompileMemberBodies = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool fullyQualifyAmbiguousTypeNames = true;
-
-		public bool FullyQualifyAmbiguousTypeNames {
-			get { return fullyQualifyAmbiguousTypeNames; }
-			set {
-				if (fullyQualifyAmbiguousTypeNames != value) {
-					fullyQualifyAmbiguousTypeNames = value;
 					OnPropertyChanged();
 				}
 			}

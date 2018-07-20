@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		protected void Initialize(TransformContext context)
 		{
-			currentTypeDefinition = context.DecompiledTypeDefinition;
-			currentMethod = context.DecompiledMember as IMethod;
+			currentTypeDefinition = context.CurrentTypeDefinition;
+			currentMethod = context.CurrentMember as IMethod;
 		}
 		
 		protected void Uninitialize()

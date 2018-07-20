@@ -85,7 +85,6 @@ namespace ICSharpCode.ILSpy
 				AlwaysUseBraces = settings.AlwaysUseBraces,
 				ExpandMemberDefinitions = settings.ExpandMemberDefinitions,
 				FoldBraces = settings.FoldBraces,
-				FullyQualifyAmbiguousTypeNames = settings.FullyQualifyAmbiguousTypeNames,
 				RemoveDeadCode = settings.RemoveDeadCode,
 				ShowDebugInfo = settings.ShowDebugInfo,
 				ShowXmlDocumentation = settings.ShowXmlDocumentation,

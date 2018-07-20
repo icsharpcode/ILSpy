@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			node.AcceptVisitor(visitor);
 
-			visitor.RemoveSingleEmptyConstructor(node.Children, context.DecompiledTypeDefinition);
+			visitor.RemoveSingleEmptyConstructor(node.Children, context.CurrentTypeDefinition);
 		}
 	}
 	

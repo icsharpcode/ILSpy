@@ -664,7 +664,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
-			ITypeDefinition parentTypeDef = null;
 			syntaxTree = new SyntaxTree();
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
@@ -676,17 +675,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				RequiredNamespaceCollector.CollectNamespaces(entity, module, decompileRun.Namespaces);
 			}
 
+			bool first = true;
+			ITypeDefinition parentTypeDef = null;
+
 			foreach (var entity in definitions) {
 				switch (entity.Kind) {
 					case HandleKind.TypeDefinition:
 						ITypeDefinition typeDef = module.GetDefinition((TypeDefinitionHandle)entity);
 						syntaxTree.Members.Add(DoDecompile(typeDef, decompileRun, new SimpleTypeResolveContext(typeDef)));
-						parentTypeDef = typeDef.DeclaringTypeDefinition;
+						if (first) {
+							parentTypeDef = typeDef.DeclaringTypeDefinition;
+						} else if (parentTypeDef != null) {
+							parentTypeDef = FindCommonDeclaringTypeDefinition(parentTypeDef, typeDef.DeclaringTypeDefinition);
+						}
 						break;
 					case HandleKind.MethodDefinition:
 						IMethod method = module.GetDefinition((MethodDefinitionHandle)entity);
 						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method)));
-						parentTypeDef = method.DeclaringTypeDefinition;
+						if (first) {
+							parentTypeDef = method.DeclaringTypeDefinition;
+						} else if (parentTypeDef != null) {
+							parentTypeDef = FindCommonDeclaringTypeDefinition(parentTypeDef, method.DeclaringTypeDefinition);
+						}
 						break;
 					case HandleKind.FieldDefinition:
 						IField field = module.GetDefinition((FieldDefinitionHandle)entity);
@@ -696,19 +706,37 @@ namespace ICSharpCode.Decompiler.CSharp
 					case HandleKind.PropertyDefinition:
 						IProperty property = module.GetDefinition((PropertyDefinitionHandle)entity);
 						syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property)));
-						parentTypeDef = property.DeclaringTypeDefinition;
+						if (first) {
+							parentTypeDef = property.DeclaringTypeDefinition;
+						} else if (parentTypeDef != null) {
+							parentTypeDef = FindCommonDeclaringTypeDefinition(parentTypeDef, property.DeclaringTypeDefinition);
+						}
 						break;
 					case HandleKind.EventDefinition:
 						IEvent ev = module.GetDefinition((EventDefinitionHandle)entity);
 						syntaxTree.Members.Add(DoDecompile(ev, decompileRun, new SimpleTypeResolveContext(ev)));
-						parentTypeDef = ev.DeclaringTypeDefinition;
+						if (first) {
+							parentTypeDef = ev.DeclaringTypeDefinition;
+						} else if (parentTypeDef != null) {
+							parentTypeDef = FindCommonDeclaringTypeDefinition(parentTypeDef, ev.DeclaringTypeDefinition);
+						}
 						break;
 					default:
 						throw new NotSupportedException(entity.Kind.ToString());
 				}
+				first = false;
 			}
 			RunTransforms(syntaxTree, decompileRun, parentTypeDef != null ? new SimpleTypeResolveContext(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainModule));
 			return syntaxTree;
+		}
+
+		ITypeDefinition FindCommonDeclaringTypeDefinition(ITypeDefinition a, ITypeDefinition b)
+		{
+			if (a == null || b == null)
+				return null;
+			var declaringTypes = a.GetDeclaringTypeDefinitions();
+			var set = new HashSet<ITypeDefinition>(b.GetDeclaringTypeDefinitions());
+			return declaringTypes.FirstOrDefault(set.Contains);
 		}
 
 		/// <summary>
@@ -1036,7 +1064,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (IsWindowsFormsInitializeComponentMethod(method)) {
 					localSettings.UseImplicitMethodGroupConversion = false;
 					localSettings.UsingDeclarations = false;
-					localSettings.FullyQualifyAmbiguousTypeNames = true;
 					localSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls = true;
 				}
 

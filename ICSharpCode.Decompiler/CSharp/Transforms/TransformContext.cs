@@ -37,25 +37,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		readonly ITypeResolveContext decompilationContext;
 
 		/// <summary>
-		/// Returns the member that is being decompiled; or null if a whole type or assembly is being decompiled.
+		/// Returns the current member; or null if a whole type or module is being decompiled.
 		/// </summary>
-		public IMember DecompiledMember {
-			get { return decompilationContext.CurrentMember; }
-		}
-		
+		public IMember CurrentMember => decompilationContext.CurrentMember;
+
 		/// <summary>
-		/// Returns the type definition that is being decompiled; or null if an assembly is being decompiled.
+		/// Returns the current type definition; or null if a module is being decompiled.
 		/// </summary>
-		public ITypeDefinition DecompiledTypeDefinition {
-			get { return decompilationContext.CurrentTypeDefinition; }
-		}
+		public ITypeDefinition CurrentTypeDefinition => decompilationContext.CurrentTypeDefinition;
 
 		/// <summary>
 		/// Returns the module that is being decompiled.
 		/// </summary>
-		public IModule DecompiledModule {
-			get { return decompilationContext.CurrentModule; }
-		}
+		public IModule CurrentModule => decompilationContext.CurrentModule;
 
 		/// <summary>
 		/// Returns the max possible set of namespaces that will be used during decompilation.

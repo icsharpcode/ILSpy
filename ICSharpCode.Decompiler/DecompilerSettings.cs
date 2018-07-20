@@ -415,18 +415,6 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool fullyQualifyAmbiguousTypeNames = true;
-
-		public bool FullyQualifyAmbiguousTypeNames {
-			get { return fullyQualifyAmbiguousTypeNames; }
-			set {
-				if (fullyQualifyAmbiguousTypeNames != value) {
-					fullyQualifyAmbiguousTypeNames = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
 		bool useDebugSymbols = true;
 
 		/// <summary>

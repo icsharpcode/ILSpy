@@ -51,12 +51,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void InitializeContext(UsingScope usingScope)
 		{
 			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
-			if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
-				foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
+			if (!string.IsNullOrEmpty(context.CurrentTypeDefinition?.Namespace)) {
+				foreach (string ns in context.CurrentTypeDefinition.Namespace.Split('.')) {
 					usingScope = new UsingScope(usingScope, ns);
 				}
 			}
-			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.DecompiledTypeDefinition);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainModule, usingScope.Resolve(context.TypeSystem), context.CurrentTypeDefinition);
 			this.resolveContextStack.Push(currentContext);
 			this.resolver = new CSharpResolver(currentContext);
 		}

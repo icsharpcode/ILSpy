@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				// Handle top-level types
 				if (string.IsNullOrEmpty(genericType.Namespace)) {
 					result.Target = new SimpleType("global");
-					if (AddResolveResultAnnotations)
+					if (AddResolveResultAnnotations && resolver != null)
 						result.Target.AddAnnotation(new NamespaceResolveResult(resolver.Compilation.RootNamespace));
 					result.IsDoubleColon = true;
 				} else {

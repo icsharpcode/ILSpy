@@ -112,7 +112,25 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return IsDerivedFrom(type, type.Compilation.FindType(baseType).GetDefinition());
 		}
 		#endregion
-		
+
+		#region GetDeclaringTypeDefinitionsOrThis
+		/// <summary>
+		/// Returns all declaring type definitions of this type definition.
+		/// The output is ordered so that inner types occur before outer types.
+		/// </summary>
+		public static IEnumerable<ITypeDefinition> GetDeclaringTypeDefinitions(this ITypeDefinition definition)
+		{
+			if (definition == null) {
+				throw new ArgumentNullException(nameof(definition));
+			}
+
+			while (definition != null) {
+				yield return definition;
+				definition = definition.DeclaringTypeDefinition;
+			}
+		}
+		#endregion
+
 		#region IsOpen / IsUnbound / IsKnownType
 		sealed class TypeClassificationVisitor : TypeVisitor
 		{
