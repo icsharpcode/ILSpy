@@ -235,12 +235,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			signature.ReturnType(ILNameSyntax.Signature);
 			output.Write(' ');
 
-			var parameters = methodDefinition.GetParameters().ToArray();
-			if (parameters.Length > 0 && parameters.Length > signature.ParameterTypes.Length) {
-				var marshallingDesc = metadata.GetParameter(parameters[0]).GetMarshallingDescriptor();
-
-				if (!marshallingDesc.IsNil) {
-					WriteMarshalInfo(metadata.GetBlobReader(marshallingDesc));
+			var parameters = methodDefinition.GetParameters();
+			if (parameters.Count > 0) {
+				var firstParam = metadata.GetParameter(parameters.First());
+				if (firstParam.SequenceNumber == 0) {
+					var marshallingDesc = firstParam.GetMarshallingDescriptor();
+					if (!marshallingDesc.IsNil) {
+						WriteMarshalInfo(metadata.GetBlobReader(marshallingDesc));
+					}
 				}
 			}
 
@@ -932,33 +934,61 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 		#endregion
 
-		void WriteParameters(MetadataReader metadata, ParameterHandle[] parameters, MethodSignature<Action<ILNameSyntax>> signature)
+		void WriteParameters(MetadataReader metadata, IEnumerable<ParameterHandle> parameters, MethodSignature<Action<ILNameSyntax>> signature)
 		{
-			int parameterOffset = parameters.Length > signature.ParameterTypes.Length ? 1 : 0;
-			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
-				if (i + parameterOffset < parameters.Length) {
-					var p = metadata.GetParameter(parameters[i + parameterOffset]);
-					if ((p.Attributes & ParameterAttributes.In) == ParameterAttributes.In)
-						output.Write("[in] ");
-					if ((p.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
-						output.Write("[out] ");
-					if ((p.Attributes & ParameterAttributes.Optional) == ParameterAttributes.Optional)
-						output.Write("[opt] ");
-					signature.ParameterTypes[i](ILNameSyntax.Signature);
-					output.Write(' ');
-					var md = p.GetMarshallingDescriptor();
-					if (!md.IsNil) {
-						WriteMarshalInfo(metadata.GetBlobReader(md));
+			int i = 0;
+
+			foreach (var h in parameters) {
+				var p = metadata.GetParameter(h);
+				// skip return type parameter handle
+				if (p.SequenceNumber == 0) continue;
+
+				// fill gaps in parameter list
+				while (i < p.SequenceNumber - 1) {
+					if (i > 0) {
+						output.Write(',');
+						output.WriteLine();
 					}
-					output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
-				} else {
 					signature.ParameterTypes[i](ILNameSyntax.Signature);
 					output.Write(" ''");
+					i++;
 				}
-				if (i < signature.ParameterTypes.Length - 1)
+
+				// separator
+				if (i > 0) {
 					output.Write(',');
-				output.WriteLine();
+					output.WriteLine();
+				}
+
+				// print parameter
+				if ((p.Attributes & ParameterAttributes.In) == ParameterAttributes.In)
+					output.Write("[in] ");
+				if ((p.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
+					output.Write("[out] ");
+				if ((p.Attributes & ParameterAttributes.Optional) == ParameterAttributes.Optional)
+					output.Write("[opt] ");
+				signature.ParameterTypes[i](ILNameSyntax.Signature);
+				output.Write(' ');
+				var md = p.GetMarshallingDescriptor();
+				if (!md.IsNil) {
+					WriteMarshalInfo(metadata.GetBlobReader(md));
+				}
+				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
+				i++;
 			}
+
+			// add remaining parameter types as unnamed parameters
+			while (i < signature.RequiredParameterCount) {
+				if (i > 0) {
+					output.Write(',');
+					output.WriteLine();
+				}
+				signature.ParameterTypes[i](ILNameSyntax.Signature);
+				output.Write(" ''");
+				i++;
+			}
+
+			output.WriteLine();
 		}
 
 		void WriteGenericParameterAttributes(PEFile module, GenericParameterHandle handle)
@@ -1111,7 +1141,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 				output.WriteLine();
 				output.Indent();
-				WriteParameters(metadata, parameters.Take(parametersCount).ToArray(), signature);
+				WriteParameters(metadata, parameters.Take(parametersCount), signature);
 				output.Unindent();
 			}
 			output.Write(')');
