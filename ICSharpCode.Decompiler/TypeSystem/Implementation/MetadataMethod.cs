@@ -157,6 +157,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			CustomAttributeHandleCollection? returnTypeAttributes = null;
 			IParameter[] parameters = new IParameter[signature.RequiredParameterCount
 				+ (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs ? 1 : 0)];
+			IType parameterType;
 			if (parameterHandles != null) {
 				foreach (var parameterHandle in parameterHandles) {
 					var par = metadata.GetParameter(parameterHandle);
@@ -164,8 +165,18 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// "parameter" holds return type attributes
 						returnTypeAttributes = par.GetCustomAttributes();
 					} else if (par.SequenceNumber > 0 && i < signature.RequiredParameterCount) {
-						Debug.Assert(par.SequenceNumber - 1 == i);
-						var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+						// "Successive rows of the Param table that are owned by the same method shall be
+						// ordered by increasing Sequence value - although gaps in the sequence are allowed"
+						Debug.Assert(i < par.SequenceNumber);
+						// Fill gaps in the sequence with non-metadata parameters:
+						while (i < par.SequenceNumber - 1) {
+							parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+								signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions);
+							parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
+								isRef: parameterType.Kind == TypeKind.ByReference);
+							i++;
+						}
+						parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
 							signature.ParameterTypes[i], module.Compilation,
 							par.GetCustomAttributes(), metadata, module.TypeSystemOptions);
 						parameters[i] = new MetadataParameter(module, owner, parameterType, parameterHandle);
@@ -174,7 +185,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			while (i < signature.RequiredParameterCount) {
-				var parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
+				parameterType = ApplyAttributeTypeVisitor.ApplyAttributesToType(
 					signature.ParameterTypes[i], module.Compilation, null, metadata, module.TypeSystemOptions);
 				parameters[i] = new DefaultParameter(parameterType, name: string.Empty, owner,
 					isRef: parameterType.Kind == TypeKind.ByReference);
