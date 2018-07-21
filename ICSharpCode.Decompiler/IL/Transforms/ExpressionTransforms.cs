@@ -333,6 +333,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (TransformDynamicAddAssignOrRemoveAssign(inst))
 				return;
+			if (inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst)) {
+				ILInstruction transformed = UserDefinedLogicTransform.Transform(condition, trueInst, falseInst);
+				if (transformed != null) {
+					context.Step("User-defined short-circuiting logic operator (roslyn pattern)", condition);
+					transformed.AddILRange(inst.ILRange);
+					inst.ReplaceWith(transformed);
+					return;
+				}
+			}
 		}
 
 		/// <summary>

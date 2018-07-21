@@ -142,6 +142,8 @@ namespace ICSharpCode.Decompiler.IL
 					return callVirt.Method.ReturnType;
 				case CallIndirect calli:
 					return calli.ReturnType;
+				case UserDefinedLogicOperator logicOp:
+					return logicOp.Method.ReturnType;
 				case LdObj ldobj:
 					return ldobj.Type;
 				case StObj stobj:
@@ -151,19 +153,19 @@ namespace ICSharpCode.Decompiler.IL
 				case StLoc stloc:
 					return stloc.Variable.Type;
 				case LdLoca ldloca:
-					return new TypeSystem.ByReferenceType(ldloca.Variable.Type);
+					return new ByReferenceType(ldloca.Variable.Type);
 				case LdFlda ldflda:
-					return new TypeSystem.ByReferenceType(ldflda.Field.Type);
+					return new ByReferenceType(ldflda.Field.Type);
 				case LdsFlda ldsflda:
-					return new TypeSystem.ByReferenceType(ldsflda.Field.Type);
+					return new ByReferenceType(ldsflda.Field.Type);
 				case LdElema ldelema:
-					if (ldelema.Array.InferType() is TypeSystem.ArrayType arrayType) {
-						var refType = new TypeSystem.ByReferenceType(arrayType.ElementType);
+					if (ldelema.Array.InferType() is ArrayType arrayType) {
+						var refType = new ByReferenceType(arrayType.ElementType);
 						if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType, ldelema.Type)) {
 							return refType;
 						}
 					}
-					return new TypeSystem.ByReferenceType(ldelema.Type);
+					return new ByReferenceType(ldelema.Type);
 				default:
 					return SpecialType.UnknownType;
 			}

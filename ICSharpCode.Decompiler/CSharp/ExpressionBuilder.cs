@@ -748,12 +748,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				                                  left.ResolveResult, right.ResolveResult));
 		}
 
-		protected internal override TranslatedExpression VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst, TranslationContext context)
 		{
 			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseAnd, ExpressionType.And);
 		}
 
-		protected internal override TranslatedExpression VisitThreeValuedLogicOr(ThreeValuedLogicOr inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitThreeValuedBoolOr(ThreeValuedBoolOr inst, TranslationContext context)
 		{
 			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseOr, ExpressionType.Or);
 		}
@@ -777,6 +777,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithRR(new OperatorResolveResult(nullableBoolType, eop, null, true, new[] { left.ResolveResult, right.ResolveResult }))
+				.WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst, TranslationContext context)
+		{
+			var left = Translate(inst.Left, inst.Method.Parameters[0].Type).ConvertTo(inst.Method.Parameters[0].Type, this);
+			var right = Translate(inst.Right, inst.Method.Parameters[1].Type).ConvertTo(inst.Method.Parameters[1].Type, this);
+			BinaryOperatorType op;
+			if (inst.Method.Name == "op_BitwiseAnd") {
+				op = BinaryOperatorType.ConditionalAnd;
+			} else if (inst.Method.Name == "op_BitwiseOr") {
+				op = BinaryOperatorType.ConditionalOr;
+			} else {
+				throw new InvalidOperationException("Invalid method name");
+			}
+			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+				.WithRR(new InvocationResolveResult(null, inst.Method, new ResolveResult[] { left.ResolveResult, right.ResolveResult }))
 				.WithILInstruction(inst);
 		}
 

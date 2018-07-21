@@ -691,6 +691,21 @@ namespace ICSharpCode.Decompiler.CSharp
 						or.AddCandidate(ctor);
 					}
 				}
+			} else if (method.IsOperator) {
+				IEnumerable<IParameterizedMember> operatorCandidates;
+				if (arguments.Count == 1) {
+					operatorCandidates = resolver.GetUserDefinedOperatorCandidates(arguments[0].Type, method.Name);
+				} else if (arguments.Count == 2) {
+					var hashSet = new HashSet<IParameterizedMember>();
+					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(arguments[0].Type, method.Name));
+					hashSet.UnionWith(resolver.GetUserDefinedOperatorCandidates(arguments[1].Type, method.Name));
+					operatorCandidates = hashSet;
+				} else {
+					operatorCandidates = EmptyList<IParameterizedMember>.Instance;
+				}
+				foreach (var m in operatorCandidates) {
+					or.AddCandidate(m);
+				}
 			} else if (target == null) {
 				var result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: true) as MethodGroupResolveResult;
 				if (result == null)

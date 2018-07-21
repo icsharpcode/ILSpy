@@ -267,6 +267,7 @@
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\ILParser.cs" />
+    <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />
     <Compile Include="Metadata\EnumUnderlyingTypeResolveException.cs" />
@@ -330,7 +331,7 @@
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
     <Compile Include="IL\Instructions\LockInstruction.cs" />
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
-    <Compile Include="IL\Instructions\ThreeValuedLogicInstructions.cs" />
+    <Compile Include="IL\Instructions\LogicInstructions.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />

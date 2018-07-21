@@ -103,6 +103,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void CustomShortCircuitOperators([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void ExceptionHandling([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {

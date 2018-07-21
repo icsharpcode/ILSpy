@@ -175,10 +175,10 @@
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
 			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref")),
-		new OpCode("3vl.logic.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
-			CustomClassName("ThreeValuedLogicAnd"), Binary, ResultType("O")),
-		new OpCode("3vl.logic.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
-			CustomClassName("ThreeValuedLogicOr"), Binary, ResultType("O")),
+		new OpCode("3vl.bool.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedBoolAnd"), Binary, ResultType("O")),
+		new OpCode("3vl.bool.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedBoolOr"), Binary, ResultType("O")),
 		new OpCode("nullable.unwrap", "The input operand must be one of:" + Environment.NewLine
 				+ "  1. a nullable value type" + Environment.NewLine
 				+ "  2. a reference type" + Environment.NewLine
@@ -279,6 +279,16 @@
 			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
 			MatchCondition("this.IsChecked == o.IsChecked")),
 
+		new OpCode("user.logic.op", "Use of user-defined && or || operator.",
+			CustomClassName("UserDefinedLogicOperator"),
+			HasMethodOperand, ResultType("O"),
+			CustomChildren(new []{
+				new ChildInfo("left") { CanInlineInto = true },
+				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
+			}),
+			CustomComputeFlags // MayThrow, SideEffect, ControlFlow
+		),
+		
 		new OpCode("dynamic.binary.operator", "ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).",
 			CustomClassName("DynamicBinaryOperatorInstruction"), Dynamic, CustomArguments(("left", null), ("right", null)), CustomWriteTo),
 		new OpCode("dynamic.unary.operator", "ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).",

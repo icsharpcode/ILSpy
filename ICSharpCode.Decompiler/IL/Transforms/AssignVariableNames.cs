@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			type = NullableType.GetUnderlyingType(type);
 			while (type is ModifiedType || type is PinnedType) {
-				type = ((TypeWithElementType)type).ElementType;
+				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
 			string name;

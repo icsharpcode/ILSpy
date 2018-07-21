@@ -350,6 +350,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				case OpCode.NullableUnwrap:
 					return true; // inline into ?. operator
+				case OpCode.UserDefinedLogicOperator:
+					return true; // inline into (left slot of) user-defined && or || operator
 				case OpCode.DynamicGetMemberInstruction:
 				case OpCode.DynamicGetIndexInstruction:
 				case OpCode.LdObj:

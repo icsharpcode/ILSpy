@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.IL
 	// Note: The comp instruction also supports three-valued logic via ComparisonLiftingKind.ThreeValuedLogic.
 	// comp.i4.lifted[3VL](x == ldc.i4 0) is used to represent a lifted logic.not.
 
-	partial class ThreeValuedLogicAnd : ILiftableInstruction
+	partial class ThreeValuedBoolAnd : ILiftableInstruction
 	{
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	partial class ThreeValuedLogicOr : ILiftableInstruction
+	partial class ThreeValuedBoolOr : ILiftableInstruction
 	{
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
@@ -44,6 +44,22 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+		}
+	}
+
+	partial class UserDefinedLogicOperator
+	{
+		protected override InstructionFlags ComputeFlags()
+		{
+			// left is always executed; right only sometimes
+			return DirectFlags | left.Flags
+				| SemanticHelper.CombineBranches(InstructionFlags.None, right.Flags);
+		}
+
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
+			}
 		}
 	}
 }
