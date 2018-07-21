@@ -935,7 +935,7 @@ namespace ICSharpCode.Decompiler.IL
 						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(PopFieldTarget(field), field) { DelayExceptions = true }, type: field.Type);
 					}
 				case ILOpCode.Ldlen:
-					return Push(new LdLen(StackType.I, Pop()));
+					return Push(new LdLen(StackType.I, Pop(StackType.O)));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
