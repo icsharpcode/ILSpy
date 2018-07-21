@@ -108,9 +108,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				yield break;
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
-				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
+				TypeCode typeCode = ReflectionHelper.GetTypeCode(enumType);
+				if (typeCode != TypeCode.Empty) {
+					value = CSharpPrimitiveCast.Cast(typeCode, i, false);
+				} else {
+					value = i;
+				}
 			} else {
-				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
+				TypeCode typeCode = ReflectionHelper.GetTypeCode(type);
+				if (typeCode != TypeCode.Empty) {
+					value = CSharpPrimitiveCast.Cast(typeCode, i, false);
+				} else {
+					value = i;
+				}
 			}
 			yield return new ConstantResolveResult(type, value);
 		}
