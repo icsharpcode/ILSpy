@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (handle == entrypointHandle)
 				output.WriteLine(".entrypoint");
 
-			DisassembleLocalsBlock(body);
+			DisassembleLocalsBlock(handle, body);
 			output.WriteLine();
 
 			sequencePoints = DebugInfo?.GetSequencePoints(handle) ?? EmptyList<DebugInfo.SequencePoint>.Instance;
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			sequencePoints = null;
 		}
 
-		void DisassembleLocalsBlock(MethodBodyBlock body)
+		void DisassembleLocalsBlock(MethodDefinitionHandle method, MethodBodyBlock body)
 		{
 			if (body.LocalSignature.IsNil)
 				return;
@@ -142,6 +142,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			foreach (var v in signature) {
 				output.WriteLocalReference("[" + index + "] ", v, isDefinition: true);
 				v(ILNameSyntax.TypeName);
+				if (DebugInfo != null && DebugInfo.TryGetName(method, index, out var name)) {
+					output.Write(" " + DisassemblerHelpers.Escape(name));
+				}
 				if (index + 1 < signature.Length)
 					output.Write(',');
 				output.WriteLine();
