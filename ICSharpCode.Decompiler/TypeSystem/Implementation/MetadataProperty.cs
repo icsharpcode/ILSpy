@@ -68,16 +68,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool DetermineIsIndexer(MetadataReader metadata, string name, PropertyAccessors accessors)
 		{
-			if (!accessors.Getter.IsNil) {
-				var md = metadata.GetMethodDefinition(accessors.Getter);
-				if (md.GetParameters().Count == 0)
-					return false;
-			} else if (!accessors.Setter.IsNil) {
-				var md = metadata.GetMethodDefinition(accessors.Setter);
-				if (md.GetParameters().Count <= 1)
-					return false;
-			}
-			return name == (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName;
+			if (name != (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName)
+				return false;
+			return Parameters.Count > 0;
 		}
 
 		public override string ToString()
