@@ -170,6 +170,8 @@ namespace ICSharpCode.ILSpy.Controls
 			SortableGridViewColumn column = GetCurrentSortColumn(grid);
 			ICollectionView dataView = CollectionViewSource.GetDefaultView(grid.ItemsSource);
 
+			if (dataView == null) return;
+
 			if (column != null && GetSortMode(grid) == ListViewSortMode.Automatic && currentDirection != ColumnSortDirection.None) {
 				string sortBy = column.SortBy;
 				if (sortBy == null) {
