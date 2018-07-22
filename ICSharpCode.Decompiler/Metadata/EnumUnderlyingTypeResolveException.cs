@@ -23,22 +23,25 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
+	[Serializable]
 	public class EnumUnderlyingTypeResolveException : Exception
 	{
-		public EnumUnderlyingTypeResolveException()
-		{
-		}
+		public EnumUnderlyingTypeResolveException() { }
+		public EnumUnderlyingTypeResolveException(string message) : base(message) { }
+		public EnumUnderlyingTypeResolveException(string message, Exception inner) : base(message, inner) { }
+		protected EnumUnderlyingTypeResolveException(
+		  SerializationInfo info,
+		  StreamingContext context) : base(info, context) { }
+	}
 
-		public EnumUnderlyingTypeResolveException(string message) : base(message)
-		{
-		}
-
-		public EnumUnderlyingTypeResolveException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
-
-		protected EnumUnderlyingTypeResolveException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+	[Serializable]
+	public class PEFileNotSupportedException : Exception
+	{
+		public PEFileNotSupportedException() { }
+		public PEFileNotSupportedException(string message) : base(message) { }
+		public PEFileNotSupportedException(string message, Exception inner) : base(message, inner) { }
+		protected PEFileNotSupportedException(
+		  SerializationInfo info,
+		  StreamingContext context) : base(info, context) { }
 	}
 }

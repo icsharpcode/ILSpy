@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
 			if (!reader.HasMetadata)
-				throw new ArgumentException("PE file does not contain any metadata!");
+				throw new PEFileNotSupportedException("PE file does not contain any managed metadata.");
 			this.Metadata = reader.GetMetadataReader();
 		}
 
