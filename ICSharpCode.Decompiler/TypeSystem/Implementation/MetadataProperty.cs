@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			setter = module.GetDefinition(accessors.Setter);
 			name = metadata.GetString(prop.Name);
 			// Maybe we should defer the calculation of symbolKind?
-			if (DetermineIsIndexer(metadata, name, accessors)) {
+			if (DetermineIsIndexer(name)) {
 				symbolKind = SymbolKind.Indexer;
 			} else if (name.IndexOf('.') >= 0) {
 				// explicit interface implementation
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 
-		bool DetermineIsIndexer(MetadataReader metadata, string name, PropertyAccessors accessors)
+		bool DetermineIsIndexer(string name)
 		{
 			if (name != (DeclaringTypeDefinition as MetadataTypeDefinition)?.DefaultMemberName)
 				return false;
