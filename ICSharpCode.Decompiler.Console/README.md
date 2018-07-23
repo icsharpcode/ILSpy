@@ -1,8 +1,13 @@
-# ICSharpCode.Decompiler.Console
-netcoreapp 2.0 console application using ICSharpCode.Decompiler
+# ilspycmd
 
 ```
-./ilspycmd -h
+dotnet tool install ilspycmd -g
+```
+
+.NET Core 2.1 Tool 
+
+```
+ilspycmd -h
 
 Usage:  [arguments] [options]
 
