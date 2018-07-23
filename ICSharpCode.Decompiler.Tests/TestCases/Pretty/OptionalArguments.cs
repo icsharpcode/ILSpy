@@ -16,12 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal class OptionalArguments
+	internal class OptionalArguments : List<int>
 	{
+		public OptionalArguments(string name, int a = 5)
+		{
+
+		}
+		public OptionalArguments(int num, bool flag = true)
+		{
+
+		}
+
+		public void Add(string name, int a = 5)
+		{
+
+		}
+
 		private void SimpleTests()
 		{
 			Test();
@@ -59,6 +74,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CallerMemberName(null);
 			CallerLineNumber(60);
 			CallerLineNumber(0);
+		}
+
+		private void Constructor(out OptionalArguments a, out OptionalArguments b, out OptionalArguments c)
+		{
+			a = new OptionalArguments("Hallo");
+			b = new OptionalArguments(10);
+			c = new OptionalArguments(10) {
+				{
+					"Test",
+					10
+				},
+				"Test2"
+			};
 		}
 
 		private void CallerMemberName([CallerMemberName] string memberName = null)

@@ -34,8 +34,42 @@
 // =============== CLASS MEMBERS DECLARATION ===================
 
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments
-       extends [mscorlib]System.Object
+       extends class [mscorlib]System.Collections.Generic.List`1<int32>
 {
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string name,
+                               [opt] int32 a) cil managed
+  {
+    .param [2] = int32(0x00000005)
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    IL_0006:  ret
+  } // end of method OptionalArguments::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(int32 num,
+                               [opt] bool flag) cil managed
+  {
+    .param [2] = bool(true)
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+    IL_0006:  ret
+  } // end of method OptionalArguments::.ctor
+
+  .method public hidebysig instance void 
+          Add(string name,
+              [opt] int32 a) cil managed
+  {
+    .param [2] = int32(0x00000005)
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::Add
+
   .method private hidebysig instance void 
           SimpleTests() cil managed
   {
@@ -181,6 +215,44 @@
   } // end of method OptionalArguments::CallerInfo
 
   .method private hidebysig instance void 
+          Constructor([out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments& a,
+                      [out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments& b,
+                      [out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments& c) cil managed
+  {
+    // Code size       59 (0x3b)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldstr      "Hallo"
+    IL_0006:  ldc.i4.5
+    IL_0007:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::.ctor(string,
+                                                                                                              int32)
+    IL_000c:  stind.ref
+    IL_000d:  ldarg.2
+    IL_000e:  ldc.i4.s   10
+    IL_0010:  ldc.i4.1
+    IL_0011:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::.ctor(int32,
+                                                                                                              bool)
+    IL_0016:  stind.ref
+    IL_0017:  ldarg.3
+    IL_0018:  ldc.i4.s   10
+    IL_001a:  ldc.i4.1
+    IL_001b:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::.ctor(int32,
+                                                                                                              bool)
+    IL_0020:  dup
+    IL_0021:  ldstr      "Test"
+    IL_0026:  ldc.i4.s   10
+    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Add(string,
+                                                                                                            int32)
+    IL_002d:  dup
+    IL_002e:  ldstr      "Test2"
+    IL_0033:  ldc.i4.5
+    IL_0034:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Add(string,
+                                                                                                            int32)
+    IL_0039:  stind.ref
+    IL_003a:  ret
+  } // end of method OptionalArguments::Constructor
+
+  .method private hidebysig instance void 
           CallerMemberName([opt] string memberName) cil managed
   {
     .param [1] = nullref
@@ -315,16 +387,6 @@
     IL_0001:  throw
   } // end of method OptionalArguments::Get
 
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
-  {
-    // Code size       7 (0x7)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-    IL_0006:  ret
-  } // end of method OptionalArguments::.ctor
-
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments
 
 .class private auto ansi sealed '<PrivateImplementationDetails>'
@@ -338,16 +400,15 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002BE8
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002BF8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002D2C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002D3C
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00002BE8 = bytearray (
+.data cil I_00002D2C = bytearray (
                  0A 00 00 00 09 00 00 00 08 00 00 00) 
-.data cil I_00002BF4 = int8[4]
-.data cil I_00002BF8 = bytearray (
+.data cil I_00002D3C = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************
