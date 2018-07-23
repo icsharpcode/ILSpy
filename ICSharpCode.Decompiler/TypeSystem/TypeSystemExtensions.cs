@@ -439,6 +439,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
+		#region IParameter.GetAttribute
+		/// <summary>
+		/// Gets whether the parameter has an attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="parameter">The parameter on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		public static bool HasAttribute(this IParameter parameter, KnownAttribute attrType)
+		{
+			return GetAttribute(parameter, attrType) != null;
+		}
+
+		/// <summary>
+		/// Gets the attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="parameter">The parameter on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		/// <returns>
+		/// Returns the attribute that was found; or <c>null</c> if none was found.
+		/// </returns>
+		public static IAttribute GetAttribute(this IParameter parameter, KnownAttribute attributeType)
+		{
+			return parameter.GetAttributes().FirstOrDefault(a => a.AttributeType.IsKnownType(attributeType));
+		}
+		#endregion
+
 		#region IAssembly.GetTypeDefinition(string,string,int)
 		/// <summary>
 		/// Gets the type definition for a top-level type.
