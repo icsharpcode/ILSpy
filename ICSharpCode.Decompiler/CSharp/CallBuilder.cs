@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
 				arguments, null, -1, expectedParameters, CallTransformation.None, out IParameterizedMember foundMethod);
-			Debug.Assert(transform == CallTransformation.None);
+			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
@@ -419,6 +419,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		bool IsOptionalArgument(IParameter parameter, TranslatedExpression arg)
 		{
 			if (!parameter.IsOptional || !arg.ResolveResult.IsCompileTimeConstant)
+				return false;
+			if (parameter.GetAttributes().Any(a => a.AttributeType.IsKnownType(KnownAttribute.CallerMemberName)
+				|| a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
+				|| a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
 			return (parameter.ConstantValue == null && arg.ResolveResult.ConstantValue == null)
 				|| (parameter.ConstantValue != null && parameter.ConstantValue.Equals(arg.ResolveResult.ConstantValue));
