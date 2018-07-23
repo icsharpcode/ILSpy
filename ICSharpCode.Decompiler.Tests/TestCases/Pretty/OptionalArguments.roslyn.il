@@ -181,6 +181,64 @@
   } // end of method OptionalArguments::ParamsTests
 
   .method private hidebysig instance void 
+          CallerInfo() cil managed
+  {
+    // Code size       39 (0x27)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldstr      "CallerInfo"
+    IL_0007:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerMemberName(string)
+    IL_000c:  nop
+    IL_000d:  ldarg.0
+    IL_000e:  ldnull
+    IL_000f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerMemberName(string)
+    IL_0014:  nop
+    IL_0015:  ldarg.0
+    IL_0016:  ldc.i4.s   60
+    IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerLineNumber(int32)
+    IL_001d:  nop
+    IL_001e:  ldarg.0
+    IL_001f:  ldc.i4.0
+    IL_0020:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerLineNumber(int32)
+    IL_0025:  nop
+    IL_0026:  ret
+  } // end of method OptionalArguments::CallerInfo
+
+  .method private hidebysig instance void 
+          CallerMemberName([opt] string memberName) cil managed
+  {
+    .param [1] = nullref
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerMemberNameAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method OptionalArguments::CallerMemberName
+
+  .method private hidebysig instance void 
+          CallerFilePath([opt] string filePath) cil managed
+  {
+    .param [1] = nullref
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerFilePathAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method OptionalArguments::CallerFilePath
+
+  .method private hidebysig instance void 
+          CallerLineNumber([opt] int32 lineNumber) cil managed
+  {
+    .param [1] = int32(0x00000000)
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerLineNumberAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method OptionalArguments::CallerLineNumber
+
+  .method private hidebysig instance void 
           ParamsMethod([opt] int32 a,
                        int32[] values) cil managed
   {
@@ -319,16 +377,16 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002A90
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002AA0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002C10
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002C20
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00002A90 = bytearray (
+.data cil I_00002C10 = bytearray (
                  0A 00 00 00 09 00 00 00 08 00 00 00) 
-.data cil I_00002A9C = int8[4]
-.data cil I_00002AA0 = bytearray (
+.data cil I_00002C1C = int8[4]
+.data cil I_00002C20 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************

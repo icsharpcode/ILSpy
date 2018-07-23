@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Runtime.CompilerServices;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class OptionalArguments
@@ -49,6 +51,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ParamsMethod(5);
 			ParamsMethod(10);
 			ParamsMethod(null, 1, 2, 3);
+		}
+
+		private void CallerInfo()
+		{
+			CallerMemberName("CallerInfo");
+			CallerMemberName(null);
+			CallerLineNumber(60);
+			CallerLineNumber(0);
+		}
+
+		private void CallerMemberName([CallerMemberName] string memberName = null)
+		{
+
+		}
+
+		private void CallerFilePath([CallerFilePath] string filePath = null)
+		{
+
+		}
+
+		private void CallerLineNumber([CallerLineNumber] int lineNumber = 0)
+		{
+
 		}
 
 		private void ParamsMethod(int a = 5, params int[] values)

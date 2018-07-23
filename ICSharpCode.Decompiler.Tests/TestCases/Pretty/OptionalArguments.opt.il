@@ -10,9 +10,9 @@
 }
 .assembly OptionalArguments.opt
 {
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .permissionset reqmin
              = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
@@ -180,6 +180,56 @@
                                                                                                                      int32[])
     IL_0060:  ret
   } // end of method OptionalArguments::ParamsTests
+
+  .method private hidebysig instance void 
+          CallerInfo() cil managed
+  {
+    // Code size       34 (0x22)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "CallerInfo"
+    IL_0006:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerMemberName(string)
+    IL_000b:  ldarg.0
+    IL_000c:  ldnull
+    IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerMemberName(string)
+    IL_0012:  ldarg.0
+    IL_0013:  ldc.i4.s   60
+    IL_0015:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerLineNumber(int32)
+    IL_001a:  ldarg.0
+    IL_001b:  ldc.i4.0
+    IL_001c:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::CallerLineNumber(int32)
+    IL_0021:  ret
+  } // end of method OptionalArguments::CallerInfo
+
+  .method private hidebysig instance void 
+          CallerMemberName([opt] string memberName) cil managed
+  {
+    .param [1] = nullref
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerMemberNameAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::CallerMemberName
+
+  .method private hidebysig instance void 
+          CallerFilePath([opt] string filePath) cil managed
+  {
+    .param [1] = nullref
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerFilePathAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::CallerFilePath
+
+  .method private hidebysig instance void 
+          CallerLineNumber([opt] int32 lineNumber) cil managed
+  {
+    .param [1] = int32(0x00000000)
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CallerLineNumberAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::CallerLineNumber
 
   .method private hidebysig instance void 
           ParamsMethod([opt] int32 a,
