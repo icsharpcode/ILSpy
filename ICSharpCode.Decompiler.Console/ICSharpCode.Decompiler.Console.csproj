@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.0" />
-    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4201-alpha1" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4226-alpha1" />
 	
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Handles" Version="4.3.0" />
