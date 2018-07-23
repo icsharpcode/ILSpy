@@ -125,12 +125,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			// We only allow removing optional arguments in the following cases:
 			// - call arguments are not in expanded form
 			// - there are no named arguments
-			// This value has the following following values:
+			// This value has the following values:
 			// -2 - there are no optional arguments
 			// -1 - optional arguments are forbidden
 			// >= 0 - the index of the first argument that can be removed, because it is optional
 			// and is the default value of the parameter. 
-			int firstOptionalArgumentIndex = -2;
+			int firstOptionalArgumentIndex = expressionBuilder.settings.OptionalArguments ? -2 : -1;
 			for (int i = firstParamIndex; i < callArguments.Count; i++) {
 				IParameter parameter;
 				if (argumentToParameterMap != null) {

@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
 				dynamic = false;
 				namedArguments = false;
-				// * optional arguments (not supported yet)
+				optionalArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
 				asyncAwait = false;
@@ -683,6 +683,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (namedArguments != value) {
 					namedArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool optionalArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether optional arguments should be removed, if possible.
+		/// </summary>
+		public bool OptionalArguments {
+			get { return optionalArguments; }
+			set {
+				if (optionalArguments != value) {
+					optionalArguments = value;
 					OnPropertyChanged();
 				}
 			}
