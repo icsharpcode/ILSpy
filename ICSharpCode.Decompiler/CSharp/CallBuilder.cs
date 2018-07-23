@@ -306,7 +306,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			// - vararg methods may not be used.
 			// - named arguments are not supported.
 			// However, note that params methods may be used.
-			// TODO : implement support for optional arguments
 
 			// At this point, we assume that 'method' fulfills all the conditions mentioned above. We just need to make
 			// sure that the correct method is called by resolving any ambiguities by inserting casts, if necessary.
@@ -321,10 +320,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(callArguments.Count == method.Parameters.Count - firstParamIndex);
 			var expectedParameters = new List<IParameter>(arguments.Count); // parameters, but in argument order
 			bool isExpandedForm = false;
+
+			// Optional arguments:
+			// We only allow removing optional arguments in the following cases:
+			// - call arguments are not in expanded form
+			// - there are no named arguments
+			// This value has the following values:
+			// -2 - there are no optional arguments
+			// -1 - optional arguments are forbidden
+			// >= 0 - the index of the first argument that can be removed, because it is optional
+			// and is the default value of the parameter. 
+			int firstOptionalArgumentIndex = expressionBuilder.settings.OptionalArguments ? -2 : -1;
+
 			for (int i = 0; i < callArguments.Count; i++) {
 				var parameter = method.Parameters[i + firstParamIndex];
 
 				var arg = expressionBuilder.Translate(callArguments[i], parameter.Type);
+				if (IsOptionalArgument(parameter, arg)) {
+					if (firstOptionalArgumentIndex == -2)
+						firstOptionalArgumentIndex = i - firstParamIndex;
+				} else {
+					firstOptionalArgumentIndex = -2;
+				}
 				if (parameter.IsParams && i + 1 == callArguments.Count) {
 					// Parameter is marked params
 					// If the argument is an array creation, inline all elements into the call and add missing default values.
@@ -332,6 +349,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (TransformParamsArgument(expectedTargetDetails, target, method, parameter,
 						arg, ref expectedParameters, ref arguments)) {
 						isExpandedForm = true;
+						firstOptionalArgumentIndex = -1;
 						continue;
 					}
 				}
@@ -351,16 +369,30 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
-				arguments, null, -1, expectedParameters, CallTransformation.None, out IParameterizedMember foundMethod);
+				arguments, null, firstOptionalArgumentIndex, expectedParameters, CallTransformation.None, out IParameterizedMember foundMethod);
 			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
+			// Note: we intentionally ignore the firstOptionalArgumentIndex in this case.
 			if (arguments.Count == 1)
 				return arguments[0];
 
-			return new ArrayInitializerExpression(arguments.Select(a => a.Expression))
-				.WithRR(new CSharpInvocationResolveResult(target, method, arguments.SelectArray(a => a.ResolveResult),
+			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
+				firstOptionalArgumentIndex = -1;
+
+			ResolveResult[] argumentResolveResults;
+			IEnumerable<Expression> elements;
+
+			if (firstOptionalArgumentIndex < 0) {
+				elements = arguments.Select(a => a.Expression);
+				argumentResolveResults = arguments.SelectArray(a => a.ResolveResult);
+			} else {
+				elements = arguments.Take(firstOptionalArgumentIndex).Select(a => a.Expression);
+				argumentResolveResults = arguments.Take(firstOptionalArgumentIndex).Select(a => a.ResolveResult).ToArray();
+			}
+			return new ArrayInitializerExpression(elements)
+				.WithRR(new CSharpInvocationResolveResult(target, method, argumentResolveResults,
 					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: isExpandedForm));
 		}
 
