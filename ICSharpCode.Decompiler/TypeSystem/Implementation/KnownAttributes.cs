@@ -78,6 +78,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		ParamArray,
 		In,
 		Out,
+		CallerMemberName,
+		CallerFilePath,
+		CallerLineNumber,
 
 		// Marshalling attributes:
 		MarshalAs,
@@ -130,6 +133,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
 			// Marshalling attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(MarshalAsAttribute)),
 			// Security attributes:
