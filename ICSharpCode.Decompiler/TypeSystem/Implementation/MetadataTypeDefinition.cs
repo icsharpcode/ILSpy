@@ -270,8 +270,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var context = new GenericContext(TypeParameters);
 				var interfaceImplCollection = td.GetInterfaceImplementations();
 				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
-				if (!td.BaseType.IsNil) {
-					baseTypes.Add(module.ResolveType(td.BaseType, context));
+				EntityHandle baseType = td.GetBaseTypeOrNil();
+				if (!baseType.IsNil) {
+					baseTypes.Add(module.ResolveType(baseType, context));
 				} else if (Kind == TypeKind.Interface) {
 					// td.BaseType.IsNil is always true for interfaces,
 					// but the type system expects every interface to derive from System.Object as well.

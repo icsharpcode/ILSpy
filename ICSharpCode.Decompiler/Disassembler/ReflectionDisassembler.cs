@@ -1274,13 +1274,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType);
 			output.WriteLine();
 
-			if (!typeDefinition.BaseType.IsNil) {
+			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+			if (!baseType.IsNil) {
 				output.Indent();
 				output.Write("extends ");
-				typeDefinition.BaseType.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
+				baseType.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
 				output.WriteLine();
 				output.Unindent();
 			}
+
 			var interfaces = typeDefinition.GetInterfaceImplementations();
 			if (interfaces.Count > 0) {
 				output.Indent();

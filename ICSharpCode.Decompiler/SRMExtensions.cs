@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsValueType(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
-			var baseType = typeDefinition.BaseType;
+			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
 			if (baseType.IsNil)
 				return false;
 			if (baseType.IsKnownType(reader, KnownTypeCode.Enum))
@@ -49,9 +49,10 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
-			if (typeDefinition.BaseType.IsNil)
+			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+			if (baseType.IsNil)
 				return false;
-			return typeDefinition.BaseType.IsKnownType(reader, KnownTypeCode.Enum);
+			return baseType.IsKnownType(reader, KnownTypeCode.Enum);
 		}
 
 		public static bool IsEnum(this TypeDefinitionHandle handle, MetadataReader reader, out PrimitiveTypeCode underlyingType)
@@ -62,9 +63,10 @@ namespace ICSharpCode.Decompiler
 		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader, out PrimitiveTypeCode underlyingType)
 		{
 			underlyingType = 0;
-			if (typeDefinition.BaseType.IsNil)
+			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+			if (baseType.IsNil)
 				return false;
-			if (!typeDefinition.BaseType.IsKnownType(reader, KnownTypeCode.Enum))
+			if (!baseType.IsKnownType(reader, KnownTypeCode.Enum))
 				return false;
 			var field = reader.GetFieldDefinition(typeDefinition.GetFields().First());
 			var blob = reader.GetBlobReader(field.Signature);
@@ -81,7 +83,7 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsDelegate(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
-			var baseType = typeDefinition.BaseType;
+			var baseType = typeDefinition.GetBaseTypeOrNil();
 			return !baseType.IsNil && baseType.IsKnownType(reader, KnownTypeCode.MulticastDelegate);
 		}
 		
@@ -409,6 +411,15 @@ namespace ICSharpCode.Decompiler
 			public int GetTypeFromSpecification(MetadataReader reader, GenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
 			{
 				return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+			}
+		}
+
+		public static EntityHandle GetBaseTypeOrNil(this TypeDefinition definition)
+		{
+			try {
+				return definition.BaseType;
+			} catch (BadImageFormatException) {
+				return default;
 			}
 		}
 	}
