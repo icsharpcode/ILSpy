@@ -57,17 +57,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (!loop-condition) leave loop-container
 			// ...
 			condition = null;
-			loopBody = null;
-			if (!(loop.EntryPoint.Instructions[0] is IfInstruction ifInstruction))
+			loopBody = loop.EntryPoint;
+			if (!(loopBody.Instructions[0] is IfInstruction ifInstruction))
 				return false;
+
 			if (!ifInstruction.FalseInst.MatchNop())
 				return false;
+
 			if (UsesVariableCapturedInLoop(loop, ifInstruction.Condition))
 				return false;
 
 			condition = ifInstruction;
-			if (!ifInstruction.TrueInst.MatchLeave(loop))
-				return false;
+			if (!ifInstruction.TrueInst.MatchLeave(loop)) {
+				// sometimes the loop-body is nested within the if
+				// if (loop-condition) { loop-body }
+				// leave loop-container
+
+				if (loopBody.Instructions.Count != 2 || !loop.EntryPoint.Instructions.Last().MatchLeave(loop))
+					return false;
+				
+				if (!ifInstruction.TrueInst.HasFlag(InstructionFlags.EndPointUnreachable))
+					((Block)ifInstruction.TrueInst).Instructions.Add(new Leave(loop));
+
+				ConditionDetection.InvertIf(loopBody, ifInstruction, context);
+			}
 			
 			context.Step("Transform to while (condition) loop", loop);
 			loop.Kind = ContainerKind.While;
@@ -95,26 +108,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
 			}*/
-
-			// Invert condition and unwrap nested block, if loop ends in a break or return statement preceeded by an IfInstruction.
-			/*while (loopBody.Instructions.Last() is Leave leave && loopBody.Instructions.SecondToLastOrDefault() is IfInstruction nestedIf && nestedIf.FalseInst.MatchNop()) {
-				switch (nestedIf.TrueInst) {
-					case Block nestedBlock:
-						loopBody.Instructions.RemoveAt(leave.ChildIndex);
-						loopBody.Instructions.AddRange(nestedBlock.Instructions);
-						break;
-					case Branch br:
-						leave.ReplaceWith(nestedIf.TrueInst);
-						break;
-					default:
-						return true;
-				}
-				nestedIf.Condition = Comp.LogicNot(nestedIf.Condition);
-				nestedIf.TrueInst = leave;
-				ExpressionTransforms.RunOnSingleStatment(nestedIf, context);
-				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
-					loopBody.Instructions.Add(new Leave(loop));
-			}*/
+			
 			return true;
 		}
 

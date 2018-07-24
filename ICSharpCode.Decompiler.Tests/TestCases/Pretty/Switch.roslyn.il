@@ -2960,6 +2960,65 @@
     IL_008d:  ret
   } // end of method Switch::SwitchWithContinue6
 
+  .method public hidebysig static void  SwitchWithContinue7() cil managed
+  {
+    // Code size       76 (0x4c)
+    .maxstack  2
+    .locals init (int32 V_0,
+             int32 V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0035
+
+    IL_0005:  nop
+    IL_0006:  ldstr      "loop-head"
+    IL_000b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0010:  nop
+    IL_0011:  ldloc.0
+    IL_0012:  stloc.1
+    IL_0013:  ldloc.1
+    IL_0014:  brfalse.s  IL_002b
+
+    IL_0016:  br.s       IL_0018
+
+    IL_0018:  ldloc.1
+    IL_0019:  ldc.i4.1
+    IL_001a:  beq.s      IL_002d
+
+    IL_001c:  br.s       IL_001e
+
+    IL_001e:  ldstr      "default"
+    IL_0023:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0028:  nop
+    IL_0029:  br.s       IL_002f
+
+    IL_002b:  br.s       IL_0031
+
+    IL_002d:  br.s       IL_002f
+
+    IL_002f:  br.s       IL_0040
+
+    IL_0031:  ldloc.0
+    IL_0032:  ldc.i4.1
+    IL_0033:  sub
+    IL_0034:  stloc.0
+    IL_0035:  ldloc.0
+    IL_0036:  ldc.i4.0
+    IL_0037:  clt
+    IL_0039:  ldc.i4.0
+    IL_003a:  ceq
+    IL_003c:  stloc.2
+    IL_003d:  ldloc.2
+    IL_003e:  brtrue.s   IL_0005
+
+    IL_0040:  ldstr      "end"
+    IL_0045:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004a:  nop
+    IL_004b:  ret
+  } // end of method Switch::SwitchWithContinue7
+
   .method public hidebysig static void  SwitchLoopNesting() cil managed
   {
     // Code size       140 (0x8c)
@@ -3634,6 +3693,52 @@
     IL_0047:  ldloc.s    V_4
     IL_0049:  ret
   } // end of method Switch::SwitchlikeIf2
+
+  .method public hidebysig static bool  Loop8(char c,
+                                              bool b,
+                                              class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    IL_0003:  ldloc.0
+    IL_0004:  brfalse.s  IL_0025
+
+    IL_0006:  nop
+    IL_0007:  br.s       IL_0013
+
+    IL_0009:  nop
+    IL_000a:  ldarg.2
+    IL_000b:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_0010:  starg.s    c
+    IL_0012:  nop
+    IL_0013:  ldarg.0
+    IL_0014:  ldc.i4.s   32
+    IL_0016:  beq.s      IL_001f
+
+    IL_0018:  ldarg.0
+    IL_0019:  ldc.i4.s   9
+    IL_001b:  ceq
+    IL_001d:  br.s       IL_0020
+
+    IL_001f:  ldc.i4.1
+    IL_0020:  stloc.1
+    IL_0021:  ldloc.1
+    IL_0022:  brtrue.s   IL_0009
+
+    IL_0024:  nop
+    IL_0025:  ldc.i4.1
+    IL_0026:  stloc.2
+    IL_0027:  br.s       IL_0029
+
+    IL_0029:  ldloc.2
+    IL_002a:  ret
+  } // end of method Switch::Loop8
 
   .method public hidebysig static void  SwitchWithBreakCase(int32 i,
                                                             bool b) cil managed

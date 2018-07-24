@@ -335,6 +335,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			       && ThenInstIsSingleExit(elseIfInst);
 		}
 
+		private void InvertIf(Block block, IfInstruction ifInst) => InvertIf(block, ifInst, context);
+
 		/// <summary>
 		///   if (cond) { then... }
 		///   else...;
@@ -345,7 +347,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Assumes ifInst does not have an else block
 		/// </summary>
-		private void InvertIf(Block block, IfInstruction ifInst)
+		internal static void InvertIf(Block block, IfInstruction ifInst, ILTransformContext context)
 		{
 			Debug.Assert(ifInst.Parent == block);
 			

@@ -813,6 +813,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			 } while (++i < 10);
 		}
 
+		// double break from switch to loop exit requires additional pattern matching in HighLevelLoopTransform
+		public static void SwitchWithContinue7()
+		{
+			for (int num = 0; num >= 0; num--) {
+				Console.WriteLine("loop-head");
+				switch (num) {
+					default:
+						Console.WriteLine("default");
+						break;
+					case 0:
+						continue;
+					case 1:
+						break;
+				}
+				break;
+			}
+			Console.WriteLine("end");
+		}
+
 		public static void SwitchLoopNesting()
 		{
 			for (int i = 0; i < 10; i++) {
@@ -967,6 +986,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return false;
 			}
 			return false;
+		}
+		
+		public static bool Loop8(char c, bool b, Func<char> getChar)
+		{
+			if (b) {
+				while (c == ' ' || c == '\t') {
+					c = getChar();
+				}
+			}
+
+			return true;
 		}
 		#endregion
 		

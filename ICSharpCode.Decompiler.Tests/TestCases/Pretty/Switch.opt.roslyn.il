@@ -2270,6 +2270,41 @@
     IL_006b:  ret
   } // end of method Switch::SwitchWithContinue6
 
+  .method public hidebysig static void  SwitchWithContinue7() cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0025
+
+    IL_0004:  ldstr      "loop-head"
+    IL_0009:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000e:  ldloc.0
+    IL_000f:  brfalse.s  IL_0021
+
+    IL_0011:  ldloc.0
+    IL_0012:  ldc.i4.1
+    IL_0013:  beq.s      IL_0029
+
+    IL_0015:  ldstr      "default"
+    IL_001a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001f:  br.s       IL_0029
+
+    IL_0021:  ldloc.0
+    IL_0022:  ldc.i4.1
+    IL_0023:  sub
+    IL_0024:  stloc.0
+    IL_0025:  ldloc.0
+    IL_0026:  ldc.i4.0
+    IL_0027:  bge.s      IL_0004
+
+    IL_0029:  ldstr      "end"
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0033:  ret
+  } // end of method Switch::SwitchWithContinue7
+
   .method public hidebysig static void  SwitchLoopNesting() cil managed
   {
     // Code size       92 (0x5c)
@@ -2655,6 +2690,32 @@
     IL_0023:  ldc.i4.0
     IL_0024:  ret
   } // end of method Switch::SwitchlikeIf2
+
+  .method public hidebysig static bool  Loop8(char c,
+                                              bool b,
+                                              class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  brfalse.s  IL_0017
+
+    IL_0003:  br.s       IL_000d
+
+    IL_0005:  ldarg.2
+    IL_0006:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_000b:  starg.s    c
+    IL_000d:  ldarg.0
+    IL_000e:  ldc.i4.s   32
+    IL_0010:  beq.s      IL_0005
+
+    IL_0012:  ldarg.0
+    IL_0013:  ldc.i4.s   9
+    IL_0015:  beq.s      IL_0005
+
+    IL_0017:  ldc.i4.1
+    IL_0018:  ret
+  } // end of method Switch::Loop8
 
   .method public hidebysig static void  SwitchWithBreakCase(int32 i,
                                                             bool b) cil managed
