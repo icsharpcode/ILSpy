@@ -84,11 +84,35 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
 				introduceRefAndReadonlyModifiersOnStructs = false;
+				nonTrailingNamedArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				//introduceUnmanagedTypeConstraint = false;
 				tupleComparisons = false;
 			}
+		}
+
+		public CSharp.LanguageVersion GetMinimumRequiredVersion()
+		{
+			if (tupleComparisons)
+				return CSharp.LanguageVersion.CSharp7_3;
+			if (IntroduceRefAndReadonlyModifiersOnStructs || nonTrailingNamedArguments)
+				return CSharp.LanguageVersion.CSharp7_2;
+			// C# 7.1 missing
+			if (outVariables || tupleTypes || tupleConversions || discards)
+				return CSharp.LanguageVersion.CSharp7;
+			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
+				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
+				return CSharp.LanguageVersion.CSharp6;
+			if (asyncAwait)
+				return CSharp.LanguageVersion.CSharp5;
+			if (dynamic || namedArguments || optionalArguments)
+				return CSharp.LanguageVersion.CSharp4;
+			if (anonymousTypes || objectCollectionInitializers || automaticProperties || queryExpressions || expressionTrees)
+				return CSharp.LanguageVersion.CSharp3;
+			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
+				return CSharp.LanguageVersion.CSharp2;
+			return CSharp.LanguageVersion.CSharp1;
 		}
 
 		bool anonymousMethods = true;
@@ -683,6 +707,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (namedArguments != value) {
 					namedArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool nonTrailingNamedArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.2 non-trailing named arguments should be used.
+		/// </summary>
+		public bool NonTrailingNamedArguments {
+			get { return nonTrailingNamedArguments; }
+			set {
+				if (nonTrailingNamedArguments != value) {
+					nonTrailingNamedArguments = value;
 					OnPropertyChanged();
 				}
 			}
