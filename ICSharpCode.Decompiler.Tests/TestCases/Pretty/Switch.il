@@ -3345,6 +3345,38 @@
     IL_004f:  ret
   } // end of method Switch::SwitchlikeIf2
 
+  .method public hidebysig static void  SingleIntervalIf(char c) cil managed
+  {
+    // Code size       44 (0x2c)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.s   65
+    IL_0004:  blt.s      IL_000d
+
+    IL_0006:  ldarg.0
+    IL_0007:  ldc.i4.s   90
+    IL_0009:  cgt
+    IL_000b:  br.s       IL_000e
+
+    IL_000d:  ldc.i4.1
+    IL_000e:  nop
+    IL_000f:  stloc.0
+    IL_0010:  ldloc.0
+    IL_0011:  brtrue.s   IL_0020
+
+    IL_0013:  nop
+    IL_0014:  ldstr      "alphabet"
+    IL_0019:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001e:  nop
+    IL_001f:  nop
+    IL_0020:  ldstr      "end"
+    IL_0025:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_002a:  nop
+    IL_002b:  ret
+  } // end of method Switch::SingleIntervalIf
+
   .method public hidebysig static bool  Loop8(char c,
                                               bool b,
                                               class [mscorlib]System.Func`1<char> getChar) cil managed

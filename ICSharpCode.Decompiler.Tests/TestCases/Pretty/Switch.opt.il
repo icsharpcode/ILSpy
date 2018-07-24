@@ -2530,6 +2530,25 @@
     IL_0024:  ret
   } // end of method Switch::SwitchlikeIf2
 
+  .method public hidebysig static void  SingleIntervalIf(char c) cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   65
+    IL_0003:  blt.s      IL_0014
+
+    IL_0005:  ldarg.0
+    IL_0006:  ldc.i4.s   90
+    IL_0008:  bgt.s      IL_0014
+
+    IL_000a:  ldstr      "alphabet"
+    IL_000f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0014:  ldstr      "end"
+    IL_0019:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001e:  ret
+  } // end of method Switch::SingleIntervalIf
+
   .method public hidebysig static bool  Loop8(char c,
                                               bool b,
                                               class [mscorlib]System.Func`1<char> getChar) cil managed

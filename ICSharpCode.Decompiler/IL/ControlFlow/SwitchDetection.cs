@@ -197,6 +197,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// heuristic to determine if a block would be better represented as an if statement rather than a case statement
 			if (ifCount < labelCount)
 				return false;
+
+			// don't create switch statements with only one non-default label (provided the if option is short enough)
+			if (analysis.Sections.Count == 2 && ifCount <= 2)
+				return false;
 			
 			// if there is no ILSwitch, there's still many control flow patterns that 
 			// match a switch statement but were originally just regular if statements,

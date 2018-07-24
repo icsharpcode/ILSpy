@@ -987,6 +987,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return false;
 		}
+
+		public static void SingleIntervalIf(char c)
+		{
+			if (c >= 'A' && c <= 'Z') {
+				Console.WriteLine("alphabet");
+			}
+			Console.WriteLine("end");
+		}
 		
 		public static bool Loop8(char c, bool b, Func<char> getChar)
 		{
