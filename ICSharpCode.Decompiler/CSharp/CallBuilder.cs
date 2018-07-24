@@ -253,8 +253,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref target,
-				argumentList.Arguments, argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex,
-				argumentList.ExpectedParameters, CallTransformation.All, out IParameterizedMember foundMethod);
+				ref argumentList, CallTransformation.All, out IParameterizedMember foundMethod);
 
 			// Note: after this, 'method' and 'foundMethod' may differ,
 			// but as far as allowed by IsAppropriateCallTarget().
@@ -327,84 +326,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			// ILAst level, therefore we have to exclude the first argument.
 			int firstParamIndex = method.IsExtensionMethod ? 1 : 0;
 
-			var arguments = new List<TranslatedExpression>(callArguments.Count);
-			Debug.Assert(callArguments.Count == method.Parameters.Count - firstParamIndex);
-			var expectedParameters = new List<IParameter>(arguments.Count); // parameters, but in argument order
-			bool isExpandedForm = false;
-
-			// Optional arguments:
-			// We only allow removing optional arguments in the following cases:
-			// - call arguments are not in expanded form
-			// - there are no named arguments
-			// This value has the following values:
-			// -2 - there are no optional arguments
-			// -1 - optional arguments are forbidden
-			// >= 0 - the index of the first argument that can be removed, because it is optional
-			// and is the default value of the parameter. 
-			int firstOptionalArgumentIndex = expressionBuilder.settings.OptionalArguments ? -2 : -1;
-
-			for (int i = 0; i < callArguments.Count; i++) {
-				var parameter = method.Parameters[i + firstParamIndex];
-
-				var arg = expressionBuilder.Translate(callArguments[i], parameter.Type);
-				if (IsOptionalArgument(parameter, arg)) {
-					if (firstOptionalArgumentIndex == -2)
-						firstOptionalArgumentIndex = i - firstParamIndex;
-				} else {
-					firstOptionalArgumentIndex = -2;
-				}
-				if (parameter.IsParams && i + 1 == callArguments.Count) {
-					// Parameter is marked params
-					// If the argument is an array creation, inline all elements into the call and add missing default values.
-					// Otherwise handle it normally.
-					if (TransformParamsArgument(expectedTargetDetails, target, method, parameter,
-						arg, ref expectedParameters, ref arguments)) {
-						isExpandedForm = true;
-						firstOptionalArgumentIndex = -1;
-						continue;
-					}
-				}
-
-				IType parameterType;
-				if (parameter.Type.Kind == TypeKind.Dynamic) {
-					parameterType = expressionBuilder.compilation.FindType(KnownTypeCode.Object);
-				} else {
-					parameterType = parameter.Type;
-				}
-
-				arg = arg.ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: arg.Type.Kind != TypeKind.Dynamic);
-
-				arguments.Add(arg);
-				expectedParameters.Add(parameter);
-			}
+			var argumentList = BuildArgumentList(expectedTargetDetails, target, method,
+				firstParamIndex, callArguments, null);
+			argumentList.ArgumentNames = null;
+			argumentList.AddNamesToPrimitiveValues = false;
 
 			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
-				arguments, null, firstOptionalArgumentIndex, expectedParameters, CallTransformation.None, out IParameterizedMember foundMethod);
+				ref argumentList, CallTransformation.None, out IParameterizedMember foundMethod);
 			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
 			// Note: we intentionally ignore the firstOptionalArgumentIndex in this case.
-			if (arguments.Count == 1)
-				return arguments[0];
+			if (argumentList.Arguments.Length == 1)
+				return argumentList.Arguments[0];
 
 			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
-				firstOptionalArgumentIndex = -1;
+				argumentList.FirstOptionalArgumentIndex = -1;
 
-			ResolveResult[] argumentResolveResults;
-			IEnumerable<Expression> elements;
-
-			if (firstOptionalArgumentIndex < 0) {
-				elements = arguments.Select(a => a.Expression);
-				argumentResolveResults = arguments.SelectArray(a => a.ResolveResult);
-			} else {
-				elements = arguments.Take(firstOptionalArgumentIndex).Select(a => a.Expression);
-				argumentResolveResults = arguments.Take(firstOptionalArgumentIndex).Select(a => a.ResolveResult).ToArray();
-			}
-			return new ArrayInitializerExpression(elements)
-				.WithRR(new CSharpInvocationResolveResult(target, method, argumentResolveResults,
-					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: isExpandedForm));
+			return new ArrayInitializerExpression(argumentList.GetArgumentExpressions())
+				.WithRR(new CSharpInvocationResolveResult(target, method, argumentList.GetArgumentResolveResults().ToArray(),
+					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: argumentList.IsExpandedForm));
 		}
 
 		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, int firstParamIndex,
@@ -569,8 +512,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ref TranslatedExpression target, IList<TranslatedExpression> arguments, string[] argumentNames, int firstOptionalArgumentIndex,
-			IList<IParameter> expectedParameters, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
+			ref TranslatedExpression target, ref ArgumentList argumentList, CallTransformation allowedTransforms, out IParameterizedMember foundMethod)
 		{
 			CallTransformation transform = CallTransformation.None;
 
@@ -603,14 +545,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType[] typeArguments;
 			bool appliedRequireTypeArgumentsShortcut = false;
 			if (method.TypeParameters.Count > 0 && (allowedTransforms & CallTransformation.RequireTypeArguments) != 0
-				&& !IsPossibleExtensionMethodCallOnNull(method, arguments)) {
+				&& !IsPossibleExtensionMethodCallOnNull(method, argumentList.Arguments)) {
 				// The ambiguity resolution below only adds type arguments as last resort measure, however there are
 				// methods, such as Enumerable.OfType<TResult>(IEnumerable input) that always require type arguments,
 				// as those cannot be inferred from the parameters, which leads to bloated expressions full of extra casts
 				// that are no longer required once we add the type arguments.
 				// We lend overload resolution a hand by detecting such cases beforehand and requiring type arguments,
 				// if necessary.
-				if (!CanInferTypeArgumentsFromParameters(method, arguments.SelectArray(a => a.ResolveResult), expressionBuilder.typeInference)) {
+				if (!CanInferTypeArgumentsFromParameters(method, argumentList.Arguments.SelectArray(a => a.ResolveResult), expressionBuilder.typeInference)) {
 					requireTypeArguments = true;
 					typeArguments = method.TypeArguments.ToArray();
 					appliedRequireTypeArgumentsShortcut = true;
@@ -626,7 +568,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool targetCasted = false;
 			bool argumentsCasted = false;
 			OverloadResolutionErrors errors;
-			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments, arguments, argumentNames, firstOptionalArgumentIndex, out foundMethod)) != OverloadResolutionErrors.None) {
+			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
+				argumentList.Arguments, argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod)) != OverloadResolutionErrors.None)
+			{
 				switch (errors) {
 					case OverloadResolutionErrors.TypeInferenceFailed:
 						if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0) {
@@ -640,14 +584,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeArguments = method.TypeArguments.ToArray();
 						continue;
 					case OverloadResolutionErrors.MissingArgumentForRequiredParameter:
-						if (firstOptionalArgumentIndex == -1) goto default;
-						firstOptionalArgumentIndex = -1;
+						if (argumentList.FirstOptionalArgumentIndex == -1) goto default;
+						argumentList.FirstOptionalArgumentIndex = -1;
 						continue;
 					default:
 						// TODO : implement some more intelligent algorithm that decides which of these fixes (cast args, add target, cast target, add type args)
 						// is best in this case. Additionally we should not cast all arguments at once, but step-by-step try to add only a minimal number of casts.
-						if (firstOptionalArgumentIndex >= 0) {
-							firstOptionalArgumentIndex = -1;
+						if (argumentList.FirstOptionalArgumentIndex >= 0) {
+							argumentList.FirstOptionalArgumentIndex = -1;
 						} else if (!argumentsCasted) {
 							// If we added type arguments beforehand, but that didn't make the code any better,
 							// undo that decision and add casts first.
@@ -657,7 +601,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								appliedRequireTypeArgumentsShortcut = false;
 							}
 							argumentsCasted = true;
-							CastArguments(arguments, expectedParameters);
+							CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
 						} else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !requireTarget) {
 							requireTarget = true;
 							targetResolveResult = target.ResolveResult;
@@ -681,7 +625,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				transform |= CallTransformation.RequireTarget;
 			if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && requireTypeArguments)
 				transform |= CallTransformation.RequireTypeArguments;
-			if (firstOptionalArgumentIndex < 0)
+			if (argumentList.FirstOptionalArgumentIndex < 0)
 				transform |= CallTransformation.NoOptionalArgumentAllowed;
 			return transform;
 		}
