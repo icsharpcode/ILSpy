@@ -143,6 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return;
 			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
+			propertyDeclaration.Getter.Remove();
 		}
 	}
 }
