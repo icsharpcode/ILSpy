@@ -306,6 +306,22 @@ namespace ICSharpCode.Decompiler.Util
 			list.RemoveAt(list.Count - 1);
 		}
 
+		public static T OnlyOrDefault<T>(this IEnumerable<T> source, Func<T, bool> predicate) => OnlyOrDefault(source.Where(predicate));
+
+		public static T OnlyOrDefault<T>(this IEnumerable<T> source)
+		{
+			bool any = false;
+			T first = default;
+			foreach (var t in source) {
+				if (any)
+					return default(T);
+				first = t;
+				any = true;
+			}
+
+			return first;
+		}
+
 		#region Aliases/shortcuts for Enumerable extension methods
 		public static bool Any<T>(this ICollection<T> list) => list.Count > 0;
 		public static bool Any<T>(this T[] array, Predicate<T> match) => Array.Exists(array, match);

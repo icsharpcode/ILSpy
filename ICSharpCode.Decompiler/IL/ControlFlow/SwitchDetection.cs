@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private bool UseCSharpSwitch(out KeyValuePair<LongSet, ILInstruction> defaultSection)
 		{
 			if (!analysis.InnerBlocks.Any()) {
-				defaultSection = default(KeyValuePair<LongSet, ILInstruction>);
+				defaultSection = default;
 				return false;
 			}
 			defaultSection = analysis.Sections.FirstOrDefault(s => s.Key.Count() > MaxValuesPerSection);
@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// The switch has a single break target and there is one more hint
 			// The break target cannot be inlined, and should have the highest IL offset of everything targetted by the switch
-			return breakBlock.ChildIndex >= analysis.Sections.Select(s => s.Value.MatchBranch(out var b) ? b.ChildIndex : -1).Max();
+			return breakBlock.ILRange.Start >= analysis.Sections.Select(s => s.Value.MatchBranch(out var b) ? b.ILRange.Start : -1).Max();
 		}
 
 		/// <summary>
@@ -238,6 +238,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
 
+			var switchHead = controlFlowGraph.GetNode(analysis.RootBlock);
 			// grab the control flow nodes for blocks targetted by each section
 			var caseNodes = new List<ControlFlowNode>();
 			foreach (var s in analysis.Sections) {
@@ -245,7 +246,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 
 				var node = controlFlowGraph.GetNode(block);
-				if (!IsContinue(node))
+				if (!IsContinue(switchHead, node))
 					caseNodes.Add(node);
 			}
 
@@ -262,7 +263,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return true; // cannot have more than one break case without gotos
 			
 			// check that case nodes flow through a single point
-			var breakTargets = caseNodes.Except(externalCases).SelectMany(GetBreakTargets).ToHashSet();
+			var breakTargets = caseNodes.Except(externalCases).SelectMany(n => GetBreakTargets(switchHead, n)).ToHashSet();
 
 			// if there are multiple break targets, then gotos are required
 			// if there are none, then the external case (if any) can be the break target
@@ -307,7 +308,48 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			flowBlocks.Add(nullableBlock);
 		}
 
-		internal static bool IsContinue(ControlFlowNode node) => false;
+		internal static bool IsContinue(ControlFlowNode innerLoopHead, ControlFlowNode node) =>
+			IsContinue(node, out var outerLoopHead) && outerLoopHead.Dominates(innerLoopHead);
+		
+		private static bool IsContinue(ControlFlowNode node, out ControlFlowNode loopHead)
+		{
+			bool IsLoopHead(ControlFlowNode n) => n.Predecessors.Any(n.Dominates);
+			ControlFlowNode OnlyInloopPred(ControlFlowNode n) => n.Predecessors.OnlyOrDefault(p => p != n && n.Dominates(p));
+			
+			loopHead = null;
+
+			// loop head
+			if (IsLoopHead(node)) {
+				var preBlock = OnlyInloopPred(node);
+				if (preBlock != null && IsContinue(preBlock, out var preHead) && preHead == node)
+					return false;
+
+				loopHead = node;
+				return true;
+			}
+
+			// match for loop increment block
+			if (node.Successors.Count == 1) {
+				// potential loop head
+				loopHead = node.Successors.SingleOrDefault(s => IsLoopHead(s) && OnlyInloopPred(s) == node);
+				if (loopHead != null &&
+						HighLevelLoopTransform.MatchIncrementBlock((Block)node.UserData, out var target) &&
+						target == loopHead.UserData)
+					return true;
+			}
+
+			// match do-while condition
+			if (node.Successors.Count <= 2) {
+				// potential loop head
+				loopHead = node.Successors.OnlyOrDefault(s => IsLoopHead(s) && OnlyInloopPred(s) == node);
+				if (loopHead != null &&
+						HighLevelLoopTransform.MatchDoWhileConditionBlock((Block)node.UserData, out var t1, out var t2) &&
+						(t1 == loopHead.UserData || t2 == loopHead.UserData))
+					return true;
+			}
+
+			return false;
+		}
 		
 		/// <summary>
 		/// Lists all potential targets for break; statements from a domination tree,
@@ -318,8 +360,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Note that node will be returned once for every outgoing edge
 		/// </summary>
-		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) => 
-			TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !IsContinue(c)))
-			.SelectMany(n => n.Successors.Where(c => !dominator.Dominates(c) && !IsContinue(c)));
+		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode loopHead, ControlFlowNode dominator) => 
+			TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !IsContinue(loopHead, c)))
+				.SelectMany(n => n.Successors)
+				.Where(n => !dominator.Dominates(n) && !IsContinue(loopHead, n));
 	}
 }

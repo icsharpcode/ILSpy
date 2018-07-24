@@ -243,8 +243,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// outside the loop, or we are in case 2 and found an exit point via post-dominance.
 				// Note that if exitPoint == NoExitPoint, we end up adding all dominated blocks to the loop.
 				var ep = exitPoint;
-				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != ep) ? n.DominatorTreeChildren : null)) {
-					if (node != exitPoint && !node.Visited) {
+				foreach (var node in TreeTraversal.PreOrder(loopHead, n => DominatorTreeChildren(n, ep, isSwitch))) {
+					if (!node.Visited) {
 						node.Visited = true;
 						loop.Add(node);
 					}
@@ -272,14 +272,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 3) otherwise (exit point unknown, heuristically extend loop): null
 		/// </returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool treatBackEdgesAsExits)
+		internal ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool isSwitch)
 		{
-			bool hasReachableExit = context.ControlFlowGraph.HasReachableExit(loopHead);
-			if (!hasReachableExit && treatBackEdgesAsExits) {
-				// If we're analyzing the switch, there's no reachable exit, but the loopHead (=switchHead) block
-				// is also a loop head, we consider the back-edge a reachable exit for the switch.
-				hasReachableExit = loopHead.Predecessors.Any(p => loopHead.Dominates(p));
-			}
+			bool hasReachableExit = HasReachableExit(loopHead, isSwitch);
 			if (!hasReachableExit) {
 				// Case 1:
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
@@ -297,7 +292,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ControlFlowNode exitPoint = null;
 				int exitPointILOffset = -1;
 				foreach (var node in loopHead.DominatorTreeChildren) {
-					PickExitPoint(node, ref exitPoint, ref exitPointILOffset);
+					PickExitPoint(node, isSwitch, ref exitPoint, ref exitPointILOffset);
 				}
 				return exitPoint;
 			} else {
@@ -305,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// We need to pick our exit point so that all paths from the loop head
 				// to the reachable exits run through that exit point.
 				var cfg = context.ControlFlowGraph.cfg;
-				var revCfg = PrepareReverseCFG(loopHead, treatBackEdgesAsExits, out int exitNodeArity);
+				var revCfg = PrepareReverseCFG(loopHead, isSwitch, out int exitNodeArity);
 				//ControlFlowNode.ExportGraph(cfg).Show("cfg");
 				//ControlFlowNode.ExportGraph(revCfg).Show("rev");
 				ControlFlowNode commonAncestor = revCfg[loopHead.UserIndex];
@@ -338,13 +333,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// * The loop has a single exit point that wasn't considered during post-dominance analysis.
 				//        (which means the single exit isn't dominated by the loop head)
 				//     -> we should return NoExitPoint so that all code dominated by the loop head is included into the loop
-				if (exitNodeArity > 1) {
+				if (exitNodeArity > 1)
 					return null;
-				} else {
-					// If exitNodeArity == 0, we should maybe look test if our exits out of the block container are all compatible?
-					// but I don't think it hurts to have a bit too much code inside the loop in this rare case.
-					return NoExitPoint;
-				}
+
+				if (exitNodeArity == 1 && isSwitch)
+					return SwitchDetection.GetBreakTargets(loopHead, loopHead).Distinct().Single();
+
+				// If exitNodeArity == 0, we should maybe look test if our exits out of the block container are all compatible?
+				// but I don't think it hurts to have a bit too much code inside the loop in this rare case.
+				return NoExitPoint;
 			}
 		}
 
@@ -385,6 +382,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
+		bool HasReachableExit(ControlFlowNode node, bool isSwitch) => isSwitch
+			? SwitchDetection.GetBreakTargets(context.ControlFlowNode, node).Any()
+			: context.ControlFlowGraph.HasReachableExit(node);
+		
+		IEnumerable<ControlFlowNode> DominatorTreeChildren(ControlFlowNode n, ControlFlowNode exitPoint, bool isSwitch) => 
+			n.DominatorTreeChildren.Where(c => c != exitPoint && (!isSwitch || !SwitchDetection.IsContinue(context.ControlFlowNode, c)));
+
 		/// <summary>
 		/// Pick exit point by picking any node that has no reachable exits.
 		/// 
@@ -395,11 +399,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		void PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
+		void PickExitPoint(ControlFlowNode node, bool isSwitch, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
 		{
+			if (isSwitch && SwitchDetection.IsContinue(context.ControlFlowNode, node))
+				return;
+
 			Block block = (Block)node.UserData;
 			if (block.ILRange.Start > exitPointILOffset
-				&& !context.ControlFlowGraph.HasReachableExit(node)
+				&& !HasReachableExit(node, isSwitch)
 				&& ((Block)node.UserData).Parent == currentBlockContainer)
 			{
 				// HasReachableExit(node) == false
@@ -418,7 +425,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// moving almost all of the code into the loop.
 			}
 			foreach (var child in node.DominatorTreeChildren) {
-				PickExitPoint(child, ref exitPoint, ref exitPointILOffset);
+				PickExitPoint(child, isSwitch, ref exitPoint, ref exitPointILOffset);
 			}
 		}
 
@@ -431,7 +438,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// or that leave the block Container.
 		/// </summary>
 		/// <param name="loopHead">Entry point of the loop.</param>
-		/// <param name="treatBackEdgesAsExits">Whether to treat loop back edges as exit points.</param>
+		/// <param name="isSwitch">Whether to ignore branches that map to C# 'continue' statements.</param>
 		/// <param name="exitNodeArity">out: The number of different CFG nodes.
 		/// Possible values:
 		///  0 = no CFG nodes used as exit nodes (although edges leaving the block container might still be exits);
@@ -439,7 +446,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///  2 = more than one CFG node (not dominated by loopHead) was used as an exit node.
 		/// </param>
 		/// <returns></returns>
-		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool treatBackEdgesAsExits, out int exitNodeArity)
+		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool isSwitch, out int exitNodeArity)
 		{
 			ControlFlowNode[] cfg = context.ControlFlowGraph.cfg;
 			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
@@ -451,11 +458,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
 			rev[cfg.Length] = exitNode;
 			for (int i = 0; i < cfg.Length; i++) {
-				if (!loopHead.Dominates(cfg[i]))
+				if (!loopHead.Dominates(cfg[i]) || isSwitch && SwitchDetection.IsContinue(loopHead, cfg[i]))
 					continue;
+
 				// Add reverse edges for all edges in cfg
 				foreach (var succ in cfg[i].Successors) {
-					if (loopHead.Dominates(succ) && (!treatBackEdgesAsExits || loopHead != succ)) {
+					if (isSwitch && SwitchDetection.IsContinue(loopHead, succ))
+						continue;
+
+					if (loopHead.Dominates(succ)) {
 						rev[succ.UserIndex].AddEdgeTo(rev[i]);
 					} else {
 						if (nodeTreatedAsExitNode == null)
@@ -662,7 +673,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			nodesInSwitch.Add(h);
 			h.Visited = true;
 			ExtendLoop(h, nodesInSwitch, out var exitPoint, isSwitch: true);
-			if (exitPoint != null && exitPoint.Predecessors.Count == 1 && !context.ControlFlowGraph.HasReachableExit(exitPoint)) {
+			if (exitPoint != null && exitPoint.Predecessors.Count == 1 && !HasReachableExit(exitPoint, true)) {
 				// If the exit point is reachable from just one single "break;",
 				// it's better to move the code into the switch.
 				// (unlike loops which should not be nested unless necessary,

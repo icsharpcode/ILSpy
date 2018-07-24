@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -460,6 +461,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("End of method");
 		}
+		
+		public static void SwitchWithGotoComplex(string s)
+		{
+			Console.WriteLine("SwitchWithGotoComplex: " + s);
+			switch (s) {
+				case "1":
+					Console.WriteLine("one");
+					goto case "8";
+				case "2":
+					Console.WriteLine("two");
+					goto case "3";
+				case "3":
+					Console.WriteLine("three");
+					if (s.Length != 2) {
+						break;
+					}
+					goto case "5";
+				case "4":
+					Console.WriteLine("four");
+					goto case "5";
+				case "5":
+					Console.WriteLine("five");
+					goto case "8";
+				case "6":
+					Console.WriteLine("six");
+					goto case "5";
+				case "8":
+					Console.WriteLine("eight");
+					return;
+				// add a default case so that case "7": isn't redundant
+				default:
+					Console.WriteLine("default");
+					break;
+				// note that goto case "7" will decompile as break;
+				// cases with a single break have the highest IL offset and are moved to the bottom
+				case "7":
+					break;
+			}
+			Console.WriteLine("End of method");
+		}
 
 		private static SetProperty[] GetProperties()
 		{
@@ -538,6 +579,266 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 			Console.WriteLine("end");
+		}
+
+		public static void SwitchWithContinue1(int i, bool b)
+		{
+			while (true) {
+				switch (i) {
+#if OPT
+					case 1:
+						continue;
+#endif
+					case 0:
+						if (b) {
+							continue;
+						}
+						break;
+					case 2:
+						if (!b) {
+							continue;
+						}
+						break;
+#if !OPT
+					case 1:
+						continue;
+#endif
+				}
+				Console.WriteLine();
+			}
+		}
+		
+		// while condition, return and break cases
+		public static void SwitchWithContinue2(int i, bool b)
+		{
+			while (i < 10) {
+				switch (i) {
+					case 0:
+						if (b) {
+							Console.WriteLine("0b");
+							continue;
+						}
+						Console.WriteLine("0!b");
+						break;
+					case 2:
+#if OPT
+						if (b) {
+							Console.WriteLine("2b");
+							return;
+						}
+						Console.WriteLine("2!b");
+						continue;
+#else
+						if (!b) {
+							Console.WriteLine("2!b");
+							continue;
+						}
+						Console.WriteLine("2b");
+						return;
+#endif
+					default:
+						Console.WriteLine("default");
+						break;
+					case 3:
+						break;
+					case 1:
+						continue;
+				}
+				Console.WriteLine("loop-tail");
+				i++;
+			}
+		}
+		
+		// for loop version
+		public static void SwitchWithContinue3(bool b)
+		{
+			for (int i = 0; i < 10; i++) {
+				switch (i) {
+					case 0:
+						if (b) {
+							Console.WriteLine("0b");
+							continue;
+						}
+						Console.WriteLine("0!b");
+						break;
+					case 2:
+#if OPT
+						if (b) {
+							Console.WriteLine("2b");
+							return;
+						}
+						Console.WriteLine("2!b");
+						continue;
+#else
+						if (!b) {
+							Console.WriteLine("2!b");
+							continue;
+						}
+						Console.WriteLine("2b");
+						return;
+#endif
+					default:
+						Console.WriteLine("default");
+						break;
+					case 3:
+						break;
+					case 1:
+						continue;
+				}
+				Console.WriteLine("loop-tail");
+			}
+		}
+		
+		// foreach version
+		public static void SwitchWithContinue4(bool b)
+		{
+			foreach (int item in Enumerable.Range(0, 10)) {
+				Console.WriteLine("loop: " + item);
+				switch (item) {
+					case 1:
+						if (b) {
+							continue;
+						}
+						break;
+					case 3:
+						if (!b) {
+							continue;
+						}
+						return;
+					case 4:
+						Console.WriteLine(4);
+						goto case 7;
+					case 5:
+						Console.WriteLine(5);
+						goto default;
+					case 6:
+						if (b) {
+							continue;
+						}
+						goto case 3;
+					case 7:
+						if (item % 2 == 0) {
+							goto case 3;
+						}
+						if (!b) {
+							continue;
+						}
+						goto case 8;
+					case 8:
+						if (b) {
+							continue;
+						}
+						goto case 5;
+					default:
+						Console.WriteLine("default");
+						break;
+					case 2:
+						continue;
+				}
+				Console.WriteLine("break: " + item);
+			}
+		}
+		// internal if statement, loop increment block not dominated by the switch head
+		public static void SwitchWithContinue5(bool b)
+		{
+			for (int i = 0; i < 10; i++) {
+				if (i < 5) {
+					switch (i) {
+						case 0:
+							if (b) {
+								Console.WriteLine("0b");
+								continue;
+							}
+							Console.WriteLine("0!b");
+							break;
+						case 2:
+#if OPT
+							if (b) {
+								Console.WriteLine("2b");
+								return;
+							}
+							Console.WriteLine("2!b");
+							continue;
+#else
+							if (!b) {
+								Console.WriteLine("2!b");
+								continue;
+							}
+							Console.WriteLine("2b");
+							return;
+#endif
+						default:
+							Console.WriteLine("default");
+							break;
+						case 3:
+							break;
+						case 1:
+							continue;
+					}
+					Console.WriteLine("break-target");
+				}
+				Console.WriteLine("loop-tail");
+			}
+		}
+
+		// do-while loop version
+		public static void SwitchWithContinue6(int i, bool b)
+		{
+			do {
+				switch (i) {
+					case 0:
+						if (!b) {
+							Console.WriteLine("0!b");
+							break;
+						}
+						Console.WriteLine("0b");
+						// ConditionDetection doesn't recognise Do-While continues yet
+						continue;
+					case 2:
+						if (b) {
+							Console.WriteLine("2b");
+							return;
+						}
+						Console.WriteLine("2!b");
+						continue;
+					default:
+						Console.WriteLine("default");
+						break;
+					case 3:
+						break;
+					case 1:
+						continue;
+				}
+				Console.WriteLine("loop-tail");
+			 } while (++i < 10);
+		}
+
+		public static void SwitchLoopNesting()
+		{
+			for (int i = 0; i < 10; i++) {
+				switch (i) {
+					case 0:
+						Console.WriteLine(0);
+						break;
+					case 1:
+						Console.WriteLine(1);
+						break;
+					default:
+						if (i % 2 == 0) {
+							while (i % 3 != 0) {
+								Console.WriteLine(i++);
+							}
+						}
+						Console.WriteLine();
+						break;
+				}
+
+				if (i > 4) {
+					Console.WriteLine("high");
+				} else {
+					Console.WriteLine("low");
+				}
+			}
 		}
 
 		// These decompile poorly into switch statements and should be left as is

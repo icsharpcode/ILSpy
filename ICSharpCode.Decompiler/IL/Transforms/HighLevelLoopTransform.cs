@@ -325,10 +325,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		// early match before block containers have been constructed
+		internal static bool MatchDoWhileConditionBlock(Block block, out Block target1, out Block target2)
+		{
+			target1 = target2 = null;
+			if (block.Instructions.Count < 2)
+				return false;
+
+			var last = block.Instructions.Last();
+			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInstruction) || !ifInstruction.FalseInst.MatchNop())
+				return false;
+
+			return (ifInstruction.TrueInst.MatchBranch(out target1) || ifInstruction.TrueInst.MatchReturn(out var _)) &&
+			       (last.MatchBranch(out target2) || last.MatchReturn(out var _));
+		}
+
 		internal static Block GetIncrementBlock(BlockContainer loop, Block whileLoopBody) => 
 			loop.Blocks.SingleOrDefault(b => b != whileLoopBody
 			                              && b.Instructions.Last().MatchBranch(loop.EntryPoint)
 			                              && b.Instructions.SkipLast(1).All(IsSimpleStatement));
+
+		internal static bool MatchIncrementBlock(Block block, out Block loopHead) =>
+			block.Instructions.Last().MatchBranch(out loopHead) 
+			&& block.Instructions.SkipLast(1).All(IsSimpleStatement);
 
 		bool MatchForLoop(BlockContainer loop, IfInstruction whileCondition, Block whileLoopBody)
 		{
