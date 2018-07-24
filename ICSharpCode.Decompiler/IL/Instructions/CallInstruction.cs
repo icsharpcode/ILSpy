@@ -121,12 +121,12 @@ namespace ICSharpCode.Decompiler.IL
 			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1) {
-				Debug.Assert(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType),
-					$"Stack type mismatch in 'this' argument in call to {Method.Name}()");
+				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType)))
+					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
 			for (int i = 0; i < Method.Parameters.Count; ++i) {
-				Debug.Assert(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType(),
-					$"Stack type mismatch in parameter {i} in call to {Method.Name}()");
+				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
+					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
 		}
 
