@@ -416,9 +416,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
 			string[] argumentNames = null;
 			Debug.Assert(callArguments.Count == firstParamIndex + method.Parameters.Count);
-			var expectedParameters = new List<IParameter>(arguments.Count); // parameters, but in argument order
+			var expectedParameters = new List<IParameter>(method.Parameters.Count); // parameters, but in argument order
 			bool isExpandedForm = false;
-			BitSet isPrimitiveValue = new BitSet(arguments.Count);
+			BitSet isPrimitiveValue = new BitSet(method.Parameters.Count);
 
 			// Optional arguments:
 			// This value has the following values:
