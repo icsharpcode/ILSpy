@@ -386,8 +386,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					parameter = method.Parameters[i - firstParamIndex];
 				}
 				var arg = expressionBuilder.Translate(callArguments[i], parameter.Type);
-				if (arg.ResolveResult.IsCompileTimeConstant && !method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
-					&& arg.ResolveResult.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				if (IsPrimitiveValueThatShouldHaveNamedArgument(arg, method)) {
 					isPrimitiveValue.Set(arguments.Count);
 				}
 				if (IsOptionalArgument(parameter, arg)) {
@@ -435,6 +434,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			list.FirstOptionalArgumentIndex = firstOptionalArgumentIndex;
 			list.AddNamesToPrimitiveValues = expressionBuilder.settings.NonTrailingNamedArguments;
 			return list;
+		}
+
+		private bool IsPrimitiveValueThatShouldHaveNamedArgument(TranslatedExpression arg, IMethod method)
+		{
+			if (!arg.ResolveResult.IsCompileTimeConstant || method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT))
+				return false;
+			return arg.ResolveResult.Type.IsKnownType(KnownTypeCode.Boolean);
 		}
 
 		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails, ResolveResult targetResolveResult,
