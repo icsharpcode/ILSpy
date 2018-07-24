@@ -82,13 +82,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 
 		private static void Test2()
 		{
-			C c = new C();
-			if (c && c) {
-				Console.WriteLine(c.ToString());
+			if (GetC(1) && GetC(2)) {
+				Console.WriteLine(GetC(3));
 			}
-
-			if (!(c && c)) {
-				Console.WriteLine(c.ToString());
+			if (GetC(1) || GetC(2)) {
+				Console.WriteLine(GetC(3));
+			}
+			if (!(GetC(1) && GetC(2))) {
+				Console.WriteLine(GetC(3));
 			}
 		}
 
@@ -100,6 +101,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 			}
 			if (!c) {
 				Console.WriteLine(c.ToString());
+			}
+		}
+
+		public void WithDynamic(dynamic d)
+		{
+			Console.WriteLine(GetC(1) && d.P);
+			Console.WriteLine(GetC(2) || d.P);
+			if (GetC(3) && d.P) {
+				Console.WriteLine(GetC(4));
+			}
+			if (GetC(5) || d.P) {
+				Console.WriteLine(GetC(6));
 			}
 		}
 	}
@@ -165,6 +178,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomShortCircuitOperat
 				Console.WriteLine("d");
 			} else {
 				Console.WriteLine("e");
+			}
+		}
+
+		public void WithDynamic(dynamic d)
+		{
+			Console.WriteLine(Get(1) && d.P);
+			Console.WriteLine(Get(2) || d.P);
+			if (Get(3) && d.P) {
+				Console.WriteLine(Get(4));
+			}
+			if (Get(5) || d.P) {
+				Console.WriteLine(Get(6));
 			}
 		}
 	}

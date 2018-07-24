@@ -18,7 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -50,6 +54,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (trueInst.MatchReturn(out var trueValue) && falseInst.MatchReturn(out var falseValue)) {
 				var transformed = Transform(condition, trueValue, falseValue);
+				if (transformed == null) {
+					transformed = TransformDynamic(condition, trueValue, falseValue);
+				}
 				if (transformed != null) {
 					context.Step("User-defined short-circuiting logic operator (optimized return)", condition);
 					((Leave)block.Instructions[pos + 1]).Value = transformed;
@@ -145,6 +152,105 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			result.AddILRange(trueInst.ILRange);
 			result.AddILRange(call.ILRange);
 			return result;
+		}
+		
+		public static ILInstruction TransformDynamic(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		{
+			// Check condition:
+			System.Linq.Expressions.ExpressionType unaryOp;
+			if (condition.MatchLdLoc(out var lhsVar)) {
+				// if (ldloc lhsVar) box bool(ldloc lhsVar) else dynamic.binary.operator.logic Or(ldloc lhsVar, rhsInst)
+				//    -> dynamic.logic.operator OrElse(ldloc lhsVar, rhsInst)
+				if (trueInst is Box box && box.Type.IsKnownType(KnownTypeCode.Boolean)) {
+					unaryOp = System.Linq.Expressions.ExpressionType.IsTrue;
+					trueInst = box.Argument;
+				} else if (falseInst is Box box2 && box2.Type.IsKnownType(KnownTypeCode.Boolean)) {
+					// negate condition and swap true/false
+					unaryOp = System.Linq.Expressions.ExpressionType.IsFalse;
+					falseInst = trueInst;
+					trueInst = box2.Argument;
+				} else {
+					return null;
+				}
+			} else if (condition is DynamicUnaryOperatorInstruction unary) {
+				// if (dynamic.unary.operator IsFalse(ldloc lhsVar)) ldloc lhsVar else dynamic.binary.operator.logic And(ldloc lhsVar, rhsInst)
+				//    -> dynamic.logic.operator AndAlso(ldloc lhsVar, rhsInst)
+				unaryOp = unary.Operation;
+				if (!unary.Operand.MatchLdLoc(out lhsVar))
+					return null;
+			} else if (MatchCondition(condition, out lhsVar, out string operatorMethodName)) {
+				// if (call op_False(ldloc s)) box S(ldloc s) else dynamic.binary.operator.logic And(ldloc s, rhsInst))
+				if (operatorMethodName == "op_True") {
+					unaryOp = System.Linq.Expressions.ExpressionType.IsTrue;
+				} else {
+					Debug.Assert(operatorMethodName == "op_False");
+					unaryOp = System.Linq.Expressions.ExpressionType.IsFalse;
+				}
+				var callParamType = ((Call)condition).Method.Parameters.Single().Type.SkipModifiers();
+				if (callParamType.IsReferenceType == false) {
+					// If lhs is a value type, eliminate the boxing instruction.
+					if (trueInst is Box box && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(box.Type, callParamType)) {
+						trueInst = box.Argument;
+					} else if (trueInst.OpCode == OpCode.LdcI4) {
+						// special case, handled below in 'check trueInst'
+					} else {
+						return null;
+					}
+				}
+			} else {
+				return null;
+			}
+
+			// Check trueInst:
+			DynamicUnaryOperatorInstruction rhsUnary;
+			if (trueInst.MatchLdLoc(lhsVar)) {
+				// OK, typical pattern where the expression evaluates to 'dynamic'
+				rhsUnary = null;
+			} else if (trueInst.MatchLdcI4(1) && unaryOp == System.Linq.Expressions.ExpressionType.IsTrue) {
+				// logic.or(IsTrue(lhsVar), IsTrue(lhsVar | rhsInst))
+				// => IsTrue(lhsVar || rhsInst)
+				rhsUnary = falseInst as DynamicUnaryOperatorInstruction;
+				if (rhsUnary != null) {
+					if (rhsUnary.Operation != System.Linq.Expressions.ExpressionType.IsTrue)
+						return null;
+					falseInst = rhsUnary.Operand;
+				} else {
+					return null;
+				}
+			} else {
+				return null;
+			}
+
+			System.Linq.Expressions.ExpressionType expectedBitop;
+			System.Linq.Expressions.ExpressionType logicOp;
+			if (unaryOp == System.Linq.Expressions.ExpressionType.IsFalse) {
+				expectedBitop = System.Linq.Expressions.ExpressionType.And;
+				logicOp = System.Linq.Expressions.ExpressionType.AndAlso;
+			} else if (unaryOp == System.Linq.Expressions.ExpressionType.IsTrue) {
+				expectedBitop = System.Linq.Expressions.ExpressionType.Or;
+				logicOp = System.Linq.Expressions.ExpressionType.OrElse;
+			} else {
+				return null;
+			}
+
+			// Check falseInst:
+			if (!(falseInst is DynamicBinaryOperatorInstruction binary))
+				return null;
+			if (binary.Operation != expectedBitop)
+				return null;
+			if (!binary.Left.MatchLdLoc(lhsVar))
+				return null;
+			var logicInst = new DynamicLogicOperatorInstruction(binary.BinderFlags, logicOp, binary.CallingContext,
+				binary.LeftArgumentInfo, binary.Left, binary.RightArgumentInfo, binary.Right)
+			{
+				ILRange = binary.ILRange
+			};
+			if (rhsUnary != null) {
+				rhsUnary.Operand = logicInst;
+				return rhsUnary;
+			} else {
+				return logicInst;
+			}
 		}
 	}
 }

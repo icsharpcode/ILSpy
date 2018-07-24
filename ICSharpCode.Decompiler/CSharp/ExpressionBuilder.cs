@@ -2581,6 +2581,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		protected internal override TranslatedExpression VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst, TranslationContext context)
+		{
+			BinaryOperatorType operatorType;
+			if (inst.Operation == ExpressionType.AndAlso) {
+				operatorType = BinaryOperatorType.ConditionalAnd;
+			} else if (inst.Operation == ExpressionType.OrElse) {
+				operatorType = BinaryOperatorType.ConditionalOr;
+			} else {
+				Debug.Fail("Unknown operation for DynamicLogicOperatorInstruction");
+				return base.VisitDynamicLogicOperatorInstruction(inst, context);
+			}
+			var left = TranslateDynamicArgument(inst.Left, inst.LeftArgumentInfo);
+			var right = TranslateDynamicArgument(inst.Right, inst.RightArgumentInfo);
+			var boe = new BinaryOperatorExpression(left.Expression, operatorType, right.Expression);
+			return boe.WithILInstruction(inst).WithRR(new ResolveResult(SpecialType.Dynamic));
+		}
+
 		protected internal override TranslatedExpression VisitDynamicUnaryOperatorInstruction(DynamicUnaryOperatorInstruction inst, TranslationContext context)
 		{
 			switch (inst.Operation) {

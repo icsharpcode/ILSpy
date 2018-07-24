@@ -279,7 +279,7 @@
 			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
 			MatchCondition("this.IsChecked == o.IsChecked")),
 
-		new OpCode("user.logic.op", "Use of user-defined && or || operator.",
+		new OpCode("user.logic.operator", "Use of user-defined && or || operator.",
 			CustomClassName("UserDefinedLogicOperator"),
 			HasMethodOperand, ResultType("O"),
 			CustomChildren(new []{
@@ -287,6 +287,14 @@
 				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
 			}),
 			CustomComputeFlags // MayThrow, SideEffect, ControlFlow
+		),
+
+		new OpCode("dynamic.logic.operator", "ILAst representation of a short-circuiting binary operator inside a dynamic expression.",
+			CustomClassName("DynamicLogicOperatorInstruction"), Dynamic, CustomComputeFlags,
+			CustomChildren(new []{
+				new ChildInfo("left") { CanInlineInto = true },
+				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
+			}), CustomWriteTo
 		),
 		
 		new OpCode("dynamic.binary.operator", "ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).",

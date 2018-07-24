@@ -566,9 +566,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool EqualErasedType(IType a, IType b)
 		{
-			a = a.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
-			b = b.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
-			return a.Equals(b);
+			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
 		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)

@@ -369,10 +369,71 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void If2(dynamic a, dynamic b)
 		{
-			// TODO : beautify complex conditions
-			//if (a == null || b == null) {
-			//	Console.WriteLine("Equal");
-			//}
+			if (a == null || b == null) {
+				Console.WriteLine("One is null");
+			}
+		}
+
+		private static void If3(dynamic a, dynamic b)
+		{
+			if (a == null && b == null) {
+				Console.WriteLine("Both are null");
+			}
+		}
+
+		private static void If4(dynamic a, dynamic b)
+		{
+			if ((a == null || b == null) && GetDynamic(1) && !(GetDynamic(2) && GetDynamic(3))) {
+				Console.WriteLine("then");
+			} else {
+				Console.WriteLine("else");
+			}
+		}
+
+		private static dynamic GetDynamic(int i)
+		{
+			return null;
+		}
+
+		private static bool GetBool(int i)
+		{
+			return false;
+		}
+
+		private static dynamic LogicAnd()
+		{
+			return GetDynamic(1) && GetDynamic(2);
+		}
+
+		private static dynamic LogicAnd(dynamic a, dynamic b)
+		{
+			return a && b;
+		}
+
+		private static void LogicAndExtended(int i, dynamic d)
+		{
+			Console.WriteLine(GetDynamic(1) && GetDynamic(2));
+			Console.WriteLine(GetDynamic(1) && GetBool(2));
+			Console.WriteLine(GetBool(1) && GetDynamic(2));
+			Console.WriteLine(i == 1 && d == null);
+		}
+
+		private static dynamic LogicOr()
+		{
+			return GetDynamic(1) || GetDynamic(2);
+		}
+
+		private static dynamic LogicOr(dynamic a, dynamic b)
+		{
+			return a || b;
+		}
+
+		private static void LogicOrExtended(int i, dynamic d)
+		{
+			Console.WriteLine(GetDynamic(1) || GetDynamic(2));
+			Console.WriteLine(GetDynamic(1) || GetBool(2));
+			Console.WriteLine(GetBool(1) || GetDynamic(2));
+			Console.WriteLine(i == 1 || d == null);
 		}
 	}
 }

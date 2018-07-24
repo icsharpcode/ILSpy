@@ -15,9 +15,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ReplaceClassTypeParametersWithDummy = false,
 			ReplaceMethodTypeParametersWithDummy = false,
 			DynamicAndObject = true,
-			TupleToUnderlyingType = true
+			TupleToUnderlyingType = true,
+			RemoveModOpt = true,
+			RemoveModReq = true,
 		};
 
+		public bool EquivalentTypes(IType a, IType b)
+		{
+			a = a.AcceptVisitor(this);
+			b = b.AcceptVisitor(this);
+			return a.Equals(b);
+		}
+
+		public bool RemoveModOpt = true;
+		public bool RemoveModReq = true;
 		public bool ReplaceClassTypeParametersWithDummy = true;
 		public bool ReplaceMethodTypeParametersWithDummy = true;
 		public bool DynamicAndObject = true;
@@ -50,6 +61,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return type.UnderlyingType.AcceptVisitor(this);
 			} else {
 				return base.VisitTupleType(type);
+			}
+		}
+
+		public override IType VisitModOpt(ModifiedType type)
+		{
+			if (RemoveModOpt) {
+				return type.ElementType.AcceptVisitor(this);
+			} else {
+				return base.VisitModOpt(type);
+			}
+		}
+
+		public override IType VisitModReq(ModifiedType type)
+		{
+			if (RemoveModReq) {
+				return type.ElementType.AcceptVisitor(this);
+			} else {
+				return base.VisitModReq(type);
 			}
 		}
 	}
