@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		const ulong MaxValuesPerSection = 50;
+		const ulong MaxValuesPerSection = 100;
 
 		/// <summary>
 		/// Tests whether we should prefer a switch statement over an if statement.
