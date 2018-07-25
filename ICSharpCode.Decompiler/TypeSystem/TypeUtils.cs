@@ -40,6 +40,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case TypeKind.Enum:
 					type = type.GetEnumUnderlyingType();
 					break;
+				case TypeKind.ModOpt:
+				case TypeKind.ModReq:
+					return type.SkipModifiers().GetSize();
 			}
 
 			var typeDef = type.GetDefinition();
@@ -232,6 +235,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					// Type parameters are always considered StackType.O, even
 					// though they might be instantiated with primitive types.
 					return StackType.O;
+				case TypeKind.ModOpt:
+				case TypeKind.ModReq:
+					return type.SkipModifiers().GetStackType();
 			}
 			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
@@ -269,6 +275,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static IType GetEnumUnderlyingType(this IType type)
 		{
+			type = type.SkipModifiers();
 			return (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
 		}
 
@@ -284,6 +291,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </remarks>
 		public static Sign GetSign(this IType type)
 		{
+			type = type.SkipModifiers();
 			if (type.Kind == TypeKind.Pointer)
 				return Sign.Unsigned;
 			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
@@ -353,6 +361,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static PrimitiveType ToPrimitiveType(this IType type)
 		{
+			type = type.SkipModifiers();
 			if (type.Kind == TypeKind.Unknown) return PrimitiveType.Unknown;
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
