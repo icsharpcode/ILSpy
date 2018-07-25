@@ -57,7 +57,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (blockContainerNeedsCleanup) {
 					Debug.Assert(container.Blocks.All(b => b.Instructions.Count != 0 || b.IncomingEdgeCount == 0));
-					container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
+
+					// if the original code has an unreachable switch-like condition
+					// eg. if (i >= 0) { ... } else if (i == 2) { unreachable }
+					// then the 'i == 2' block head gets consumed and the unreachable code needs deleting
+					if (context.Settings.RemoveDeadCode)
+						container.SortBlocks(deleteUnreachableBlocks: true);
+					else
+						container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
 				}
 			}
 		}
