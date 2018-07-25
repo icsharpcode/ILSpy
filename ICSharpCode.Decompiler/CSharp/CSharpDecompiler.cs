@@ -509,64 +509,72 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				while (connectedMethods.Count > 0) {
 					part = connectedMethods.Dequeue();
-					var md = module.Metadata.GetMethodDefinition(part);
-
-					if (!md.HasBody()) {
-						info.AddMapping(parent, part);
-					} else {
-						var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
-						while (blob.RemainingBytes > 0) {
-							var code = blob.DecodeOpCode();
-							switch (code) {
-								case ILOpCode.Stfld:
-									// async and yield fsms:
-									var token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-									if (!token.IsNil && token.Kind == HandleKind.FieldDefinition) {
-										var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
-										var fsmTypeDef = fsmField.GetDeclaringType();
-										if (!fsmTypeDef.IsNil) {
-											var fsmType = module.Metadata.GetTypeDefinition(fsmTypeDef);
-											// Must be a nested type of the containing type.
-											if (fsmType.GetDeclaringType() != declaringType)
-												break;
-											if (!processedNestedTypes.Add(fsmTypeDef))
-												break;
-											if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
-												|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
-												foreach (var h in fsmType.GetMethods()) {
-													if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
-														continue;
-													var otherMethod = module.Metadata.GetMethodDefinition(h);
-													if (!otherMethod.GetCustomAttributes().HasKnownAttribute(module.Metadata, KnownAttribute.DebuggerHidden)) {
-														connectedMethods.Enqueue(h);
-													}
-												}
-											}
-										}
-									}
-									break;
-								case ILOpCode.Ldftn:
-									// deal with ldftn instructions, i.e., lambdas
-									token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-									if (!token.IsNil && token.Kind == HandleKind.MethodDefinition) {
-										if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
-											connectedMethods.Enqueue((MethodDefinitionHandle)token);
-									}
-									break;
-								default:
-									blob.SkipOperand(code);
-									break;
-							}
-						}
-
-						info.AddMapping(parent, part);
+					try {
+						ReadCodeMappingInfo(module, declaringType, info, parent, part, connectedMethods, processedNestedTypes);
+					} catch (BadImageFormatException) {
+						// ignore invalid IL
 					}
 				}
-
-
 			}
 
 			return info;
+		}
+
+		private static void ReadCodeMappingInfo(PEFile module, TypeDefinitionHandle declaringType, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
+		{
+			var md = module.Metadata.GetMethodDefinition(part);
+
+			if (!md.HasBody()) {
+				info.AddMapping(parent, part);
+				return;
+			} 
+
+			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			while (blob.RemainingBytes > 0) {
+				var code = blob.DecodeOpCode();
+				switch (code) {
+					case ILOpCode.Stfld:
+						// async and yield fsms:
+						var token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+						if (!token.IsNil && token.Kind == HandleKind.FieldDefinition) {
+							var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
+							var fsmTypeDef = fsmField.GetDeclaringType();
+							if (!fsmTypeDef.IsNil) {
+								var fsmType = module.Metadata.GetTypeDefinition(fsmTypeDef);
+								// Must be a nested type of the containing type.
+								if (fsmType.GetDeclaringType() != declaringType)
+									break;
+								if (!processedNestedTypes.Add(fsmTypeDef))
+									break;
+								if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
+									|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
+									foreach (var h in fsmType.GetMethods()) {
+										if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
+											continue;
+										var otherMethod = module.Metadata.GetMethodDefinition(h);
+										if (!otherMethod.GetCustomAttributes().HasKnownAttribute(module.Metadata, KnownAttribute.DebuggerHidden)) {
+											connectedMethods.Enqueue(h);
+										}
+									}
+								}
+							}
+						}
+						break;
+					case ILOpCode.Ldftn:
+						// deal with ldftn instructions, i.e., lambdas
+						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
+						if (!token.IsNil && token.Kind == HandleKind.MethodDefinition) {
+							if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
+								connectedMethods.Enqueue((MethodDefinitionHandle)token);
+						}
+						break;
+					default:
+						blob.SkipOperand(code);
+						break;
+				}
+			}
+
+			info.AddMapping(parent, part);
 		}
 
 		/// <summary>
@@ -1047,7 +1055,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					DebugInfo = DebugInfoProvider
 				};
 				var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-				var methodBody = module.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				var body = BlockStatement.Null;
+				MethodBodyBlock methodBody;
+				try {
+					methodBody = module.PEFile.Reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+				} catch (BadImageFormatException ex) {
+					body = new BlockStatement();
+					body.AddChild(new Comment("Invalid MethodBodyBlock: " + ex.Message), Roles.Comment);
+					entityDecl.AddChild(body, Roles.Body);
+					return;
+				}
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
@@ -1083,7 +1100,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 				}
 
-				var body = BlockStatement.Null;
 				// Generate C# AST only if bodies should be displayed.
 				if (localSettings.DecompileMemberBodies) {
 					AddDefinesForConditionalAttributes(function, decompileRun);

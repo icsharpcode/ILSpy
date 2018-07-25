@@ -54,12 +54,22 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var md = module.PEFile.Metadata.GetMethodDefinition(handle);
 			if (!md.HasBody()) yield break;
 
-			var blob = module.PEFile.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			BlobReader blob;
+			try {
+				blob = module.PEFile.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
+			} catch (BadImageFormatException) {
+				yield break;
+			}
 			var visitor = new TypeDefinitionCollector();
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0) {
-				var opCode = blob.DecodeOpCode();
+				ILOpCode opCode;
+				try {
+					opCode = blob.DecodeOpCode();
+				} catch (BadImageFormatException) {
+					yield break;
+				}
 				switch (opCode.GetOperandType()) {
 					case OperandType.Field:
 					case OperandType.Method:
@@ -74,20 +84,35 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 							case HandleKind.TypeDefinition:
 							case HandleKind.TypeReference:
 							case HandleKind.TypeSpecification:
-								module.ResolveType(member, genericContext).AcceptVisitor(visitor);
+								IType ty;
+								try {
+									ty = module.ResolveType(member, genericContext);
+								} catch (BadImageFormatException) {
+									ty = null;
+								}
+								ty?.AcceptVisitor(visitor);
 								break;
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
 							case HandleKind.FieldDefinition:
-								var m = module.ResolveEntity(member, genericContext);
+								IEntity m;
+								try {
+									m = module.ResolveEntity(member, genericContext);
+								} catch (BadImageFormatException) {
+									m = null;
+								}
 								if (m != null)
 									yield return m;
 								break;
 						}
 						break;
 					default:
-						ILParser.SkipOperand(ref blob, opCode);
+						try {
+							ILParser.SkipOperand(ref blob, opCode);
+						} catch (BadImageFormatException) {
+							yield break;
+						}
 						break;
 				}
 			}

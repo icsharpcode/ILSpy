@@ -450,7 +450,7 @@ namespace ICSharpCode.ILSpy
 			string simple = field.Name + " : " + TypeToString(field.Type, includeNamespace);
 			if (!includeDeclaringTypeName)
 				return simple;
-			return TypeToStringInternal(field.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + simple;
+			return TypeToStringInternal(field.DeclaringType, includeNamespaceOfDeclaringTypeName) + "." + simple;
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
@@ -458,6 +458,10 @@ namespace ICSharpCode.ILSpy
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
 			var buffer = new System.Text.StringBuilder();
+			if (includeDeclaringTypeName) {
+				buffer.Append(TypeToString(property.DeclaringType, includeNamespaceOfDeclaringTypeName));
+				buffer.Append('.');
+			}
 			if (property.IsIndexer) {
 				if (property.IsExplicitInterfaceImplementation) {
 					string name = property.Name;
@@ -484,9 +488,7 @@ namespace ICSharpCode.ILSpy
 			}
 			buffer.Append(" : ");
 			buffer.Append(TypeToStringInternal(property.ReturnType, includeNamespace));
-			if (!includeDeclaringTypeName)
-				return buffer.ToString();
-			return TypeToString(property.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + buffer.ToString();
+			return buffer.ToString();
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
@@ -495,12 +497,12 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(method));
 			string name;
 			if (includeDeclaringTypeName) {
-				name = TypeToString(method.DeclaringTypeDefinition, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
+				name = TypeToString(method.DeclaringType, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
 			} else {
 				name = "";
 			}
 			if (method.IsConstructor) {
-				name += TypeToString(method.DeclaringTypeDefinition, false);
+				name += TypeToString(method.DeclaringType, false);
 			} else {
 				name += method.Name;
 			}
@@ -542,7 +544,7 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(@event));
 			var buffer = new System.Text.StringBuilder();
 			if (includeDeclaringTypeName) {
-				buffer.Append(TypeToString(@event.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + ".");
+				buffer.Append(TypeToString(@event.DeclaringType, includeNamespaceOfDeclaringTypeName) + ".");
 			}
 			buffer.Append(@event.Name);
 			buffer.Append(" : ");

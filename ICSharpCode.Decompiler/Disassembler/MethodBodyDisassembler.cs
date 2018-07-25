@@ -88,7 +88,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 				return;
 			}
-			var body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			MethodBodyBlock body;
+			try {
+				body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			} catch (BadImageFormatException ex) {
+				output.WriteLine("// {0}", ex.Message);
+				return;
+			}
 			var blob = body.GetILReader();
 			output.WriteLine("// Code size {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);

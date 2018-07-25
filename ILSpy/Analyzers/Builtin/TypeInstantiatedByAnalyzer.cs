@@ -81,31 +81,37 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool IsUsedInMethod(ITypeDefinition analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
 		{
-			if (method.MetadataToken.IsNil)
-				return false;
-			var module = method.ParentModule.PEFile;
-			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			if (!md.HasBody()) return false;
-			return ScanMethodBody(analyzedEntity, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress));
+			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
 		}
 
 		bool ScanMethodBody(ITypeDefinition analyzedEntity, IMethod method, MethodBodyBlock methodBody)
 		{
-			bool found = false;
+			if (methodBody == null)
+				return false;
 			var blob = methodBody.GetILReader();
 			var module = (MetadataModule)method.ParentModule;
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
-			while (!found && blob.RemainingBytes > 0) {
-				var opCode = blob.DecodeOpCode();
-				if (!CanBeReference(opCode)) {
-					blob.SkipOperand(opCode);
-					continue;
+			while (blob.RemainingBytes > 0) {
+				ILOpCode opCode;
+				try {
+					opCode = blob.DecodeOpCode();
+					if (!CanBeReference(opCode)) {
+						blob.SkipOperand(opCode);
+						continue;
+					}
+				} catch (BadImageFormatException) {
+					return false;
 				}
 				EntityHandle methodHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!methodHandle.Kind.IsMemberKind())
 					continue;
-				var ctor = module.ResolveMethod(methodHandle, genericContext);
+				IMethod ctor;
+				try {
+					ctor = module.ResolveMethod(methodHandle, genericContext);
+				} catch (BadImageFormatException) {
+					continue;
+				}
 				if (ctor == null || !ctor.IsConstructor)
 					continue;
 

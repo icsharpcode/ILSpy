@@ -93,7 +93,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
 						foreach (var part in parts) {
 							var methodDef = module.metadata.GetMethodDefinition(part);
-							var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+							MethodBodyBlock body;
+							try {
+								body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+							} catch (BadImageFormatException) {
+								continue;
+							}
 							CollectNamespacesFromMethodBody(body, module, namespaces);
 						}
 					}
