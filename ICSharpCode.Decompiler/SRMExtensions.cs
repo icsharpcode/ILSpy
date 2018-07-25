@@ -9,6 +9,7 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ICSharpCode.Decompiler
 {
@@ -193,11 +194,27 @@ namespace ICSharpCode.Decompiler
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			var tr = reader.GetTypeReference(handle);
-			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(reader.GetString(tr.Name), out var typeParameterCount);
+			string name;
+			try {
+				name = reader.GetString(tr.Name);
+			} catch (BadImageFormatException) {
+				name = $"TR{reader.GetToken(handle):x8}";
+			}
+			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out var typeParameterCount);
 			TypeReferenceHandle declaringTypeHandle;
-			if ((declaringTypeHandle = tr.GetDeclaringType()).IsNil) {
-				string @namespace = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
+			try {
+				declaringTypeHandle = tr.GetDeclaringType();
+			} catch (BadImageFormatException) {
+				declaringTypeHandle = default;
+			}
+			if (declaringTypeHandle.IsNil) {
+				string ns;
+				try {
+					ns = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
+				} catch (BadImageFormatException) {
+					ns = "";
+				}
+				return new FullTypeName(new TopLevelTypeName(ns, name, typeParameterCount));
 			} else {
 				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
 			}
