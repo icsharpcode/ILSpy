@@ -36,11 +36,99 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class SwitchDetection : IILTransform
 	{
+		private readonly SwitchAnalysis analysis = new SwitchAnalysis();
+
 		private ILTransformContext context;
 		private BlockContainer currentContainer;
 		private ControlFlowGraph controlFlowGraph;
+		private LoopContext loopContext;
 
-		SwitchAnalysis analysis = new SwitchAnalysis();
+		/// <summary>
+		/// When detecting a switch, it is important to distinguish Branch instructions which will
+		/// eventually decompile to continue; statements. 
+		/// 
+		/// A LoopContext is constructed for a node and its dominator tree, as for a Branch to be a continue;
+		/// statement, it must be contained within the target-loop
+		/// 
+		/// This class also supplies the depth of the loop targetted by a continue; statement relative to the
+		/// context node, to avoid (or eventually support) labelled continues to outer loops
+		/// </summary>
+		public class LoopContext
+		{
+			private readonly IDictionary<ControlFlowNode, int> continueDepth = new Dictionary<ControlFlowNode, int>();
+
+			public LoopContext(ControlFlowGraph cfg, ControlFlowNode contextNode)
+			{
+				var loopHeads = new List<ControlFlowNode>();
+
+				void Analyze(ControlFlowNode n)
+				{
+					if (n.Visited)
+						return;
+
+					n.Visited = true;
+					if (n.Dominates(contextNode))
+						loopHeads.Add(n);
+					else
+						n.Successors.ForEach(Analyze);
+				}
+				contextNode.Successors.ForEach(Analyze);
+
+				foreach (var node in cfg.cfg)
+					node.Visited = false;
+
+				int l = 1;
+				foreach (var loopHead in loopHeads.OrderBy(n => n.PostOrderNumber))
+					continueDepth[FindContinue(loopHead)] = l++;
+			}
+
+			private static ControlFlowNode FindContinue(ControlFlowNode loopHead)
+			{
+				// potential continue target
+				var pred = loopHead.Predecessors.OnlyOrDefault(p => p != loopHead && loopHead.Dominates(p));
+				if (pred == null)
+					return loopHead;
+
+				// match for loop increment block
+				if (pred.Successors.Count == 1) {
+					if (HighLevelLoopTransform.MatchIncrementBlock((Block)pred.UserData, out var target) &&target == loopHead.UserData)
+						return pred;
+				}
+
+				// match do-while condition
+				if (pred.Successors.Count <= 2) {
+					if (HighLevelLoopTransform.MatchDoWhileConditionBlock((Block)pred.UserData, out var t1, out var t2) &&
+					    (t1 == loopHead.UserData || t2 == loopHead.UserData))
+						return pred;
+				}
+
+				return loopHead;
+			}
+			
+			public bool MatchContinue(ControlFlowNode node) => MatchContinue(node, out var _);
+
+			public bool MatchContinue(ControlFlowNode node, int depth) => 
+				MatchContinue(node, out int _depth) && depth == _depth;
+
+			public bool MatchContinue(ControlFlowNode node, out int depth) => continueDepth.TryGetValue(node, out depth);
+
+			public int GetContinueDepth(ControlFlowNode node) => MatchContinue(node, out var depth) ? depth : 0;
+		
+			/// <summary>
+			/// Lists all potential targets for break; statements from a domination tree,
+			/// assuming the domination tree must be exited via either break; or continue;
+			/// 
+			/// First list all nodes in the dominator tree (excluding continue nodes)
+			/// Then return the all successors not contained within said tree.
+			/// 
+			/// Note that node will be returned once for each outgoing edge.
+			/// Labelled continue statements (depth > 1) are counted as break targets
+			/// </summary>
+			internal IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode dominator) => 
+				TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !MatchContinue(c)))
+					.SelectMany(n => n.Successors)
+					.Where(n => !dominator.Dominates(n) && !MatchContinue(n, 1));
+		}
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -248,8 +336,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
-
+			
 			var switchHead = controlFlowGraph.GetNode(analysis.RootBlock);
+			loopContext = new LoopContext(controlFlowGraph, switchHead);
+
 			// grab the control flow nodes for blocks targetted by each section
 			var caseNodes = new List<ControlFlowNode>();
 			foreach (var s in analysis.Sections) {
@@ -257,7 +347,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 
 				var node = controlFlowGraph.GetNode(block);
-				if (!IsContinue(switchHead, node))
+				if (!loopContext.MatchContinue(node))
 					caseNodes.Add(node);
 			}
 
@@ -274,7 +364,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return true; // cannot have more than one break case without gotos
 			
 			// check that case nodes flow through a single point
-			var breakTargets = caseNodes.Except(externalCases).SelectMany(n => GetBreakTargets(switchHead, n)).ToHashSet();
+			var breakTargets = caseNodes.Except(externalCases).SelectMany(n => loopContext.GetBreakTargets(n)).ToHashSet();
 
 			// if there are multiple break targets, then gotos are required
 			// if there are none, then the external case (if any) can be the break target
@@ -318,62 +408,5 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			//add the null case logic to the incoming flow blocks
 			flowBlocks.Add(nullableBlock);
 		}
-
-		internal static bool IsContinue(ControlFlowNode innerLoopHead, ControlFlowNode node) =>
-			IsContinue(node, out var outerLoopHead) && outerLoopHead.Dominates(innerLoopHead);
-		
-		private static bool IsContinue(ControlFlowNode node, out ControlFlowNode loopHead)
-		{
-			bool IsLoopHead(ControlFlowNode n) => n.Predecessors.Any(n.Dominates);
-			ControlFlowNode OnlyInloopPred(ControlFlowNode n) => n.Predecessors.OnlyOrDefault(p => p != n && n.Dominates(p));
-			
-			loopHead = null;
-
-			// loop head
-			if (IsLoopHead(node)) {
-				var preBlock = OnlyInloopPred(node);
-				if (preBlock != null && IsContinue(preBlock, out var preHead) && preHead == node)
-					return false;
-
-				loopHead = node;
-				return true;
-			}
-
-			// match for loop increment block
-			if (node.Successors.Count == 1) {
-				// potential loop head
-				loopHead = node.Successors.SingleOrDefault(s => IsLoopHead(s) && OnlyInloopPred(s) == node);
-				if (loopHead != null &&
-						HighLevelLoopTransform.MatchIncrementBlock((Block)node.UserData, out var target) &&
-						target == loopHead.UserData)
-					return true;
-			}
-
-			// match do-while condition
-			if (node.Successors.Count <= 2) {
-				// potential loop head
-				loopHead = node.Successors.OnlyOrDefault(s => IsLoopHead(s) && OnlyInloopPred(s) == node);
-				if (loopHead != null &&
-						HighLevelLoopTransform.MatchDoWhileConditionBlock((Block)node.UserData, out var t1, out var t2) &&
-						(t1 == loopHead.UserData || t2 == loopHead.UserData))
-					return true;
-			}
-
-			return false;
-		}
-		
-		/// <summary>
-		/// Lists all potential targets for break; statements from a domination tree,
-		/// assuming the domination tree must be exited via either break; or continue;
-		/// 
-		/// First list all nodes in the dominator tree (excluding continue nodes)
-		/// Then return the all successors not contained within said tree.
-		/// 
-		/// Note that node will be returned once for every outgoing edge
-		/// </summary>
-		internal static IEnumerable<ControlFlowNode> GetBreakTargets(ControlFlowNode loopHead, ControlFlowNode dominator) => 
-			TreeTraversal.PreOrder(dominator, n => n.DominatorTreeChildren.Where(c => !IsContinue(loopHead, c)))
-				.SelectMany(n => n.Successors)
-				.Where(n => !dominator.Dominates(n) && !IsContinue(loopHead, n));
 	}
 }

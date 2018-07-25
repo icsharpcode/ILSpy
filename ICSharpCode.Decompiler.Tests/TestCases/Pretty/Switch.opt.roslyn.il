@@ -2305,6 +2305,82 @@
     IL_0033:  ret
   } // end of method Switch::SwitchWithContinue7
 
+  .method public hidebysig static void  SwitchWithContinueInDoubleLoop() cil managed
+  {
+    // Code size       101 (0x65)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1,
+             int32 V_2,
+             int32 V_3)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.1
+    IL_0004:  br.s       IL_0059
+
+    IL_0006:  ldc.i4.0
+    IL_0007:  stloc.2
+    IL_0008:  br.s       IL_0050
+
+    IL_000a:  ldloc.1
+    IL_000b:  ldloc.2
+    IL_000c:  add
+    IL_000d:  stloc.3
+    IL_000e:  ldloc.3
+    IL_000f:  ldc.i4.s   11
+    IL_0011:  bgt.s      IL_003e
+
+    IL_0013:  ldloc.3
+    IL_0014:  ldc.i4.1
+    IL_0015:  sub
+    IL_0016:  switch     ( 
+                          IL_0048,
+                          IL_004c,
+                          IL_0048,
+                          IL_004c,
+                          IL_0048,
+                          IL_004c,
+                          IL_0048)
+    IL_0037:  ldloc.3
+    IL_0038:  ldc.i4.s   11
+    IL_003a:  beq.s      IL_0048
+
+    IL_003c:  br.s       IL_004c
+
+    IL_003e:  ldloc.3
+    IL_003f:  ldc.i4.s   13
+    IL_0041:  beq.s      IL_0048
+
+    IL_0043:  ldloc.3
+    IL_0044:  ldc.i4.s   17
+    IL_0046:  bne.un.s   IL_004c
+
+    IL_0048:  ldc.i4.1
+    IL_0049:  stloc.0
+    IL_004a:  br.s       IL_0055
+
+    IL_004c:  ldloc.2
+    IL_004d:  ldc.i4.1
+    IL_004e:  add
+    IL_004f:  stloc.2
+    IL_0050:  ldloc.2
+    IL_0051:  ldc.i4.s   10
+    IL_0053:  blt.s      IL_000a
+
+    IL_0055:  ldloc.1
+    IL_0056:  ldc.i4.1
+    IL_0057:  add
+    IL_0058:  stloc.1
+    IL_0059:  ldloc.1
+    IL_005a:  ldc.i4.s   10
+    IL_005c:  blt.s      IL_0006
+
+    IL_005e:  ldloc.0
+    IL_005f:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0064:  ret
+  } // end of method Switch::SwitchWithContinueInDoubleLoop
+
   .method public hidebysig static void  SwitchLoopNesting() cil managed
   {
     // Code size       92 (0x5c)

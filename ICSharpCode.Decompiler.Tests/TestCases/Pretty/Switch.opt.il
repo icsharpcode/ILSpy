@@ -2146,6 +2146,75 @@
     IL_003c:  ret
   } // end of method Switch::SwitchWithContinue7
 
+  .method public hidebysig static void  SwitchWithContinueInDoubleLoop() cil managed
+  {
+    // Code size       105 (0x69)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1,
+             int32 V_2,
+             int32 V_3)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.1
+    IL_0004:  br.s       IL_005d
+
+    IL_0006:  ldc.i4.0
+    IL_0007:  stloc.2
+    IL_0008:  br.s       IL_0054
+
+    IL_000a:  ldloc.1
+    IL_000b:  ldloc.2
+    IL_000c:  add
+    IL_000d:  stloc.3
+    IL_000e:  ldloc.3
+    IL_000f:  ldc.i4.1
+    IL_0010:  sub
+    IL_0011:  switch     ( 
+                          IL_004c,
+                          IL_0050,
+                          IL_004c,
+                          IL_0050,
+                          IL_004c,
+                          IL_0050,
+                          IL_004c)
+    IL_0032:  ldloc.3
+    IL_0033:  ldc.i4.s   11
+    IL_0035:  sub
+    IL_0036:  switch     ( 
+                          IL_004c,
+                          IL_0050,
+                          IL_004c)
+    IL_0047:  ldloc.3
+    IL_0048:  ldc.i4.s   17
+    IL_004a:  bne.un.s   IL_0050
+
+    IL_004c:  ldc.i4.1
+    IL_004d:  stloc.0
+    IL_004e:  br.s       IL_0059
+
+    IL_0050:  ldloc.2
+    IL_0051:  ldc.i4.1
+    IL_0052:  add
+    IL_0053:  stloc.2
+    IL_0054:  ldloc.2
+    IL_0055:  ldc.i4.s   10
+    IL_0057:  blt.s      IL_000a
+
+    IL_0059:  ldloc.1
+    IL_005a:  ldc.i4.1
+    IL_005b:  add
+    IL_005c:  stloc.1
+    IL_005d:  ldloc.1
+    IL_005e:  ldc.i4.s   10
+    IL_0060:  blt.s      IL_0006
+
+    IL_0062:  ldloc.0
+    IL_0063:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0068:  ret
+  } // end of method Switch::SwitchWithContinueInDoubleLoop
+
   .method public hidebysig static void  SwitchLoopNesting() cil managed
   {
     // Code size       101 (0x65)

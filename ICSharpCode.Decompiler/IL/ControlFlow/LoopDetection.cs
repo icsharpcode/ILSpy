@@ -42,6 +42,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		
 		/// <summary>Block container corresponding to the current cfg.</summary>
 		BlockContainer currentBlockContainer;
+
+		/// <summary>
+		/// Enabled during DetectSwitchBody, used by ExtendLoop and children
+		/// </summary>
+		private bool isSwitch;
+		/// <summary>
+		/// Used when isSwitch == true, to determine appropriate exit points within loops
+		/// </summary>
+		private SwitchDetection.LoopContext loopContext;
 		
 		/// <summary>
 		/// Check whether 'block' is a loop head; and construct a loop instruction
@@ -234,16 +243,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Requires and maintains the invariant that a node is marked as visited iff it is contained in the loop.
 		/// </remarks>
-		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint, bool isSwitch=false)
+		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint)
 		{
-			exitPoint = FindExitPoint(loopHead, loop, isSwitch);
+			exitPoint = FindExitPoint(loopHead, loop);
 			Debug.Assert(!loop.Contains(exitPoint), "Cannot pick an exit point that is part of the natural loop");
 			if (exitPoint != null) {
 				// Either we are in case 1 and just picked an exit that maximizes the amount of code
 				// outside the loop, or we are in case 2 and found an exit point via post-dominance.
 				// Note that if exitPoint == NoExitPoint, we end up adding all dominated blocks to the loop.
 				var ep = exitPoint;
-				foreach (var node in TreeTraversal.PreOrder(loopHead, n => DominatorTreeChildren(n, ep, isSwitch))) {
+				foreach (var node in TreeTraversal.PreOrder(loopHead, n => DominatorTreeChildren(n, ep))) {
 					if (!node.Visited) {
 						node.Visited = true;
 						loop.Add(node);
@@ -272,9 +281,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 3) otherwise (exit point unknown, heuristically extend loop): null
 		/// </returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		internal ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool isSwitch)
+		internal ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
 		{
-			bool hasReachableExit = HasReachableExit(loopHead, isSwitch);
+			bool hasReachableExit = HasReachableExit(loopHead);
 			if (!hasReachableExit) {
 				// Case 1:
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
@@ -292,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ControlFlowNode exitPoint = null;
 				int exitPointILOffset = -1;
 				foreach (var node in loopHead.DominatorTreeChildren) {
-					PickExitPoint(node, isSwitch, ref exitPoint, ref exitPointILOffset);
+					PickExitPoint(node, ref exitPoint, ref exitPointILOffset);
 				}
 				return exitPoint;
 			} else {
@@ -300,7 +309,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// We need to pick our exit point so that all paths from the loop head
 				// to the reachable exits run through that exit point.
 				var cfg = context.ControlFlowGraph.cfg;
-				var revCfg = PrepareReverseCFG(loopHead, isSwitch, out int exitNodeArity);
+				var revCfg = PrepareReverseCFG(loopHead, out int exitNodeArity);
 				//ControlFlowNode.ExportGraph(cfg).Show("cfg");
 				//ControlFlowNode.ExportGraph(revCfg).Show("rev");
 				ControlFlowNode commonAncestor = revCfg[loopHead.UserIndex];
@@ -336,8 +345,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (exitNodeArity > 1)
 					return null;
 
+				// Exit node is on the very edge of the tree, and isn't important for determining inclusion
+				// Still necessary for switch detection to insert correct leave statements
 				if (exitNodeArity == 1 && isSwitch)
-					return SwitchDetection.GetBreakTargets(loopHead, loopHead).Distinct().Single();
+					return loopContext.GetBreakTargets(loopHead).Distinct().Single();
 
 				// If exitNodeArity == 0, we should maybe look test if our exits out of the block container are all compatible?
 				// but I don't think it hurts to have a bit too much code inside the loop in this rare case.
@@ -382,12 +393,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool HasReachableExit(ControlFlowNode node, bool isSwitch) => isSwitch
-			? SwitchDetection.GetBreakTargets(context.ControlFlowNode, node).Any()
+		/// <summary>
+		/// Extension of ControlFlowGraph.HasReachableExit
+		/// Uses loopContext.GetBreakTargets().Any() when analyzing switches to avoid 
+		/// classifying continue blocks as reachable exits.
+		/// </summary>
+		bool HasReachableExit(ControlFlowNode node) => isSwitch
+			? loopContext.GetBreakTargets(node).Any()
 			: context.ControlFlowGraph.HasReachableExit(node);
 		
-		IEnumerable<ControlFlowNode> DominatorTreeChildren(ControlFlowNode n, ControlFlowNode exitPoint, bool isSwitch) => 
-			n.DominatorTreeChildren.Where(c => c != exitPoint && (!isSwitch || !SwitchDetection.IsContinue(context.ControlFlowNode, c)));
+		/// <summary>
+		/// Returns the children in a loop dominator tree, with an optional exit point
+		/// Avoids returning continue statements when analysing switches (because increment blocks can be dominated)
+		/// </summary>
+		IEnumerable<ControlFlowNode> DominatorTreeChildren(ControlFlowNode n, ControlFlowNode exitPoint) => 
+			n.DominatorTreeChildren.Where(c => c != exitPoint && (!isSwitch || !loopContext.MatchContinue(c)));
 
 		/// <summary>
 		/// Pick exit point by picking any node that has no reachable exits.
@@ -399,14 +419,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		void PickExitPoint(ControlFlowNode node, bool isSwitch, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
+		void PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
 		{
-			if (isSwitch && SwitchDetection.IsContinue(context.ControlFlowNode, node))
+			if (isSwitch && loopContext.MatchContinue(node))
 				return;
 
 			Block block = (Block)node.UserData;
 			if (block.ILRange.Start > exitPointILOffset
-				&& !HasReachableExit(node, isSwitch)
+				&& !HasReachableExit(node)
 				&& ((Block)node.UserData).Parent == currentBlockContainer)
 			{
 				// HasReachableExit(node) == false
@@ -425,7 +445,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// moving almost all of the code into the loop.
 			}
 			foreach (var child in node.DominatorTreeChildren) {
-				PickExitPoint(child, isSwitch, ref exitPoint, ref exitPointILOffset);
+				PickExitPoint(child, ref exitPoint, ref exitPointILOffset);
 			}
 		}
 
@@ -446,7 +466,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///  2 = more than one CFG node (not dominated by loopHead) was used as an exit node.
 		/// </param>
 		/// <returns></returns>
-		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool isSwitch, out int exitNodeArity)
+		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, out int exitNodeArity)
 		{
 			ControlFlowNode[] cfg = context.ControlFlowGraph.cfg;
 			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
@@ -458,12 +478,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
 			rev[cfg.Length] = exitNode;
 			for (int i = 0; i < cfg.Length; i++) {
-				if (!loopHead.Dominates(cfg[i]) || isSwitch && SwitchDetection.IsContinue(loopHead, cfg[i]))
+				if (!loopHead.Dominates(cfg[i]) || isSwitch && cfg[i] != loopHead && loopContext.MatchContinue(cfg[i]))
 					continue;
 
 				// Add reverse edges for all edges in cfg
 				foreach (var succ in cfg[i].Successors) {
-					if (isSwitch && SwitchDetection.IsContinue(loopHead, succ))
+					// edges to outer loops still count as exits (labelled continue not implemented)
+					if (isSwitch && loopContext.MatchContinue(succ, 1))
 						continue;
 
 					if (loopHead.Dominates(succ)) {
@@ -669,11 +690,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(h.UserData == block);
 			Debug.Assert(!TreeTraversal.PreOrder(h, n => n.DominatorTreeChildren).Any(n => n.Visited));
 
+			isSwitch = true;
+			loopContext = new SwitchDetection.LoopContext(context.ControlFlowGraph, h);
+
 			var nodesInSwitch = new List<ControlFlowNode>();
 			nodesInSwitch.Add(h);
 			h.Visited = true;
-			ExtendLoop(h, nodesInSwitch, out var exitPoint, isSwitch: true);
-			if (exitPoint != null && exitPoint.Predecessors.Count == 1 && !HasReachableExit(exitPoint, true)) {
+			ExtendLoop(h, nodesInSwitch, out var exitPoint);
+			if (exitPoint != null && h.Dominates(exitPoint) && exitPoint.Predecessors.Count == 1 && !HasReachableExit(exitPoint)) {
 				// If the exit point is reachable from just one single "break;",
 				// it's better to move the code into the switch.
 				// (unlike loops which should not be nested unless necessary,
@@ -716,6 +740,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					branch.ReplaceWith(new Leave(switchContainer) { ILRange = branch.ILRange });
 				}
 			}
+
+			isSwitch = false;
 		}
 	}
 }

@@ -2674,6 +2674,93 @@
     IL_0050:  ret
   } // end of method Switch::SwitchWithContinue7
 
+  .method public hidebysig static void  SwitchWithContinueInDoubleLoop() cil managed
+  {
+    // Code size       128 (0x80)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1,
+             int32 V_2,
+             int32 V_3,
+             bool V_4)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  ldc.i4.0
+    IL_0004:  stloc.1
+    IL_0005:  br.s       IL_006d
+
+    IL_0007:  nop
+    IL_0008:  ldc.i4.0
+    IL_0009:  stloc.2
+    IL_000a:  br.s       IL_005d
+
+    IL_000c:  nop
+    IL_000d:  ldloc.1
+    IL_000e:  ldloc.2
+    IL_000f:  add
+    IL_0010:  stloc.3
+    IL_0011:  ldloc.3
+    IL_0012:  ldc.i4.1
+    IL_0013:  sub
+    IL_0014:  switch     ( 
+                          IL_0051,
+                          IL_0053,
+                          IL_0051,
+                          IL_0053,
+                          IL_0051,
+                          IL_0053,
+                          IL_0051)
+    IL_0035:  ldloc.3
+    IL_0036:  ldc.i4.s   11
+    IL_0038:  sub
+    IL_0039:  switch     ( 
+                          IL_0051,
+                          IL_0053,
+                          IL_0051)
+    IL_004a:  ldloc.3
+    IL_004b:  ldc.i4.s   17
+    IL_004d:  beq.s      IL_0051
+
+    IL_004f:  br.s       IL_0053
+
+    IL_0051:  br.s       IL_0055
+
+    IL_0053:  br.s       IL_0059
+
+    IL_0055:  ldc.i4.1
+    IL_0056:  stloc.0
+    IL_0057:  br.s       IL_0068
+
+    IL_0059:  ldloc.2
+    IL_005a:  ldc.i4.1
+    IL_005b:  add
+    IL_005c:  stloc.2
+    IL_005d:  ldloc.2
+    IL_005e:  ldc.i4.s   10
+    IL_0060:  clt
+    IL_0062:  stloc.s    V_4
+    IL_0064:  ldloc.s    V_4
+    IL_0066:  brtrue.s   IL_000c
+
+    IL_0068:  nop
+    IL_0069:  ldloc.1
+    IL_006a:  ldc.i4.1
+    IL_006b:  add
+    IL_006c:  stloc.1
+    IL_006d:  ldloc.1
+    IL_006e:  ldc.i4.s   10
+    IL_0070:  clt
+    IL_0072:  stloc.s    V_4
+    IL_0074:  ldloc.s    V_4
+    IL_0076:  brtrue.s   IL_0007
+
+    IL_0078:  ldloc.0
+    IL_0079:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_007e:  nop
+    IL_007f:  ret
+  } // end of method Switch::SwitchWithContinueInDoubleLoop
+
   .method public hidebysig static void  SwitchLoopNesting() cil managed
   {
     // Code size       153 (0x99)

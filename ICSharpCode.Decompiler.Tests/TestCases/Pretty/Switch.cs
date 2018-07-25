@@ -832,6 +832,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("end");
 		}
 
+		public static void SwitchWithContinueInDoubleLoop()
+		{
+			bool value = false;
+			for (int i = 0; i < 10; i++) {
+				for (int j = 0; j < 10; j++) {
+					switch (i + j) {
+						case 1:
+						case 3:
+						case 5:
+						case 7:
+						case 11:
+						case 13:
+						case 17:
+							break;
+						default:
+							continue;
+					}
+					value = true;
+					break;
+				}
+			}
+			Console.WriteLine(value);
+		}
+
 		public static void SwitchLoopNesting()
 		{
 			for (int i = 0; i < 10; i++) {
