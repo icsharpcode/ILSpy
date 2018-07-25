@@ -933,7 +933,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (this.ShowParameterNames) {
 				decl.Name = parameter.Name;
 			}
-			if (parameter.IsOptional && this.ShowConstantValues) {
+			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues) {
 				decl.DefaultExpression = ConvertConstantValue(parameter.Type, parameter.ConstantValue);
 			}
 			return decl;

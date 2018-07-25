@@ -76,8 +76,8 @@
   .method private hidebysig instance void 
           SimpleTests() cil managed
   {
-    // Code size       43 (0x2b)
-    .maxstack  8
+    // Code size       70 (0x46)
+    .maxstack  3
     IL_0000:  nop
     IL_0001:  ldarg.0
     IL_0002:  ldc.i4.s   10
@@ -97,7 +97,17 @@
     IL_0024:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Test(int32,
                                                                                                              string)
     IL_0029:  nop
-    IL_002a:  ret
+    IL_002a:  ldarg.0
+    IL_002b:  ldc.i4.s   10
+    IL_002d:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_0032:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Decimal(valuetype [mscorlib]System.Decimal)
+    IL_0037:  nop
+    IL_0038:  ldarg.0
+    IL_0039:  ldc.i4.5
+    IL_003a:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_003f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Decimal(valuetype [mscorlib]System.Decimal)
+    IL_0044:  nop
+    IL_0045:  ret
   } // end of method OptionalArguments::SimpleTests
 
   .method private hidebysig instance void 
@@ -399,6 +409,22 @@
     IL_0000:  nop
     IL_0001:  ret
   } // end of method OptionalArguments::Test
+
+  .method private hidebysig instance void 
+          Decimal([opt] valuetype [mscorlib]System.Decimal d) cil managed
+  {
+    .param [1]
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.DecimalConstantAttribute::.ctor(uint8,
+                                                                                                    uint8,
+                                                                                                    uint32,
+                                                                                                    uint32,
+                                                                                                    uint32) = ( 01 00 00 00 00 00 00 00 00 00 00 00 0A 00 00 00 
+                                                                                                                00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method OptionalArguments::Decimal
 
   .method private hidebysig instance void 
           OnlyDifferenceIsLastArgument(int32 a,

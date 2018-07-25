@@ -221,6 +221,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool decimalConstants = true;
+
+		/// <summary>
+		/// Decompile [DecimalConstant(...)] as simple literal values.
+		/// </summary>
+		public bool DecimalConstants {
+			get { return decimalConstants; }
+			set {
+				if (decimalConstants != value) {
+					decimalConstants = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool fixedBuffers = true;
 
 		/// <summary>

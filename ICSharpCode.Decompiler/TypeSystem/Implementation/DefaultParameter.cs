@@ -102,6 +102,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return false; }
 		}
 		
+		public bool HasConstantValueInSignature {
+			get { return IsOptional; }
+		}
+		
 		public object ConstantValue {
 			get { return defaultValue; }
 		}
@@ -123,7 +127,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(parameter.Name);
 			b.Append(':');
 			b.Append(parameter.Type.ReflectionName);
-			if (parameter.IsOptional) {
+			if (parameter.IsOptional && parameter.HasConstantValueInSignature) {
 				b.Append(" = ");
 				if (parameter.ConstantValue != null)
 					b.Append(parameter.ConstantValue.ToString());

@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return true;
+							return (options & TypeSystemOptions.DecimalConstants) != 0;
 						default:
 							return false;
 					}

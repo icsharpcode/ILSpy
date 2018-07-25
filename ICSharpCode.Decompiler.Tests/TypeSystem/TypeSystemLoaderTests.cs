@@ -658,6 +658,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.AreEqual(4, p.ConstantValue);
 		}
@@ -670,6 +671,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsFalse(p.HasConstantValueInSignature);
 			// explicit optional parameter appears in type system if it's read from C#, but not when read from IL
 			//Assert.AreEqual(1, p.GetAttributes().Count());
 		}
@@ -682,6 +684,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.AreEqual((int)StringComparison.OrdinalIgnoreCase, p.ConstantValue);
 		}
@@ -694,6 +697,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsNull(p.ConstantValue);
 		}
@@ -706,6 +710,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(1L, p.ConstantValue);
 			Assert.AreEqual(typeof(long), p.ConstantValue.GetType());
 		}
@@ -718,8 +723,22 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsRef);
 			Assert.IsFalse(p.IsOut);
 			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
 			Assert.AreEqual(1L, p.ConstantValue);
 			Assert.AreEqual(typeof(long), p.ConstantValue.GetType());
+		}
+
+		[Test]
+		public void MethodWithOptionalDecimalParameter()
+		{
+			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithOptionalDecimalParameter").Parameters.Single();
+			Assert.IsTrue(p.IsOptional);
+			Assert.IsFalse(p.IsRef);
+			Assert.IsFalse(p.IsOut);
+			Assert.IsFalse(p.IsParams);
+			Assert.IsTrue(p.HasConstantValueInSignature);
+			Assert.AreEqual(1M, p.ConstantValue);
+			Assert.AreEqual(typeof(decimal), p.ConstantValue.GetType());
 		}
 
 		[Test]

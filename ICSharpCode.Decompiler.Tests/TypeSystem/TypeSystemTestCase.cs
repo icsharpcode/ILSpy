@@ -162,6 +162,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void MethodWithOptionalNullableParameter(int? x = null) { }
 		public void MethodWithOptionalLongParameter(long x = 1) { }
 		public void MethodWithOptionalNullableLongParameter(long? x = 1) { }
+		public void MethodWithOptionalDecimalParameter(decimal x = 1) { }
 		public void VarArgsMethod(__arglist) { }
 	}
 

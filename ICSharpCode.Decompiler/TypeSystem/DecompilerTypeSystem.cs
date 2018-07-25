@@ -71,11 +71,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Also, some code in the decompiler expects to be able to compare type/member definitions by reference equality,
 		/// and thus will fail with uncached type systems.
 		/// </summary>
-		Uncached = 0x10,
+		Uncached = 16,
+		/// <summary>
+		/// If this option is active, [DecimalConstantAttribute] is removed and constant values are transformed into simple decimal literals.
+		/// </summary>
+		DecimalConstants = 32,
 		/// <summary>
 		/// Default settings: all features enabled.
 		/// </summary>
-		Default = Dynamic | Tuple | ExtensionMethods
+		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants
 	}
 
 	/// <summary>
@@ -95,6 +99,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.Tuple;
 			if (settings.ExtensionMethods)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
+			if (settings.DecimalConstants)
+				typeSystemOptions |= TypeSystemOptions.DecimalConstants;
 			return typeSystemOptions;
 		}
 

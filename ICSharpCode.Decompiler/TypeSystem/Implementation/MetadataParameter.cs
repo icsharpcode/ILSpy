@@ -37,6 +37,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		string name;
+		bool? hasConstantValueInSignature;
+		bool? isDecimalConstant;
 
 		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
@@ -47,6 +49,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			var param = module.metadata.GetParameter(handle);
 			this.attributes = param.Attributes;
+			if (!IsOptional)
+				isDecimalConstant = false; // only optional parameters can be constants
 		}
 
 		public EntityHandle MetadataToken => handle;
@@ -57,6 +61,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
+
+			if (IsOptional && !HasConstantValueInSignature)
+				b.Add(KnownAttribute.Optional);
 
 			if (!IsOut) {
 				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
@@ -102,13 +109,41 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public object ConstantValue {
 			get {
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				var constantHandle = propertyDef.GetDefaultValue();
+				var parameterDef = metadata.GetParameter(handle);
+				if (IsDecimalConstant)
+					return DecimalConstantHelper.GetDecimalConstantValue(module, parameterDef.GetCustomAttributes());
+
+				var constantHandle = parameterDef.GetDefaultValue();
 				if (constantHandle.IsNil)
 					return null;
+
 				var constant = metadata.GetConstant(constantHandle);
 				var blobReader = metadata.GetBlobReader(constant.Value);
 				return blobReader.ReadConstant(constant.TypeCode);
+			}
+		}
+
+		public bool HasConstantValueInSignature {
+			get {
+				if (hasConstantValueInSignature == null) {
+					if (IsDecimalConstant) {
+						hasConstantValueInSignature = DecimalConstantHelper.AllowsDecimalConstants(module);
+					}
+					else {
+						hasConstantValueInSignature = !module.metadata.GetParameter(handle).GetDefaultValue().IsNil;
+					}
+				}
+				return (bool)hasConstantValueInSignature;
+			}
+		}
+
+		bool IsDecimalConstant {
+			get {
+				if (isDecimalConstant == null) {
+					var parameterDef = module.metadata.GetParameter(handle);
+					isDecimalConstant = DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes());
+				}
+				return (bool)isDecimalConstant;
 			}
 		}
 
