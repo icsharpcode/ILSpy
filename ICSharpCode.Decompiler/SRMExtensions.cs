@@ -337,11 +337,18 @@ namespace ICSharpCode.Decompiler
 
 		public static unsafe SRM.BlobReader GetInitialValue(this FieldDefinition field, PEReader pefile, ICompilation typeSystem)
 		{
-			if (!field.HasFlag(FieldAttributes.HasFieldRVA) || field.GetRelativeVirtualAddress() == 0)
+			if (!field.HasFlag(FieldAttributes.HasFieldRVA))
 				return default;
 			int rva = field.GetRelativeVirtualAddress();
+			if (rva == 0)
+				return default;
 			int size = field.DecodeSignature(new FieldValueSizeDecoder(typeSystem), default);
-			return pefile.GetSectionData(rva).GetReader(0, size);
+			var sectionData = pefile.GetSectionData(rva);
+			if (sectionData.Length == 0 && size != 0)
+				throw new BadImageFormatException($"Field data (rva=0x{rva:x}) could not be found in any section!");
+			if (size < 0 || size > sectionData.Length)
+				throw new BadImageFormatException($"Invalid size {size} for field data!");
+			return sectionData.GetReader(0, size);
 		}
 
 		sealed class FieldValueSizeDecoder : ISignatureTypeProvider<int, GenericContext>

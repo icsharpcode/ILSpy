@@ -92,6 +92,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			var reader = sectionData.GetReader();
 			reader.Offset += (int)This().Offset;
 			int length = reader.ReadInt32();
+			if (length < 0 || length > reader.RemainingBytes)
+				throw new BadImageFormatException("Resource stream length invalid");
 			return new ResourceMemoryStream(Module.Reader, reader.CurrentPointer, length);
 		}
 	}
