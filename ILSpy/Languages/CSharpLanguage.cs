@@ -392,20 +392,12 @@ namespace ICSharpCode.ILSpy
 
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
-				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
-					fileName = Path.ChangeExtension(fileName, ".resx");
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
-						foreach (var entry in new ResourcesFile(entryStream)) {
-							writer.AddResource(entry.Key, entry.Value);
-						}
-					}
-					return new[] { Tuple.Create("EmbeddedResource", fileName) };
-				}
 				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
-						return new[] { Tuple.Create(handler.EntryType, handler.WriteResourceToFile(assembly, fileName, entryStream, options)) };
+						fileName = Path.Combine(targetDirectory, fileName);
+						fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, options);
+						return new[] { Tuple.Create(handler.EntryType, fileName) };
 					}
 				}
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);

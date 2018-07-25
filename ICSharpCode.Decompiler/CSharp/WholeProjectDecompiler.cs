@@ -373,7 +373,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								Stream entryStream = (Stream)value;
 								entryStream.Position = 0;
 								individualResources.AddRange(
-									WriteResourceToFile(Path.Combine(targetDirectory, fileName), (string)name, entryStream));
+									WriteResourceToFile(fileName, (string)name, entryStream));
 							}
 							decodedIntoIndividualFiles = true;
 						} else {
@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					} else {
 						stream.Position = 0;
-						string fileName = Path.ChangeExtension(GetFileNameForResource(r.Name), ".resource");
+						string fileName = GetFileNameForResource(r.Name);
 						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream)) {
 							yield return entry;
 						}
@@ -406,10 +406,24 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected virtual IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
-			using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write)) {
+			if (fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
+				string resx = Path.ChangeExtension(fileName, ".resx");
+				try {
+					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, resx), FileMode.Create, FileAccess.Write))
+					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
+						foreach (var entry in new ResourcesFile(entryStream)) {
+							writer.AddResource(entry.Key, entry.Value);
+						}
+					}
+					return new[] { Tuple.Create("EmbeddedResource", resx) };
+				} catch (BadImageFormatException) {
+					// if the .resources can't be decoded, just save them as-is
+				}
+			} 
+			using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write)) {
 				entryStream.CopyTo(fs);
 			}
-			yield return Tuple.Create("EmbeddedResource", fileName);
+			return new[] { Tuple.Create("EmbeddedResource", fileName) };
 		}
 
 		string GetFileNameForResource(string fullName)
