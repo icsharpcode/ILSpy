@@ -205,6 +205,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (leave.TargetContainer == null) {
 						// assign the finally/filter container
 						leave.TargetContainer = containerStack.Peek();
+						leave.Value = ILReader.Cast(leave.Value, leave.TargetContainer.ExpectedResultType, null, leave.ILRange.Start);
 					}
 					break;
 				case BlockContainer container:

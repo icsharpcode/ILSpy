@@ -1085,6 +1085,11 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Pop(StackType expectedType)
 		{
 			ILInstruction inst = Pop();
+			return Cast(inst, expectedType, Warnings, reader.Offset);
+		}
+
+		internal static ILInstruction Cast(ILInstruction inst, StackType expectedType, List<string> warnings, int ilOffset)
+		{
 			if (expectedType != inst.ResultType) {
 				if (inst is InvalidExpression) {
 					((InvalidExpression)inst).ExpectedResultType = expectedType;
@@ -1134,6 +1139,13 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return inst;
+
+			void Warn(string message)
+			{
+				if (warnings != null) {
+					warnings.Add(string.Format("IL_{0:x4}: {1}", ilOffset, message));
+				}
+			}
 		}
 		
 		ILInstruction PopPointer()
