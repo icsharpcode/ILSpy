@@ -337,7 +337,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (inst.Variable.Kind != VariableKind.StackSlot)
 				return false;
-			Debug.Assert(!inst.Variable.Type.IsSmallIntegerType());
 			if (!(nextInst.Variable.Kind == VariableKind.Local || nextInst.Variable.Kind == VariableKind.Parameter))
 				return false;
 			if (!nextInst.Value.MatchLdLoc(inst.Variable))
