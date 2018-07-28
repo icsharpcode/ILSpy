@@ -463,8 +463,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					b.Append('.'); // allow dot, but never two in a row
 				else
 					b.Append('-');
-				if (b.Length >= 64)
-					break; // limit to 64 chars
+				if (b.Length >= 200)
+					break; // limit to 200 chars
 			}
 			if (b.Length == 0)
 				b.Append('-');
