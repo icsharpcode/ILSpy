@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpy
 			if (module == null)
 				return null;
 			return typeSystem = new SimpleCompilation(
-				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached),
+				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
 				MinimalCorlib.Instance);
 		}
 

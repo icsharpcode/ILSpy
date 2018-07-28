@@ -71,13 +71,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Also, some code in the decompiler expects to be able to compare type/member definitions by reference equality,
 		/// and thus will fail with uncached type systems.
 		/// </summary>
-		Uncached = 16,
+		Uncached = 0x10,
 		/// <summary>
 		/// If this option is active, [DecimalConstantAttribute] is removed and constant values are transformed into simple decimal literals.
 		/// </summary>
-		DecimalConstants = 32,
+		DecimalConstants = 0x20,
 		/// <summary>
-		/// Default settings: all features enabled.
+		/// If this option is active, modopt and modreq types are preserved in the type system.
+		/// 
+		/// Note: the decompiler currently does not support handling modified types;
+		/// activating this option may lead to incorrect decompilation or internal errors.
+		/// </summary>
+		KeepModifiers = 0x40,
+		/// <summary>
+		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants
 	}
