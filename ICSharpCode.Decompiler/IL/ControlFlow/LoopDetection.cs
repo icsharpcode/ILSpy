@@ -98,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				IncludeNestedContainers(loop);
 				// Try to extend the loop to reduce the number of exit points:
 				ExtendLoop(h, loop, out var exitPoint);
+				IncludeUnreachablePredecessors(loop);
 
 				// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
 				// (if the loop doesn't contain nested loops, this is a topological sort)
@@ -151,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-		
+
 		#region ExtendLoop
 		/// <summary>
 		/// Given a natural loop, add additional CFG nodes to the loop in order
@@ -231,7 +232,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// If it is impossible to use a single exit point for the loop, the lowest common ancestor will be the fake "exit node"
 		/// used by the post-dominance analysis. In this case, we fall back to the old heuristic algorithm.
 		/// 
-		/// Precondition: Requires that a node is marked as visited iff it is contained in the loop.
+		/// Requires and maintains the invariant that a node is marked as visited iff it is contained in the loop.
 		/// </remarks>
 		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint, bool isSwitch=false)
 		{
@@ -244,6 +245,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var ep = exitPoint;
 				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != ep) ? n.DominatorTreeChildren : null)) {
 					if (node != exitPoint && !node.Visited) {
+						node.Visited = true;
 						loop.Add(node);
 					}
 				}
@@ -568,7 +570,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 		#endregion
-		
+
+		/// <summary>
+		/// While our normal dominance logic ensures the loop has just a single reachable entry point,
+		/// it's possible that there are unreachable code blocks that have jumps into the loop.
+		/// We'll also include those into the loop.
+		/// 
+		/// Requires and maintains the invariant that a node is marked as visited iff it is contained in the loop.
+		/// </summary>
+		private void IncludeUnreachablePredecessors(List<ControlFlowNode> loop)
+		{
+			for (int i = 1; i < loop.Count; i++) {
+				Debug.Assert(loop[i].Visited);
+				foreach (var pred in loop[i].Predecessors) {
+					if (!pred.Visited) {
+						if (pred.IsReachable) {
+							Debug.Fail("All jumps into the loop body should go through the entry point");
+						} else {
+							pred.Visited = true;
+							loop.Add(pred);
+						}
+					}
+				}
+			}
+		}
+
 		/// <summary>
 		/// Move the blocks associated with the loop into a new block container.
 		/// </summary>
@@ -642,8 +668,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// (unlike loops which should not be nested unless necessary,
 				//  nesting switches makes it clearer in which cases a piece of code is reachable)
 				nodesInSwitch.AddRange(TreeTraversal.PreOrder(exitPoint, p => p.DominatorTreeChildren));
+				foreach (var node in nodesInSwitch) {
+					node.Visited = true;
+				}
 				exitPoint = null;
 			}
+			IncludeUnreachablePredecessors(nodesInSwitch);
 
 			context.Step("Create BlockContainer for switch", switchInst);
 			// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.

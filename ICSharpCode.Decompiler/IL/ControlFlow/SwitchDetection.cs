@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
