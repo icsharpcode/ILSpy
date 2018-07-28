@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IParameter.IsOut => baseParameter.IsOut;
 		bool IParameter.IsParams => baseParameter.IsParams;
 		bool IParameter.IsOptional => baseParameter.IsOptional;
+		bool IParameter.HasConstantValueInSignature => baseParameter.HasConstantValueInSignature;
 		IParameterizedMember IParameter.Owner => newOwner;
 		string IVariable.Name => baseParameter.Name;
 		string ISymbol.Name => baseParameter.Name;

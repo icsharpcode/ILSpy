@@ -37,6 +37,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		string name;
+		// these can't be bool? as bool? is not thread-safe from torn reads
+		byte constantValueInSignatureState;
+		byte decimalConstantState;
 
 		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
@@ -47,6 +50,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			var param = module.metadata.GetParameter(handle);
 			this.attributes = param.Attributes;
+			if (!IsOptional)
+				decimalConstantState = ThreeState.False; // only optional parameters can be constants
 		}
 
 		public EntityHandle MetadataToken => handle;
@@ -57,6 +62,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
+
+			if (IsOptional && !HasConstantValueInSignature)
+				b.Add(KnownAttribute.Optional);
 
 			if (!IsOut) {
 				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
@@ -102,13 +110,41 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public object ConstantValue {
 			get {
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				var constantHandle = propertyDef.GetDefaultValue();
+				var parameterDef = metadata.GetParameter(handle);
+				if (IsDecimalConstant)
+					return DecimalConstantHelper.GetDecimalConstantValue(module, parameterDef.GetCustomAttributes());
+
+				var constantHandle = parameterDef.GetDefaultValue();
 				if (constantHandle.IsNil)
 					return null;
+
 				var constant = metadata.GetConstant(constantHandle);
 				var blobReader = metadata.GetBlobReader(constant.Value);
 				return blobReader.ReadConstant(constant.TypeCode);
+			}
+		}
+
+		public bool HasConstantValueInSignature {
+			get {
+				if (constantValueInSignatureState == ThreeState.Unknown) {
+					if (IsDecimalConstant) {
+						constantValueInSignatureState = ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
+					}
+					else {
+						constantValueInSignatureState = ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
+					}
+				}
+				return constantValueInSignatureState == ThreeState.True;
+			}
+		}
+
+		bool IsDecimalConstant {
+			get {
+				if (decimalConstantState == ThreeState.Unknown) {
+					var parameterDef = module.metadata.GetParameter(handle);
+					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
+				}
+				return decimalConstantState == ThreeState.True;
 			}
 		}
 

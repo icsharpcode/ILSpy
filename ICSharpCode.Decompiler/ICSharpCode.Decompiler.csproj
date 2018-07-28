@@ -349,6 +349,7 @@
     <Compile Include="TypeSystem\GenericContext.cs" />
     <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
     <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
+    <Compile Include="TypeSystem\Implementation\DecimalConstantHelper.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
@@ -361,6 +362,7 @@
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\ThreeState.cs" />
     <Compile Include="TypeSystem\MetadataModule.cs" />
     <Compile Include="TypeSystem\ModifiedType.cs" />
     <Compile Include="TypeSystem\Implementation\PinnedType.cs" />

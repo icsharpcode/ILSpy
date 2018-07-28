@@ -42,6 +42,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Test();
 			Test(5);
 			Test(10, "Hello World!");
+
+			Decimal();
+			Decimal(5m);
 		}
 
 		private void Conflicts()
@@ -121,6 +124,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private void Test(int a = 10, string b = "Test")
+		{
+		}
+
+		private void Decimal(decimal d = 10m)
 		{
 		}
 
