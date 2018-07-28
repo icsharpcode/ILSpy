@@ -67,19 +67,76 @@ namespace ICSharpCode.Decompiler.Metadata
 			return directories.ToArray();
 		}
 
-		public string TargetFramework { get; }
+		enum TargetFrameworkIdentifier
+		{
+			NETFramework,
+			NETCoreApp,
+			NETStandard,
+			Silverlight
+		}
+
+		string targetFramework;
+		TargetFrameworkIdentifier targetFrameworkIdentifier;
+		Version targetFrameworkVersion;
 
 		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
 			PEStreamOptions options = PEStreamOptions.Default)
 		{
 			this.options = options;
-			this.TargetFramework = targetFramework ?? string.Empty;
+			this.targetFramework = targetFramework ?? string.Empty;
+			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
 			this.throwOnError = throwOnError;
 			if (string.IsNullOrWhiteSpace(this.baseDirectory))
 				this.baseDirectory = Environment.CurrentDirectory;
 			AddSearchDirectory(baseDirectory);
+		}
+
+		(TargetFrameworkIdentifier, Version) ParseTargetFramework(string targetFramework)
+		{
+			string[] tokens = targetFramework.Split(',');
+			TargetFrameworkIdentifier identifier;
+
+			switch (tokens[0].Trim().ToUpperInvariant()) {
+				case ".NETCOREAPP":
+					identifier = TargetFrameworkIdentifier.NETCoreApp;
+					break;
+				case ".NETSTANDARD":
+					identifier = TargetFrameworkIdentifier.NETStandard;
+					break;
+				case "SILVERLIGHT":
+					identifier = TargetFrameworkIdentifier.Silverlight;
+					break;
+				default:
+					identifier = TargetFrameworkIdentifier.NETFramework;
+					break;
+			}
+
+			Version version = null;
+
+			for (int i = 1; i < tokens.Length; i++) {
+				var pair = tokens[i].Trim().Split('=');
+
+				if (pair.Length != 2)
+					continue;
+
+				switch (pair[0].Trim().ToUpperInvariant()) {
+					case "VERSION":
+						var versionString = pair[1].TrimStart('v');
+						if (identifier == TargetFrameworkIdentifier.NETCoreApp ||
+							identifier == TargetFrameworkIdentifier.NETStandard)
+						{
+							if (versionString.Length == 3)
+								versionString += ".0";
+						}
+						if (!Version.TryParse(versionString, out version))
+							version = null;
+						break;
+				}
+			}
+
+			return (identifier, version ?? ZeroVersion);
 		}
 
 		public PEFile Resolve(IAssemblyReference name)
@@ -107,25 +164,23 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
-			var targetFramework = TargetFramework.Split(new[] { ",Version=v", ",Profile=" }, StringSplitOptions.None);
 			string file = null;
-			switch (targetFramework[0]) {
-				case ".NETCoreApp":
-				case ".NETStandard":
-					if (targetFramework.Length < 2)
+			switch (targetFrameworkIdentifier) {
+				case TargetFrameworkIdentifier.NETCoreApp:
+				case TargetFrameworkIdentifier.NETStandard:
+					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
 					if (dotNetCorePathFinder == null) {
-						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, TargetFramework, version);
+						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, targetFrameworkVersion);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					if (file != null)
 						return file;
 					goto default;
-				case "Silverlight":
-					if (targetFramework.Length < 2)
+				case TargetFrameworkIdentifier.Silverlight:
+					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
-					file = ResolveSilverlight(name, new Version(targetFramework[1]));
+					file = ResolveSilverlight(name, targetFrameworkVersion);
 					if (file != null)
 						return file;
 					goto default;

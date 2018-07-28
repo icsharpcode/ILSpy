@@ -57,15 +57,13 @@ namespace ICSharpCode.Decompiler.Metadata
 		ISet<string> packageBasePaths = new HashSet<string>(StringComparer.Ordinal);
 		readonly string assemblyName;
 		readonly string basePath;
-		readonly string targetFrameworkId;
-		readonly string version;
+		readonly Version version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version, ReferenceLoadInfo loadInfo = null)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, Version version, ReferenceLoadInfo loadInfo = null)
 		{
 			this.assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
 			this.basePath = Path.GetDirectoryName(parentAssemblyFileName);
-			this.targetFrameworkId = targetFrameworkId;
 			this.version = version;
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
@@ -98,7 +96,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			return FallbackToDotNetSharedDirectory(name, new Version(version));
+			return FallbackToDotNetSharedDirectory(name, version);
 		}
 
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
