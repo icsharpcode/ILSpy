@@ -118,15 +118,17 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 		}
 
-		[Test, Ignore("?")]
+		[Test]
 		public void FSharpLoops_Debug()
 		{
+			CopyFSharpCoreDll();
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
-		[Test, Ignore("?")]
+		[Test]
 		public void FSharpLoops_Release()
 		{
+			CopyFSharpCoreDll();
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
@@ -139,6 +141,20 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = Tester.DecompileCSharp(executable, settings);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled);
+		}
+
+		static readonly object copyLock = new object();
+
+		static void CopyFSharpCoreDll()
+		{
+			lock (copyLock) {
+				if (File.Exists(Path.Combine(TestCasePath, "FSharp.Core.dll")))
+					return;
+				string fsharpCoreDll = Path.Combine(TestCasePath, "..\\..\\..\\ILSpy-tests\\FSharp\\FSharp.Core.dll");
+				if (!File.Exists(fsharpCoreDll))
+					Assert.Ignore("Ignored because of missing ILSpy-tests repo. Must be checked out separately from https://github.com/icsharpcode/ILSpy-tests!");
+				File.Copy(fsharpCoreDll, Path.Combine(TestCasePath, "FSharp.Core.dll"));
+			}
 		}
 	}
 }

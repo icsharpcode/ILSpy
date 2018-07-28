@@ -18,91 +18,84 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 [assembly: FSharpInterfaceDataVersion(2, 0, 0)]
-[assembly: TargetFramework(".NETFramework,Version=v4.6.1", FrameworkDisplayName = ".NET Framework 4.6.1")]
 [assembly: AssemblyTitle("ConsoleApplication1")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ConsoleApplication1")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: TargetFramework(".NETFramework,Version=v4.6.1", FrameworkDisplayName = ".NET Framework 4.6.1")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("e0674ff5-5e8f-4d4e-a88f-e447192454c7")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: Debuggable(DebuggableAttribute.DebuggingModes.Default | DebuggableAttribute.DebuggingModes.DisableOptimizations)]
-[assembly: AssemblyVersion("1.0.0.0")]
 [CompilationMapping(SourceConstructFlags.Module)]
 public static class Program
 {
 	[Serializable]
-	[StructLayout(LayoutKind.Auto, CharSet = CharSet.Auto)]
 	[CompilationMapping(SourceConstructFlags.Closure)]
-	internal sealed class disposable@3 : IDisposable
+	internal sealed class disposable_00403 : IDisposable
 	{
-		public disposable@3()
+		public disposable_00403()
 		{
-			((object)this)..ctor();
+			((object)this)._002Ector();
 		}
 
-		private void System-IDisposable-Dispose()
+		private void System_002DIDisposable_002DDispose()
 		{
 		}
 
 		void IDisposable.Dispose()
 		{
 			//ILSpy generated this explicit interface implementation from .override directive in System-IDisposable-Dispose
-			this.System-IDisposable-Dispose();
+			this.System_002DIDisposable_002DDispose();
 		}
 	}
 
 	[Serializable]
-	[StructLayout(LayoutKind.Auto, CharSet = CharSet.Auto)]
 	[CompilationMapping(SourceConstructFlags.Closure)]
-	internal sealed class getSeq@5 : GeneratedSequenceBase<int>
+	internal sealed class getSeq_00405 : GeneratedSequenceBase<int>
 	{
+		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		[DebuggerNonUserCode]
 		public int pc = pc;
 
+		[DebuggerNonUserCode]
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		[CompilerGenerated]
-		[DebuggerNonUserCode]
 		public int current = current;
 
-		public getSeq@5(int pc, int current)
+		public getSeq_00405(int pc, int current)
 		{
 		}
 
 		public override int GenerateNext(ref IEnumerable<int> next)
 		{
-			switch (this.pc)
-			{
+			switch (pc) {
 			default:
-				this.pc = 1;
-				this.current = 1;
+				pc = 1;
+				current = 1;
 				return 1;
 			case 1:
-				this.pc = 2;
+				pc = 2;
 				break;
 			case 2:
 				break;
 			}
-			this.current = 0;
+			current = 0;
 			return 0;
 		}
 
 		public override void Close()
 		{
-			this.pc = 2;
+			pc = 2;
 		}
 
 		public override bool get_CheckClose()
 		{
-			switch (this.pc)
-			{
+			switch (pc) {
 			default:
 				return false;
 			case 0:
@@ -111,29 +104,29 @@ public static class Program
 			}
 		}
 
-		[CompilerGenerated]
 		[DebuggerNonUserCode]
+		[CompilerGenerated]
 		public override int get_LastGenerated()
 		{
-			return this.current;
+			return current;
 		}
 
-		[CompilerGenerated]
 		[DebuggerNonUserCode]
+		[CompilerGenerated]
 		public override IEnumerator<int> GetFreshEnumerator()
 		{
-			return new getSeq@5(0, 0);
+			return new getSeq_00405(0, 0);
 		}
 	}
 
 	public static IDisposable disposable()
 	{
-		return new disposable@3();
+		return new disposable_00403();
 	}
 
 	public static IEnumerable<int> getSeq()
 	{
-		return new getSeq@5(0, 0);
+		return new getSeq_00405(0, 0);
 	}
 
 	public static FSharpList<int> getList()
@@ -143,8 +136,7 @@ public static class Program
 
 	public static int[] getArray()
 	{
-		return new int[1]
-		{
+		return new int[1] {
 			1
 		};
 	}
@@ -152,56 +144,40 @@ public static class Program
 	[EntryPoint]
 	public static int main(string[] argv)
 	{
-		IDisposable disposable = default(IDisposable);
-		using (Program.disposable())
-		{
+		IDisposable disposable;
+		using (Program.disposable()) {
 			Console.WriteLine("Hello 1");
 			disposable = Program.disposable();
 		}
-		using (disposable)
-		{
-			IEnumerable<int> seq = Program.getSeq();
-			using (IEnumerator<int> enumerator = seq.GetEnumerator())
-			{
-				while (true)
-				{
-					if (!enumerator.MoveNext())
-						break;
-					int k = enumerator.Current;
-					Console.WriteLine(k);
-				}
+		using (disposable) {
+			IEnumerable<int> seq = getSeq();
+			foreach (int item in seq) {
+				Console.WriteLine(item);
 			}
-			FSharpList<int> fSharpList = Program.getList();
-			FSharpList<int> tailOrNull = fSharpList.TailOrNull;
-			while (true)
-			{
-				if (tailOrNull == null)
-					break;
-				int j = fSharpList.HeadOrDefault;
-				Console.WriteLine(j);
+			FSharpList<int> fSharpList = getList();
+			for (FSharpList<int> tailOrNull = fSharpList.TailOrNull; tailOrNull != null; tailOrNull = fSharpList.TailOrNull) {
+				int headOrDefault = fSharpList.HeadOrDefault;
+				Console.WriteLine(headOrDefault);
 				fSharpList = tailOrNull;
-				tailOrNull = fSharpList.TailOrNull;
 			}
-			int[] array = Program.getArray();
-			for (int l = 0; l < array.Length; l++)
-			{
-				int i = array[l];
-				Console.WriteLine(i);
+			int[] array = getArray();
+			foreach (int value in array) {
+				Console.WriteLine(value);
 			}
 			return 0;
 		}
 	}
 }
-namespace <StartupCode$ConsoleApplication1>
+namespace _003CStartupCode_0024ConsoleApplication1_003E
 {
-	internal static class $Program
+	internal static class _0024Program
 	{
 	}
-	internal static class $AssemblyInfo
+	internal static class _0024AssemblyInfo
 	{
 	}
 }
-namespace <StartupCode$ConsoleApplication1>.$.NETFramework,Version=v4.6.1
+namespace _003CStartupCode_0024ConsoleApplication1_003E._0024.NETFramework_002CVersion_003Dv4._6._1
 {
 	internal static class AssemblyAttributes
 	{
