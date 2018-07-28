@@ -112,19 +112,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!SemanticHelper.IsPure(stobj.Target.Flags) || inst.Variable.IsUsedWithin(stobj.Target))
 					return false;
-				var newType = stobj.Target.InferType();
-				if (newType is ByReferenceType byref)
-					newType = byref.ElementType;
-				else if (newType is PointerType pointer)
-					newType = pointer.ElementType;
-				else
-					newType = stobj.Type;
+				var pointerType = stobj.Target.InferType();
+				IType newType = stobj.Type;
+				if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointerType, stobj.Type)) {
+					if (pointerType is ByReferenceType byref)
+						newType = byref.ElementType;
+					else if (pointerType is PointerType pointer)
+						newType = pointer.ElementType;
+				}
 				if (IsImplicitTruncation(inst.Value, newType)) {
 					// 'stobj' is implicitly truncating the value
 					return false;
 				}
-				stobj.Type = newType;
 				context.Step("Inline assignment stobj", stobj);
+				stobj.Type = newType;
 				block.Instructions.Remove(localStore);
 				block.Instructions.Remove(stobj);
 				stobj.Value = inst.Value;

@@ -202,7 +202,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(int index, IType type)
 		{
 			VariableKind kind;
-			if (type is PinnedType pinned) {
+			if (type.SkipModifiers() is PinnedType pinned) {
 				kind = VariableKind.PinnedLocal;
 				type = pinned.ElementType;
 			} else {

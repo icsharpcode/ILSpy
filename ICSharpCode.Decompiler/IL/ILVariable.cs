@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 		NamedArgument,
 	}
 
+	[DebuggerDisplay("{Name} : {Type}")]
 	public class ILVariable
 	{
 		VariableKind kind;

@@ -1448,9 +1448,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						// We need to convert to inst.TargetType, or to an equivalent type.
 						IType targetType;
 						if (inst.TargetType == NullableType.GetUnderlyingType(context.TypeHint).ToPrimitiveType()
-							&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
-						{
+							&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted) {
 							targetType = context.TypeHint;
+						} else if (inst.TargetType == IL.PrimitiveType.Ref) {
+							// converting to unknown ref-type
+							targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
 						} else {
 							targetType = GetType(inst.TargetType.ToKnownTypeCode());
 						}
@@ -1691,7 +1693,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
-			if (TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, inst.Type)) {
 				TranslatedExpression result;
 				if (target.Expression is DirectionExpression dirExpr) {
 					// we can dereference the managed reference by stripping away the 'ref'
@@ -1735,27 +1737,35 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitStObj(StObj inst, TranslationContext context)
 		{
-			var target = Translate(inst.Target);
-			TranslatedExpression result;
-			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			var pointer = Translate(inst.Target);
+			TranslatedExpression target;
+			TranslatedExpression value = default;
+			if (pointer.Expression is DirectionExpression && TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
-				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
+				target = pointer.UnwrapChild(((DirectionExpression)pointer.Expression).Expression);
 			} else {
 				// Cast pointer type if necessary:
-				if (!TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
-					target = target.ConvertTo(new PointerType(inst.Type), this);
+				if (!TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointer.Type, inst.Type)) {
+					value = Translate(inst.Value, typeHint: inst.Type);
+					if (TypeUtils.IsCompatibleTypeForMemoryAccess(value.Type, inst.Type)) {
+						pointer = pointer.ConvertTo(new PointerType(value.Type), this);
+					} else {
+						pointer = pointer.ConvertTo(new PointerType(inst.Type), this);
+					}
 				}
-				if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
+				if (pointer.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
 					// *&ptr -> ptr
-					result = target.UnwrapChild(uoe.Expression);
+					target = pointer.UnwrapChild(uoe.Expression);
 				} else {
-					result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+					target = new UnaryOperatorExpression(UnaryOperatorType.Dereference, pointer.Expression)
 						.WithoutILInstruction()
-						.WithRR(new ResolveResult(((TypeWithElementType)target.Type).ElementType));
+						.WithRR(new ResolveResult(((TypeWithElementType)pointer.Type).ElementType));
 				}
 			}
-			var value = Translate(inst.Value, typeHint: result.Type);
-			return Assignment(result, value).WithILInstruction(inst);
+			if (value.Expression == null) {
+				value = Translate(inst.Value, typeHint: target.Type);
+			}
+			return Assignment(target, value).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst, TranslationContext context)
@@ -1834,7 +1844,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
 			var arrayType = arrayExpr.Type as ArrayType;
-			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(arrayType.ElementType), inst.Type)) {
+			if (arrayType == null || !TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, inst.Type)) {
 				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}

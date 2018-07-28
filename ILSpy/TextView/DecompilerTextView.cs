@@ -730,13 +730,8 @@ namespace ICSharpCode.ILSpy.TextView
 						tcs.SetResult(output);
 					} catch (OperationCanceledException) {
 						tcs.SetCanceled();
-						#if DEBUG
-					} catch (AggregateException ex) {
-						tcs.SetException(ex);
-						#else
 					} catch (Exception ex) {
 						tcs.SetException(ex);
-						#endif
 					}
 				}));
 			thread.Start();

@@ -192,13 +192,26 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// The access semantics may sligthly differ on read accesses of small integer types,
 		/// due to zero extension vs. sign extension when the signs differ.
 		/// </remarks>
-		public static bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType)
+		public static bool IsCompatiblePointerTypeForMemoryAccess(IType pointerType, IType accessType)
 		{
 			IType memoryType;
 			if (pointerType is PointerType || pointerType is ByReferenceType)
 				memoryType = ((TypeWithElementType)pointerType).ElementType;
 			else
 				return false;
+			return IsCompatibleTypeForMemoryAccess(memoryType, accessType);
+		}
+
+		/// <summary>
+		/// Gets whether reading/writing an element of accessType from the pointer
+		/// is equivalent to reading/writing an element of the memoryType.
+		/// </summary>
+		/// <remarks>
+		/// The access semantics may sligthly differ on read accesses of small integer types,
+		/// due to zero extension vs. sign extension when the signs differ.
+		/// </remarks>
+		public static bool IsCompatibleTypeForMemoryAccess(IType memoryType, IType accessType)
+		{
 			memoryType = memoryType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 			accessType = accessType.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
 			if (memoryType.Equals(accessType))
@@ -363,6 +376,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			type = type.SkipModifiers();
 			if (type.Kind == TypeKind.Unknown) return PrimitiveType.Unknown;
+			if (type.Kind == TypeKind.ByReference) return PrimitiveType.Ref;
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
 		}

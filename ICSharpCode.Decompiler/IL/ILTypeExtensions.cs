@@ -160,9 +160,8 @@ namespace ICSharpCode.Decompiler.IL
 					return new ByReferenceType(ldsflda.Field.Type);
 				case LdElema ldelema:
 					if (ldelema.Array.InferType() is ArrayType arrayType) {
-						var refType = new ByReferenceType(arrayType.ElementType);
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType, ldelema.Type)) {
-							return refType;
+						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type)) {
+							return new ByReferenceType(arrayType.ElementType);
 						}
 					}
 					return new ByReferenceType(ldelema.Type);

@@ -300,7 +300,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				for (int i = 0; i < instructionCount; i++) {
 					foreach (var branch in workItem.Instructions[i].Descendants.OfType<Branch>()) {
 						if (branch.TargetBlock.Parent == sourceContainer) {
-							Debug.Assert(branch.TargetBlock != block);
+							if (branch.TargetBlock == block) {
+								// pin instruction is within a loop, and can loop around without an unpin instruction
+								// This should never happen for C#-compiled code, but may happen with C++/CLI code.
+								return false;
+							}
 							if (reachedEdgesPerBlock[branch.TargetBlock.ChildIndex]++ == 0) {
 								// detected first edge to that block: add block as work item
 								workList.Enqueue(branch.TargetBlock);
@@ -442,7 +446,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if ((inst is LdLoc || inst is StLoc) && !IsSlotAcceptingBothManagedAndUnmanagedPointers(inst.SlotInfo) && oldVar.StackType != StackType.I) {
 					// wrap inst in Conv, so that the stack types match up
 					var children = inst.Parent.Children;
-					children[inst.ChildIndex] = new Conv(inst, PrimitiveType.I, false, Sign.None);
+					children[inst.ChildIndex] = new Conv(inst, oldVar.StackType.ToPrimitiveType(), false, Sign.None);
 				}
 			} else if (inst.MatchLdStr(out var val) && val == "Is this ILSpy?") {
 				inst.ReplaceWith(new LdStr("This is ILSpy!")); // easter egg ;)
