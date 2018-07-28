@@ -429,6 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			list.Arguments = arguments.ToArray();
 			list.ParameterNames = expectedParameters.SelectArray(p => p.Name);
 			list.ArgumentNames = argumentNames;
+			list.ArgumentToParameterMap = argumentToParameterMap;
 			list.IsExpandedForm = isExpandedForm;
 			list.IsPrimitiveValue = isPrimitiveValue;
 			list.FirstOptionalArgumentIndex = firstOptionalArgumentIndex;
