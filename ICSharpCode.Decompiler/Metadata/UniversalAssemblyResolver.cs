@@ -164,6 +164,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string FindAssemblyFile(IAssemblyReference name)
 		{
+			if (name.IsWindowsRuntime) {
+				return FindWindowsMetadataFile(name);
+			}
+
 			string file = null;
 			switch (targetFrameworkIdentifier) {
 				case TargetFrameworkIdentifier.NETCoreApp:
@@ -187,6 +191,54 @@ namespace ICSharpCode.Decompiler.Metadata
 				default:
 					return ResolveInternal(name);
 			}
+		}
+
+		string FindWindowsMetadataFile(IAssemblyReference name)
+		{
+			// Finding Windows Metadata (winmd) is currently only supported on Windows.
+			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+				return null;
+
+			// TODO : Find a way to detect the base directory for the required Windows SDK.
+			string basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Windows Kits", "10", "References");
+
+			if (!Directory.Exists(basePath))
+				return FindWindowsMetadataInSystemDirectory(name);
+
+			// TODO : Find a way to detect the required Windows SDK version.
+			var di = new DirectoryInfo(basePath);
+			basePath = null;
+			foreach (var versionFolder in di.EnumerateDirectories()) {
+				basePath = versionFolder.FullName;
+			}
+
+			if (basePath == null)
+				return FindWindowsMetadataInSystemDirectory(name);
+
+			basePath = Path.Combine(basePath, name.Name);
+
+			if (!Directory.Exists(basePath))
+				return FindWindowsMetadataInSystemDirectory(name);
+
+			basePath = Path.Combine(basePath, FindClosestVersionDirectory(basePath, name.Version));
+
+			if (!Directory.Exists(basePath))
+				return FindWindowsMetadataInSystemDirectory(name);
+
+			string file = Path.Combine(basePath, name.Name + ".winmd");
+
+			if (!File.Exists(file))
+				return FindWindowsMetadataInSystemDirectory(name);
+
+			return file;
+		}
+
+		string FindWindowsMetadataInSystemDirectory(IAssemblyReference name)
+		{
+			string file = Path.Combine(Environment.SystemDirectory, "WinMetadata", name.Name + ".winmd");
+			if (File.Exists(file))
+				return file;
+			return null;
 		}
 
 		void AddTargetFrameworkSearchPathIfExists(string path)

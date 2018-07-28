@@ -346,12 +346,8 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				if (isWinRT) {
-					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", fullName.Name + ".winmd");
-				} else {
-					var resolver = new MyUniversalResolver(this);
-					file = resolver.FindAssemblyFile(fullName);
-				}
+				var resolver = new MyUniversalResolver(this);
+				file = resolver.FindAssemblyFile(fullName);
 
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
 					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {
