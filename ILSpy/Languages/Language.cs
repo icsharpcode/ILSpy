@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy
 			if (metadata.IsAssembly) {
 				var name = metadata.GetAssemblyDefinition();
 				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0) {
-					WriteCommentLine(output, name.Name + " [WinRT]");
+					WriteCommentLine(output, metadata.GetString(name.Name) + " [WinRT]");
 				} else {
 					WriteCommentLine(output, metadata.GetFullAssemblyName());
 				}
