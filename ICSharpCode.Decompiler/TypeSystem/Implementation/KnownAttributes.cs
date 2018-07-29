@@ -48,6 +48,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		AssemblyVersion,
 		InternalsVisibleTo,
 		TypeForwardedTo,
+		ReferenceAssembly,
 		
 		// Type attributes:
 		Serializable,
@@ -109,6 +110,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Reflection", nameof(AssemblyVersionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(InternalsVisibleToAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TypeForwardedToAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(ReferenceAssemblyAttribute)),
 			// Type attributes:
 			new TopLevelTypeName("System", nameof(SerializableAttribute)),
 			new TopLevelTypeName("System", nameof(FlagsAttribute)),
