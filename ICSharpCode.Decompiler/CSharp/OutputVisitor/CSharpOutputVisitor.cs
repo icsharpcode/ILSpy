@@ -2170,6 +2170,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case ParameterModifier.This:
 					WriteKeyword(ParameterDeclaration.ThisModifierRole);
 					break;
+				case ParameterModifier.In:
+					WriteKeyword(ParameterDeclaration.InModifierRole);
+					break;
 			}
 			parameterDeclaration.Type.AcceptVisitor(this);
 			if (!parameterDeclaration.Type.IsNull && !string.IsNullOrEmpty(parameterDeclaration.Name)) {

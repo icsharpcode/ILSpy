@@ -911,16 +911,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Remove the [DefaultMember] attribute if the class contains indexers
 				RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
 			}
-			if (settings.IntroduceRefAndReadonlyModifiersOnStructs && typeDecl.ClassType == ClassType.Struct) {
-				if (RemoveAttribute(typeDecl, KnownAttribute.IsByRefLike)) {
-					typeDecl.Modifiers |= Modifiers.Ref;
-				}
-				if (RemoveAttribute(typeDecl, KnownAttribute.IsReadOnly)) {
-					typeDecl.Modifiers |= Modifiers.Readonly;
-				}
+			if (settings.IntroduceRefModifiersOnStructs) {
 				if (FindAttribute(typeDecl, KnownAttribute.Obsolete, out var attr)) {
 					if (obsoleteAttributePattern.IsMatch(attr)) {
-						if (attr.Parent is Syntax.AttributeSection section && section.Attributes.Count == 1)
+						if (attr.Parent is AttributeSection section && section.Attributes.Count == 1)
 							section.Remove();
 						else
 							attr.Remove();

@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly TypeAttributes attributes;
 		public TypeKind Kind { get; }
 		public bool IsByRefLike { get; }
+		public bool IsReadOnly { get; }
 		public ITypeDefinition DeclaringTypeDefinition { get; }
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
@@ -101,12 +102,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				} else {
 					this.Kind = TypeKind.Struct;
 					this.IsByRefLike = td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
+					this.IsReadOnly = td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 				}
 			} else if (td.IsDelegate(metadata)) {
 				this.Kind = TypeKind.Delegate;
 			} else {
 				this.Kind = TypeKind.Class;
 				this.HasExtensionMethods = this.IsStatic
+					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}
 		}

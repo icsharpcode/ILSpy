@@ -83,7 +83,8 @@ namespace ICSharpCode.Decompiler
 				discards = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
-				introduceRefAndReadonlyModifiersOnStructs = false;
+				introduceReadonlyAndInModifiers = false;
+				introduceRefModifiersOnStructs = false;
 				nonTrailingNamedArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
@@ -96,7 +97,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (tupleComparisons)
 				return CSharp.LanguageVersion.CSharp7_3;
-			if (IntroduceRefAndReadonlyModifiersOnStructs || nonTrailingNamedArguments)
+			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
 			if (outVariables || tupleTypes || tupleConversions || discards)
@@ -650,16 +651,32 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool introduceRefAndReadonlyModifiersOnStructs = true;
+		bool introduceRefModifiersOnStructs = true;
 
 		/// <summary>
-		/// Gets/Sets whether IsByRefLikeAttribute and IsReadOnlyAttribute should be replaced with 'ref' and 'readonly' modifiers on structs.
+		/// Gets/Sets whether IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs.
 		/// </summary>
-		public bool IntroduceRefAndReadonlyModifiersOnStructs {
-			get { return introduceRefAndReadonlyModifiersOnStructs; }
+		public bool IntroduceRefModifiersOnStructs {
+			get { return introduceRefModifiersOnStructs; }
 			set {
-				if (introduceRefAndReadonlyModifiersOnStructs != value) {
-					introduceRefAndReadonlyModifiersOnStructs = value;
+				if (introduceRefModifiersOnStructs != value) {
+					introduceRefModifiersOnStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceReadonlyAndInModifiers = true;
+
+		/// <summary>
+		/// Gets/Sets whether IsReadOnlyAttribute should be replaced with 'readonly' modifiers on structs
+		/// and with the 'in' modifier on parameters.
+		/// </summary>
+		public bool IntroduceReadonlyAndInModifiers {
+			get { return introduceReadonlyAndInModifiers; }
+			set {
+				if (introduceReadonlyAndInModifiers != value) {
+					introduceReadonlyAndInModifiers = value;
 					OnPropertyChanged();
 				}
 			}

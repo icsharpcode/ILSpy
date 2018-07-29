@@ -37,7 +37,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether this parameter is a C# 'out' parameter.
 		/// </summary>
 		bool IsOut { get; }
-		
+
+		/// <summary>
+		/// Gets whether this parameter is a C# 'in' parameter.
+		/// </summary>
+		bool IsIn { get; }
+
 		/// <summary>
 		/// Gets whether this parameter is a C# 'params' parameter.
 		/// </summary>

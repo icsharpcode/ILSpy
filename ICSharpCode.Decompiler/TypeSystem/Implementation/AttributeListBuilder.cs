@@ -200,6 +200,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
 							return (options & TypeSystemOptions.DecimalConstants) != 0;
+						case "IsReadOnlyAttribute":
+							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
+						case "IsByRefLikeAttribute":
+							return (options & TypeSystemOptions.RefStructs) != 0;
 						default:
 							return false;
 					}

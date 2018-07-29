@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IParameter.GetAttributes() => baseParameter.GetAttributes();
 		bool IParameter.IsRef => baseParameter.IsRef;
 		bool IParameter.IsOut => baseParameter.IsOut;
+		bool IParameter.IsIn => baseParameter.IsIn;
 		bool IParameter.IsParams => baseParameter.IsParams;
 		bool IParameter.IsOptional => baseParameter.IsOptional;
 		bool IParameter.HasConstantValueInSignature => baseParameter.HasConstantValueInSignature;

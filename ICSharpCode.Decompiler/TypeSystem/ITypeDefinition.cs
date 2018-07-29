@@ -44,6 +44,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For all other types: returns <see cref="SpecialType.UnknownType"/>.
 		/// </summary>
 		IType EnumUnderlyingType { get; }
+
+		/// <summary>
+		/// For structs: returns whether this is a readonly struct.
+		/// For all other types: returns false.
+		/// </summary>
+		bool IsReadOnly { get; }
 		
 		/// <summary>
 		/// Gets the full name of this type.

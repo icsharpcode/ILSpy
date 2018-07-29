@@ -84,9 +84,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		KeepModifiers = 0x40,
 		/// <summary>
+		/// If this option is active, [IsReadOnlyAttribute] is removed and parameters are marked as in, structs as readonly.
+		/// Otherwise, the attribute is preserved but the parameters and structs are not marked.
+		/// </summary>
+		ReadOnlyStructsAndParameters = 0x80,
+		/// <summary>
+		/// If this option is active, [IsByRefLikeAttribute] is removed and structs are marked as ref.
+		/// Otherwise, the attribute is preserved but the structs are not marked.
+		/// </summary>
+		RefStructs = 0x100,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
-		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants
+		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters | RefStructs
 	}
 
 	/// <summary>
@@ -108,6 +118,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
 			if (settings.DecimalConstants)
 				typeSystemOptions |= TypeSystemOptions.DecimalConstants;
+			if (settings.IntroduceRefModifiersOnStructs)
+				typeSystemOptions |= TypeSystemOptions.RefStructs;
+			if (settings.IntroduceReadonlyAndInModifiers)
+				typeSystemOptions |= TypeSystemOptions.ReadOnlyStructsAndParameters;
 			return typeSystemOptions;
 		}
 

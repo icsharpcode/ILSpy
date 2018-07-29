@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (IsOptional && !HasConstantValueInSignature)
 				b.Add(KnownAttribute.Optional);
 
-			if (!IsOut) {
+			if (!IsOut && !IsIn) {
 				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
 					b.Add(KnownAttribute.In);
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
@@ -80,17 +80,28 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
-		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out;
+		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) == 0;
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
+
+		public bool IsIn {
+			get {
+				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0 ||
+					Type.Kind != TypeKind.ByReference || (attributes & inOut) != ParameterAttributes.In)
+					return false;
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+			}
+		}
 
 		public bool IsParams {
 			get {
 				if (Type.Kind != TypeKind.Array)
 					return false;
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				return propertyDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
+				var parameterDef = metadata.GetParameter(handle);
+				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
 			}
 		}
 
@@ -100,8 +111,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (name != null)
 					return name;
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				return LazyInit.GetOrSet(ref this.name, metadata.GetString(propertyDef.Name));
+				var parameterDef = metadata.GetParameter(handle);
+				return LazyInit.GetOrSet(ref this.name, metadata.GetString(parameterDef.Name));
 			}
 		}
 

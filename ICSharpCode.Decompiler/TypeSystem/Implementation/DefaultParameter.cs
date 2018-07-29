@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly IType type;
 		readonly string name;
 		readonly IReadOnlyList<IAttribute> attributes;
-		readonly bool isRef, isOut, isParams, isOptional;
+		readonly bool isRef, isOut, isIn, isParams, isOptional;
 		readonly object defaultValue;
 		readonly IParameterizedMember owner;
 		
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public DefaultParameter(IType type, string name, IParameterizedMember owner = null, IReadOnlyList<IAttribute> attributes = null,
-		                        bool isRef = false, bool isOut = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
+		                        bool isRef = false, bool isOut = false, bool isIn = false, bool isParams = false, bool isOptional = false, object defaultValue = null)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.isRef = isRef;
 			this.isOut = isOut;
+			this.isIn = isIn;
 			this.isParams = isParams;
 			this.isOptional = isOptional;
 			this.defaultValue = defaultValue;
@@ -80,6 +81,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public bool IsOut {
 			get { return isOut; }
+		}
+
+		public bool IsIn {
+			get { return IsIn; }
 		}
 		
 		public bool IsParams {
