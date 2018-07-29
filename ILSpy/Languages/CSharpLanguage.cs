@@ -133,6 +133,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = method.ParentModule.PEFile;
+			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -200,6 +201,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = property.ParentModule.PEFile;
+			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
@@ -209,6 +211,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = field.ParentModule.PEFile;
+			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -269,6 +272,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileEvent(IEvent @event, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = @event.ParentModule.PEFile;
+			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			base.WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
@@ -278,20 +282,41 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			PEFile assembly = type.ParentModule.PEFile;
+			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
 
-		void AddReferenceWarningMessage(PEFile assembly, ITextOutput output)
+		void AddReferenceWarningMessage(PEFile module, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetPEFileOrNull() == assembly);
+			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetPEFileOrNull() == module);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.HasErrors)
 				return;
 			const string line1 = "Warning: Some assembly references could not be resolved automatically. This might lead to incorrect decompilation of some parts,";
 			const string line2 = "for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.";
+			AddWarningMessage(module, output, line1, line2, "Show assembly load log", Images.ViewCode, delegate {
+				MainWindow.Instance.SelectNode(MainWindow.Instance.FindTreeNode(module).Children.OfType<ReferenceFolderTreeNode>().First());
+			});
+		}
+
+		void AddReferenceAssemblyWarningMessage(PEFile module, ITextOutput output)
+		{
+			var metadata = module.Metadata;
+			if (!metadata.GetCustomAttributes(Handle.AssemblyDefinition).HasKnownAttribute(metadata, KnownAttribute.ReferenceAssembly))
+				return;
+			const string line1 = "Warning: This assembly is marked as 'reference assembly', which means that it only contains metadata and no executable code.";
+			AddWarningMessage(module, output, line1);
+		}
+
+		void AddWarningMessage(PEFile module, ITextOutput output, string line1, string line2 = null,
+			string buttonText = null, System.Windows.Media.ImageSource buttonImage = null, RoutedEventHandler buttonClickHandler = null)
+		{
 			if (output is ISmartTextOutput fancyOutput) {
+				string text = line1;
+				if (!string.IsNullOrEmpty(line2))
+					text += Environment.NewLine + line2;
 				fancyOutput.AddUIElement(() => new StackPanel {
 					Margin = new Thickness(5),
 					Orientation = Orientation.Horizontal,
@@ -303,18 +328,19 @@ namespace ICSharpCode.ILSpy
 						},
 						new TextBlock {
 							Margin = new Thickness(5, 0, 0, 0),
-							Text = line1 + Environment.NewLine + line2
+							Text = text
 						}
 					}
 				});
 				fancyOutput.WriteLine();
-				fancyOutput.AddButton(Images.ViewCode, "Show assembly load log", delegate {
-					MainWindow.Instance.SelectNode(MainWindow.Instance.FindTreeNode(assembly).Children.OfType<ReferenceFolderTreeNode>().First());
-				});
-				fancyOutput.WriteLine();
+				if (buttonText != null && buttonClickHandler != null) {
+					fancyOutput.AddButton(buttonImage, buttonText, buttonClickHandler);
+					fancyOutput.WriteLine();
+				}
 			} else {
 				WriteCommentLine(output, line1);
-				WriteCommentLine(output, line2);
+				if (!string.IsNullOrEmpty(line2))
+					WriteCommentLine(output, line2);
 			}
 		}
 
@@ -325,6 +351,7 @@ namespace ICSharpCode.ILSpy
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
 				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
+				AddReferenceAssemblyWarningMessage(module, output);
 				AddReferenceWarningMessage(module, output);
 				output.WriteLine();
 				base.DecompileAssembly(assembly, output, options);

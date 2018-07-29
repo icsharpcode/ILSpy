@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
-		internal static bool HasKnownAttribute(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata, KnownAttribute type)
+		public static bool HasKnownAttribute(this CustomAttributeHandleCollection customAttributes, MetadataReader metadata, KnownAttribute type)
 		{
 			foreach (var handle in customAttributes) {
 				var customAttribute = metadata.GetCustomAttribute(handle);
