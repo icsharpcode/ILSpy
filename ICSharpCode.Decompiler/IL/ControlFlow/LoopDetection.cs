@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// (the entry-point itself doesn't have a CFG node, because it's newly created by this transform)
 					for (int i = 1; i < nestedContainer.Blocks.Count; i++) {
 						var node = context.ControlFlowGraph.GetNode(nestedContainer.Blocks[i]);
-						Debug.Assert(loop[0].Dominates(node));
+						Debug.Assert(loop[0].Dominates(node) || !node.IsReachable);
 						if (!node.Visited) {
 							node.Visited = true;
 							loop.Add(node);
