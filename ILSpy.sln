@@ -31,7 +31,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Rebracer.xml = Rebracer.xml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.Decompiler.PdbProvider.Cecil", "ICSharpCode.Decompiler.PdbProvider.Cecil\ICSharpCode.Decompiler.PdbProvider.Cecil.csproj", "{B85A155A-9DD6-43BC-A624-2D8EC773D71F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.PdbProvider.Cecil", "ICSharpCode.Decompiler.PdbProvider.Cecil\ICSharpCode.Decompiler.PdbProvider.Cecil.csproj", "{B85A155A-9DD6-43BC-A624-2D8EC773D71F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.Tests", "ILSpy.Tests\ILSpy.Tests.csproj", "{B51C6636-B8D1-4200-9869-08F2689DE6C2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B85A155A-9DD6-43BC-A624-2D8EC773D71F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B51C6636-B8D1-4200-9869-08F2689DE6C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

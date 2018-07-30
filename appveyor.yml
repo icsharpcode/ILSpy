@@ -19,6 +19,7 @@ after_build:
 test:
   assemblies:
     - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net46\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.Tests\bin\%configuration%\net46\ILSpy.Tests.exe'
     - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net46\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
