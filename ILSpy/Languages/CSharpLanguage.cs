@@ -29,17 +29,10 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.Metadata;
 using System.Reflection.Metadata;
-using System.Collections.Immutable;
-using System.Reflection.Metadata.Ecma335;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using System.Reflection;
-using ICSharpCode.Decompiler.Disassembler;
-using GenericContext = ICSharpCode.Decompiler.Metadata.GenericContext;
 using System.Text;
 
 namespace ICSharpCode.ILSpy
@@ -443,17 +436,17 @@ namespace ICSharpCode.ILSpy
 			return TypeToStringInternal(type, includeNamespace, false);
 		}
 
-		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true, bool? isOutParameter = null)
+		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true, ParameterModifier parameterModifier = ParameterModifier.None)
 		{
 			TypeSystemAstBuilder builder = new TypeSystemAstBuilder();
 			builder.AlwaysUseShortTypeNames = !includeNamespace;
 			builder.AlwaysUseBuiltinTypeNames = useBuiltinTypeNames;
 
+			const ParameterModifier refInOutModifier = ParameterModifier.Ref | ParameterModifier.Out | ParameterModifier.In;
+
 			AstType astType = builder.ConvertType(t);
-			if (isOutParameter != null && astType is ComposedType ct && ct.HasRefSpecifier) {
+			if ((parameterModifier & refInOutModifier) != 0 && astType is ComposedType ct && ct.HasRefSpecifier) {
 				ct.HasRefSpecifier = false;
-			} else {
-				isOutParameter = null;
 			}
 
 			StringWriter w = new StringWriter();
@@ -461,12 +454,30 @@ namespace ICSharpCode.ILSpy
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			string output = w.ToString();
 
-			if (isOutParameter == true)
-				output = "out " + output;
-			else if (isOutParameter == false)
-				output = "ref " + output;
+			switch (parameterModifier) {
+				case ParameterModifier.Ref:
+					output = "ref " + output;
+					break;
+				case ParameterModifier.Out:
+					output = "out " + output;
+					break;
+				case ParameterModifier.In:
+					output = "in " + output;
+					break;
+			}
 
 			return output;
+		}
+
+		static ParameterModifier GetModifier(IParameter p)
+		{
+			if (p.IsRef)
+				return ParameterModifier.Ref;
+			if (p.IsOut)
+				return ParameterModifier.Out;
+			if (p.IsIn)
+				return ParameterModifier.In;
+			return ParameterModifier.None;
 		}
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
@@ -505,7 +516,7 @@ namespace ICSharpCode.ILSpy
 				foreach (var param in parameters) {
 					if (i > 0)
 						buffer.Append(", ");
-					buffer.Append(TypeToStringInternal(param.Type, includeNamespace, isOutParameter: param.IsOut));
+					buffer.Append(TypeToStringInternal(param.Type, includeNamespace, parameterModifier: GetModifier(param)));
 					i++;
 				}
 
@@ -553,7 +564,7 @@ namespace ICSharpCode.ILSpy
 			foreach (var param in parameters) {
 				if (i > 0)
 					buffer.Append(", ");
-				buffer.Append(TypeToStringInternal(param.Type, includeNamespace, isOutParameter: param.IsOut));
+				buffer.Append(TypeToStringInternal(param.Type, includeNamespace, parameterModifier: GetModifier(param)));
 				i++;
 			}
 
