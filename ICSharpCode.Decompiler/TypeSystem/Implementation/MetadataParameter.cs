@@ -85,6 +85,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get {
 				if (!(Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out))
 					return false;
+				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0)
+					return true;
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
 				return !parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
