@@ -796,6 +796,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case FieldDirection.Ref:
 					WriteKeyword(DirectionExpression.RefKeywordRole);
 					break;
+				case FieldDirection.In:
+					WriteKeyword(DirectionExpression.InKeywordRole);
+					break;
 				default:
 					throw new NotSupportedException ("Invalid value for FieldDirection");
 			}
