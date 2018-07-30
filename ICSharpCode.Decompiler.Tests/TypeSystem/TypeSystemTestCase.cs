@@ -158,6 +158,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void MethodWithParamsArray(params object[] x) { }
 		public void MethodWithOptionalParameter(int x = 4) { }
 		public void MethodWithExplicitOptionalParameter([Optional] int x) { }
+		public void MethodWithRefParameter(ref int x) { }
+		public void MethodWithInParameter(in int x) { }
 		public void MethodWithEnumOptionalParameter(StringComparison x = StringComparison.OrdinalIgnoreCase) { }
 		public void MethodWithOptionalNullableParameter(int? x = null) { }
 		public void MethodWithOptionalLongParameter(long x = 1) { }

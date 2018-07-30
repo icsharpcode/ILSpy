@@ -634,6 +634,31 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(p.IsOptional);
 			Assert.IsFalse(p.IsRef);
 			Assert.IsTrue(p.IsOut);
+			Assert.IsFalse(p.IsIn);
+			Assert.AreEqual(0, p.GetAttributes().Count());
+			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
+		}
+
+		[Test]
+		public void MethodWithRefParameter()
+		{
+			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithRefParameter").Parameters.Single();
+			Assert.IsFalse(p.IsOptional);
+			Assert.IsTrue(p.IsRef);
+			Assert.IsFalse(p.IsOut);
+			Assert.IsFalse(p.IsIn);
+			Assert.AreEqual(0, p.GetAttributes().Count());
+			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
+		}
+
+		[Test]
+		public void MethodWithInParameter()
+		{
+			IParameter p = GetTypeDefinition(typeof(ParameterTests)).Methods.Single(m => m.Name == "MethodWithInParameter").Parameters.Single();
+			Assert.IsFalse(p.IsOptional);
+			Assert.IsFalse(p.IsRef);
+			Assert.IsFalse(p.IsOut);
+			Assert.IsTrue(p.IsIn);
 			Assert.AreEqual(0, p.GetAttributes().Count());
 			Assert.IsTrue(p.Type.Kind == TypeKind.ByReference);
 		}

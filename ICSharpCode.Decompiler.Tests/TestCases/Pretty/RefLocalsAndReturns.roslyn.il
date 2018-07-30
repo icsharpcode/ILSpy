@@ -33,67 +33,13 @@
 
 // =============== CLASS MEMBERS DECLARATION ===================
 
-.class private auto ansi sealed beforefieldinit Microsoft.CodeAnalysis.EmbeddedAttribute
-       extends [mscorlib]System.Attribute
-{
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Attribute::.ctor()
-    IL_0006:  nop
-    IL_0007:  ret
-  } // end of method EmbeddedAttribute::.ctor
-
-} // end of class Microsoft.CodeAnalysis.EmbeddedAttribute
-
-.class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.IsReadOnlyAttribute
-       extends [mscorlib]System.Attribute
-{
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Attribute::.ctor()
-    IL_0006:  nop
-    IL_0007:  ret
-  } // end of method IsReadOnlyAttribute::.ctor
-
-} // end of class System.Runtime.CompilerServices.IsReadOnlyAttribute
-
-.class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.IsByRefLikeAttribute
-       extends [mscorlib]System.Attribute
-{
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Attribute::.ctor()
-    IL_0006:  nop
-    IL_0007:  ret
-  } // end of method IsByRefLikeAttribute::.ctor
-
-} // end of class System.Runtime.CompilerServices.IsByRefLikeAttribute
-
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.RefLocalsAndReturns
        extends [mscorlib]System.Object
 {
   .class sequential ansi sealed nested public beforefieldinit RefStruct
          extends [mscorlib]System.ValueType
   {
-    .custom instance void System.Runtime.CompilerServices.IsByRefLikeAttribute::.ctor() = ( 01 00 00 00 ) 
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.IsByRefLikeAttribute::.ctor() = ( 01 00 00 00 ) 
     .custom instance void [mscorlib]System.ObsoleteAttribute::.ctor(string,
                                                                     bool) = ( 01 00 52 54 79 70 65 73 20 77 69 74 68 20 65 6D   // ..RTypes with em
                                                                               62 65 64 64 65 64 20 72 65 66 65 72 65 6E 63 65   // bedded reference
@@ -107,7 +53,7 @@
   .class sequential ansi sealed nested public beforefieldinit ReadOnlyRefStruct
          extends [mscorlib]System.ValueType
   {
-    .custom instance void System.Runtime.CompilerServices.IsByRefLikeAttribute::.ctor() = ( 01 00 00 00 ) 
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.IsByRefLikeAttribute::.ctor() = ( 01 00 00 00 ) 
     .custom instance void [mscorlib]System.ObsoleteAttribute::.ctor(string,
                                                                     bool) = ( 01 00 52 54 79 70 65 73 20 77 69 74 68 20 65 6D   // ..RTypes with em
                                                                               62 65 64 64 65 64 20 72 65 66 65 72 65 6E 63 65   // bedded reference
@@ -115,9 +61,16 @@
                                                                               74 65 64 20 69 6E 20 74 68 69 73 20 76 65 72 73   // ted in this vers
                                                                               69 6F 6E 20 6F 66 20 79 6F 75 72 20 63 6F 6D 70   // ion of your comp
                                                                               69 6C 65 72 2E 01 00 00 )                         // iler....
-    .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
     .field private initonly int32 dummy
   } // end of class ReadOnlyRefStruct
+
+  .class sequential ansi sealed nested public beforefieldinit ReadOnlyStruct
+         extends [mscorlib]System.ValueType
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private initonly int32 dummy
+  } // end of class ReadOnlyStruct
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

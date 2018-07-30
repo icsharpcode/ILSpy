@@ -80,7 +80,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
-		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) == 0;
+
+		public bool IsRef {
+			get {
+				if (!(Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out))
+					return false;
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				return !parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+			}
+		}
+
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
 

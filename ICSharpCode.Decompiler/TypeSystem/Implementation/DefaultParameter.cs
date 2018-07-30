@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		public bool IsIn {
-			get { return IsIn; }
+			get { return isIn; }
 		}
 		
 		public bool IsParams {
