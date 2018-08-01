@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
@@ -234,6 +235,38 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
 			}
 
+			if (settings.StringInterpolation && IsInterpolatedStringCreation(method) &&
+				TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
+			{
+				var arguments = argumentList.Arguments;
+				var content = new List<InterpolatedStringContent>();
+				if (tokens.Count > 0) {
+					foreach (var (kind, index, text) in tokens) {
+						switch (kind) {
+							case TokenKind.String:
+								content.Add(new InterpolatedStringText(text));
+								break;
+							case TokenKind.Argument:
+								content.Add(new Interpolation(arguments[index + 1]));
+								break;
+							case TokenKind.ArgumentWithFormat:
+								content.Add(new Interpolation(arguments[index + 1], text));
+								break;
+						}
+					}
+					var formattableStringType = expressionBuilder.compilation.FindType(KnownTypeCode.FormattableString);
+					var isrr = new InterpolatedStringResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.String),
+						format, argumentList.GetArgumentResolveResults().Skip(1).ToArray());
+					var expr = new InterpolatedStringExpression();
+					expr.Content.AddRange(content);
+					if (method.Name == "Format")
+						return expr.WithRR(isrr);
+					return new CastExpression(expressionBuilder.ConvertType(formattableStringType),
+						expr.WithRR(isrr))
+						.WithRR(new ConversionResolveResult(formattableStringType, isrr, Conversion.ImplicitInterpolatedStringConversion));
+				}
+			}
+
 			int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 			if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || argumentList.ExpectedParameters.Length == allowedParamCount)) {
 				argumentList.CheckNoNamedOrOptionalArguments();
@@ -349,6 +382,133 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new CSharpInvocationResolveResult(target, method, argumentList.GetArgumentResolveResults().ToArray(),
 					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: argumentList.IsExpandedForm));
 		}
+
+		private bool IsInterpolatedStringCreation(IMethod method)
+		{
+			return method.IsStatic && (
+				(method.DeclaringType.IsKnownType(KnownTypeCode.String) && method.Name == "Format") ||
+				(method.Name == "Create" && method.DeclaringType.Name == "FormattableStringFactory" &&
+					method.DeclaringType.Namespace == "System.Runtime.CompilerServices")
+			);
+		}
+
+		private bool TryGetStringInterpolationTokens(ArgumentList argumentList, out string format, out List<(TokenKind, int, string)> tokens)
+		{
+			tokens = null;
+			format = null;
+			TranslatedExpression[] arguments = argumentList.Arguments;
+			if (arguments.Length == 0 || argumentList.ArgumentNames != null || argumentList.ArgumentToParameterMap != null)
+				return false;
+			if (!(arguments[(int)0].ResolveResult is ConstantResolveResult crr && crr.Type.IsKnownType((KnownTypeCode)KnownTypeCode.String)))
+				return false;
+			if (!arguments.Skip(1).All(a => !a.Expression.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
+				return false;
+			tokens = new List<(TokenKind, int, string)>();
+			int i = 0;
+			format = (string)crr.ConstantValue;
+			foreach (var (kind, data) in TokenizeFormatString(format)) {
+				int index;
+				switch (kind) {
+					case TokenKind.Error:
+						return false;
+					case TokenKind.String:
+						tokens.Add((kind, -1, data));
+						break;
+					case TokenKind.Argument:
+						if (!int.TryParse(data, out index) || index != i)
+							return false;
+						i++;
+						tokens.Add((kind, index, null));
+						break;
+					case TokenKind.ArgumentWithFormat:
+						string[] arg = data.Split(new[] { ':' }, 2);
+						if (arg.Length != 2 || arg[1].Length == 0)
+							return false;
+						if (!int.TryParse(arg[0], out index) || index != i)
+							return false;
+						i++;
+						tokens.Add((kind, index, arg[1]));
+						break;
+					default:
+						return false;
+				}
+			}
+			return i == arguments.Length - 1;
+		}
+
+		private enum TokenKind
+		{
+			Error,
+			String,
+			Argument,
+			ArgumentWithFormat
+		}
+
+		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
+		{
+			int pos = -1;
+
+			int Peek(int steps = 1)
+			{
+				if (pos + steps < value.Length)
+					return value[pos + steps];
+				return -1;
+			}
+
+			int Next()
+			{
+				int val = Peek();
+				pos++;
+				return val;
+			}
+
+			int next;
+			TokenKind kind = TokenKind.String;
+			StringBuilder sb = new StringBuilder();
+
+			while ((next = Next()) > -1) {
+				switch ((char)next) {
+					case '{':
+						if (Peek() == '{') {
+							kind = TokenKind.String;
+							sb.Append("{{");
+							Next();
+						} else {
+							if (sb.Length > 0) {
+								yield return (kind, sb.ToString());
+							}
+							kind = TokenKind.Argument;
+							sb.Clear();
+						}
+						break;
+					case '}':
+						if (kind != TokenKind.String) {
+							yield return (kind, sb.ToString());
+							sb.Clear();
+							kind = TokenKind.String;
+						} else {
+							sb.Append((char)next);
+						}
+						break;
+					case ':':
+						if (kind == TokenKind.Argument) {
+							kind = TokenKind.ArgumentWithFormat;
+						}
+						sb.Append(':');
+						break;
+					default:
+						sb.Append((char)next);
+						break;
+				}
+			}
+			if (sb.Length > 0) {
+				if (kind == TokenKind.String)
+					yield return (kind, sb.ToString());
+				else
+					yield return (TokenKind.Error, null);
+			}
+		}
+
 
 		private ArgumentList BuildArgumentList(ExpectedTargetDetails expectedTargetDetails, ResolveResult target, IMethod method, int firstParamIndex,
 			IReadOnlyList<ILInstruction> callArguments, IReadOnlyList<int> argumentToParameterMap)

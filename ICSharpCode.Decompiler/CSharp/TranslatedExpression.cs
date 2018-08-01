@@ -179,10 +179,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					switch (ResolveResult) {
 						case ConversionResolveResult conversion: {
 							if (Expression is CastExpression cast
-							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
+							&& ((type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
 								|| conversion.Conversion.IsAnonymousFunctionConversion
 								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
-							)) {
+							) || (conversion.Conversion.IsInterpolatedStringConversion))) {
 								return this.UnwrapChild(cast.Expression);
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
@@ -220,7 +220,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
-			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 && conv.Conversion.IsBoxingConversion && conversions.IsBoxingConversion(conv.Input.Type, targetType)) {
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
+				IsBoxingOrInterpolatedStringConversion(conversions, conv.Conversion, conv.Input.Type, targetType))
+			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
 					return unwrapped;
@@ -383,6 +385,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
+		}
+
+		bool IsBoxingOrInterpolatedStringConversion(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType targetType)
+		{
+			if (conversion.IsBoxingConversion && conversions.IsBoxingConversion(inputType, targetType))
+				return true;
+			if (conversion.IsInterpolatedStringConversion && (targetType.IsKnownType(KnownTypeCode.FormattableString)
+				|| targetType.IsKnownType(KnownTypeCode.IFormattable)))
+				return true;
+			return false;
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)

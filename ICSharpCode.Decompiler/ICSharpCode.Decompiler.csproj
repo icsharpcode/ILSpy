@@ -343,6 +343,7 @@
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
     <Compile Include="DebugInfo\PortablePdbWriter.cs" />
+    <Compile Include="Semantics\InterpolatedStringResolveResult.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
