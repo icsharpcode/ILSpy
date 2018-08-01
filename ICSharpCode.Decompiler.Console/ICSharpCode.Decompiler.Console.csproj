@@ -7,6 +7,14 @@
     <PackAsTool>true</PackAsTool>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
+    <Version>2.0.0</Version>
+    <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
+    <Copyright>Copyright 2011-2018 AlphaSierraPapa</Copyright>
+    <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
+    <PackageLicenseUrl>https://opensource.org/licenses/mit-license.php</PackageLicenseUrl>
+    <PackageIconUrl>https://ilspy.net/images/icon32.png</PackageIconUrl>
+    <RepositoryUrl>https://github.com/icsharpcode/ILSpy/</RepositoryUrl>
+    <Company />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
