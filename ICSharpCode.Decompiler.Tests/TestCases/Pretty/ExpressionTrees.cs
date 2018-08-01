@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Xml;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -44,6 +45,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public static bool GenericMethod<Y>()
 			{
 				return false;
+			}
+		}
+
+		private class AssertTest
+		{
+			private struct DataStruct
+			{
+				private int dummy;
+			}
+
+			private struct WrapperStruct
+			{
+				internal DataStruct Data;
+			}
+
+			private class SomeClass
+			{
+				internal WrapperStruct DataWrapper;
+			}
+
+			private SomeClass someClass;
+
+			public void Test()
+			{
+				GetMember(() => someClass.DataWrapper.Data);
+			}
+
+			public static MemberInfo GetMember<T>(Expression<Func<T>> p)
+			{
+				return null;
 			}
 		}
 

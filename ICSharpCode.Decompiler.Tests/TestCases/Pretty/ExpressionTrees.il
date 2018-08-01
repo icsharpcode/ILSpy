@@ -20,9 +20,9 @@
 }
 .assembly ExpressionTrees
 {
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .permissionset reqmin
              = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
@@ -141,6 +141,98 @@
       .get instance !X ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1::get_InstanceProperty()
     } // end of property GenericClass`1::InstanceProperty
   } // end of class GenericClass`1
+
+  .class auto ansi nested private beforefieldinit AssertTest
+         extends [mscorlib]System.Object
+  {
+    .class sequential ansi sealed nested private beforefieldinit DataStruct
+           extends [mscorlib]System.ValueType
+    {
+      .field private int32 dummy
+    } // end of class DataStruct
+
+    .class sequential ansi sealed nested private beforefieldinit WrapperStruct
+           extends [mscorlib]System.ValueType
+    {
+      .field assembly valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/DataStruct Data
+    } // end of class WrapperStruct
+
+    .class auto ansi nested private beforefieldinit SomeClass
+           extends [mscorlib]System.Object
+    {
+      .field assembly valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/WrapperStruct DataWrapper
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       7 (0x7)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  ret
+      } // end of method SomeClass::.ctor
+
+    } // end of class SomeClass
+
+    .field private class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/SomeClass someClass
+    .method public hidebysig instance void 
+            Test() cil managed
+    {
+      // Code size       85 (0x55)
+      .maxstack  2
+      IL_0000:  nop
+      IL_0001:  ldarg.0
+      IL_0002:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest
+      IL_0007:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest
+      IL_000c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+      IL_0011:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+                                                                                                                                                   class [mscorlib]System.Type)
+      IL_0016:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/SomeClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest::someClass
+      IL_001b:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+      IL_0020:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                              class [mscorlib]System.Reflection.FieldInfo)
+      IL_0025:  ldtoken    field valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/WrapperStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/SomeClass::DataWrapper
+      IL_002a:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+      IL_002f:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                              class [mscorlib]System.Reflection.FieldInfo)
+      IL_0034:  ldtoken    field valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/DataStruct ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/WrapperStruct::Data
+      IL_0039:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+      IL_003e:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                              class [mscorlib]System.Reflection.FieldInfo)
+      IL_0043:  ldc.i4.0
+      IL_0044:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+      IL_0049:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/DataStruct>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                              class [System.Core]System.Linq.Expressions.ParameterExpression[])
+      IL_004e:  call       class [mscorlib]System.Reflection.MemberInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest::GetMember<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/AssertTest/DataStruct>(class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
+      IL_0053:  pop
+      IL_0054:  ret
+    } // end of method AssertTest::Test
+
+    .method public hidebysig static class [mscorlib]System.Reflection.MemberInfo 
+            GetMember<T>(class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!T>> p) cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  1
+      .locals init (class [mscorlib]System.Reflection.MemberInfo V_0)
+      IL_0000:  nop
+      IL_0001:  ldnull
+      IL_0002:  stloc.0
+      IL_0003:  br.s       IL_0005
+
+      IL_0005:  ldloc.0
+      IL_0006:  ret
+    } // end of method AssertTest::GetMember
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method AssertTest::.ctor
+
+  } // end of class AssertTest
 
   .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass0'
          extends [mscorlib]System.Object
@@ -9907,7 +9999,7 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     [mscorlib]System.Int32
     IL_0006:  dup
-    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000bc-1'
+    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000c0-1'
     IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0011:  stloc.0
@@ -9983,7 +10075,7 @@
     IL_0009:  ldc.i4.3
     IL_000a:  newarr     [mscorlib]System.Int32
     IL_000f:  dup
-    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000c0-1'
+    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x60000c4-1'
     IL_0015:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001a:  stelem.ref
@@ -11216,8 +11308,8 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000bc-1' at I_00007A38
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000c0-1' at I_00007AB0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000c0-1' at I_00007A38
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x60000c4-1' at I_00007AB0
 } // end of class '<PrivateImplementationDetails>'
 
 .class private auto ansi sealed beforefieldinit '<>f__AnonymousType2`2'<'<A>j__TPar','<B>j__TPar'>
