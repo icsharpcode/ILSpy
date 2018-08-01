@@ -660,7 +660,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (target == null) {
 				return (new LdObj(new LdsFlda((IField)member), member.ReturnType), member.ReturnType);
 			} else {
-				return (new LdObj(new LdFlda(target, (IField)member), member.ReturnType), member.ReturnType);
+				if (member.DeclaringType.IsReferenceType == true) {
+					return (new LdObj(new LdFlda(target, (IField)member), member.ReturnType), member.ReturnType);
+				} else {
+					return (new LdObj(new LdFlda(new AddressOf(target), (IField)member), member.ReturnType), member.ReturnType);
+				}
 			}
 		}
 
