@@ -129,37 +129,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		ILInstruction GetNullExpression(IType elementType)
+		bool DoTransformMultiDim(Block body, int pos)
 		{
-			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
-			if (typeDef == null)
-				return new DefaultValue(elementType);
-			switch (typeDef.KnownTypeCode) {
-				case KnownTypeCode.Boolean:
-				case KnownTypeCode.Char:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-				case KnownTypeCode.Int32:
-				case KnownTypeCode.UInt32:
-					return new LdcI4(0);
-				case KnownTypeCode.Int64:
-				case KnownTypeCode.UInt64:
-					return new LdcI8(0);
-				case KnownTypeCode.Single:
-					return new LdcF4(0);
-				case KnownTypeCode.Double:
-					return new LdcF8(0);
-				case KnownTypeCode.Decimal:
-					return new LdcDecimal(0);
-				case KnownTypeCode.Void:
-					throw new ArgumentException("void is not a valid element type!");
-				case KnownTypeCode.IntPtr:
-				case KnownTypeCode.UIntPtr:
-				default:
-					return new DefaultValue(elementType);
+			if (pos >= body.Instructions.Count - 2)
+				return false;
+			ILVariable v;
+			ILInstruction newarrExpr;
+			IType arrayType;
+			int[] length;
+			ILInstruction instr = body.Instructions[pos];
+			if (instr.MatchStLoc(out v, out newarrExpr) && MatchNewArr(newarrExpr, out arrayType, out length)) {
+				ILInstruction[] values;
+				int initArrayPos;
+				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, arrayType, length, out values, out initArrayPos)) {
+					var block = BlockFromInitializer(v, arrayType, length, values);
+					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
+					body.Instructions.RemoveAt(initArrayPos);
+					ILInlining.InlineIfPossible(body, pos, context);
+					return true;
+				}
 			}
+			return false;
 		}
 
 		/// <summary>
@@ -248,29 +238,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nextInstruction = block.Instructions.ElementAtOrDefault(pos);
 			return nextInstruction != null && nextInstruction.MatchStLoc(initializerStore, out initializer) && initializer.OpCode == OpCode.Block;
 		}
-
-		bool DoTransformMultiDim(Block body, int pos)
-		{
-			if (pos >= body.Instructions.Count - 2)
-				return false;
-			ILVariable v;
-			ILInstruction newarrExpr;
-			IType arrayType;
-			int[] length;
-			ILInstruction instr = body.Instructions[pos];
-			if (instr.MatchStLoc(out v, out newarrExpr) && MatchNewArr(newarrExpr, out arrayType, out length)) {
-				ILInstruction[] values;
-				int initArrayPos;
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, arrayType, length, out values, out initArrayPos)) {
-					var block = BlockFromInitializer(v, arrayType, length, values);
-					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
-					body.Instructions.RemoveAt(initArrayPos);
-					ILInlining.InlineIfPossible(body, pos, context);
-					return true;
-				}
-			}
-			return false;
-		}
 		
 		Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
 		{
@@ -290,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return block;
 		}
 		
-		internal static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
+		static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
 		{
 			NewArr newArr = instruction as NewArr;
 			length = null;
@@ -413,6 +380,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = new Conv(value, type.ToPrimitiveType(), false, Sign.None); 
 			}
 			return new StObj(new LdElema(type, array, indices), value, type);
+		}
+
+		static ILInstruction GetNullExpression(IType elementType)
+		{
+			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
+			if (typeDef == null)
+				return new DefaultValue(elementType);
+			switch (typeDef.KnownTypeCode) {
+				case KnownTypeCode.Boolean:
+				case KnownTypeCode.Char:
+				case KnownTypeCode.SByte:
+				case KnownTypeCode.Byte:
+				case KnownTypeCode.Int16:
+				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Int32:
+				case KnownTypeCode.UInt32:
+					return new LdcI4(0);
+				case KnownTypeCode.Int64:
+				case KnownTypeCode.UInt64:
+					return new LdcI8(0);
+				case KnownTypeCode.Single:
+					return new LdcF4(0);
+				case KnownTypeCode.Double:
+					return new LdcF8(0);
+				case KnownTypeCode.Decimal:
+					return new LdcDecimal(0);
+				case KnownTypeCode.Void:
+					throw new ArgumentException("void is not a valid element type!");
+				case KnownTypeCode.IntPtr:
+				case KnownTypeCode.UIntPtr:
+				default:
+					return new DefaultValue(elementType);
+			}
 		}
 
 		static int ElementSizeOf(TypeCode elementType)
