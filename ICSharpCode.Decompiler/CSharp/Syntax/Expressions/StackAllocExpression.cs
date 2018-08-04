@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class StackAllocExpression : Expression
 	{
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole ("stackalloc");
-		
+		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
+
 		public CSharpTokenNode StackAllocToken {
 			get { return GetChildByRole (StackallocKeywordRole); }
 		}
@@ -55,7 +56,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole (Roles.RBracket); }
 		}
-		
+
+		public ArrayInitializerExpression Initializer {
+			get { return GetChildByRole(InitializerRole); }
+			set { SetChildByRole(InitializerRole, value); }
+		}
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitStackAllocExpression (this);
@@ -74,7 +80,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			StackAllocExpression o = other as StackAllocExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.CountExpression.DoMatch(o.CountExpression, match);
+			return o != null && this.Type.DoMatch(o.Type, match)
+				&& this.CountExpression.DoMatch(o.CountExpression, match)
+				&& this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }
