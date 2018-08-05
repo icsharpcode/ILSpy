@@ -39,8 +39,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			try {
-				if (!DoTransform(block, pos))
-					DoTransformMultiDim(block, pos);
+				if (DoTransform(block, pos))
+					return;
+				if (DoTransformMultiDim(block, pos))
+					return;
+				if (context.Settings.StackAllocInitializers && DoTransformStackAllocInitializer(block, pos))
+					return;
 			} finally {
 				this.context = null;
 			}
@@ -152,16 +156,159 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		bool DoTransformStackAllocInitializer(Block body, int pos)
+		{
+			if (pos >= body.Instructions.Count - 2)
+				return false;
+			ILInstruction inst = body.Instructions[pos];
+			IType elementType;
+			if (inst.MatchStLoc(out var v, out var locallocExpr) && locallocExpr.MatchLocAlloc(out var lengthInst)) {
+				if (lengthInst.MatchLdcI(out var lengthInBytes) && HandleCpblkInitializer(body, pos + 1, v, lengthInBytes, out var blob, out elementType)) {
+					context.Step("HandleCpblkInitializer", inst);
+					var block = new Block(BlockKind.StackAllocInitializer);
+					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
+					block.Instructions.Add(new StLoc(tempStore, new LocAlloc(lengthInst)));
+
+					while (blob.RemainingBytes > 0) {
+						block.Instructions.Add(StElemPtr(tempStore, blob.Offset, new LdcI4(blob.ReadByte()), elementType));
+					}
+
+					block.FinalInstruction = new LdLoc(tempStore);
+					body.Instructions[pos] = new StLoc(v, block);
+					body.Instructions.RemoveAt(pos + 1);
+					ILInlining.InlineIfPossible(body, pos, context);
+					return true;
+				}
+				if (HandleSequentialLocAllocInitializer(body, pos + 1, v, lengthInst, out elementType, out StObj[] values)) {
+					context.Step("HandleSequentialLocAllocInitializer", inst);
+					var block = new Block(BlockKind.StackAllocInitializer);
+					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
+					block.Instructions.Add(new StLoc(tempStore, new LocAlloc(lengthInst)));
+					block.Instructions.AddRange(values.Select(value => RewrapStore(tempStore, value, elementType)));
+					block.FinalInstruction = new LdLoc(tempStore);
+					body.Instructions[pos] = new StLoc(v, block);
+					body.Instructions.RemoveRange(pos + 1, values.Length);
+					ILInlining.InlineIfPossible(body, pos, context);
+					return true;
+				}
+			}
+			return false;
+		}
+
+		bool HandleCpblkInitializer(Block block, int pos, ILVariable v, long length, out BlobReader blob, out IType elementType)
+		{
+			blob = default;
+			elementType = null;
+			if (!block.Instructions[pos].MatchCpblk(out var dest, out var src, out var size))
+				return false;
+			if (!dest.MatchLdLoc(v) || !src.MatchLdsFlda(out var field) || !size.MatchLdcI4((int)length))
+				return false;
+			if (field.MetadataToken.IsNil)
+				return false;
+			if (!block.Instructions[pos + 1].MatchStLoc(out var finalStore, out var value))
+				return false;
+			if (!value.MatchLdLoc(v))
+				return false;
+			var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
+			if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+				return false;
+			blob = fd.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+			elementType = ((PointerType)finalStore.Type).ElementType;
+			return true;
+		}
+
+		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction lengthInstruction, out IType elementType, out StObj[] values)
+		{
+			int elementCount = 0;
+			values = null;
+			elementType = null;
+
+			for (int i = pos; i < block.Instructions.Count; i++) {
+				// match the basic stobj pattern
+				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out var currentType)
+					|| value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
+					break;
+				if (elementType != null && !currentType.Equals(elementType))
+					break;
+				elementType = currentType;
+				// match the target
+				// should be either ldloc store (at offset 0)
+				// or binary.add(ldloc store, offset) where offset is either 'elementSize' or 'i * elementSize'
+				if (elementCount == 0) {
+					if (!target.MatchLdLoc(store))
+						break;
+				} else {
+					if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+						break;
+					if (!left.MatchLdLoc(store))
+						break;
+					var offsetInst = PointerArithmeticOffset.Detect(right, new PointerType(elementType), ((BinaryNumericInstruction)target).CheckForOverflow);
+					if (offsetInst == null)
+						break;
+					if (!offsetInst.MatchLdcI(elementCount))
+						break;
+				}
+				if (values == null) {
+					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, new PointerType(elementType), checkForOverflow: true);
+					if (countInstruction == null || !countInstruction.MatchLdcI(out long valuesLength) || valuesLength < 1)
+						return false;
+					values = new StObj[(int)valuesLength];
+				}
+				if (i - pos >= values.Length)
+					break;
+				values[i - pos] = (StObj)block.Instructions[i];
+				elementCount++;
+			}
+
+			if (values == null || store.Kind != VariableKind.StackSlot || store.StoreCount != 1
+				|| store.AddressCount != 0 || store.LoadCount != values.Length + 1)
+				return false;
+
+			var finalStore = store.LoadInstructions.Last().Parent as StLoc;
+
+			if (finalStore == null)
+				return false;
+
+			elementType = ((PointerType)finalStore.Variable.Type).ElementType;
+
+			return elementCount == values.Length;
+		}
+
+		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
+		{
+			ILInstruction targetInst;
+			if (storeInstruction.Target.MatchLdLoc(out _))
+				targetInst = new LdLoc(target);
+			else if (storeInstruction.Target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right)) {
+				var old = (BinaryNumericInstruction)storeInstruction.Target;
+				targetInst = new BinaryNumericInstruction(BinaryNumericOperator.Add, new LdLoc(target), right,
+					old.CheckForOverflow, old.Sign);
+			} else
+				throw new NotSupportedException("This should never happen: Bug in HandleSequentialLocAllocInitializer!");
+
+			return new StObj(targetInst, storeInstruction.Value, storeInstruction.Type);
+		}
+
+		ILInstruction StElemPtr(ILVariable target, int offset, LdcI4 value, IType type)
+		{
+			var targetInst = offset == 0 ? (ILInstruction)new LdLoc(target) : new BinaryNumericInstruction(
+				BinaryNumericOperator.Add,
+				new LdLoc(target),
+				new Conv(new LdcI4(offset), PrimitiveType.I, false, Sign.Signed),
+				false,
+				Sign.None
+			);
+			return new StObj(targetInst, value, type);
+		}
+
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		internal static bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int instructionsToRemove)
+		internal static bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int elementCount)
 		{
-			instructionsToRemove = 0;
-			values = null;
+			elementCount = 0;
 			values = new ILInstruction[length];
 			int nextMinimumIndex = 0;
-			int elementCount = 0;
 			for (int i = pos; i < block.Instructions.Count; i++) {
 				if (nextMinimumIndex >= length)
 					break;
@@ -180,7 +327,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values[nextMinimumIndex] = value;
 				nextMinimumIndex++;
 				elementCount++;
-				instructionsToRemove++;
 			}
 			if (pos + elementCount >= block.Instructions.Count)
 				return false;
