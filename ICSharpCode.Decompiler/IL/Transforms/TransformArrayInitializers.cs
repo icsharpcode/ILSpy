@@ -55,14 +55,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (pos >= body.Instructions.Count - 2)
 				return false;
 			ILInstruction inst = body.Instructions[pos];
-			ILVariable v;
-			ILInstruction newarrExpr;
-			IType elementType;
-			int[] arrayLength;
-			if (inst.MatchStLoc(out v, out newarrExpr) && MatchNewArr(newarrExpr, out elementType, out arrayLength)) {
-				ILInstruction[] values;
-				int initArrayPos;
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
+			if (inst.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var elementType, out var arrayLength)) {
+				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out var values, out var initArrayPos)) {
 					context.Step("ForwardScanInitializeArrayRuntimeHelper", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
@@ -72,8 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 				if (arrayLength.Length == 1) {
-					int instructionsToRemove;
-					if (HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out values, out instructionsToRemove)) {
+					if (HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out values, out var instructionsToRemove)) {
 						context.Step("HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
@@ -104,31 +97,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 				}
-				// Put in a limit so that we don't consume too much memory if the code allocates a huge array
-				// and populates it extremely sparsly. However, 255 "null" elements in a row actually occur in the Mono C# compiler!
-//				const int maxConsecutiveDefaultValueExpressions = 300;
-//				var operands = new List<ILInstruction>();
-//				int numberOfInstructionsToRemove = 0;
-//				for (int j = pos + 1; j < body.Instructions.Count; j++) {
-//					var nextExpr = body.Instructions[j] as Void;
-//					int arrayPos;
-//					if (nextExpr != null && nextExpr is a.IsStoreToArray() &&
-//					    nextExpr.Arguments[0].Match(ILCode.Ldloc, out v3) &&
-//					    v == v3 &&
-//					    nextExpr.Arguments[1].Match(ILCode.Ldc_I4, out arrayPos) &&
-//					    arrayPos >= operands.Count &&
-//					    arrayPos <= operands.Count + maxConsecutiveDefaultValueExpressions &&
-//					    !nextExpr.Arguments[2].ContainsReferenceTo(v3))
-//					{
-//						while (operands.Count < arrayPos)
-//							operands.Add(new ILExpression(ILCode.DefaultValue, elementType));
-//						operands.Add(nextExpr.Arguments[2]);
-//						numberOfInstructionsToRemove++;
-//					} else {
-//						break;
-//					}
-//				}
-
 			}
 			return false;
 		}
@@ -137,15 +105,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
-			ILVariable v;
-			ILInstruction newarrExpr;
-			IType arrayType;
-			int[] length;
 			ILInstruction instr = body.Instructions[pos];
-			if (instr.MatchStLoc(out v, out newarrExpr) && MatchNewArr(newarrExpr, out arrayType, out length)) {
-				ILInstruction[] values;
-				int initArrayPos;
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, arrayType, length, out values, out initArrayPos)) {
+			if (instr.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var arrayType, out var length)) {
+				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, arrayType, length, out var values, out var initArrayPos)) {
 					var block = BlockFromInitializer(v, arrayType, length, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
@@ -161,9 +123,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (pos >= body.Instructions.Count - 2)
 				return false;
 			ILInstruction inst = body.Instructions[pos];
-			IType elementType;
 			if (inst.MatchStLoc(out var v, out var locallocExpr) && locallocExpr.MatchLocAlloc(out var lengthInst)) {
-				if (lengthInst.MatchLdcI(out var lengthInBytes) && HandleCpblkInitializer(body, pos + 1, v, lengthInBytes, out var blob, out elementType)) {
+				if (lengthInst.MatchLdcI(out var lengthInBytes) && HandleCpblkInitializer(body, pos + 1, v, lengthInBytes, out var blob, out var elementType)) {
 					context.Step("HandleCpblkInitializer", inst);
 					var block = new Block(BlockKind.StackAllocInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
@@ -319,11 +280,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = pos; i < block.Instructions.Count; i++) {
 				if (nextMinimumIndex >= length)
 					break;
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
+				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type)
+					|| value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
+				{
 					break;
-				var ldelem = target as LdElema;
-				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out int index))
+				}
+
+				if (!(target is LdElema ldelem) || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1
+					|| !ldelem.Indices[0].MatchLdcI4(out int index))
+				{
 					break;
+				}
 				// index must be in range [0..length[ and must be greater than or equal to nextMinimumIndex
 				// to avoid running out of bounds or accidentally reordering instructions or overwriting previous instructions.
 				// However, leaving array slots empty is allowed, as those are filled with default values when the
@@ -350,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IType type;
 			for (int i = 0; i < length; i++) {
 				// 1. Instruction: (optional) temporary copy of store
-				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out ILVariable temp, out ILInstruction storeLoad) && storeLoad.MatchLdLoc(store);
+				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out var temp, out var storeLoad) && storeLoad.MatchLdLoc(store);
 				if (hasTemporaryCopy) {
 					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out type))
 						return false;
@@ -363,10 +330,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				pos += inc;
 				instructionsToRemove += inc;
 			}
-			ILInstruction array;
 			// In case there is an extra copy of the store variable
 			// Remove it and use its value instead.
-			if (block.Instructions[pos].MatchStLoc(out finalStore, out array)) {
+			if (block.Instructions[pos].MatchStLoc(out finalStore, out var array)) {
 				instructionsToRemove++;
 				return array.MatchLdLoc(store);
 			}
@@ -380,16 +346,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			type = null;
 			// 3. Instruction: stobj(ldelema(ldloc temp, ldc.i4 0), ldloc tempArrayLoad)
 			var finalInstruction = block.Instructions.ElementAtOrDefault(pos + 1);
-			ILInstruction tempAccess, tempArrayLoad;
-			ILVariable initializerStore;
-			if (finalInstruction == null || !finalInstruction.MatchStObj(out tempAccess, out tempArrayLoad, out type) || !tempArrayLoad.MatchLdLoc(out initializerStore))
+			if (finalInstruction == null || !finalInstruction.MatchStObj(out var tempAccess, out var tempArrayLoad, out type)
+				|| !tempArrayLoad.MatchLdLoc(out var initializerStore))
+			{
 				return false;
-			var elemLoad = tempAccess as LdElema;
-			if (elemLoad == null || !elemLoad.Array.MatchLdLoc(store) || elemLoad.Indices.Count != 1 || !elemLoad.Indices[0].MatchLdcI4(index))
+			}
+			if (!(tempAccess is LdElema elemLoad) || !elemLoad.Array.MatchLdLoc(store) || elemLoad.Indices.Count != 1
+				|| !elemLoad.Indices[0].MatchLdcI4(index))
+			{
 				return false;
+			}
 			// 2. Instruction: stloc(temp) with block (array initializer)
 			var nextInstruction = block.Instructions.ElementAtOrDefault(pos);
-			return nextInstruction != null && nextInstruction.MatchStLoc(initializerStore, out initializer) && initializer.OpCode == OpCode.Block;
+			return nextInstruction != null
+				&& nextInstruction.MatchStLoc(initializerStore, out initializer)
+				&& initializer.OpCode == OpCode.Block;
 		}
 		
 		Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
@@ -412,17 +383,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
 		{
-			NewArr newArr = instruction as NewArr;
 			length = null;
 			arrayType = null;
-			if (newArr == null)
+			if (!(instruction is NewArr newArr))
 				return false;
 			arrayType = newArr.Type;
 			var args = newArr.Indices;
 			length = new int[args.Count];
 			for (int i = 0; i < args.Count; i++) {
-				int value;
-				if (!args[i].MatchLdcI4(out value) || value <= 0) return false;
+				if (!args[i].MatchLdcI4(out int value) || value <= 0) return false;
 				length[i] = value;
 			}
 			return true;
@@ -433,8 +402,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			method = null;
 			array = null;
 			field = default;
-			Call call = instruction as Call;
-			if (call == null || call.Arguments.Count != 2)
+			if (!(instruction is Call call) || call.Arguments.Count != 2)
 				return false;
 			method = call.Method;
 			if (method.DeclaringTypeDefinition == null || method.DeclaringTypeDefinition.FullName != "System.Runtime.CompilerServices.RuntimeHelpers")
@@ -443,8 +411,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!call.Arguments[0].MatchLdLoc(out array))
 				return false;
-			IMember member;
-			if (!call.Arguments[1].MatchLdMemberToken(out member))
+			if (!call.Arguments[1].MatchLdMemberToken(out var member))
 				return false;
 			if (member.MetadataToken.IsNil)
 				return false;
