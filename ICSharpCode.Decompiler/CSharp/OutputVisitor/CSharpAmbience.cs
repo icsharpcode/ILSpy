@@ -186,7 +186,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(typeDef);
-			if (typeDef.DeclaringTypeDefinition != null) {
+			if (typeDef.DeclaringTypeDefinition != null && 
+				((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType ||
+				(ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) == ConversionFlags.UseFullyQualifiedEntityNames)) {
 				WriteTypeDeclarationName(typeDef.DeclaringTypeDefinition, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
 			} else if ((ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) == ConversionFlags.UseFullyQualifiedEntityNames) {

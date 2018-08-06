@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Output
 		/// </summary>
 		ShowDefinitionKeyword  = 8,
 		/// <summary>
-		/// Show the declaring type for the member
+		/// Show the declaring type for the type or member
 		/// </summary>
 		ShowDeclaringType = 0x10,
 		/// <summary>
