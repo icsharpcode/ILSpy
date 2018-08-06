@@ -179,15 +179,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
-				if (HandleSequentialLocAllocInitializer(body, pos + 1, v, lengthInst, out elementType, out StObj[] values)) {
+				if (HandleSequentialLocAllocInitializer(body, pos + 1, v, lengthInst, out elementType, out StObj[] values, out int instructionsToRemove)) {
 					context.Step("HandleSequentialLocAllocInitializer", inst);
 					var block = new Block(BlockKind.StackAllocInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
 					block.Instructions.Add(new StLoc(tempStore, new LocAlloc(lengthInst)));
-					block.Instructions.AddRange(values.Select(value => RewrapStore(tempStore, value, elementType)));
+					block.Instructions.AddRange(values.Where(value => value != null).Select(value => RewrapStore(tempStore, value, elementType)));
 					block.FinalInstruction = new LdLoc(tempStore);
 					body.Instructions[pos] = new StLoc(v, block);
-					body.Instructions.RemoveRange(pos + 1, values.Length);
+					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
@@ -217,15 +217,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction lengthInstruction, out IType elementType, out StObj[] values)
+		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction lengthInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
 		{
 			int elementCount = 0;
+			long minExpectedOffset = 0;
 			values = null;
 			elementType = null;
+			instructionsToRemove = 0;
+
+			if (block.Instructions[pos].MatchInitblk(out var dest, out var value, out var size)
+				&& lengthInstruction.MatchLdcI(out long byteCount))
+			{
+				if (!dest.MatchLdLoc(store) || !value.MatchLdcI4(0) || !size.MatchLdcI(byteCount))
+					return false;
+				instructionsToRemove++;
+				pos++;
+			}
 
 			for (int i = pos; i < block.Instructions.Count; i++) {
 				// match the basic stobj pattern
-				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out var currentType)
+				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out value, out var currentType)
 					|| value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
 				if (elementType != null && !currentType.Equals(elementType))
@@ -234,19 +245,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// match the target
 				// should be either ldloc store (at offset 0)
 				// or binary.add(ldloc store, offset) where offset is either 'elementSize' or 'i * elementSize'
-				if (elementCount == 0) {
-					if (!target.MatchLdLoc(store))
-						break;
-				} else {
+				if (!target.MatchLdLoc(store)) {
 					if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
-						break;
+						return false;
 					if (!left.MatchLdLoc(store))
 						break;
 					var offsetInst = PointerArithmeticOffset.Detect(right, new PointerType(elementType), ((BinaryNumericInstruction)target).CheckForOverflow);
 					if (offsetInst == null)
+						return false;
+					if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
 						break;
-					if (!offsetInst.MatchLdcI(elementCount))
-						break;
+					minExpectedOffset = offset;
 				}
 				if (values == null) {
 					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, new PointerType(elementType), checkForOverflow: true);
@@ -254,24 +263,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					values = new StObj[(int)valuesLength];
 				}
-				if (i - pos >= values.Length)
+				if (minExpectedOffset >= values.Length)
 					break;
-				values[i - pos] = (StObj)block.Instructions[i];
+				values[minExpectedOffset] = (StObj)block.Instructions[i];
 				elementCount++;
 			}
 
 			if (values == null || store.Kind != VariableKind.StackSlot || store.StoreCount != 1
-				|| store.AddressCount != 0 || store.LoadCount != values.Length + 1)
+				|| store.AddressCount != 0 || store.LoadCount > values.Length + 1)
 				return false;
 
-			var finalStore = store.LoadInstructions.Last().Parent as StLoc;
+			if (store.LoadInstructions.Last().Parent is StLoc finalStore) {
+				elementType = ((PointerType)finalStore.Variable.Type).ElementType;
+			}
+			instructionsToRemove += elementCount;
 
-			if (finalStore == null)
-				return false;
-
-			elementType = ((PointerType)finalStore.Variable.Type).ElementType;
-
-			return elementCount == values.Length;
+			return elementCount <= values.Length;
 		}
 
 		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
@@ -528,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return new StObj(new LdElema(type, array, indices), value, type);
 		}
 
-		static ILInstruction GetNullExpression(IType elementType)
+		internal static ILInstruction GetNullExpression(IType elementType)
 		{
 			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)

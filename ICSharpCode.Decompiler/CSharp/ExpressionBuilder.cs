@@ -2203,25 +2203,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			var initializer = stackAllocExpression.Initializer = new ArrayInitializerExpression();
 			var pointerType = new PointerType(elementType);
 
+			long expectedOffset = 0;
+
 			for (int i = 1; i < block.Instructions.Count; i++) {
 				// stobj type(binary.add.i(ldloc I_0, conv i4->i <sign extend> (ldc.i4 offset)), value)
 				if (!block.Instructions[i].MatchStObj(out var target, out var value, out var t) || !TypeUtils.IsCompatibleTypeForMemoryAccess(elementType, t))
 					throw new ArgumentException("given Block is invalid!");
-				if (i == 1) {
-					if (!target.MatchLdLoc(stloc.Variable))
-						throw new ArgumentException("given Block is invalid!");
-				} else {
+				long offset = 0;
+				if (!target.MatchLdLoc(stloc.Variable)) {
 					if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
 						throw new ArgumentException("given Block is invalid!");
 					var binary = (BinaryNumericInstruction)target;
 					var offsetInst = PointerArithmeticOffset.Detect(right, pointerType, binary.CheckForOverflow);
 					if (!left.MatchLdLoc(final.Variable) || offsetInst == null)
 						throw new ArgumentException("given Block is invalid!");
-					if (!offsetInst.MatchLdcI(i - 1))
+					if (!offsetInst.MatchLdcI(out offset))
 						throw new ArgumentException("given Block is invalid!");
+				}
+				while (expectedOffset < offset) {
+					initializer.Elements.Add(Translate(IL.Transforms.TransformArrayInitializers.GetNullExpression(elementType), typeHint: elementType));
+					expectedOffset++;
 				}
 				var val = Translate(value, typeHint: elementType).ConvertTo(elementType, this, allowImplicitConversion: true);
 				initializer.Elements.Add(val);
+				expectedOffset++;
 			}
 			return stackAllocExpression.WithILInstruction(block)
 				.WithRR(new ResolveResult(stloc.Variable.Type));
