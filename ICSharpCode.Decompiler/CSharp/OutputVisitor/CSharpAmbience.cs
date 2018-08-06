@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -37,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				throw new ArgumentNullException("symbol");
 			
 			StringWriter writer = new StringWriter();
-			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateMono ());
+			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateEmpty());
 			return writer.ToString();
 		}
 		
@@ -87,7 +88,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			
-			if ((ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType) {
+			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) != ConversionFlags.PlaceReturnTypeAfterParameterList
+				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
+			{
 				var rt = node.GetChildByRole(Roles.Type);
 				if (!rt.IsNull) {
 					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
@@ -116,7 +119,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				writer.WriteToken(symbol.SymbolKind == SymbolKind.Indexer ? Roles.RBracket : Roles.RPar, symbol.SymbolKind == SymbolKind.Indexer ? "]" : ")");
 			}
-			
+
+			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) == ConversionFlags.PlaceReturnTypeAfterParameterList
+				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
+			{
+				var rt = node.GetChildByRole(Roles.Type);
+				if (!rt.IsNull) {
+					writer.Space();
+					writer.WriteToken(Roles.Colon, ":");
+					writer.Space();
+					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
+				}
+			}
+
 			if ((ConversionFlags & ConversionFlags.ShowBody) == ConversionFlags.ShowBody && !(node is TypeDeclaration)) {
 				IProperty property = symbol as IProperty;
 				if (property != null) {

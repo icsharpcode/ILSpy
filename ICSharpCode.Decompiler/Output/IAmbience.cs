@@ -17,8 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.TypeSystem
+namespace ICSharpCode.Decompiler.Output
 {
 	[Flags]
 	public enum ConversionFlags
@@ -69,11 +70,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For properties: shows "{ get; }" or similar.
 		/// </summary>
 		ShowBody = 0x200,
-		
 		/// <summary>
 		/// Use fully qualified names for members.
 		/// </summary>
 		UseFullyQualifiedEntityNames = 0x400,
+		/// <summary>
+		/// Instead of placing the return type before the entity name,
+		/// append it after the parameter list, preceeded by a colon.
+		/// </summary>
+		PlaceReturnTypeAfterParameterList = 0x800,
 		
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |

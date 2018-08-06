@@ -19,6 +19,7 @@
 
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+    <RootNamespace>ICSharpCode.ILSpy.Tests</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -36,8 +37,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\ICSharpCode.Decompiler.Tests\TypeSystem\TypeSystemTestCase.cs" Link="TestCases\TypeSystemTestCase.cs" />
-    <Compile Include="Languages\CSharpLanguageTests.cs" />
     <Compile Include="Stub.cs" />
   </ItemGroup>
 
@@ -61,10 +60,6 @@
 
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="TestCases\" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ILSpy.Tests
+namespace ICSharpCode.ILSpy.Tests
 {
 	class Stub
 	{
