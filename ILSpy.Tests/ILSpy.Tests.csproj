@@ -14,7 +14,7 @@
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <OutputType>Exe</OutputType>
-    <StartupObject>ILSpy.Tests.Stub</StartupObject>
+    <StartupObject>ICSharpCode.ILSpy.Tests.Stub</StartupObject>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
 
     <SignAssembly>True</SignAssembly>
