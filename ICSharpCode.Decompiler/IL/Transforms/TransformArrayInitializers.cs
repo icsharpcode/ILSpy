@@ -405,10 +405,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(instruction is Call call) || call.Arguments.Count != 2)
 				return false;
 			method = call.Method;
-			if (method.DeclaringTypeDefinition == null || method.DeclaringTypeDefinition.FullName != "System.Runtime.CompilerServices.RuntimeHelpers")
+			if (!method.IsStatic || method.Name != "InitializeArray" || method.DeclaringTypeDefinition == null)
 				return false;
-			if (method.Name != "InitializeArray")
+			var declaringType = method.DeclaringTypeDefinition;
+			if (declaringType.DeclaringType != null || declaringType.Name != "RuntimeHelpers"
+				|| declaringType.Namespace != "System.Runtime.CompilerServices")
+			{
 				return false;
+			}
 			if (!call.Arguments[0].MatchLdLoc(out array))
 				return false;
 			if (!call.Arguments[1].MatchLdMemberToken(out var member))
