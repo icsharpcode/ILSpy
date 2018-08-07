@@ -810,16 +810,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return ed;
 		}
 		#endregion
-		
-		#region Destructor
-		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
-			Attributes = { new Repeat(new AnyNode()) },
-			Modifiers = Modifiers.Any,
-			ReturnType = new PrimitiveType("void"),
-			Name = "Finalize",
-			Body = destructorBodyPattern
-		};
 
+		#region Destructor
 		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
 			new TryCatchStatement {
 				TryBlock = new AnyNode("body"),
@@ -827,6 +819,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
 				}
 			}
+		};
+
+		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			ReturnType = new PrimitiveType("void"),
+			Name = "Finalize",
+			Body = destructorBodyPattern
 		};
 
 		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
