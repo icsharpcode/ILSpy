@@ -17,7 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -109,6 +112,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				writer.WriteToken(symbol.SymbolKind == SymbolKind.Indexer ? Roles.LBracket : Roles.LPar, symbol.SymbolKind == SymbolKind.Indexer ? "[" : "(");
 				bool first = true;
 				foreach (var param in node.GetChildrenByRole(Roles.Parameter)) {
+					if ((ConversionFlags & ConversionFlags.ShowParameterModifiers) == 0) {
+						param.ParameterModifier = ParameterModifier.None;
+					}
 					if (first) {
 						first = false;
 					} else {
@@ -186,7 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(typeDef);
-			if (typeDef.DeclaringTypeDefinition != null && 
+			if (typeDef.DeclaringTypeDefinition != null &&
 				((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType ||
 				(ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) == ConversionFlags.UseFullyQualifiedEntityNames)) {
 				WriteTypeDeclarationName(typeDef.DeclaringTypeDefinition, writer, formattingPolicy);
@@ -198,12 +204,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			writer.WriteIdentifier(node.NameToken);
-			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList) {
-				var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);
-				outputVisitor.WriteTypeParameters(node.GetChildrenByRole(Roles.TypeParameter));
-			}
+			WriteTypeParameters(node, writer, formattingPolicy);
 		}
-		
+
 		void WriteMemberDeclarationName(IMember member, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
@@ -254,12 +257,27 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					writer.WriteIdentifier(Identifier.Create(member.Name));
 					break;
 			}
-			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList && member.SymbolKind == SymbolKind.Method) {
+			WriteTypeParameters(node, writer, formattingPolicy);
+		}
+
+		void WriteTypeParameters(EntityDeclaration node, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		{
+			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList) {
 				var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);
-				outputVisitor.WriteTypeParameters(node.GetChildrenByRole(Roles.TypeParameter));
+				IEnumerable<TypeParameterDeclaration> typeParameters = node.GetChildrenByRole(Roles.TypeParameter);
+				if ((ConversionFlags & ConversionFlags.ShowTypeParameterVarianceModifier) == 0) {
+					typeParameters = typeParameters.Select(RemoveVarianceModifier);
+				}
+				outputVisitor.WriteTypeParameters(typeParameters);
+			}
+
+			TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			{
+				decl.Variance = VarianceModifier.Invariant;
+				return decl;
 			}
 		}
-		
+
 		void PrintModifiers(Modifiers modifiers, TokenWriter writer)
 		{
 			foreach (var m in CSharpModifierToken.AllModifiers) {

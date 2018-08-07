@@ -429,16 +429,16 @@ namespace ICSharpCode.ILSpy
 		static CSharpAmbience CreateAmbience()
 		{
 			CSharpAmbience ambience = new CSharpAmbience();
-			ambience.ConversionFlags = ConversionFlags.ShowParameterList
-				| ConversionFlags.ShowReturnType
-				| ConversionFlags.ShowTypeParameterList
-				| ConversionFlags.PlaceReturnTypeAfterParameterList;
+			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
+			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
 			return ambience;
 		}
 
 		static string EntityToString(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
+			// Do not forget to update CSharpAmbienceTests, if this ever changes.
 			var ambience = CreateAmbience();
+			ambience.ConversionFlags |= ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterModifiers;
 			if (includeDeclaringTypeName)
 				ambience.ConversionFlags |= ConversionFlags.ShowDeclaringType;
 			if (includeNamespace)
@@ -453,6 +453,7 @@ namespace ICSharpCode.ILSpy
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
 			var ambience = CreateAmbience();
+			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
 			if (includeNamespace)
 				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
 			if (type is ITypeDefinition definition) {
@@ -584,7 +585,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string GetTooltip(IEntity entity)
 		{
-			var flags = ConversionFlags.All & ~ConversionFlags.ShowBody;
+			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity);
 		}
 

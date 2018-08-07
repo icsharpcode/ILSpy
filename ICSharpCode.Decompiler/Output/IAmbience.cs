@@ -79,17 +79,28 @@ namespace ICSharpCode.Decompiler.Output
 		/// append it after the parameter list, preceeded by a colon.
 		/// </summary>
 		PlaceReturnTypeAfterParameterList = 0x800,
-		
+		/// <summary>
+		/// Show the variance modifier of the type parameter.
+		/// If active, shows 'Func&lt;in T, out TResult&gt;' instead of 'Func&lt;T, TResult&gt;'.
+		/// </summary>
+		ShowTypeParameterVarianceModifier = 0x1000,
+		/// <summary>
+		/// Show  modifiers of parameters, e.g. 'this', 'params', 'ref', 'out' and 'in'.
+		/// </summary>
+		ShowParameterModifiers = 0x2000,
+
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
 			ShowParameterList |
+			ShowParameterModifiers |
 			ShowReturnType |
 			ShowModifiers |
 			ShowTypeParameterList |
+			ShowTypeParameterVarianceModifier |
 			ShowDefinitionKeyword |
 			ShowBody,
 		
-		All = 0x7ff,
+		All = 0x7ffff,
 	}
 	
 	/// <summary>

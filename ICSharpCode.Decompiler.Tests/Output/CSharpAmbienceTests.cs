@@ -26,6 +26,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using NUnit.Framework;
 
+using static ICSharpCode.Decompiler.Output.ConversionFlags;
+
 namespace ICSharpCode.Decompiler.Tests.Output
 {
 	[TestFixture]
@@ -43,156 +45,201 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				TypeSystemLoaderTests.Mscorlib.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.OnlyPublicAPI));
 		}
 
+		ITypeDefinition GetDefinition(Type type)
+		{
+			if (type == null) {
+				throw new ArgumentNullException(nameof(type));
+			}
+
+			var foundType = compilation.FindType(type).GetDefinition();
+			Assert.IsNotNull(foundType);
+			return foundType;
+		}
+
+		const ConversionFlags ILSpyMainTreeViewTypeFlags = ShowTypeParameterList | PlaceReturnTypeAfterParameterList;
+		const ConversionFlags ILSpyMainTreeViewMemberFlags = ILSpyMainTreeViewTypeFlags | ShowParameterList | ShowReturnType | ShowParameterModifiers;
+
 		#region ITypeDefinition tests
-		[Test]
-		public void GenericType()
+		[TestCase(None, "Dictionary")]
+		[TestCase(ShowDefinitionKeyword, "class Dictionary")]
+		[TestCase(ShowAccessibility, "public Dictionary")]
+		[TestCase(ShowDefinitionKeyword | ShowAccessibility, "public class Dictionary")]
+		[TestCase(ShowTypeParameterList, "Dictionary<TKey,TValue>")]
+		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public class Dictionary<TKey,TValue>")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList, "System.Collections.Generic.Dictionary<TKey,TValue>")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public class System.Collections.Generic.Dictionary<TKey,TValue>")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "Dictionary<TKey,TValue>")]
+		public void GenericType(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Dictionary<,>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("System.Collections.Generic.Dictionary<TKey,TValue>", result);
+			var typeDef = GetDefinition(typeof(Dictionary<,>));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void GenericTypeShortName()
+		[TestCase(None, "Object")]
+		[TestCase(ShowDefinitionKeyword, "class Object")]
+		[TestCase(ShowAccessibility, "public Object")]
+		[TestCase(ShowDefinitionKeyword | ShowAccessibility, "public class Object")]
+		[TestCase(ShowTypeParameterList, "Object")]
+		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public class Object")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList, "System.Object")]
+		[TestCase(All, "public class System.Object")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "Object")]
+		public void SimpleType(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Dictionary<,>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("Dictionary<TKey,TValue>", result);
+			var typeDef = GetDefinition(typeof(object));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void SimpleType()
+		[TestCase(None, "IEnumerable")]
+		[TestCase(ShowTypeParameterList, "IEnumerable<T>")]
+		[TestCase(ShowTypeParameterList | ShowTypeParameterVarianceModifier, "IEnumerable<out T>")]
+		[TestCase(All, "public interface System.Collections.Generic.IEnumerable<out T>")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "IEnumerable<T>")]
+		public void GenericInterface(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Object)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("System.Object", result);
+			var typeDef = GetDefinition(typeof(IEnumerable<>));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void SimpleTypeDefinition()
+		[TestCase(None, "Enumerator")]
+		[TestCase(ShowDefinitionKeyword, "struct Enumerator")]
+		[TestCase(ShowAccessibility, "public Enumerator")]
+		[TestCase(ShowDefinitionKeyword | ShowAccessibility, "public struct Enumerator")]
+		[TestCase(ShowTypeParameterList, "Enumerator")]
+		[TestCase(ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "public struct Enumerator")]
+		[TestCase(UseFullyQualifiedEntityNames | ShowTypeParameterList, "System.Collections.Generic.List<T>.Enumerator")]
+		[TestCase(ShowDeclaringType | ShowTypeParameterList, "List<T>.Enumerator")]
+		[TestCase(All, "public struct System.Collections.Generic.List<T>.Enumerator")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "Enumerator")]
+		public void GenericTypeWithNested(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Object)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.UseFullyQualifiedEntityNames);
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("public class Object", result);
+			var typeDef = GetDefinition(typeof(List<>.Enumerator));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void SimpleTypeDefinitionWithoutModifiers()
+		[TestCase(None, "StaticClass")]
+		[TestCase(ShowDefinitionKeyword, "class StaticClass")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword, "static class StaticClass")]
+		[TestCase(ShowModifiers | ShowAccessibility, "private static StaticClass")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private static class StaticClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList, "static StaticClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private static class StaticClass")]
+		[TestCase(All, "private static class ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.StaticClass")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "StaticClass")]
+		public void StaticClassTest(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Object)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowModifiers | ConversionFlags.ShowAccessibility);
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("class Object", result);
+			var typeDef = GetDefinition(typeof(StaticClass));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void GenericTypeDefinitionFull()
+		[TestCase(None, "SealedClass")]
+		[TestCase(ShowDefinitionKeyword, "class SealedClass")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword, "sealed class SealedClass")]
+		[TestCase(ShowModifiers | ShowAccessibility, "private sealed SealedClass")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private sealed class SealedClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList, "sealed SealedClass")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private sealed class SealedClass")]
+		[TestCase(All, "private sealed class ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.SealedClass")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "SealedClass")]
+		public void SealedClassTest(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(List<>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.All;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("public class System.Collections.Generic.List<T>", result);
+			var typeDef = GetDefinition(typeof(SealedClass));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void GenericInterfaceFull()
+		[TestCase(None, "RefStruct")]
+		[TestCase(ShowDefinitionKeyword, "struct RefStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword, "ref struct RefStruct")]
+		[TestCase(ShowModifiers | ShowAccessibility, "private ref RefStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private ref struct RefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList, "ref RefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private ref struct RefStruct")]
+		[TestCase(All, "private ref struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.RefStruct")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "RefStruct")]
+		public void RefStructTest(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(IEnumerable<>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.All;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("public interface System.Collections.Generic.IEnumerable<out T>", result);
+			var typeDef = GetDefinition(typeof(RefStruct));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void SimpleTypeShortName()
+		[TestCase(None, "ReadonlyStruct")]
+		[TestCase(ShowDefinitionKeyword, "struct ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword, "readonly struct ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowAccessibility, "private readonly ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private readonly struct ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList, "readonly ReadonlyStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private readonly struct ReadonlyStruct")]
+		[TestCase(All, "private readonly struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyStruct")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "ReadonlyStruct")]
+		public void ReadonlyStructTest(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(Object)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("Object", result);
+			var typeDef = GetDefinition(typeof(ReadonlyStruct));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 
-		[Test]
-		public void GenericTypeWithNested()
+		[TestCase(None, "ReadonlyRefStruct")]
+		[TestCase(ShowDefinitionKeyword, "struct ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword, "readonly ref struct ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowAccessibility, "private readonly ref ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowDefinitionKeyword | ShowAccessibility, "private readonly ref struct ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList, "readonly ref ReadonlyRefStruct")]
+		[TestCase(ShowModifiers | ShowTypeParameterList | ShowDefinitionKeyword | ShowAccessibility, "private readonly ref struct ReadonlyRefStruct")]
+		[TestCase(All, "private readonly ref struct ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.ReadonlyRefStruct")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "ReadonlyRefStruct")]
+		public void ReadonlyRefStructTest(ConversionFlags flags, string expectedOutput)
 		{
-			var typeDef = compilation.FindType(typeof(List<>.Enumerator)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("System.Collections.Generic.List<T>.Enumerator", result);
-		}
-
-		[Test]
-		public void GenericTypeWithNestedShortName()
-		{
-			var typeDef = compilation.FindType(typeof(List<>.Enumerator)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.ShowDeclaringType | ConversionFlags.ShowTypeParameterList;
-			string result = ambience.ConvertSymbol(typeDef);
-
-			Assert.AreEqual("List<T>.Enumerator", result);
+			var typeDef = GetDefinition(typeof(ReadonlyRefStruct));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(typeDef));
 		}
 		#endregion
 
 		#region Delegate tests
-		[Test]
-		public void DelegateName()
+		[TestCase(None, "Func")]
+		[TestCase(ShowTypeParameterList, "Func<T,TResult>")]
+		[TestCase(ShowTypeParameterList | ShowTypeParameterVarianceModifier, "Func<in T,out TResult>")]
+		[TestCase(ShowTypeParameterList | ShowReturnType | ShowTypeParameterVarianceModifier, "TResult Func<in T,out TResult>")]
+		[TestCase(ShowTypeParameterList | ShowParameterList | ShowTypeParameterVarianceModifier, "Func<in T,out TResult>(T)")]
+		[TestCase(ShowTypeParameterList | ShowParameterList | ShowReturnType | ShowTypeParameterVarianceModifier, "TResult Func<in T,out TResult>(T)")]
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "public delegate TResult System.Func<in T,out TResult>(T arg);")]
+		[TestCase(All, "public delegate System.Func<in T,out TResult>(T arg) : TResult;")]
+		[TestCase(ILSpyMainTreeViewTypeFlags, "Func<T,TResult>")]
+		public void FuncDelegate(ConversionFlags flags, string expectedOutput)
 		{
-			var func = compilation.FindType(typeof(Func<,>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList;
-
-			Assert.AreEqual("Func<in T,out TResult>", ambience.ConvertSymbol(func));
-		}
-
-		[Test]
-		public void FullDelegate()
-		{
-			var func = compilation.FindType(typeof(Func<,>)).GetDefinition();
-			ambience.ConversionFlags = ConversionFlags.All;
-			Assert.AreEqual("public delegate TResult System.Func<in T,out TResult>(T arg);", ambience.ConvertSymbol(func));
+			var func = GetDefinition(typeof(Func<,>));
+			ambience.ConversionFlags = flags;
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(func));
 		}
 		#endregion
 
 		#region IField tests
-		[Test]
-		public void SimpleField()
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.test;")]
+		[TestCase(ILSpyMainTreeViewMemberFlags, "test : int")]
+		[TestCase(ConversionFlags.All & ~(ConversionFlags.ShowDeclaringType | ConversionFlags.ShowModifiers | ConversionFlags.ShowAccessibility | ConversionFlags.PlaceReturnTypeAfterParameterList), "int test;")]
+		public void SimpleField(ConversionFlags flags, string expectedOutput)
 		{
-			var field = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "test").Single();
-			ambience.ConversionFlags = ConversionFlags.All;
-			string result = ambience.ConvertSymbol(field);
+			var field = GetDefinition(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "test").Single();
+			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual("private int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.test;", result);
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
 		}
 
-		[Test]
-		public void SimpleConstField()
+		[TestCase(All & ~PlaceReturnTypeAfterParameterList, "private const int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.TEST2;")]
+		[TestCase(ILSpyMainTreeViewMemberFlags, "TEST2 : int")]
+		public void SimpleConstField(ConversionFlags flags, string expectedOutput)
 		{
 			var field = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "TEST2").Single();
-			ambience.ConversionFlags = ConversionFlags.All;
-			string result = ambience.ConvertSymbol(field);
+			ambience.ConversionFlags = flags;
 
-			Assert.AreEqual("private const int ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.TEST2;", result);
-		}
-
-		[Test]
-		public void SimpleFieldWithoutModifiers()
-		{
-			var field = compilation.FindType(typeof(CSharpAmbienceTests.Program)).GetFields(f => f.Name == "test").Single();
-			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowDeclaringType | ConversionFlags.ShowModifiers | ConversionFlags.ShowAccessibility);
-			string result = ambience.ConvertSymbol(field);
-
-			Assert.AreEqual("int test;", result);
+			Assert.AreEqual(expectedOutput, ambience.ConvertSymbol(field));
 		}
 		#endregion
 
@@ -240,10 +287,22 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 		#endregion
 
+		#region IMethod tests
+		[Test]
+		public void ConstructorTests()
+		{
+		}
+		#endregion
+
 		#region Test types
 #pragma warning disable 169, 67
 
 		class Test { }
+		static class StaticClass { }
+		sealed class SealedClass { }
+		ref struct RefStruct { }
+		readonly struct ReadonlyStruct { }
+		readonly ref struct ReadonlyRefStruct { }
 
 		class Program
 		{
@@ -296,6 +355,11 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 				Console.Write("Press any key to continue . . . ");
 				Console.ReadKey(true);
+			}
+
+			public static void InParameter(in int a)
+			{
+
 			}
 		}
 		#endregion
