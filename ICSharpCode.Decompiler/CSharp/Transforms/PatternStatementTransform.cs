@@ -121,7 +121,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
 		}
-		
+
+		public override AstNode VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		{
+			return TransformDestructorBody(destructorDeclaration) ?? base.VisitDestructorDeclaration(destructorDeclaration);
+		}
+
 		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
 		{
 			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement);
@@ -812,16 +817,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Modifiers = Modifiers.Any,
 			ReturnType = new PrimitiveType("void"),
 			Name = "Finalize",
-			Body = new BlockStatement {
-				new TryCatchStatement {
-					TryBlock = new AnyNode("body"),
-					FinallyBlock = new BlockStatement {
-						new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
-					}
+			Body = destructorBodyPattern
+		};
+
+		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
+			new TryCatchStatement {
+				TryBlock = new AnyNode("body"),
+				FinallyBlock = new BlockStatement {
+					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
 				}
 			}
 		};
-		
+
 		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
@@ -837,8 +844,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return null;
 		}
+
+		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		{
+			Match m = destructorBodyPattern.Match(dtorDef.Body);
+			if (m.Success) {
+				dtorDef.Body = m.Get<BlockStatement>("body").Single().Detach();
+				return dtorDef;
+			}
+			return null;
+		}
 		#endregion
-		
+
 		#region Try-Catch-Finally
 		static readonly TryCatchStatement tryCatchFinallyPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {

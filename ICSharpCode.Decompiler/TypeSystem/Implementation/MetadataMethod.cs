@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.symbolKind = SymbolKind.Operator;
 			} else if ((attributes & finalizerAttributes) == finalizerAttributes) {
 				string name = this.Name;
-				if (name == "Finalize") {
+				if (name == "Finalize" && Parameters.Count == 0) {
 					this.symbolKind = SymbolKind.Destructor;
 				}
 			}
