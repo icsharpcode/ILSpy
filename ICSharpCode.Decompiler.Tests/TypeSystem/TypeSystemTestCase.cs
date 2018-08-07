@@ -33,11 +33,21 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	public class SimplePublicClass
 	{
 		public void Method() { }
+
+		public SimplePublicClass() { }
+		~SimplePublicClass() { }
 	}
 
 	public class TypeTestAttribute : Attribute
 	{
 		public TypeTestAttribute(int a1, Type a2, Type a3) { }
+
+#pragma warning disable CS0465
+		private void Finalize()
+		{
+
+		}
+#pragma warning restore CS0465
 	}
 
 	[Params(1, StringComparison.CurrentCulture, null, 4.0, "Test")]
@@ -114,10 +124,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		public class Nested<X> { }
 
+		~Base() { }
+
 		public virtual void GenericMethodWithConstraints<X>(T a) where X : IComparer<T>, new() { }
 	}
 	public class Derived<A, B> : Base<B>
 	{
+		~Derived() { }
 		public override void GenericMethodWithConstraints<Y>(B a) { }
 	}
 
