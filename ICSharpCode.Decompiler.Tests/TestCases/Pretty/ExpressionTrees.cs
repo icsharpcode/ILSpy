@@ -48,6 +48,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		internal class GenericClassWithCtor<T>
+		{
+		}
+
+		internal class GenericClassWithMultipleCtors<T>
+		{
+			public GenericClassWithMultipleCtors()
+			{
+			}
+
+			public GenericClassWithMultipleCtors(int x)
+			{
+			}
+		}
+
 		private class AssertTest
 		{
 			private struct DataStruct
@@ -78,7 +93,218 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class Administrator
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string TrueName {
+				get;
+				set;
+			}
+
+			public string Phone {
+				get;
+				set;
+			}
+		}
+
+		public class Contract
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string ContractNo {
+				get;
+				set;
+			}
+
+			public string HouseAddress {
+				get;
+				set;
+			}
+
+			public DateTime SigningTime {
+				get;
+				set;
+			}
+
+			public string BuyerName {
+				get;
+				set;
+			}
+
+			public string BuyerTelephone {
+				get;
+				set;
+			}
+
+			public string Customer {
+				get;
+				set;
+			}
+
+			public string CustTelephone {
+				get;
+				set;
+			}
+
+			public int AdminID {
+				get;
+				set;
+			}
+
+			public int StoreID {
+				get;
+				set;
+			}
+		}
+
+		public class Database
+		{
+			public IQueryable<Contract> Contracts {
+				get;
+				set;
+			}
+
+			public IQueryable<Loan> Loan {
+				get;
+				set;
+			}
+
+			public IQueryable<Administrator> Administrator {
+				get;
+				set;
+			}
+
+			public IQueryable<Store> Store {
+				get;
+				set;
+			}
+		}
+
+		public class Loan
+		{
+			public string ContractNo {
+				get;
+				set;
+			}
+
+			public DateTime? ShenDate {
+				get;
+				set;
+			}
+
+			public DateTime? LoanDate {
+				get;
+				set;
+			}
+
+			public string Credit {
+				get;
+				set;
+			}
+
+			public string LoanBank {
+				get;
+				set;
+			}
+
+			public string Remarks {
+				get;
+				set;
+			}
+		}
+
+		public class Store
+		{
+			public int ID {
+				get;
+				set;
+			}
+
+			public string Name {
+				get;
+				set;
+			}
+		}
+
+		internal class MyClass
+		{
+			public static MyClass operator +(MyClass a, MyClass b)
+			{
+				return new MyClass();
+			}
+		}
+
+		internal class SimpleType
+		{
+			public const int ConstField = 1;
+
+			public static readonly int StaticReadonlyField = 2;
+
+			public static int StaticField = 3;
+
+			public readonly int ReadonlyField = 2;
+
+			public int Field = 3;
+
+#if CS60
+			public static int StaticReadonlyProperty => 0;
+#else
+		public static int StaticReadonlyProperty {
+			get {
+				return 0;
+			}
+		}
+#endif
+
+			public static int StaticProperty {
+				get;
+				set;
+			}
+
+#if CS60
+			public int ReadonlyProperty => 0;
+#else
+		public int ReadonlyProperty {
+			get {
+				return 0;
+			}
+		}
+#endif
+
+			public int Property {
+				get;
+				set;
+			}
+		}
+
+		internal class SimpleTypeWithCtor
+		{
+			public SimpleTypeWithCtor(int i)
+			{
+			}
+		}
+
+		internal class SimpleTypeWithMultipleCtors
+		{
+			public SimpleTypeWithMultipleCtors()
+			{
+			}
+
+			public SimpleTypeWithMultipleCtors(int i)
+			{
+			}
+		}
+
 		private int field;
+		private Database db;
+		private dynamic ViewBag;
 
 		public static readonly object[] SupportedMethods = new object[2] {
 			ToCode(null, () => ((IQueryable<object>)null).Aggregate((object o1, object o2) => null)),
@@ -91,6 +317,53 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, () => ((IEnumerable<object>)null).Aggregate(null, (object o1, object o2) => null)),
 			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object)null, (Func<object, object, object>)((object o1, object o2) => null), (Func<object, object>)((object o) => null)))
 		};
+
+		private void Issue1249(int ID)
+		{
+			if (ID == 0) {
+				ViewBag.data = "''";
+			} else {
+				var model = (from a in db.Contracts
+							 where a.ID == ID
+							 select new {
+								 ID = a.ID,
+								 ContractNo = a.ContractNo,
+								 HouseAddress = a.HouseAddress,
+								 AdminID = (from b in db.Administrator
+											where b.ID == a.AdminID
+											select b.TrueName).FirstOrDefault(),
+								 StoreID = (from b in db.Store
+											where b.ID == a.StoreID
+											select b.Name).FirstOrDefault(),
+								 SigningTime = a.SigningTime,
+								 YeWuPhone = (from b in db.Administrator
+											  where b.ID == a.AdminID
+											  select b.Phone).FirstOrDefault(),
+								 BuyerName = a.BuyerName,
+								 BuyerTelephone = a.BuyerTelephone,
+								 Customer = a.Customer,
+								 CustTelephone = a.CustTelephone,
+								 Credit = (from b in db.Loan
+										   where b.ContractNo == a.ContractNo
+										   select b.Credit).FirstOrDefault(),
+								 LoanBank = (from b in db.Loan
+											 where b.ContractNo == a.ContractNo
+											 select b.LoanBank).FirstOrDefault(),
+								 Remarks = (from b in db.Loan
+											where b.ContractNo == a.ContractNo
+											select b.Remarks).FirstOrDefault()
+							 }).FirstOrDefault();
+				ViewBag.data = model.ToJson();
+				DateTime? dateTime = (from b in db.Loan
+									  where b.ContractNo == model.ContractNo
+									  select b.ShenDate).FirstOrDefault();
+				DateTime? dateTime2 = (from b in db.Loan
+									   where b.ContractNo == model.ContractNo
+									   select b.LoanDate).FirstOrDefault();
+				ViewBag.ShenDate = ((!dateTime.HasValue) ? "" : dateTime.ParseDateTime().ToString("yyyy-MM-dd"));
+				ViewBag.LoanDate = ((!dateTime2.HasValue) ? "" : dateTime2.ParseDateTime().ToString("yyyy-MM-dd"));
+			}
+		}
 
 		private static object ToCode<R>(object x, Expression<Action<R>> expr)
 		{
@@ -721,91 +994,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
-	internal class MyClass
+	internal static class Extensions
 	{
-		public static MyClass operator +(MyClass a, MyClass b)
+		public static dynamic ToJson(this object o)
 		{
-			return new MyClass();
-		}
-	}
-
-	internal class SimpleType
-	{
-		public const int ConstField = 1;
-
-		public static readonly int StaticReadonlyField = 2;
-
-		public static int StaticField = 3;
-
-		public readonly int ReadonlyField = 2;
-
-		public int Field = 3;
-
-#if CS60
-		public static int StaticReadonlyProperty => 0;
-#else
-		public static int StaticReadonlyProperty {
-			get {
-				return 0;
-			}
-		}
-#endif
-
-		public static int StaticProperty {
-			get;
-			set;
+			return null;
 		}
 
-#if CS60
-		public int ReadonlyProperty => 0;
-#else
-		public int ReadonlyProperty {
-			get {
-				return 0;
-			}
-		}
-#endif
-
-		public int Property {
-			get;
-			set;
-		}
-	}
-
-	internal class SimpleTypeWithCtor
-	{
-		public SimpleTypeWithCtor(int i)
+		public static DateTime ParseDateTime(this object str)
 		{
+			return default(DateTime);
 		}
-	}
-
-	internal class SimpleTypeWithMultipleCtors
-	{
-		public SimpleTypeWithMultipleCtors()
-		{
-		}
-
-		public SimpleTypeWithMultipleCtors(int i)
-		{
-		}
-	}
-
-	internal class GenericClassWithCtor<T>
-	{
-	}
-
-	internal class GenericClassWithMultipleCtors<T>
-	{
-		public GenericClassWithMultipleCtors()
-		{
-		}
-
-		public GenericClassWithMultipleCtors(int x)
-		{
-		}
-	}
-
-	internal class GenericClass<T>
-	{
 	}
 }
