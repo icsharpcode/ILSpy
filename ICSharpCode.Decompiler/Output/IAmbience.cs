@@ -85,14 +85,19 @@ namespace ICSharpCode.Decompiler.Output
 		/// </summary>
 		ShowTypeParameterVarianceModifier = 0x1000,
 		/// <summary>
-		/// Show  modifiers of parameters, e.g. 'this', 'params', 'ref', 'out' and 'in'.
+		/// Show modifiers of parameters, e.g. 'this', 'params', 'ref', 'out' and 'in'.
 		/// </summary>
 		ShowParameterModifiers = 0x2000,
+		/// <summary>
+		/// Show default values of parameters.
+		/// </summary>
+		ShowParameterDefaultValues = 0x4000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
 			ShowParameterList |
 			ShowParameterModifiers |
+			ShowParameterDefaultValues |
 			ShowReturnType |
 			ShowModifiers |
 			ShowTypeParameterList |

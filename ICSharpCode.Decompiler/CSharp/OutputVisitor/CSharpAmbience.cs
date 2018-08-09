@@ -115,6 +115,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					if ((ConversionFlags & ConversionFlags.ShowParameterModifiers) == 0) {
 						param.ParameterModifier = ParameterModifier.None;
 					}
+					if ((ConversionFlags & ConversionFlags.ShowParameterDefaultValues) == 0) {
+						param.DefaultExpression.Detach();
+					}
 					if (first) {
 						first = false;
 					} else {
