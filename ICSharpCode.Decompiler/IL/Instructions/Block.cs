@@ -161,7 +161,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
+			int index = 0;
 			foreach (var inst in Instructions) {
+				if (options.ShowChildIndexInBlock) {
+					output.Write("[" + index + "] ");
+					index++;
+				}
 				inst.WriteTo(output, options);
 				output.WriteLine();
 			}
