@@ -154,6 +154,77 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			}
 		}
 
+		public class Item
+		{
+			public string Text {
+				get;
+				set;
+			}
+
+			public decimal Value {
+				get;
+				set;
+			}
+
+			public decimal Value2 {
+				get;
+				set;
+			}
+
+			public string Value3 {
+				get;
+				set;
+			}
+
+			public string Value4 {
+				get;
+				set;
+			}
+
+			public string Value5 {
+				get;
+				set;
+			}
+
+			public string Value6 {
+				get;
+				set;
+			}
+		}
+
+		public class OtherItem
+		{
+			public decimal Value {
+				get;
+				set;
+			}
+
+			public decimal Value2 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable {
+				get;
+				set;
+			}
+
+			public decimal? Nullable2 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable3 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable4 {
+				get;
+				set;
+			}
+		}
+
 		// Helper methods used to ensure initializers used within expressions work correctly
 		private static void X(object a, object b)
 		{
@@ -610,6 +681,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					"",
 					text
 				}
+			});
+		}
+
+		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
+		{
+			list.Add(new Item {
+				Text = "Text",
+				Value = otherItem.Value,
+				Value2 = otherItem.Value2,
+				Value3 = otherItem.Nullable.ToString(),
+				Value4 = otherItem.Nullable2.ToString(),
+				Value5 = otherItem.Nullable3.ToString(),
+				Value6 = otherItem.Nullable4.ToString()
 			});
 		}
 	}
