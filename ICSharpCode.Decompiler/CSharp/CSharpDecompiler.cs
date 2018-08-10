@@ -536,25 +536,70 @@ namespace ICSharpCode.Decompiler.CSharp
 					case ILOpCode.Stfld:
 						// async and yield fsms:
 						var token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
-						if (!token.IsNil && token.Kind == HandleKind.FieldDefinition) {
-							var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
-							var fsmTypeDef = fsmField.GetDeclaringType();
-							if (!fsmTypeDef.IsNil) {
-								var fsmType = module.Metadata.GetTypeDefinition(fsmTypeDef);
-								// Must be a nested type of the containing type.
-								if (fsmType.GetDeclaringType() != declaringType)
-									break;
-								if (!processedNestedTypes.Add(fsmTypeDef))
-									break;
-								if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
-									|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
-									foreach (var h in fsmType.GetMethods()) {
-										if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
+						if (token.IsNil)
+							continue;
+						TypeDefinitionHandle fsmTypeDef;
+						switch (token.Kind) {
+							case HandleKind.FieldDefinition:
+								var fsmField = module.Metadata.GetFieldDefinition((FieldDefinitionHandle)token);
+								fsmTypeDef = fsmField.GetDeclaringType();
+								break;
+							case HandleKind.MemberReference:
+								var memberRef = module.Metadata.GetMemberReference((MemberReferenceHandle)token);
+								if (memberRef.GetKind() != MemberReferenceKind.Field)
+									continue;
+								switch (memberRef.Parent.Kind) {
+									case HandleKind.TypeReference:
+										// This should never happen in normal code, because we are looking at nested types
+										// If it's not a nested type, it can't be a reference to the statem machine anyway, and
+										// those should be either TypeDef or TypeSpec.
+										continue;
+									case HandleKind.TypeDefinition:
+										fsmTypeDef = (TypeDefinitionHandle)memberRef.Parent;
+										break;
+									case HandleKind.TypeSpecification:
+										var ts = module.Metadata.GetTypeSpecification((TypeSpecificationHandle)memberRef.Parent);
+										if (ts.Signature.IsNil)
 											continue;
-										var otherMethod = module.Metadata.GetMethodDefinition(h);
-										if (!otherMethod.GetCustomAttributes().HasKnownAttribute(module.Metadata, KnownAttribute.DebuggerHidden)) {
-											connectedMethods.Enqueue(h);
-										}
+										// Do a quick scan using BlobReader
+										var signature = module.Metadata.GetBlobReader(ts.Signature);
+										// When dealing with FSM implementations, we can safely assume that if it's a type spec,
+										// it must be a generic type instance.
+										if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
+											continue;
+										// Skip over the rawTypeKind: value type or class
+										var rawTypeKind = signature.ReadCompressedInteger();
+										if (rawTypeKind < 17 || rawTypeKind > 18)
+											continue;
+										// Only read the generic type, ignore the type arguments
+										var genericType = signature.ReadTypeHandle();
+										// Again, we assume this is a type def, because we are only looking at nested types
+										if (genericType.Kind != HandleKind.TypeDefinition)
+											continue;
+										fsmTypeDef = (TypeDefinitionHandle)genericType;
+										break;
+									default:
+										continue;
+								}
+								break;
+							default:
+								continue;
+						}
+						if (!fsmTypeDef.IsNil) {
+							var fsmType = module.Metadata.GetTypeDefinition(fsmTypeDef);
+							// Must be a nested type of the containing type.
+							if (fsmType.GetDeclaringType() != declaringType)
+								break;
+							if (!processedNestedTypes.Add(fsmTypeDef))
+								break;
+							if (YieldReturnDecompiler.IsCompilerGeneratorEnumerator(fsmTypeDef, module.Metadata)
+								|| AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(fsmTypeDef, module.Metadata)) {
+								foreach (var h in fsmType.GetMethods()) {
+									if (module.MethodSemanticsLookup.GetSemantics(h).Item2 != 0)
+										continue;
+									var otherMethod = module.Metadata.GetMethodDefinition(h);
+									if (!otherMethod.GetCustomAttributes().HasKnownAttribute(module.Metadata, KnownAttribute.DebuggerHidden)) {
+										connectedMethods.Enqueue(h);
 									}
 								}
 							}
