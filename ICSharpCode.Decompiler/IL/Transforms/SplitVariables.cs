@@ -104,9 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case Await await:
 					// GetAwaiter() may write to the struct, but shouldn't store the address for later use
 					return AddressUse.Immediate;
-				case Call call:
-					return HandleCall(addressLoadingInstruction, targetVar, call);
-				case CallVirt call:
+				case CallInstruction call:
 					return HandleCall(addressLoadingInstruction, targetVar, call);
 				case StLoc stloc when stloc.Variable.IsSingleDefinition:
 					// Address stored in local variable: also check all uses of that variable.
@@ -131,8 +129,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Address is passed to method.
 			// We'll assume the method only uses the address locally,
 			// unless we can see an address being returned from the method:
-			if (call.Method.ReturnType.IsByRefLike) {
-				return AddressUse.Unknown;
+			if (call is NewObj) {
+				if (call.Method.DeclaringType.IsByRefLike) {
+					return AddressUse.Unknown;
+				}
+			} else {
+				if (call.Method.ReturnType.IsByRefLike) {
+					return AddressUse.Unknown;
+				}
 			}
 			foreach (var p in call.Method.Parameters) {
 				// catch "out Span<int>" and similar
