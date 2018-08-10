@@ -105,25 +105,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// GetAwaiter() may write to the struct, but shouldn't store the address for later use
 					return AddressUse.Immediate;
 				case Call call:
-					// Address is passed to method.
-					// We'll assume the method only uses the address locally,
-					// unless we can see an address being returned from the method:
-					if (call.Method.ReturnType.IsByRefLike) {
-						return AddressUse.Unknown;
-					}
-					foreach (var p in call.Method.Parameters) {
-						// catch "out Span<int>" and similar
-						if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
-							return AddressUse.Unknown;
-					}
-					// ensure there's no 'stloc target' in between the ldloca and the call consuming the address
-					for (int i = addressLoadingInstruction.ChildIndex + 1; i < call.Arguments.Count; i++) {
-						foreach (var inst in call.Arguments[i].Descendants) {
-							if (inst is StLoc store && store.Variable == targetVar)
-								return AddressUse.Unknown;
-						}
-					}
-					return AddressUse.Immediate;
+					return HandleCall(addressLoadingInstruction, targetVar, call);
+				case CallVirt call:
+					return HandleCall(addressLoadingInstruction, targetVar, call);
 				case StLoc stloc when stloc.Variable.IsSingleDefinition:
 					// Address stored in local variable: also check all uses of that variable.
 					if (!(stloc.Variable.Kind == VariableKind.StackSlot || stloc.Variable.Kind == VariableKind.Local))
@@ -140,6 +124,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return AddressUse.Unknown;
 			}
+		}
+
+		static AddressUse HandleCall(ILInstruction addressLoadingInstruction, ILVariable targetVar, CallInstruction call)
+		{
+			// Address is passed to method.
+			// We'll assume the method only uses the address locally,
+			// unless we can see an address being returned from the method:
+			if (call.Method.ReturnType.IsByRefLike) {
+				return AddressUse.Unknown;
+			}
+			foreach (var p in call.Method.Parameters) {
+				// catch "out Span<int>" and similar
+				if (p.Type.SkipModifiers() is ByReferenceType brt && brt.ElementType.IsByRefLike)
+					return AddressUse.Unknown;
+			}
+			// ensure there's no 'stloc target' in between the ldloca and the call consuming the address
+			for (int i = addressLoadingInstruction.ChildIndex + 1; i < call.Arguments.Count; i++) {
+				foreach (var inst in call.Arguments[i].Descendants) {
+					if (inst is StLoc store && store.Variable == targetVar)
+						return AddressUse.Unknown;
+				}
+			}
+			return AddressUse.Immediate;
 		}
 
 		/// <summary>
