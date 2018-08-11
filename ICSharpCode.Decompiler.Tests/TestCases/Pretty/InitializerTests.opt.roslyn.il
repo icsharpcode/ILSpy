@@ -123,9 +123,54 @@
   .class auto ansi nested public beforefieldinit C
          extends [mscorlib]System.Object
   {
+    .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 )                      // ...Item..
     .field public int32 Z
     .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S Y
     .field public class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S> L
+    .method public hidebysig specialname 
+            instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 
+            get_Item(int32 index) cil managed
+    {
+      // Code size       10 (0xa)
+      .maxstack  1
+      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_0)
+      IL_0000:  ldloca.s   V_0
+      IL_0002:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+      IL_0008:  ldloc.0
+      IL_0009:  ret
+    } // end of method C::get_Item
+
+    .method public hidebysig specialname 
+            instance void  set_Item(int32 index,
+                                    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 'value') cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method C::set_Item
+
+    .method public hidebysig specialname 
+            instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 
+            get_Item(object key) cil managed
+    {
+      // Code size       10 (0xa)
+      .maxstack  1
+      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_0)
+      IL_0000:  ldloca.s   V_0
+      IL_0002:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+      IL_0008:  ldloc.0
+      IL_0009:  ret
+    } // end of method C::get_Item
+
+    .method public hidebysig specialname 
+            instance void  set_Item(object key,
+                                    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 'value') cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method C::set_Item
+
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -136,6 +181,20 @@
       IL_0006:  ret
     } // end of method C::.ctor
 
+    .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+            Item(int32)
+    {
+      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::get_Item(int32)
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(int32,
+                                                                                                              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    } // end of property C::Item
+    .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+            Item(object)
+    {
+      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::get_Item(object)
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(object,
+                                                                                                              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    } // end of property C::Item
   } // end of class C
 
   .class sequential ansi sealed nested public beforefieldinit S
@@ -1697,10 +1756,10 @@
     IL_0081:  ret
   } // end of method TestCases::MixedObjectAndDictInitializer
 
-  .method public hidebysig instance void 
-          NestedListWithIndexInitializer() cil managed
+  .method private hidebysig instance void 
+          NestedListWithIndexInitializer(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum myEnum) cil managed
   {
-    // Code size       46 (0x2e)
+    // Code size       59 (0x3b)
     .maxstack  8
     IL_0000:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<int32>>::.ctor()
     IL_0005:  dup
@@ -1718,8 +1777,13 @@
     IL_0021:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<int32>>::get_Item(int32)
     IL_0026:  ldc.i4.3
     IL_0027:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
-    IL_002c:  pop
-    IL_002d:  ret
+    IL_002c:  dup
+    IL_002d:  ldc.i4.1
+    IL_002e:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.List`1<class [mscorlib]System.Collections.Generic.List`1<int32>>::get_Item(int32)
+    IL_0033:  ldarg.1
+    IL_0034:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
+    IL_0039:  pop
+    IL_003a:  ret
   } // end of method TestCases::NestedListWithIndexInitializer
 
   .method public hidebysig static void  ObjectInitializerWithInitializationOfDeeplyNestedObjects() cil managed
@@ -1994,6 +2058,85 @@
   } // end of method TestCases::Issue907_Test3
 
   .method private hidebysig instance void 
+          Issue1250_Test1(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum 'value') cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000a:  dup
+    IL_000b:  ldarg.1
+    IL_000c:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::Z
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0016:  ret
+  } // end of method TestCases::Issue1250_Test1
+
+  .method private hidebysig instance void 
+          Issue1250_Test2(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum 'value') cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  5
+    .locals init (int32 V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000a:  ldarg.1
+    IL_000b:  stloc.0
+    IL_000c:  dup
+    IL_000d:  ldloc.0
+    IL_000e:  ldarg.1
+    IL_000f:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S::.ctor(int32)
+    IL_0014:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(int32,
+                                                                                                                            valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    IL_0019:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001e:  ret
+  } // end of method TestCases::Issue1250_Test2
+
+  .method private hidebysig instance void 
+          Issue1250_Test3(int32 'value') cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  5
+    .locals init (int32 V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000a:  ldarg.1
+    IL_000b:  stloc.0
+    IL_000c:  dup
+    IL_000d:  ldloc.0
+    IL_000e:  ldarg.1
+    IL_000f:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S::.ctor(int32)
+    IL_0014:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(int32,
+                                                                                                                            valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    IL_0019:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001e:  ret
+  } // end of method TestCases::Issue1250_Test3
+
+  .method private hidebysig instance void 
+          Issue1250_Test4(int32 'value') cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  5
+    .locals init (object V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000a:  ldarg.1
+    IL_000b:  box        [mscorlib]System.Int32
+    IL_0010:  stloc.0
+    IL_0011:  dup
+    IL_0012:  ldloc.0
+    IL_0013:  ldarg.1
+    IL_0014:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S::.ctor(int32)
+    IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(object,
+                                                                                                                            valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    IL_001e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0023:  ret
+  } // end of method TestCases::Issue1250_Test4
+
+  .method private hidebysig instance void 
           Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
   {
@@ -2072,13 +2215,13 @@
     .size 40
   } // end of class '__StaticArrayInitTypeSize=40'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00004ED0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00005108
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00004ED0 = bytearray (
+.data cil I_00005108 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 

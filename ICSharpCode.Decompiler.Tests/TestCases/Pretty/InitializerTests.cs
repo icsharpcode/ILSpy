@@ -62,6 +62,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public int Z;
 			public S Y;
 			public List<S> L;
+
+			public S this[int index] {
+				get {
+					return default(S);
+				}
+				set {
+				}
+			}
+
+			public S this[object key] {
+				get {
+					return default(S);
+				}
+				set {
+				}
+			}
 		}
 
 		public struct S
@@ -542,7 +558,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
-		public void NestedListWithIndexInitializer()
+		private void NestedListWithIndexInitializer(MyEnum myEnum)
 		{
 #if !OPT
 			List<List<int>> list = new List<List<int>> {
@@ -553,6 +569,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					1,
 					2,
 					3
+				},
+				[1] = {
+					(int)myEnum
 				}
 			};
 		}
@@ -683,6 +702,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			});
 		}
+
+		private void Issue1250_Test1(MyEnum value)
+		{
+			X(Y(), new C {
+				Z = (int)value
+			});
+		}
+
+#if CS60
+		private void Issue1250_Test2(MyEnum value)
+		{
+			X(Y(), new C {
+				[(int)value] = new S((int)value)
+			});
+		}
+
+		private void Issue1250_Test3(int value)
+		{
+			X(Y(), new C {
+				[value] = new S(value)
+			});
+		}
+
+		private void Issue1250_Test4(int value)
+		{
+			X(Y(), new C {
+				[(object)value] = new S(value)
+			});
+		}
+#endif
 
 		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
 		{

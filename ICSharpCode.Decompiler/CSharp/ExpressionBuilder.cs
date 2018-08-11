@@ -2010,10 +2010,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
 			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
+			// Check basic structure of block
+			if (stloc == null || final == null || stloc.Variable != final.Variable
+				|| stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			InitializedObjectResolveResult initObjRR;
 			TranslatedExpression expr;
+			// Detect type of initializer
 			switch (stloc.Value) {
 				case NewObj newObjInst:
 					initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
@@ -2032,18 +2035,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					throw new ArgumentException("given Block is invalid!");
 			}
-			var elementsStack = new Stack<List<Expression>>();
-			var elements = new List<Expression>(block.Instructions.Count);
+			// Build initializer expression
+			var elementsStack = new Stack<List<TranslatedExpression>>();
+			var elements = new List<TranslatedExpression>(block.Instructions.Count);
 			elementsStack.Push(elements);
 			List<IL.Transforms.AccessPathElement> currentPath = null;
 			var indexVariables = new Dictionary<ILVariable, ILInstruction>();
 			foreach (var inst in block.Instructions.Skip(1)) {
+				// Collect indexer variables (for C# 6 dictionary initializers)
 				if (inst is StLoc indexStore) {
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
+				// Get current path
 				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type, settings: settings);
+				// This should not happen, because the IL transform should not create invalid access paths,
+				// but we leave it here as sanity check.
 				if (info.Kind == IL.Transforms.AccessPathKind.Invalid) continue;
+				// Calculate "difference" to previous path
 				if (currentPath == null) {
 					currentPath = info.Path;
 				} else {
@@ -2055,25 +2064,38 @@ namespace ICSharpCode.Decompiler.CSharp
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];
 						var values = elementsStack.Pop();
-						elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement, values, indexVariables));
+						elementsStack.Peek().Add(MakeInitializerAssignment(initObjRR, methodElement, pathElement, values, indexVariables));
 					}
 					currentPath = info.Path;
 				}
+				// Fill the stack with empty expression lists
 				while (elementsStack.Count < currentPath.Count)
-					elementsStack.Push(new List<Expression>());
+					elementsStack.Push(new List<TranslatedExpression>());
 				var lastElement = currentPath.Last();
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind) {
 					case IL.Transforms.AccessPathKind.Adder:
-						elementsStack.Peek().Add(new CallBuilder(this, typeSystem, settings).BuildCollectionInitializerExpression(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values));
+						Debug.Assert(lastElement.Member is IMethod);
+						elementsStack.Peek().Add(
+							new CallBuilder(this, typeSystem, settings)
+								.BuildCollectionInitializerExpression(lastElement.OpCode, (IMethod)lastElement.Member, initObjRR, info.Values)
+								.WithILInstruction(inst)
+						);
 						break;
 					case IL.Transforms.AccessPathKind.Setter:
+						Debug.Assert(lastElement.Member is IProperty || lastElement.Member is IField);
 						if (lastElement.Indices?.Length > 0) {
-							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => TranslateInitializerIndexerValue(i, indexVariables)))
-								.WithILInstruction(inst).WithRR(memberRR);
-							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single(), typeHint: indexer.Type)));
+							var property = (IProperty)lastElement.Member;
+							Debug.Assert(property.IsIndexer);
+							elementsStack.Peek().Add(
+								new CallBuilder(this, typeSystem, settings)
+									.BuildDictionaryInitializerExpression(lastElement.OpCode, property.Setter, initObjRR, GetIndices(lastElement.Indices, indexVariables).ToList(), info.Values.Single())
+									.WithILInstruction(inst)
+							);
 						} else {
-							var assignment = new NamedExpression(lastElement.Member.Name, Translate(info.Values.Single(), typeHint: memberRR.Type))
+							var value = Translate(info.Values.Single(), typeHint: memberRR.Type)
+								.ConvertTo(memberRR.Type, this, allowImplicitConversion: true);
+							var assignment = new NamedExpression(lastElement.Member.Name, value)
 								.WithILInstruction(inst).WithRR(memberRR);
 							elementsStack.Peek().Add(assignment);
 						}
@@ -2084,34 +2106,56 @@ namespace ICSharpCode.Decompiler.CSharp
 				var methodElement = currentPath[elementsStack.Count - 1];
 				var pathElement = currentPath[elementsStack.Count - 2];
 				var values = elementsStack.Pop();
-				elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement, values, indexVariables));
+				elementsStack.Peek().Add(
+					MakeInitializerAssignment(initObjRR, methodElement, pathElement, values, indexVariables)
+				);
 			}
 			var oce = (ObjectCreateExpression)expr.Expression;
-			oce.Initializer = new ArrayInitializerExpression(elements);
+			oce.Initializer = new ArrayInitializerExpression(elements.SelectArray(e => e.Expression));
 			return expr.WithILInstruction(block);
 		}
 
-		Expression TranslateInitializerIndexerValue(ILInstruction inst, Dictionary<ILVariable, ILInstruction> indexVariables)
+		IEnumerable<ILInstruction> GetIndices(IEnumerable<ILInstruction> indices, Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
-			if (inst is LdLoc ld && indexVariables.TryGetValue(ld.Variable, out var newInst)) {
-				inst = newInst;
+			foreach (var inst in indices) {
+				if (inst is LdLoc ld && indexVariables.TryGetValue(ld.Variable, out var newInst))
+					yield return newInst;
+				else
+					yield return inst;
 			}
-			return Translate(inst).Expression;
 		}
 
-		Expression MakeInitializerAssignment(IMember method, IL.Transforms.AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
+		TranslatedExpression MakeInitializerAssignment(InitializedObjectResolveResult rr, IL.Transforms.AccessPathElement memberPath,
+			IL.Transforms.AccessPathElement valuePath, List<TranslatedExpression> values, 
+			Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
-			Expression value;
-			if (values.Count == 1 && !(values[0] is AssignmentExpression || values[0] is NamedExpression) && !(method.SymbolKind == SymbolKind.Method && method.Name == "Add")) {
+			TranslatedExpression value;
+			if (memberPath.Member is IMethod method && method.Name == "Add") {
+				value = new ArrayInitializerExpression(values.Select(v => v.Expression))
+					.WithRR(new ResolveResult(SpecialType.UnknownType))
+					.WithoutILInstruction();
+			} else if (values.Count == 1 && !(values[0].Expression is AssignmentExpression || values[0].Expression is NamedExpression)) {
 				value = values[0];
 			} else {
-				value = new ArrayInitializerExpression(values);
+				value = new ArrayInitializerExpression(values.Select(v => v.Expression))
+					.WithRR(new ResolveResult(SpecialType.UnknownType))
+					.WithoutILInstruction();
 			}
-			if (member.Indices?.Length > 0) {
-				var index = new IndexerExpression(null, member.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression));
-				return new AssignmentExpression(index, value);
+			if (valuePath.Indices?.Length > 0) {
+				Expression index;
+				if (memberPath.Member is IProperty property) {
+					index = new CallBuilder(this, typeSystem, settings)
+						.BuildDictionaryInitializerExpression(valuePath.OpCode, property.Setter, rr, GetIndices(valuePath.Indices, indexVariables).ToList());
+				} else {
+					index = new IndexerExpression(null, GetIndices(valuePath.Indices, indexVariables).Select(i => Translate(i).Expression));
+				}
+				return new AssignmentExpression(index, value)
+					.WithRR(new MemberResolveResult(rr, memberPath.Member))
+					.WithoutILInstruction();
 			} else {
-				return new NamedExpression(member.Member.Name, value);
+				return new NamedExpression(valuePath.Member.Name, value)
+					.WithRR(new MemberResolveResult(rr, memberPath.Member))
+					.WithoutILInstruction();
 			}
 		}
 

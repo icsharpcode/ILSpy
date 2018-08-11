@@ -383,6 +383,28 @@ namespace ICSharpCode.Decompiler.CSharp
 					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: argumentList.IsExpandedForm));
 		}
 
+		public ExpressionWithResolveResult BuildDictionaryInitializerExpression(OpCode callOpCode, IMethod method,
+			InitializedObjectResolveResult target, IReadOnlyList<ILInstruction> indices, ILInstruction value = null)
+		{
+			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
+
+			var callArguments = new List<ILInstruction>();
+			callArguments.Add(new LdNull());
+			callArguments.AddRange(indices);
+			callArguments.Add(value ?? new Nop());
+
+			var argumentList = BuildArgumentList(expectedTargetDetails, target, method, 1, callArguments, null);
+			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
+
+			var assignment = HandleAccessorCall(expectedTargetDetails, method, unused,
+				argumentList.Arguments.ToList(), argumentList.ArgumentNames);
+
+			if (value != null)
+				return assignment;
+
+			return new ExpressionWithResolveResult(((AssignmentExpression)assignment).Left.Detach());
+		}
+
 		private bool IsInterpolatedStringCreation(IMethod method)
 		{
 			return method.IsStatic && (
@@ -1035,7 +1057,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				TranslatedExpression expr;
 
 				if (arguments.Count != 0) {
-					expr = new IndexerExpression(target.Expression, arguments.Select(a => a.Expression))
+					expr = new IndexerExpression(target.ResolveResult is InitializedObjectResolveResult ? null : target.Expression, arguments.Select(a => a.Expression))
 						.WithoutILInstruction().WithRR(rr);
 				} else if (requireTarget) {
 					expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name)
