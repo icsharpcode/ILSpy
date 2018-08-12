@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
-			function.StateMachineCompiledWithMono = true;
+			function.StateMachineCompiledWithMono = isCompiledWithMono;
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
