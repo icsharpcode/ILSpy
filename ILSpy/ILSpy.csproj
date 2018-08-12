@@ -421,6 +421,8 @@
       <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
