@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.DebugInfo
 				var scope = metadata.GetLocalScope(h);
 				foreach (var v in scope.GetLocalVariables()) {
 					var var = metadata.GetLocalVariable(v);
-					variables.Add(new Variable { Name = metadata.GetString(var.Name) });
+					variables.Add(new Variable(var.Index, metadata.GetString(var.Name)));
 				}
 			}
 

@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.PdbProvider.Cecil;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.DebugInfo;
@@ -187,7 +188,7 @@ namespace ICSharpCode.ILSpy
 					string pdbDirectory = Path.GetDirectoryName(fileName);
 					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 					if (File.Exists(pdbFileName)) {
-						debugInfoProvider = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
+						debugInfoProvider = new MonoCecilDebugInfoProvider(module, pdbFileName);
 						return;
 					}
 
