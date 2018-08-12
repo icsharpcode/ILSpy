@@ -94,7 +94,9 @@ namespace ICSharpCode.Decompiler.Console
 		static void DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
 			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
-			decompiler.DecompileProject(new PEFile(assemblyFileName), outputDirectory);
+			var module = new PEFile(assemblyFileName);
+			decompiler.AssemblyResolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			decompiler.DecompileProject(module, outputDirectory);
 		}
 
 		static void Decompile(string assemblyFileName, TextWriter output, string typeName = null)
