@@ -81,6 +81,7 @@ namespace ICSharpCode.Decompiler
 				tupleTypes = false;
 				tupleConversions = false;
 				discards = false;
+				localFunctions = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
 				introduceReadonlyAndInModifiers = false;
@@ -100,7 +101,7 @@ namespace ICSharpCode.Decompiler
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
 				return CSharp.LanguageVersion.CSharp7_2;
 			// C# 7.1 missing
-			if (outVariables || tupleTypes || tupleConversions || discards)
+			if (outVariables || tupleTypes || tupleConversions || discards || localFunctions)
 				return CSharp.LanguageVersion.CSharp7;
 			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
 				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
@@ -770,6 +771,23 @@ namespace ICSharpCode.Decompiler
 				if (optionalArguments != value) {
 					optionalArguments = value;
 					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool localFunctions = false;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.0 local functions should be used.
+		/// Note: this language feature is currenly not implemented and this setting is always false.
+		/// </summary>
+		public bool LocalFunctions {
+			get { return localFunctions; }
+			set {
+				if (localFunctions != value) {
+					throw new NotImplementedException("C# 7.0 local functions are not implemented!");
+					//localFunctions = value;
+					//OnPropertyChanged();
 				}
 			}
 		}

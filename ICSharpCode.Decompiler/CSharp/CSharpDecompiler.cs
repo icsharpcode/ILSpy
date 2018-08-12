@@ -249,9 +249,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					var methodSemantics = module.MethodSemanticsLookup.GetSemantics(methodHandle).Item2;
 					if (methodSemantics != 0 && methodSemantics != System.Reflection.MethodSemanticsAttributes.Other)
 						return true;
+					if (LocalFunctionDecompiler.IsLocalFunctionMethod(module, methodHandle))
+						return settings.LocalFunctions;
 					if (settings.AnonymousMethods && methodHandle.HasGeneratedName(metadata) && methodHandle.IsCompilerGenerated(metadata))
 						return true;
-					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, (MethodDefinitionHandle)member))
+					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module, methodHandle))
 						return true;
 					return false;
 				case HandleKind.TypeDefinition:
@@ -259,6 +261,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					var type = metadata.GetTypeDefinition(typeHandle);
 					name = metadata.GetString(type.Name);
 					if (!type.GetDeclaringType().IsNil) {
+						if (LocalFunctionDecompiler.IsLocalFunctionDisplayClass(module, typeHandle))
+							return settings.LocalFunctions;
 						if (settings.AnonymousMethods && IsClosureType(type, metadata))
 							return true;
 						if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(typeHandle, metadata))
@@ -1070,6 +1074,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			FixParameterNames(methodDecl);
 			var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (!settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionMethod(method.ParentModule.PEFile, (MethodDefinitionHandle)method.MetadataToken)) {
+				// if local functions are not active and we're dealing with a local function,
+				// reduce the visibility of the method to private,
+				// otherwise this leads to compile errors because the display classes have lesser accessibility.
+				// Note: removing and then adding the static modifier again is necessary to set the private modifier before all other modifiers.
+				methodDecl.Modifiers &= ~(Modifiers.Internal | Modifiers.Static);
+				methodDecl.Modifiers |= Modifiers.Private | (method.IsStatic ? Modifiers.Static : 0);
+			}
 			if (methodDefinition.HasBody()) {
 				DecompileBody(method, methodDecl, decompileRun, decompilationContext);
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
