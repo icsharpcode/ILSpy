@@ -20,8 +20,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 		protected override void ProcessRecord()
 		{
-			try
-			{
+			try {
 				StringWriter output = new StringWriter();
 				if (TypeName == null) {
 					output.Write(Decompiler.DecompileWholeModuleAsString());

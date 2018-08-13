@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.Console
 
 		static CSharpDecompiler GetDecompiler(string assemblyFileName)
 		{
-			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() {  ThrowOnAssemblyResolveErrors = false });
+			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false });
 		}
 
 		static void ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
