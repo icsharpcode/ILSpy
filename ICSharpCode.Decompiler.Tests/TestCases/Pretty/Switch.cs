@@ -1023,12 +1023,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static bool Loop8(char c, bool b, Func<char> getChar)
 		{
 			if (b) {
-				while (c == ' ' || c == '\t') {
+				while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
 					c = getChar();
 				}
 			}
 
 			return true;
+		}
+
+		public static void Loop9(Func<char> getChar)
+		{
+			char c;
+			do {
+				c = getChar();
+			} while (c != -1 && c != '\n' && c != '\u2028' && c != '\u2029');
 		}
 		#endregion
 		

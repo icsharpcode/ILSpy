@@ -3830,7 +3830,7 @@
                                               bool b,
                                               class [mscorlib]System.Func`1<char> getChar) cil managed
   {
-    // Code size       43 (0x2b)
+    // Code size       59 (0x3b)
     .maxstack  2
     .locals init (bool V_0,
              bool V_1,
@@ -3839,7 +3839,7 @@
     IL_0001:  ldarg.1
     IL_0002:  stloc.0
     IL_0003:  ldloc.0
-    IL_0004:  brfalse.s  IL_0025
+    IL_0004:  brfalse.s  IL_0035
 
     IL_0006:  nop
     IL_0007:  br.s       IL_0013
@@ -3850,27 +3850,79 @@
     IL_0010:  starg.s    c
     IL_0012:  nop
     IL_0013:  ldarg.0
-    IL_0014:  ldc.i4.s   32
-    IL_0016:  beq.s      IL_001f
+    IL_0014:  ldc.i4.s   97
+    IL_0016:  blt.s      IL_001d
 
     IL_0018:  ldarg.0
-    IL_0019:  ldc.i4.s   9
-    IL_001b:  ceq
-    IL_001d:  br.s       IL_0020
+    IL_0019:  ldc.i4.s   122
+    IL_001b:  ble.s      IL_002f
 
-    IL_001f:  ldc.i4.1
-    IL_0020:  stloc.1
-    IL_0021:  ldloc.1
-    IL_0022:  brtrue.s   IL_0009
+    IL_001d:  ldarg.0
+    IL_001e:  ldc.i4.s   65
+    IL_0020:  blt.s      IL_002c
 
-    IL_0024:  nop
-    IL_0025:  ldc.i4.1
-    IL_0026:  stloc.2
-    IL_0027:  br.s       IL_0029
+    IL_0022:  ldarg.0
+    IL_0023:  ldc.i4.s   90
+    IL_0025:  cgt
+    IL_0027:  ldc.i4.0
+    IL_0028:  ceq
+    IL_002a:  br.s       IL_002d
 
-    IL_0029:  ldloc.2
-    IL_002a:  ret
+    IL_002c:  ldc.i4.0
+    IL_002d:  br.s       IL_0030
+
+    IL_002f:  ldc.i4.1
+    IL_0030:  stloc.1
+    IL_0031:  ldloc.1
+    IL_0032:  brtrue.s   IL_0009
+
+    IL_0034:  nop
+    IL_0035:  ldc.i4.1
+    IL_0036:  stloc.2
+    IL_0037:  br.s       IL_0039
+
+    IL_0039:  ldloc.2
+    IL_003a:  ret
   } // end of method Switch::Loop8
+
+  .method public hidebysig static void  Loop9(class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  2
+    .locals init (char V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.0
+    IL_0003:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_0008:  stloc.0
+    IL_0009:  nop
+    IL_000a:  ldloc.0
+    IL_000b:  ldc.i4.m1
+    IL_000c:  beq.s      IL_0028
+
+    IL_000e:  ldloc.0
+    IL_000f:  ldc.i4.s   10
+    IL_0011:  beq.s      IL_0028
+
+    IL_0013:  ldloc.0
+    IL_0014:  ldc.i4     0x2028
+    IL_0019:  beq.s      IL_0028
+
+    IL_001b:  ldloc.0
+    IL_001c:  ldc.i4     0x2029
+    IL_0021:  ceq
+    IL_0023:  ldc.i4.0
+    IL_0024:  ceq
+    IL_0026:  br.s       IL_0029
+
+    IL_0028:  ldc.i4.0
+    IL_0029:  stloc.1
+    IL_002a:  ldloc.1
+    IL_002b:  brtrue.s   IL_0001
+
+    IL_002d:  ret
+  } // end of method Switch::Loop9
 
   .method public hidebysig static void  SwitchWithBreakCase(int32 i,
                                                             bool b) cil managed

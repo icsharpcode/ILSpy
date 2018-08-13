@@ -2790,10 +2790,10 @@
                                               bool b,
                                               class [mscorlib]System.Func`1<char> getChar) cil managed
   {
-    // Code size       25 (0x19)
+    // Code size       35 (0x23)
     .maxstack  8
     IL_0000:  ldarg.1
-    IL_0001:  brfalse.s  IL_0017
+    IL_0001:  brfalse.s  IL_0021
 
     IL_0003:  br.s       IL_000d
 
@@ -2801,16 +2801,51 @@
     IL_0006:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
     IL_000b:  starg.s    c
     IL_000d:  ldarg.0
-    IL_000e:  ldc.i4.s   32
-    IL_0010:  beq.s      IL_0005
+    IL_000e:  ldc.i4.s   97
+    IL_0010:  blt.s      IL_0017
 
     IL_0012:  ldarg.0
-    IL_0013:  ldc.i4.s   9
-    IL_0015:  beq.s      IL_0005
+    IL_0013:  ldc.i4.s   122
+    IL_0015:  ble.s      IL_0005
 
-    IL_0017:  ldc.i4.1
-    IL_0018:  ret
+    IL_0017:  ldarg.0
+    IL_0018:  ldc.i4.s   65
+    IL_001a:  blt.s      IL_0021
+
+    IL_001c:  ldarg.0
+    IL_001d:  ldc.i4.s   90
+    IL_001f:  ble.s      IL_0005
+
+    IL_0021:  ldc.i4.1
+    IL_0022:  ret
   } // end of method Switch::Loop8
+
+  .method public hidebysig static void  Loop9(class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  2
+    .locals init (char V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.m1
+    IL_0009:  beq.s      IL_0020
+
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.s   10
+    IL_000e:  beq.s      IL_0020
+
+    IL_0010:  ldloc.0
+    IL_0011:  ldc.i4     0x2028
+    IL_0016:  beq.s      IL_0020
+
+    IL_0018:  ldloc.0
+    IL_0019:  ldc.i4     0x2029
+    IL_001e:  bne.un.s   IL_0000
+
+    IL_0020:  ret
+  } // end of method Switch::Loop9
 
   .method public hidebysig static void  SwitchWithBreakCase(int32 i,
                                                             bool b) cil managed

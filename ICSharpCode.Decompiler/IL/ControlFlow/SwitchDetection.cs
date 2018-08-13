@@ -73,9 +73,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						n.Successors.ForEach(Analyze);
 				}
 				contextNode.Successors.ForEach(Analyze);
-
-				foreach (var node in cfg.cfg)
-					node.Visited = false;
+				ResetVisited(cfg.cfg);
 
 				int l = 1;
 				foreach (var loopHead in loopHeads.OrderBy(n => n.PostOrderNumber))
@@ -286,15 +284,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// good enough indicator that the surrounding code also forms a switch statement
 			if (analysis.ContainsILSwitch || MatchRoslynSwitchOnString())
 				return true;
-
+			
+			// heuristic to determine if a block would be better represented as an if statement rather than switch
 			int ifCount = analysis.InnerBlocks.Count + 1;
-			int labelCount = analysis.Sections.Where(s => !s.Key.SetEquals(defaultSectionKey)).Sum(s => s.Key.Intervals.Length);
-			// heuristic to determine if a block would be better represented as an if statement rather than a case statement
-			if (ifCount < labelCount)
+			int intervalCount = analysis.Sections.Where(s => !s.Key.SetEquals(defaultSectionKey)).Sum(s => s.Key.Intervals.Length);
+			if (ifCount < intervalCount)
 				return false;
+			
+			(var flowNodes, var caseNodes) = AnalyzeControlFlow();
 
-			// don't create switch statements with only one non-default label (provided the if option is short enough)
-			if (analysis.Sections.Count == 2 && ifCount <= 2)
+			// don't create switch statements with only one non-default label when the corresponding condition tree is flat
+			// it may be important that the switch-like conditions be inlined
+			// for example, a loop condition: while (c == '\n' || c == '\r')
+			if (analysis.Sections.Count == 2 && IsSingleCondition(flowNodes, caseNodes))
 				return false;
 			
 			// if there is no ILSwitch, there's still many control flow patterns that 
@@ -305,9 +307,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// These goto statements may be "goto case x" or "goto default", but these are a hint that the original code was not a switch,
 			// and that the switch statement may be very poor quality. 
 			// Thus the rule of thumb is no goto statements if the original code didn't include them
-			if (SwitchUsesGoto(out var breakBlock))
+			if (SwitchUsesGoto(flowNodes, caseNodes, out var breakBlock))
 				return false;
 
+			// valid switch construction, all code can be inlined
 			if (breakBlock == null)
 				return true;
 
@@ -318,10 +321,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>
 		/// stloc switchValueVar(call ComputeStringHash(switchValue))
-		/// 
-		/// Previously, the roslyn case block heads were added to the flowBlocks for case control flow analysis.
-		/// This forbade goto case statements (as is the purpose of ValidatePotentialSwitchFlow)
-		/// Identifying the roslyn string switch head is a better indicator for UseCSharpSwitch
 		/// </summary>
 		private bool MatchRoslynSwitchOnString()
 		{
@@ -330,15 +329,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		/// <summary>
-		/// Determines if the analysed switch can be constructed without any gotos
+		/// Builds the control flow graph for the current container (if necessary), establishes loopContext
+		/// and returns the ControlFlowNodes corresponding to the inner flow and case blocks of the potential switch
 		/// </summary>
-		private bool SwitchUsesGoto(out Block breakBlock)
+		private (List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes) AnalyzeControlFlow()
 		{
 			if (controlFlowGraph == null)
 				controlFlowGraph = new ControlFlowGraph(currentContainer, context.CancellationToken);
 			
 			var switchHead = controlFlowGraph.GetNode(analysis.RootBlock);
 			loopContext = new LoopContext(controlFlowGraph, switchHead);
+
+			var flowNodes = new List<ControlFlowNode> { switchHead };
+			flowNodes.AddRange(analysis.InnerBlocks.Select(controlFlowGraph.GetNode));
 
 			// grab the control flow nodes for blocks targetted by each section
 			var caseNodes = new List<ControlFlowNode>();
@@ -351,13 +354,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					caseNodes.Add(node);
 			}
 
-			var flowBlocks = analysis.InnerBlocks.ToHashSet();
-			flowBlocks.Add(analysis.RootBlock);
-			AddNullCase(flowBlocks, caseNodes);
-			
+			AddNullCase(flowNodes, caseNodes);
+
+			Debug.Assert(flowNodes.SelectMany(n => n.Successors)
+				.All(n => flowNodes.Contains(n) || caseNodes.Contains(n) || loopContext.MatchContinue(n)));
+
+			return (flowNodes, caseNodes);
+		}
+
+		/// <summary>
+		/// Determines if the analysed switch can be constructed without any gotos
+		/// </summary>
+		private bool SwitchUsesGoto(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes, out Block breakBlock)
+		{
 			// cases with predecessors that aren't part of the switch logic 
 			// must either require "goto case" statements, or consist of a single "break;"
-			var externalCases = caseNodes.Where(c => c.Predecessors.Any(n => !flowBlocks.Contains(n.UserData))).ToList();
+			var externalCases = caseNodes.Where(c => c.Predecessors.Any(n => !flowNodes.Contains(n))).ToList();
 
 			breakBlock = null;
 			if (externalCases.Count > 1)
@@ -381,7 +393,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Does some of the analysis of SwitchOnNullableTransform to add the null case control flow
 		/// to the results of SwitchAnaylsis
 		/// </summary>
-		private void AddNullCase(HashSet<Block> flowBlocks, List<ControlFlowNode> caseNodes)
+		private void AddNullCase(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes)
 		{
 			if (analysis.RootBlock.IncomingEdgeCount != 1)
 				return;
@@ -406,7 +418,94 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 
 			//add the null case logic to the incoming flow blocks
-			flowBlocks.Add(nullableBlock);
+			flowNodes.Add(controlFlowGraph.GetNode(nullableBlock));
+		}
+		/// <summary>
+		/// Pattern matching for short circuit expressions
+		///   p
+		///   |\
+		///   | n
+		///   |/ \
+		///   s   c
+		/// 
+		///  where
+		///   p: if (a) goto n; goto s;
+		///   n: if (b) goto c; goto s;
+		/// 
+		///  Can simplify to
+		///    p|n
+		///    / \
+		///   s   c
+		/// 
+		///  where:
+		///   p|n: if (a && b) goto c; goto s;
+		/// 
+		///  Note that if n has only 1 successor, but is still a flow node, then a short circuit expression 
+		///  has a target (c) with no corresponding block (leave)
+		/// </summary>
+		/// <param name="parent">A node with 2 successors</param>
+		/// <param name="side">The successor index to consider n (the other successor will be the common sibling)</param>
+		private static bool IsShortCircuit(ControlFlowNode parent, int side)
+		{
+			var node = parent.Successors[side];
+			var sibling = parent.Successors[side ^ 1];
+
+			if (!IsFlowNode(node) || node.Successors.Count > 2 || node.Predecessors.Count != 1)
+				return false;
+
+			return node.Successors.Contains(sibling);
+		}
+
+		/// <summary>
+		/// A flow node contains only two instructions, the first of which is an IfInstruction
+		/// A short circuit expression is comprised of a root block ending in an IfInstruction and one or more flow nodes
+		/// </summary>
+		static bool IsFlowNode(ControlFlowNode n) => ((Block)n.UserData).Instructions.FirstOrDefault() is IfInstruction;
+
+		/// <summary>
+		/// Determines whether the flowNodes are can be reduced to a single condition via short circuit operators
+		/// </summary>
+		private bool IsSingleCondition(List<ControlFlowNode> flowNodes, List<ControlFlowNode> caseNodes)
+		{
+			if (flowNodes.Count == 1)
+				return true;
+
+			var rootNode = controlFlowGraph.GetNode(analysis.RootBlock);
+			rootNode.Visited = true;
+
+			// search down the tree, marking nodes as visited while they continue the current condition
+			var n = rootNode;
+			while (n.Successors.Count > 0 && (n == rootNode || IsFlowNode(n))) {
+				if (n.Successors.Count == 1) {
+					// if there is more than one case node, then a flow node with only one successor is not part of the initial condition
+					if (caseNodes.Count > 1)
+						break;
+					
+					n = n.Successors[0];
+				}
+				else { // 2 successors
+					if (IsShortCircuit(n, 0))
+						n = n.Successors[0];
+					else if (IsShortCircuit(n, 1))
+						n = n.Successors[1];
+					else
+						break;
+				}
+				
+				n.Visited = true;
+				if (loopContext.MatchContinue(n))
+					break;
+			}
+
+			var ret = flowNodes.All(f => f.Visited);
+			ResetVisited(controlFlowGraph.cfg);
+			return ret;
+		}
+
+		private static void ResetVisited(IEnumerable<ControlFlowNode> nodes)
+		{
+			foreach (var n in nodes)
+				n.Visited = false;
 		}
 	}
 }
