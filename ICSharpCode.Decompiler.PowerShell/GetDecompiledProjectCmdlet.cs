@@ -4,6 +4,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.Decompiler.PowerShell
 {
@@ -29,7 +30,9 @@ namespace ICSharpCode.Decompiler.PowerShell
 
 			try {
 				WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
-				decompiler.DecompileProject(Decompiler.TypeSystem.MainModule.PEFile, path);
+				PEFile module = Decompiler.TypeSystem.MainModule.PEFile;
+				decompiler.AssemblyResolver = new UniversalAssemblyResolver(module.FileName, false, module.Reader.DetectTargetFrameworkId());
+				decompiler.DecompileProject(module, path);
 
 				WriteObject("Decompilation finished");
 			} catch (Exception e) {
