@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0-preview-03" />
-    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4285-beta1" />
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0-preview-06" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4319-beta2" />
   </ItemGroup>
 
 </Project>
