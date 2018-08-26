@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// deal with ldftn instructions, i.e., lambdas
 						token = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 						if (!token.IsNil && token.Kind == HandleKind.MethodDefinition) {
-							if (((MethodDefinitionHandle)token).IsCompilerGenerated(module.Metadata))
+							if (((MethodDefinitionHandle)token).IsCompilerGeneratedOrIsInCompilerGeneratedClass(module.Metadata))
 								connectedMethods.Enqueue((MethodDefinitionHandle)token);
 						}
 						break;
