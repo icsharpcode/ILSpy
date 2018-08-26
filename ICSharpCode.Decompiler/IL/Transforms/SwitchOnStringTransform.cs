@@ -373,21 +373,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool MatchLegacySwitchOnStringWithDict(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			if (i < 1) return false;
-			// match first block: checking switch-value for null
+			// match first block: checking switch-value for null:
+			// (In some cases, i.e., if switchValueVar is a parameter, the initial store is optional.)
 			// stloc switchValueVar(switchValue)
 			// if (comp(ldloc switchValueVar == ldnull)) br nullCase
 			// br nextBlock
-			if (!(instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump) &&
-				instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue) && switchValueVar.Type.IsKnownType(KnownTypeCode.String)))
+			if (!instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump))
 				return false;
-			if (!switchValueVar.IsSingleDefinition)
+			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull()))
+				return false;
+			// The initial store can be omitted in some cases. If there is no initial store or the switch value variable is reused later,
+			// we do not inline the "switch value", but create an extra load later on.
+			if (i > 0 && instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue)) {
+				if (!(switchValueVar.IsSingleDefinition && ((SemanticHelper.IsPure(switchValue.Flags) && left.Match(switchValue).Success) || left.MatchLdLoc(switchValueVar))))
+					return false;
+			} else {
+				if (!left.MatchLdLoc(out switchValueVar))
+					return false;
+				switchValue = null;
+			}
+			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// either br nullCase or leave container
 			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave((BlockContainer)instructions[i].Parent.Parent))
-				return false;
-			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull()
-				&& ((SemanticHelper.IsPure(switchValue.Flags) && left.Match(switchValue).Success) || left.MatchLdLoc(switchValueVar))))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -475,7 +483,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			bool keepAssignmentBefore = false;
-			if (switchValueVar.LoadCount > 2) {
+			if (switchValueVar.LoadCount > 2 || switchValue == null) {
 				switchValue = new LdLoc(switchValueVar);
 				keepAssignmentBefore = true;
 			}
