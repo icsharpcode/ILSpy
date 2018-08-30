@@ -13,7 +13,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			this.Container = Container;
 			this.MainContent = decompilerTextView;
-			this.TabName = "Tab";
+			this.TabName = $"Tab {Container.DecompilerTabs.Count}";
 			this.CloseTabCommand = new CloseTabCommand(this);
 		}
 

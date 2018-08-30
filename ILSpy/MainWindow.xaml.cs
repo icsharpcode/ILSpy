@@ -58,10 +58,17 @@ namespace ICSharpCode.ILSpy
 
 		DecompilerTextView decompilerTextView {
 			get {
-				var view = mainTabView.ViewModel.CurrentDecompilerTab?.MainContent;
-				if (view == null) {
+				var currentDecompilerTab = mainTabView.ViewModel.CurrentDecompilerTab;
+				var view = currentDecompilerTab?.MainContent;
+				// CurrentDecompiler tab is null indicates no tabs existed
+				if (currentDecompilerTab == null) {
 					view = new DecompilerTextView();
 					mainTabView.ViewModel.AddDecompilerTab(view);
+				}
+				// If tab is there but view is null
+				if (view == null) {
+					view = new DecompilerTextView();
+					currentDecompilerTab.MainContent = view;
 				}
 				return view;
 			}
