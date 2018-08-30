@@ -319,7 +319,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
-	<Page Include="NugetPackageBrowserDialog.xaml" />
+	  <Page Include="NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -394,9 +394,6 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
-    <Page Update="TextView\MainTabView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
 
   <ItemGroup>
