@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// Type system implementation for Metadata.PEFile.
 	/// </summary>
 	[DebuggerDisplay("<MetadataModule: {AssemblyName}>")]
-	public class MetadataModule : IModule
+	public class MetadataModule : IModule, IDisposable
 	{
 		public ICompilation Compilation { get; }
 		internal readonly MetadataReader metadata;
@@ -76,6 +76,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				this.propertyDefs = new MetadataProperty[metadata.PropertyDefinitions.Count + 1];
 				this.eventDefs = new MetadataEvent[metadata.EventDefinitions.Count + 1];
 			}
+		}
+
+		public void Dispose()
+		{
+			PEFile?.Dispose();
 		}
 
 		internal string GetString(StringHandle name)

@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Instances of this class are not thread-safe. Use separate instances to decompile multiple members in parallel.
 	/// (in particular, the transform instances are not thread-safe)
 	/// </remarks>
-	public class CSharpDecompiler
+	public class CSharpDecompiler : IDisposable
 	{
 		readonly IDecompilerTypeSystem typeSystem;
 		readonly MetadataModule module;
@@ -233,6 +233,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.metadata = module.PEFile.Metadata;
 			if (module.TypeSystemOptions.HasFlag(TypeSystemOptions.Uncached))
 				throw new ArgumentException("Cannot use an uncached type system in the decompiler.");
+		}
+
+		public void Dispose()
+		{
+			module?.Dispose();
 		}
 
 		#region MemberIsHidden
