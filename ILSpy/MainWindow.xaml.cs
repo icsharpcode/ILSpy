@@ -57,7 +57,9 @@ namespace ICSharpCode.ILSpy
 		AssemblyListTreeNode assemblyListTreeNode;
 		
 		readonly DecompilerTextView decompilerTextView;
-		
+
+		readonly MainTabView mainTabView;
+
 		static MainWindow instance;
 		
 		public static MainWindow Instance {
@@ -80,9 +82,11 @@ namespace ICSharpCode.ILSpy
 			this.DataContext = sessionSettings;
 			
 			InitializeComponent();
+			mainTabView = App.ExportProvider.GetExportedValue<MainTabView>();
 			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
-			mainPane.Content = decompilerTextView;
-			
+			mainTabView.ViewModel.AddDecompilerTab(decompilerTextView);
+			mainPane.Content = mainTabView;
+
 			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
 				leftColumn.Width = new GridLength(sessionSettings.SplitterPosition, GridUnitType.Star);
 				rightColumn.Width = new GridLength(1 - sessionSettings.SplitterPosition, GridUnitType.Star);

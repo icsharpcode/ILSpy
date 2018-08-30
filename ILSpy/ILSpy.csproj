@@ -102,6 +102,7 @@
     <Compile Include="Commands\BrowseBackCommand.cs" />
     <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
+    <Compile Include="Commands\CloseTabCommand.cs" />
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
@@ -209,8 +210,14 @@
     <Compile Include="Commands\SimpleCommand.cs" />
     <Compile Include="Search\AbstractSearchStrategy.cs" />
     <Compile Include="TaskHelper.cs" />
+    <Compile Include="TextView\DecompilerTab.cs" />
     <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
+    <Compile Include="TextView\MainTabView.xaml.cs">
+      <DependentUpon>MainTabView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TextView\MainTabViewModel.cs" />
     <Compile Include="TextView\XmlDocRenderer.cs" />
     <Compile Include="Analyzers\AnalyzeCommand.cs" />
     <Compile Include="Analyzers\Builtin\FieldAccessAnalyzer.cs" />
@@ -318,6 +325,7 @@
     <Page Include="Options\OptionsDialog.xaml" />
     <Page Include="Search\SearchPane.xaml" />
     <Page Include="TextView\DecompilerTextView.xaml" />
+    <Page Include="TextView\MainTabView.xaml" />
     <Page Include="themes\generic.xaml" />
   </ItemGroup>
 
@@ -384,6 +392,9 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="TextView\MainTabView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

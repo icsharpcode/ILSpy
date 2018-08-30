@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="ICSharpCode.ILSpy.TextView.MainTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ICSharpCode.ILSpy.TextView"
+             mc:Ignorable="d" 
+			 DataContext="{DynamicResource TabViewModel}">
+	<UserControl.Resources>
+		<local:MainTabViewModel x:Key="TabViewModel" />
+	</UserControl.Resources>
+
+	<Grid>
+		<TabControl ItemsSource="{Binding DecompilerTabs}" SelectedIndex="{Binding ActiveTab}">
+			<TabControl.ItemTemplate>
+				<DataTemplate>
+					<StackPanel Orientation="Horizontal">
+						<TextBlock Text="{Binding TabName}"/>
+						<Button Content="X" Margin="5,0,0,0" Padding="1,-1,1,-1" MinWidth="0" Command="{Binding CloseTabCommand}" />
+					</StackPanel>
+				</DataTemplate>
+			</TabControl.ItemTemplate>
+			
+			<TabControl.ContentTemplate>
+				<DataTemplate>
+					<ContentPresenter Content="{Binding MainContent}" />
+				</DataTemplate>
+			</TabControl.ContentTemplate>
+		</TabControl>
+	</Grid>
+</UserControl>
