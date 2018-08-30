@@ -55,8 +55,17 @@ namespace ICSharpCode.ILSpy
 		internal AssemblyListManager assemblyListManager;
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
-		
-		readonly DecompilerTextView decompilerTextView;
+
+		DecompilerTextView decompilerTextView {
+			get {
+				var view = mainTabView.ViewModel.CurrentDecompilerTab?.MainContent;
+				if (view == null) {
+					view = new DecompilerTextView();
+					mainTabView.ViewModel.AddDecompilerTab(view);
+				}
+				return view;
+			}
+		}
 
 		readonly MainTabView mainTabView;
 
@@ -83,8 +92,7 @@ namespace ICSharpCode.ILSpy
 			
 			InitializeComponent();
 			mainTabView = App.ExportProvider.GetExportedValue<MainTabView>();
-			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
-			mainTabView.ViewModel.AddDecompilerTab(decompilerTextView);
+			mainTabView.ViewModel.AddDecompilerTab(new DecompilerTextView());
 			mainPane.Content = mainTabView;
 
 			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {

@@ -41,6 +41,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public void AddDecompilerTab(DecompilerTextView decompilerTextView)
 		{
 			DecompilerTabs.Add(new DecompilerTab(this, decompilerTextView));
+			ActiveTab = DecompilerTabs.Count - 1;
 		}
 
 		public void CloseDecompilerTab(DecompilerTab decompilerTab)
