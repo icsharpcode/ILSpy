@@ -265,6 +265,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var outer = BlockContainer.FindClosestContainer(container.Parent);
 				if (outer != null) changedContainers.Add(outer);
 				finallyContainer.Blocks.Add(entryPointOfFinally);
+				finallyContainer.ILRange = entryPointOfFinally.ILRange;
 				exitOfFinally.Instructions.RemoveRange(tempStore.ChildIndex, 3);
 				exitOfFinally.Instructions.Add(new Leave(finallyContainer));
 				foreach (var branchToFinally in container.Descendants.OfType<Branch>()) {
@@ -274,8 +275,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var newBlock in additionalBlocksInFinally) {
 					newBlock.Remove();
 					finallyContainer.Blocks.Add(newBlock);
+					finallyContainer.AddILRange(newBlock.ILRange);
 				}
-				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer));
+				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer) {ILRange = tryCatch.TryBlock.ILRange});
 			}
 
 			// clean up all modified containers

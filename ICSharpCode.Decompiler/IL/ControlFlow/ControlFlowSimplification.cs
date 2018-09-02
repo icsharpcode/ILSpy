@@ -132,7 +132,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop()) {
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
-					branch.ReplaceWith(leave.Clone());
+					var leave2 = leave.Clone();
+					if (!branch.ILRange.IsEmpty) // use the ILRange of the branch if possible
+						leave2.ILRange = branch.ILRange;
+					branch.ReplaceWith(leave2);
 				}
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
@@ -187,6 +190,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// The C# compiler generates a dead store for the condition of while (true) loops.
 				block.Instructions.RemoveRange(block.Instructions.Count - 3, 2);
 			}
+
+			if (block.ILRange.IsEmpty)
+				block.ILRange = targetBlock.ILRange;
+
 			block.Instructions.Remove(br);
 			block.Instructions.AddRange(targetBlock.Instructions);
 			targetBlock.Instructions.Clear(); // mark targetBlock for deletion

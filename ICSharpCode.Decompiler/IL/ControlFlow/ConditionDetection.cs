@@ -425,7 +425,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void OrderIfBlocks(IfInstruction ifInst)
 		{
-			if (IsEmpty(ifInst.FalseInst) || ifInst.TrueInst.ILRange.Start <= ifInst.FalseInst.ILRange.Start)
+			if (IsEmpty(ifInst.FalseInst) || GetILRange(ifInst.TrueInst).Start <= GetILRange(ifInst.FalseInst).Start)
 				return;
 
 			context.Step("Swap then-branch with else-branch to match IL order", ifInst);
@@ -435,6 +435,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ifInst.FalseInst = oldTrue;
 			oldTrue.ReleaseRef();
 			ifInst.Condition = Comp.LogicNot(ifInst.Condition);
+		}
+
+		public static Interval GetILRange(ILInstruction inst)
+		{
+			// some compilers merge the leave instructions for different arguments using stack variables
+			// these get split and inlined, but the ILRange of the value remains a better indicator of the actual location
+			if (inst is Leave leave && !leave.Value.MatchNop())
+				return leave.Value.ILRange;
+
+			return inst.ILRange;
 		}
 
 		/// <summary>
