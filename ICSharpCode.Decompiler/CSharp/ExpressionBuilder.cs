@@ -1877,10 +1877,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				// isinst followed by unbox.any of the same type is used for as-casts to generic types
 				return arg.WithILInstruction(inst);
 			}
-			if (arg.Type.IsReferenceType != true) {
-				// ensure we treat the input as a reference type
-				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
-			}
 
 			IType targetType = inst.Type;
 			if (targetType.Kind == TypeKind.TypeParameter) {
@@ -1892,6 +1888,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					arg = arg.ConvertTo(((ITypeParameter)targetType).EffectiveBaseClass, this);
 				}
 			}
+			else {
+				// Before unboxing arg must be a object
+				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
+			}
+
 			return new CastExpression(ConvertType(targetType), arg.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(targetType, arg.ResolveResult, Conversion.UnboxingConversion));
