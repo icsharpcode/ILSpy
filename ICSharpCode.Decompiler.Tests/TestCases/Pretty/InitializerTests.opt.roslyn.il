@@ -2192,6 +2192,42 @@
     IL_0096:  ret
   } // end of method TestCases::Issue1251_Test
 
+  .method private hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data 
+          Issue1279(int32 p) cil managed
+  {
+    // Code size       37 (0x25)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.1
+    IL_0002:  bne.un.s   IL_0023
+
+    IL_0004:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0009:  dup
+    IL_000a:  ldc.i4.0
+    IL_000b:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0010:  dup
+    IL_0011:  ldarg.0
+    IL_0012:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Data_TestEvent(object,
+                                                                                                                                class [mscorlib]System.EventArgs)
+    IL_0018:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
+                                                                            native int)
+    IL_001d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
+    IL_0022:  ret
+
+    IL_0023:  ldnull
+    IL_0024:  ret
+  } // end of method TestCases::Issue1279
+
+  .method private hidebysig instance void 
+          Data_TestEvent(object sender,
+                         class [mscorlib]System.EventArgs e) cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0005:  throw
+  } // end of method TestCases::Data_TestEvent
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -2215,13 +2251,13 @@
     .size 40
   } // end of class '__StaticArrayInitTypeSize=40'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00005108
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00005180
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00005108 = bytearray (
+.data cil I_00005180 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 

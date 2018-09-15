@@ -2451,6 +2451,62 @@
     IL_00a1:  ret
   } // end of method TestCases::Issue1251_Test
 
+  .method private hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data 
+          Issue1279(int32 p) cil managed
+  {
+    // Code size       56 (0x38)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.1
+    IL_0003:  ceq
+    IL_0005:  ldc.i4.0
+    IL_0006:  ceq
+    IL_0008:  stloc.2
+    IL_0009:  ldloc.2
+    IL_000a:  brtrue.s   IL_0032
+
+    IL_000c:  nop
+    IL_000d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0012:  stloc.0
+    IL_0013:  ldloc.0
+    IL_0014:  ldc.i4.0
+    IL_0015:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_001a:  nop
+    IL_001b:  ldloc.0
+    IL_001c:  ldarg.0
+    IL_001d:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Data_TestEvent(object,
+                                                                                                                                class [mscorlib]System.EventArgs)
+    IL_0023:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
+                                                                            native int)
+    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
+    IL_002d:  nop
+    IL_002e:  ldloc.0
+    IL_002f:  stloc.1
+    IL_0030:  br.s       IL_0036
+
+    IL_0032:  ldnull
+    IL_0033:  stloc.1
+    IL_0034:  br.s       IL_0036
+
+    IL_0036:  ldloc.1
+    IL_0037:  ret
+  } // end of method TestCases::Issue1279
+
+  .method private hidebysig instance void 
+          Data_TestEvent(object sender,
+                         class [mscorlib]System.EventArgs e) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method TestCases::Data_TestEvent
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {

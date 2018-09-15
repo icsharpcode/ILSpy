@@ -745,5 +745,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				Value6 = otherItem.Nullable4.ToString()
 			});
 		}
+
+		private Data Issue1279(int p)
+		{
+			if (p == 1) {
+				Data data = new Data();
+				data.a = MyEnum.a;
+				data.TestEvent += Data_TestEvent;
+				return data;
+			}
+			return null;
+		}
+
+		private void Data_TestEvent(object sender, EventArgs e)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
