@@ -443,7 +443,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (context.SelectedTreeNodes == null)
 				return false;
 			return context.SelectedTreeNodes
-				.All(n => n is AssemblyTreeNode a && File.Exists(a.LoadedAssembly.FileName));
+				.All(n => {
+					var a = GetAssemblyTreeNode(n);
+					return a != null && File.Exists(a.LoadedAssembly.FileName);
+				});
+		}
+
+		internal static AssemblyTreeNode GetAssemblyTreeNode(SharpTreeNode node)
+		{
+			while (node != null) {
+				if (node is AssemblyTreeNode a)
+					return a;
+				node = node.Parent;
+			}
+			return null;
 		}
 
 		public bool IsEnabled(TextViewContext context)
@@ -451,14 +464,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (context.SelectedTreeNodes == null)
 				return false;
 			return context.SelectedTreeNodes
-				.All(n => n is AssemblyTreeNode a && File.Exists(a.LoadedAssembly.FileName));
+				.All(n => {
+					var a = GetAssemblyTreeNode(n);
+					return a != null && File.Exists(a.LoadedAssembly.FileName);
+				});
 		}
 
 		public void Execute(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
 				return;
-			foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>()) {
+			foreach (var n in context.SelectedTreeNodes) {
+				var node = GetAssemblyTreeNode(n);
 				var path = node.LoadedAssembly.FileName;
 				if (File.Exists(path)) {
 					MainWindow.ExecuteCommand("explorer.exe", $"/select,\"{path}\"");
@@ -475,7 +492,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (context.SelectedTreeNodes == null)
 				return false;
 			return context.SelectedTreeNodes
-				.All(n => n is AssemblyTreeNode a && File.Exists(a.LoadedAssembly.FileName));
+				.All(n => {
+					var a = OpenContainingFolder.GetAssemblyTreeNode(n);
+					return a != null && File.Exists(a.LoadedAssembly.FileName);
+				});
 		}
 
 		public bool IsEnabled(TextViewContext context)
@@ -483,14 +503,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (context.SelectedTreeNodes == null)
 				return false;
 			return context.SelectedTreeNodes
-				.All(n => n is AssemblyTreeNode a && File.Exists(a.LoadedAssembly.FileName));
+				.All(n => {
+					var a = OpenContainingFolder.GetAssemblyTreeNode(n);
+					return a != null && File.Exists(a.LoadedAssembly.FileName);
+				});
 		}
 
 		public void Execute(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes == null)
 				return;
-			foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>()) {
+			foreach (var n in context.SelectedTreeNodes) {
+				var node = OpenContainingFolder.GetAssemblyTreeNode(n);
 				var path = Path.GetDirectoryName(node.LoadedAssembly.FileName);
 				if (Directory.Exists(path)) {
 					MainWindow.ExecuteCommand("cmd.exe", $"/k \"cd {path}\"");
