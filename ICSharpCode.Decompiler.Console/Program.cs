@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.Console
 					if (outputOption.HasValue()) {
 						string directory = outputOption.Value();
 						string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
-						output = File.CreateText(Path.Combine(directory, outputName) + ".ILCode.txt");
+						output = File.CreateText(Path.Combine(directory, outputName) + ".il");
 					}
 					ShowIL(inputAssemblyFileName.Value, output);
 				} else {
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.Console
 				decompiler.TypeSystem.MainModule.PEFile,
 				decompiler.TypeSystem.MainModule.TypeDefinitions.Select(x => (TypeDefinitionHandle)x.MetadataToken));
 
-			output.WriteLine($"IL code: {decompiler.TypeSystem.MainModule.AssemblyName}");
+			output.WriteLine($"// IL code: {decompiler.TypeSystem.MainModule.AssemblyName}");
 			output.WriteLine(textOutput.ToString());
 			output.Flush();
 		}
