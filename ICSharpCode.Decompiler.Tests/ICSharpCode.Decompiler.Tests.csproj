@@ -71,6 +71,7 @@
     <Compile Include="TestCases\Correctness\LocalFunctions.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
+    <Compile Include="TestCases\Pretty\Issue1281.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\TypeTests.cs" />

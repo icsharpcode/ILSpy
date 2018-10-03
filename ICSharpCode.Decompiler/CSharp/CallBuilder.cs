@@ -670,6 +670,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					acrr.SizeArguments[0].IsCompileTimeConstant &&
 					acrr.SizeArguments[0].ConstantValue is int l)
 				{
+					if (acrr.InitializerElements.Count == 1 && 
+						acrr.InitializerElements[0].Type.Kind == TypeKind.Array && 
+						method.Parameters.Count == 1) 
+					{
+						// * method have only one parameter (params type[] parameter)
+						// * arg contains one element array
+						return false;
+					}
 					len = l;
 					t = ((ArrayType)acrr.Type).ElementType;
 					return true;
