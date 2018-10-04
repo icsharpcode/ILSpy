@@ -10,5 +10,14 @@
 				array
 			});
 		}
+
+		internal void MethodWithIntAndParams(int arg, params object[] args)
+		{
+			object[] array = new object[0];
+			MethodWithIntAndParams(10, array);
+			MethodWithIntAndParams(10, new object[1] {
+				array
+			});
+		}
 	}
 }

@@ -630,6 +630,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			IMethod method, IParameter parameter, TranslatedExpression arg, ref List<IParameter> expectedParameters,
 			ref List<TranslatedExpression> arguments)
 		{
+			Predicate<IMethod> isInterpolatedStringCreation = IsInterpolatedStringCreation;
 			if (CheckArgument(out int length, out IType elementType)) {
 				var expandedParameters = new List<IParameter>(expectedParameters);
 				var expandedArguments = new List<TranslatedExpression>(arguments);
@@ -672,10 +673,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					if (acrr.InitializerElements.Count == 1 && 
 						acrr.InitializerElements[0].Type.Kind == TypeKind.Array && 
-						method.Parameters.Count == 1) 
+						!isInterpolatedStringCreation(method)) 
 					{
-						// * method have only one parameter (params type[] parameter)
-						// * arg contains one element array
+						// * arg contains one element and ths element is array
+						// * method with params isn't interpolated string creation
 						return false;
 					}
 					len = l;
