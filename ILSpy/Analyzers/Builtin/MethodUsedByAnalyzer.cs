@@ -140,6 +140,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				case ILOpCode.Ldtoken:
 				case ILOpCode.Ldftn:
 				case ILOpCode.Ldvirtftn:
+				case ILOpCode.Newobj:
 					return true;
 				default:
 					return false;
