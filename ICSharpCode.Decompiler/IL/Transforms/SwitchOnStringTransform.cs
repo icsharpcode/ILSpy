@@ -847,7 +847,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'stloc(targetVar, call ComputeStringHash(ldloc switchValue))'
 		/// </summary>
-		bool MatchComputeStringHashCall(ILInstruction inst, ILVariable targetVar, out LdLoc switchValue)
+		internal static bool MatchComputeStringHashCall(ILInstruction inst, ILVariable targetVar, out LdLoc switchValue)
 		{
 			switchValue = null;
 			if (!inst.MatchStLoc(targetVar, out var value))

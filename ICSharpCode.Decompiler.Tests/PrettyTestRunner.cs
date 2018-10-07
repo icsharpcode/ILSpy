@@ -121,7 +121,10 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Switch([ValueSource("defaultOptions")] CSharpCompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				// legacy csc generates a dead store in debug builds
+				RemoveDeadCode = (cscOptions == CSharpCompilerOptions.None)
+			});
 		}
 
 		[Test]
