@@ -233,20 +233,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool MatchSwitchVar(ILInstruction inst, out long sub)
 		{
-			if (inst.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub, out var left, out var right) && right.MatchLdcI(out sub))
-				return MatchSwitchVar(left);
+			if (inst is BinaryNumericInstruction bn
+				&& bn.Operator == BinaryNumericOperator.Sub
+				&& !bn.CheckForOverflow && !bn.IsLifted
+				&& bn.Right.MatchLdcI(out sub))
+			{
+				return MatchSwitchVar(bn.Left);
+			}
 
 			sub = 0;
 			return MatchSwitchVar(inst);
-		}
-		/// <summary>
-		/// Shifts a LongInterval, treating long.MinValue and long.MaxValue like float.Positive/NegativeInfinity
-		/// </summary>
-		LongInterval ShiftInterval(LongInterval interval, long offset)
-		{
-			return new LongInterval(
-				interval.Start == long.MinValue ? long.MinValue : interval.Start + offset,
-				interval.End == long.MinValue ? long.MinValue : interval.End + offset);
 		}
 
 		/// <summary>
@@ -256,11 +252,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private bool AnalyzeCondition(ILInstruction condition, out LongSet trueValues)
 		{
 			if (condition is Comp comp && MatchSwitchVar(comp.Left, out var sub) && comp.Right.MatchLdcI(out long val)) {
-				// if (comp(V OP val))
+				// if (comp((V - sub) OP val))
 				trueValues = MakeSetWhereComparisonIsTrue(comp.Kind, val, comp.Sign);
-				if (sub != 0)
-					trueValues = new LongSet(trueValues.Intervals.Select(i => ShiftInterval(i, sub)));
-
+				trueValues = trueValues.AddOffset(sub);
 				return true;
 			} else if (MatchSwitchVar(condition)) {
 				// if (ldloc V) --> branch for all values except 0
