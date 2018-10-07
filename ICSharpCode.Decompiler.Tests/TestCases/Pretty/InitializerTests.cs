@@ -62,6 +62,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			public int Z;
 			public S Y;
 			public List<S> L;
+
+			public S this[int index] {
+				get {
+					return default(S);
+				}
+				set {
+				}
+			}
+
+			public S this[object key] {
+				get {
+					return default(S);
+				}
+				set {
+				}
+			}
 		}
 
 		public struct S
@@ -151,6 +167,77 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				this = default(StructData);
 				Field = initialValue;
 				Property = initialValue;
+			}
+		}
+
+		public class Item
+		{
+			public string Text {
+				get;
+				set;
+			}
+
+			public decimal Value {
+				get;
+				set;
+			}
+
+			public decimal Value2 {
+				get;
+				set;
+			}
+
+			public string Value3 {
+				get;
+				set;
+			}
+
+			public string Value4 {
+				get;
+				set;
+			}
+
+			public string Value5 {
+				get;
+				set;
+			}
+
+			public string Value6 {
+				get;
+				set;
+			}
+		}
+
+		public class OtherItem
+		{
+			public decimal Value {
+				get;
+				set;
+			}
+
+			public decimal Value2 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable {
+				get;
+				set;
+			}
+
+			public decimal? Nullable2 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable3 {
+				get;
+				set;
+			}
+
+			public decimal? Nullable4 {
+				get;
+				set;
 			}
 		}
 
@@ -471,7 +558,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 
-		public void NestedListWithIndexInitializer()
+		private void NestedListWithIndexInitializer(MyEnum myEnum)
 		{
 #if !OPT
 			List<List<int>> list = new List<List<int>> {
@@ -482,6 +569,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					1,
 					2,
 					3
+				},
+				[1] = {
+					(int)myEnum
 				}
 			};
 		}
@@ -611,6 +701,65 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 					text
 				}
 			});
+		}
+
+		private void Issue1250_Test1(MyEnum value)
+		{
+			X(Y(), new C {
+				Z = (int)value
+			});
+		}
+
+#if CS60
+		private void Issue1250_Test2(MyEnum value)
+		{
+			X(Y(), new C {
+				[(int)value] = new S((int)value)
+			});
+		}
+
+		private void Issue1250_Test3(int value)
+		{
+			X(Y(), new C {
+				[value] = new S(value)
+			});
+		}
+
+		private void Issue1250_Test4(int value)
+		{
+			X(Y(), new C {
+				[(object)value] = new S(value)
+			});
+		}
+#endif
+
+		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
+		{
+			list.Add(new Item {
+				Text = "Text",
+				Value = otherItem.Value,
+				Value2 = otherItem.Value2,
+				Value3 = otherItem.Nullable.ToString(),
+				Value4 = otherItem.Nullable2.ToString(),
+				Value5 = otherItem.Nullable3.ToString(),
+				Value6 = otherItem.Nullable4.ToString()
+			});
+		}
+
+		private Data Issue1279(int p)
+		{
+			if (p == 1) {
+				Data data = new Data();
+				data.a = MyEnum.a;
+				data.TestEvent += Data_TestEvent;
+				return data;
+			}
+			return null;
+		}
+
+		private void Data_TestEvent(object sender, EventArgs e)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

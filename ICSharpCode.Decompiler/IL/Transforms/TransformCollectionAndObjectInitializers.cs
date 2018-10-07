@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (method.IsStatic && !method.IsExtensionMethod)
 				return false;
-			if (method.IsAccessor)
+			if (method.AccessorOwner is IProperty)
 				return true;
 			if (!"Add".Equals(method.Name, StringComparison.Ordinal) || arguments.Count == 0)
 				return false;

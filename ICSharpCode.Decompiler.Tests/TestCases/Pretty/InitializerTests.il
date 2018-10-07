@@ -15,8 +15,8 @@
 }
 .assembly InitializerTests
 {
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
   .permissionset reqmin
@@ -125,9 +125,68 @@
   .class auto ansi nested public beforefieldinit C
          extends [mscorlib]System.Object
   {
+    .custom instance void [mscorlib]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 )                      // ...Item..
     .field public int32 Z
     .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S Y
     .field public class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S> L
+    .method public hidebysig specialname 
+            instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 
+            get_Item(int32 index) cil managed
+    {
+      // Code size       15 (0xf)
+      .maxstack  1
+      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_0,
+               valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_1)
+      IL_0000:  nop
+      IL_0001:  ldloca.s   V_1
+      IL_0003:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+      IL_0009:  ldloc.1
+      IL_000a:  stloc.0
+      IL_000b:  br.s       IL_000d
+
+      IL_000d:  ldloc.0
+      IL_000e:  ret
+    } // end of method C::get_Item
+
+    .method public hidebysig specialname 
+            instance void  set_Item(int32 index,
+                                    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 'value') cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method C::set_Item
+
+    .method public hidebysig specialname 
+            instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 
+            get_Item(object key) cil managed
+    {
+      // Code size       15 (0xf)
+      .maxstack  1
+      .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_0,
+               valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S V_1)
+      IL_0000:  nop
+      IL_0001:  ldloca.s   V_1
+      IL_0003:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+      IL_0009:  ldloc.1
+      IL_000a:  stloc.0
+      IL_000b:  br.s       IL_000d
+
+      IL_000d:  ldloc.0
+      IL_000e:  ret
+    } // end of method C::get_Item
+
+    .method public hidebysig specialname 
+            instance void  set_Item(object key,
+                                    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S 'value') cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method C::set_Item
+
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -138,6 +197,20 @@
       IL_0006:  ret
     } // end of method C::.ctor
 
+    .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+            Item(int32)
+    {
+      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::get_Item(int32)
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(int32,
+                                                                                                              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    } // end of property C::Item
+    .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S
+            Item(object)
+    {
+      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::get_Item(object)
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::set_Item(object,
+                                                                                                              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/S)
+    } // end of property C::Item
   } // end of class C
 
   .class sequential ansi sealed nested public beforefieldinit S
@@ -495,8 +568,8 @@
     .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum
             a()
     {
-      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_a()
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+      .get instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_a()
     } // end of property Data::a
     .property instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum
             b()
@@ -507,8 +580,8 @@
     .property instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>
             PropertyList()
     {
-      .get instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_PropertyList(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>)
+      .get instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
     } // end of property Data::PropertyList
     .property instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data
             MoreData()
@@ -636,6 +709,507 @@
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_MoreData(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data)
     } // end of property StructData::MoreData
   } // end of class StructData
+
+  .class auto ansi nested public beforefieldinit Item
+         extends [mscorlib]System.Object
+  {
+    .field private string '<Text>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Decimal '<Value>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Decimal '<Value2>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private string '<Value3>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private string '<Value4>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private string '<Value5>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private string '<Value6>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .method public hidebysig specialname 
+            instance string  get_Text() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (string V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Text>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Text
+
+    .method public hidebysig specialname 
+            instance void  set_Text(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Text>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Text
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Decimal 
+            get_Value() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Decimal V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value
+
+    .method public hidebysig specialname 
+            instance void  set_Value(valuetype [mscorlib]System.Decimal 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Decimal 
+            get_Value2() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Decimal V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value2>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value2
+
+    .method public hidebysig specialname 
+            instance void  set_Value2(valuetype [mscorlib]System.Decimal 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value2>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value2
+
+    .method public hidebysig specialname 
+            instance string  get_Value3() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (string V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value3>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value3
+
+    .method public hidebysig specialname 
+            instance void  set_Value3(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value3>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value3
+
+    .method public hidebysig specialname 
+            instance string  get_Value4() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (string V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value4>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value4
+
+    .method public hidebysig specialname 
+            instance void  set_Value4(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value4>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value4
+
+    .method public hidebysig specialname 
+            instance string  get_Value5() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (string V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value5>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value5
+
+    .method public hidebysig specialname 
+            instance void  set_Value5(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value5>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value5
+
+    .method public hidebysig specialname 
+            instance string  get_Value6() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (string V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value6>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method Item::get_Value6
+
+    .method public hidebysig specialname 
+            instance void  set_Value6(string 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::'<Value6>k__BackingField'
+      IL_0007:  ret
+    } // end of method Item::set_Value6
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method Item::.ctor
+
+    .property instance string Text()
+    {
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Text()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Text(string)
+    } // end of property Item::Text
+    .property instance valuetype [mscorlib]System.Decimal
+            Value()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value(valuetype [mscorlib]System.Decimal)
+      .get instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value()
+    } // end of property Item::Value
+    .property instance valuetype [mscorlib]System.Decimal
+            Value2()
+    {
+      .get instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value2()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value2(valuetype [mscorlib]System.Decimal)
+    } // end of property Item::Value2
+    .property instance string Value3()
+    {
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value3()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value3(string)
+    } // end of property Item::Value3
+    .property instance string Value4()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value4(string)
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value4()
+    } // end of property Item::Value4
+    .property instance string Value5()
+    {
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value5()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value5(string)
+    } // end of property Item::Value5
+    .property instance string Value6()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value6(string)
+      .get instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::get_Value6()
+    } // end of property Item::Value6
+  } // end of class Item
+
+  .class auto ansi nested public beforefieldinit OtherItem
+         extends [mscorlib]System.Object
+  {
+    .field private valuetype [mscorlib]System.Decimal '<Value>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Decimal '<Value2>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> '<Nullable>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> '<Nullable2>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> '<Nullable3>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> '<Nullable4>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Decimal 
+            get_Value() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Decimal V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Value>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Value
+
+    .method public hidebysig specialname 
+            instance void  set_Value(valuetype [mscorlib]System.Decimal 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Value>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Value
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Decimal 
+            get_Value2() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Decimal V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Value2>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Value2
+
+    .method public hidebysig specialname 
+            instance void  set_Value2(valuetype [mscorlib]System.Decimal 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Value2>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Value2
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 
+            get_Nullable() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Nullable
+
+    .method public hidebysig specialname 
+            instance void  set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Nullable
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 
+            get_Nullable2() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable2>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Nullable2
+
+    .method public hidebysig specialname 
+            instance void  set_Nullable2(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable2>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Nullable2
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 
+            get_Nullable3() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable3>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Nullable3
+
+    .method public hidebysig specialname 
+            instance void  set_Nullable3(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable3>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Nullable3
+
+    .method public hidebysig specialname 
+            instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 
+            get_Nullable4() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable4>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method OtherItem::get_Nullable4
+
+    .method public hidebysig specialname 
+            instance void  set_Nullable4(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::'<Nullable4>k__BackingField'
+      IL_0007:  ret
+    } // end of method OtherItem::set_Nullable4
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method OtherItem::.ctor
+
+    .property instance valuetype [mscorlib]System.Decimal
+            Value()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Value(valuetype [mscorlib]System.Decimal)
+      .get instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value()
+    } // end of property OtherItem::Value
+    .property instance valuetype [mscorlib]System.Decimal
+            Value2()
+    {
+      .get instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value2()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Value2(valuetype [mscorlib]System.Decimal)
+    } // end of property OtherItem::Value2
+    .property instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+            Nullable()
+    {
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+      .get instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable()
+    } // end of property OtherItem::Nullable
+    .property instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+            Nullable2()
+    {
+      .get instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable2()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable2(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+    } // end of property OtherItem::Nullable2
+    .property instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+            Nullable3()
+    {
+      .get instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable3()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable3(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+    } // end of property OtherItem::Nullable3
+    .property instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+            Nullable4()
+    {
+      .get instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable4()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable4(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+    } // end of property OtherItem::Nullable4
+  } // end of class OtherItem
 
   .field private static class [mscorlib]System.EventHandler 'CS$<>9__CachedAnonymousMethodDelegate9'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1788,6 +2362,150 @@
     IL_001f:  nop
     IL_0020:  ret
   } // end of method TestCases::Issue907_Test3
+
+  .method private hidebysig instance void 
+          Issue1250_Test1(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum 'value') cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C V_0)
+    IL_0000:  nop
+    IL_0001:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0006:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldarg.1
+    IL_000e:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::Z
+    IL_0013:  ldloc.0
+    IL_0014:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0019:  nop
+    IL_001a:  ret
+  } // end of method TestCases::Issue1250_Test1
+
+  .method private hidebysig instance void 
+          Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
+                         class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
+  {
+    // Code size       162 (0xa2)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item V_0,
+             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::.ctor()
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldstr      "Text"
+    IL_000e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Text(string)
+    IL_0013:  nop
+    IL_0014:  ldloc.0
+    IL_0015:  ldarg.2
+    IL_0016:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value()
+    IL_001b:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value(valuetype [mscorlib]System.Decimal)
+    IL_0020:  nop
+    IL_0021:  ldloc.0
+    IL_0022:  ldarg.2
+    IL_0023:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value2()
+    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value2(valuetype [mscorlib]System.Decimal)
+    IL_002d:  nop
+    IL_002e:  ldloc.0
+    IL_002f:  ldarg.2
+    IL_0030:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable()
+    IL_0035:  stloc.1
+    IL_0036:  ldloca.s   V_1
+    IL_0038:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_003e:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0043:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value3(string)
+    IL_0048:  nop
+    IL_0049:  ldloc.0
+    IL_004a:  ldarg.2
+    IL_004b:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable2()
+    IL_0050:  stloc.1
+    IL_0051:  ldloca.s   V_1
+    IL_0053:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0059:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_005e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value4(string)
+    IL_0063:  nop
+    IL_0064:  ldloc.0
+    IL_0065:  ldarg.2
+    IL_0066:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable3()
+    IL_006b:  stloc.1
+    IL_006c:  ldloca.s   V_1
+    IL_006e:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0074:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0079:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value5(string)
+    IL_007e:  nop
+    IL_007f:  ldloc.0
+    IL_0080:  ldarg.2
+    IL_0081:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable4()
+    IL_0086:  stloc.1
+    IL_0087:  ldloca.s   V_1
+    IL_0089:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_008f:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0094:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value6(string)
+    IL_0099:  nop
+    IL_009a:  ldloc.0
+    IL_009b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item>::Add(!0)
+    IL_00a0:  nop
+    IL_00a1:  ret
+  } // end of method TestCases::Issue1251_Test
+
+  .method private hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data 
+          Issue1279(int32 p) cil managed
+  {
+    // Code size       56 (0x38)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.1
+    IL_0003:  ceq
+    IL_0005:  ldc.i4.0
+    IL_0006:  ceq
+    IL_0008:  stloc.2
+    IL_0009:  ldloc.2
+    IL_000a:  brtrue.s   IL_0032
+
+    IL_000c:  nop
+    IL_000d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0012:  stloc.0
+    IL_0013:  ldloc.0
+    IL_0014:  ldc.i4.0
+    IL_0015:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_001a:  nop
+    IL_001b:  ldloc.0
+    IL_001c:  ldarg.0
+    IL_001d:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Data_TestEvent(object,
+                                                                                                                                class [mscorlib]System.EventArgs)
+    IL_0023:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
+                                                                            native int)
+    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
+    IL_002d:  nop
+    IL_002e:  ldloc.0
+    IL_002f:  stloc.1
+    IL_0030:  br.s       IL_0036
+
+    IL_0032:  ldnull
+    IL_0033:  stloc.1
+    IL_0034:  br.s       IL_0036
+
+    IL_0036:  ldloc.1
+    IL_0037:  ret
+  } // end of method TestCases::Issue1279
+
+  .method private hidebysig instance void 
+          Data_TestEvent(object sender,
+                         class [mscorlib]System.EventArgs e) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method TestCases::Data_TestEvent
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

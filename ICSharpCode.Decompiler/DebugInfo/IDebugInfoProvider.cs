@@ -7,7 +7,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 {
 	public struct Variable
 	{
-		public string Name { get; set; }
+		public Variable(int index, string name)
+		{
+			Index = index;
+			Name = name;
+		}
+
+		public int Index { get; }
+		public string Name { get; }
 	}
 
 	public interface IDebugInfoProvider

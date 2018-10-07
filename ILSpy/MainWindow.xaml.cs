@@ -661,8 +661,20 @@ namespace ICSharpCode.ILSpy
 				// just ignore all of them.
 			}
 		}
+
+		public static void ExecuteCommand(string fileName, string arguments)
+		{
+			try {
+				Process.Start(fileName, arguments);
+#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
+			} catch (Exception) {
+#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
+		}
 		#endregion
-		
+
 		#region Open/Refresh
 		void OpenCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{

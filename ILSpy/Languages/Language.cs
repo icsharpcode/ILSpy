@@ -250,11 +250,20 @@ namespace ICSharpCode.ILSpy
 
 			public override IType VisitOtherType(IType type)
 			{
+				WriteType(type);
+				return type;
+			}
+
+			private void WriteType(IType type)
+			{
 				if (includeNamespace)
 					builder.Append(type.FullName);
 				else
 					builder.Append(type.Name);
-				return type;
+				if (type.TypeParameterCount > 0) {
+					builder.Append('`');
+					builder.Append(type.TypeParameterCount);
+				}
 			}
 
 			public override IType VisitTypeDefinition(ITypeDefinition type)
@@ -315,10 +324,7 @@ namespace ICSharpCode.ILSpy
 						builder.Append("typedref");
 						break;
 					default:
-						if (includeNamespace)
-							builder.Append(type.FullName);
-						else
-							builder.Append(type.Name);
+						WriteType(type);
 						break;
 				}
 				return type;
@@ -359,6 +365,8 @@ namespace ICSharpCode.ILSpy
 			buffer.Append(GetDisplayName(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			var typeParameters = method.TypeParameters;
 			if (typeParameters.Count > 0) {
+				buffer.Append("``");
+				buffer.Append(typeParameters.Count);
 				buffer.Append('<');
 				foreach (var tp in typeParameters) {
 					if (i > 0)

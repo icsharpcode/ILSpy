@@ -112,6 +112,42 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void SimplePublicClassCtorTest()
+		{
+			ITypeDefinition c = GetTypeDefinition(typeof(SimplePublicClass));
+
+			IMethod method = c.Methods.Single(m => m.IsConstructor);
+			Assert.AreEqual(typeof(SimplePublicClass).FullName + "..ctor", method.FullName);
+			Assert.AreSame(c, method.DeclaringType);
+			Assert.AreEqual(Accessibility.Public, method.Accessibility);
+			Assert.AreEqual(SymbolKind.Constructor, method.SymbolKind);
+			Assert.IsFalse(method.IsVirtual);
+			Assert.IsFalse(method.IsStatic);
+			Assert.AreEqual(0, method.Parameters.Count);
+			Assert.AreEqual(0, method.GetAttributes().Count());
+			Assert.IsTrue(method.HasBody);
+			Assert.IsNull(method.AccessorOwner);
+		}
+
+		[Test]
+		public void SimplePublicClassDtorTest()
+		{
+			ITypeDefinition c = GetTypeDefinition(typeof(SimplePublicClass));
+
+			IMethod method = c.Methods.Single(m => m.IsDestructor);
+			Assert.AreEqual(typeof(SimplePublicClass).FullName + ".Finalize", method.FullName);
+			Assert.AreSame(c, method.DeclaringType);
+			Assert.AreEqual(Accessibility.Protected, method.Accessibility);
+			Assert.AreEqual(SymbolKind.Destructor, method.SymbolKind);
+			Assert.IsFalse(method.IsVirtual);
+			Assert.IsFalse(method.IsStatic);
+			Assert.AreEqual(0, method.Parameters.Count);
+			Assert.AreEqual(0, method.GetAttributes().Count());
+			Assert.IsTrue(method.HasBody);
+			Assert.IsNull(method.AccessorOwner);
+		}
+
+		[Test]
 		public void DynamicType()
 		{
 			ITypeDefinition testClass = GetTypeDefinition(typeof(DynamicTest));
@@ -519,6 +555,40 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsTrue(tp.HasDefaultConstructorConstraint);
 			Assert.AreEqual(new string[] { "System.Collections.Generic.IComparer`1[[`1]]", "System.Object" },
 							tp.DirectBaseTypes.Select(t => t.ReflectionName).ToArray());
+		}
+
+		[Test]
+		public void DtorInDerivedClass()
+		{
+			ITypeDefinition c = GetTypeDefinition(typeof(Derived<,>));
+			IMethod method = c.Methods.Single(m => m.IsDestructor);
+			Assert.AreEqual(c.FullName + ".Finalize", method.FullName);
+			Assert.AreSame(c, method.DeclaringType);
+			Assert.AreEqual(Accessibility.Protected, method.Accessibility);
+			Assert.AreEqual(SymbolKind.Destructor, method.SymbolKind);
+			Assert.IsFalse(method.IsVirtual);
+			Assert.IsFalse(method.IsStatic);
+			Assert.AreEqual(0, method.Parameters.Count);
+			Assert.AreEqual(0, method.GetAttributes().Count());
+			Assert.IsTrue(method.HasBody);
+			Assert.IsNull(method.AccessorOwner);
+		}
+
+		[Test]
+		public void PrivateFinalizeMethodIsNotADtor()
+		{
+			ITypeDefinition c = GetTypeDefinition(typeof(TypeTestAttribute));
+			IMethod method = c.Methods.Single(m => m.Name == "Finalize");
+			Assert.AreEqual(c.FullName + ".Finalize", method.FullName);
+			Assert.AreSame(c, method.DeclaringType);
+			Assert.AreEqual(Accessibility.Private, method.Accessibility);
+			Assert.AreEqual(SymbolKind.Method, method.SymbolKind);
+			Assert.IsFalse(method.IsVirtual);
+			Assert.IsFalse(method.IsStatic);
+			Assert.AreEqual(0, method.Parameters.Count);
+			Assert.AreEqual(0, method.GetAttributes().Count());
+			Assert.IsTrue(method.HasBody);
+			Assert.IsNull(method.AccessorOwner);
 		}
 
 		[Test]

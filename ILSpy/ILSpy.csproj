@@ -50,9 +50,8 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
-    <PackageReference Include="Microsoft.DiaSymReader" Version="1.2.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,6 +64,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler.PdbProvider.Cecil\MonoCecilDebugInfoProvider.cs" Link="DebugInfo\MonoCecilDebugInfoProvider.cs" />
     <Compile Include="AboutPage.cs" />
     <Compile Include="Analyzers\AnalyzerScope.cs" />
     <Compile Include="Analyzers\Builtin\AttributeAppliedToAnalyzer.cs" />
@@ -128,7 +128,6 @@
     <Compile Include="CreateListDialog.xaml.cs">
       <DependentUpon>CreateListDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DebugInfo\DiaSymNativeDebugInfoProvider.cs" />
     <Compile Include="DebugInfo\PortableDebugInfoProvider.cs" />
     <Compile Include="DebugSteps.xaml.cs">
       <DependentUpon>DebugSteps.xaml</DependentUpon>
@@ -422,6 +421,8 @@
       <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
       <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>

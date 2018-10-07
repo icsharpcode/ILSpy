@@ -336,6 +336,7 @@ namespace ICSharpCode.ILSpy
 		
 		public string Location { get; set; }
 		public string Name { get; set; }
+		public object ToolTip { get; set; }
 		public ImageSource Image { get; set; }
 		public ImageSource LocationImage { get; set; }
 		

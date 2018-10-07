@@ -1016,11 +1016,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case TypeKind.Struct:
 					classType = ClassType.Struct;
 					modifiers &= ~Modifiers.Sealed;
-					if (typeDefinition.IsReadOnly) {
-						modifiers |= Modifiers.Readonly;
-					}
-					if (typeDefinition.IsByRefLike) {
-						modifiers |= Modifiers.Ref;
+					if (ShowModifiers) {
+						if (typeDefinition.IsReadOnly) {
+							modifiers |= Modifiers.Readonly;
+						}
+						if (typeDefinition.IsByRefLike) {
+							modifiers |= Modifiers.Ref;
+						}
 					}
 					break;
 				case TypeKind.Enum:

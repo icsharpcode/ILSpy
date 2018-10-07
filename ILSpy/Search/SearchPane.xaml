@@ -45,7 +45,7 @@
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
 									<Image Height="16" Margin="0,0,4,0" Width="16" Source="{Binding Image}" />
-									<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+									<TextBlock Text="{Binding Name}" ToolTip="{Binding ToolTip}" TextTrimming="CharacterEllipsis" />
 								</StackPanel>
 							</DataTemplate>
 						</controls:SortableGridViewColumn.CellTemplate>

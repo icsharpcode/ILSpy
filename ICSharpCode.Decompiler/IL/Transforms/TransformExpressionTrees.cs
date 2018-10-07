@@ -164,6 +164,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			container.ExpectedResultType = bodyInstruction.ResultType;
 			container.Blocks.Add(new Block() { Instructions = { new Leave(container, bodyInstruction) } });
+			// Replace all other usages of the parameter variable
+			foreach (var mapping in parameterMapping) {
+				foreach (var load in mapping.Key.LoadInstructions.ToArray()) {
+					if (load.IsDescendantOf(instruction))
+						continue;
+					load.ReplaceWith(new LdLoc(mapping.Value));
+				}
+			}
 			return (function, function.DelegateType);
 		}
 
@@ -333,9 +341,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return (function, function.DelegateType);
 					case LdLoc ldloc:
 						if (IsExpressionTreeParameter(ldloc.Variable)) {
-							if (!parameterMapping.TryGetValue(ldloc.Variable, out var v))
-								return (null, SpecialType.UnknownType);
-							return (new LdLoc(v), v.Type);
+							// Replace an already mapped parameter with the actual ILVariable,
+							// we generated earlier.
+							if (parameterMapping.TryGetValue(ldloc.Variable, out var v))
+								return (new LdLoc(v), v.Type);
+							// This is a parameter variable from an outer scope.
+							// We can't replace these variables just yet, because the transform works backwards.
+							// We simply return the same instruction again, but return the actual expected type,
+							// so our transform can continue normally.
+							// Later, we will replace all references to unmapped variables,
+							// with references to mapped parameters.
+							if (ldloc.Variable.IsSingleDefinition && ldloc.Variable.StoreInstructions[0] is ILInstruction inst) {
+								if (MatchParameterVariableAssignment(inst, out _, out var type, out _))
+									return (ldloc, type);
+							}
 						}
 						return (null, SpecialType.UnknownType);
 					default:
@@ -1017,7 +1036,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdLoc ldloc:
 					if (IsExpressionTreeParameter(ldloc.Variable)) {
 						if (!parameterMapping.TryGetValue(ldloc.Variable, out var v))
-							return null;
+							return ldloc;
 						if (context is CallInstruction parentCall
 							&& parentCall.Method.FullName == "System.Linq.Expressions.Expression.Call"
 							&& v.StackType.IsIntegerType())
@@ -1025,7 +1044,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					} else {
 						if (ldloc.Variable.Kind != VariableKind.StackSlot)
-							return new LdLoc(ldloc.Variable);
+							return ldloc;
 						return null;
 					}
 				default:

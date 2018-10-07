@@ -69,7 +69,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		public IType Type {
 			get { return ResolveResult.Type; }
 		}
-		
+
+		internal ExpressionWithResolveResult(Expression expression)
+		{
+			Debug.Assert(expression != null);
+			this.Expression = expression;
+			this.ResolveResult = expression.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
+		}
+
 		internal ExpressionWithResolveResult(Expression expression, ResolveResult resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);

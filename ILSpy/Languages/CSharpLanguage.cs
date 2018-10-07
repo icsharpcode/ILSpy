@@ -21,19 +21,21 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.Metadata;
-using System.Reflection.Metadata;
+using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using System.Text;
+using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -113,7 +115,7 @@ namespace ICSharpCode.ILSpy
 			return decompiler;
 		}
 
-		void WriteCode(ITextOutput output, Decompiler.DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
+		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem) { FoldBraces = settings.FoldBraces, ExpandMemberDefinitions = settings.ExpandMemberDefinitions };
@@ -424,170 +426,69 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
+		static CSharpAmbience CreateAmbience()
+		{
+			CSharpAmbience ambience = new CSharpAmbience();
+			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewTypeFlags, if this ever changes.
+			ambience.ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList;
+			return ambience;
+		}
+
+		static string EntityToString(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
+		{
+			// Do not forget to update CSharpAmbienceTests, if this ever changes.
+			var ambience = CreateAmbience();
+			ambience.ConversionFlags |= ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList | ConversionFlags.ShowParameterModifiers;
+			if (includeDeclaringTypeName)
+				ambience.ConversionFlags |= ConversionFlags.ShowDeclaringType;
+			if (includeNamespace)
+				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (includeNamespaceOfDeclaringTypeName)
+				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			return ambience.ConvertSymbol(entity);
+		}
 
 		public override string TypeToString(IType type, bool includeNamespace)
 		{
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			if (type is ITypeDefinition definition && definition.TypeParameterCount > 0) {
-				return TypeToStringInternal(new ParameterizedType(definition, definition.TypeParameters), includeNamespace, false);
+			var ambience = CreateAmbience();
+			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
+			if (includeNamespace)
+				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
+			if (type is ITypeDefinition definition) {
+				return ambience.ConvertSymbol(definition);
+			} else {
+				return ambience.ConvertType(type);
 			}
-			return TypeToStringInternal(type, includeNamespace, false);
-		}
-
-		string TypeToStringInternal(IType t, bool includeNamespace, bool useBuiltinTypeNames = true, ParameterModifier parameterModifier = ParameterModifier.None)
-		{
-			TypeSystemAstBuilder builder = new TypeSystemAstBuilder();
-			builder.AlwaysUseShortTypeNames = !includeNamespace;
-			builder.AlwaysUseBuiltinTypeNames = useBuiltinTypeNames;
-
-			const ParameterModifier refInOutModifier = ParameterModifier.Ref | ParameterModifier.Out | ParameterModifier.In;
-
-			AstType astType = builder.ConvertType(t);
-			if ((parameterModifier & refInOutModifier) != 0 && astType is ComposedType ct && ct.HasRefSpecifier) {
-				ct.HasRefSpecifier = false;
-			}
-
-			StringWriter w = new StringWriter();
-
-			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
-			string output = w.ToString();
-
-			switch (parameterModifier) {
-				case ParameterModifier.Ref:
-					output = "ref " + output;
-					break;
-				case ParameterModifier.Out:
-					output = "out " + output;
-					break;
-				case ParameterModifier.In:
-					output = "in " + output;
-					break;
-			}
-
-			return output;
-		}
-
-		static ParameterModifier GetModifier(IParameter p)
-		{
-			if (p.IsRef)
-				return ParameterModifier.Ref;
-			if (p.IsOut)
-				return ParameterModifier.Out;
-			if (p.IsIn)
-				return ParameterModifier.In;
-			return ParameterModifier.None;
 		}
 
 		public override string FieldToString(IField field, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
-
-			string simple = field.Name + " : " + TypeToString(field.Type, includeNamespace);
-			if (!includeDeclaringTypeName)
-				return simple;
-			return TypeToStringInternal(field.DeclaringType, includeNamespaceOfDeclaringTypeName) + "." + simple;
+			return EntityToString(field, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string PropertyToString(IProperty property, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (property == null)
 				throw new ArgumentNullException(nameof(property));
-			var buffer = new System.Text.StringBuilder();
-			if (includeDeclaringTypeName) {
-				buffer.Append(TypeToString(property.DeclaringType, includeNamespaceOfDeclaringTypeName));
-				buffer.Append('.');
-			}
-			if (property.IsIndexer) {
-				if (property.IsExplicitInterfaceImplementation) {
-					string name = property.Name;
-					int index = name.LastIndexOf('.');
-					if (index > 0) {
-						buffer.Append(name.Substring(0, index));
-						buffer.Append('.');
-					}
-				}
-				buffer.Append(@"this[");
-
-				int i = 0;
-				var parameters = property.Parameters;
-				foreach (var param in parameters) {
-					if (i > 0)
-						buffer.Append(", ");
-					buffer.Append(TypeToStringInternal(param.Type, includeNamespace, parameterModifier: GetModifier(param)));
-					i++;
-				}
-
-				buffer.Append(@"]");
-			} else {
-				buffer.Append(property.Name);
-			}
-			buffer.Append(" : ");
-			buffer.Append(TypeToStringInternal(property.ReturnType, includeNamespace));
-			return buffer.ToString();
+			return EntityToString(property, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string MethodToString(IMethod method, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (method == null)
 				throw new ArgumentNullException(nameof(method));
-			string name;
-			if (includeDeclaringTypeName) {
-				name = TypeToString(method.DeclaringType, includeNamespace: includeNamespaceOfDeclaringTypeName) + ".";
-			} else {
-				name = "";
-			}
-			if (method.IsConstructor) {
-				name += TypeToString(method.DeclaringType, false);
-			} else {
-				name += method.Name;
-			}
-			int i = 0;
-			var buffer = new StringBuilder(name);
-
-			if (method.TypeParameters.Count > 0) {
-				buffer.Append('<');
-				foreach (var tp in method.TypeParameters) {
-					if (i > 0)
-						buffer.Append(", ");
-					buffer.Append(tp.Name);
-					i++;
-				}
-				buffer.Append('>');
-			}
-			buffer.Append('(');
-
-			i = 0;
-			var parameters = method.Parameters;
-			foreach (var param in parameters) {
-				if (i > 0)
-					buffer.Append(", ");
-				buffer.Append(TypeToStringInternal(param.Type, includeNamespace, parameterModifier: GetModifier(param)));
-				i++;
-			}
-
-			buffer.Append(')');
-			if (!method.IsConstructor) {
-				buffer.Append(" : ");
-				buffer.Append(TypeToStringInternal(method.ReturnType, includeNamespace));
-			}
-			return buffer.ToString();
+			return EntityToString(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		public override string EventToString(IEvent @event, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
 			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
-			var buffer = new System.Text.StringBuilder();
-			if (includeDeclaringTypeName) {
-				buffer.Append(TypeToString(@event.DeclaringType, includeNamespaceOfDeclaringTypeName) + ".");
-			}
-			buffer.Append(@event.Name);
-			buffer.Append(" : ");
-			buffer.Append(TypeToStringInternal(@event.ReturnType, includeNamespace));
-			return buffer.ToString();
+			return EntityToString(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName);
 		}
 
 		string ToCSharpString(MetadataReader metadata, TypeDefinitionHandle handle, bool fullName)
@@ -684,7 +585,7 @@ namespace ICSharpCode.ILSpy
 
 		public override string GetTooltip(IEntity entity)
 		{
-			var flags = ConversionFlags.All & ~ConversionFlags.ShowBody;
+			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(entity);
 		}
 

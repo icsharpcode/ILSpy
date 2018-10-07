@@ -17,8 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
@@ -37,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				throw new ArgumentNullException("symbol");
 			
 			StringWriter writer = new StringWriter();
-			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateMono ());
+			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateEmpty());
 			return writer.ToString();
 		}
 		
@@ -87,7 +91,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			
-			if ((ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType) {
+			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) != ConversionFlags.PlaceReturnTypeAfterParameterList
+				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
+			{
 				var rt = node.GetChildByRole(Roles.Type);
 				if (!rt.IsNull) {
 					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
@@ -106,6 +112,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				writer.WriteToken(symbol.SymbolKind == SymbolKind.Indexer ? Roles.LBracket : Roles.LPar, symbol.SymbolKind == SymbolKind.Indexer ? "[" : "(");
 				bool first = true;
 				foreach (var param in node.GetChildrenByRole(Roles.Parameter)) {
+					if ((ConversionFlags & ConversionFlags.ShowParameterModifiers) == 0) {
+						param.ParameterModifier = ParameterModifier.None;
+					}
+					if ((ConversionFlags & ConversionFlags.ShowParameterDefaultValues) == 0) {
+						param.DefaultExpression.Detach();
+					}
 					if (first) {
 						first = false;
 					} else {
@@ -116,7 +128,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				writer.WriteToken(symbol.SymbolKind == SymbolKind.Indexer ? Roles.RBracket : Roles.RPar, symbol.SymbolKind == SymbolKind.Indexer ? "]" : ")");
 			}
-			
+
+			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) == ConversionFlags.PlaceReturnTypeAfterParameterList
+				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
+			{
+				var rt = node.GetChildByRole(Roles.Type);
+				if (!rt.IsNull) {
+					writer.Space();
+					writer.WriteToken(Roles.Colon, ":");
+					writer.Space();
+					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
+				}
+			}
+
 			if ((ConversionFlags & ConversionFlags.ShowBody) == ConversionFlags.ShowBody && !(node is TypeDeclaration)) {
 				IProperty property = symbol as IProperty;
 				if (property != null) {
@@ -171,7 +195,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
 			EntityDeclaration node = astBuilder.ConvertEntity(typeDef);
-			if (typeDef.DeclaringTypeDefinition != null) {
+			if (typeDef.DeclaringTypeDefinition != null &&
+				((ConversionFlags & ConversionFlags.ShowDeclaringType) == ConversionFlags.ShowDeclaringType ||
+				(ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) == ConversionFlags.UseFullyQualifiedEntityNames)) {
 				WriteTypeDeclarationName(typeDef.DeclaringTypeDefinition, writer, formattingPolicy);
 				writer.WriteToken(Roles.Dot, ".");
 			} else if ((ConversionFlags & ConversionFlags.UseFullyQualifiedEntityNames) == ConversionFlags.UseFullyQualifiedEntityNames) {
@@ -181,12 +207,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			writer.WriteIdentifier(node.NameToken);
-			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList) {
-				var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);
-				outputVisitor.WriteTypeParameters(node.GetChildrenByRole(Roles.TypeParameter));
-			}
+			WriteTypeParameters(node, writer, formattingPolicy);
 		}
-		
+
 		void WriteMemberDeclarationName(IMember member, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
 		{
 			TypeSystemAstBuilder astBuilder = CreateAstBuilder();
@@ -237,12 +260,27 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					writer.WriteIdentifier(Identifier.Create(member.Name));
 					break;
 			}
-			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList && member.SymbolKind == SymbolKind.Method) {
+			WriteTypeParameters(node, writer, formattingPolicy);
+		}
+
+		void WriteTypeParameters(EntityDeclaration node, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
+		{
+			if ((ConversionFlags & ConversionFlags.ShowTypeParameterList) == ConversionFlags.ShowTypeParameterList) {
 				var outputVisitor = new CSharpOutputVisitor(writer, formattingPolicy);
-				outputVisitor.WriteTypeParameters(node.GetChildrenByRole(Roles.TypeParameter));
+				IEnumerable<TypeParameterDeclaration> typeParameters = node.GetChildrenByRole(Roles.TypeParameter);
+				if ((ConversionFlags & ConversionFlags.ShowTypeParameterVarianceModifier) == 0) {
+					typeParameters = typeParameters.Select(RemoveVarianceModifier);
+				}
+				outputVisitor.WriteTypeParameters(typeParameters);
+			}
+
+			TypeParameterDeclaration RemoveVarianceModifier(TypeParameterDeclaration decl)
+			{
+				decl.Variance = VarianceModifier.Invariant;
+				return decl;
 			}
 		}
-		
+
 		void PrintModifiers(Modifiers modifiers, TokenWriter writer)
 		{
 			foreach (var m in CSharpModifierToken.AllModifiers) {

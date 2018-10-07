@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <AssemblyName>ilspycmd</AssemblyName>
     <ToolCommandName>ilspycmd</ToolCommandName>
-    <Version>2.0.0</Version>
+    <Version>3.0.0</Version>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
     <Copyright>Copyright 2011-2018 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
@@ -23,8 +23,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.0" />
-    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4285-beta1" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="4.0.0.4319-beta2" />
 	
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Runtime.Handles" Version="4.3.0" />

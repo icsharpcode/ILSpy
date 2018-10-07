@@ -21,6 +21,7 @@ Options:
   -t|--type <type-name>       The fully qualified name of the type to decompile.
   -l|--list <entity-type(s)>  Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct),
  d(elegate), e(num)
+  -il|--ilcode				  Show IL code.	
 
 -o is valid with every option and required when using -p.
 ```

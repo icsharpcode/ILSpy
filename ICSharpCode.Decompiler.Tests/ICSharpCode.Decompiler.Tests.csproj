@@ -63,15 +63,19 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
     <Compile Include="Semantics\OverloadResolutionTests.cs" />
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="TestCases\Correctness\LocalFunctions.cs" />
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\TypeTests.cs" />
+    <None Include="TestCases\ILPretty\Issue1256.il" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoDecimalConstants.cs" />
     <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />
