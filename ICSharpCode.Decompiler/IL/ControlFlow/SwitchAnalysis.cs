@@ -116,6 +116,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!(tailOnly || block.Instructions.Count == 2))
 					return false;
 				trueValues = trueValues.IntersectWith(inputValues);
+				if (trueValues.SetEquals(inputValues) || trueValues.IsEmpty)
+					return false;
 				Block trueBlock;
 				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues)) {
 					// OK, true block was further analyzed.
