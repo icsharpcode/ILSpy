@@ -8,6 +8,11 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
+.assembly extern System.Core
+{
+  .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
+  .ver 4:0:0:0
+}
 .assembly Switch
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
@@ -268,6 +273,104 @@
     IL_00b3:  ldstr      "something else"
     IL_00b8:  ret
   } // end of method Switch::SparseIntegerSwitch
+
+  .method public hidebysig static void  SparseIntegerSwitch2(int32 i) cil managed
+  {
+    // Code size       67 (0x43)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   21
+    IL_0003:  bgt.s      IL_0021
+
+    IL_0005:  ldarg.0
+    IL_0006:  ldc.i4.s   11
+    IL_0008:  bgt.s      IL_0016
+
+    IL_000a:  ldarg.0
+    IL_000b:  ldc.i4.4
+    IL_000c:  beq.s      IL_003d
+
+    IL_000e:  ldarg.0
+    IL_000f:  ldc.i4.s   10
+    IL_0011:  sub
+    IL_0012:  ldc.i4.1
+    IL_0013:  ble.un.s   IL_003d
+
+    IL_0015:  ret
+
+    IL_0016:  ldarg.0
+    IL_0017:  ldc.i4.s   13
+    IL_0019:  beq.s      IL_003d
+
+    IL_001b:  ldarg.0
+    IL_001c:  ldc.i4.s   21
+    IL_001e:  beq.s      IL_003d
+
+    IL_0020:  ret
+
+    IL_0021:  ldarg.0
+    IL_0022:  ldc.i4.s   33
+    IL_0024:  bgt.s      IL_0031
+
+    IL_0026:  ldarg.0
+    IL_0027:  ldc.i4.s   29
+    IL_0029:  beq.s      IL_003d
+
+    IL_002b:  ldarg.0
+    IL_002c:  ldc.i4.s   33
+    IL_002e:  beq.s      IL_003d
+
+    IL_0030:  ret
+
+    IL_0031:  ldarg.0
+    IL_0032:  ldc.i4.s   49
+    IL_0034:  sub
+    IL_0035:  ldc.i4.1
+    IL_0036:  ble.un.s   IL_003d
+
+    IL_0038:  ldarg.0
+    IL_0039:  ldc.i4.s   55
+    IL_003b:  bne.un.s   IL_0042
+
+    IL_003d:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0042:  ret
+  } // end of method Switch::SparseIntegerSwitch2
+
+  .method public hidebysig static bool  SparseIntegerSwitch3(int32 i) cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   12
+    IL_0003:  bgt.s      IL_0011
+
+    IL_0005:  ldarg.0
+    IL_0006:  brfalse.s  IL_0020
+
+    IL_0008:  ldarg.0
+    IL_0009:  ldc.i4.s   10
+    IL_000b:  sub
+    IL_000c:  ldc.i4.2
+    IL_000d:  ble.un.s   IL_0020
+
+    IL_000f:  br.s       IL_0022
+
+    IL_0011:  ldarg.0
+    IL_0012:  ldc.i4.s   100
+    IL_0014:  sub
+    IL_0015:  ldc.i4.1
+    IL_0016:  ble.un.s   IL_0020
+
+    IL_0018:  ldarg.0
+    IL_0019:  ldc.i4     0xc8
+    IL_001e:  bne.un.s   IL_0022
+
+    IL_0020:  ldc.i4.1
+    IL_0021:  ret
+
+    IL_0022:  ldc.i4.0
+    IL_0023:  ret
+  } // end of method Switch::SparseIntegerSwitch3
 
   .method public hidebysig static string 
           SwitchOverNullableInt(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
@@ -651,6 +754,35 @@
     IL_0074:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0079:  ret
   } // end of method Switch::SwitchOverInt
+
+  .method public hidebysig static void  CompactSwitchOverInt(int32 i) cil managed
+  {
+    // Code size       55 (0x37)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.2
+    IL_0002:  ble.un.s   IL_000a
+
+    IL_0004:  ldarg.0
+    IL_0005:  ldc.i4.3
+    IL_0006:  beq.s      IL_0016
+
+    IL_0008:  br.s       IL_0022
+
+    IL_000a:  ldstr      "012"
+    IL_000f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0014:  br.s       IL_002c
+
+    IL_0016:  ldstr      "3"
+    IL_001b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0020:  br.s       IL_002c
+
+    IL_0022:  ldstr      "default"
+    IL_0027:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_002c:  ldstr      "end"
+    IL_0031:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0036:  ret
+  } // end of method Switch::CompactSwitchOverInt
 
   .method public hidebysig static string 
           ShortSwitchOverString(string text) cil managed
@@ -1203,6 +1335,353 @@
     IL_0070:  ret
   } // end of method Switch::SwitchWithGoto
 
+  .method public hidebysig static void  SwitchWithGotoString(string s) cil managed
+  {
+    // Code size       443 (0x1bb)
+    .maxstack  2
+    .locals init (uint32 V_0)
+    IL_0000:  ldstr      "SwitchWithGotoString: "
+    IL_0005:  ldarg.0
+    IL_0006:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_000b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0010:  ldarg.0
+    IL_0011:  call       uint32 '<PrivateImplementationDetails>'::ComputeStringHash(string)
+    IL_0016:  stloc.0
+    IL_0017:  ldloc.0
+    IL_0018:  ldc.i4     0x330ca589
+    IL_001d:  bgt.un.s   IL_005d
+
+    IL_001f:  ldloc.0
+    IL_0020:  ldc.i4     0x310ca263
+    IL_0025:  bgt.un.s   IL_0042
+
+    IL_0027:  ldloc.0
+    IL_0028:  ldc.i4     0x300ca0d0
+    IL_002d:  beq        IL_00ee
+
+    IL_0032:  ldloc.0
+    IL_0033:  ldc.i4     0x310ca263
+    IL_0038:  beq        IL_00dc
+
+    IL_003d:  br         IL_01a6
+
+    IL_0042:  ldloc.0
+    IL_0043:  ldc.i4     0x320ca3f6
+    IL_0048:  beq        IL_0112
+
+    IL_004d:  ldloc.0
+    IL_004e:  ldc.i4     0x330ca589
+    IL_0053:  beq        IL_0100
+
+    IL_0058:  br         IL_01a6
+
+    IL_005d:  ldloc.0
+    IL_005e:  ldc.i4     0x360caa42
+    IL_0063:  bgt.un.s   IL_007a
+
+    IL_0065:  ldloc.0
+    IL_0066:  ldc.i4     0x340ca71c
+    IL_006b:  beq.s      IL_009d
+
+    IL_006d:  ldloc.0
+    IL_006e:  ldc.i4     0x360caa42
+    IL_0073:  beq.s      IL_00c7
+
+    IL_0075:  br         IL_01a6
+
+    IL_007a:  ldloc.0
+    IL_007b:  ldc.i4     0x370cabd5
+    IL_0080:  beq.s      IL_00b2
+
+    IL_0082:  ldloc.0
+    IL_0083:  ldc.i4     0x3c0cb3b4
+    IL_0088:  beq        IL_0133
+
+    IL_008d:  ldloc.0
+    IL_008e:  ldc.i4     0x3d0cb547
+    IL_0093:  beq        IL_0124
+
+    IL_0098:  br         IL_01a6
+
+    IL_009d:  ldarg.0
+    IL_009e:  ldstr      "1"
+    IL_00a3:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00a8:  brtrue     IL_0142
+
+    IL_00ad:  br         IL_01a6
+
+    IL_00b2:  ldarg.0
+    IL_00b3:  ldstr      "2"
+    IL_00b8:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00bd:  brtrue     IL_014e
+
+    IL_00c2:  br         IL_01a6
+
+    IL_00c7:  ldarg.0
+    IL_00c8:  ldstr      "3"
+    IL_00cd:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00d2:  brtrue     IL_0158
+
+    IL_00d7:  br         IL_01a6
+
+    IL_00dc:  ldarg.0
+    IL_00dd:  ldstr      "4"
+    IL_00e2:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00e7:  brtrue.s   IL_0164
+
+    IL_00e9:  br         IL_01a6
+
+    IL_00ee:  ldarg.0
+    IL_00ef:  ldstr      "5"
+    IL_00f4:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00f9:  brtrue.s   IL_016f
+
+    IL_00fb:  br         IL_01a6
+
+    IL_0100:  ldarg.0
+    IL_0101:  ldstr      "6"
+    IL_0106:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_010b:  brtrue.s   IL_017a
+
+    IL_010d:  br         IL_01a6
+
+    IL_0112:  ldarg.0
+    IL_0113:  ldstr      "7"
+    IL_0118:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_011d:  brtrue.s   IL_0185
+
+    IL_011f:  br         IL_01a6
+
+    IL_0124:  ldarg.0
+    IL_0125:  ldstr      "8"
+    IL_012a:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_012f:  brtrue.s   IL_0190
+
+    IL_0131:  br.s       IL_01a6
+
+    IL_0133:  ldarg.0
+    IL_0134:  ldstr      "9"
+    IL_0139:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_013e:  brtrue.s   IL_019b
+
+    IL_0140:  br.s       IL_01a6
+
+    IL_0142:  ldstr      "one"
+    IL_0147:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_014c:  br.s       IL_01a6
+
+    IL_014e:  ldstr      "two"
+    IL_0153:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0158:  ldstr      "three"
+    IL_015d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0162:  br.s       IL_01b0
+
+    IL_0164:  ldstr      "four"
+    IL_0169:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_016e:  ret
+
+    IL_016f:  ldstr      "five"
+    IL_0174:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0179:  ret
+
+    IL_017a:  ldstr      "six"
+    IL_017f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0184:  ret
+
+    IL_0185:  ldstr      "seven"
+    IL_018a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_018f:  ret
+
+    IL_0190:  ldstr      "eight"
+    IL_0195:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_019a:  ret
+
+    IL_019b:  ldstr      "nine"
+    IL_01a0:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_01a5:  ret
+
+    IL_01a6:  ldstr      "default"
+    IL_01ab:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_01b0:  ldstr      "End of method"
+    IL_01b5:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_01ba:  ret
+  } // end of method Switch::SwitchWithGotoString
+
+  .method public hidebysig static void  SwitchWithGotoComplex(string s) cil managed
+  {
+    // Code size       387 (0x183)
+    .maxstack  2
+    .locals init (uint32 V_0)
+    IL_0000:  ldstr      "SwitchWithGotoComplex: "
+    IL_0005:  ldarg.0
+    IL_0006:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_000b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0010:  ldarg.0
+    IL_0011:  call       uint32 '<PrivateImplementationDetails>'::ComputeStringHash(string)
+    IL_0016:  stloc.0
+    IL_0017:  ldloc.0
+    IL_0018:  ldc.i4     0x330ca589
+    IL_001d:  bgt.un.s   IL_005d
+
+    IL_001f:  ldloc.0
+    IL_0020:  ldc.i4     0x310ca263
+    IL_0025:  bgt.un.s   IL_0042
+
+    IL_0027:  ldloc.0
+    IL_0028:  ldc.i4     0x300ca0d0
+    IL_002d:  beq        IL_00d7
+
+    IL_0032:  ldloc.0
+    IL_0033:  ldc.i4     0x310ca263
+    IL_0038:  beq        IL_00c5
+
+    IL_003d:  br         IL_016e
+
+    IL_0042:  ldloc.0
+    IL_0043:  ldc.i4     0x320ca3f6
+    IL_0048:  beq        IL_0107
+
+    IL_004d:  ldloc.0
+    IL_004e:  ldc.i4     0x330ca589
+    IL_0053:  beq        IL_00e9
+
+    IL_0058:  br         IL_016e
+
+    IL_005d:  ldloc.0
+    IL_005e:  ldc.i4     0x360caa42
+    IL_0063:  bgt.un.s   IL_007a
+
+    IL_0065:  ldloc.0
+    IL_0066:  ldc.i4     0x340ca71c
+    IL_006b:  beq.s      IL_008f
+
+    IL_006d:  ldloc.0
+    IL_006e:  ldc.i4     0x360caa42
+    IL_0073:  beq.s      IL_00b3
+
+    IL_0075:  br         IL_016e
+
+    IL_007a:  ldloc.0
+    IL_007b:  ldc.i4     0x370cabd5
+    IL_0080:  beq.s      IL_00a1
+
+    IL_0082:  ldloc.0
+    IL_0083:  ldc.i4     0x3d0cb547
+    IL_0088:  beq.s      IL_00f8
+
+    IL_008a:  br         IL_016e
+
+    IL_008f:  ldarg.0
+    IL_0090:  ldstr      "1"
+    IL_0095:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_009a:  brtrue.s   IL_0116
+
+    IL_009c:  br         IL_016e
+
+    IL_00a1:  ldarg.0
+    IL_00a2:  ldstr      "2"
+    IL_00a7:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00ac:  brtrue.s   IL_0122
+
+    IL_00ae:  br         IL_016e
+
+    IL_00b3:  ldarg.0
+    IL_00b4:  ldstr      "3"
+    IL_00b9:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00be:  brtrue.s   IL_012c
+
+    IL_00c0:  br         IL_016e
+
+    IL_00c5:  ldarg.0
+    IL_00c6:  ldstr      "4"
+    IL_00cb:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00d0:  brtrue.s   IL_0141
+
+    IL_00d2:  br         IL_016e
+
+    IL_00d7:  ldarg.0
+    IL_00d8:  ldstr      "5"
+    IL_00dd:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00e2:  brtrue.s   IL_014b
+
+    IL_00e4:  br         IL_016e
+
+    IL_00e9:  ldarg.0
+    IL_00ea:  ldstr      "6"
+    IL_00ef:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_00f4:  brtrue.s   IL_0157
+
+    IL_00f6:  br.s       IL_016e
+
+    IL_00f8:  ldarg.0
+    IL_00f9:  ldstr      "8"
+    IL_00fe:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0103:  brtrue.s   IL_0163
+
+    IL_0105:  br.s       IL_016e
+
+    IL_0107:  ldarg.0
+    IL_0108:  ldstr      "7"
+    IL_010d:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0112:  brtrue.s   IL_0178
+
+    IL_0114:  br.s       IL_016e
+
+    IL_0116:  ldstr      "one"
+    IL_011b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0120:  br.s       IL_0163
+
+    IL_0122:  ldstr      "two"
+    IL_0127:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_012c:  ldstr      "three"
+    IL_0131:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0136:  ldarg.0
+    IL_0137:  callvirt   instance int32 [mscorlib]System.String::get_Length()
+    IL_013c:  ldc.i4.2
+    IL_013d:  beq.s      IL_014b
+
+    IL_013f:  br.s       IL_0178
+
+    IL_0141:  ldstr      "four"
+    IL_0146:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_014b:  ldstr      "five"
+    IL_0150:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0155:  br.s       IL_0163
+
+    IL_0157:  ldstr      "six"
+    IL_015c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0161:  br.s       IL_014b
+
+    IL_0163:  ldstr      "eight"
+    IL_0168:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_016d:  ret
+
+    IL_016e:  ldstr      "default"
+    IL_0173:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0178:  ldstr      "End of method"
+    IL_017d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0182:  ret
+  } // end of method Switch::SwitchWithGotoComplex
+
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] 
           GetProperties() cil managed
   {
@@ -1448,6 +1927,1060 @@
     IL_006d:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0072:  ret
   } // end of method Switch::SwitchWithArray
+
+  .method public hidebysig static void  SwitchWithContinue1(int32 i,
+                                                            bool b) cil managed
+  {
+    // Code size       35 (0x23)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  switch     ( 
+                          IL_0014,
+                          IL_0000,
+                          IL_0019)
+    IL_0012:  br.s       IL_001c
+
+    IL_0014:  ldarg.1
+    IL_0015:  brfalse.s  IL_001c
+
+    IL_0017:  br.s       IL_0000
+
+    IL_0019:  ldarg.1
+    IL_001a:  brfalse.s  IL_0000
+
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0021:  br.s       IL_0000
+  } // end of method Switch::SwitchWithContinue1
+
+  .method public hidebysig static void  SwitchWithContinue2(int32 i,
+                                                            bool b) cil managed
+  {
+    // Code size       110 (0x6e)
+    .maxstack  2
+    IL_0000:  br.s       IL_0068
+
+    IL_0002:  ldarg.0
+    IL_0003:  switch     ( 
+                          IL_001a,
+                          IL_0068,
+                          IL_0035,
+                          IL_0059)
+    IL_0018:  br.s       IL_004f
+
+    IL_001a:  ldarg.1
+    IL_001b:  brfalse.s  IL_0029
+
+    IL_001d:  ldstr      "0b"
+    IL_0022:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0027:  br.s       IL_0068
+
+    IL_0029:  ldstr      "0!b"
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0033:  br.s       IL_0059
+
+    IL_0035:  ldarg.1
+    IL_0036:  brfalse.s  IL_0043
+
+    IL_0038:  ldstr      "2b"
+    IL_003d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0042:  ret
+
+    IL_0043:  ldstr      "2!b"
+    IL_0048:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004d:  br.s       IL_0068
+
+    IL_004f:  ldstr      "default"
+    IL_0054:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0059:  ldstr      "loop-tail"
+    IL_005e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0063:  ldarg.0
+    IL_0064:  ldc.i4.1
+    IL_0065:  add
+    IL_0066:  starg.s    i
+    IL_0068:  ldarg.0
+    IL_0069:  ldc.i4.s   10
+    IL_006b:  blt.s      IL_0002
+
+    IL_006d:  ret
+  } // end of method Switch::SwitchWithContinue2
+
+  .method public hidebysig static void  SwitchWithContinue3(bool b) cil managed
+  {
+    // Code size       111 (0x6f)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0069
+
+    IL_0004:  ldloc.0
+    IL_0005:  switch     ( 
+                          IL_001c,
+                          IL_0065,
+                          IL_0037,
+                          IL_005b)
+    IL_001a:  br.s       IL_0051
+
+    IL_001c:  ldarg.0
+    IL_001d:  brfalse.s  IL_002b
+
+    IL_001f:  ldstr      "0b"
+    IL_0024:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0029:  br.s       IL_0065
+
+    IL_002b:  ldstr      "0!b"
+    IL_0030:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0035:  br.s       IL_005b
+
+    IL_0037:  ldarg.0
+    IL_0038:  brfalse.s  IL_0045
+
+    IL_003a:  ldstr      "2b"
+    IL_003f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0044:  ret
+
+    IL_0045:  ldstr      "2!b"
+    IL_004a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004f:  br.s       IL_0065
+
+    IL_0051:  ldstr      "default"
+    IL_0056:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005b:  ldstr      "loop-tail"
+    IL_0060:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0065:  ldloc.0
+    IL_0066:  ldc.i4.1
+    IL_0067:  add
+    IL_0068:  stloc.0
+    IL_0069:  ldloc.0
+    IL_006a:  ldc.i4.s   10
+    IL_006c:  blt.s      IL_0004
+
+    IL_006e:  ret
+  } // end of method Switch::SwitchWithContinue3
+
+  .method public hidebysig static void  SwitchWithContinue4(bool b) cil managed
+  {
+    // Code size       188 (0xbc)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<int32> V_0,
+             int32 V_1)
+    IL_0000:  ldc.i4.0
+    IL_0001:  ldc.i4.s   10
+    IL_0003:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<int32> [System.Core]System.Linq.Enumerable::Range(int32,
+                                                                                                                                    int32)
+    IL_0008:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<int32>::GetEnumerator()
+    IL_000d:  stloc.0
+    .try
+    {
+      IL_000e:  br         IL_00a4
+
+      IL_0013:  ldloc.0
+      IL_0014:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<int32>::get_Current()
+      IL_0019:  stloc.1
+      IL_001a:  ldstr      "loop: "
+      IL_001f:  ldloc.1
+      IL_0020:  box        [mscorlib]System.Int32
+      IL_0025:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_002a:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_002f:  ldloc.1
+      IL_0030:  ldc.i4.1
+      IL_0031:  sub
+      IL_0032:  switch     ( 
+                            IL_0059,
+                            IL_00a4,
+                            IL_005e,
+                            IL_0063,
+                            IL_006b,
+                            IL_0073,
+                            IL_0078,
+                            IL_0080)
+      IL_0057:  br.s       IL_0085
+
+      IL_0059:  ldarg.0
+      IL_005a:  brfalse.s  IL_008f
+
+      IL_005c:  br.s       IL_00a4
+
+      IL_005e:  ldarg.0
+      IL_005f:  brfalse.s  IL_00a4
+
+      IL_0061:  leave.s    IL_00bb
+
+      IL_0063:  ldc.i4.4
+      IL_0064:  call       void [mscorlib]System.Console::WriteLine(int32)
+      IL_0069:  br.s       IL_0078
+
+      IL_006b:  ldc.i4.5
+      IL_006c:  call       void [mscorlib]System.Console::WriteLine(int32)
+      IL_0071:  br.s       IL_0085
+
+      IL_0073:  ldarg.0
+      IL_0074:  brfalse.s  IL_005e
+
+      IL_0076:  br.s       IL_00a4
+
+      IL_0078:  ldloc.1
+      IL_0079:  ldc.i4.2
+      IL_007a:  rem
+      IL_007b:  brfalse.s  IL_005e
+
+      IL_007d:  ldarg.0
+      IL_007e:  brfalse.s  IL_00a4
+
+      IL_0080:  ldarg.0
+      IL_0081:  brfalse.s  IL_006b
+
+      IL_0083:  br.s       IL_00a4
+
+      IL_0085:  ldstr      "default"
+      IL_008a:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_008f:  ldstr      "break: "
+      IL_0094:  ldloc.1
+      IL_0095:  box        [mscorlib]System.Int32
+      IL_009a:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_009f:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00a4:  ldloc.0
+      IL_00a5:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_00aa:  brtrue     IL_0013
+
+      IL_00af:  leave.s    IL_00bb
+
+    }  // end .try
+    finally
+    {
+      IL_00b1:  ldloc.0
+      IL_00b2:  brfalse.s  IL_00ba
+
+      IL_00b4:  ldloc.0
+      IL_00b5:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_00ba:  endfinally
+    }  // end handler
+    IL_00bb:  ret
+  } // end of method Switch::SwitchWithContinue4
+
+  .method public hidebysig static void  SwitchWithContinue5(bool b) cil managed
+  {
+    // Code size       125 (0x7d)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0077
+
+    IL_0004:  ldloc.0
+    IL_0005:  ldc.i4.5
+    IL_0006:  bge.s      IL_0069
+
+    IL_0008:  ldloc.0
+    IL_0009:  switch     ( 
+                          IL_0020,
+                          IL_0073,
+                          IL_003b,
+                          IL_005f)
+    IL_001e:  br.s       IL_0055
+
+    IL_0020:  ldarg.0
+    IL_0021:  brfalse.s  IL_002f
+
+    IL_0023:  ldstr      "0b"
+    IL_0028:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_002d:  br.s       IL_0073
+
+    IL_002f:  ldstr      "0!b"
+    IL_0034:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0039:  br.s       IL_005f
+
+    IL_003b:  ldarg.0
+    IL_003c:  brfalse.s  IL_0049
+
+    IL_003e:  ldstr      "2b"
+    IL_0043:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0048:  ret
+
+    IL_0049:  ldstr      "2!b"
+    IL_004e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0053:  br.s       IL_0073
+
+    IL_0055:  ldstr      "default"
+    IL_005a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005f:  ldstr      "break-target"
+    IL_0064:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0069:  ldstr      "loop-tail"
+    IL_006e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0073:  ldloc.0
+    IL_0074:  ldc.i4.1
+    IL_0075:  add
+    IL_0076:  stloc.0
+    IL_0077:  ldloc.0
+    IL_0078:  ldc.i4.s   10
+    IL_007a:  blt.s      IL_0004
+
+    IL_007c:  ret
+  } // end of method Switch::SwitchWithContinue5
+
+  .method public hidebysig static void  SwitchWithContinue6(int32 i,
+                                                            bool b) cil managed
+  {
+    // Code size       108 (0x6c)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  switch     ( 
+                          IL_0018,
+                          IL_0061,
+                          IL_0033,
+                          IL_0057)
+    IL_0016:  br.s       IL_004d
+
+    IL_0018:  ldarg.1
+    IL_0019:  brtrue.s   IL_0027
+
+    IL_001b:  ldstr      "0!b"
+    IL_0020:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0025:  br.s       IL_0057
+
+    IL_0027:  ldstr      "0b"
+    IL_002c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0031:  br.s       IL_0061
+
+    IL_0033:  ldarg.1
+    IL_0034:  brfalse.s  IL_0041
+
+    IL_0036:  ldstr      "2b"
+    IL_003b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0040:  ret
+
+    IL_0041:  ldstr      "2!b"
+    IL_0046:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004b:  br.s       IL_0061
+
+    IL_004d:  ldstr      "default"
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0057:  ldstr      "loop-tail"
+    IL_005c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0061:  ldarg.0
+    IL_0062:  ldc.i4.1
+    IL_0063:  add
+    IL_0064:  dup
+    IL_0065:  starg.s    i
+    IL_0067:  ldc.i4.s   10
+    IL_0069:  blt.s      IL_0000
+
+    IL_006b:  ret
+  } // end of method Switch::SwitchWithContinue6
+
+  .method public hidebysig static void  SwitchWithContinue7() cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0025
+
+    IL_0004:  ldstr      "loop-head"
+    IL_0009:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000e:  ldloc.0
+    IL_000f:  brfalse.s  IL_0021
+
+    IL_0011:  ldloc.0
+    IL_0012:  ldc.i4.1
+    IL_0013:  beq.s      IL_0029
+
+    IL_0015:  ldstr      "default"
+    IL_001a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001f:  br.s       IL_0029
+
+    IL_0021:  ldloc.0
+    IL_0022:  ldc.i4.1
+    IL_0023:  sub
+    IL_0024:  stloc.0
+    IL_0025:  ldloc.0
+    IL_0026:  ldc.i4.0
+    IL_0027:  bge.s      IL_0004
+
+    IL_0029:  ldstr      "end"
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0033:  ret
+  } // end of method Switch::SwitchWithContinue7
+
+  .method public hidebysig static void  SwitchWithContinueInDoubleLoop() cil managed
+  {
+    // Code size       101 (0x65)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1,
+             int32 V_2,
+             int32 V_3)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.1
+    IL_0004:  br.s       IL_0059
+
+    IL_0006:  ldc.i4.0
+    IL_0007:  stloc.2
+    IL_0008:  br.s       IL_0050
+
+    IL_000a:  ldloc.1
+    IL_000b:  ldloc.2
+    IL_000c:  add
+    IL_000d:  stloc.3
+    IL_000e:  ldloc.3
+    IL_000f:  ldc.i4.s   11
+    IL_0011:  bgt.s      IL_003e
+
+    IL_0013:  ldloc.3
+    IL_0014:  ldc.i4.1
+    IL_0015:  sub
+    IL_0016:  switch     ( 
+                          IL_0048,
+                          IL_004c,
+                          IL_0048,
+                          IL_004c,
+                          IL_0048,
+                          IL_004c,
+                          IL_0048)
+    IL_0037:  ldloc.3
+    IL_0038:  ldc.i4.s   11
+    IL_003a:  beq.s      IL_0048
+
+    IL_003c:  br.s       IL_004c
+
+    IL_003e:  ldloc.3
+    IL_003f:  ldc.i4.s   13
+    IL_0041:  beq.s      IL_0048
+
+    IL_0043:  ldloc.3
+    IL_0044:  ldc.i4.s   17
+    IL_0046:  bne.un.s   IL_004c
+
+    IL_0048:  ldc.i4.1
+    IL_0049:  stloc.0
+    IL_004a:  br.s       IL_0055
+
+    IL_004c:  ldloc.2
+    IL_004d:  ldc.i4.1
+    IL_004e:  add
+    IL_004f:  stloc.2
+    IL_0050:  ldloc.2
+    IL_0051:  ldc.i4.s   10
+    IL_0053:  blt.s      IL_000a
+
+    IL_0055:  ldloc.1
+    IL_0056:  ldc.i4.1
+    IL_0057:  add
+    IL_0058:  stloc.1
+    IL_0059:  ldloc.1
+    IL_005a:  ldc.i4.s   10
+    IL_005c:  blt.s      IL_0006
+
+    IL_005e:  ldloc.0
+    IL_005f:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0064:  ret
+  } // end of method Switch::SwitchWithContinueInDoubleLoop
+
+  .method public hidebysig static void  SwitchLoopNesting() cil managed
+  {
+    // Code size       92 (0x5c)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0056
+
+    IL_0004:  ldloc.0
+    IL_0005:  brfalse.s  IL_000d
+
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.1
+    IL_0009:  beq.s      IL_0015
+
+    IL_000b:  br.s       IL_001d
+
+    IL_000d:  ldc.i4.0
+    IL_000e:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0013:  br.s       IL_0038
+
+    IL_0015:  ldc.i4.1
+    IL_0016:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001b:  br.s       IL_0038
+
+    IL_001d:  ldloc.0
+    IL_001e:  ldc.i4.2
+    IL_001f:  rem
+    IL_0020:  brtrue.s   IL_0033
+
+    IL_0022:  br.s       IL_002e
+
+    IL_0024:  ldloc.0
+    IL_0025:  dup
+    IL_0026:  ldc.i4.1
+    IL_0027:  add
+    IL_0028:  stloc.0
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002e:  ldloc.0
+    IL_002f:  ldc.i4.3
+    IL_0030:  rem
+    IL_0031:  brtrue.s   IL_0024
+
+    IL_0033:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0038:  ldloc.0
+    IL_0039:  ldc.i4.4
+    IL_003a:  ble.s      IL_0048
+
+    IL_003c:  ldstr      "high"
+    IL_0041:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0046:  br.s       IL_0052
+
+    IL_0048:  ldstr      "low"
+    IL_004d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0052:  ldloc.0
+    IL_0053:  ldc.i4.1
+    IL_0054:  add
+    IL_0055:  stloc.0
+    IL_0056:  ldloc.0
+    IL_0057:  ldc.i4.s   10
+    IL_0059:  blt.s      IL_0004
+
+    IL_005b:  ret
+  } // end of method Switch::SwitchLoopNesting
+
+  .method public hidebysig static void  SingleIf1(int32 i,
+                                                  bool a) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.1
+    IL_0002:  beq.s      IL_000c
+
+    IL_0004:  ldarg.0
+    IL_0005:  ldc.i4.2
+    IL_0006:  ceq
+    IL_0008:  ldarg.1
+    IL_0009:  and
+    IL_000a:  brfalse.s  IL_0012
+
+    IL_000c:  ldc.i4.1
+    IL_000d:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0012:  ldc.i4.2
+    IL_0013:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0018:  ret
+  } // end of method Switch::SingleIf1
+
+  .method public hidebysig static void  SingleIf2(int32 i,
+                                                  bool a,
+                                                  bool b) cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.1
+    IL_0002:  beq.s      IL_0014
+
+    IL_0004:  ldarg.0
+    IL_0005:  ldc.i4.2
+    IL_0006:  ceq
+    IL_0008:  ldarg.1
+    IL_0009:  and
+    IL_000a:  brtrue.s   IL_0014
+
+    IL_000c:  ldarg.0
+    IL_000d:  ldc.i4.3
+    IL_000e:  ceq
+    IL_0010:  ldarg.2
+    IL_0011:  and
+    IL_0012:  brfalse.s  IL_001a
+
+    IL_0014:  ldc.i4.1
+    IL_0015:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001a:  ldc.i4.2
+    IL_001b:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0020:  ret
+  } // end of method Switch::SingleIf2
+
+  .method public hidebysig static void  SingleIf3(int32 i,
+                                                  bool a,
+                                                  bool b) cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  brtrue.s   IL_000f
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  beq.s      IL_000f
+
+    IL_0007:  ldarg.0
+    IL_0008:  ldc.i4.2
+    IL_0009:  ceq
+    IL_000b:  ldarg.2
+    IL_000c:  and
+    IL_000d:  brfalse.s  IL_0015
+
+    IL_000f:  ldc.i4.1
+    IL_0010:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0015:  ldc.i4.2
+    IL_0016:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001b:  ret
+  } // end of method Switch::SingleIf3
+
+  .method public hidebysig static void  SingleIf4(int32 i,
+                                                  bool a) cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.1
+    IL_0002:  beq.s      IL_0017
+
+    IL_0004:  ldarg.0
+    IL_0005:  ldc.i4.2
+    IL_0006:  beq.s      IL_0017
+
+    IL_0008:  ldarg.0
+    IL_0009:  ldc.i4.3
+    IL_000a:  ceq
+    IL_000c:  ldc.i4.0
+    IL_000d:  ceq
+    IL_000f:  ldarg.1
+    IL_0010:  and
+    IL_0011:  brtrue.s   IL_0017
+
+    IL_0013:  ldarg.0
+    IL_0014:  ldc.i4.4
+    IL_0015:  beq.s      IL_001d
+
+    IL_0017:  ldc.i4.1
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001d:  ldc.i4.2
+    IL_001e:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0023:  ret
+  } // end of method Switch::SingleIf4
+
+  .method public hidebysig static void  NestedIf(int32 i) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.1
+    IL_0002:  beq.s      IL_0018
+
+    IL_0004:  ldarg.0
+    IL_0005:  ldc.i4.2
+    IL_0006:  bne.un.s   IL_000e
+
+    IL_0008:  ldc.i4.2
+    IL_0009:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_000e:  ldstr      "default"
+    IL_0013:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine()
+    IL_001d:  ret
+  } // end of method Switch::NestedIf
+
+  .method public hidebysig static void  IfChainWithCondition(int32 i) cil managed
+  {
+    // Code size       98 (0x62)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  brtrue.s   IL_000b
+
+    IL_0003:  ldc.i4.0
+    IL_0004:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0009:  br.s       IL_005c
+
+    IL_000b:  ldarg.0
+    IL_000c:  ldc.i4.1
+    IL_000d:  bne.un.s   IL_0017
+
+    IL_000f:  ldc.i4.1
+    IL_0010:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0015:  br.s       IL_005c
+
+    IL_0017:  ldarg.0
+    IL_0018:  ldc.i4.2
+    IL_0019:  bne.un.s   IL_0023
+
+    IL_001b:  ldc.i4.2
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0021:  br.s       IL_005c
+
+    IL_0023:  ldarg.0
+    IL_0024:  ldc.i4.3
+    IL_0025:  bne.un.s   IL_002f
+
+    IL_0027:  ldc.i4.3
+    IL_0028:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002d:  br.s       IL_005c
+
+    IL_002f:  ldarg.0
+    IL_0030:  ldc.i4.4
+    IL_0031:  bne.un.s   IL_003b
+
+    IL_0033:  ldc.i4.4
+    IL_0034:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0039:  br.s       IL_005c
+
+    IL_003b:  ldarg.0
+    IL_003c:  ldc.i4.5
+    IL_003d:  bne.un.s   IL_0052
+
+    IL_003f:  call       bool [mscorlib]System.Console::get_CapsLock()
+    IL_0044:  brfalse.s  IL_0052
+
+    IL_0046:  ldstr      "5A"
+    IL_004b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0050:  br.s       IL_005c
+
+    IL_0052:  ldstr      "default"
+    IL_0057:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0061:  ret
+  } // end of method Switch::IfChainWithCondition
+
+  .method public hidebysig static bool  SwitchlikeIf(int32 i,
+                                                     int32 j) cil managed
+  {
+    // Code size       148 (0x94)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  brfalse.s  IL_0050
+
+    IL_0003:  ldarg.1
+    IL_0004:  brfalse.s  IL_0050
+
+    IL_0006:  ldarg.0
+    IL_0007:  ldc.i4.m1
+    IL_0008:  bne.un.s   IL_0018
+
+    IL_000a:  ldarg.1
+    IL_000b:  ldc.i4.m1
+    IL_000c:  bne.un.s   IL_0018
+
+    IL_000e:  ldstr      "-1, -1"
+    IL_0013:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0018:  ldarg.0
+    IL_0019:  ldc.i4.m1
+    IL_001a:  bne.un.s   IL_002a
+
+    IL_001c:  ldarg.1
+    IL_001d:  ldc.i4.1
+    IL_001e:  bne.un.s   IL_002a
+
+    IL_0020:  ldstr      "-1, 1"
+    IL_0025:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_002a:  ldarg.0
+    IL_002b:  ldc.i4.1
+    IL_002c:  bne.un.s   IL_003c
+
+    IL_002e:  ldarg.1
+    IL_002f:  ldc.i4.m1
+    IL_0030:  bne.un.s   IL_003c
+
+    IL_0032:  ldstr      "1, -1"
+    IL_0037:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_003c:  ldarg.0
+    IL_003d:  ldc.i4.1
+    IL_003e:  bne.un.s   IL_004e
+
+    IL_0040:  ldarg.1
+    IL_0041:  ldc.i4.1
+    IL_0042:  bne.un.s   IL_004e
+
+    IL_0044:  ldstr      "1, 1"
+    IL_0049:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004e:  ldc.i4.0
+    IL_004f:  ret
+
+    IL_0050:  ldarg.0
+    IL_0051:  brfalse.s  IL_0071
+
+    IL_0053:  ldarg.0
+    IL_0054:  ldc.i4.m1
+    IL_0055:  bne.un.s   IL_0061
+
+    IL_0057:  ldstr      "-1, 0"
+    IL_005c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0061:  ldarg.0
+    IL_0062:  ldc.i4.1
+    IL_0063:  bne.un.s   IL_006f
+
+    IL_0065:  ldstr      "1, 0"
+    IL_006a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_006f:  ldc.i4.0
+    IL_0070:  ret
+
+    IL_0071:  ldarg.1
+    IL_0072:  brfalse.s  IL_0092
+
+    IL_0074:  ldarg.1
+    IL_0075:  ldc.i4.m1
+    IL_0076:  bne.un.s   IL_0082
+
+    IL_0078:  ldstr      "0, -1"
+    IL_007d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0082:  ldarg.1
+    IL_0083:  ldc.i4.1
+    IL_0084:  bne.un.s   IL_0090
+
+    IL_0086:  ldstr      "0, 1"
+    IL_008b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0090:  ldc.i4.0
+    IL_0091:  ret
+
+    IL_0092:  ldc.i4.1
+    IL_0093:  ret
+  } // end of method Switch::SwitchlikeIf
+
+  .method public hidebysig static bool  SwitchlikeIf2(int32 i) cil managed
+  {
+    // Code size       37 (0x25)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  brfalse.s  IL_0023
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  bne.un.s   IL_000d
+
+    IL_0007:  ldc.i4.1
+    IL_0008:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_000d:  ldarg.0
+    IL_000e:  ldc.i4.2
+    IL_000f:  bne.un.s   IL_0017
+
+    IL_0011:  ldc.i4.2
+    IL_0012:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0017:  ldarg.0
+    IL_0018:  ldc.i4.3
+    IL_0019:  bne.un.s   IL_0021
+
+    IL_001b:  ldc.i4.3
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0021:  ldc.i4.0
+    IL_0022:  ret
+
+    IL_0023:  ldc.i4.0
+    IL_0024:  ret
+  } // end of method Switch::SwitchlikeIf2
+
+  .method public hidebysig static void  SingleIntervalIf(char c) cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.s   65
+    IL_0003:  blt.s      IL_0014
+
+    IL_0005:  ldarg.0
+    IL_0006:  ldc.i4.s   90
+    IL_0008:  bgt.s      IL_0014
+
+    IL_000a:  ldstr      "alphabet"
+    IL_000f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0014:  ldstr      "end"
+    IL_0019:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001e:  ret
+  } // end of method Switch::SingleIntervalIf
+
+  .method public hidebysig static bool  Loop8(char c,
+                                              bool b,
+                                              class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       35 (0x23)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  brfalse.s  IL_0021
+
+    IL_0003:  br.s       IL_000d
+
+    IL_0005:  ldarg.2
+    IL_0006:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_000b:  starg.s    c
+    IL_000d:  ldarg.0
+    IL_000e:  ldc.i4.s   97
+    IL_0010:  blt.s      IL_0017
+
+    IL_0012:  ldarg.0
+    IL_0013:  ldc.i4.s   122
+    IL_0015:  ble.s      IL_0005
+
+    IL_0017:  ldarg.0
+    IL_0018:  ldc.i4.s   65
+    IL_001a:  blt.s      IL_0021
+
+    IL_001c:  ldarg.0
+    IL_001d:  ldc.i4.s   90
+    IL_001f:  ble.s      IL_0005
+
+    IL_0021:  ldc.i4.1
+    IL_0022:  ret
+  } // end of method Switch::Loop8
+
+  .method public hidebysig static void  Loop9(class [mscorlib]System.Func`1<char> getChar) cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  2
+    .locals init (char V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  callvirt   instance !0 class [mscorlib]System.Func`1<char>::Invoke()
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.m1
+    IL_0009:  beq.s      IL_0020
+
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.s   10
+    IL_000e:  beq.s      IL_0020
+
+    IL_0010:  ldloc.0
+    IL_0011:  ldc.i4     0x2028
+    IL_0016:  beq.s      IL_0020
+
+    IL_0018:  ldloc.0
+    IL_0019:  ldc.i4     0x2029
+    IL_001e:  bne.un.s   IL_0000
+
+    IL_0020:  ret
+  } // end of method Switch::Loop9
+
+  .method public hidebysig static void  SwitchWithBreakCase(int32 i,
+                                                            bool b) cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  brfalse.s  IL_0029
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  beq.s      IL_000d
+
+    IL_0007:  ldarg.0
+    IL_0008:  ldc.i4.2
+    IL_0009:  beq.s      IL_001f
+
+    IL_000b:  br.s       IL_0015
+
+    IL_000d:  ldc.i4.1
+    IL_000e:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0013:  br.s       IL_001f
+
+    IL_0015:  ldstr      "default"
+    IL_001a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001f:  ldstr      "b"
+    IL_0024:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0029:  ldstr      "end"
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0033:  ret
+  } // end of method Switch::SwitchWithBreakCase
+
+  .method public hidebysig static void  SwitchWithReturnAndBreak(int32 i,
+                                                                 bool b) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  brfalse.s  IL_0009
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  beq.s      IL_000d
+
+    IL_0007:  br.s       IL_0011
+
+    IL_0009:  ldarg.1
+    IL_000a:  brfalse.s  IL_0011
+
+    IL_000c:  ret
+
+    IL_000d:  ldarg.1
+    IL_000e:  brtrue.s   IL_0011
+
+    IL_0010:  ret
+
+    IL_0011:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0016:  ret
+  } // end of method Switch::SwitchWithReturnAndBreak
+
+  .method public hidebysig static int32  SwitchWithReturnAndBreak2(int32 i,
+                                                                   bool b) cil managed
+  {
+    // Code size       77 (0x4d)
+    .maxstack  2
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4     0x14e
+    IL_0006:  bgt.s      IL_001b
+
+    IL_0008:  ldarg.0
+    IL_0009:  ldc.i4.4
+    IL_000a:  beq.s      IL_0035
+
+    IL_000c:  ldarg.0
+    IL_000d:  ldc.i4.s   33
+    IL_000f:  beq.s      IL_0035
+
+    IL_0011:  ldarg.0
+    IL_0012:  ldc.i4     0x14e
+    IL_0017:  beq.s      IL_003c
+
+    IL_0019:  br.s       IL_0046
+
+    IL_001b:  ldarg.0
+    IL_001c:  ldc.i4     0x18b
+    IL_0021:  beq.s      IL_0041
+
+    IL_0023:  ldarg.0
+    IL_0024:  ldc.i4     0x19a
+    IL_0029:  beq.s      IL_0041
+
+    IL_002b:  ldarg.0
+    IL_002c:  ldc.i4     0x1c7
+    IL_0031:  beq.s      IL_0041
+
+    IL_0033:  br.s       IL_0046
+
+    IL_0035:  call       void [mscorlib]System.Console::WriteLine()
+    IL_003a:  ldc.i4.1
+    IL_003b:  ret
+
+    IL_003c:  ldarg.1
+    IL_003d:  brfalse.s  IL_0046
+
+    IL_003f:  ldc.i4.2
+    IL_0040:  ret
+
+    IL_0041:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0046:  call       void [mscorlib]System.Console::WriteLine()
+    IL_004b:  ldc.i4.0
+    IL_004c:  ret
+  } // end of method Switch::SwitchWithReturnAndBreak2
+
+  .method public hidebysig static void  SwitchWithReturnAndBreak3(int32 i) cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  brfalse.s  IL_0008
+
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.1
+    IL_0005:  beq.s      IL_0010
+
+    IL_0007:  ret
+
+    IL_0008:  ldc.i4.0
+    IL_0009:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_000e:  br.s       IL_0016
+
+    IL_0010:  ldc.i4.1
+    IL_0011:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0016:  call       void [mscorlib]System.Console::WriteLine()
+    IL_001b:  ret
+  } // end of method Switch::SwitchWithReturnAndBreak3
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
 

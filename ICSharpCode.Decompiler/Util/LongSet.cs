@@ -203,6 +203,9 @@ namespace ICSharpCode.Decompiler.Util
 		/// </summary>
 		public LongSet AddOffset(long val)
 		{
+			if (val == 0) {
+				return this;
+			}
 			var newIntervals = new List<LongInterval>(Intervals.Length + 1);
 			foreach (var element in Intervals) {
 				long newStart = unchecked(element.Start + val);

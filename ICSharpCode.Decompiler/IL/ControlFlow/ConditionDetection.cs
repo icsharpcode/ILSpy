@@ -47,7 +47,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private BlockTransformContext context;
 		private ControlFlowNode cfgNode;
 		private BlockContainer currentContainer;
-		private Block continueBlock;
 
 		/// <summary>
 		/// Builds structured control flow for the block associated with the control flow node.
@@ -60,9 +59,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			this.context = context;
 			currentContainer = (BlockContainer)block.Parent;
-
-			// for detection of continue statements
-			continueBlock = GuessContinueBlock();
 
 			// We only embed blocks into this block if they aren't referenced anywhere else,
 			// so those blocks are dominated by this block.
@@ -339,6 +335,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			       && ThenInstIsSingleExit(elseIfInst);
 		}
 
+		private void InvertIf(Block block, IfInstruction ifInst) => InvertIf(block, ifInst, context);
+
 		/// <summary>
 		///   if (cond) { then... }
 		///   else...;
@@ -349,7 +347,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Assumes ifInst does not have an else block
 		/// </summary>
-		private void InvertIf(Block block, IfInstruction ifInst)
+		internal static void InvertIf(Block block, IfInstruction ifInst, ILTransformContext context)
 		{
 			Debug.Assert(ifInst.Parent == block);
 			
@@ -488,7 +486,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// breaks have highest priority in a switch
 					if ((keyword1 == Keyword.Break) != (keyword2 == Keyword.Break))
 						return keyword1 == Keyword.Break ? 1 : -1;
-
 				} else {
 					// breaks have lowest priority
 					if ((keyword1 == Keyword.Break) != (keyword2 == Keyword.Break))
@@ -537,7 +534,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			keyword = Keyword.Other;
 			switch (exitInst) {
 				case Branch branch:
-					if (branch.TargetBlock == continueBlock) {
+					if (IsContinueBlock(branch.TargetContainer, branch.TargetBlock)) {
 						keyword = Keyword.Continue;
 						return true;
 					}
@@ -599,19 +596,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Used to identify branches targetting this block as continue statements, for ordering priority.
 		/// </summary>
 		/// <returns></returns>
-		private Block GuessContinueBlock()
+		private static bool IsContinueBlock(BlockContainer container, Block block)
 		{
-			if (currentContainer.Kind != ContainerKind.Loop)
-				return null;
+			if (container.Kind != ContainerKind.Loop)
+				return false;
 
-			// continue blocks have exactly 2 incoming edges
-			if (currentContainer.EntryPoint.IncomingEdgeCount == 2) {
-				var forIncrement = HighLevelLoopTransform.GetIncrementBlock(currentContainer, currentContainer.EntryPoint);
+			// increment blocks have exactly 2 incoming edges
+			if (container.EntryPoint.IncomingEdgeCount == 2) {
+				var forIncrement = HighLevelLoopTransform.GetIncrementBlock(container, container.EntryPoint);
 				if (forIncrement != null)
-					return forIncrement;
+					return block == forIncrement;
 			}
 
-			return currentContainer.EntryPoint;
+			return block == container.EntryPoint;
 		}
 
 		/// <summary>
