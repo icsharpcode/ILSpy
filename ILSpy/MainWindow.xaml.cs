@@ -773,7 +773,7 @@ namespace ICSharpCode.ILSpy
 		
 		void DecompileSelectedNodes(DecompilerTextViewState state = null, bool recordHistory = true)
 		{
-			if (ignoreDecompilationRequests)
+			if (ignoreDecompilationRequests || treeView.SelectedItems.Count == 0)
 				return;
 			
 			if (recordHistory) {
