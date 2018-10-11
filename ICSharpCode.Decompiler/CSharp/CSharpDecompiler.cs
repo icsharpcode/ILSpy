@@ -678,12 +678,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		/// <remarks>
 		/// Unlike Decompile(IMemberDefinition[]), this method will add namespace declarations around the type definition.
+		/// Note that decompiling types from modules other than the main module is not supported.
 		/// </remarks>
 		public SyntaxTree DecompileType(FullTypeName fullTypeName)
 		{
 			var type = typeSystem.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
 			if (type == null)
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
+			if (type.ParentModule != typeSystem.MainModule)
+				throw new NotSupportedException("Decompiling types that are not part of the main module is not supported.");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
