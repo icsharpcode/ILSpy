@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.ILSpy.Properties;
+
 namespace ICSharpCode.ILSpy.TextView
 {
-	[ExportContextMenuEntry(Header = "Copy", Category = "Editor")]
+	[ExportContextMenuEntry(Header = nameof(Resources.Copy), Category = nameof(Resources.Editor))]
 	sealed class CopyContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

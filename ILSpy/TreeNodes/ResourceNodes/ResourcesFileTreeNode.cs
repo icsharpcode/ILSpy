@@ -28,6 +28,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -110,7 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (s == null) return false;
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
-			dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
+			dlg.Filter = Resources.ResourcesFileFilter;
 			if (dlg.ShowDialog() == true) {
 				s.Position = 0;
 				switch (dlg.FilterIndex) {

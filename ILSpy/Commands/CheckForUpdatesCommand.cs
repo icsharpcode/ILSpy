@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using ICSharpCode.ILSpy.Properties;
+
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_Help", Header = "_Check for Updates", MenuOrder = 5000)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._Help),  Header = nameof(Resources._CheckUpdates),   MenuOrder = 5000)]
 	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)

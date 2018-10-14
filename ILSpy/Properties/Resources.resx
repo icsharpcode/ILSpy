@@ -1,0 +1,393 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Navigation" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Forward" xml:space="preserve">
+    <value>Forward</value>
+  </data>
+  <data name="_CheckUpdates" xml:space="preserve">
+    <value>_Check for Updates</value>
+  </data>
+  <data name="_Help" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="_File" xml:space="preserve">
+    <value>_File</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="DEBUGDisassemble" xml:space="preserve">
+    <value>DEBUG -- Disassemble All</value>
+  </data>
+  <data name="E_xit" xml:space="preserve">
+    <value>E_xit</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="_Open" xml:space="preserve">
+    <value>_Open...</value>
+  </data>
+  <data name="OpenFrom_GAC" xml:space="preserve">
+    <value>Open from _GAC...</value>
+  </data>
+  <data name="Open_List" xml:space="preserve">
+    <value>Open _List...</value>
+  </data>
+  <data name="ReloadAssemblies" xml:space="preserve">
+    <value>Reload all assemblies</value>
+  </data>
+  <data name="DEBUGDecompile" xml:space="preserve">
+    <value>DEBUG -- Decompile All</value>
+  </data>
+  <data name="DEBUGDecompile100x" xml:space="preserve">
+    <value>DEBUG -- Decompile 100x</value>
+  </data>
+  <data name="GeneratePortable" xml:space="preserve">
+    <value>Generate portable PDB</value>
+  </data>
+  <data name="RefreshCommand_ReloadAssemblies" xml:space="preserve">
+    <value>ReloadAssemblies</value>
+  </data>
+  <data name="_Reload" xml:space="preserve">
+    <value>_Reload</value>
+  </data>
+  <data name="_RemoveAssembliesWithLoadErrors" xml:space="preserve">
+    <value>_Remove Assemblies with load errors</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="_SaveCode" xml:space="preserve">
+    <value>_Save Code...</value>
+  </data>
+  <data name="_ShowDebugSteps" xml:space="preserve">
+    <value>_Show debug steps</value>
+  </data>
+  <data name="_View" xml:space="preserve">
+    <value>_View</value>
+  </data>
+  <data name="SortAssembly_listName" xml:space="preserve">
+    <value>Sort assembly _list by name</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="SortAssemblyListName" xml:space="preserve">
+    <value>Sort assembly list by name</value>
+  </data>
+  <data name="_CollapseTreeNodes" xml:space="preserve">
+    <value>_Collapse all tree nodes</value>
+  </data>
+  <data name="CollapseTreeNodes" xml:space="preserve">
+    <value>Collapse all tree nodes</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ValueString" xml:space="preserve">
+    <value>Value (as string)</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="StringTable" xml:space="preserve">
+    <value>String Table</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="VariableNamesFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>Use variable names from debug symbols, if available</value>
+  </data>
+  <data name="ShowInfoFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>Show info from debug symbols, if available</value>
+  </data>
+  <data name="ShowDocumentationDecompiledCode" xml:space="preserve">
+    <value>Show XML documentation in decompiled code</value>
+  </data>
+  <data name="EnableFoldingBlocksBraces" xml:space="preserve">
+    <value>Enable folding on all blocks in braces</value>
+  </data>
+  <data name="RemoveDeadSideEffectFreeCode" xml:space="preserve">
+    <value>Remove dead and side effect free code</value>
+  </data>
+  <data name="InsertUsingDeclarations" xml:space="preserve">
+    <value>Insert using declarations</value>
+  </data>
+  <data name="AlwaysBraces" xml:space="preserve">
+    <value>Always use braces</value>
+  </data>
+  <data name="ExpandMemberDefinitionsAfterDecompilation" xml:space="preserve">
+    <value>Expand member definitions after decompilation</value>
+  </data>
+  <data name="Font" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="OtherOptions" xml:space="preserve">
+    <value>Other options</value>
+  </data>
+  <data name="ShowLineNumbers" xml:space="preserve">
+    <value>Show line numbers</value>
+  </data>
+  <data name="ShowMetadataTokens" xml:space="preserve">
+    <value>Show metadata tokens</value>
+  </data>
+  <data name="EnableWordWrap" xml:space="preserve">
+    <value>Enable word wrap</value>
+  </data>
+  <data name="SortResultsFitness" xml:space="preserve">
+    <value>Sort results by fitness</value>
+  </data>
+  <data name="AllowMultipleInstances" xml:space="preserve">
+    <value>Allow multiple instances</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="SearchPane_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="WatermarkText" xml:space="preserve">
+    <value>Search for t:TypeName, m:Member or c:Constant; use exact match (=term), 'should not contain' (-term) or 'must contain' (+term); use /reg(ular)?Ex(pressions)?/ or both - t:/Type(Name)?/...</value>
+  </data>
+  <data name="_SearchFor" xml:space="preserve">
+    <value>_Search for:</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="Decompiling" xml:space="preserve">
+    <value>Decompiling...</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Editor" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="ToggleFolding" xml:space="preserve">
+    <value>Toggle All Folding</value>
+  </data>
+  <data name="Folding" xml:space="preserve">
+    <value>Folding</value>
+  </data>
+  <data name="ResourcesFileFilter" xml:space="preserve">
+    <value>Resources file (*.resources)|*.resources|Resource XML file|*.resx</value>
+  </data>
+  <data name="_Remove" xml:space="preserve">
+    <value>_Remove</value>
+  </data>
+  <data name="_LoadDependencies" xml:space="preserve">
+    <value>_Load Dependencies</value>
+  </data>
+  <data name="Dependencies" xml:space="preserve">
+    <value>Dependencies</value>
+  </data>
+  <data name="_AddMainList" xml:space="preserve">
+    <value>_Add To Main List</value>
+  </data>
+  <data name="_OpenContainingFolder" xml:space="preserve">
+    <value>_Open Containing Folder</value>
+  </data>
+  <data name="Shell" xml:space="preserve">
+    <value>Shell</value>
+  </data>
+  <data name="_OpenCommandLineHere" xml:space="preserve">
+    <value>_Open Command Line Here</value>
+  </data>
+  <data name="CopyName" xml:space="preserve">
+    <value>Copy FQ Name</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="CopyErrorMessage" xml:space="preserve">
+    <value>Copy error message</value>
+  </data>
+  <data name="DerivedTypes" xml:space="preserve">
+    <value>Derived Types</value>
+  </data>
+  <data name="References" xml:space="preserve">
+    <value>References</value>
+  </data>
+  <data name="_Resources" xml:space="preserve">
+    <value>Resources</value>
+  </data>
+  <data name="_About" xml:space="preserve">
+    <value>_About</value>
+  </data>
+  <data name="ILSpyVersion" xml:space="preserve">
+    <value>ILSpy version </value>
+  </data>
+  <data name="AutomaticallyCheckUpdatesEveryWeek" xml:space="preserve">
+    <value>Automatically check for updates every week</value>
+  </data>
+  <data name="CheckUpdates" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="Checking" xml:space="preserve">
+    <value>Checking...</value>
+  </data>
+  <data name="UsingLatestRelease" xml:space="preserve">
+    <value>You are using the latest release.</value>
+  </data>
+  <data name="VersionAvailable" xml:space="preserve">
+    <value>Version {0} is available.</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="UsingNightlyBuildNewerThanLatestRelease" xml:space="preserve">
+    <value>You are using a nightly build newer than the latest release.</value>
+  </data>
+  <data name="Show_internalTypesMembers" xml:space="preserve">
+    <value>Show _internal types and members</value>
+  </data>
+  <data name="ShowInternalTypesMembers" xml:space="preserve">
+    <value>Show internal types and members</value>
+  </data>
+  <data name="StandBy" xml:space="preserve">
+    <value>Stand by...</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ILSpyVersionAvailable" xml:space="preserve">
+    <value>A new ILSpy version is available.</value>
+  </data>
+  <data name="UpdateILSpyFound" xml:space="preserve">
+    <value>No update for ILSpy found.</value>
+  </data>
+  <data name="CheckAgain" xml:space="preserve">
+    <value>Check again</value>
+  </data>
+</root>

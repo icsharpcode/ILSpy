@@ -2,6 +2,7 @@
 <UserControl x:Class="ICSharpCode.ILSpy.Controls.ResourceStringTable"
 			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 			 Cursor="Arrow">
 	<UserControl.CommandBindings>
 		<CommandBinding Command="ApplicationCommands.Copy"
@@ -26,7 +27,7 @@
 			<RowDefinition />
 			<RowDefinition />
 		</Grid.RowDefinitions>
-		<Label Content="String Table"
+		<Label Content="{x:Static properties:Resources.StringTable}"
 			   FontFamily="Segoe UI"
 			   FontWeight="Bold"
 			   FontSize="12pt" />
@@ -41,12 +42,12 @@
 			<GridView AllowsColumnReorder="False">
 				<GridView.Columns>
 					<GridViewColumn DisplayMemberBinding="{Binding Key}">
-						<GridViewColumnHeader Content="Name"
+						<GridViewColumnHeader Content="{x:Static properties:Resources.Name}"
 											  HorizontalContentAlignment="Left"
 											  FontWeight="Bold" />
 					</GridViewColumn>
 					<GridViewColumn DisplayMemberBinding="{Binding Value}">
-						<GridViewColumnHeader Content="Value"
+						<GridViewColumnHeader Content="{x:Static properties:Resources.Value}"
 											  HorizontalContentAlignment="Left"
 											  FontWeight="Bold" />
 					</GridViewColumn>

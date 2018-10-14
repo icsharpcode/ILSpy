@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="ICSharpCode.ILSpy.Options.DisplaySettingsPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
              xmlns:local="clr-namespace:ICSharpCode.ILSpy.Options">
 	<UserControl.Resources>
 		<local:FontSizeConverter x:Key="fontSizeConv" />
@@ -10,7 +11,7 @@
 			<RowDefinition Height="Auto"/>
 			<RowDefinition/>
 		</Grid.RowDefinitions>
-		<GroupBox Header="Font">
+		<GroupBox Header="{x:Static properties:Resources.Font}">
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
@@ -22,7 +23,7 @@
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="50" />
 				</Grid.RowDefinitions>
-				<Label Margin="3,0">Font:</Label>
+				<Label Margin="3,0" Content="Font:"/>
 				<ComboBox x:Name="fontSelector" VerticalContentAlignment="Center" SelectedItem="{Binding SelectedFont}" Grid.Column="1">
 					<ComboBox.ItemTemplate>
 						<DataTemplate>
@@ -30,7 +31,7 @@
 						</DataTemplate>
 					</ComboBox.ItemTemplate>
 				</ComboBox>
-				<Label Grid.Column="2" Margin="3,0">Size:</Label>
+				<Label Grid.Column="2" Margin="3,0" Content="Size:"/>
 				<ComboBox Grid.Column="3" Text="{Binding SelectedFontSize, Converter={StaticResource fontSizeConv}}" IsEditable="True" Margin="3,0">
 					<ComboBoxItem>6</ComboBoxItem>
 					<ComboBoxItem>7</ComboBoxItem>
@@ -57,12 +58,12 @@
 				</Border>
 			</Grid>
 		</GroupBox>
-		<GroupBox Header="Other options" Grid.Row="1">
+		<GroupBox Header="{x:Static properties:Resources.OtherOptions}" Grid.Row="1">
 			<StackPanel Margin="3">
-				<CheckBox IsChecked="{Binding ShowLineNumbers}">Show line numbers</CheckBox>
-				<CheckBox IsChecked="{Binding ShowMetadataTokens}">Show metadata tokens</CheckBox>
-				<CheckBox IsChecked="{Binding EnableWordWrap}">Enable word wrap</CheckBox>
-				<CheckBox IsChecked="{Binding SortResults}">Sort results by fitness</CheckBox>
+				<CheckBox IsChecked="{Binding ShowLineNumbers}" Content="{x:Static properties:Resources.ShowLineNumbers}"/>
+				<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"/>
+				<CheckBox IsChecked="{Binding EnableWordWrap}" Content="{x:Static properties:Resources.EnableWordWrap}"/>
+				<CheckBox IsChecked="{Binding SortResults}" Content="{x:Static properties:Resources.SortResultsFitness}"/>
 			</StackPanel>
 		</GroupBox>
 	</Grid>

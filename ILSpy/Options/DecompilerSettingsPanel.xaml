@@ -3,18 +3,19 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"
 	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls">
 	<UserControl.Resources>
 		<controls:BoolToVisibilityConverter x:Key="boolConv" />
 	</UserControl.Resources>
 	<StackPanel Margin="10">
-		<CheckBox IsChecked="{Binding UseDebugSymbols}">Use variable names from debug symbols, if available</CheckBox>
-		<CheckBox IsChecked="{Binding ShowDebugInfo}">Show info from debug symbols, if available</CheckBox>
-		<CheckBox IsChecked="{Binding ShowXmlDocumentation}">Show XML documentation in decompiled code</CheckBox>
-		<CheckBox IsChecked="{Binding FoldBraces}">Enable folding on all blocks in braces</CheckBox>
-		<CheckBox IsChecked="{Binding RemoveDeadCode}">Remove dead and side effect free code</CheckBox>
-		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
-		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
-		<CheckBox IsChecked="{Binding ExpandMemberDefinitions}">Expand member definitions after decompilation</CheckBox>
+		<CheckBox IsChecked="{Binding UseDebugSymbols}" Content="{x:Static properties:Resources.VariableNamesFromDebugSymbolsAvailable}" />
+		<CheckBox IsChecked="{Binding ShowDebugInfo}" Content="{x:Static properties:Resources.ShowInfoFromDebugSymbolsAvailable}"/>
+		<CheckBox IsChecked="{Binding ShowXmlDocumentation}"  Content="{x:Static properties:Resources.ShowDocumentationDecompiledCode}" />
+		<CheckBox IsChecked="{Binding FoldBraces}" Content="{x:Static properties:Resources.EnableFoldingBlocksBraces}" />
+		<CheckBox IsChecked="{Binding RemoveDeadCode}" Content="{x:Static properties:Resources.RemoveDeadSideEffectFreeCode}"/>
+		<CheckBox IsChecked="{Binding UsingDeclarations}" Content="{x:Static properties:Resources.InsertUsingDeclarations}"/>
+		<CheckBox IsChecked="{Binding AlwaysUseBraces}" Content="{x:Static properties:Resources.AlwaysBraces}"/>
+		<CheckBox IsChecked="{Binding ExpandMemberDefinitions}" Content="{x:Static properties:Resources.ExpandMemberDefinitionsAfterDecompilation}"/>
 	</StackPanel>
 </UserControl>
