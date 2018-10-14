@@ -39,7 +39,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// We exclude logic.and to avoid turning
 			// "logic.and(comp(interfaces != ldnull), call get_Count(interfaces))"
 			// into "if ((interfaces?.Count ?? 0) != 0)".
-			return (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
+			return ifInst != null
+				&& (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
 				&& IfInstruction.IsInConditionSlot(ifInst);
 		}
 

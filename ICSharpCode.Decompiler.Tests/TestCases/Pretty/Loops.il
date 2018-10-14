@@ -2938,7 +2938,7 @@
           NestedForeach(class [mscorlib]System.Collections.Generic.List`1<object> items1,
                         class [mscorlib]System.Collections.Generic.List`1<object> items2) cil managed
   {
-    // Code size       150 (0x96)
+    // Code size       152 (0x98)
     .maxstack  2
     .locals init (object V_0,
              bool V_1,
@@ -2953,7 +2953,7 @@
     IL_0008:  stloc.3
     .try
     {
-      IL_0009:  br.s       IL_006b
+      IL_0009:  br.s       IL_006d
 
       IL_000b:  ldloca.s   V_3
       IL_000d:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::get_Current()
@@ -3009,47 +3009,49 @@
       IL_005c:  ldloc.1
       IL_005d:  stloc.s    V_5
       IL_005f:  ldloc.s    V_5
-      IL_0061:  brtrue.s   IL_006a
+      IL_0061:  brtrue.s   IL_006c
 
-      IL_0063:  ldloc.0
-      IL_0064:  call       void [mscorlib]System.Console::WriteLine(object)
-      IL_0069:  nop
+      IL_0063:  nop
+      IL_0064:  ldloc.0
+      IL_0065:  call       void [mscorlib]System.Console::WriteLine(object)
       IL_006a:  nop
-      IL_006b:  ldloca.s   V_3
-      IL_006d:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
-      IL_0072:  stloc.s    V_5
-      IL_0074:  ldloc.s    V_5
-      IL_0076:  brtrue.s   IL_000b
+      IL_006b:  nop
+      IL_006c:  nop
+      IL_006d:  ldloca.s   V_3
+      IL_006f:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
+      IL_0074:  stloc.s    V_5
+      IL_0076:  ldloc.s    V_5
+      IL_0078:  brtrue.s   IL_000b
 
-      IL_0078:  leave.s    IL_0089
+      IL_007a:  leave.s    IL_008b
 
     }  // end .try
     finally
     {
-      IL_007a:  ldloca.s   V_3
-      IL_007c:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
-      IL_0082:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
-      IL_0087:  nop
-      IL_0088:  endfinally
+      IL_007c:  ldloca.s   V_3
+      IL_007e:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
+      IL_0084:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0089:  nop
+      IL_008a:  endfinally
     }  // end handler
-    IL_0089:  nop
-    IL_008a:  ldstr      "end"
-    IL_008f:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0094:  nop
-    IL_0095:  ret
+    IL_008b:  nop
+    IL_008c:  ldstr      "end"
+    IL_0091:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0096:  nop
+    IL_0097:  ret
   } // end of method Loops::NestedForeach
 
   .method public hidebysig instance void 
           MergeAroundContinue() cil managed
   {
-    // Code size       137 (0x89)
+    // Code size       140 (0x8c)
     .maxstack  2
     .locals init (int32 V_0,
              bool V_1)
     IL_0000:  nop
     IL_0001:  ldc.i4.0
     IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0074
+    IL_0003:  br.s       IL_0077
 
     IL_0005:  nop
     IL_0006:  ldloc.0
@@ -3061,7 +3063,7 @@
     IL_000d:  ceq
     IL_000f:  stloc.1
     IL_0010:  ldloc.1
-    IL_0011:  brtrue.s   IL_0021
+    IL_0011:  brtrue.s   IL_0022
 
     IL_0013:  nop
     IL_0014:  ldloc.0
@@ -3069,94 +3071,97 @@
     IL_0016:  ceq
     IL_0018:  stloc.1
     IL_0019:  ldloc.1
-    IL_001a:  brtrue.s   IL_001e
+    IL_001a:  brtrue.s   IL_001f
 
-    IL_001c:  br.s       IL_0070
+    IL_001c:  nop
+    IL_001d:  br.s       IL_0073
 
-    IL_001e:  nop
-    IL_001f:  br.s       IL_0068
+    IL_001f:  nop
+    IL_0020:  br.s       IL_006b
 
-    IL_0021:  ldloc.0
-    IL_0022:  ldc.i4.5
-    IL_0023:  rem
-    IL_0024:  ldc.i4.0
-    IL_0025:  ceq
-    IL_0027:  ldc.i4.0
-    IL_0028:  ceq
-    IL_002a:  stloc.1
-    IL_002b:  ldloc.1
-    IL_002c:  brtrue.s   IL_003c
+    IL_0022:  ldloc.0
+    IL_0023:  ldc.i4.5
+    IL_0024:  rem
+    IL_0025:  ldc.i4.0
+    IL_0026:  ceq
+    IL_0028:  ldc.i4.0
+    IL_0029:  ceq
+    IL_002b:  stloc.1
+    IL_002c:  ldloc.1
+    IL_002d:  brtrue.s   IL_003e
 
-    IL_002e:  nop
-    IL_002f:  ldloc.0
-    IL_0030:  ldc.i4.5
-    IL_0031:  ceq
-    IL_0033:  stloc.1
-    IL_0034:  ldloc.1
-    IL_0035:  brtrue.s   IL_0039
+    IL_002f:  nop
+    IL_0030:  ldloc.0
+    IL_0031:  ldc.i4.5
+    IL_0032:  ceq
+    IL_0034:  stloc.1
+    IL_0035:  ldloc.1
+    IL_0036:  brtrue.s   IL_003b
 
-    IL_0037:  br.s       IL_0070
+    IL_0038:  nop
+    IL_0039:  br.s       IL_0073
 
-    IL_0039:  nop
-    IL_003a:  br.s       IL_0068
+    IL_003b:  nop
+    IL_003c:  br.s       IL_006b
 
-    IL_003c:  ldloc.0
-    IL_003d:  ldc.i4.7
-    IL_003e:  rem
-    IL_003f:  ldc.i4.0
-    IL_0040:  ceq
-    IL_0042:  ldc.i4.0
-    IL_0043:  ceq
-    IL_0045:  stloc.1
-    IL_0046:  ldloc.1
-    IL_0047:  brtrue.s   IL_0057
+    IL_003e:  ldloc.0
+    IL_003f:  ldc.i4.7
+    IL_0040:  rem
+    IL_0041:  ldc.i4.0
+    IL_0042:  ceq
+    IL_0044:  ldc.i4.0
+    IL_0045:  ceq
+    IL_0047:  stloc.1
+    IL_0048:  ldloc.1
+    IL_0049:  brtrue.s   IL_005a
 
-    IL_0049:  nop
-    IL_004a:  ldloc.0
-    IL_004b:  ldc.i4.7
-    IL_004c:  ceq
-    IL_004e:  stloc.1
-    IL_004f:  ldloc.1
-    IL_0050:  brtrue.s   IL_0054
-
-    IL_0052:  br.s       IL_0070
+    IL_004b:  nop
+    IL_004c:  ldloc.0
+    IL_004d:  ldc.i4.7
+    IL_004e:  ceq
+    IL_0050:  stloc.1
+    IL_0051:  ldloc.1
+    IL_0052:  brtrue.s   IL_0057
 
     IL_0054:  nop
-    IL_0055:  br.s       IL_0068
+    IL_0055:  br.s       IL_0073
 
-    IL_0057:  ldloc.0
-    IL_0058:  ldc.i4.s   11
-    IL_005a:  rem
-    IL_005b:  ldc.i4.0
-    IL_005c:  ceq
+    IL_0057:  nop
+    IL_0058:  br.s       IL_006b
+
+    IL_005a:  ldloc.0
+    IL_005b:  ldc.i4.s   11
+    IL_005d:  rem
     IL_005e:  ldc.i4.0
     IL_005f:  ceq
-    IL_0061:  stloc.1
-    IL_0062:  ldloc.1
-    IL_0063:  brtrue.s   IL_0068
+    IL_0061:  ldc.i4.0
+    IL_0062:  ceq
+    IL_0064:  stloc.1
+    IL_0065:  ldloc.1
+    IL_0066:  brtrue.s   IL_006b
 
-    IL_0065:  nop
-    IL_0066:  br.s       IL_0070
+    IL_0068:  nop
+    IL_0069:  br.s       IL_0073
 
-    IL_0068:  ldloc.0
-    IL_0069:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_006e:  nop
-    IL_006f:  nop
-    IL_0070:  ldloc.0
-    IL_0071:  ldc.i4.1
-    IL_0072:  add
-    IL_0073:  stloc.0
-    IL_0074:  ldloc.0
-    IL_0075:  ldc.i4.s   20
-    IL_0077:  clt
-    IL_0079:  stloc.1
-    IL_007a:  ldloc.1
-    IL_007b:  brtrue.s   IL_0005
+    IL_006b:  ldloc.0
+    IL_006c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0071:  nop
+    IL_0072:  nop
+    IL_0073:  ldloc.0
+    IL_0074:  ldc.i4.1
+    IL_0075:  add
+    IL_0076:  stloc.0
+    IL_0077:  ldloc.0
+    IL_0078:  ldc.i4.s   20
+    IL_007a:  clt
+    IL_007c:  stloc.1
+    IL_007d:  ldloc.1
+    IL_007e:  brtrue.s   IL_0005
 
-    IL_007d:  ldstr      "end"
-    IL_0082:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0087:  nop
-    IL_0088:  ret
+    IL_0080:  ldstr      "end"
+    IL_0085:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_008a:  nop
+    IL_008b:  ret
   } // end of method Loops::MergeAroundContinue
 
   .method public hidebysig specialname rtspecialname 

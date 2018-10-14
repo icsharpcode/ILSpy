@@ -499,13 +499,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				case BinaryNumericOperator.BitAnd:
 					if (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
-						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
-						&& SemanticHelper.IsPure(inst.Right.Flags))
+						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
 					{
-						context.Step("Replace bit.and with logic.and", inst);
-						var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
-						inst.ReplaceWith(expr);
-						expr.AcceptVisitor(this);
+						if (new NullableLiftingTransform(context).Run(inst)) {
+							// e.g. "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
+						} else if (SemanticHelper.IsPure(inst.Right.Flags)) {
+							context.Step("Replace bit.and with logic.and", inst);
+							var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
+							inst.ReplaceWith(expr);
+							expr.AcceptVisitor(this);
+						}
 					}
 					break;
 			}
