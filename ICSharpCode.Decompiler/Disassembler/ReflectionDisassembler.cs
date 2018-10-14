@@ -666,7 +666,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					break;
 				default:
-					output.Write(value.ToString());
+					DisassemblerHelpers.WriteOperand(output, value);
 					break;
 			}
 		}
