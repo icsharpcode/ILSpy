@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!IsValidAccessChain(testedVar, mode, nonNullInst, out var varLoad))
 				return null;
 			// note: InferType will be accurate in this case because the access chain consists of calls and field accesses
-			IType returnType = nonNullInst.InferType();
+			IType returnType = nonNullInst.InferType(context.TypeSystem);
 			if (nullInst.MatchLdNull()) {
 				context.Step($"Null propagation (mode={mode}, output=reference type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : null

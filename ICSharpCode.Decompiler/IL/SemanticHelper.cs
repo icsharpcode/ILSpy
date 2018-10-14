@@ -47,27 +47,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
 		/// </summary>
-		internal static bool MayReorder(InstructionFlags inst1, InstructionFlags inst2)
-		{
-			// If both instructions perform an impure action, we cannot reorder them
-			if (!IsPure(inst1) && !IsPure(inst2))
-				return false;
-			// We cannot reorder if inst2 might write what inst1 looks at
-			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadLocals, InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect))
-				return false;
-			return true;
-		}
-
-		private static bool ConflictingPair(InstructionFlags inst1, InstructionFlags inst2, InstructionFlags readFlag, InstructionFlags writeFlag)
-		{
-			// if one instruction has the read flag and the other the write flag, that's a conflict
-			return (inst1 & readFlag) != 0 && (inst2 & writeFlag) != 0
-				|| (inst2 & readFlag) != 0 && (inst1 & writeFlag) != 0;
-		}
-		
-		/// <summary>
-		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
-		/// </summary>
 		internal static bool MayReorder(ILInstruction inst1, ILInstruction inst2)
 		{
 			// If both instructions perform an impure action, we cannot reorder them

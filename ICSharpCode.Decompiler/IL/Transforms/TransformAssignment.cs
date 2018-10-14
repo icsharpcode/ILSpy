@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// in some cases it can be a compiler-generated local
 			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
 				return false;
-			if (IsImplicitTruncation(inst.Value, inst.Variable.Type)) {
+			if (IsImplicitTruncation(inst.Value, inst.Variable.Type, context.TypeSystem)) {
 				// 'stloc s' is implicitly truncating the value
 				return false;
 			}
@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!SemanticHelper.IsPure(stobj.Target.Flags) || inst.Variable.IsUsedWithin(stobj.Target))
 					return false;
-				var pointerType = stobj.Target.InferType();
+				var pointerType = stobj.Target.InferType(context.TypeSystem);
 				IType newType = stobj.Type;
 				if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(pointerType, stobj.Type)) {
 					if (pointerType is ByReferenceType byref)
@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					else if (pointerType is PointerType pointer)
 						newType = pointer.ElementType;
 				}
-				if (IsImplicitTruncation(inst.Value, newType)) {
+				if (IsImplicitTruncation(inst.Value, newType, context.TypeSystem)) {
 					// 'stobj' is implicitly truncating the value
 					return false;
 				}
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!SemanticHelper.IsPure(arg.Flags) || inst.Variable.IsUsedWithin(arg))
 						return false;
 				}
-				if (IsImplicitTruncation(inst.Value, call.Method.Parameters.Last().Type)) {
+				if (IsImplicitTruncation(inst.Value, call.Method.Parameters.Last().Type, context.TypeSystem)) {
 					// setter call is implicitly truncating the value
 					return false;
 				}
@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// changes the return value of the expression, so this is only valid on block-level.
 				return false;
 			}
-			if (!IsCompoundStore(compoundStore, out var targetType, out var setterValue))
+			if (!IsCompoundStore(compoundStore, out var targetType, out var setterValue, context.TypeSystem))
 				return false;
 			// targetType = The type of the property/field/etc. being stored to.
 			// setterValue = The value being stored.
@@ -342,11 +342,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
-			if (IsImplicitTruncation(inst.Value, inst.Variable.Type)) {
+			if (IsImplicitTruncation(inst.Value, inst.Variable.Type, context.TypeSystem)) {
 				// 'stloc s' is implicitly truncating the stack value
 				return false;
 			}
-			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type)) {
+			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type, context.TypeSystem)) {
 				// 'stloc l' is implicitly truncating the stack value
 				return false;
 			}
@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
 		/// due to implicit truncation.
 		/// </summary>
-		static internal bool IsImplicitTruncation(ILInstruction value, IType type, bool allowNullableValue = false)
+		static internal bool IsImplicitTruncation(ILInstruction value, IType type, ICompilation compilation, bool allowNullableValue = false)
 		{
 			if (!type.IsSmallIntegerType()) {
 				// Implicit truncation in ILAst only happens for small integer types;
@@ -401,10 +401,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (value is Comp) {
 				return false; // comp returns 0 or 1, which always fits
 			} else if (value is IfInstruction ifInst) {
-				return IsImplicitTruncation(ifInst.TrueInst, type, allowNullableValue)
-					|| IsImplicitTruncation(ifInst.FalseInst, type, allowNullableValue);
+				return IsImplicitTruncation(ifInst.TrueInst, type, compilation, allowNullableValue)
+					|| IsImplicitTruncation(ifInst.FalseInst, type, compilation, allowNullableValue);
 			} else {
-				IType inferredType = value.InferType();
+				IType inferredType = value.InferType(compilation);
 				if (allowNullableValue) {
 					inferredType = NullableType.GetUnderlyingType(inferredType);
 				}
@@ -456,14 +456,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Gets whether 'inst' is a possible store for use as a compound store.
 		/// </summary>
-		static bool IsCompoundStore(ILInstruction inst, out IType storeType, out ILInstruction value)
+		static bool IsCompoundStore(ILInstruction inst, out IType storeType, out ILInstruction value, ICompilation compilation)
 		{
 			value = null;
 			storeType = null;
 			if (inst is StObj stobj) {
 				// stobj.Type may just be 'int' (due to stind.i4) when we're actually operating on a 'ref MyEnum'.
 				// Try to determine the real type of the object we're modifying:
-				storeType = stobj.Target.InferType();
+				storeType = stobj.Target.InferType(compilation);
 				if (storeType is ByReferenceType refType) {
 					storeType = refType.ElementType;
 				} else if (storeType is PointerType pointerType) {
@@ -530,7 +530,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformPostIncDecOperatorWithInlineStore(Block block, int pos)
 		{
 			var store = block.Instructions[pos];
-			if (!IsCompoundStore(store, out var targetType, out var value))
+			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))
 				return false;
 			StLoc stloc;
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
@@ -555,7 +555,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!IsMatchingCompoundLoad(stloc.Value, store, stloc.Variable))
 				return false;
-			if (IsImplicitTruncation(stloc.Value, stloc.Variable.Type))
+			if (IsImplicitTruncation(stloc.Value, stloc.Variable.Type, context.TypeSystem))
 				return false;
 			context.Step("TransformPostIncDecOperatorWithInlineStore", store);
 			if (binary != null) {
@@ -585,9 +585,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var store = block.Instructions.ElementAtOrDefault(i + 1);
 			if (inst == null || store == null)
 				return false;
-			if (!IsCompoundStore(store, out var targetType, out var value))
+			if (!IsCompoundStore(store, out var targetType, out var value, context.TypeSystem))
 				return false;
-			if (IsImplicitTruncation(inst.Value, targetType)) {
+			if (IsImplicitTruncation(inst.Value, targetType, context.TypeSystem)) {
 				// 'stloc l' is implicitly truncating the value
 				return false;
 			}

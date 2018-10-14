@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					IType newType = null;
 					// Multiple store are possible in case of (c ? ref a : ref b) += 1, for example.
 					foreach (var stloc in v.StoreInstructions.OfType<StLoc>()) {
-						var inferredType = stloc.Value.InferType();
+						var inferredType = stloc.Value.InferType(context.TypeSystem);
 						// cancel, if types of values do not match exactly
 						if (newType != null && !newType.Equals(inferredType)) {
 							newType = SpecialType.UnknownType;

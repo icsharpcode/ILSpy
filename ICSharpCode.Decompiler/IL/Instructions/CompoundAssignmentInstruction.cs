@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			// Can't transform if the RHS value would be need to be truncated for the LHS type.
-			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, binary.IsLifted))
+			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, null, binary.IsLifted))
 				return false;
 			return true;
 		}

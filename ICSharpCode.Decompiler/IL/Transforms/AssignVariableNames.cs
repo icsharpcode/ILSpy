@@ -448,7 +448,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
 
-			IType inferredType = inst.InferType();
+			IType inferredType = inst.InferType(context.TypeSystem);
 			if (inferredType.Kind != TypeKind.Unknown)
 				return inferredType;
 			else
