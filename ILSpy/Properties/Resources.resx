@@ -390,4 +390,85 @@
   <data name="CheckAgain" xml:space="preserve">
     <value>Check again</value>
   </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Searching...</value>
+  </data>
+  <data name="SearchAbortedMoreThan1000ResultsFound" xml:space="preserve">
+    <value>Search aborted, more than 1000 results found.</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search...</value>
+  </data>
+  <data name="DisplayCode" xml:space="preserve">
+    <value>Display Code</value>
+  </data>
+  <data name="SaveCode" xml:space="preserve">
+    <value>Save Code</value>
+  </data>
+  <data name="AllFiles" xml:space="preserve">
+    <value>|All Files|*.*</value>
+  </data>
+  <data name="OpenExplorer" xml:space="preserve">
+    <value>Open Explorer</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="_ToggleFolding" xml:space="preserve">
+    <value>Toggle Folding</value>
+  </data>
+  <data name="Analyze" xml:space="preserve">
+    <value>Analyze</value>
+  </data>
+  <data name="EnterListName" xml:space="preserve">
+    <value>Enter a list name:</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="List" xml:space="preserve">
+    <value>New list</value>
+  </data>
+  <data name="SelectAssembliesOpen" xml:space="preserve">
+    <value>Select assemblies to open:</value>
+  </data>
+  <data name="NugetPackageBrowser" xml:space="preserve">
+    <value>Nuget Package Browser</value>
+  </data>
+  <data name="OpenFrom" xml:space="preserve">
+    <value>Open From GAC</value>
+  </data>
+  <data name="_Search" xml:space="preserve">
+    <value>_Search:</value>
+  </data>
+  <data name="ReferenceName" xml:space="preserve">
+    <value>Reference Name</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Culture" xml:space="preserve">
+    <value>Culture</value>
+  </data>
+  <data name="PublicToken" xml:space="preserve">
+    <value>Public Key Token</value>
+  </data>
+  <data name="OpenList" xml:space="preserve">
+    <value>Open List</value>
+  </data>
+  <data name="SelectList" xml:space="preserve">
+    <value>Select a list:</value>
+  </data>
+  <data name="_Create" xml:space="preserve">
+    <value>_Create</value>
+  </data>
+  <data name="OpenListDialog__Open" xml:space="preserve">
+    <value>_Open</value>
+  </data>
+  <data name="OpenListDialog__Delete" xml:space="preserve">
+    <value>_Delete</value>
+  </data>
+  <data name="_Reset" xml:space="preserve">
+    <value>_Reset</value>
+  </data>
 </root>

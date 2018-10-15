@@ -1,6 +1,9 @@
 ﻿<Window
-	x:Class="ICSharpCode.ILSpy.CreateListDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
-	Title="New list"
+	x:Class="ICSharpCode.ILSpy.CreateListDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:properties="clr-namespace:ICSharpCode.ILSpy.Properties"	
+	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+	Title="{x:Static properties:Resources.List}"
 	Style="{DynamicResource DialogWindow}"
 	WindowStartupLocation="CenterOwner"
 	ResizeMode="NoResize"
@@ -13,12 +16,12 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel>
-            <Label>Enter a list name:</Label>
-            <TextBox Margin="8,8" Name="ListName" TextChanged="TextBox_TextChanged"></TextBox>
+			<Label Content="{x:Static properties:Resources.EnterListName}"/>
+			<TextBox Margin="8,8" Name="ListName" TextChanged="TextBox_TextChanged"></TextBox>
         </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="8,0">
-            <Button IsDefault="True" Margin="2,0" IsEnabled="False" Name="okButton" Click="OKButton_Click">Create</Button>
-            <Button IsCancel="True" Margin="2,0">Cancel</Button>
-        </StackPanel>
+			<Button IsDefault="True" Margin="2,0" IsEnabled="False" Name="okButton" Click="OKButton_Click" Content="{x:Static properties:Resources.Create}"/>
+			<Button IsCancel="True" Margin="2,0" Content="{x:Static properties:Resources.Cancel}"/>
+		</StackPanel>
     </Grid>
 </Window>

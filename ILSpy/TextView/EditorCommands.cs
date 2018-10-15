@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "Select All", Category = "Editor")]
+	[ExportContextMenuEntry(Header = nameof(Resources.Select), Category = nameof(Resources.Editor))]
 	sealed class SelectAllContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

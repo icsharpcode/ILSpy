@@ -312,4 +312,163 @@
   <data name="CopyErrorMessage" xml:space="preserve">
     <value>复制错误信息</value>
   </data>
+  <data name="VariableNamesFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>使用调试符号中的变量名称 (如果可用)</value>
+  </data>
+  <data name="ShowInfoFromDebugSymbolsAvailable" xml:space="preserve">
+    <value>显示调试符号的信息 (如果可用)</value>
+  </data>
+  <data name="ShowDocumentationDecompiledCode" xml:space="preserve">
+    <value>在反编译代码中显示 XML 文档</value>
+  </data>
+  <data name="EnableFoldingBlocksBraces" xml:space="preserve">
+    <value>在大括号中的所有块上启用折叠</value>
+  </data>
+  <data name="RemoveDeadSideEffectFreeCode" xml:space="preserve">
+    <value>删除死亡和副作用免费代码</value>
+  </data>
+  <data name="InsertUsingDeclarations" xml:space="preserve">
+    <value>插入使用声明</value>
+  </data>
+  <data name="AlwaysBraces" xml:space="preserve">
+    <value>始终使用大括号</value>
+  </data>
+  <data name="ExpandMemberDefinitionsAfterDecompilation" xml:space="preserve">
+    <value>在反编译后展开成员定义</value>
+  </data>
+  <data name="ShowMetadataTokens" xml:space="preserve">
+    <value>显示元数据标记</value>
+  </data>
+  <data name="EnableWordWrap" xml:space="preserve">
+    <value>启用自动换行</value>
+  </data>
+  <data name="AllowMultipleInstances" xml:space="preserve">
+    <value>允许多个实例</value>
+  </data>
+  <data name="ToggleFolding" xml:space="preserve">
+    <value>切换所有折叠</value>
+  </data>
+  <data name="DerivedTypes" xml:space="preserve">
+    <value>派生类型</value>
+  </data>
+  <data name="ResourcesFileFilter" xml:space="preserve">
+    <value>资源文件 (*.resources)|*.resources|XML资源文件|*.resx  </value>
+  </data>
+  <data name="SortResultsFitness" xml:space="preserve">
+    <value>排序结果自适应</value>
+  </data>
+  <data name="_Reset" xml:space="preserve">
+    <value>重置(_R)</value>
+  </data>
+  <data name="OpenListDialog__Delete" xml:space="preserve">
+    <value>删除(_D)</value>
+  </data>
+  <data name="OpenListDialog__Open" xml:space="preserve">
+    <value>打开(_O)</value>
+  </data>
+  <data name="_Create" xml:space="preserve">
+    <value>创建(_C)</value>
+  </data>
+  <data name="ReferenceName" xml:space="preserve">
+    <value>引用名称</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version  </value>
+  </data>
+  <data name="Culture" xml:space="preserve">
+    <value>Culture  </value>
+  </data>
+  <data name="PublicToken" xml:space="preserve">
+    <value>Public Key Token  </value>
+  </data>
+  <data name="OpenList" xml:space="preserve">
+    <value>打开列表</value>
+  </data>
+  <data name="SelectList" xml:space="preserve">
+    <value>选择一个列表:</value>
+  </data>
+  <data name="_Search" xml:space="preserve">
+    <value>搜索(_S):</value>
+  </data>
+  <data name="OpenFrom" xml:space="preserve">
+    <value>从 GAC 打开</value>
+  </data>
+  <data name="NugetPackageBrowser" xml:space="preserve">
+    <value>Nuget 包浏览器</value>
+  </data>
+  <data name="List" xml:space="preserve">
+    <value>新建列表</value>
+  </data>
+  <data name="SelectAssembliesOpen" xml:space="preserve">
+    <value>选择要打开的程序集:</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="EnterListName" xml:space="preserve">
+    <value>输入列表名称:</value>
+  </data>
+  <data name="Analyze" xml:space="preserve">
+    <value>分析</value>
+  </data>
+  <data name="_ToggleFolding" xml:space="preserve">
+    <value>切换折叠</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>全部选择</value>
+  </data>
+  <data name="OpenExplorer" xml:space="preserve">
+    <value>打开资源管理器</value>
+  </data>
+  <data name="AllFiles" xml:space="preserve">
+    <value>|所有文件 |*.*</value>
+  </data>
+  <data name="SaveCode" xml:space="preserve">
+    <value>保存代码</value>
+  </data>
+  <data name="DisplayCode" xml:space="preserve">
+    <value>显示代码</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>搜索...</value>
+  </data>
+  <data name="SearchAbortedMoreThan1000ResultsFound" xml:space="preserve">
+    <value>搜索已中止, 发现超过1000个结果。</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>搜索...</value>
+  </data>
+  <data name="CheckAgain" xml:space="preserve">
+    <value>再次检查</value>
+  </data>
+  <data name="UpdateILSpyFound" xml:space="preserve">
+    <value>找不到 ILSpy 的更新。</value>
+  </data>
+  <data name="ILSpyVersionAvailable" xml:space="preserve">
+    <value>新的 ILSpy 版本可用。</value>
+  </data>
+  <data name="StandBy" xml:space="preserve">
+    <value>就绪...</value>
+  </data>
+  <data name="ShowInternalTypesMembers" xml:space="preserve">
+    <value>显示内部类型和成员</value>
+  </data>
+  <data name="Show_internalTypesMembers" xml:space="preserve">
+    <value>显示内部类型和成员(_I)</value>
+  </data>
+  <data name="UsingNightlyBuildNewerThanLatestRelease" xml:space="preserve">
+    <value>您使用的是每日构建版本，比最新版本更新。</value>
+  </data>
+  <data name="VersionAvailable" xml:space="preserve">
+    <value>版本 {0} 已可用。</value>
+  </data>
+  <data name="UsingLatestRelease" xml:space="preserve">
+    <value>您使用的是最新版本。</value>
+  </data>
+  <data name="AutomaticallyCheckUpdatesEveryWeek" xml:space="preserve">
+    <value>每周自动检查更新</value>
+  </data>
+  <data name="WatermarkText" xml:space="preserve">
+    <value>搜索 t:TypeName, m:Member 或c:Constant; 使用完全匹配 (=term), '不应包含' (-term) 或 '必须包含' (+term); 使用 /reg(ular)?Ex(pressions)?/或两者 - t:/Type(Name)?/...  </value>
+  </data>
 </root>

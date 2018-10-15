@@ -26,6 +26,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -83,7 +84,7 @@ namespace ICSharpCode.ILSpy
 		public void Show()
 		{
 			if (!IsVisible) {
-				MainWindow.Instance.ShowInTopPane("Search", this);
+				MainWindow.Instance.ShowInTopPane(Properties.Resources.SearchPane_Search, this);
 				if (runSearchOnNextShow) {
 					runSearchOnNextShow = false;
 					StartSearch(this.SearchTerm);
@@ -204,7 +205,7 @@ namespace ICSharpCode.ILSpy
 				this.language = language;
 				this.searchMode = searchMode;
 				
-				this.Results.Add(new SearchResult { Name = "Searching..." });
+				this.Results.Add(new SearchResult { Name = Properties.Resources.Searching });
 			}
 			
 			public void Cancel()
@@ -236,7 +237,7 @@ namespace ICSharpCode.ILSpy
 			void AddResult(SearchResult result)
 			{
 				if (++resultCount == 1000) {
-					result = new SearchResult { Name = "Search aborted, more than 1000 results found." };
+					result = new SearchResult { Name = Properties.Resources.SearchAbortedMoreThan1000ResultsFound };
 					cts.Cancel();
 				}
 				dispatcher.BeginInvoke(
@@ -354,7 +355,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_View", Header = "Search...", MenuIcon = "Images/Find.png", MenuCategory = "View", MenuOrder = 100)]
+	[ExportMainMenuCommand(Menu = nameof(Resources._View), Header = nameof(Resources.Search), MenuIcon = "Images/Find.png", MenuCategory = nameof(Resources.View), MenuOrder = 100)]
 	[ExportToolbarCommand(ToolTip = "Search (Ctrl+Shift+F or Ctrl+E)", ToolbarIcon = "Images/Find.png", ToolbarCategory = "View", ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{

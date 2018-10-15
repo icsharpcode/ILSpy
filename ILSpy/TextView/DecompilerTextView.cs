@@ -559,7 +559,7 @@ namespace ICSharpCode.ILSpy.TextView
 			output.WriteLine();
 			if (wasNormalLimit) {
 				output.AddButton(
-					Images.ViewCode, "Display Code",
+					Images.ViewCode, Properties.Resources.DisplayCode,
 					delegate {
 						DoDecompile(context, ExtendedOutputLengthLimit).HandleExceptions();
 					});
@@ -567,7 +567,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			
 			output.AddButton(
-				Images.Save, "Save Code",
+				Images.Save, Properties.Resources.SaveCode,
 				delegate {
 					SaveToDisk(context.Language, context.TreeNodes, context.Options);
 				});
@@ -669,7 +669,7 @@ namespace ICSharpCode.ILSpy.TextView
 			
 			SaveFileDialog dlg = new SaveFileDialog();
 			dlg.DefaultExt = language.FileExtension;
-			dlg.Filter = language.Name + "|*" + language.FileExtension + "|All Files|*.*";
+			dlg.Filter = language.Name + "|*" + language.FileExtension + Properties.Resources.AllFiles;
 			dlg.FileName = CleanUpName(treeNodes.First().ToString()) + language.FileExtension;
 			if (dlg.ShowDialog() == true) {
 				SaveToDisk(new DecompilationContext(language, treeNodes.ToArray(), options), dlg.FileName);
@@ -725,7 +725,7 @@ namespace ICSharpCode.ILSpy.TextView
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
 						output.WriteLine("Decompilation complete in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
 						output.WriteLine();
-						output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+						output.AddButton(null, Properties.Resources.OpenExplorer, delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
 						tcs.SetResult(output);
 					} catch (OperationCanceledException) {

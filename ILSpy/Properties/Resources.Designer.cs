@@ -97,6 +97,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 _Create 的本地化字符串。
+        /// </summary>
+        public static string _Create {
+            get {
+                return ResourceManager.GetString("_Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 _File 的本地化字符串。
         /// </summary>
         public static string _File {
@@ -178,6 +187,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 _Reset 的本地化字符串。
+        /// </summary>
+        public static string _Reset {
+            get {
+                return ResourceManager.GetString("_Reset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Resources 的本地化字符串。
         /// </summary>
         public static string _Resources {
@@ -192,6 +210,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string _SaveCode {
             get {
                 return ResourceManager.GetString("_SaveCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 _Search: 的本地化字符串。
+        /// </summary>
+        public static string _Search {
+            get {
+                return ResourceManager.GetString("_Search", resourceCulture);
             }
         }
         
@@ -214,11 +241,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Toggle Folding 的本地化字符串。
+        /// </summary>
+        public static string _ToggleFolding {
+            get {
+                return ResourceManager.GetString("_ToggleFolding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 _View 的本地化字符串。
         /// </summary>
         public static string _View {
             get {
                 return ResourceManager.GetString("_View", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 |All Files|*.* 的本地化字符串。
+        /// </summary>
+        public static string AllFiles {
+            get {
+                return ResourceManager.GetString("AllFiles", resourceCulture);
             }
         }
         
@@ -237,6 +282,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string AlwaysBraces {
             get {
                 return ResourceManager.GetString("AlwaysBraces", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Analyze 的本地化字符串。
+        /// </summary>
+        public static string Analyze {
+            get {
+                return ResourceManager.GetString("Analyze", resourceCulture);
             }
         }
         
@@ -331,6 +385,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Create 的本地化字符串。
+        /// </summary>
+        public static string Create {
+            get {
+                return ResourceManager.GetString("Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 DEBUG -- Decompile All 的本地化字符串。
         /// </summary>
         public static string DEBUGDecompile {
@@ -385,6 +448,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Display Code 的本地化字符串。
+        /// </summary>
+        public static string DisplayCode {
+            get {
+                return ResourceManager.GetString("DisplayCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Download 的本地化字符串。
         /// </summary>
         public static string Download {
@@ -426,6 +498,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string EnableWordWrap {
             get {
                 return ResourceManager.GetString("EnableWordWrap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Enter a list name: 的本地化字符串。
+        /// </summary>
+        public static string EnterListName {
+            get {
+                return ResourceManager.GetString("EnterListName", resourceCulture);
             }
         }
         
@@ -511,6 +592,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 New list 的本地化字符串。
+        /// </summary>
+        public static string List {
+            get {
+                return ResourceManager.GetString("List", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Loading... 的本地化字符串。
         /// </summary>
         public static string Loading {
@@ -547,6 +637,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Nuget Package Browser 的本地化字符串。
+        /// </summary>
+        public static string NugetPackageBrowser {
+            get {
+                return ResourceManager.GetString("NugetPackageBrowser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 OK 的本地化字符串。
         /// </summary>
         public static string OK {
@@ -574,6 +673,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Open Explorer 的本地化字符串。
+        /// </summary>
+        public static string OpenExplorer {
+            get {
+                return ResourceManager.GetString("OpenExplorer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Open From GAC 的本地化字符串。
+        /// </summary>
+        public static string OpenFrom {
+            get {
+                return ResourceManager.GetString("OpenFrom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Open from _GAC... 的本地化字符串。
         /// </summary>
         public static string OpenFrom_GAC {
@@ -583,11 +700,56 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Open List 的本地化字符串。
+        /// </summary>
+        public static string OpenList {
+            get {
+                return ResourceManager.GetString("OpenList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 _Delete 的本地化字符串。
+        /// </summary>
+        public static string OpenListDialog__Delete {
+            get {
+                return ResourceManager.GetString("OpenListDialog__Delete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 _Open 的本地化字符串。
+        /// </summary>
+        public static string OpenListDialog__Open {
+            get {
+                return ResourceManager.GetString("OpenListDialog__Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Other options 的本地化字符串。
         /// </summary>
         public static string OtherOptions {
             get {
                 return ResourceManager.GetString("OtherOptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Public Key Token 的本地化字符串。
+        /// </summary>
+        public static string PublicToken {
+            get {
+                return ResourceManager.GetString("PublicToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Reference Name 的本地化字符串。
+        /// </summary>
+        public static string ReferenceName {
+            get {
+                return ResourceManager.GetString("ReferenceName", resourceCulture);
             }
         }
         
@@ -655,11 +817,74 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Save Code 的本地化字符串。
+        /// </summary>
+        public static string SaveCode {
+            get {
+                return ResourceManager.GetString("SaveCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Search... 的本地化字符串。
+        /// </summary>
+        public static string Search {
+            get {
+                return ResourceManager.GetString("Search", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Search aborted, more than 1000 results found. 的本地化字符串。
+        /// </summary>
+        public static string SearchAbortedMoreThan1000ResultsFound {
+            get {
+                return ResourceManager.GetString("SearchAbortedMoreThan1000ResultsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Searching... 的本地化字符串。
+        /// </summary>
+        public static string Searching {
+            get {
+                return ResourceManager.GetString("Searching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Search 的本地化字符串。
         /// </summary>
         public static string SearchPane_Search {
             get {
                 return ResourceManager.GetString("SearchPane_Search", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Select All 的本地化字符串。
+        /// </summary>
+        public static string Select {
+            get {
+                return ResourceManager.GetString("Select", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Select assemblies to open: 的本地化字符串。
+        /// </summary>
+        public static string SelectAssembliesOpen {
+            get {
+                return ResourceManager.GetString("SelectAssembliesOpen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Select a list: 的本地化字符串。
+        /// </summary>
+        public static string SelectList {
+            get {
+                return ResourceManager.GetString("SelectList", resourceCulture);
             }
         }
         
@@ -849,6 +1074,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string VariableNamesFromDebugSymbolsAvailable {
             get {
                 return ResourceManager.GetString("VariableNamesFromDebugSymbolsAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Version 的本地化字符串。
+        /// </summary>
+        public static string Version {
+            get {
+                return ResourceManager.GetString("Version", resourceCulture);
             }
         }
         
