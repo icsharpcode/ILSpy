@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.Options
 	/// <summary>
 	/// Interaction logic for DisplaySettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = "Display", Order = 1)]
+	[ExportOptionPage(Title = nameof(Properties.Resources.Display), Order = 1)]
 	public partial class DisplaySettingsPanel : UserControl, IOptionPage
 	{
 		public DisplaySettingsPanel()

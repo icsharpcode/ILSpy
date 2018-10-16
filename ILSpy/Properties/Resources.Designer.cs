@@ -160,6 +160,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 _Options... 的本地化字符串。
+        /// </summary>
+        public static string _Options {
+            get {
+                return ResourceManager.GetString("_Options", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 _Reload 的本地化字符串。
         /// </summary>
         public static string _Reload {
@@ -421,6 +430,33 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Debug Steps 的本地化字符串。
+        /// </summary>
+        public static string DebugSteps {
+            get {
+                return ResourceManager.GetString("DebugSteps", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Debug this step 的本地化字符串。
+        /// </summary>
+        public static string DebugThisStep {
+            get {
+                return ResourceManager.GetString("DebugThisStep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Decompiler 的本地化字符串。
+        /// </summary>
+        public static string Decompiler {
+            get {
+                return ResourceManager.GetString("Decompiler", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Decompiling... 的本地化字符串。
         /// </summary>
         public static string Decompiling {
@@ -448,11 +484,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Display 的本地化字符串。
+        /// </summary>
+        public static string Display {
+            get {
+                return ResourceManager.GetString("Display", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Display Code 的本地化字符串。
         /// </summary>
         public static string DisplayCode {
             get {
                 return ResourceManager.GetString("DisplayCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Font: 的本地化字符串。
+        /// </summary>
+        public static string DisplaySettingsPanel_Font {
+            get {
+                return ResourceManager.GetString("DisplaySettingsPanel_Font", resourceCulture);
             }
         }
         
@@ -619,6 +673,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Misc 的本地化字符串。
+        /// </summary>
+        public static string Misc {
+            get {
+                return ResourceManager.GetString("Misc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Name 的本地化字符串。
         /// </summary>
         public static string Name {
@@ -723,6 +786,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string OpenListDialog__Open {
             get {
                 return ResourceManager.GetString("OpenListDialog__Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Options 的本地化字符串。
+        /// </summary>
+        public static string Options {
+            get {
+                return ResourceManager.GetString("Options", resourceCulture);
             }
         }
         
@@ -907,11 +979,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 ShowChildIndexInBlock 的本地化字符串。
+        /// </summary>
+        public static string ShowChildIndexInBlock {
+            get {
+                return ResourceManager.GetString("ShowChildIndexInBlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Show XML documentation in decompiled code 的本地化字符串。
         /// </summary>
         public static string ShowDocumentationDecompiledCode {
             get {
                 return ResourceManager.GetString("ShowDocumentationDecompiledCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 ShowILRanges 的本地化字符串。
+        /// </summary>
+        public static string ShowILRanges {
+            get {
+                return ResourceManager.GetString("ShowILRanges", resourceCulture);
             }
         }
         
@@ -948,6 +1038,33 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ShowMetadataTokens {
             get {
                 return ResourceManager.GetString("ShowMetadataTokens", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Show state after this step 的本地化字符串。
+        /// </summary>
+        public static string ShowStateAfterThisStep {
+            get {
+                return ResourceManager.GetString("ShowStateAfterThisStep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Show state before this step 的本地化字符串。
+        /// </summary>
+        public static string ShowStateBeforeThisStep {
+            get {
+                return ResourceManager.GetString("ShowStateBeforeThisStep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Size: 的本地化字符串。
+        /// </summary>
+        public static string Size {
+            get {
+                return ResourceManager.GetString("Size", resourceCulture);
             }
         }
         
@@ -1029,6 +1146,24 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string UpdateILSpyFound {
             get {
                 return ResourceManager.GetString("UpdateILSpyFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 UseFieldSugar 的本地化字符串。
+        /// </summary>
+        public static string UseFieldSugar {
+            get {
+                return ResourceManager.GetString("UseFieldSugar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 UseLogicOperationSugar 的本地化字符串。
+        /// </summary>
+        public static string UseLogicOperationSugar {
+            get {
+                return ResourceManager.GetString("UseLogicOperationSugar", resourceCulture);
             }
         }
         

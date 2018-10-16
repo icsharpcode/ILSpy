@@ -23,7 +23,7 @@
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="50" />
 				</Grid.RowDefinitions>
-				<Label Margin="3,0" Content="Font:"/>
+				<Label Margin="3,0" Content="{x:Static properties:Resources.DisplaySettingsPanel_Font}"/>
 				<ComboBox x:Name="fontSelector" VerticalContentAlignment="Center" SelectedItem="{Binding SelectedFont}" Grid.Column="1">
 					<ComboBox.ItemTemplate>
 						<DataTemplate>
@@ -31,7 +31,7 @@
 						</DataTemplate>
 					</ComboBox.ItemTemplate>
 				</ComboBox>
-				<Label Grid.Column="2" Margin="3,0" Content="Size:"/>
+				<Label Grid.Column="2" Margin="3,0" Content="{x:Static properties:Resources.Size}"/>
 				<ComboBox Grid.Column="3" Text="{Binding SelectedFontSize, Converter={StaticResource fontSizeConv}}" IsEditable="True" Margin="3,0">
 					<ComboBoxItem>6</ComboBoxItem>
 					<ComboBoxItem>7</ComboBoxItem>

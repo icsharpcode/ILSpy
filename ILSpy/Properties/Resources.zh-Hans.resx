@@ -373,13 +373,13 @@
     <value>引用名称</value>
   </data>
   <data name="Version" xml:space="preserve">
-    <value>Version  </value>
+    <value>版本</value>
   </data>
   <data name="Culture" xml:space="preserve">
-    <value>Culture  </value>
+    <value>区域</value>
   </data>
   <data name="PublicToken" xml:space="preserve">
-    <value>Public Key Token  </value>
+    <value>公钥标记</value>
   </data>
   <data name="OpenList" xml:space="preserve">
     <value>打开列表</value>
@@ -445,7 +445,7 @@
     <value>找不到 ILSpy 的更新。</value>
   </data>
   <data name="ILSpyVersionAvailable" xml:space="preserve">
-    <value>新的 ILSpy 版本可用。</value>
+    <value>有新的 ILSpy 版本已经可用。</value>
   </data>
   <data name="StandBy" xml:space="preserve">
     <value>就绪...</value>
@@ -470,5 +470,50 @@
   </data>
   <data name="WatermarkText" xml:space="preserve">
     <value>搜索 t:TypeName, m:Member 或c:Constant; 使用完全匹配 (=term), '不应包含' (-term) 或 '必须包含' (+term); 使用 /reg(ular)?Ex(pressions)?/或两者 - t:/Type(Name)?/...  </value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>选项</value>
+  </data>
+  <data name="_Options" xml:space="preserve">
+    <value>选项(_O)...</value>
+  </data>
+  <data name="Display" xml:space="preserve">
+    <value>显示</value>
+  </data>
+  <data name="Decompiler" xml:space="preserve">
+    <value>反编译器</value>
+  </data>
+  <data name="Misc" xml:space="preserve">
+    <value>杂项</value>
+  </data>
+  <data name="DisplaySettingsPanel_Font" xml:space="preserve">
+    <value>字体:</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>大小:</value>
+  </data>
+  <data name="DebugSteps" xml:space="preserve">
+    <value>调试步骤</value>
+  </data>
+  <data name="UseFieldSugar" xml:space="preserve">
+    <value>UseFieldSugar</value>
+  </data>
+  <data name="UseLogicOperationSugar" xml:space="preserve">
+    <value>UseLogicOperationSugar</value>
+  </data>
+  <data name="ShowILRanges" xml:space="preserve">
+    <value>ShowILRanges</value>
+  </data>
+  <data name="ShowChildIndexInBlock" xml:space="preserve">
+    <value>ShowChildIndexInBlock</value>
+  </data>
+  <data name="ShowStateBeforeThisStep" xml:space="preserve">
+    <value>在此步骤之前显示状态</value>
+  </data>
+  <data name="ShowStateAfterThisStep" xml:space="preserve">
+    <value>在此步骤之后显示状态</value>
+  </data>
+  <data name="DebugThisStep" xml:space="preserve">
+    <value>调试此步骤</value>
   </data>
 </root>

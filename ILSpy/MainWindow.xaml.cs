@@ -182,7 +182,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private static string GetResourceString(string key)
+		internal static string GetResourceString(string key)
 		{
 			var str = !string.IsNullOrEmpty(key)? Properties.Resources.ResourceManager.GetString(key):null;
 			return string.IsNullOrEmpty(key)||  string.IsNullOrEmpty(str) ? key :  str;
