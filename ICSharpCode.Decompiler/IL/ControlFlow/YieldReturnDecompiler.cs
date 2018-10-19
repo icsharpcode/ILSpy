@@ -70,6 +70,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>Set in AnalyzeCurrentProperty()</remarks>
 		IField currentField;
 
+		/// <summary>The disposing field of the compiler-generated enumerator class./summary>
+		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
+		IField disposingField;
+
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
 		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
@@ -459,6 +463,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ConstructExceptionTable()
 		{
 			if (isCompiledWithMono) {
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
+				BlockContainer body = disposeMethod == null ? null : (BlockContainer)CreateILAst(disposeMethod, context).Body;
+
+				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++) {
+					if (body.EntryPoint.Instructions[i] is StObj stobj
+						&& stobj.MatchStFld(out var target, out var field, out var value)
+						&& target.MatchLdThis()
+						&& field.Type.IsKnownType(KnownTypeCode.Boolean)
+						&& value.MatchLdcI4(1)) {
+						disposingField = (IField)field.MemberDefinition;
+						break;
+					}
+				}
+
 				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
 				disposeMethod = default;
 				finallyMethodToStateRange = default;
@@ -633,7 +651,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				newBody.Blocks.Add(new Block { ILRange = oldBody.Blocks[blockIndex].ILRange });
 			}
 			// convert contents of blocks
-			
+
 			for (int i = 0; i < oldBody.Blocks.Count; i++) {
 				var oldBlock = oldBody.Blocks[i];
 				var newBlock = newBody.Blocks[i];
@@ -693,8 +711,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& target.MatchLdThis()
 					&& field.MemberDefinition == stateField
 					&& value.MatchLdcI4(out int newState))) {
-					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
-					return;
+					if (isCompiledWithMono
+						&& disposingField != null
+						&& oldBlock.Instructions[i + 1].MatchIfInstruction(out var condition, out var trueInst)
+						&& condition.MatchLdFld(out target, out field)
+						&& target.MatchLdThis() && field.MemberDefinition.Equals(disposingField)
+						&& oldBlock.Instructions[i + 2].MatchBranch(out var targetBlock)
+						&& targetBlock.Instructions[0].MatchStFld(out target, out field, out value)
+						&& target.MatchLdThis()
+						&& field.MemberDefinition == stateField
+						&& value.MatchLdcI4(out newState)) {
+						// skip disposing branch, chain the next block
+						oldBlock = targetBlock;
+						i = -1;
+						if (oldBlock.Instructions[1].MatchBranch(out targetBlock)
+							&& targetBlock.Instructions.Count == 2
+							&& targetBlock.Instructions[0].MatchStLoc(out var variable, out value)
+							&& value.MatchLdcI4(out var flag) && flag == 1
+							&& targetBlock.Instructions[1].MatchBranch(out targetBlock)) {
+							oldBlock = targetBlock;
+							i = -2;
+						}
+					} else {
+						newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
+						return;
+					}
 				}
 				int pos = i + 2;
 				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value)) {
