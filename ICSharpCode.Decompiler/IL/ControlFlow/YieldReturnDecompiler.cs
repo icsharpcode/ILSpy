@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("Translate fields to local accesses", function);
-			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap, isCompiledWithMono);
 
 			CleanSkipFinallyBodies(function);
 
@@ -823,7 +823,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Translates all field accesses in `function` to local variable accesses.
 		/// </summary>
-		internal static void TranslateFieldsToLocalAccess(ILFunction function, ILInstruction inst, Dictionary<IField, ILVariable> fieldToVariableMap)
+		internal static void TranslateFieldsToLocalAccess(ILFunction function, ILInstruction inst, Dictionary<IField, ILVariable> fieldToVariableMap, bool isCompiledWithMono = false)
 		{
 			if (inst is LdFlda ldflda && ldflda.Target.MatchLdThis()) {
 				var fieldDef = (IField)ldflda.Field.MemberDefinition;
@@ -845,11 +845,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				} else {
 					inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
 				}
-			} else if (inst.MatchLdThis()) {
+			} else if (!isCompiledWithMono && inst.MatchLdThis()) {
 				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType, ILRange = inst.ILRange });
 			} else {
 				foreach (var child in inst.Children) {
-					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap);
+					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap, isCompiledWithMono);
 				}
 				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null) {
 					LdLoc ldloc = new LdLoc(ldloca.Variable);

@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
 					if (f != null) {
 						call.ReplaceWith(f);
-						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+						if (target is IInstructionWithVariableOperand)
 							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
 				}
@@ -269,6 +269,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStLoc(StLoc inst)
 			{
 				base.VisitStLoc(inst);
+				if (targetLoad is ILInstruction instruction && instruction.MatchLdThis())
+					return;
 				if (inst.Variable == targetLoad.Variable)
 					orphanedVariableInits.Add(inst);
 				if (MatchesTargetOrCopyLoad(inst.Value)) {
@@ -285,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStObj(StObj inst)
 			{
 				base.VisitStObj(inst);
-				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target) || target.MatchLdThis())
 					return;
 				field = (IField)field.MemberDefinition;
 				ILInstruction value;
@@ -321,6 +323,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitLdFlda(LdFlda inst)
 			{
 				base.VisitLdFlda(inst);
+				if (inst.Target.MatchLdThis() && inst.Field.Name == "$this"
+					&& inst.Field.MemberDefinition.ReflectionName.Contains("c__Iterator")) {
+					var variable = currentFunction.Variables.First((f) => f.Index == -1);
+					inst.ReplaceWith(new LdLoca(variable) { ILRange = inst.ILRange });
+				}
 				if (inst.Parent is LdObj || inst.Parent is StObj)
 					return;
 				if (!MatchesTargetOrCopyLoad(inst.Target))
