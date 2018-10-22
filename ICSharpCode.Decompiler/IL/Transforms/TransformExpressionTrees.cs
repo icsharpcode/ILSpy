@@ -1065,7 +1065,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = call.Arguments[0];
 				if (call.Arguments.Count == 2)
 					return MatchGetTypeFromHandle(call.Arguments[1], out type);
-				type = value.InferType();
+				type = value.InferType(context.TypeSystem);
 				return true;
 			}
 			return false;

@@ -498,21 +498,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 				case BinaryNumericOperator.BitAnd:
-					if (IsBoolean(inst.Left) && IsBoolean(inst.Right) && SemanticHelper.IsPure(inst.Right.Flags))
+					if (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
+						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
 					{
-						context.Step("Replace bit.and with logic.and", inst);
-						var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
-						inst.ReplaceWith(expr);
-						expr.AcceptVisitor(this);
+						if (new NullableLiftingTransform(context).Run(inst)) {
+							// e.g. "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
+						} else if (SemanticHelper.IsPure(inst.Right.Flags)) {
+							context.Step("Replace bit.and with logic.and", inst);
+							var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
+							inst.ReplaceWith(expr);
+							expr.AcceptVisitor(this);
+						}
 					}
 					break;
 			}
 		}
-
-		private static bool IsBoolean(ILInstruction inst) => 
-			inst is Comp c && c.ResultType == StackType.I4 || 
-			inst.InferType().IsKnownType(KnownTypeCode.Boolean);
-
+		
 		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
 			base.VisitTryCatchHandler(inst);
