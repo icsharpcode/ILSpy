@@ -516,4 +516,16 @@
   <data name="DebugThisStep" xml:space="preserve">
     <value>Debug this step</value>
   </data>
+  <data name="WarningAsmMarkedRef" xml:space="preserve">
+    <value>Warning: This assembly is marked as 'reference assembly', which means that it only contains metadata and no executable code.</value>
+  </data>
+  <data name="WarningSomeAssemblyReference" xml:space="preserve">
+    <value>Warning: Some assembly references could not be resolved automatically. This might lead to incorrect decompilation of some parts,</value>
+  </data>
+  <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
+    <value>for ex. property getter/setter access. To get optimal decompilation results, please manually add the missing references to the list of loaded assemblies.</value>
+  </data>
+  <data name="ShowAssemblyLoad" xml:space="preserve">
+    <value>Show assembly load log</value>
+  </data>
 </root>

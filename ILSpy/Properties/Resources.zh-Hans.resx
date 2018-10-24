@@ -516,4 +516,16 @@
   <data name="DebugThisStep" xml:space="preserve">
     <value>调试此步骤</value>
   </data>
+  <data name="WarningAsmMarkedRef" xml:space="preserve">
+    <value>警告: 此程序集被标记为 "引用程序集", 这意味着它只包含元数据, 没有可执行代码。</value>
+  </data>
+  <data name="WarningSomeAssemblyReference" xml:space="preserve">
+    <value>警告: 某些程序集引用无法自动解析。这可能会导致某些部分反编译错误,</value>
+  </data>
+  <data name="PropertyManuallyMissingReferencesListLoadedAssemblies" xml:space="preserve">
+    <value>比如属性getter/setter 访问。要获得最佳反编译结果, 请手动将缺少的引用添加到加载的程序集列表中。</value>
+  </data>
+  <data name="ShowAssemblyLoad" xml:space="preserve">
+    <value>显示程序集加载日志</value>
+  </data>
 </root>
