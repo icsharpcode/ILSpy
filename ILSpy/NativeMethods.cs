@@ -50,6 +50,20 @@ namespace ICSharpCode.ILSpy
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static extern bool SetForegroundWindow(IntPtr hWnd);
+
+		//HANDLE WINAPI GetProcessHandleFromHwnd(
+		//  _In_ HWND hwnd
+		//);
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		[return: MarshalAs(UnmanagedType.I4)]
+		internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, [MarshalAs(UnmanagedType.I4)] out uint processId);
+
+		public static uint GetProcessIdFromWindow(IntPtr hWnd)
+		{
+			GetWindowThreadProcessId(hWnd, out uint processId);
+			return processId;
+		}
 	}
 	
 	[return: MarshalAs(UnmanagedType.Bool)]

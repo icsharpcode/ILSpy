@@ -12,18 +12,6 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	public class ILSpyParameters
-	{
-		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
-		{
-			this.AssemblyFileNames = assemblyFileNames;
-			this.Arguments = arguments;
-		}
-
-		public IEnumerable<string> AssemblyFileNames { get; private set; }
-		public string[] Arguments { get; private set; }
-	}
-
 	public class DetectedReference
 	{
 		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
@@ -75,12 +63,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(parameters.AssemblyFileNames.ToArray());
-			if (parameters.Arguments != null) {
-				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(parameters.Arguments));
-			}
-
-			System.Diagnostics.Process.Start(GetILSpyPath(), commandLineArguments);
+			var ilspyExe = new ILSpyInstance(parameters);
+			ilspyExe.Start();
 		}
 
 		protected Dictionary<string, DetectedReference> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
@@ -140,7 +124,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected override void OnExecute(object sender, EventArgs e)
 		{
-			System.Diagnostics.Process.Start(GetILSpyPath());
+			new ILSpyInstance().Start();
 		}
 
 		internal static void Register(ILSpyAddInPackage owner)

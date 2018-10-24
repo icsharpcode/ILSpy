@@ -74,6 +74,7 @@
     <Compile Include="Commands\OpenProjectOutputCommand.cs" />
     <Compile Include="Commands\OpenReferenceCommand.cs" />
     <Compile Include="Guids.cs" />
+    <Compile Include="ILSpyInstance.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
