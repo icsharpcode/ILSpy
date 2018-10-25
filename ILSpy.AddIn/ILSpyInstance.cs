@@ -66,22 +66,18 @@ namespace ICSharpCode.ILSpy.AddIn
 				do {
 					NativeMethods.EnumWindows(
 						(hWnd, lParam) => {
-							uint processId = NativeMethods.GetProcessIdFromWindow(hWnd);
-							//if (processId == ilspyProcess.Id) {
-								Debug.WriteLine("Found {0:x4} for process {1}", hWnd, processId);
-								string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
-								if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal)) {
-									Debug.WriteLine("Found {0:x4}: {1}", hWnd, windowTitle);
-									IntPtr result = Send(hWnd, message);
-									Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
-									if (result == (IntPtr)1) {
-										if (activate)
-											NativeMethods.SetForegroundWindow(hWnd);
-										success = true;
-										return false; // stop enumeration
-									}
+							string windowTitle = NativeMethods.GetWindowText(hWnd, 100);
+							if (windowTitle.StartsWith("ILSpy", StringComparison.Ordinal)) {
+								Debug.WriteLine("Found {0:x4}: {1}", hWnd, windowTitle);
+								IntPtr result = Send(hWnd, message);
+								Debug.WriteLine("WM_COPYDATA result: {0:x8}", result);
+								if (result == (IntPtr)1) {
+									if (activate)
+										NativeMethods.SetForegroundWindow(hWnd);
+									success = true;
+									return false; // stop enumeration
 								}
-							//}
+							}
 							return true; // continue enumeration
 						}, IntPtr.Zero);
 
