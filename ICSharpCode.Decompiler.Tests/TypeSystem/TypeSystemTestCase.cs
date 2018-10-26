@@ -153,6 +153,14 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[DllImport("unmanaged.dll", CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool DllMethod([In, Out] ref int p);
+
+		[DllImport("unmanaged.dll", PreserveSig = false)]
+		public static extern bool DoNotPreserveSig();
+
+		[PreserveSig]
+		public static void PreserveSigAsAttribute()
+		{
+		}
 	}
 
 	[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode, Pack = 8)]
