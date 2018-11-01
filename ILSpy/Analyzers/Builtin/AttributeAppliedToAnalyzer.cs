@@ -36,7 +36,6 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				return Array.Empty<ISymbol>();
 
 			var scope = context.GetScopeOf(attributeType);
-			// TODO: The IndexerNameAttribute needs special support, because it is not available on IL level. Do we want to support it?
 			// TODO: DeclSecurity attributes are not supported.
 			if (!IsBuiltinAttribute(attributeType, out var knownAttribute)) {
 				return HandleCustomAttribute(attributeType, scope);
@@ -62,199 +61,79 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 				case KnownAttribute.Optional:
 				case KnownAttribute.In:
 				case KnownAttribute.Out:
+				case KnownAttribute.IndexerName:
 					return true;
 				default:
 					return false;
 			}
 		}
 
-		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attributeType, AnalyzerScope scope)
+		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope)
 		{
-			// For built-in attributes (i.e. metadata flags) we have to perform the same checks
-			// as implemented in the GetAttributes methods of MetadataField, MetadataMethod, MetadataParameter, etc.
+			IEnumerable<ISymbol> ScanTypes(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.Where(t => t.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanMethods(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Members.OfType<IMethod>())
+					.Where(m => m.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanFields(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Fields)
+					.Where(f => f.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanProperties(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Properties)
+					.Where(p => p.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanParameters(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Members.OfType<IMethod>())
+					.Where(m => m.Parameters.Any(p => p.HasAttribute(attribute)));
+			}
+
 			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules()) {
 				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
 
-				switch (attributeType) {
+				switch (attribute) {
 					case KnownAttribute.Serializable:
-						yield return ScanDefinitions(ts, TypeAttributes.Serializable);
-						break;
 					case KnownAttribute.ComImport:
-						yield return ScanDefinitions(ts, TypeAttributes.Import);
-						break;
 					case KnownAttribute.StructLayout:
-						yield return ScanDefinitions(ts, matcher: HasStructLayout);
+						yield return ScanTypes(ts);
 						break;
 					case KnownAttribute.DllImport:
-						yield return ScanDefinitions(ts, matcher: IsPinvokeImpl);
-						break;
 					case KnownAttribute.PreserveSig:
-						yield return ScanDefinitions(ts, matcher: (mod, m) => !IsPinvokeImpl(mod, m) && (m.ImplAttributes & ~MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.PreserveSig);
-						break;
 					case KnownAttribute.MethodImpl:
-						yield return ScanDefinitions(ts, matcher: HasMethodImplOptions);
+						yield return ScanMethods(ts);
 						break;
 					case KnownAttribute.FieldOffset:
-						yield return ScanDefinitions(ts, matcher: (mod, f) => f.GetOffset() != -1);
-						break;
 					case KnownAttribute.NonSerialized:
-						yield return ScanDefinitions(ts, FieldAttributes.NotSerialized);
+						yield return ScanFields(ts);
 						break;
 					case KnownAttribute.MarshalAs:
-						yield return ScanDefinitions(ts, matcher: (mod, f) => !f.GetMarshallingDescriptor().IsNil);
-						yield return ScanParameters(ts, matcher: (mod, _, p) => !p.GetMarshallingDescriptor().IsNil);
-						break;
+						yield return ScanFields(ts);
+						yield return ScanParameters(ts);
+						goto case KnownAttribute.Out;
 					case KnownAttribute.Optional:
-						yield return ScanParameters(ts, matcher: (mod, m, p) => (p.Attributes & ParameterAttributes.Optional) != 0 && !CheckTSParamFlag(ts.MainModule, m, tsp => tsp.HasConstantValueInSignature));
-						break;
 					case KnownAttribute.In:
-						yield return ScanParameters(ts, matcher: (mod, m, p) => (p.Attributes & ParameterAttributes.In) == ParameterAttributes.In && CheckTSParamFlag(ts.MainModule, m, tsp => tsp.HasAttribute(KnownAttribute.In)));
-						break;
 					case KnownAttribute.Out:
-						yield return ScanParameters(ts, matcher: (mod, m, p) => (p.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out && CheckTSParamFlag(ts.MainModule, m, tsp => tsp.HasAttribute(KnownAttribute.Out)));
+						yield return ScanParameters(ts);
 						break;
-				}
-			}
-		}
-
-		private bool CheckTSParamFlag(MetadataModule module, MethodDefinitionHandle h, Func<IParameter, bool> matcher)
-		{
-			var m = module.GetDefinition(h);
-			return m.Parameters.Any(matcher);
-		}
-
-		private bool HasMethodImplOptions(Decompiler.Metadata.PEFile module, MethodDefinition m)
-		{
-			var implOptions = m.ImplAttributes & ~MethodImplAttributes.CodeTypeMask;
-			if (IsPinvokeImpl(module, m)) {
-				implOptions &= ~MethodImplAttributes.PreserveSig;
-			}
-			if (implOptions == MethodImplAttributes.PreserveSig)
-				return false;
-			return implOptions != 0;
-		}
-
-		private bool IsPinvokeImpl(Decompiler.Metadata.PEFile module, MethodDefinition m)
-		{
-			var info = m.GetImport();
-			return (m.Attributes & MethodAttributes.PinvokeImpl) == MethodAttributes.PinvokeImpl && !info.Module.IsNil;
-		}
-
-		private bool HasStructLayout(Decompiler.Metadata.PEFile module, TypeDefinition t)
-		{
-			LayoutKind layoutKind = LayoutKind.Auto;
-			switch (t.Attributes & TypeAttributes.LayoutMask) {
-				case TypeAttributes.SequentialLayout:
-					layoutKind = LayoutKind.Sequential;
-					break;
-				case TypeAttributes.ExplicitLayout:
-					layoutKind = LayoutKind.Explicit;
-					break;
-			}
-			CharSet charSet = CharSet.None;
-			switch (t.Attributes & TypeAttributes.StringFormatMask) {
-				case TypeAttributes.AnsiClass:
-					charSet = CharSet.Ansi;
-					break;
-				case TypeAttributes.AutoClass:
-					charSet = CharSet.Auto;
-					break;
-				case TypeAttributes.UnicodeClass:
-					charSet = CharSet.Unicode;
-					break;
-			}
-			var defaultLayoutKind = t.IsValueType(module.Metadata) && !t.IsEnum(module.Metadata) ? LayoutKind.Sequential : LayoutKind.Auto;
-			var layout = t.GetLayout();
-			return layoutKind != defaultLayoutKind || charSet != CharSet.Ansi || layout.PackingSize > 0 || layout.Size > 0;
-		}
-
-		IEnumerable<ISymbol> ScanDefinitions(DecompilerTypeSystem ts, TypeAttributes attribute = 0, Func<Decompiler.Metadata.PEFile, TypeDefinition, bool> matcher = null)
-		{
-			var module = ts.MainModule.PEFile;
-			foreach (var h in module.Metadata.TypeDefinitions) {
-				var t = module.Metadata.GetTypeDefinition(h);
-				if (matcher != null) {
-					if (!matcher(module, t)) continue;
-				} else {
-					if ((t.Attributes & attribute) == 0) continue;
-				}
-				yield return ts.MainModule.GetDefinition(h);
-			}
-		}
-
-		IEnumerable<ISymbol> ScanDefinitions(DecompilerTypeSystem ts, MethodAttributes attribute = 0, Func<Decompiler.Metadata.PEFile, MethodDefinition, bool> matcher = null)
-		{
-			var module = ts.MainModule.PEFile;
-			foreach (var h in module.Metadata.MethodDefinitions) {
-				var m = module.Metadata.GetMethodDefinition(h);
-				if (matcher != null) {
-					if (!matcher(module, m)) continue;
-				} else {
-					if ((m.Attributes & attribute) == 0) continue;
-				}
-				yield return ts.MainModule.GetDefinition(h);
-			}
-		}
-
-		IEnumerable<ISymbol> ScanDefinitions(DecompilerTypeSystem ts, FieldAttributes attribute = 0, Func<Decompiler.Metadata.PEFile, FieldDefinition, bool> matcher = null)
-		{
-			var module = ts.MainModule.PEFile;
-			foreach (var h in module.Metadata.FieldDefinitions) {
-				var f = module.Metadata.GetFieldDefinition(h);
-				if (matcher != null) {
-					if (!matcher(module, f)) continue;
-				} else {
-					if ((f.Attributes & attribute) == 0) continue;
-				}
-				yield return ts.MainModule.GetDefinition(h);
-			}
-		}
-
-		IEnumerable<ISymbol> ScanDefinitions(DecompilerTypeSystem ts, PropertyAttributes attribute = 0, Func<Decompiler.Metadata.PEFile, PropertyDefinition, bool> matcher = null)
-		{
-			var module = ts.MainModule.PEFile;
-			foreach (var h in module.Metadata.PropertyDefinitions) {
-				var p = module.Metadata.GetPropertyDefinition(h);
-				if (matcher != null) {
-					if (!matcher(module, p)) continue;
-				} else {
-					if ((p.Attributes & attribute) == 0) continue;
-				}
-				yield return ts.MainModule.GetDefinition(h);
-			}
-		}
-
-		IEnumerable<ISymbol> ScanDefinitions(DecompilerTypeSystem ts, EventAttributes attribute)
-		{
-			var module = ts.MainModule.PEFile;
-			foreach (var h in module.Metadata.EventDefinitions) {
-				var e = module.Metadata.GetEventDefinition(h);
-				if ((e.Attributes & attribute) == 0) continue;
-				yield return ts.MainModule.GetDefinition(h);
-			}
-		}
-
-		IEnumerable<ISymbol> ScanParameters(DecompilerTypeSystem ts, ParameterAttributes attribute = 0, Func<Decompiler.Metadata.PEFile, MethodDefinitionHandle, Parameter, bool> matcher = null)
-		{
-			var module = ts.MainModule.PEFile;
-			var genericContext = new GenericContext();
-			foreach (var h in module.Metadata.MethodDefinitions) {
-				var m = module.Metadata.GetMethodDefinition(h);
-				foreach (var ph in m.GetParameters()) {
-					var p = module.Metadata.GetParameter(ph);
-					if (matcher != null) {
-						if (!matcher(module, h, p)) continue;
-					} else {
-						if ((p.Attributes & attribute) == 0) continue;
-					}
-					var method = ts.MainModule.ResolveMethod(h, genericContext);
-					if (method != null) {
-						if (method.IsAccessor)
-							yield return method.AccessorOwner;
-						else
-							yield return method;
-					}
-					break;
+					case KnownAttribute.IndexerName:
+						yield return ScanProperties(ts);
+						break;
 				}
 			}
 		}
