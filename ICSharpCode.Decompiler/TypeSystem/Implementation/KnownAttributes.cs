@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -155,6 +156,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType FindType(this ICompilation compilation, KnownAttribute attrType)
 		{
 			return compilation.FindType(attrType.GetTypeName());
+		}
+
+		public static KnownAttribute IsKnownAttributeType(this ITypeDefinition attributeType)
+		{
+			if (!attributeType.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute)))
+				return KnownAttribute.None;
+			for (int i = 1; i < typeNames.Length; i++) {
+				if (typeNames[i] == attributeType.FullTypeName)
+					return (KnownAttribute)i;
+			}
+			return KnownAttribute.None;
 		}
 	}
 }
