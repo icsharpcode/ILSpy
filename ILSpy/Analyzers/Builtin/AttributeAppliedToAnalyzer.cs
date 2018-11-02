@@ -80,7 +80,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			{
 				return ts.MainModule.TypeDefinitions
 					.SelectMany(t => t.Members.OfType<IMethod>())
-					.Where(m => m.HasAttribute(attribute));
+					.Where(m => m.HasAttribute(attribute))
+					.Select(m => m.AccessorOwner ?? m);
 			}
 
 			IEnumerable<ISymbol> ScanFields(DecompilerTypeSystem ts)
@@ -101,7 +102,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			{
 				return ts.MainModule.TypeDefinitions
 					.SelectMany(t => t.Members.OfType<IMethod>())
-					.Where(m => m.Parameters.Any(p => p.HasAttribute(attribute)));
+					.Where(m => m.Parameters.Any(p => p.HasAttribute(attribute)))
+					.Select(m => m.AccessorOwner ?? m);
 			}
 
 			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules()) {
