@@ -112,7 +112,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 							index--;
 						assemblyList.assemblies.RemoveAt(nodeIndex);
 					}
-					assemblies.Reverse();
+					Array.Reverse(assemblies);
 					foreach (LoadedAssembly asm in assemblies) {
 						assemblyList.assemblies.Insert(index, asm);
 					}
