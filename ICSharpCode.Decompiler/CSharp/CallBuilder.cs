@@ -787,7 +787,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
 				argumentList.Arguments, argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod,
-				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None && bestCandidateIsExpandedForm == argumentList.IsExpandedForm)
+				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 			{
 				switch (errors) {
 					case OverloadResolutionErrors.TypeInferenceFailed:
@@ -1164,7 +1164,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array, argumentList.Arguments,
 					argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
-					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None && bestCandidateIsExpandedForm == argumentList.IsExpandedForm)
+					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 				{
 					if (argumentList.FirstOptionalArgumentIndex >= 0) {
 						argumentList.FirstOptionalArgumentIndex = -1;
