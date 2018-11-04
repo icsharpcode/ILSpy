@@ -235,22 +235,41 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
 			}
 
-			if (settings.StringInterpolation && IsInterpolatedStringCreation(method) &&
+			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList) &&
 				TryGetStringInterpolationTokens(argumentList, out string format, out var tokens))
 			{
 				var arguments = argumentList.Arguments;
 				var content = new List<InterpolatedStringContent>();
+
+				bool unpackSingleElementArray = !argumentList.IsExpandedForm && argumentList.Length == 2
+					&& argumentList.Arguments[1].Expression is ArrayCreateExpression ace
+					&& ace.Initializer?.Elements.Count == 1;
+
+				void UnpackSingleElementArray(ref TranslatedExpression argument)
+				{
+					if (!unpackSingleElementArray) return;
+					var arrayCreation = (ArrayCreateExpression)argumentList.Arguments[1].Expression;
+					var arrayCreationRR = (ArrayCreateResolveResult)argumentList.Arguments[1].ResolveResult;
+					var element = arrayCreation.Initializer.Elements.First().Detach();
+					argument = new TranslatedExpression(element, arrayCreationRR.InitializerElements.First());
+				}
+
 				if (tokens.Count > 0) {
 					foreach (var (kind, index, text) in tokens) {
+						TranslatedExpression argument;
 						switch (kind) {
 							case TokenKind.String:
 								content.Add(new InterpolatedStringText(text));
 								break;
 							case TokenKind.Argument:
-								content.Add(new Interpolation(arguments[index + 1]));
+								argument = arguments[index + 1];
+								UnpackSingleElementArray(ref argument);
+								content.Add(new Interpolation(argument));
 								break;
 							case TokenKind.ArgumentWithFormat:
-								content.Add(new Interpolation(arguments[index + 1], text));
+								argument = arguments[index + 1];
+								UnpackSingleElementArray(ref argument);
+								content.Add(new Interpolation(argument, text));
 								break;
 						}
 					}
@@ -405,12 +424,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithResolveResult(((AssignmentExpression)assignment).Left.Detach());
 		}
 
-		private static bool IsInterpolatedStringCreation(IMethod method)
+		private static bool IsInterpolatedStringCreation(IMethod method, ArgumentList argumentList)
 		{
 			return method.IsStatic && (
 				(method.DeclaringType.IsKnownType(KnownTypeCode.String) && method.Name == "Format") ||
 				(method.Name == "Create" && method.DeclaringType.Name == "FormattableStringFactory" &&
 					method.DeclaringType.Namespace == "System.Runtime.CompilerServices")
+			)
+			&& argumentList.ArgumentNames == null // Argument names are not allowed
+			&& (
+				argumentList.IsExpandedForm // Must be expanded form
+				|| !method.Parameters.Last().IsParams // -or- not a params overload
+				|| (argumentList.Length == 2 && argumentList.Arguments[1].Expression is ArrayCreateExpression) // -or- an array literal
 			);
 		}
 

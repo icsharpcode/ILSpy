@@ -180,6 +180,26 @@
     IL_011f:  ret
   } // end of method CS6_StringInterpolation::General
 
+  .method public hidebysig static void  ArrayExpansionSpecialCases(object[] args) cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldstr      "args: {0}"
+    IL_0006:  ldarg.0
+    IL_0007:  call       string [mscorlib]System.String::Format(string,
+                                                                object)
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0011:  nop
+    IL_0012:  ldstr      "args: {0}"
+    IL_0017:  ldarg.0
+    IL_0018:  call       string [mscorlib]System.String::Format(string,
+                                                                object[])
+    IL_001d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0022:  nop
+    IL_0023:  ret
+  } // end of method CS6_StringInterpolation::ArrayExpansionSpecialCases
+
   .method public hidebysig static void  InvalidFormatString(string[] args) cil managed
   {
     // Code size       581 (0x245)

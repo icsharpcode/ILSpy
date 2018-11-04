@@ -21,6 +21,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine($"\ta{$"a{args.Length}" == args[0]}");
 		}
 
+		public static void ArrayExpansionSpecialCases(object[] args)
+		{
+			Console.WriteLine($"args: {args}");
+			Console.WriteLine(string.Format("args: {0}", args));
+		}
+
 		public static void InvalidFormatString(string[] args)
 		{
 			Console.WriteLine(string.Format("", args.Length));
