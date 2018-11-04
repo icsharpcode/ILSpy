@@ -405,7 +405,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithResolveResult(((AssignmentExpression)assignment).Left.Detach());
 		}
 
-		private bool IsInterpolatedStringCreation(IMethod method)
+		private static bool IsInterpolatedStringCreation(IMethod method)
 		{
 			return method.IsStatic && (
 				(method.DeclaringType.IsKnownType(KnownTypeCode.String) && method.Name == "Format") ||
@@ -643,7 +643,10 @@ namespace ICSharpCode.Decompiler.CSharp
 							expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
 					}
 				}
-				if (IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, Empty<IType>.Array, expandedArguments, null, -1, out _) == OverloadResolutionErrors.None) {
+				if (IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, Empty<IType>.Array,
+					expandedArguments, argumentNames: null, firstOptionalArgumentIndex: -1, out _,
+					out var bestCandidateIsExpandedForm) == OverloadResolutionErrors.None && bestCandidateIsExpandedForm)
+				{
 					expectedParameters = expandedParameters;
 					arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
 					return true;
@@ -758,7 +761,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool argumentsCasted = false;
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
-				argumentList.Arguments, argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod)) != OverloadResolutionErrors.None)
+				argumentList.Arguments, argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out foundMethod,
+				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None && bestCandidateIsExpandedForm == argumentList.IsExpandedForm)
 			{
 				switch (errors) {
 					case OverloadResolutionErrors.TypeInferenceFailed:
@@ -923,9 +927,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		OverloadResolutionErrors IsUnambiguousCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			ResolveResult target, IType[] typeArguments, IList<TranslatedExpression> arguments,
 			string[] argumentNames, int firstOptionalArgumentIndex,
-			out IParameterizedMember foundMember)
+			out IParameterizedMember foundMember, out bool bestCandidateIsExpandedForm)
 		{
 			foundMember = null;
+			bestCandidateIsExpandedForm = false;
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
 			var or = new OverloadResolution(resolver.Compilation,
 				firstOptionalArgumentIndex < 0 ? arguments.SelectArray(a => a.ResolveResult) : arguments.Take(firstOptionalArgumentIndex).Select(a => a.ResolveResult).ToArray(),
@@ -964,6 +969,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return OverloadResolutionErrors.AmbiguousMatch;
 				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 			}
+			bestCandidateIsExpandedForm = or.BestCandidateIsExpandedForm;
 			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
 				return or.BestCandidateErrors;
 			if (or.IsAmbiguous)
@@ -1132,7 +1138,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				));
 			} else {
 				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array, argumentList.Arguments,
-					argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _) != OverloadResolutionErrors.None) {
+					argumentList.ArgumentNames, argumentList.FirstOptionalArgumentIndex, out _,
+					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None && bestCandidateIsExpandedForm == argumentList.IsExpandedForm)
+				{
 					if (argumentList.FirstOptionalArgumentIndex >= 0) {
 						argumentList.FirstOptionalArgumentIndex = -1;
 						continue;
