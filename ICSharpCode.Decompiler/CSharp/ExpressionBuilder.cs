@@ -323,25 +323,40 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst, TranslationContext context)
 		{
-			string literalValue = null;
-			if (ShouldDisplayAsHex(inst.Value, inst.Parent)) {
-				literalValue = $"0x{inst.Value:X}";
+			ResolveResult rr;
+			if (context.TypeHint.GetSign() == Sign.Unsigned) {
+				rr = new ConstantResolveResult(
+					compilation.FindType(KnownTypeCode.UInt32),
+					unchecked((uint)inst.Value)
+				);
+			} else {
+				rr = new ConstantResolveResult(
+					compilation.FindType(KnownTypeCode.Int32),
+					inst.Value
+				);
 			}
-			var expr = new PrimitiveExpression(inst.Value, literalValue)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Value));
-			return AdjustConstantExpressionToType(expr, context.TypeHint);
+			rr = AdjustConstantToType(rr, context.TypeHint);
+			return ConvertConstantValue(rr, allowImplicitConversion: true)
+				.WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst, TranslationContext context)
 		{
-			string literalValue = null;
-			if (ShouldDisplayAsHex(inst.Value, inst.Parent)) {
-				literalValue = $"0x{inst.Value:X}";
+			ResolveResult rr;
+			if (context.TypeHint.GetSign() == Sign.Unsigned) {
+				rr = new ConstantResolveResult(
+					compilation.FindType(KnownTypeCode.UInt64),
+					unchecked((ulong)inst.Value)
+				);
+			} else {
+				rr = new ConstantResolveResult(
+					compilation.FindType(KnownTypeCode.Int64),
+					inst.Value
+				);
 			}
-			return new PrimitiveExpression(inst.Value, literalValue)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int64), inst.Value));
+			rr = AdjustConstantToType(rr, context.TypeHint);
+			return ConvertConstantValue(rr, allowImplicitConversion: true)
+				.WithILInstruction(inst);
 		}
 
 		private bool ShouldDisplayAsHex(long value, ILInstruction parent)
@@ -2245,22 +2260,36 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// convert the expression into the target type.
 		/// Otherwise, returns the expression unmodified.
 		/// </summary>
-		TranslatedExpression AdjustConstantExpressionToType(TranslatedExpression expr, IType type)
+		TranslatedExpression AdjustConstantExpressionToType(TranslatedExpression expr, IType typeHint)
 		{
-			if (!expr.ResolveResult.IsCompileTimeConstant) {
+			var newRR = AdjustConstantToType(expr.ResolveResult, typeHint);
+			if (newRR == expr.ResolveResult) {
 				return expr;
+			} else {
+				return ConvertConstantValue(newRR).WithILInstruction(expr.ILInstructions);
 			}
-			type = NullableType.GetUnderlyingType(type);
-			if (type.IsKnownType(KnownTypeCode.Boolean)
-				&& (object.Equals(expr.ResolveResult.ConstantValue, 0) || object.Equals(expr.ResolveResult.ConstantValue, 1))) {
-				return expr.ConvertToBoolean(this);
-			} else if (type.Kind == TypeKind.Enum || type.IsKnownType(KnownTypeCode.Char)) {
-				var castRR = resolver.WithCheckForOverflow(true).ResolveCast(type, expr.ResolveResult);
+		}
+		
+		private ResolveResult AdjustConstantToType(ResolveResult rr, IType typeHint)
+		{
+			if (!rr.IsCompileTimeConstant) {
+				return rr;
+			}
+			typeHint = NullableType.GetUnderlyingType(typeHint);
+			// Convert to type hint, if this is possible without loss of accuracy
+			if (typeHint.IsKnownType(KnownTypeCode.Boolean)) {
+				if (object.Equals(rr.ConstantValue, 0)) {
+					rr = new ConstantResolveResult(typeHint, false);
+				} else if (object.Equals(rr.ConstantValue, 1)) {
+					rr = new ConstantResolveResult(typeHint, true);
+				}
+			} else if (typeHint.Kind == TypeKind.Enum || typeHint.IsKnownType(KnownTypeCode.Char) || typeHint.IsCSharpSmallIntegerType()) {
+				var castRR = resolver.WithCheckForOverflow(true).ResolveCast(typeHint, rr);
 				if (castRR.IsCompileTimeConstant && !castRR.IsError) {
-					return ConvertConstantValue(castRR).WithILInstruction(expr.ILInstructions);
+					rr = castRR;
 				}
 			}
-			return expr;
+			return rr;
 		}
 
 		protected internal override TranslatedExpression VisitNullCoalescingInstruction(NullCoalescingInstruction inst, TranslationContext context)
