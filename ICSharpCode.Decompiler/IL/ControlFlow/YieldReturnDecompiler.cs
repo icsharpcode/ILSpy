@@ -116,6 +116,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.enumeratorCtor = default;
 			this.stateField = null;
 			this.currentField = null;
+			this.disposingField = null;
 			this.fieldToParameterMap.Clear();
 			this.finallyMethodToStateRange = null;
 			this.decompiledFinallyMethods.Clear();
@@ -464,7 +465,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (isCompiledWithMono) {
 				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "Dispose");
-				BlockContainer body = disposeMethod == null ? null : (BlockContainer)CreateILAst(disposeMethod, context).Body;
+				var function = CreateILAst(disposeMethod, context);
+				BlockContainer body = (BlockContainer)function.Body;
 
 				for (var i = 0; (i < body.EntryPoint.Instructions.Count) && !(body.EntryPoint.Instructions[i] is Branch); i++) {
 					if (body.EntryPoint.Instructions[i] is StObj stobj
@@ -478,17 +480,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
-				disposeMethod = default;
 				finallyMethodToStateRange = default;
-				return;
+			} else {
+				// Non-Mono: analyze try-finally structure in Dispose()
+				disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
+				var function = CreateILAst(disposeMethod, context);
+				var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
+				rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
+				finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 			}
-
-			disposeMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "System.IDisposable.Dispose");
-			var function = CreateILAst(disposeMethod, context);
-
-			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
-			rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
-			finallyMethodToStateRange = rangeAnalysis.finallyMethodToStateRange;
 		}
 		
 		[Conditional("DEBUG")]
@@ -674,7 +674,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						} else if (field.MemberDefinition.Equals(currentField)) {
 							// create yield return
 							newBlock.Instructions.Add(new YieldReturn(value) { ILRange = oldInst.ILRange });
-							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex);
+							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex + 1);
 							break; // we're done with this basic block
 						}
 					} else if (oldInst is Call call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
@@ -705,39 +705,51 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			});
 			return newBody;
 
-			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int i)
+			void ConvertBranchAfterYieldReturn(Block newBlock, Block oldBlock, int pos)
 			{
-				if (!(oldBlock.Instructions[i + 1].MatchStFld(out var target, out var field, out var value)
-					&& target.MatchLdThis()
-					&& field.MemberDefinition == stateField
-					&& value.MatchLdcI4(out int newState))) {
-					if (isCompiledWithMono
-						&& disposingField != null
-						&& oldBlock.Instructions[i + 1].MatchIfInstruction(out var condition, out var trueInst)
-						&& condition.MatchLdFld(out target, out field)
-						&& target.MatchLdThis() && field.MemberDefinition.Equals(disposingField)
-						&& oldBlock.Instructions[i + 2].MatchBranch(out var targetBlock)
-						&& targetBlock.Instructions[0].MatchStFld(out target, out field, out value)
-						&& target.MatchLdThis()
-						&& field.MemberDefinition == stateField
-						&& value.MatchLdcI4(out newState)) {
-						// skip disposing branch, chain the next block
+				Block targetBlock;
+				if (isCompiledWithMono && disposingField != null) {
+					// Mono skips over the state assignment if 'this.disposing' is set:
+					//      ...
+					//      stfld $current(ldloc this, yield-expr)
+					//  	if (ldfld $disposing(ldloc this)) br IL_007c
+					//  	br targetBlock
+					//  }
+					//  
+					//  Block targetBlock (incoming: 1) {
+					//  	stfld $PC(ldloc this, ldc.i4 1)
+					//  	br setSkipFinallyBodies
+					//  }
+					//  
+					//  Block setSkipFinallyBodies (incoming: 2) {
+					//  	stloc skipFinallyBodies(ldc.i4 1)
+					//  	br returnBlock
+					//  }
+					if (oldBlock.Instructions[pos].MatchIfInstruction(out var condition, out _)
+						&& condition.MatchLdFld(out var condTarget, out var condField)
+						&& condTarget.MatchLdThis() && condField.MemberDefinition.Equals(disposingField)
+						&& oldBlock.Instructions[pos + 1].MatchBranch(out targetBlock)
+						&& targetBlock.Parent == oldBlock.Parent) {
+						// Keep looking at the target block:
 						oldBlock = targetBlock;
-						i = -1;
-						if (oldBlock.Instructions[1].MatchBranch(out targetBlock)
-							&& targetBlock.Instructions.Count == 2
-							&& targetBlock.Instructions[0].MatchStLoc(out var variable, out value)
-							&& value.MatchLdcI4(out var flag) && flag == 1
-							&& targetBlock.Instructions[1].MatchBranch(out targetBlock)) {
-							oldBlock = targetBlock;
-							i = -2;
-						}
-					} else {
-						newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
-						return;
+						pos = 0;
 					}
 				}
-				int pos = i + 2;
+
+				if (oldBlock.Instructions[pos].MatchStFld(out var target, out var field, out var value)
+					&& target.MatchLdThis()
+					&& field.MemberDefinition == stateField
+					&& value.MatchLdcI4(out int newState)) {
+					pos++;
+				} else {
+					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
+					return;
+				}
+				// Mono may have 'br setSkipFinallyBodies' here, so follow the branch
+				if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) && targetBlock.Parent == oldBlock.Parent) {
+					oldBlock = targetBlock;
+					pos = 0;
+				}
 				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value)) {
 					if (!value.MatchLdcI4(1)) {
 						newBlock.Instructions.Add(new InvalidExpression {
@@ -747,9 +759,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					pos++;
 				}
+
 				if (oldBlock.Instructions[pos].MatchReturn(out var retVal) && retVal.MatchLdcI4(1)) {
 					// OK, found return directly after state assignment
-				} else if (oldBlock.Instructions[pos].MatchBranch(out var targetBlock) 
+				} else if (oldBlock.Instructions[pos].MatchBranch(out targetBlock) 
 					&& targetBlock.Instructions[0].MatchReturn(out retVal) && retVal.MatchLdcI4(1)) {
 					// OK, jump to common return block (e.g. on Mono)
 				} else {
