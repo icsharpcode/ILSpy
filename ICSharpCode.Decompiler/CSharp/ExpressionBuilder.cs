@@ -2425,9 +2425,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitDynamicConvertInstruction(DynamicConvertInstruction inst, TranslationContext context)
 		{
-			// TODO : make conversions implicit, if !inst.IsExplicit
-			// currently this leads to stack type mismatch assertions, if the expected type is not O
-			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked, allowImplicitConversion: false);
+			var operand = Translate(inst.Argument).ConvertTo(SpecialType.Dynamic, this);
+			var result = new CastExpression(ConvertType(inst.Type), operand)
+				.WithILInstruction(inst)
+				.WithRR(new ConversionResolveResult(
+					inst.Type, operand.ResolveResult,
+					inst.IsExplicit ? Conversion.ExplicitDynamicConversion : Conversion.ImplicitDynamicConversion
+				));
+			result.Expression.AddAnnotation(inst.IsChecked ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			return result;
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetIndexInstruction(DynamicGetIndexInstruction inst, TranslationContext context)

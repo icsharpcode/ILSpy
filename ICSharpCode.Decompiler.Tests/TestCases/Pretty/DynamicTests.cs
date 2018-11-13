@@ -435,5 +435,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(GetBool(1) || GetDynamic(2));
 			Console.WriteLine(i == 1 || d == null);
 		}
+
+		private static int ImplicitCast(object o)
+		{
+			return (dynamic)o;
+		}
+
+		private static int ExplicitCast(object o)
+		{
+			return (int)(dynamic)o;
+		}
 	}
 }

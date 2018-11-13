@@ -185,11 +185,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (allowImplicitConversion) {
 					switch (ResolveResult) {
 						case ConversionResolveResult conversion: {
-							if (Expression is CastExpression cast
-							&& ((type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-								|| conversion.Conversion.IsAnonymousFunctionConversion
-								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
-							) || (conversion.Conversion.IsInterpolatedStringConversion))) {
+							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
+									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+									conversion.Conversion,
+									conversion.Input.Type,
+									type, targetType
+								)) {
 								return this.UnwrapChild(cast.Expression);
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
@@ -228,7 +229,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
 			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
-				IsBoxingOrInterpolatedStringConversion(conversions, conv.Conversion, conv.Input.Type, targetType))
+				CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
@@ -393,14 +394,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
-
-		bool IsBoxingOrInterpolatedStringConversion(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType targetType)
+		
+		/// <summary>
+		/// Gets whether an implicit conversion from 'inputType' to 'newTargetType'
+		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
+		/// The existing cast is classified in 'conversion'.
+		/// </summary>
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
 		{
-			if (conversion.IsBoxingConversion && conversions.IsBoxingConversion(inputType, targetType))
-				return true;
-			if (conversion.IsInterpolatedStringConversion && (targetType.IsKnownType(KnownTypeCode.FormattableString)
-				|| targetType.IsKnownType(KnownTypeCode.IFormattable)))
-				return true;
+			if (!conversion.IsImplicit) {
+				// If the cast was required for the old conversion, avoid making it implicit.
+				return false;
+			}
+			if (conversion.IsBoxingConversion) {
+				return conversions.IsBoxingConversionOrInvolvingTypeParameter(inputType, newTargetType);
+			}
+			if (conversion.IsInterpolatedStringConversion) {
+				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
+					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
+			}
+			if (conversion.IsAnonymousFunctionConversion) {
+				return oldTargetType.Equals(newTargetType);
+			}
+			if (conversion.IsUserDefined || newTargetType.IsKnownType(KnownTypeCode.Decimal) || conversion.IsDynamicConversion) {
+				return oldTargetType.Equals(newTargetType);
+			}
 			return false;
 		}
 		

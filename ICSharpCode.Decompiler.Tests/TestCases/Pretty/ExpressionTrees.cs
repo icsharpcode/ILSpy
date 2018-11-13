@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void MembersBuiltin()
 		{
 			ToCode(X(), () => 1.23m.ToString());
-			ToCode(X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+			ToCode(X(), () => AttributeTargets.All.HasFlag(AttributeTargets.Assembly));
 			ToCode(X(), () => "abc".Length == 3);
 			ToCode(X(), () => 'a'.CompareTo('b') < 0);
 		}
