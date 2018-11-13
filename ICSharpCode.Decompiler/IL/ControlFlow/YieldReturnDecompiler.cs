@@ -152,16 +152,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			context.Step("Delete unreachable blocks", function);
-			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
-			// (though some may point to now-deleted blocks)
-			newBody.SortBlocks(deleteUnreachableBlocks: true);
 
 			if (isCompiledWithMono) {
 				// mono has try-finally inline (like async on MS); we also need to sort nested blocks:
 				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>()) {
 					nestedContainer.SortBlocks(deleteUnreachableBlocks: true);
 				}
-			} else {
+				// We need to clean up nested blocks before the main block, so that edges from unreachable code
+				// in nested containers into the main container are removed before we clean up the main container.
+			}
+			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
+			// (though some may point to now-deleted blocks)
+			newBody.SortBlocks(deleteUnreachableBlocks: true);
+
+			if (!isCompiledWithMono) {
 				DecompileFinallyBlocks();
 				ReconstructTryFinallyBlocks(function);
 			}
