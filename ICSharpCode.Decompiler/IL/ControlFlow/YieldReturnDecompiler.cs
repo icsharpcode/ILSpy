@@ -811,8 +811,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						break;
 					case Leave leave:
 						if (leave.MatchReturn(out var value)) {
-							if (value.MatchLdLoc(out var v) && v.IsSingleDefinition
-								&& v.StoreInstructions.SingleOrDefault() is StLoc stloc) {
+							if (value.MatchLdLoc(out var v)
+								&& (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)
+								&& v.StoreInstructions.Count == 1
+								&& v.StoreInstructions[0] is StLoc stloc) {
 								returnStores.Add(stloc);
 								value = stloc.Value;
 							}

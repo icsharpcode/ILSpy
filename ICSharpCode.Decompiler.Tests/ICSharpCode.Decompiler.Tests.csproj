@@ -74,6 +74,7 @@
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\TypeTests.cs" />
+    <Compile Include="TestCases\Pretty\YieldReturn.cs" />
     <None Include="TestCases\ILPretty\Issue1256.il" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoDecimalConstants.cs" />

@@ -286,7 +286,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
 					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+					var expr = exprBuilder.Translate(inst.Value, typeHint: targetType)
+						.ConvertTo(targetType, exprBuilder, allowImplicitConversion: true);
+					return new ReturnStatement(expr);
 				} else
 					return new ReturnStatement();
 			}
@@ -311,8 +313,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
+				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
-				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
+				Expression = expr
 			};
 		}
 
