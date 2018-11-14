@@ -574,6 +574,51 @@
     IL_000d:  ret
   } // end of method CheckedUnchecked::CheckedInArrayCreationArgument
 
+  .method public hidebysig instance int16 
+          Unbox(valuetype [mscorlib]System.TypeCode c,
+                object b) cil managed
+  {
+    // Code size       69 (0x45)
+    .maxstack  2
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   9
+    IL_0003:  beq.s      IL_0011
+
+    IL_0005:  ldarg.1
+    IL_0006:  ldc.i4.s   10
+    IL_0008:  beq.s      IL_001e
+
+    IL_000a:  ldarg.1
+    IL_000b:  ldc.i4.s   14
+    IL_000d:  beq.s      IL_002b
+
+    IL_000f:  br.s       IL_003f
+
+    IL_0011:  ldarg.2
+    IL_0012:  castclass  class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<int32>
+    IL_0017:  ldfld      !0 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<int32>::Value
+    IL_001c:  conv.ovf.i2
+    IL_001d:  ret
+
+    IL_001e:  ldarg.2
+    IL_001f:  castclass  class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<uint32>
+    IL_0024:  ldfld      !0 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<uint32>::Value
+    IL_0029:  conv.ovf.i2.un
+    IL_002a:  ret
+
+    IL_002b:  ldarg.2
+    IL_002c:  castclass  class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<float64>
+    IL_0031:  ldfld      !0 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<float64>::Value
+    IL_0036:  conv.r4
+    IL_0037:  dup
+    IL_0038:  call       void [mscorlib]System.Console::WriteLine(float32)
+    IL_003d:  conv.ovf.i2
+    IL_003e:  ret
+
+    IL_003f:  newobj     instance void [mscorlib]System.Exception::.ctor()
+    IL_0044:  throw
+  } // end of method CheckedUnchecked::Unbox
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -585,6 +630,22 @@
   } // end of method CheckedUnchecked::.ctor
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CheckedUnchecked
+
+.class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1<T>
+       extends [mscorlib]System.Object
+{
+  .field public initonly !T Value
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_0006:  ret
+  } // end of method Box`1::.ctor
+
+} // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Box`1
 
 
 // =============================================================

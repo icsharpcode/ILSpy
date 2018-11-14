@@ -388,8 +388,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
-			bool avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
-			if (!avoidCheckAnnotation) {
+			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();
+			if (needsCheckAnnotation) {
 				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
