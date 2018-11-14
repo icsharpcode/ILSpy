@@ -413,13 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
-			if (conversion.IsAnonymousFunctionConversion) {
-				return oldTargetType.Equals(newTargetType);
-			}
-			if (conversion.IsUserDefined || newTargetType.IsKnownType(KnownTypeCode.Decimal) || conversion.IsDynamicConversion) {
-				return oldTargetType.Equals(newTargetType);
-			}
-			return false;
+			return oldTargetType.Equals(newTargetType);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)
