@@ -640,9 +640,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						targetType = compilation.FindType(inst.InputType.ToKnownTypeCode(leftUType.GetSign()));
 					}
-					if (inst.IsLifted) {
-						targetType = NullableType.Create(compilation, targetType);
-					}
+				}
+				if (inst.IsLifted) {
+					targetType = NullableType.Create(compilation, targetType);
 				}
 				if (targetType.Equals(left.Type)) {
 					right = right.ConvertTo(targetType, this);
