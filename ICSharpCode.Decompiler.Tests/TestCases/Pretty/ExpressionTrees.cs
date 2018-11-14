@@ -844,7 +844,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (object a) => a ?? new MyClass());
 		}
 
-		public static void BinaryLogicalOperators()
+		public static void ComparisonOperators()
 		{
 			ToCode(null, (int a, int b) => a == b);
 			ToCode(null, (int a, int b) => a != b);
@@ -863,6 +863,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (short a, long b) => (long)a >= b);
 			ToCode(null, (int a, int b) => a == 1 && b == 2);
 			ToCode(null, (int a, int b) => a == 1 || b == 2);
+		}
+
+		public static void LiftedComparisonOperators()
+		{
+			ToCode(X(), (int? a, int? b) => a == b);
+			ToCode(X(), (int? a, int? b) => a != b);
+			ToCode(X(), (int? a, int? b) => a < b);
+			ToCode(X(), (int? a, int? b) => a <= b);
+			ToCode(X(), (int? a, int? b) => a > b);
+			ToCode(X(), (int? a, int? b) => a >= b);
 		}
 
 		public static void UnaryArithmeticOperators()

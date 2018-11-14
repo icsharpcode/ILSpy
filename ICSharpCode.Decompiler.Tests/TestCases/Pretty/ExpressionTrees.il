@@ -8876,7 +8876,7 @@
     IL_00ac:  ret
   } // end of method ExpressionTrees::ConditionalOperator
 
-  .method public hidebysig static void  BinaryLogicalOperators() cil managed
+  .method public hidebysig static void  ComparisonOperators() cil managed
   {
     // Code size       1639 (0x667)
     .maxstack  5
@@ -9559,7 +9559,222 @@
                                                                                                                         class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
     IL_0665:  pop
     IL_0666:  ret
-  } // end of method ExpressionTrees::BinaryLogicalOperators
+  } // end of method ExpressionTrees::ComparisonOperators
+
+  .method public hidebysig static void  LiftedComparisonOperators() cil managed
+  {
+    // Code size       488 (0x1e8)
+    .maxstack  5
+    .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_1,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_2)
+    IL_0000:  nop
+    IL_0001:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_0006:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_000b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0010:  ldstr      "a"
+    IL_0015:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_001a:  stloc.0
+    IL_001b:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0020:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0025:  ldstr      "b"
+    IL_002a:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_002f:  stloc.1
+    IL_0030:  ldloc.0
+    IL_0031:  ldloc.1
+    IL_0032:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                            class [System.Core]System.Linq.Expressions.Expression)
+    IL_0037:  ldc.i4.2
+    IL_0038:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_003d:  stloc.2
+    IL_003e:  ldloc.2
+    IL_003f:  ldc.i4.0
+    IL_0040:  ldloc.0
+    IL_0041:  stelem.ref
+    IL_0042:  ldloc.2
+    IL_0043:  ldc.i4.1
+    IL_0044:  ldloc.1
+    IL_0045:  stelem.ref
+    IL_0046:  ldloc.2
+    IL_0047:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_004c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_0051:  pop
+    IL_0052:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_0057:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_005c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0061:  ldstr      "a"
+    IL_0066:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_006b:  stloc.0
+    IL_006c:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0071:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0076:  ldstr      "b"
+    IL_007b:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_0080:  stloc.1
+    IL_0081:  ldloc.0
+    IL_0082:  ldloc.1
+    IL_0083:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::NotEqual(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression)
+    IL_0088:  ldc.i4.2
+    IL_0089:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_008e:  stloc.2
+    IL_008f:  ldloc.2
+    IL_0090:  ldc.i4.0
+    IL_0091:  ldloc.0
+    IL_0092:  stelem.ref
+    IL_0093:  ldloc.2
+    IL_0094:  ldc.i4.1
+    IL_0095:  ldloc.1
+    IL_0096:  stelem.ref
+    IL_0097:  ldloc.2
+    IL_0098:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_009d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_00a2:  pop
+    IL_00a3:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_00a8:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00ad:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00b2:  ldstr      "a"
+    IL_00b7:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_00bc:  stloc.0
+    IL_00bd:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00c2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00c7:  ldstr      "b"
+    IL_00cc:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_00d1:  stloc.1
+    IL_00d2:  ldloc.0
+    IL_00d3:  ldloc.1
+    IL_00d4:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::LessThan(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression)
+    IL_00d9:  ldc.i4.2
+    IL_00da:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_00df:  stloc.2
+    IL_00e0:  ldloc.2
+    IL_00e1:  ldc.i4.0
+    IL_00e2:  ldloc.0
+    IL_00e3:  stelem.ref
+    IL_00e4:  ldloc.2
+    IL_00e5:  ldc.i4.1
+    IL_00e6:  ldloc.1
+    IL_00e7:  stelem.ref
+    IL_00e8:  ldloc.2
+    IL_00e9:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_00ee:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_00f3:  pop
+    IL_00f4:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_00f9:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00fe:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0103:  ldstr      "a"
+    IL_0108:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_010d:  stloc.0
+    IL_010e:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0113:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0118:  ldstr      "b"
+    IL_011d:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_0122:  stloc.1
+    IL_0123:  ldloc.0
+    IL_0124:  ldloc.1
+    IL_0125:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::LessThanOrEqual(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression)
+    IL_012a:  ldc.i4.2
+    IL_012b:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0130:  stloc.2
+    IL_0131:  ldloc.2
+    IL_0132:  ldc.i4.0
+    IL_0133:  ldloc.0
+    IL_0134:  stelem.ref
+    IL_0135:  ldloc.2
+    IL_0136:  ldc.i4.1
+    IL_0137:  ldloc.1
+    IL_0138:  stelem.ref
+    IL_0139:  ldloc.2
+    IL_013a:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_013f:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_0144:  pop
+    IL_0145:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_014a:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_014f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0154:  ldstr      "a"
+    IL_0159:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_015e:  stloc.0
+    IL_015f:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0164:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0169:  ldstr      "b"
+    IL_016e:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_0173:  stloc.1
+    IL_0174:  ldloc.0
+    IL_0175:  ldloc.1
+    IL_0176:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::GreaterThan(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                  class [System.Core]System.Linq.Expressions.Expression)
+    IL_017b:  ldc.i4.2
+    IL_017c:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0181:  stloc.2
+    IL_0182:  ldloc.2
+    IL_0183:  ldc.i4.0
+    IL_0184:  ldloc.0
+    IL_0185:  stelem.ref
+    IL_0186:  ldloc.2
+    IL_0187:  ldc.i4.1
+    IL_0188:  ldloc.1
+    IL_0189:  stelem.ref
+    IL_018a:  ldloc.2
+    IL_018b:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_0190:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_0195:  pop
+    IL_0196:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
+    IL_019b:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01a0:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_01a5:  ldstr      "a"
+    IL_01aa:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_01af:  stloc.0
+    IL_01b0:  ldtoken    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01b5:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_01ba:  ldstr      "b"
+    IL_01bf:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+                                                                                                                                                   string)
+    IL_01c4:  stloc.1
+    IL_01c5:  ldloc.0
+    IL_01c6:  ldloc.1
+    IL_01c7:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::GreaterThanOrEqual(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                         class [System.Core]System.Linq.Expressions.Expression)
+    IL_01cc:  ldc.i4.2
+    IL_01cd:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_01d2:  stloc.2
+    IL_01d3:  ldloc.2
+    IL_01d4:  ldc.i4.0
+    IL_01d5:  ldloc.0
+    IL_01d6:  stelem.ref
+    IL_01d7:  ldloc.2
+    IL_01d8:  ldc.i4.1
+    IL_01d9:  ldloc.1
+    IL_01da:  stelem.ref
+    IL_01db:  ldloc.2
+    IL_01dc:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`3<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
+    IL_01e1:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<valuetype [mscorlib]System.Nullable`1<int32>,valuetype [mscorlib]System.Nullable`1<int32>,bool>(object,
+                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`3<!!0,!!1,!!2>>)
+    IL_01e6:  pop
+    IL_01e7:  ret
+  } // end of method ExpressionTrees::LiftedComparisonOperators
 
   .method public hidebysig static void  UnaryArithmeticOperators() cil managed
   {
@@ -12718,7 +12933,7 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     [mscorlib]System.Int32
     IL_0006:  dup
-    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x600010d-1'
+    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x600010e-1'
     IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0011:  stloc.0
@@ -12794,7 +13009,7 @@
     IL_0009:  ldc.i4.3
     IL_000a:  newarr     [mscorlib]System.Int32
     IL_000f:  dup
-    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000111-1'
+    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000112-1'
     IL_0015:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001a:  stelem.ref
@@ -14617,8 +14832,8 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x600010d-1' at I_00009008
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000111-1' at I_00009080
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x600010e-1' at I_00009200
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000112-1' at I_00009278
 } // end of class '<PrivateImplementationDetails>'
 
 .class private auto ansi sealed beforefieldinit '<>f__AnonymousType3`2'<'<A>j__TPar','<B>j__TPar'>
@@ -14810,9 +15025,9 @@
 
 // =============================================================
 
-.data cil I_00009008 = bytearray (
+.data cil I_00009200 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
-.data cil I_00009014 = int8[108]
-.data cil I_00009080 = bytearray (
+.data cil I_0000920C = int8[4]
+.data cil I_00009278 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************

@@ -611,7 +611,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (new Call(operatorMethod) { Arguments = { left, right } }, operatorMethod.ReturnType);
 			}
 			var resultType = context.TypeSystem.FindType(KnownTypeCode.Boolean);
-			return (new Comp(kind, NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None, leftType.GetStackType(), leftType.GetSign(), left, right), resultType);
+			var lifting = NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None;
+			var utype = NullableType.GetUnderlyingType(leftType);
+			return (new Comp(kind, lifting, utype.GetStackType(), utype.GetSign(), left, right), resultType);
 		}
 
 		(ILInstruction, IType) ConvertCondition(CallInstruction invocation)
