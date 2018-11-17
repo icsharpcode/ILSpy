@@ -257,7 +257,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			return IsUsedAsThisPointerInCall(loadInst) && !IsLValue(inlinedExpression);
+			return (IsAccessorCall(inlinedExpression) || IsUsedAsThisPointerInCall(loadInst)) && !IsLValue(inlinedExpression);
+		}
+
+		internal static bool IsAccessorCall(ILInstruction inst)
+		{
+			return inst is CallInstruction callInstruction && callInstruction.Method.SymbolKind == SymbolKind.Accessor;
 		}
 
 		internal static bool IsUsedAsThisPointerInCall(LdLoca ldloca)
