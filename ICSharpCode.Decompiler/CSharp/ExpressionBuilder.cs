@@ -192,14 +192,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			return currentFunction.Ancestors.OfType<ILFunction>().SelectMany(f => f.Variables).Any(v => v.Name == name);
 		}
 
+		bool RequiresQualifier(IMember member, TranslatedExpression target)
+		{
+			if (HidesVariableWithName(member.Name))
+				return true;
+			if (member.IsStatic)
+				return !IsCurrentOrContainingType(member.DeclaringTypeDefinition);
+			return !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression);
+		}
+
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction targetInstruction = null)
 		{
 			var target = TranslateTarget(targetInstruction,
 				nonVirtualInvocation: true,
 				memberStatic: field.IsStatic,
 				memberDeclaringType: field.DeclaringType);
-			bool requireTarget = HidesVariableWithName(field.Name)
-				|| (field.IsStatic ? !IsCurrentOrContainingType(field.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression));
+			bool requireTarget;
+			// If this is a reference to the backing field of an automatic property and we're going to transform automatic properties
+			// in PatternStatementTransform, then we have to do the "requires qualifier"-check based on the property instead of the field.
+			// It is easier to solve this special case here than in PatternStatementTransform, because here we perform all resolver checks.
+			// It feels a bit hacky, though.
+			if (settings.AutomaticProperties && PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)) {
+				requireTarget = RequiresQualifier(property, target);
+			} else {
+				requireTarget = RequiresQualifier(field, target);
+			}
 			bool targetCasted = false;
 			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
