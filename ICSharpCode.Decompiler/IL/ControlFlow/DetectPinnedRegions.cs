@@ -147,7 +147,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (p.StackType != StackType.Ref) {
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
 					}
-					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer);
+					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer) {
+						ILRange = block.Instructions[block.Instructions.Count - 2].ILRange
+					};
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
@@ -343,7 +345,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			
-			stLoc.ReplaceWith(new PinnedRegion(stLoc.Variable, stLoc.Value, body));
+			stLoc.ReplaceWith(new PinnedRegion(stLoc.Variable, stLoc.Value, body) { ILRange = stLoc.ILRange });
 			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
 			ProcessPinnedRegion((PinnedRegion)block.Instructions.Last());
 			return true;
@@ -400,6 +402,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var block in body.Blocks)
 				CreatePinnedRegion(block);
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
+			body.ILRange = body.EntryPoint.ILRange;
 		}
 
 		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)

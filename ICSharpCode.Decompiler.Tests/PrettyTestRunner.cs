@@ -128,6 +128,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void ReduceNesting([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void DelegateConstruction([ValueSource(nameof(defaultOptions))] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
