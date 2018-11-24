@@ -54,7 +54,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.3.25407" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI.Wpf" Version="15.6.27740" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="VSLangProj" Version="7.0.3301" />
   </ItemGroup>
 
