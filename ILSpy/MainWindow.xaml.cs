@@ -300,24 +300,16 @@ namespace ICSharpCode.ILSpy
 						var module = asm.GetPEFileOrNull();
 						if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
 							IEntity mr = null;
-							if (typeHandle.Kind == HandleKind.ExportedType) {
-								var decompilerTypeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
-								if (memberRef == null) {
-									mr = typeRef.Resolve(new SimpleTypeResolveContext(decompilerTypeSystem)) as ITypeDefinition;
-								} else {
-									mr = memberRef.Resolve(new SimpleTypeResolveContext(decompilerTypeSystem));
-								}
-							} else {
-								var compilation = new SimpleCompilation(module, MinimalCorlib.Instance);
-								if (memberRef == null) {
-									mr = ((MetadataModule)compilation.MainModule).GetDefinition((TypeDefinitionHandle)typeHandle);
-								} else {
-									mr = memberRef.Resolve(new SimpleTypeResolveContext(compilation));
-								}
-							}
-
+							ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
+								? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
+								: new SimpleCompilation(module, MinimalCorlib.Instance);
+							mr = memberRef == null
+								? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
+								: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
 							if (mr != null && mr.ParentModule.PEFile != null) {
 								found = true;
+								// Defer JumpToReference call to allow an assembly that was loaded while
+								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
 								Dispatcher.BeginInvoke(new Action(() => JumpToReference(mr)), DispatcherPriority.Loaded);
 								break;
 							}
