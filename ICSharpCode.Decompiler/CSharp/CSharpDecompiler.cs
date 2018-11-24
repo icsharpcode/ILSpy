@@ -984,6 +984,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					case EnumValueDisplayMode.None:
 						foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>()) {
 							enumMember.Initializer = null;
+							if (enumMember.GetSymbol() is IField f && f.ConstantValue == null) {
+								typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
+							}
 						}
 						break;
 					case EnumValueDisplayMode.All:
@@ -1010,7 +1013,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
 			foreach (var field in typeDef.Fields) {
-				if (MemberIsHidden(module, field.MetadataToken, settings)) continue;
+				if (MemberIsHidden(module, field.MetadataToken, settings) || field.ConstantValue == null) continue;
 				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				if (first) {
 					firstValue = currentValue;
@@ -1237,15 +1240,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.ConstantValue != null) {
+			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
 				var enumDec = new EnumMemberDeclaration { Name = field.Name };
-				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
-				enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
-				if (enumDec.Initializer is PrimitiveExpression primitive
-					&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
-						|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0))))
-				{
-					primitive.SetValue(initValue, $"0x{initValue:X}");
+				if (field.ConstantValue != null) {
+					long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+					if (enumDec.Initializer is PrimitiveExpression primitive
+						&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
+							|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {
+						primitive.SetValue(initValue, $"0x{initValue:X}");
+					}
 				}
 				enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 				enumDec.AddAnnotation(new MemberResolveResult(null, field));
