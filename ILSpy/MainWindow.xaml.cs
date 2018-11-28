@@ -48,6 +48,7 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	partial class MainWindow : Window
 	{
+		bool refreshInProgress;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettings;
 		internal SessionSettings sessionSettings;
@@ -748,9 +749,14 @@ namespace ICSharpCode.ILSpy
 		
 		void RefreshCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			var path = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
-			ShowAssemblyList(assemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
-			SelectNode(FindNodeByPath(path, true));
+			try {
+				refreshInProgress = true;
+				var path = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
+				ShowAssemblyList(assemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
+				SelectNode(FindNodeByPath(path, true));
+			} finally {
+				refreshInProgress = false;
+			}
 		}
 		
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -774,6 +780,9 @@ namespace ICSharpCode.ILSpy
 		void DecompileSelectedNodes(DecompilerTextViewState state = null, bool recordHistory = true)
 		{
 			if (ignoreDecompilationRequests)
+				return;
+
+			if (treeView.SelectedItems.Count == 0 && refreshInProgress)
 				return;
 			
 			if (recordHistory) {
@@ -804,7 +813,12 @@ namespace ICSharpCode.ILSpy
 		
 		public void RefreshDecompiledView()
 		{
-			DecompileSelectedNodes();
+			try {
+				refreshInProgress = true;
+				DecompileSelectedNodes();
+			} finally {
+				refreshInProgress = false;
+			}
 		}
 		
 		public DecompilerTextView TextView {

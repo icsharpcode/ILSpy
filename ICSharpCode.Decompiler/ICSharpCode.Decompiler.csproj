@@ -51,8 +51,8 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
-    <PackageReference Include="System.Reflection.Metadata" Version="1.4.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
 
@@ -265,6 +265,7 @@
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\ILParser.cs" />
+    <Compile Include="IL\Transforms\ReduceNestingTransform.cs" />
     <Compile Include="IL\Transforms\LocalFunctionDecompiler.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />

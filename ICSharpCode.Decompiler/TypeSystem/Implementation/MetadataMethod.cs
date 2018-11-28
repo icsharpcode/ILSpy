@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((implAttributes & MethodImplAttributes.PreserveSig) == MethodImplAttributes.PreserveSig) {
 					implAttributes &= ~MethodImplAttributes.PreserveSig;
 				} else {
-					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, true);
+					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, false);
 				}
 
 				if ((info.Attributes & MethodImportAttributes.SetLastError) == MethodImportAttributes.SetLastError)

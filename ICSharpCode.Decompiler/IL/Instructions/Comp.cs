@@ -183,6 +183,8 @@ namespace ICSharpCode.Decompiler.IL
 				return;
 			}
 			output.Write(OpCode);
+			output.Write('.');
+			output.Write(InputType.ToString().ToLower());
 			switch (Sign) {
 				case Sign.Signed:
 					output.Write(".signed");

@@ -75,6 +75,7 @@ namespace ICSharpCode.Decompiler.IL
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
 					tryCatch = new TryCatch(tryBlock);
+					tryCatch.ILRange = tryRange;
 					tryCatchList.Add(tryCatch);
 					tryInstructionList.Add(tryCatch);
 				}
@@ -90,7 +91,11 @@ namespace ICSharpCode.Decompiler.IL
 					filter = new LdcI4(1);
 				}
 
-				tryCatch.Handlers.Add(new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]));
+				var handler = new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]);
+				handler.AddILRange(filter.ILRange);
+				handler.AddILRange(handlerBlock.ILRange);
+				tryCatch.Handlers.Add(handler);
+				tryCatch.AddILRange(handler.ILRange);
 			}
 			if (tryInstructionList.Count > 0) {
 				tryInstructionList = tryInstructionList.OrderBy(tc => tc.TryBlock.ILRange.Start).ThenByDescending(tc => tc.TryBlock.ILRange.End).ToList();
@@ -128,6 +133,7 @@ namespace ICSharpCode.Decompiler.IL
 					// Leave nested containers if necessary
 					while (start >= currentContainer.ILRange.End) {
 						currentContainer = containerStack.Pop();
+						currentBlock = currentContainer.Blocks.Last();
 					}
 					// Enter a handler if necessary
 					BlockContainer handlerContainer;
@@ -136,6 +142,7 @@ namespace ICSharpCode.Decompiler.IL
 						currentContainer = handlerContainer;
 						currentBlock = handlerContainer.EntryPoint;
 					} else {
+						FinalizeCurrentBlock(start, fallthrough: false);
 						// Create the new block
 						currentBlock = new Block();
 						currentContainer.Blocks.Add(currentBlock);
@@ -172,6 +179,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (currentBlock == null)
 				return;
+			Debug.Assert(currentBlock.ILRange.IsEmpty);
 			currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, currentILOffset);
 			if (fallthrough) {
 				if (currentBlock.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop()) {

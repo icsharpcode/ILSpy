@@ -525,5 +525,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return method.Name == name && method.DeclaringType?.FullName == type;
 		}
+
+		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)
+		{
+			return KnownAttributes.IsKnownAttributeType(type);
+		}
 	}
 }

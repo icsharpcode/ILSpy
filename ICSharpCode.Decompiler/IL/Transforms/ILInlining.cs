@@ -363,6 +363,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// decide based on the target into which we are inlining
 			switch (next.OpCode) {
 				case OpCode.Leave:
+				case OpCode.YieldReturn:
 					return parent == next;
 				case OpCode.IfInstruction:
 					while (parent.MatchLogicNot(out _)) {

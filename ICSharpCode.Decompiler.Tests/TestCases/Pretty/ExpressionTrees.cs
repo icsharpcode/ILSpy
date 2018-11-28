@@ -322,47 +322,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			if (ID == 0) {
 				ViewBag.data = "''";
-			} else {
-				var model = (from a in db.Contracts
-							 where a.ID == ID
-							 select new {
-								 ID = a.ID,
-								 ContractNo = a.ContractNo,
-								 HouseAddress = a.HouseAddress,
-								 AdminID = (from b in db.Administrator
-											where b.ID == a.AdminID
-											select b.TrueName).FirstOrDefault(),
-								 StoreID = (from b in db.Store
-											where b.ID == a.StoreID
-											select b.Name).FirstOrDefault(),
-								 SigningTime = a.SigningTime,
-								 YeWuPhone = (from b in db.Administrator
-											  where b.ID == a.AdminID
-											  select b.Phone).FirstOrDefault(),
-								 BuyerName = a.BuyerName,
-								 BuyerTelephone = a.BuyerTelephone,
-								 Customer = a.Customer,
-								 CustTelephone = a.CustTelephone,
-								 Credit = (from b in db.Loan
-										   where b.ContractNo == a.ContractNo
-										   select b.Credit).FirstOrDefault(),
-								 LoanBank = (from b in db.Loan
-											 where b.ContractNo == a.ContractNo
-											 select b.LoanBank).FirstOrDefault(),
-								 Remarks = (from b in db.Loan
-											where b.ContractNo == a.ContractNo
-											select b.Remarks).FirstOrDefault()
-							 }).FirstOrDefault();
-				ViewBag.data = model.ToJson();
-				DateTime? dateTime = (from b in db.Loan
-									  where b.ContractNo == model.ContractNo
-									  select b.ShenDate).FirstOrDefault();
-				DateTime? dateTime2 = (from b in db.Loan
-									   where b.ContractNo == model.ContractNo
-									   select b.LoanDate).FirstOrDefault();
-				ViewBag.ShenDate = ((!dateTime.HasValue) ? "" : dateTime.ParseDateTime().ToString("yyyy-MM-dd"));
-				ViewBag.LoanDate = ((!dateTime2.HasValue) ? "" : dateTime2.ParseDateTime().ToString("yyyy-MM-dd"));
+				return;
 			}
+			var model = (from a in db.Contracts
+						 where a.ID == ID
+						 select new {
+							 ID = a.ID,
+							 ContractNo = a.ContractNo,
+							 HouseAddress = a.HouseAddress,
+							 AdminID = (from b in db.Administrator
+										where b.ID == a.AdminID
+										select b.TrueName).FirstOrDefault(),
+							 StoreID = (from b in db.Store
+										where b.ID == a.StoreID
+										select b.Name).FirstOrDefault(),
+							 SigningTime = a.SigningTime,
+							 YeWuPhone = (from b in db.Administrator
+										  where b.ID == a.AdminID
+										  select b.Phone).FirstOrDefault(),
+							 BuyerName = a.BuyerName,
+							 BuyerTelephone = a.BuyerTelephone,
+							 Customer = a.Customer,
+							 CustTelephone = a.CustTelephone,
+							 Credit = (from b in db.Loan
+									   where b.ContractNo == a.ContractNo
+									   select b.Credit).FirstOrDefault(),
+							 LoanBank = (from b in db.Loan
+										 where b.ContractNo == a.ContractNo
+										 select b.LoanBank).FirstOrDefault(),
+							 Remarks = (from b in db.Loan
+										where b.ContractNo == a.ContractNo
+										select b.Remarks).FirstOrDefault()
+						 }).FirstOrDefault();
+			ViewBag.data = model.ToJson();
+			DateTime? dateTime = (from b in db.Loan
+								  where b.ContractNo == model.ContractNo
+								  select b.ShenDate).FirstOrDefault();
+			DateTime? dateTime2 = (from b in db.Loan
+								   where b.ContractNo == model.ContractNo
+								   select b.LoanDate).FirstOrDefault();
+			ViewBag.ShenDate = ((!dateTime.HasValue) ? "" : dateTime.ParseDateTime().ToString("yyyy-MM-dd"));
+			ViewBag.LoanDate = ((!dateTime2.HasValue) ? "" : dateTime2.ParseDateTime().ToString("yyyy-MM-dd"));
 		}
 
 		private static object ToCode<R>(object x, Expression<Action<R>> expr)
@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void MembersBuiltin()
 		{
 			ToCode(X(), () => 1.23m.ToString());
-			ToCode(X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+			ToCode(X(), () => AttributeTargets.All.HasFlag(AttributeTargets.Assembly));
 			ToCode(X(), () => "abc".Length == 3);
 			ToCode(X(), () => 'a'.CompareTo('b') < 0);
 		}
@@ -844,7 +844,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (object a) => a ?? new MyClass());
 		}
 
-		public static void BinaryLogicalOperators()
+		public static void ComparisonOperators()
 		{
 			ToCode(null, (int a, int b) => a == b);
 			ToCode(null, (int a, int b) => a != b);
@@ -863,6 +863,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (short a, long b) => (long)a >= b);
 			ToCode(null, (int a, int b) => a == 1 && b == 2);
 			ToCode(null, (int a, int b) => a == 1 || b == 2);
+		}
+
+		public static void LiftedComparisonOperators()
+		{
+			ToCode(X(), (int? a, int? b) => a == b);
+			ToCode(X(), (int? a, int? b) => a != b);
+			ToCode(X(), (int? a, int? b) => a < b);
+			ToCode(X(), (int? a, int? b) => a <= b);
+			ToCode(X(), (int? a, int? b) => a > b);
+			ToCode(X(), (int? a, int? b) => a >= b);
 		}
 
 		public static void UnaryArithmeticOperators()

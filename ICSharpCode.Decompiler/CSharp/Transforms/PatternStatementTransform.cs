@@ -565,6 +565,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		{
+			property = null;
+			if (!(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
+				return false;
+			if (!field.IsCompilerGenerated())
+				return false;
+			var propertyName = field.Name.Substring(1, field.Name.Length - 1 - ">k__BackingField".Length);
+			property = field.DeclaringTypeDefinition
+				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			return property != null;
+		}
+
 		Identifier ReplaceBackingFieldUsage(Identifier identifier)
 		{
 			if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {

@@ -152,11 +152,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return (null, SpecialType.UnknownType);
 			var container = new BlockContainer();
+			container.ILRange = instruction.ILRange;
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType;
 			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container);
 			function.DelegateType = functionType;
 			function.Variables.AddRange(parameterVariablesList);
+			function.ILRange = instruction.ILRange;
 			lambdaStack.Push(function);
 			var (bodyInstruction, type) = ConvertInstruction(instruction.Arguments[0]);
 			lambdaStack.Pop();
@@ -611,7 +613,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (new Call(operatorMethod) { Arguments = { left, right } }, operatorMethod.ReturnType);
 			}
 			var resultType = context.TypeSystem.FindType(KnownTypeCode.Boolean);
-			return (new Comp(kind, NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None, leftType.GetStackType(), leftType.GetSign(), left, right), resultType);
+			var lifting = NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None;
+			var utype = NullableType.GetUnderlyingType(leftType);
+			return (new Comp(kind, lifting, utype.GetStackType(), utype.GetSign(), left, right), resultType);
 		}
 
 		(ILInstruction, IType) ConvertCondition(CallInstruction invocation)
@@ -1065,7 +1069,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				value = call.Arguments[0];
 				if (call.Arguments.Count == 2)
 					return MatchGetTypeFromHandle(call.Arguments[1], out type);
-				type = value.InferType();
+				type = value.InferType(context.TypeSystem);
 				return true;
 			}
 			return false;

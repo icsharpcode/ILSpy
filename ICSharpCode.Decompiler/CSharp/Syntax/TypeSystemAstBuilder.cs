@@ -1396,7 +1396,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						m |= Modifiers.Abstract;
 					if (member.IsOverride)
 						m |= Modifiers.Override;
-					if (member.IsVirtual && !member.IsAbstract && !member.IsOverride)
+					if (member.IsVirtual && !member.IsAbstract && !member.IsOverride && declaringType.Kind != TypeKind.Interface)
 						m |= Modifiers.Virtual;
 					if (member.IsSealed)
 						m |= Modifiers.Sealed;

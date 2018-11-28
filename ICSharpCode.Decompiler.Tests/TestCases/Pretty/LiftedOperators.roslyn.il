@@ -39,8 +39,8 @@
   .method public hidebysig static void  BoolBasic(valuetype [mscorlib]System.Nullable`1<bool> a,
                                                   valuetype [mscorlib]System.Nullable`1<bool> b) cil managed
   {
-    // Code size       107 (0x6b)
-    .maxstack  2
+    // Code size       103 (0x67)
+    .maxstack  3
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<bool> V_1,
              valuetype [mscorlib]System.Nullable`1<bool> V_2,
@@ -54,59 +54,53 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_2
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0013:  beq.s      IL_0018
+    IL_0013:  ceq
+    IL_0015:  ldloca.s   V_1
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_001c:  ldloca.s   V_2
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0023:  ceq
+    IL_0025:  and
+    IL_0026:  stloc.0
+    IL_0027:  ldloc.0
+    IL_0028:  brfalse.s  IL_0032
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0028
+    IL_002a:  nop
+    IL_002b:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0030:  nop
+    IL_0031:  nop
+    IL_0032:  ldarg.0
+    IL_0033:  stloc.2
+    IL_0034:  ldarg.1
+    IL_0035:  stloc.1
+    IL_0036:  ldloca.s   V_2
+    IL_0038:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_003d:  ldloca.s   V_1
+    IL_003f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0044:  ceq
+    IL_0046:  ldloca.s   V_2
+    IL_0048:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_004d:  ldloca.s   V_1
+    IL_004f:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0054:  ceq
+    IL_0056:  and
+    IL_0057:  ldc.i4.0
+    IL_0058:  ceq
+    IL_005a:  stloc.3
+    IL_005b:  ldloc.3
+    IL_005c:  brfalse.s  IL_0066
 
-    IL_0018:  ldloca.s   V_1
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_001f:  ldloca.s   V_2
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0026:  ceq
-    IL_0028:  stloc.0
-    IL_0029:  ldloc.0
-    IL_002a:  brfalse.s  IL_0034
-
-    IL_002c:  nop
-    IL_002d:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0032:  nop
-    IL_0033:  nop
-    IL_0034:  ldarg.0
-    IL_0035:  stloc.2
-    IL_0036:  ldarg.1
-    IL_0037:  stloc.1
-    IL_0038:  ldloca.s   V_2
-    IL_003a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_003f:  ldloca.s   V_1
-    IL_0041:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0046:  beq.s      IL_004b
-
-    IL_0048:  ldc.i4.1
-    IL_0049:  br.s       IL_005e
-
-    IL_004b:  ldloca.s   V_2
-    IL_004d:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0052:  ldloca.s   V_1
-    IL_0054:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0059:  ceq
-    IL_005b:  ldc.i4.0
-    IL_005c:  ceq
-    IL_005e:  stloc.3
-    IL_005f:  ldloc.3
-    IL_0060:  brfalse.s  IL_006a
-
-    IL_0062:  nop
-    IL_0063:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0068:  nop
-    IL_0069:  nop
-    IL_006a:  ret
+    IL_005e:  nop
+    IL_005f:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0064:  nop
+    IL_0065:  nop
+    IL_0066:  ret
   } // end of method LiftedOperators::BoolBasic
 
   .method public hidebysig static void  BoolComplex(valuetype [mscorlib]System.Nullable`1<bool> a,
                                                     class [mscorlib]System.Func`1<bool> x) cil managed
   {
-    // Code size       172 (0xac)
+    // Code size       164 (0xa4)
     .maxstack  2
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<bool> V_1,
@@ -123,96 +117,84 @@
     IL_000a:  ldloca.s   V_1
     IL_000c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_0011:  ldloc.2
-    IL_0012:  beq.s      IL_0017
+    IL_0012:  ceq
+    IL_0014:  ldloca.s   V_1
+    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_001b:  and
+    IL_001c:  stloc.0
+    IL_001d:  ldloc.0
+    IL_001e:  brfalse.s  IL_0028
 
-    IL_0014:  ldc.i4.0
-    IL_0015:  br.s       IL_001e
+    IL_0020:  nop
+    IL_0021:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0026:  nop
+    IL_0027:  nop
+    IL_0028:  ldarg.0
+    IL_0029:  stloc.1
+    IL_002a:  ldarg.1
+    IL_002b:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_0030:  stloc.2
+    IL_0031:  ldloca.s   V_1
+    IL_0033:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0038:  ldloc.2
+    IL_0039:  ceq
+    IL_003b:  ldloca.s   V_1
+    IL_003d:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0042:  and
+    IL_0043:  ldc.i4.0
+    IL_0044:  ceq
+    IL_0046:  stloc.3
+    IL_0047:  ldloc.3
+    IL_0048:  brfalse.s  IL_0052
 
-    IL_0017:  ldloca.s   V_1
-    IL_0019:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_001e:  stloc.0
-    IL_001f:  ldloc.0
-    IL_0020:  brfalse.s  IL_002a
+    IL_004a:  nop
+    IL_004b:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0050:  nop
+    IL_0051:  nop
+    IL_0052:  ldarg.1
+    IL_0053:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_0058:  ldarg.0
+    IL_0059:  stloc.1
+    IL_005a:  ldloca.s   V_1
+    IL_005c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0061:  ceq
+    IL_0063:  ldloca.s   V_1
+    IL_0065:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_006a:  and
+    IL_006b:  stloc.s    V_4
+    IL_006d:  ldloc.s    V_4
+    IL_006f:  brfalse.s  IL_0079
 
-    IL_0022:  nop
-    IL_0023:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0028:  nop
-    IL_0029:  nop
-    IL_002a:  ldarg.0
-    IL_002b:  stloc.1
-    IL_002c:  ldarg.1
-    IL_002d:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0032:  stloc.2
-    IL_0033:  ldloca.s   V_1
-    IL_0035:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_003a:  ldloc.2
-    IL_003b:  beq.s      IL_0040
-
-    IL_003d:  ldc.i4.1
-    IL_003e:  br.s       IL_004a
-
-    IL_0040:  ldloca.s   V_1
-    IL_0042:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0047:  ldc.i4.0
-    IL_0048:  ceq
-    IL_004a:  stloc.3
-    IL_004b:  ldloc.3
-    IL_004c:  brfalse.s  IL_0056
-
-    IL_004e:  nop
-    IL_004f:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0054:  nop
-    IL_0055:  nop
-    IL_0056:  ldarg.1
-    IL_0057:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_005c:  ldarg.0
-    IL_005d:  stloc.1
-    IL_005e:  ldloca.s   V_1
-    IL_0060:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0065:  beq.s      IL_006a
-
-    IL_0067:  ldc.i4.0
-    IL_0068:  br.s       IL_0071
-
-    IL_006a:  ldloca.s   V_1
-    IL_006c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0071:  stloc.s    V_4
-    IL_0073:  ldloc.s    V_4
-    IL_0075:  brfalse.s  IL_007f
-
+    IL_0071:  nop
+    IL_0072:  call       void [mscorlib]System.Console::WriteLine()
     IL_0077:  nop
-    IL_0078:  call       void [mscorlib]System.Console::WriteLine()
-    IL_007d:  nop
-    IL_007e:  nop
-    IL_007f:  ldarg.1
-    IL_0080:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0085:  ldarg.0
-    IL_0086:  stloc.1
-    IL_0087:  ldloca.s   V_1
-    IL_0089:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_008e:  beq.s      IL_0093
+    IL_0078:  nop
+    IL_0079:  ldarg.1
+    IL_007a:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_007f:  ldarg.0
+    IL_0080:  stloc.1
+    IL_0081:  ldloca.s   V_1
+    IL_0083:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0088:  ceq
+    IL_008a:  ldloca.s   V_1
+    IL_008c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0091:  and
+    IL_0092:  ldc.i4.0
+    IL_0093:  ceq
+    IL_0095:  stloc.s    V_5
+    IL_0097:  ldloc.s    V_5
+    IL_0099:  brfalse.s  IL_00a3
 
-    IL_0090:  ldc.i4.1
-    IL_0091:  br.s       IL_009d
-
-    IL_0093:  ldloca.s   V_1
-    IL_0095:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_009a:  ldc.i4.0
-    IL_009b:  ceq
-    IL_009d:  stloc.s    V_5
-    IL_009f:  ldloc.s    V_5
-    IL_00a1:  brfalse.s  IL_00ab
-
-    IL_00a3:  nop
-    IL_00a4:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00a9:  nop
-    IL_00aa:  nop
-    IL_00ab:  ret
+    IL_009b:  nop
+    IL_009c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00a1:  nop
+    IL_00a2:  nop
+    IL_00a3:  ret
   } // end of method LiftedOperators::BoolComplex
 
   .method public hidebysig static void  BoolConst(valuetype [mscorlib]System.Nullable`1<bool> a) cil managed
   {
-    // Code size       226 (0xe2)
+    // Code size       218 (0xda)
     .maxstack  2
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<bool> V_1,
@@ -230,137 +212,125 @@
     IL_0005:  ldloca.s   V_1
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_000c:  ldloc.2
-    IL_000d:  beq.s      IL_0012
+    IL_000d:  ceq
+    IL_000f:  ldloca.s   V_1
+    IL_0011:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0016:  and
+    IL_0017:  stloc.0
+    IL_0018:  ldloc.0
+    IL_0019:  brfalse.s  IL_0023
 
-    IL_000f:  ldc.i4.0
-    IL_0010:  br.s       IL_0019
+    IL_001b:  nop
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0021:  nop
+    IL_0022:  nop
+    IL_0023:  ldarg.0
+    IL_0024:  stloc.1
+    IL_0025:  ldc.i4.1
+    IL_0026:  stloc.2
+    IL_0027:  ldloca.s   V_1
+    IL_0029:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_002e:  ldloc.2
+    IL_002f:  ceq
+    IL_0031:  ldloca.s   V_1
+    IL_0033:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0038:  and
+    IL_0039:  ldc.i4.0
+    IL_003a:  ceq
+    IL_003c:  stloc.3
+    IL_003d:  ldloc.3
+    IL_003e:  brfalse.s  IL_0048
 
-    IL_0012:  ldloca.s   V_1
-    IL_0014:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0019:  stloc.0
-    IL_001a:  ldloc.0
-    IL_001b:  brfalse.s  IL_0025
+    IL_0040:  nop
+    IL_0041:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0046:  nop
+    IL_0047:  nop
+    IL_0048:  ldarg.0
+    IL_0049:  stloc.1
+    IL_004a:  ldc.i4.0
+    IL_004b:  stloc.2
+    IL_004c:  ldloca.s   V_1
+    IL_004e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0053:  ldloc.2
+    IL_0054:  ceq
+    IL_0056:  ldloca.s   V_1
+    IL_0058:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_005d:  and
+    IL_005e:  stloc.s    V_4
+    IL_0060:  ldloc.s    V_4
+    IL_0062:  brfalse.s  IL_006c
 
-    IL_001d:  nop
-    IL_001e:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0023:  nop
-    IL_0024:  nop
-    IL_0025:  ldarg.0
-    IL_0026:  stloc.1
-    IL_0027:  ldc.i4.1
-    IL_0028:  stloc.2
-    IL_0029:  ldloca.s   V_1
-    IL_002b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0030:  ldloc.2
-    IL_0031:  beq.s      IL_0036
-
-    IL_0033:  ldc.i4.1
-    IL_0034:  br.s       IL_0040
-
-    IL_0036:  ldloca.s   V_1
-    IL_0038:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_003d:  ldc.i4.0
-    IL_003e:  ceq
-    IL_0040:  stloc.3
-    IL_0041:  ldloc.3
-    IL_0042:  brfalse.s  IL_004c
-
-    IL_0044:  nop
-    IL_0045:  call       void [mscorlib]System.Console::WriteLine()
-    IL_004a:  nop
-    IL_004b:  nop
-    IL_004c:  ldarg.0
-    IL_004d:  stloc.1
-    IL_004e:  ldc.i4.0
-    IL_004f:  stloc.2
-    IL_0050:  ldloca.s   V_1
-    IL_0052:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0057:  ldloc.2
-    IL_0058:  beq.s      IL_005d
-
-    IL_005a:  ldc.i4.0
-    IL_005b:  br.s       IL_0064
-
-    IL_005d:  ldloca.s   V_1
-    IL_005f:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0064:  stloc.s    V_4
-    IL_0066:  ldloc.s    V_4
-    IL_0068:  brfalse.s  IL_0072
-
+    IL_0064:  nop
+    IL_0065:  call       void [mscorlib]System.Console::WriteLine()
     IL_006a:  nop
-    IL_006b:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0070:  nop
-    IL_0071:  nop
-    IL_0072:  ldarg.0
-    IL_0073:  stloc.1
-    IL_0074:  ldc.i4.0
-    IL_0075:  stloc.2
-    IL_0076:  ldloca.s   V_1
-    IL_0078:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_007d:  ldloc.2
-    IL_007e:  beq.s      IL_0083
+    IL_006b:  nop
+    IL_006c:  ldarg.0
+    IL_006d:  stloc.1
+    IL_006e:  ldc.i4.0
+    IL_006f:  stloc.2
+    IL_0070:  ldloca.s   V_1
+    IL_0072:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0077:  ldloc.2
+    IL_0078:  ceq
+    IL_007a:  ldloca.s   V_1
+    IL_007c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0081:  and
+    IL_0082:  ldc.i4.0
+    IL_0083:  ceq
+    IL_0085:  stloc.s    V_5
+    IL_0087:  ldloc.s    V_5
+    IL_0089:  brfalse.s  IL_0093
 
-    IL_0080:  ldc.i4.1
-    IL_0081:  br.s       IL_008d
+    IL_008b:  nop
+    IL_008c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0091:  nop
+    IL_0092:  nop
+    IL_0093:  ldarg.0
+    IL_0094:  stloc.1
+    IL_0095:  ldloca.s   V_1
+    IL_0097:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_009c:  brtrue.s   IL_00a1
 
-    IL_0083:  ldloca.s   V_1
-    IL_0085:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_008a:  ldc.i4.0
-    IL_008b:  ceq
-    IL_008d:  stloc.s    V_5
-    IL_008f:  ldloc.s    V_5
-    IL_0091:  brfalse.s  IL_009b
+    IL_009e:  ldc.i4.1
+    IL_009f:  br.s       IL_00a8
 
-    IL_0093:  nop
-    IL_0094:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0099:  nop
-    IL_009a:  nop
-    IL_009b:  ldarg.0
-    IL_009c:  stloc.1
-    IL_009d:  ldloca.s   V_1
-    IL_009f:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00a4:  brtrue.s   IL_00a9
+    IL_00a1:  ldloca.s   V_1
+    IL_00a3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00a8:  stloc.s    V_6
+    IL_00aa:  ldloc.s    V_6
+    IL_00ac:  brfalse.s  IL_00b6
 
-    IL_00a6:  ldc.i4.1
-    IL_00a7:  br.s       IL_00b0
+    IL_00ae:  nop
+    IL_00af:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00b4:  nop
+    IL_00b5:  nop
+    IL_00b6:  ldarg.0
+    IL_00b7:  stloc.1
+    IL_00b8:  ldloca.s   V_1
+    IL_00ba:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00bf:  brtrue.s   IL_00c4
 
-    IL_00a9:  ldloca.s   V_1
-    IL_00ab:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00b0:  stloc.s    V_6
-    IL_00b2:  ldloc.s    V_6
-    IL_00b4:  brfalse.s  IL_00be
+    IL_00c1:  ldc.i4.0
+    IL_00c2:  br.s       IL_00cb
 
-    IL_00b6:  nop
-    IL_00b7:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00bc:  nop
-    IL_00bd:  nop
-    IL_00be:  ldarg.0
-    IL_00bf:  stloc.1
-    IL_00c0:  ldloca.s   V_1
-    IL_00c2:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00c7:  brtrue.s   IL_00cc
+    IL_00c4:  ldloca.s   V_1
+    IL_00c6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00cb:  stloc.s    V_7
+    IL_00cd:  ldloc.s    V_7
+    IL_00cf:  brfalse.s  IL_00d9
 
-    IL_00c9:  ldc.i4.0
-    IL_00ca:  br.s       IL_00d3
-
-    IL_00cc:  ldloca.s   V_1
-    IL_00ce:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00d3:  stloc.s    V_7
-    IL_00d5:  ldloc.s    V_7
-    IL_00d7:  brfalse.s  IL_00e1
-
-    IL_00d9:  nop
-    IL_00da:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00df:  nop
-    IL_00e0:  nop
-    IL_00e1:  ret
+    IL_00d1:  nop
+    IL_00d2:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00d7:  nop
+    IL_00d8:  nop
+    IL_00d9:  ret
   } // end of method LiftedOperators::BoolConst
 
   .method public hidebysig static void  BoolValueBasic(valuetype [mscorlib]System.Nullable`1<bool> a,
                                                        valuetype [mscorlib]System.Nullable`1<bool> b) cil managed
   {
-    // Code size       452 (0x1c4)
-    .maxstack  2
+    // Code size       448 (0x1c0)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<bool> V_0,
              valuetype [mscorlib]System.Nullable`1<bool> V_1,
              valuetype [mscorlib]System.Nullable`1<bool> V_2)
@@ -373,215 +343,209 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_1
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0013:  beq.s      IL_0018
+    IL_0013:  ceq
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0023:  ceq
+    IL_0025:  and
+    IL_0026:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_002b:  nop
+    IL_002c:  ldarg.0
+    IL_002d:  stloc.1
+    IL_002e:  ldarg.1
+    IL_002f:  stloc.0
+    IL_0030:  ldloca.s   V_1
+    IL_0032:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0037:  ldloca.s   V_0
+    IL_0039:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_003e:  ceq
+    IL_0040:  ldloca.s   V_1
+    IL_0042:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0047:  ldloca.s   V_0
+    IL_0049:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_004e:  ceq
+    IL_0050:  and
+    IL_0051:  ldc.i4.0
+    IL_0052:  ceq
+    IL_0054:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0059:  nop
+    IL_005a:  ldarg.0
+    IL_005b:  stloc.0
+    IL_005c:  ldarg.1
+    IL_005d:  stloc.1
+    IL_005e:  ldloca.s   V_0
+    IL_0060:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0065:  brtrue.s   IL_007c
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0028
+    IL_0067:  ldloca.s   V_1
+    IL_0069:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_006e:  brtrue.s   IL_0079
 
-    IL_0018:  ldloca.s   V_0
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_001f:  ldloca.s   V_1
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0026:  ceq
-    IL_0028:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_002d:  nop
-    IL_002e:  ldarg.0
-    IL_002f:  stloc.1
-    IL_0030:  ldarg.1
-    IL_0031:  stloc.0
-    IL_0032:  ldloca.s   V_1
-    IL_0034:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0039:  ldloca.s   V_0
-    IL_003b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0040:  beq.s      IL_0045
+    IL_0070:  ldloca.s   V_0
+    IL_0072:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0077:  brfalse.s  IL_007c
 
-    IL_0042:  ldc.i4.1
-    IL_0043:  br.s       IL_0058
+    IL_0079:  ldloc.0
+    IL_007a:  br.s       IL_007d
 
-    IL_0045:  ldloca.s   V_1
-    IL_0047:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_004c:  ldloca.s   V_0
-    IL_004e:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0053:  ceq
-    IL_0055:  ldc.i4.0
-    IL_0056:  ceq
-    IL_0058:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_005d:  nop
-    IL_005e:  ldarg.0
-    IL_005f:  stloc.0
-    IL_0060:  ldarg.1
-    IL_0061:  stloc.1
-    IL_0062:  ldloca.s   V_0
-    IL_0064:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0069:  brtrue.s   IL_0080
+    IL_007c:  ldloc.1
+    IL_007d:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0082:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0087:  nop
+    IL_0088:  ldarg.0
+    IL_0089:  stloc.1
+    IL_008a:  ldarg.1
+    IL_008b:  stloc.0
+    IL_008c:  ldloca.s   V_1
+    IL_008e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0093:  brtrue.s   IL_00aa
 
-    IL_006b:  ldloca.s   V_1
-    IL_006d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0072:  brtrue.s   IL_007d
+    IL_0095:  ldloca.s   V_0
+    IL_0097:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_009c:  brtrue.s   IL_00a7
 
-    IL_0074:  ldloca.s   V_0
-    IL_0076:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_007b:  brfalse.s  IL_0080
+    IL_009e:  ldloca.s   V_1
+    IL_00a0:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00a5:  brfalse.s  IL_00aa
 
-    IL_007d:  ldloc.0
-    IL_007e:  br.s       IL_0081
+    IL_00a7:  ldloc.0
+    IL_00a8:  br.s       IL_00ab
 
-    IL_0080:  ldloc.1
-    IL_0081:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0086:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_008b:  nop
-    IL_008c:  ldarg.0
-    IL_008d:  stloc.1
-    IL_008e:  ldarg.1
-    IL_008f:  stloc.0
-    IL_0090:  ldloca.s   V_1
-    IL_0092:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0097:  brtrue.s   IL_00ae
+    IL_00aa:  ldloc.1
+    IL_00ab:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00b0:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_00b5:  nop
+    IL_00b6:  ldarg.0
+    IL_00b7:  stloc.0
+    IL_00b8:  ldarg.1
+    IL_00b9:  stloc.1
+    IL_00ba:  ldloca.s   V_0
+    IL_00bc:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00c1:  ldloca.s   V_1
+    IL_00c3:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00c8:  and
+    IL_00c9:  brtrue.s   IL_00d6
 
-    IL_0099:  ldloca.s   V_0
-    IL_009b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00a0:  brtrue.s   IL_00ab
+    IL_00cb:  ldloca.s   V_2
+    IL_00cd:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00d3:  ldloc.2
+    IL_00d4:  br.s       IL_00ea
 
-    IL_00a2:  ldloca.s   V_1
-    IL_00a4:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00a9:  brfalse.s  IL_00ae
+    IL_00d6:  ldloca.s   V_0
+    IL_00d8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00dd:  ldloca.s   V_1
+    IL_00df:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00e4:  xor
+    IL_00e5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_00ea:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00ef:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_00f4:  nop
+    IL_00f5:  ldarg.0
+    IL_00f6:  stloc.1
+    IL_00f7:  ldloca.s   V_1
+    IL_00f9:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00fe:  brtrue.s   IL_0103
 
-    IL_00ab:  ldloc.0
-    IL_00ac:  br.s       IL_00af
+    IL_0100:  ldarg.1
+    IL_0101:  br.s       IL_0104
 
-    IL_00ae:  ldloc.1
-    IL_00af:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00b4:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_00b9:  nop
-    IL_00ba:  ldarg.0
-    IL_00bb:  stloc.0
-    IL_00bc:  ldarg.1
-    IL_00bd:  stloc.1
-    IL_00be:  ldloca.s   V_0
-    IL_00c0:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00c5:  ldloca.s   V_1
-    IL_00c7:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00cc:  and
-    IL_00cd:  brtrue.s   IL_00da
+    IL_0103:  ldloc.1
+    IL_0104:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0109:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_010e:  nop
+    IL_010f:  ldarg.0
+    IL_0110:  stloc.1
+    IL_0111:  ldloca.s   V_1
+    IL_0113:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0118:  brtrue.s   IL_0125
 
-    IL_00cf:  ldloca.s   V_2
-    IL_00d1:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00d7:  ldloc.2
-    IL_00d8:  br.s       IL_00ee
+    IL_011a:  ldloca.s   V_0
+    IL_011c:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0122:  ldloc.0
+    IL_0123:  br.s       IL_0134
 
-    IL_00da:  ldloca.s   V_0
-    IL_00dc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00e1:  ldloca.s   V_1
-    IL_00e3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00e8:  xor
-    IL_00e9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_00ee:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00f3:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_00f8:  nop
-    IL_00f9:  ldarg.0
-    IL_00fa:  stloc.1
-    IL_00fb:  ldloca.s   V_1
-    IL_00fd:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0102:  brtrue.s   IL_0107
+    IL_0125:  ldloca.s   V_1
+    IL_0127:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_012c:  ldc.i4.0
+    IL_012d:  ceq
+    IL_012f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_0134:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0139:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_013e:  nop
+    IL_013f:  ldarg.0
+    IL_0140:  stloc.1
+    IL_0141:  ldarg.1
+    IL_0142:  stloc.0
+    IL_0143:  ldloca.s   V_1
+    IL_0145:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_014a:  brtrue.s   IL_0161
 
-    IL_0104:  ldarg.1
-    IL_0105:  br.s       IL_0108
+    IL_014c:  ldloca.s   V_0
+    IL_014e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0153:  brtrue.s   IL_015e
 
-    IL_0107:  ldloc.1
-    IL_0108:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_010d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0112:  nop
-    IL_0113:  ldarg.0
-    IL_0114:  stloc.1
-    IL_0115:  ldloca.s   V_1
-    IL_0117:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_011c:  brtrue.s   IL_0129
+    IL_0155:  ldloca.s   V_1
+    IL_0157:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_015c:  brfalse.s  IL_0161
 
-    IL_011e:  ldloca.s   V_0
-    IL_0120:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0126:  ldloc.0
-    IL_0127:  br.s       IL_0138
+    IL_015e:  ldloc.1
+    IL_015f:  br.s       IL_0162
 
-    IL_0129:  ldloca.s   V_1
-    IL_012b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0130:  ldc.i4.0
-    IL_0131:  ceq
-    IL_0133:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_0138:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_013d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0142:  nop
-    IL_0143:  ldarg.0
-    IL_0144:  stloc.1
-    IL_0145:  ldarg.1
-    IL_0146:  stloc.0
-    IL_0147:  ldloca.s   V_1
-    IL_0149:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_014e:  brtrue.s   IL_0165
+    IL_0161:  ldloc.0
+    IL_0162:  starg.s    a
+    IL_0164:  ldarg.0
+    IL_0165:  stloc.0
+    IL_0166:  ldarg.1
+    IL_0167:  stloc.1
+    IL_0168:  ldloca.s   V_0
+    IL_016a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_016f:  brtrue.s   IL_0186
 
-    IL_0150:  ldloca.s   V_0
-    IL_0152:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0157:  brtrue.s   IL_0162
+    IL_0171:  ldloca.s   V_1
+    IL_0173:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0178:  brtrue.s   IL_0183
 
-    IL_0159:  ldloca.s   V_1
-    IL_015b:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0160:  brfalse.s  IL_0165
+    IL_017a:  ldloca.s   V_0
+    IL_017c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0181:  brfalse.s  IL_0186
 
-    IL_0162:  ldloc.1
-    IL_0163:  br.s       IL_0166
+    IL_0183:  ldloc.1
+    IL_0184:  br.s       IL_0187
 
-    IL_0165:  ldloc.0
-    IL_0166:  starg.s    a
-    IL_0168:  ldarg.0
-    IL_0169:  stloc.0
-    IL_016a:  ldarg.1
-    IL_016b:  stloc.1
-    IL_016c:  ldloca.s   V_0
-    IL_016e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0173:  brtrue.s   IL_018a
+    IL_0186:  ldloc.0
+    IL_0187:  starg.s    a
+    IL_0189:  ldarg.0
+    IL_018a:  stloc.1
+    IL_018b:  ldarg.1
+    IL_018c:  stloc.0
+    IL_018d:  ldloca.s   V_1
+    IL_018f:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0194:  ldloca.s   V_0
+    IL_0196:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_019b:  and
+    IL_019c:  brtrue.s   IL_01a9
 
-    IL_0175:  ldloca.s   V_1
-    IL_0177:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_017c:  brtrue.s   IL_0187
+    IL_019e:  ldloca.s   V_2
+    IL_01a0:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01a6:  ldloc.2
+    IL_01a7:  br.s       IL_01bd
 
-    IL_017e:  ldloca.s   V_0
-    IL_0180:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0185:  brfalse.s  IL_018a
-
-    IL_0187:  ldloc.1
-    IL_0188:  br.s       IL_018b
-
-    IL_018a:  ldloc.0
-    IL_018b:  starg.s    a
-    IL_018d:  ldarg.0
-    IL_018e:  stloc.1
-    IL_018f:  ldarg.1
-    IL_0190:  stloc.0
-    IL_0191:  ldloca.s   V_1
-    IL_0193:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0198:  ldloca.s   V_0
-    IL_019a:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_019f:  and
-    IL_01a0:  brtrue.s   IL_01ad
-
-    IL_01a2:  ldloca.s   V_2
-    IL_01a4:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01aa:  ldloc.2
-    IL_01ab:  br.s       IL_01c1
-
-    IL_01ad:  ldloca.s   V_1
-    IL_01af:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_01b4:  ldloca.s   V_0
-    IL_01b6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_01bb:  xor
-    IL_01bc:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_01c1:  starg.s    a
-    IL_01c3:  ret
+    IL_01a9:  ldloca.s   V_1
+    IL_01ab:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_01b0:  ldloca.s   V_0
+    IL_01b2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_01b7:  xor
+    IL_01b8:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_01bd:  starg.s    a
+    IL_01bf:  ret
   } // end of method LiftedOperators::BoolValueBasic
 
   .method public hidebysig static void  BoolValueComplex(valuetype [mscorlib]System.Nullable`1<bool> a,
                                                          class [mscorlib]System.Func`1<bool> x) cil managed
   {
-    // Code size       528 (0x210)
+    // Code size       520 (0x208)
     .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<bool> V_0,
              bool V_1,
@@ -596,231 +560,219 @@
     IL_000a:  ldloca.s   V_0
     IL_000c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_0011:  ldloc.1
-    IL_0012:  beq.s      IL_0017
+    IL_0012:  ceq
+    IL_0014:  ldloca.s   V_0
+    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_001b:  and
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0021:  nop
+    IL_0022:  ldarg.0
+    IL_0023:  stloc.0
+    IL_0024:  ldarg.1
+    IL_0025:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_002a:  stloc.1
+    IL_002b:  ldloca.s   V_0
+    IL_002d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0032:  ldloc.1
+    IL_0033:  ceq
+    IL_0035:  ldloca.s   V_0
+    IL_0037:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_003c:  and
+    IL_003d:  ldc.i4.0
+    IL_003e:  ceq
+    IL_0040:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0045:  nop
+    IL_0046:  ldarg.1
+    IL_0047:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_004c:  ldarg.0
+    IL_004d:  stloc.0
+    IL_004e:  ldloca.s   V_0
+    IL_0050:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0055:  ceq
+    IL_0057:  ldloca.s   V_0
+    IL_0059:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_005e:  and
+    IL_005f:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0064:  nop
+    IL_0065:  ldarg.1
+    IL_0066:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_006b:  ldarg.0
+    IL_006c:  stloc.0
+    IL_006d:  ldloca.s   V_0
+    IL_006f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0074:  ceq
+    IL_0076:  ldloca.s   V_0
+    IL_0078:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_007d:  and
+    IL_007e:  ldc.i4.0
+    IL_007f:  ceq
+    IL_0081:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0086:  nop
+    IL_0087:  ldarg.0
+    IL_0088:  stloc.0
+    IL_0089:  ldarg.1
+    IL_008a:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_008f:  stloc.1
+    IL_0090:  ldloca.s   V_0
+    IL_0092:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0097:  brtrue.s   IL_00a4
 
-    IL_0014:  ldc.i4.0
-    IL_0015:  br.s       IL_001e
+    IL_0099:  ldloca.s   V_2
+    IL_009b:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00a1:  ldloc.2
+    IL_00a2:  br.s       IL_00b2
 
-    IL_0017:  ldloca.s   V_0
-    IL_0019:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_001e:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0023:  nop
-    IL_0024:  ldarg.0
-    IL_0025:  stloc.0
-    IL_0026:  ldarg.1
-    IL_0027:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_002c:  stloc.1
-    IL_002d:  ldloca.s   V_0
-    IL_002f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0034:  ldloc.1
-    IL_0035:  beq.s      IL_003a
+    IL_00a4:  ldloca.s   V_0
+    IL_00a6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00ab:  ldloc.1
+    IL_00ac:  xor
+    IL_00ad:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_00b2:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00b7:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_00bc:  nop
+    IL_00bd:  ldarg.0
+    IL_00be:  stloc.0
+    IL_00bf:  ldloca.s   V_0
+    IL_00c1:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00c6:  brtrue.s   IL_00d0
 
-    IL_0037:  ldc.i4.1
-    IL_0038:  br.s       IL_0044
+    IL_00c8:  ldarg.1
+    IL_00c9:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_00ce:  br.s       IL_00d7
 
-    IL_003a:  ldloca.s   V_0
-    IL_003c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0041:  ldc.i4.0
-    IL_0042:  ceq
-    IL_0044:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0049:  nop
-    IL_004a:  ldarg.1
-    IL_004b:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0050:  ldarg.0
-    IL_0051:  stloc.0
-    IL_0052:  ldloca.s   V_0
-    IL_0054:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0059:  beq.s      IL_005e
+    IL_00d0:  ldloca.s   V_0
+    IL_00d2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00d7:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00dc:  nop
+    IL_00dd:  ldarg.0
+    IL_00de:  stloc.0
+    IL_00df:  ldarg.1
+    IL_00e0:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_00e5:  stloc.1
+    IL_00e6:  ldloca.s   V_0
+    IL_00e8:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_00ed:  brtrue.s   IL_00fa
 
-    IL_005b:  ldc.i4.0
-    IL_005c:  br.s       IL_0065
+    IL_00ef:  ldloca.s   V_2
+    IL_00f1:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_00f7:  ldloc.2
+    IL_00f8:  br.s       IL_0108
 
-    IL_005e:  ldloca.s   V_0
-    IL_0060:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0065:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_006a:  nop
-    IL_006b:  ldarg.1
-    IL_006c:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0071:  ldarg.0
-    IL_0072:  stloc.0
-    IL_0073:  ldloca.s   V_0
-    IL_0075:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_007a:  beq.s      IL_007f
+    IL_00fa:  ldloca.s   V_0
+    IL_00fc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0101:  ldloc.1
+    IL_0102:  xor
+    IL_0103:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_0108:  starg.s    a
+    IL_010a:  ldarg.1
+    IL_010b:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_0110:  ldarg.0
+    IL_0111:  stloc.0
+    IL_0112:  brtrue.s   IL_011c
 
-    IL_007c:  ldc.i4.1
-    IL_007d:  br.s       IL_0089
+    IL_0114:  ldc.i4.0
+    IL_0115:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_011a:  br.s       IL_011d
 
-    IL_007f:  ldloca.s   V_0
-    IL_0081:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0086:  ldc.i4.0
-    IL_0087:  ceq
-    IL_0089:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_008e:  nop
-    IL_008f:  ldarg.0
-    IL_0090:  stloc.0
-    IL_0091:  ldarg.1
-    IL_0092:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0097:  stloc.1
-    IL_0098:  ldloca.s   V_0
-    IL_009a:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_009f:  brtrue.s   IL_00ac
+    IL_011c:  ldloc.0
+    IL_011d:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0122:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0127:  nop
+    IL_0128:  ldarg.1
+    IL_0129:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_012e:  ldarg.0
+    IL_012f:  stloc.0
+    IL_0130:  brtrue.s   IL_0135
 
-    IL_00a1:  ldloca.s   V_2
-    IL_00a3:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00a9:  ldloc.2
-    IL_00aa:  br.s       IL_00ba
+    IL_0132:  ldloc.0
+    IL_0133:  br.s       IL_013b
 
-    IL_00ac:  ldloca.s   V_0
-    IL_00ae:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00b3:  ldloc.1
-    IL_00b4:  xor
-    IL_00b5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_00ba:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00bf:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_00c4:  nop
-    IL_00c5:  ldarg.0
-    IL_00c6:  stloc.0
-    IL_00c7:  ldloca.s   V_0
-    IL_00c9:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00ce:  brtrue.s   IL_00d8
+    IL_0135:  ldc.i4.1
+    IL_0136:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_013b:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0140:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0145:  nop
+    IL_0146:  ldarg.1
+    IL_0147:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_014c:  stloc.1
+    IL_014d:  ldarg.0
+    IL_014e:  stloc.0
+    IL_014f:  ldloca.s   V_0
+    IL_0151:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0156:  brtrue.s   IL_0163
 
-    IL_00d0:  ldarg.1
-    IL_00d1:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_00d6:  br.s       IL_00df
+    IL_0158:  ldloca.s   V_2
+    IL_015a:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0160:  ldloc.2
+    IL_0161:  br.s       IL_0171
 
-    IL_00d8:  ldloca.s   V_0
-    IL_00da:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00df:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00e4:  nop
-    IL_00e5:  ldarg.0
-    IL_00e6:  stloc.0
-    IL_00e7:  ldarg.1
-    IL_00e8:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_00ed:  stloc.1
-    IL_00ee:  ldloca.s   V_0
-    IL_00f0:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00f5:  brtrue.s   IL_0102
+    IL_0163:  ldloc.1
+    IL_0164:  ldloca.s   V_0
+    IL_0166:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_016b:  xor
+    IL_016c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_0171:  box        valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0176:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_017b:  nop
+    IL_017c:  ldc.i4.0
+    IL_017d:  newarr     valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0182:  ldc.i4.0
+    IL_0183:  ldelema    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0188:  dup
+    IL_0189:  ldobj      valuetype [mscorlib]System.Nullable`1<bool>
+    IL_018e:  stloc.0
+    IL_018f:  ldarg.1
+    IL_0190:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
+    IL_0195:  stloc.1
+    IL_0196:  ldloca.s   V_0
+    IL_0198:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_019d:  brtrue.s   IL_01aa
 
-    IL_00f7:  ldloca.s   V_2
-    IL_00f9:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_00ff:  ldloc.2
-    IL_0100:  br.s       IL_0110
+    IL_019f:  ldloca.s   V_2
+    IL_01a1:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01a7:  ldloc.2
+    IL_01a8:  br.s       IL_01b8
 
-    IL_0102:  ldloca.s   V_0
-    IL_0104:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0109:  ldloc.1
-    IL_010a:  xor
-    IL_010b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_0110:  starg.s    a
-    IL_0112:  ldarg.1
-    IL_0113:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0118:  ldarg.0
-    IL_0119:  stloc.0
-    IL_011a:  brtrue.s   IL_0124
+    IL_01aa:  ldloca.s   V_0
+    IL_01ac:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_01b1:  ldloc.1
+    IL_01b2:  xor
+    IL_01b3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_01b8:  stobj      valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01bd:  ldc.i4.0
+    IL_01be:  newarr     valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01c3:  ldc.i4.0
+    IL_01c4:  ldelema    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01c9:  dup
+    IL_01ca:  ldobj      valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01cf:  stloc.0
+    IL_01d0:  ldarg.0
+    IL_01d1:  stloc.2
+    IL_01d2:  ldloca.s   V_0
+    IL_01d4:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_01d9:  ldloca.s   V_2
+    IL_01db:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_01e0:  and
+    IL_01e1:  brtrue.s   IL_01ee
 
-    IL_011c:  ldc.i4.0
-    IL_011d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_0122:  br.s       IL_0125
+    IL_01e3:  ldloca.s   V_3
+    IL_01e5:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
+    IL_01eb:  ldloc.3
+    IL_01ec:  br.s       IL_0202
 
-    IL_0124:  ldloc.0
-    IL_0125:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_012a:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_012f:  nop
-    IL_0130:  ldarg.1
-    IL_0131:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0136:  ldarg.0
-    IL_0137:  stloc.0
-    IL_0138:  brtrue.s   IL_013d
-
-    IL_013a:  ldloc.0
-    IL_013b:  br.s       IL_0143
-
-    IL_013d:  ldc.i4.1
-    IL_013e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_0143:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0148:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_014d:  nop
-    IL_014e:  ldarg.1
-    IL_014f:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_0154:  stloc.1
-    IL_0155:  ldarg.0
-    IL_0156:  stloc.0
-    IL_0157:  ldloca.s   V_0
-    IL_0159:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_015e:  brtrue.s   IL_016b
-
-    IL_0160:  ldloca.s   V_2
-    IL_0162:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0168:  ldloc.2
-    IL_0169:  br.s       IL_0179
-
-    IL_016b:  ldloc.1
-    IL_016c:  ldloca.s   V_0
-    IL_016e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0173:  xor
-    IL_0174:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_0179:  box        valuetype [mscorlib]System.Nullable`1<bool>
-    IL_017e:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0183:  nop
-    IL_0184:  ldc.i4.0
-    IL_0185:  newarr     valuetype [mscorlib]System.Nullable`1<bool>
-    IL_018a:  ldc.i4.0
-    IL_018b:  ldelema    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0190:  dup
-    IL_0191:  ldobj      valuetype [mscorlib]System.Nullable`1<bool>
-    IL_0196:  stloc.0
-    IL_0197:  ldarg.1
-    IL_0198:  callvirt   instance !0 class [mscorlib]System.Func`1<bool>::Invoke()
-    IL_019d:  stloc.1
-    IL_019e:  ldloca.s   V_0
-    IL_01a0:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_01a5:  brtrue.s   IL_01b2
-
-    IL_01a7:  ldloca.s   V_2
-    IL_01a9:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01af:  ldloc.2
-    IL_01b0:  br.s       IL_01c0
-
-    IL_01b2:  ldloca.s   V_0
-    IL_01b4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_01b9:  ldloc.1
-    IL_01ba:  xor
-    IL_01bb:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_01c0:  stobj      valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01c5:  ldc.i4.0
-    IL_01c6:  newarr     valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01cb:  ldc.i4.0
-    IL_01cc:  ldelema    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01d1:  dup
-    IL_01d2:  ldobj      valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01d7:  stloc.0
-    IL_01d8:  ldarg.0
-    IL_01d9:  stloc.2
-    IL_01da:  ldloca.s   V_0
-    IL_01dc:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_01e1:  ldloca.s   V_2
-    IL_01e3:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_01e8:  and
-    IL_01e9:  brtrue.s   IL_01f6
-
-    IL_01eb:  ldloca.s   V_3
-    IL_01ed:  initobj    valuetype [mscorlib]System.Nullable`1<bool>
-    IL_01f3:  ldloc.3
-    IL_01f4:  br.s       IL_020a
-
-    IL_01f6:  ldloca.s   V_0
-    IL_01f8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_01fd:  ldloca.s   V_2
-    IL_01ff:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0204:  xor
-    IL_0205:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
-    IL_020a:  stobj      valuetype [mscorlib]System.Nullable`1<bool>
-    IL_020f:  ret
+    IL_01ee:  ldloca.s   V_0
+    IL_01f0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_01f5:  ldloca.s   V_2
+    IL_01f7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_01fc:  xor
+    IL_01fd:  newobj     instance void valuetype [mscorlib]System.Nullable`1<bool>::.ctor(!0)
+    IL_0202:  stobj      valuetype [mscorlib]System.Nullable`1<bool>
+    IL_0207:  ret
   } // end of method LiftedOperators::BoolValueComplex
 
   .method public hidebysig static void  BoolValueConst(valuetype [mscorlib]System.Nullable`1<bool> a) cil managed
   {
-    // Code size       182 (0xb6)
+    // Code size       174 (0xae)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<bool> V_0,
              bool V_1)
@@ -832,101 +784,89 @@
     IL_0005:  ldloca.s   V_0
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
     IL_000c:  ldloc.1
-    IL_000d:  beq.s      IL_0012
+    IL_000d:  ceq
+    IL_000f:  ldloca.s   V_0
+    IL_0011:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0016:  and
+    IL_0017:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_001c:  nop
+    IL_001d:  ldarg.0
+    IL_001e:  stloc.0
+    IL_001f:  ldc.i4.1
+    IL_0020:  stloc.1
+    IL_0021:  ldloca.s   V_0
+    IL_0023:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0028:  ldloc.1
+    IL_0029:  ceq
+    IL_002b:  ldloca.s   V_0
+    IL_002d:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0032:  and
+    IL_0033:  ldc.i4.0
+    IL_0034:  ceq
+    IL_0036:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_003b:  nop
+    IL_003c:  ldarg.0
+    IL_003d:  stloc.0
+    IL_003e:  ldc.i4.0
+    IL_003f:  stloc.1
+    IL_0040:  ldloca.s   V_0
+    IL_0042:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0047:  ldloc.1
+    IL_0048:  ceq
+    IL_004a:  ldloca.s   V_0
+    IL_004c:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0051:  and
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0057:  nop
+    IL_0058:  ldarg.0
+    IL_0059:  stloc.0
+    IL_005a:  ldc.i4.0
+    IL_005b:  stloc.1
+    IL_005c:  ldloca.s   V_0
+    IL_005e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0063:  ldloc.1
+    IL_0064:  ceq
+    IL_0066:  ldloca.s   V_0
+    IL_0068:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_006d:  and
+    IL_006e:  ldc.i4.0
+    IL_006f:  ceq
+    IL_0071:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0076:  nop
+    IL_0077:  ldarg.0
+    IL_0078:  stloc.0
+    IL_0079:  ldloca.s   V_0
+    IL_007b:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_0080:  brtrue.s   IL_0085
 
-    IL_000f:  ldc.i4.0
-    IL_0010:  br.s       IL_0019
+    IL_0082:  ldc.i4.1
+    IL_0083:  br.s       IL_008c
 
-    IL_0012:  ldloca.s   V_0
-    IL_0014:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0019:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_001e:  nop
-    IL_001f:  ldarg.0
-    IL_0020:  stloc.0
-    IL_0021:  ldc.i4.1
-    IL_0022:  stloc.1
-    IL_0023:  ldloca.s   V_0
-    IL_0025:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_002a:  ldloc.1
-    IL_002b:  beq.s      IL_0030
+    IL_0085:  ldloca.s   V_0
+    IL_0087:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_008c:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0091:  nop
+    IL_0092:  ldarg.0
+    IL_0093:  stloc.0
+    IL_0094:  ldloca.s   V_0
+    IL_0096:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_009b:  brtrue.s   IL_00a0
 
-    IL_002d:  ldc.i4.1
-    IL_002e:  br.s       IL_003a
+    IL_009d:  ldc.i4.0
+    IL_009e:  br.s       IL_00a7
 
-    IL_0030:  ldloca.s   V_0
-    IL_0032:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0037:  ldc.i4.0
-    IL_0038:  ceq
-    IL_003a:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_003f:  nop
-    IL_0040:  ldarg.0
-    IL_0041:  stloc.0
-    IL_0042:  ldc.i4.0
-    IL_0043:  stloc.1
-    IL_0044:  ldloca.s   V_0
-    IL_0046:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_004b:  ldloc.1
-    IL_004c:  beq.s      IL_0051
-
-    IL_004e:  ldc.i4.0
-    IL_004f:  br.s       IL_0058
-
-    IL_0051:  ldloca.s   V_0
-    IL_0053:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0058:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_005d:  nop
-    IL_005e:  ldarg.0
-    IL_005f:  stloc.0
-    IL_0060:  ldc.i4.0
-    IL_0061:  stloc.1
-    IL_0062:  ldloca.s   V_0
-    IL_0064:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0069:  ldloc.1
-    IL_006a:  beq.s      IL_006f
-
-    IL_006c:  ldc.i4.1
-    IL_006d:  br.s       IL_0079
-
-    IL_006f:  ldloca.s   V_0
-    IL_0071:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0076:  ldc.i4.0
-    IL_0077:  ceq
-    IL_0079:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_007e:  nop
-    IL_007f:  ldarg.0
-    IL_0080:  stloc.0
-    IL_0081:  ldloca.s   V_0
-    IL_0083:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_0088:  brtrue.s   IL_008d
-
-    IL_008a:  ldc.i4.1
-    IL_008b:  br.s       IL_0094
-
-    IL_008d:  ldloca.s   V_0
-    IL_008f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_0094:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0099:  nop
-    IL_009a:  ldarg.0
-    IL_009b:  stloc.0
-    IL_009c:  ldloca.s   V_0
-    IL_009e:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
-    IL_00a3:  brtrue.s   IL_00a8
-
-    IL_00a5:  ldc.i4.0
-    IL_00a6:  br.s       IL_00af
-
-    IL_00a8:  ldloca.s   V_0
-    IL_00aa:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
-    IL_00af:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00b4:  nop
-    IL_00b5:  ret
+    IL_00a0:  ldloca.s   V_0
+    IL_00a2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_00a7:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00ac:  nop
+    IL_00ad:  ret
   } // end of method LiftedOperators::BoolValueConst
 
   .method public hidebysig static void  IntBasic(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                  valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       425 (0x1a9)
-    .maxstack  2
+    // Code size       418 (0x1a2)
+    .maxstack  3
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
              valuetype [mscorlib]System.Nullable`1<int32> V_2,
@@ -946,219 +886,201 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_2
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0013:  beq.s      IL_0018
+    IL_0013:  ceq
+    IL_0015:  ldloca.s   V_1
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001c:  ldloca.s   V_2
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0023:  ceq
+    IL_0025:  and
+    IL_0026:  stloc.0
+    IL_0027:  ldloc.0
+    IL_0028:  brfalse.s  IL_0032
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0028
+    IL_002a:  nop
+    IL_002b:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0030:  nop
+    IL_0031:  nop
+    IL_0032:  ldarg.0
+    IL_0033:  stloc.2
+    IL_0034:  ldarg.1
+    IL_0035:  stloc.1
+    IL_0036:  ldloca.s   V_2
+    IL_0038:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_003d:  ldloca.s   V_1
+    IL_003f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0044:  ceq
+    IL_0046:  ldloca.s   V_2
+    IL_0048:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_004d:  ldloca.s   V_1
+    IL_004f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0054:  ceq
+    IL_0056:  and
+    IL_0057:  ldc.i4.0
+    IL_0058:  ceq
+    IL_005a:  stloc.3
+    IL_005b:  ldloc.3
+    IL_005c:  brfalse.s  IL_0066
 
-    IL_0018:  ldloca.s   V_1
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001f:  ldloca.s   V_2
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0026:  ceq
-    IL_0028:  stloc.0
-    IL_0029:  ldloc.0
-    IL_002a:  brfalse.s  IL_0034
-
-    IL_002c:  nop
-    IL_002d:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0032:  nop
-    IL_0033:  nop
-    IL_0034:  ldarg.0
-    IL_0035:  stloc.2
-    IL_0036:  ldarg.1
-    IL_0037:  stloc.1
-    IL_0038:  ldloca.s   V_2
-    IL_003a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_003f:  ldloca.s   V_1
-    IL_0041:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0046:  beq.s      IL_004b
-
-    IL_0048:  ldc.i4.1
-    IL_0049:  br.s       IL_005e
-
-    IL_004b:  ldloca.s   V_2
-    IL_004d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0052:  ldloca.s   V_1
-    IL_0054:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0059:  ceq
-    IL_005b:  ldc.i4.0
-    IL_005c:  ceq
-    IL_005e:  stloc.3
-    IL_005f:  ldloc.3
-    IL_0060:  brfalse.s  IL_006a
-
-    IL_0062:  nop
-    IL_0063:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0068:  nop
-    IL_0069:  nop
-    IL_006a:  ldarg.0
-    IL_006b:  stloc.1
-    IL_006c:  ldarg.1
-    IL_006d:  stloc.2
-    IL_006e:  ldloca.s   V_1
-    IL_0070:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0075:  ldloca.s   V_2
-    IL_0077:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_007c:  bgt.s      IL_0081
-
-    IL_007e:  ldc.i4.0
-    IL_007f:  br.s       IL_0090
-
-    IL_0081:  ldloca.s   V_1
+    IL_005e:  nop
+    IL_005f:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0064:  nop
+    IL_0065:  nop
+    IL_0066:  ldarg.0
+    IL_0067:  stloc.1
+    IL_0068:  ldarg.1
+    IL_0069:  stloc.2
+    IL_006a:  ldloca.s   V_1
+    IL_006c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0071:  ldloca.s   V_2
+    IL_0073:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0078:  cgt
+    IL_007a:  ldloca.s   V_1
+    IL_007c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0081:  ldloca.s   V_2
     IL_0083:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0088:  ldloca.s   V_2
-    IL_008a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_008f:  and
-    IL_0090:  stloc.s    V_4
-    IL_0092:  ldloc.s    V_4
-    IL_0094:  brfalse.s  IL_009e
+    IL_0088:  and
+    IL_0089:  and
+    IL_008a:  stloc.s    V_4
+    IL_008c:  ldloc.s    V_4
+    IL_008e:  brfalse.s  IL_0098
 
+    IL_0090:  nop
+    IL_0091:  call       void [mscorlib]System.Console::WriteLine()
     IL_0096:  nop
-    IL_0097:  call       void [mscorlib]System.Console::WriteLine()
-    IL_009c:  nop
-    IL_009d:  nop
-    IL_009e:  ldarg.0
-    IL_009f:  stloc.2
-    IL_00a0:  ldarg.1
-    IL_00a1:  stloc.1
-    IL_00a2:  ldloca.s   V_2
-    IL_00a4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00a9:  ldloca.s   V_1
-    IL_00ab:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00b0:  blt.s      IL_00b5
+    IL_0097:  nop
+    IL_0098:  ldarg.0
+    IL_0099:  stloc.2
+    IL_009a:  ldarg.1
+    IL_009b:  stloc.1
+    IL_009c:  ldloca.s   V_2
+    IL_009e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00a3:  ldloca.s   V_1
+    IL_00a5:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00aa:  clt
+    IL_00ac:  ldloca.s   V_2
+    IL_00ae:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00b3:  ldloca.s   V_1
+    IL_00b5:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00ba:  and
+    IL_00bb:  and
+    IL_00bc:  stloc.s    V_5
+    IL_00be:  ldloc.s    V_5
+    IL_00c0:  brfalse.s  IL_00ca
 
-    IL_00b2:  ldc.i4.0
-    IL_00b3:  br.s       IL_00c4
+    IL_00c2:  nop
+    IL_00c3:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00c8:  nop
+    IL_00c9:  nop
+    IL_00ca:  ldarg.0
+    IL_00cb:  stloc.1
+    IL_00cc:  ldarg.1
+    IL_00cd:  stloc.2
+    IL_00ce:  ldloca.s   V_1
+    IL_00d0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00d5:  ldloca.s   V_2
+    IL_00d7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00dc:  clt
+    IL_00de:  ldc.i4.0
+    IL_00df:  ceq
+    IL_00e1:  ldloca.s   V_1
+    IL_00e3:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00e8:  ldloca.s   V_2
+    IL_00ea:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00ef:  and
+    IL_00f0:  and
+    IL_00f1:  stloc.s    V_6
+    IL_00f3:  ldloc.s    V_6
+    IL_00f5:  brfalse.s  IL_00ff
 
-    IL_00b5:  ldloca.s   V_2
-    IL_00b7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00bc:  ldloca.s   V_1
-    IL_00be:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00c3:  and
-    IL_00c4:  stloc.s    V_5
-    IL_00c6:  ldloc.s    V_5
-    IL_00c8:  brfalse.s  IL_00d2
-
-    IL_00ca:  nop
-    IL_00cb:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00d0:  nop
-    IL_00d1:  nop
-    IL_00d2:  ldarg.0
-    IL_00d3:  stloc.1
-    IL_00d4:  ldarg.1
-    IL_00d5:  stloc.2
-    IL_00d6:  ldloca.s   V_1
-    IL_00d8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00dd:  ldloca.s   V_2
-    IL_00df:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00e4:  bge.s      IL_00e9
-
-    IL_00e6:  ldc.i4.0
-    IL_00e7:  br.s       IL_00f8
-
-    IL_00e9:  ldloca.s   V_1
-    IL_00eb:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00f0:  ldloca.s   V_2
-    IL_00f2:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00f7:  and
-    IL_00f8:  stloc.s    V_6
-    IL_00fa:  ldloc.s    V_6
-    IL_00fc:  brfalse.s  IL_0106
-
+    IL_00f7:  nop
+    IL_00f8:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00fd:  nop
     IL_00fe:  nop
-    IL_00ff:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0104:  nop
-    IL_0105:  nop
-    IL_0106:  ldarg.0
-    IL_0107:  stloc.2
-    IL_0108:  ldarg.1
-    IL_0109:  stloc.1
-    IL_010a:  ldloca.s   V_2
+    IL_00ff:  ldarg.0
+    IL_0100:  stloc.2
+    IL_0101:  ldarg.1
+    IL_0102:  stloc.1
+    IL_0103:  ldloca.s   V_2
+    IL_0105:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_010a:  ldloca.s   V_1
     IL_010c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0111:  ldloca.s   V_1
-    IL_0113:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0118:  ble.s      IL_011d
-
-    IL_011a:  ldc.i4.0
-    IL_011b:  br.s       IL_012c
-
-    IL_011d:  ldloca.s   V_2
+    IL_0111:  cgt
+    IL_0113:  ldc.i4.0
+    IL_0114:  ceq
+    IL_0116:  ldloca.s   V_2
+    IL_0118:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_011d:  ldloca.s   V_1
     IL_011f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0124:  ldloca.s   V_1
-    IL_0126:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_012b:  and
-    IL_012c:  stloc.s    V_7
-    IL_012e:  ldloc.s    V_7
-    IL_0130:  brfalse.s  IL_013a
+    IL_0124:  and
+    IL_0125:  and
+    IL_0126:  stloc.s    V_7
+    IL_0128:  ldloc.s    V_7
+    IL_012a:  brfalse.s  IL_0134
 
+    IL_012c:  nop
+    IL_012d:  call       void [mscorlib]System.Console::WriteLine()
     IL_0132:  nop
-    IL_0133:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0138:  nop
-    IL_0139:  nop
-    IL_013a:  ldarg.0
-    IL_013b:  stloc.1
-    IL_013c:  ldarg.1
-    IL_013d:  stloc.2
-    IL_013e:  ldloca.s   V_1
-    IL_0140:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0145:  ldloca.s   V_2
-    IL_0147:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_014c:  bgt.s      IL_0151
+    IL_0133:  nop
+    IL_0134:  ldarg.0
+    IL_0135:  stloc.1
+    IL_0136:  ldarg.1
+    IL_0137:  stloc.2
+    IL_0138:  ldloca.s   V_1
+    IL_013a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_013f:  ldloca.s   V_2
+    IL_0141:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0146:  cgt
+    IL_0148:  ldloca.s   V_1
+    IL_014a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_014f:  ldloca.s   V_2
+    IL_0151:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0156:  and
+    IL_0157:  and
+    IL_0158:  ldc.i4.0
+    IL_0159:  ceq
+    IL_015b:  stloc.s    V_8
+    IL_015d:  ldloc.s    V_8
+    IL_015f:  brfalse.s  IL_0169
 
-    IL_014e:  ldc.i4.0
-    IL_014f:  br.s       IL_0160
+    IL_0161:  nop
+    IL_0162:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0167:  nop
+    IL_0168:  nop
+    IL_0169:  ldarg.0
+    IL_016a:  stloc.2
+    IL_016b:  ldarg.1
+    IL_016c:  stloc.1
+    IL_016d:  ldloca.s   V_2
+    IL_016f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0174:  ldloca.s   V_1
+    IL_0176:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_017b:  cgt
+    IL_017d:  ldc.i4.0
+    IL_017e:  ceq
+    IL_0180:  ldloca.s   V_2
+    IL_0182:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0187:  ldloca.s   V_1
+    IL_0189:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_018e:  and
+    IL_018f:  and
+    IL_0190:  ldc.i4.0
+    IL_0191:  ceq
+    IL_0193:  stloc.s    V_9
+    IL_0195:  ldloc.s    V_9
+    IL_0197:  brfalse.s  IL_01a1
 
-    IL_0151:  ldloca.s   V_1
-    IL_0153:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0158:  ldloca.s   V_2
-    IL_015a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_015f:  and
-    IL_0160:  ldc.i4.0
-    IL_0161:  ceq
-    IL_0163:  stloc.s    V_8
-    IL_0165:  ldloc.s    V_8
-    IL_0167:  brfalse.s  IL_0171
-
-    IL_0169:  nop
-    IL_016a:  call       void [mscorlib]System.Console::WriteLine()
-    IL_016f:  nop
-    IL_0170:  nop
-    IL_0171:  ldarg.0
-    IL_0172:  stloc.2
-    IL_0173:  ldarg.1
-    IL_0174:  stloc.1
-    IL_0175:  ldloca.s   V_2
-    IL_0177:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_017c:  ldloca.s   V_1
-    IL_017e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0183:  ble.s      IL_0188
-
-    IL_0185:  ldc.i4.0
-    IL_0186:  br.s       IL_0197
-
-    IL_0188:  ldloca.s   V_2
-    IL_018a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_018f:  ldloca.s   V_1
-    IL_0191:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0196:  and
-    IL_0197:  ldc.i4.0
-    IL_0198:  ceq
-    IL_019a:  stloc.s    V_9
-    IL_019c:  ldloc.s    V_9
-    IL_019e:  brfalse.s  IL_01a8
-
+    IL_0199:  nop
+    IL_019a:  call       void [mscorlib]System.Console::WriteLine()
+    IL_019f:  nop
     IL_01a0:  nop
-    IL_01a1:  call       void [mscorlib]System.Console::WriteLine()
-    IL_01a6:  nop
-    IL_01a7:  nop
-    IL_01a8:  ret
+    IL_01a1:  ret
   } // end of method LiftedOperators::IntBasic
 
   .method public hidebysig static void  IntComplex(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                    class [mscorlib]System.Func`1<int32> x) cil managed
   {
-    // Code size       348 (0x15c)
+    // Code size       335 (0x14f)
     .maxstack  2
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
@@ -1179,190 +1101,168 @@
     IL_000a:  ldloca.s   V_1
     IL_000c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_0011:  ldloc.2
-    IL_0012:  beq.s      IL_0017
+    IL_0012:  ceq
+    IL_0014:  ldloca.s   V_1
+    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001b:  and
+    IL_001c:  stloc.0
+    IL_001d:  ldloc.0
+    IL_001e:  brfalse.s  IL_0028
 
-    IL_0014:  ldc.i4.0
-    IL_0015:  br.s       IL_001e
+    IL_0020:  nop
+    IL_0021:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0026:  nop
+    IL_0027:  nop
+    IL_0028:  ldarg.0
+    IL_0029:  stloc.1
+    IL_002a:  ldarg.1
+    IL_002b:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0030:  stloc.2
+    IL_0031:  ldloca.s   V_1
+    IL_0033:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0038:  ldloc.2
+    IL_0039:  ceq
+    IL_003b:  ldloca.s   V_1
+    IL_003d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0042:  and
+    IL_0043:  ldc.i4.0
+    IL_0044:  ceq
+    IL_0046:  stloc.3
+    IL_0047:  ldloc.3
+    IL_0048:  brfalse.s  IL_0052
 
-    IL_0017:  ldloca.s   V_1
-    IL_0019:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001e:  stloc.0
-    IL_001f:  ldloc.0
-    IL_0020:  brfalse.s  IL_002a
+    IL_004a:  nop
+    IL_004b:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0050:  nop
+    IL_0051:  nop
+    IL_0052:  ldarg.0
+    IL_0053:  stloc.1
+    IL_0054:  ldarg.1
+    IL_0055:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_005a:  stloc.2
+    IL_005b:  ldloca.s   V_1
+    IL_005d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0062:  ldloc.2
+    IL_0063:  cgt
+    IL_0065:  ldloca.s   V_1
+    IL_0067:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_006c:  and
+    IL_006d:  stloc.s    V_4
+    IL_006f:  ldloc.s    V_4
+    IL_0071:  brfalse.s  IL_007b
 
-    IL_0022:  nop
-    IL_0023:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0028:  nop
-    IL_0029:  nop
-    IL_002a:  ldarg.0
-    IL_002b:  stloc.1
-    IL_002c:  ldarg.1
-    IL_002d:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0032:  stloc.2
-    IL_0033:  ldloca.s   V_1
-    IL_0035:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_003a:  ldloc.2
-    IL_003b:  beq.s      IL_0040
-
-    IL_003d:  ldc.i4.1
-    IL_003e:  br.s       IL_004a
-
-    IL_0040:  ldloca.s   V_1
-    IL_0042:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0047:  ldc.i4.0
-    IL_0048:  ceq
-    IL_004a:  stloc.3
-    IL_004b:  ldloc.3
-    IL_004c:  brfalse.s  IL_0056
-
-    IL_004e:  nop
-    IL_004f:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0054:  nop
-    IL_0055:  nop
-    IL_0056:  ldarg.0
-    IL_0057:  stloc.1
-    IL_0058:  ldarg.1
-    IL_0059:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_005e:  stloc.2
-    IL_005f:  ldloca.s   V_1
-    IL_0061:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0066:  ldloc.2
-    IL_0067:  bgt.s      IL_006c
-
-    IL_0069:  ldc.i4.0
-    IL_006a:  br.s       IL_0073
-
-    IL_006c:  ldloca.s   V_1
-    IL_006e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0073:  stloc.s    V_4
-    IL_0075:  ldloc.s    V_4
-    IL_0077:  brfalse.s  IL_0081
-
+    IL_0073:  nop
+    IL_0074:  call       void [mscorlib]System.Console::WriteLine()
     IL_0079:  nop
-    IL_007a:  call       void [mscorlib]System.Console::WriteLine()
-    IL_007f:  nop
-    IL_0080:  nop
-    IL_0081:  ldarg.1
-    IL_0082:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0087:  ldarg.0
-    IL_0088:  stloc.1
-    IL_0089:  ldloca.s   V_1
-    IL_008b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0090:  beq.s      IL_0095
+    IL_007a:  nop
+    IL_007b:  ldarg.1
+    IL_007c:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0081:  ldarg.0
+    IL_0082:  stloc.1
+    IL_0083:  ldloca.s   V_1
+    IL_0085:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_008a:  ceq
+    IL_008c:  ldloca.s   V_1
+    IL_008e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0093:  and
+    IL_0094:  stloc.s    V_5
+    IL_0096:  ldloc.s    V_5
+    IL_0098:  brfalse.s  IL_00a2
 
-    IL_0092:  ldc.i4.0
-    IL_0093:  br.s       IL_009c
+    IL_009a:  nop
+    IL_009b:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00a0:  nop
+    IL_00a1:  nop
+    IL_00a2:  ldarg.1
+    IL_00a3:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_00a8:  ldarg.0
+    IL_00a9:  stloc.1
+    IL_00aa:  ldloca.s   V_1
+    IL_00ac:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00b1:  ceq
+    IL_00b3:  ldloca.s   V_1
+    IL_00b5:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00ba:  and
+    IL_00bb:  ldc.i4.0
+    IL_00bc:  ceq
+    IL_00be:  stloc.s    V_6
+    IL_00c0:  ldloc.s    V_6
+    IL_00c2:  brfalse.s  IL_00cc
 
-    IL_0095:  ldloca.s   V_1
-    IL_0097:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_009c:  stloc.s    V_5
-    IL_009e:  ldloc.s    V_5
-    IL_00a0:  brfalse.s  IL_00aa
+    IL_00c4:  nop
+    IL_00c5:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00ca:  nop
+    IL_00cb:  nop
+    IL_00cc:  ldarg.1
+    IL_00cd:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_00d2:  ldarg.0
+    IL_00d3:  stloc.1
+    IL_00d4:  ldloca.s   V_1
+    IL_00d6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00db:  cgt
+    IL_00dd:  ldloca.s   V_1
+    IL_00df:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00e4:  and
+    IL_00e5:  stloc.s    V_7
+    IL_00e7:  ldloc.s    V_7
+    IL_00e9:  brfalse.s  IL_00f3
 
-    IL_00a2:  nop
-    IL_00a3:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00a8:  nop
-    IL_00a9:  nop
-    IL_00aa:  ldarg.1
-    IL_00ab:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_00b0:  ldarg.0
-    IL_00b1:  stloc.1
-    IL_00b2:  ldloca.s   V_1
-    IL_00b4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00b9:  beq.s      IL_00be
+    IL_00eb:  nop
+    IL_00ec:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00f1:  nop
+    IL_00f2:  nop
+    IL_00f3:  ldarg.0
+    IL_00f4:  stloc.1
+    IL_00f5:  ldarg.1
+    IL_00f6:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_00fb:  stloc.2
+    IL_00fc:  ldloca.s   V_1
+    IL_00fe:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0103:  ldloc.2
+    IL_0104:  cgt
+    IL_0106:  ldloca.s   V_1
+    IL_0108:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_010d:  and
+    IL_010e:  ldc.i4.0
+    IL_010f:  ceq
+    IL_0111:  stloc.s    V_8
+    IL_0113:  ldloc.s    V_8
+    IL_0115:  brfalse.s  IL_011f
 
-    IL_00bb:  ldc.i4.1
-    IL_00bc:  br.s       IL_00c8
+    IL_0117:  nop
+    IL_0118:  call       void [mscorlib]System.Console::WriteLine()
+    IL_011d:  nop
+    IL_011e:  nop
+    IL_011f:  ldarg.0
+    IL_0120:  stloc.1
+    IL_0121:  ldarg.1
+    IL_0122:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0127:  stloc.2
+    IL_0128:  ldloca.s   V_1
+    IL_012a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_012f:  ldloc.2
+    IL_0130:  cgt
+    IL_0132:  ldc.i4.0
+    IL_0133:  ceq
+    IL_0135:  ldloca.s   V_1
+    IL_0137:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_013c:  and
+    IL_013d:  ldc.i4.0
+    IL_013e:  ceq
+    IL_0140:  stloc.s    V_9
+    IL_0142:  ldloc.s    V_9
+    IL_0144:  brfalse.s  IL_014e
 
-    IL_00be:  ldloca.s   V_1
-    IL_00c0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00c5:  ldc.i4.0
-    IL_00c6:  ceq
-    IL_00c8:  stloc.s    V_6
-    IL_00ca:  ldloc.s    V_6
-    IL_00cc:  brfalse.s  IL_00d6
-
-    IL_00ce:  nop
-    IL_00cf:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00d4:  nop
-    IL_00d5:  nop
-    IL_00d6:  ldarg.1
-    IL_00d7:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_00dc:  ldarg.0
-    IL_00dd:  stloc.1
-    IL_00de:  ldloca.s   V_1
-    IL_00e0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00e5:  bgt.s      IL_00ea
-
-    IL_00e7:  ldc.i4.0
-    IL_00e8:  br.s       IL_00f1
-
-    IL_00ea:  ldloca.s   V_1
-    IL_00ec:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00f1:  stloc.s    V_7
-    IL_00f3:  ldloc.s    V_7
-    IL_00f5:  brfalse.s  IL_00ff
-
-    IL_00f7:  nop
-    IL_00f8:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00fd:  nop
-    IL_00fe:  nop
-    IL_00ff:  ldarg.0
-    IL_0100:  stloc.1
-    IL_0101:  ldarg.1
-    IL_0102:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0107:  stloc.2
-    IL_0108:  ldloca.s   V_1
-    IL_010a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_010f:  ldloc.2
-    IL_0110:  bgt.s      IL_0115
-
-    IL_0112:  ldc.i4.0
-    IL_0113:  br.s       IL_011c
-
-    IL_0115:  ldloca.s   V_1
-    IL_0117:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_011c:  ldc.i4.0
-    IL_011d:  ceq
-    IL_011f:  stloc.s    V_8
-    IL_0121:  ldloc.s    V_8
-    IL_0123:  brfalse.s  IL_012d
-
-    IL_0125:  nop
-    IL_0126:  call       void [mscorlib]System.Console::WriteLine()
-    IL_012b:  nop
-    IL_012c:  nop
-    IL_012d:  ldarg.0
-    IL_012e:  stloc.1
-    IL_012f:  ldarg.1
-    IL_0130:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0135:  stloc.2
-    IL_0136:  ldloca.s   V_1
-    IL_0138:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_013d:  ldloc.2
-    IL_013e:  ble.s      IL_0143
-
-    IL_0140:  ldc.i4.0
-    IL_0141:  br.s       IL_014a
-
-    IL_0143:  ldloca.s   V_1
-    IL_0145:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_014a:  ldc.i4.0
-    IL_014b:  ceq
-    IL_014d:  stloc.s    V_9
-    IL_014f:  ldloc.s    V_9
-    IL_0151:  brfalse.s  IL_015b
-
-    IL_0153:  nop
-    IL_0154:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0159:  nop
-    IL_015a:  nop
-    IL_015b:  ret
+    IL_0146:  nop
+    IL_0147:  call       void [mscorlib]System.Console::WriteLine()
+    IL_014c:  nop
+    IL_014d:  nop
+    IL_014e:  ret
   } // end of method LiftedOperators::IntComplex
 
   .method public hidebysig static void  IntConst(valuetype [mscorlib]System.Nullable`1<int32> a) cil managed
   {
-    // Code size       226 (0xe2)
+    // Code size       214 (0xd6)
     .maxstack  2
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
@@ -1380,136 +1280,118 @@
     IL_0005:  ldloca.s   V_1
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloc.2
-    IL_000d:  beq.s      IL_0012
+    IL_000d:  ceq
+    IL_000f:  ldloca.s   V_1
+    IL_0011:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0016:  and
+    IL_0017:  stloc.0
+    IL_0018:  ldloc.0
+    IL_0019:  brfalse.s  IL_0023
 
-    IL_000f:  ldc.i4.0
-    IL_0010:  br.s       IL_0019
+    IL_001b:  nop
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0021:  nop
+    IL_0022:  nop
+    IL_0023:  ldarg.0
+    IL_0024:  stloc.1
+    IL_0025:  ldc.i4.2
+    IL_0026:  stloc.2
+    IL_0027:  ldloca.s   V_1
+    IL_0029:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_002e:  ldloc.2
+    IL_002f:  ceq
+    IL_0031:  ldloca.s   V_1
+    IL_0033:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0038:  and
+    IL_0039:  ldc.i4.0
+    IL_003a:  ceq
+    IL_003c:  stloc.3
+    IL_003d:  ldloc.3
+    IL_003e:  brfalse.s  IL_0048
 
-    IL_0012:  ldloca.s   V_1
-    IL_0014:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0019:  stloc.0
-    IL_001a:  ldloc.0
-    IL_001b:  brfalse.s  IL_0025
+    IL_0040:  nop
+    IL_0041:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0046:  nop
+    IL_0047:  nop
+    IL_0048:  ldarg.0
+    IL_0049:  stloc.1
+    IL_004a:  ldc.i4.2
+    IL_004b:  stloc.2
+    IL_004c:  ldloca.s   V_1
+    IL_004e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0053:  ldloc.2
+    IL_0054:  cgt
+    IL_0056:  ldloca.s   V_1
+    IL_0058:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_005d:  and
+    IL_005e:  stloc.s    V_4
+    IL_0060:  ldloc.s    V_4
+    IL_0062:  brfalse.s  IL_006c
 
-    IL_001d:  nop
-    IL_001e:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0023:  nop
-    IL_0024:  nop
-    IL_0025:  ldarg.0
-    IL_0026:  stloc.1
-    IL_0027:  ldc.i4.2
-    IL_0028:  stloc.2
-    IL_0029:  ldloca.s   V_1
-    IL_002b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0030:  ldloc.2
-    IL_0031:  beq.s      IL_0036
-
-    IL_0033:  ldc.i4.1
-    IL_0034:  br.s       IL_0040
-
-    IL_0036:  ldloca.s   V_1
-    IL_0038:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_003d:  ldc.i4.0
-    IL_003e:  ceq
-    IL_0040:  stloc.3
-    IL_0041:  ldloc.3
-    IL_0042:  brfalse.s  IL_004c
-
-    IL_0044:  nop
-    IL_0045:  call       void [mscorlib]System.Console::WriteLine()
-    IL_004a:  nop
-    IL_004b:  nop
-    IL_004c:  ldarg.0
-    IL_004d:  stloc.1
-    IL_004e:  ldc.i4.2
-    IL_004f:  stloc.2
-    IL_0050:  ldloca.s   V_1
-    IL_0052:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0057:  ldloc.2
-    IL_0058:  bgt.s      IL_005d
-
-    IL_005a:  ldc.i4.0
-    IL_005b:  br.s       IL_0064
-
-    IL_005d:  ldloca.s   V_1
-    IL_005f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0064:  stloc.s    V_4
-    IL_0066:  ldloc.s    V_4
-    IL_0068:  brfalse.s  IL_0072
-
+    IL_0064:  nop
+    IL_0065:  call       void [mscorlib]System.Console::WriteLine()
     IL_006a:  nop
-    IL_006b:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0070:  nop
-    IL_0071:  nop
-    IL_0072:  ldc.i4.2
-    IL_0073:  ldarg.0
-    IL_0074:  stloc.1
-    IL_0075:  ldloca.s   V_1
-    IL_0077:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_007c:  beq.s      IL_0081
+    IL_006b:  nop
+    IL_006c:  ldc.i4.2
+    IL_006d:  ldarg.0
+    IL_006e:  stloc.1
+    IL_006f:  ldloca.s   V_1
+    IL_0071:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0076:  ceq
+    IL_0078:  ldloca.s   V_1
+    IL_007a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_007f:  and
+    IL_0080:  stloc.s    V_5
+    IL_0082:  ldloc.s    V_5
+    IL_0084:  brfalse.s  IL_008e
 
-    IL_007e:  ldc.i4.0
-    IL_007f:  br.s       IL_0088
+    IL_0086:  nop
+    IL_0087:  call       void [mscorlib]System.Console::WriteLine()
+    IL_008c:  nop
+    IL_008d:  nop
+    IL_008e:  ldc.i4.2
+    IL_008f:  ldarg.0
+    IL_0090:  stloc.1
+    IL_0091:  ldloca.s   V_1
+    IL_0093:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0098:  ceq
+    IL_009a:  ldloca.s   V_1
+    IL_009c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00a1:  and
+    IL_00a2:  ldc.i4.0
+    IL_00a3:  ceq
+    IL_00a5:  stloc.s    V_6
+    IL_00a7:  ldloc.s    V_6
+    IL_00a9:  brfalse.s  IL_00b3
 
-    IL_0081:  ldloca.s   V_1
-    IL_0083:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0088:  stloc.s    V_5
-    IL_008a:  ldloc.s    V_5
-    IL_008c:  brfalse.s  IL_0096
+    IL_00ab:  nop
+    IL_00ac:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00b1:  nop
+    IL_00b2:  nop
+    IL_00b3:  ldc.i4.2
+    IL_00b4:  ldarg.0
+    IL_00b5:  stloc.1
+    IL_00b6:  ldloca.s   V_1
+    IL_00b8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00bd:  cgt
+    IL_00bf:  ldloca.s   V_1
+    IL_00c1:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00c6:  and
+    IL_00c7:  stloc.s    V_7
+    IL_00c9:  ldloc.s    V_7
+    IL_00cb:  brfalse.s  IL_00d5
 
-    IL_008e:  nop
-    IL_008f:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0094:  nop
-    IL_0095:  nop
-    IL_0096:  ldc.i4.2
-    IL_0097:  ldarg.0
-    IL_0098:  stloc.1
-    IL_0099:  ldloca.s   V_1
-    IL_009b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00a0:  beq.s      IL_00a5
-
-    IL_00a2:  ldc.i4.1
-    IL_00a3:  br.s       IL_00af
-
-    IL_00a5:  ldloca.s   V_1
-    IL_00a7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00ac:  ldc.i4.0
-    IL_00ad:  ceq
-    IL_00af:  stloc.s    V_6
-    IL_00b1:  ldloc.s    V_6
-    IL_00b3:  brfalse.s  IL_00bd
-
-    IL_00b5:  nop
-    IL_00b6:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00bb:  nop
-    IL_00bc:  nop
-    IL_00bd:  ldc.i4.2
-    IL_00be:  ldarg.0
-    IL_00bf:  stloc.1
-    IL_00c0:  ldloca.s   V_1
-    IL_00c2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00c7:  bgt.s      IL_00cc
-
-    IL_00c9:  ldc.i4.0
-    IL_00ca:  br.s       IL_00d3
-
-    IL_00cc:  ldloca.s   V_1
-    IL_00ce:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00d3:  stloc.s    V_7
-    IL_00d5:  ldloc.s    V_7
-    IL_00d7:  brfalse.s  IL_00e1
-
-    IL_00d9:  nop
-    IL_00da:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00df:  nop
-    IL_00e0:  nop
-    IL_00e1:  ret
+    IL_00cd:  nop
+    IL_00ce:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00d3:  nop
+    IL_00d4:  nop
+    IL_00d5:  ret
   } // end of method LiftedOperators::IntConst
 
   .method public hidebysig static void  IntValueBasic(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                       valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       1633 (0x661)
+    // Code size       1626 (0x65a)
     .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
@@ -1523,690 +1405,677 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_1
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0013:  beq.s      IL_0018
-
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0028
-
-    IL_0018:  ldloca.s   V_0
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001f:  ldloca.s   V_1
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0026:  ceq
-    IL_0028:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_002d:  nop
-    IL_002e:  ldarg.0
-    IL_002f:  stloc.1
-    IL_0030:  ldarg.1
-    IL_0031:  stloc.0
-    IL_0032:  ldloca.s   V_1
-    IL_0034:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0039:  ldloca.s   V_0
-    IL_003b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0040:  beq.s      IL_0045
-
-    IL_0042:  ldc.i4.1
-    IL_0043:  br.s       IL_0058
-
-    IL_0045:  ldloca.s   V_1
-    IL_0047:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_004c:  ldloca.s   V_0
-    IL_004e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0053:  ceq
-    IL_0055:  ldc.i4.0
-    IL_0056:  ceq
-    IL_0058:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_005d:  nop
-    IL_005e:  ldarg.0
-    IL_005f:  stloc.0
-    IL_0060:  ldarg.1
-    IL_0061:  stloc.1
-    IL_0062:  ldloca.s   V_0
-    IL_0064:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0069:  ldloca.s   V_1
-    IL_006b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0070:  bgt.s      IL_0075
-
-    IL_0072:  ldc.i4.0
-    IL_0073:  br.s       IL_0084
-
-    IL_0075:  ldloca.s   V_0
+    IL_0013:  ceq
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0023:  ceq
+    IL_0025:  and
+    IL_0026:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_002b:  nop
+    IL_002c:  ldarg.0
+    IL_002d:  stloc.1
+    IL_002e:  ldarg.1
+    IL_002f:  stloc.0
+    IL_0030:  ldloca.s   V_1
+    IL_0032:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0037:  ldloca.s   V_0
+    IL_0039:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_003e:  ceq
+    IL_0040:  ldloca.s   V_1
+    IL_0042:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0047:  ldloca.s   V_0
+    IL_0049:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_004e:  ceq
+    IL_0050:  and
+    IL_0051:  ldc.i4.0
+    IL_0052:  ceq
+    IL_0054:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0059:  nop
+    IL_005a:  ldarg.0
+    IL_005b:  stloc.0
+    IL_005c:  ldarg.1
+    IL_005d:  stloc.1
+    IL_005e:  ldloca.s   V_0
+    IL_0060:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0065:  ldloca.s   V_1
+    IL_0067:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_006c:  cgt
+    IL_006e:  ldloca.s   V_0
+    IL_0070:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0075:  ldloca.s   V_1
     IL_0077:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_007c:  ldloca.s   V_1
-    IL_007e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0083:  and
-    IL_0084:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0089:  nop
-    IL_008a:  ldarg.0
-    IL_008b:  stloc.1
-    IL_008c:  ldarg.1
-    IL_008d:  stloc.0
-    IL_008e:  ldloca.s   V_1
-    IL_0090:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0095:  ldloca.s   V_0
-    IL_0097:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_009c:  bgt.s      IL_00a1
-
-    IL_009e:  ldc.i4.0
-    IL_009f:  br.s       IL_00b0
-
-    IL_00a1:  ldloca.s   V_1
-    IL_00a3:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00a8:  ldloca.s   V_0
-    IL_00aa:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00af:  and
-    IL_00b0:  ldc.i4.0
-    IL_00b1:  ceq
-    IL_00b3:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00b8:  nop
-    IL_00b9:  ldarg.0
-    IL_00ba:  stloc.0
-    IL_00bb:  ldarg.1
-    IL_00bc:  stloc.1
-    IL_00bd:  ldloca.s   V_0
-    IL_00bf:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00c4:  ldloca.s   V_1
-    IL_00c6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00cb:  bge.s      IL_00d0
-
-    IL_00cd:  ldc.i4.0
-    IL_00ce:  br.s       IL_00df
-
-    IL_00d0:  ldloca.s   V_0
-    IL_00d2:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00d7:  ldloca.s   V_1
-    IL_00d9:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00de:  and
-    IL_00df:  ldc.i4.0
-    IL_00e0:  ceq
-    IL_00e2:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00e7:  nop
-    IL_00e8:  ldarg.0
-    IL_00e9:  stloc.1
-    IL_00ea:  ldarg.1
-    IL_00eb:  stloc.0
-    IL_00ec:  ldloca.s   V_1
+    IL_007c:  and
+    IL_007d:  and
+    IL_007e:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0083:  nop
+    IL_0084:  ldarg.0
+    IL_0085:  stloc.1
+    IL_0086:  ldarg.1
+    IL_0087:  stloc.0
+    IL_0088:  ldloca.s   V_1
+    IL_008a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_008f:  ldloca.s   V_0
+    IL_0091:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0096:  cgt
+    IL_0098:  ldloca.s   V_1
+    IL_009a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_009f:  ldloca.s   V_0
+    IL_00a1:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00a6:  and
+    IL_00a7:  and
+    IL_00a8:  ldc.i4.0
+    IL_00a9:  ceq
+    IL_00ab:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00b0:  nop
+    IL_00b1:  ldarg.0
+    IL_00b2:  stloc.0
+    IL_00b3:  ldarg.1
+    IL_00b4:  stloc.1
+    IL_00b5:  ldloca.s   V_0
+    IL_00b7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00bc:  ldloca.s   V_1
+    IL_00be:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00c3:  clt
+    IL_00c5:  ldc.i4.0
+    IL_00c6:  ceq
+    IL_00c8:  ldloca.s   V_0
+    IL_00ca:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00cf:  ldloca.s   V_1
+    IL_00d1:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00d6:  and
+    IL_00d7:  and
+    IL_00d8:  ldc.i4.0
+    IL_00d9:  ceq
+    IL_00db:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00e0:  nop
+    IL_00e1:  ldarg.0
+    IL_00e2:  stloc.1
+    IL_00e3:  ldarg.1
+    IL_00e4:  stloc.0
+    IL_00e5:  ldloca.s   V_1
+    IL_00e7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00ec:  ldloca.s   V_0
     IL_00ee:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00f3:  ldloca.s   V_0
-    IL_00f5:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00fa:  and
-    IL_00fb:  brtrue.s   IL_0108
+    IL_00f3:  and
+    IL_00f4:  brtrue.s   IL_0101
 
-    IL_00fd:  ldloca.s   V_2
-    IL_00ff:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0105:  ldloc.2
-    IL_0106:  br.s       IL_011c
+    IL_00f6:  ldloca.s   V_2
+    IL_00f8:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00fe:  ldloc.2
+    IL_00ff:  br.s       IL_0115
 
-    IL_0108:  ldloca.s   V_1
+    IL_0101:  ldloca.s   V_1
+    IL_0103:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0108:  ldloca.s   V_0
     IL_010a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_010f:  ldloca.s   V_0
-    IL_0111:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0116:  add
-    IL_0117:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_011c:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0121:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0126:  nop
-    IL_0127:  ldarg.0
-    IL_0128:  stloc.0
-    IL_0129:  ldarg.1
-    IL_012a:  stloc.1
-    IL_012b:  ldloca.s   V_0
+    IL_010f:  add
+    IL_0110:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0115:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_011a:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_011f:  nop
+    IL_0120:  ldarg.0
+    IL_0121:  stloc.0
+    IL_0122:  ldarg.1
+    IL_0123:  stloc.1
+    IL_0124:  ldloca.s   V_0
+    IL_0126:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_012b:  ldloca.s   V_1
     IL_012d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0132:  ldloca.s   V_1
-    IL_0134:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0139:  and
-    IL_013a:  brtrue.s   IL_0147
+    IL_0132:  and
+    IL_0133:  brtrue.s   IL_0140
 
-    IL_013c:  ldloca.s   V_2
-    IL_013e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0144:  ldloc.2
-    IL_0145:  br.s       IL_015b
+    IL_0135:  ldloca.s   V_2
+    IL_0137:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_013d:  ldloc.2
+    IL_013e:  br.s       IL_0154
 
-    IL_0147:  ldloca.s   V_0
+    IL_0140:  ldloca.s   V_0
+    IL_0142:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0147:  ldloca.s   V_1
     IL_0149:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_014e:  ldloca.s   V_1
-    IL_0150:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0155:  sub
-    IL_0156:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_015b:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0160:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0165:  nop
-    IL_0166:  ldarg.0
-    IL_0167:  stloc.1
-    IL_0168:  ldarg.1
-    IL_0169:  stloc.0
-    IL_016a:  ldloca.s   V_1
+    IL_014e:  sub
+    IL_014f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0154:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0159:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_015e:  nop
+    IL_015f:  ldarg.0
+    IL_0160:  stloc.1
+    IL_0161:  ldarg.1
+    IL_0162:  stloc.0
+    IL_0163:  ldloca.s   V_1
+    IL_0165:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_016a:  ldloca.s   V_0
     IL_016c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0171:  ldloca.s   V_0
-    IL_0173:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0178:  and
-    IL_0179:  brtrue.s   IL_0186
+    IL_0171:  and
+    IL_0172:  brtrue.s   IL_017f
 
-    IL_017b:  ldloca.s   V_2
-    IL_017d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0183:  ldloc.2
-    IL_0184:  br.s       IL_019a
+    IL_0174:  ldloca.s   V_2
+    IL_0176:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_017c:  ldloc.2
+    IL_017d:  br.s       IL_0193
 
-    IL_0186:  ldloca.s   V_1
+    IL_017f:  ldloca.s   V_1
+    IL_0181:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0186:  ldloca.s   V_0
     IL_0188:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_018d:  ldloca.s   V_0
-    IL_018f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0194:  mul
-    IL_0195:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_019a:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_019f:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01a4:  nop
-    IL_01a5:  ldarg.0
-    IL_01a6:  stloc.0
-    IL_01a7:  ldarg.1
-    IL_01a8:  stloc.1
-    IL_01a9:  ldloca.s   V_0
+    IL_018d:  mul
+    IL_018e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0193:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0198:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_019d:  nop
+    IL_019e:  ldarg.0
+    IL_019f:  stloc.0
+    IL_01a0:  ldarg.1
+    IL_01a1:  stloc.1
+    IL_01a2:  ldloca.s   V_0
+    IL_01a4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01a9:  ldloca.s   V_1
     IL_01ab:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01b0:  ldloca.s   V_1
-    IL_01b2:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01b7:  and
-    IL_01b8:  brtrue.s   IL_01c5
+    IL_01b0:  and
+    IL_01b1:  brtrue.s   IL_01be
 
-    IL_01ba:  ldloca.s   V_2
-    IL_01bc:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01c2:  ldloc.2
-    IL_01c3:  br.s       IL_01d9
+    IL_01b3:  ldloca.s   V_2
+    IL_01b5:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01bb:  ldloc.2
+    IL_01bc:  br.s       IL_01d2
 
-    IL_01c5:  ldloca.s   V_0
+    IL_01be:  ldloca.s   V_0
+    IL_01c0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_01c5:  ldloca.s   V_1
     IL_01c7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_01cc:  ldloca.s   V_1
-    IL_01ce:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_01d3:  div
-    IL_01d4:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_01d9:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01de:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01e3:  nop
-    IL_01e4:  ldarg.0
-    IL_01e5:  stloc.1
-    IL_01e6:  ldarg.1
-    IL_01e7:  stloc.0
-    IL_01e8:  ldloca.s   V_1
+    IL_01cc:  div
+    IL_01cd:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01d2:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01d7:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01dc:  nop
+    IL_01dd:  ldarg.0
+    IL_01de:  stloc.1
+    IL_01df:  ldarg.1
+    IL_01e0:  stloc.0
+    IL_01e1:  ldloca.s   V_1
+    IL_01e3:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01e8:  ldloca.s   V_0
     IL_01ea:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01ef:  ldloca.s   V_0
-    IL_01f1:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01f6:  and
-    IL_01f7:  brtrue.s   IL_0204
+    IL_01ef:  and
+    IL_01f0:  brtrue.s   IL_01fd
 
-    IL_01f9:  ldloca.s   V_2
-    IL_01fb:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0201:  ldloc.2
-    IL_0202:  br.s       IL_0218
+    IL_01f2:  ldloca.s   V_2
+    IL_01f4:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01fa:  ldloc.2
+    IL_01fb:  br.s       IL_0211
 
-    IL_0204:  ldloca.s   V_1
+    IL_01fd:  ldloca.s   V_1
+    IL_01ff:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0204:  ldloca.s   V_0
     IL_0206:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_020b:  ldloca.s   V_0
-    IL_020d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0212:  rem
-    IL_0213:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0218:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_021d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0222:  nop
-    IL_0223:  ldarg.0
-    IL_0224:  stloc.0
-    IL_0225:  ldarg.1
-    IL_0226:  stloc.1
-    IL_0227:  ldloca.s   V_0
+    IL_020b:  rem
+    IL_020c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0211:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0216:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_021b:  nop
+    IL_021c:  ldarg.0
+    IL_021d:  stloc.0
+    IL_021e:  ldarg.1
+    IL_021f:  stloc.1
+    IL_0220:  ldloca.s   V_0
+    IL_0222:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0227:  ldloca.s   V_1
     IL_0229:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_022e:  ldloca.s   V_1
-    IL_0230:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0235:  and
-    IL_0236:  brtrue.s   IL_0243
+    IL_022e:  and
+    IL_022f:  brtrue.s   IL_023c
 
-    IL_0238:  ldloca.s   V_2
-    IL_023a:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0240:  ldloc.2
-    IL_0241:  br.s       IL_0257
+    IL_0231:  ldloca.s   V_2
+    IL_0233:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0239:  ldloc.2
+    IL_023a:  br.s       IL_0250
 
-    IL_0243:  ldloca.s   V_0
+    IL_023c:  ldloca.s   V_0
+    IL_023e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0243:  ldloca.s   V_1
     IL_0245:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_024a:  ldloca.s   V_1
-    IL_024c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0251:  and
-    IL_0252:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0257:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_025c:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0261:  nop
-    IL_0262:  ldarg.0
-    IL_0263:  stloc.1
-    IL_0264:  ldarg.1
-    IL_0265:  stloc.0
-    IL_0266:  ldloca.s   V_1
+    IL_024a:  and
+    IL_024b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0250:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0255:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_025a:  nop
+    IL_025b:  ldarg.0
+    IL_025c:  stloc.1
+    IL_025d:  ldarg.1
+    IL_025e:  stloc.0
+    IL_025f:  ldloca.s   V_1
+    IL_0261:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0266:  ldloca.s   V_0
     IL_0268:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_026d:  ldloca.s   V_0
-    IL_026f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0274:  and
-    IL_0275:  brtrue.s   IL_0282
+    IL_026d:  and
+    IL_026e:  brtrue.s   IL_027b
 
-    IL_0277:  ldloca.s   V_2
-    IL_0279:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_027f:  ldloc.2
-    IL_0280:  br.s       IL_0296
+    IL_0270:  ldloca.s   V_2
+    IL_0272:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0278:  ldloc.2
+    IL_0279:  br.s       IL_028f
 
-    IL_0282:  ldloca.s   V_1
+    IL_027b:  ldloca.s   V_1
+    IL_027d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0282:  ldloca.s   V_0
     IL_0284:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0289:  ldloca.s   V_0
-    IL_028b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0290:  or
-    IL_0291:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0296:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_029b:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_02a0:  nop
-    IL_02a1:  ldarg.0
-    IL_02a2:  stloc.0
-    IL_02a3:  ldarg.1
-    IL_02a4:  stloc.1
-    IL_02a5:  ldloca.s   V_0
+    IL_0289:  or
+    IL_028a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_028f:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0294:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0299:  nop
+    IL_029a:  ldarg.0
+    IL_029b:  stloc.0
+    IL_029c:  ldarg.1
+    IL_029d:  stloc.1
+    IL_029e:  ldloca.s   V_0
+    IL_02a0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02a5:  ldloca.s   V_1
     IL_02a7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02ac:  ldloca.s   V_1
-    IL_02ae:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02b3:  and
-    IL_02b4:  brtrue.s   IL_02c1
+    IL_02ac:  and
+    IL_02ad:  brtrue.s   IL_02ba
 
-    IL_02b6:  ldloca.s   V_2
-    IL_02b8:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02be:  ldloc.2
-    IL_02bf:  br.s       IL_02d5
+    IL_02af:  ldloca.s   V_2
+    IL_02b1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02b7:  ldloc.2
+    IL_02b8:  br.s       IL_02ce
 
-    IL_02c1:  ldloca.s   V_0
+    IL_02ba:  ldloca.s   V_0
+    IL_02bc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_02c1:  ldloca.s   V_1
     IL_02c3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02c8:  ldloca.s   V_1
-    IL_02ca:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02cf:  xor
-    IL_02d0:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_02d5:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02da:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_02df:  nop
-    IL_02e0:  ldarg.0
-    IL_02e1:  stloc.1
-    IL_02e2:  ldarg.1
-    IL_02e3:  stloc.0
-    IL_02e4:  ldloca.s   V_1
+    IL_02c8:  xor
+    IL_02c9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_02ce:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02d3:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_02d8:  nop
+    IL_02d9:  ldarg.0
+    IL_02da:  stloc.1
+    IL_02db:  ldarg.1
+    IL_02dc:  stloc.0
+    IL_02dd:  ldloca.s   V_1
+    IL_02df:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02e4:  ldloca.s   V_0
     IL_02e6:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02eb:  ldloca.s   V_0
-    IL_02ed:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02f2:  and
-    IL_02f3:  brtrue.s   IL_0300
+    IL_02eb:  and
+    IL_02ec:  brtrue.s   IL_02f9
 
-    IL_02f5:  ldloca.s   V_2
-    IL_02f7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02fd:  ldloc.2
-    IL_02fe:  br.s       IL_0317
+    IL_02ee:  ldloca.s   V_2
+    IL_02f0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02f6:  ldloc.2
+    IL_02f7:  br.s       IL_0310
 
-    IL_0300:  ldloca.s   V_1
+    IL_02f9:  ldloca.s   V_1
+    IL_02fb:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0300:  ldloca.s   V_0
     IL_0302:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0307:  ldloca.s   V_0
-    IL_0309:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_030e:  ldc.i4.s   31
-    IL_0310:  and
-    IL_0311:  shl
-    IL_0312:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0317:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_031c:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0321:  nop
-    IL_0322:  ldarg.0
-    IL_0323:  stloc.0
-    IL_0324:  ldarg.1
-    IL_0325:  stloc.1
-    IL_0326:  ldloca.s   V_0
+    IL_0307:  ldc.i4.s   31
+    IL_0309:  and
+    IL_030a:  shl
+    IL_030b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0310:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0315:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_031a:  nop
+    IL_031b:  ldarg.0
+    IL_031c:  stloc.0
+    IL_031d:  ldarg.1
+    IL_031e:  stloc.1
+    IL_031f:  ldloca.s   V_0
+    IL_0321:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0326:  ldloca.s   V_1
     IL_0328:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_032d:  ldloca.s   V_1
-    IL_032f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0334:  and
-    IL_0335:  brtrue.s   IL_0342
+    IL_032d:  and
+    IL_032e:  brtrue.s   IL_033b
 
-    IL_0337:  ldloca.s   V_2
-    IL_0339:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_033f:  ldloc.2
-    IL_0340:  br.s       IL_0359
+    IL_0330:  ldloca.s   V_2
+    IL_0332:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0338:  ldloc.2
+    IL_0339:  br.s       IL_0352
 
-    IL_0342:  ldloca.s   V_0
+    IL_033b:  ldloca.s   V_0
+    IL_033d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0342:  ldloca.s   V_1
     IL_0344:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0349:  ldloca.s   V_1
-    IL_034b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0350:  ldc.i4.s   31
-    IL_0352:  and
-    IL_0353:  shr
-    IL_0354:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0359:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_035e:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0363:  nop
-    IL_0364:  ldarg.0
-    IL_0365:  stloc.1
-    IL_0366:  ldloca.s   V_1
-    IL_0368:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_036d:  brtrue.s   IL_0372
+    IL_0349:  ldc.i4.s   31
+    IL_034b:  and
+    IL_034c:  shr
+    IL_034d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0352:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0357:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_035c:  nop
+    IL_035d:  ldarg.0
+    IL_035e:  stloc.1
+    IL_035f:  ldloca.s   V_1
+    IL_0361:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0366:  brtrue.s   IL_036b
 
-    IL_036f:  ldarg.1
-    IL_0370:  br.s       IL_0373
+    IL_0368:  ldarg.1
+    IL_0369:  br.s       IL_036c
 
-    IL_0372:  ldloc.1
-    IL_0373:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0378:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_037d:  nop
-    IL_037e:  ldarg.0
-    IL_037f:  stloc.1
-    IL_0380:  ldloca.s   V_1
-    IL_0382:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0387:  brtrue.s   IL_0394
+    IL_036b:  ldloc.1
+    IL_036c:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0371:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0376:  nop
+    IL_0377:  ldarg.0
+    IL_0378:  stloc.1
+    IL_0379:  ldloca.s   V_1
+    IL_037b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0380:  brtrue.s   IL_038d
 
-    IL_0389:  ldloca.s   V_0
-    IL_038b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0391:  ldloc.0
-    IL_0392:  br.s       IL_03a1
+    IL_0382:  ldloca.s   V_0
+    IL_0384:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_038a:  ldloc.0
+    IL_038b:  br.s       IL_039a
 
-    IL_0394:  ldloca.s   V_1
-    IL_0396:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_039b:  neg
-    IL_039c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03a1:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03a6:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_03ab:  nop
-    IL_03ac:  ldarg.0
-    IL_03ad:  stloc.1
-    IL_03ae:  ldloca.s   V_1
-    IL_03b0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03b5:  brtrue.s   IL_03c2
+    IL_038d:  ldloca.s   V_1
+    IL_038f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0394:  neg
+    IL_0395:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_039a:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_039f:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_03a4:  nop
+    IL_03a5:  ldarg.0
+    IL_03a6:  stloc.1
+    IL_03a7:  ldloca.s   V_1
+    IL_03a9:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03ae:  brtrue.s   IL_03bb
 
-    IL_03b7:  ldloca.s   V_0
-    IL_03b9:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03bf:  ldloc.0
-    IL_03c0:  br.s       IL_03cf
+    IL_03b0:  ldloca.s   V_0
+    IL_03b2:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03b8:  ldloc.0
+    IL_03b9:  br.s       IL_03c8
 
-    IL_03c2:  ldloca.s   V_1
-    IL_03c4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03c9:  not
-    IL_03ca:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03cf:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03d4:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_03d9:  nop
-    IL_03da:  ldarg.0
-    IL_03db:  stloc.1
-    IL_03dc:  ldloca.s   V_1
-    IL_03de:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03e3:  brtrue.s   IL_03f0
+    IL_03bb:  ldloca.s   V_1
+    IL_03bd:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03c2:  not
+    IL_03c3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03c8:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03cd:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_03d2:  nop
+    IL_03d3:  ldarg.0
+    IL_03d4:  stloc.1
+    IL_03d5:  ldloca.s   V_1
+    IL_03d7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03dc:  brtrue.s   IL_03e9
 
-    IL_03e5:  ldloca.s   V_0
-    IL_03e7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03ed:  ldloc.0
-    IL_03ee:  br.s       IL_03fe
+    IL_03de:  ldloca.s   V_0
+    IL_03e0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03e6:  ldloc.0
+    IL_03e7:  br.s       IL_03f7
 
-    IL_03f0:  ldloca.s   V_1
-    IL_03f2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03f7:  ldc.i4.1
-    IL_03f8:  add
-    IL_03f9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03fe:  dup
-    IL_03ff:  starg.s    a
-    IL_0401:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0406:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_040b:  nop
-    IL_040c:  ldarg.0
-    IL_040d:  stloc.1
-    IL_040e:  ldloca.s   V_1
-    IL_0410:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0415:  brtrue.s   IL_0422
+    IL_03e9:  ldloca.s   V_1
+    IL_03eb:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03f0:  ldc.i4.1
+    IL_03f1:  add
+    IL_03f2:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03f7:  dup
+    IL_03f8:  starg.s    a
+    IL_03fa:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03ff:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0404:  nop
+    IL_0405:  ldarg.0
+    IL_0406:  stloc.1
+    IL_0407:  ldloca.s   V_1
+    IL_0409:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_040e:  brtrue.s   IL_041b
 
-    IL_0417:  ldloca.s   V_0
-    IL_0419:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_041f:  ldloc.0
-    IL_0420:  br.s       IL_0430
+    IL_0410:  ldloca.s   V_0
+    IL_0412:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0418:  ldloc.0
+    IL_0419:  br.s       IL_0429
 
-    IL_0422:  ldloca.s   V_1
-    IL_0424:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0429:  ldc.i4.1
-    IL_042a:  sub
-    IL_042b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0430:  dup
-    IL_0431:  starg.s    a
-    IL_0433:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0438:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_043d:  nop
-    IL_043e:  ldarg.0
-    IL_043f:  stloc.1
-    IL_0440:  ldarg.1
-    IL_0441:  stloc.0
-    IL_0442:  ldloca.s   V_1
+    IL_041b:  ldloca.s   V_1
+    IL_041d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0422:  ldc.i4.1
+    IL_0423:  sub
+    IL_0424:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0429:  dup
+    IL_042a:  starg.s    a
+    IL_042c:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0431:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0436:  nop
+    IL_0437:  ldarg.0
+    IL_0438:  stloc.1
+    IL_0439:  ldarg.1
+    IL_043a:  stloc.0
+    IL_043b:  ldloca.s   V_1
+    IL_043d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0442:  ldloca.s   V_0
     IL_0444:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0449:  ldloca.s   V_0
-    IL_044b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0450:  and
-    IL_0451:  brtrue.s   IL_045e
+    IL_0449:  and
+    IL_044a:  brtrue.s   IL_0457
 
-    IL_0453:  ldloca.s   V_2
-    IL_0455:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_045b:  ldloc.2
-    IL_045c:  br.s       IL_0472
+    IL_044c:  ldloca.s   V_2
+    IL_044e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0454:  ldloc.2
+    IL_0455:  br.s       IL_046b
 
-    IL_045e:  ldloca.s   V_1
+    IL_0457:  ldloca.s   V_1
+    IL_0459:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_045e:  ldloca.s   V_0
     IL_0460:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0465:  ldloca.s   V_0
-    IL_0467:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_046c:  add
-    IL_046d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0472:  starg.s    a
-    IL_0474:  ldarg.0
-    IL_0475:  stloc.0
-    IL_0476:  ldarg.1
-    IL_0477:  stloc.1
-    IL_0478:  ldloca.s   V_0
+    IL_0465:  add
+    IL_0466:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_046b:  starg.s    a
+    IL_046d:  ldarg.0
+    IL_046e:  stloc.0
+    IL_046f:  ldarg.1
+    IL_0470:  stloc.1
+    IL_0471:  ldloca.s   V_0
+    IL_0473:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0478:  ldloca.s   V_1
     IL_047a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_047f:  ldloca.s   V_1
-    IL_0481:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0486:  and
-    IL_0487:  brtrue.s   IL_0494
+    IL_047f:  and
+    IL_0480:  brtrue.s   IL_048d
 
-    IL_0489:  ldloca.s   V_2
-    IL_048b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0491:  ldloc.2
-    IL_0492:  br.s       IL_04a8
+    IL_0482:  ldloca.s   V_2
+    IL_0484:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_048a:  ldloc.2
+    IL_048b:  br.s       IL_04a1
 
-    IL_0494:  ldloca.s   V_0
+    IL_048d:  ldloca.s   V_0
+    IL_048f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0494:  ldloca.s   V_1
     IL_0496:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_049b:  ldloca.s   V_1
-    IL_049d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_04a2:  sub
-    IL_04a3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_04a8:  starg.s    a
-    IL_04aa:  ldarg.0
-    IL_04ab:  stloc.1
-    IL_04ac:  ldarg.1
-    IL_04ad:  stloc.0
-    IL_04ae:  ldloca.s   V_1
+    IL_049b:  sub
+    IL_049c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_04a1:  starg.s    a
+    IL_04a3:  ldarg.0
+    IL_04a4:  stloc.1
+    IL_04a5:  ldarg.1
+    IL_04a6:  stloc.0
+    IL_04a7:  ldloca.s   V_1
+    IL_04a9:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_04ae:  ldloca.s   V_0
     IL_04b0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04b5:  ldloca.s   V_0
-    IL_04b7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04bc:  and
-    IL_04bd:  brtrue.s   IL_04ca
+    IL_04b5:  and
+    IL_04b6:  brtrue.s   IL_04c3
 
-    IL_04bf:  ldloca.s   V_2
-    IL_04c1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_04c7:  ldloc.2
-    IL_04c8:  br.s       IL_04de
+    IL_04b8:  ldloca.s   V_2
+    IL_04ba:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_04c0:  ldloc.2
+    IL_04c1:  br.s       IL_04d7
 
-    IL_04ca:  ldloca.s   V_1
+    IL_04c3:  ldloca.s   V_1
+    IL_04c5:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_04ca:  ldloca.s   V_0
     IL_04cc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_04d1:  ldloca.s   V_0
-    IL_04d3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_04d8:  mul
-    IL_04d9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_04de:  starg.s    a
-    IL_04e0:  ldarg.0
-    IL_04e1:  stloc.0
-    IL_04e2:  ldarg.1
-    IL_04e3:  stloc.1
-    IL_04e4:  ldloca.s   V_0
+    IL_04d1:  mul
+    IL_04d2:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_04d7:  starg.s    a
+    IL_04d9:  ldarg.0
+    IL_04da:  stloc.0
+    IL_04db:  ldarg.1
+    IL_04dc:  stloc.1
+    IL_04dd:  ldloca.s   V_0
+    IL_04df:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_04e4:  ldloca.s   V_1
     IL_04e6:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04eb:  ldloca.s   V_1
-    IL_04ed:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04f2:  and
-    IL_04f3:  brtrue.s   IL_0500
+    IL_04eb:  and
+    IL_04ec:  brtrue.s   IL_04f9
 
-    IL_04f5:  ldloca.s   V_2
-    IL_04f7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_04fd:  ldloc.2
-    IL_04fe:  br.s       IL_0514
+    IL_04ee:  ldloca.s   V_2
+    IL_04f0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_04f6:  ldloc.2
+    IL_04f7:  br.s       IL_050d
 
-    IL_0500:  ldloca.s   V_0
+    IL_04f9:  ldloca.s   V_0
+    IL_04fb:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0500:  ldloca.s   V_1
     IL_0502:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0507:  ldloca.s   V_1
-    IL_0509:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_050e:  div
-    IL_050f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0514:  starg.s    a
-    IL_0516:  ldarg.0
-    IL_0517:  stloc.1
-    IL_0518:  ldarg.1
-    IL_0519:  stloc.0
-    IL_051a:  ldloca.s   V_1
+    IL_0507:  div
+    IL_0508:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_050d:  starg.s    a
+    IL_050f:  ldarg.0
+    IL_0510:  stloc.1
+    IL_0511:  ldarg.1
+    IL_0512:  stloc.0
+    IL_0513:  ldloca.s   V_1
+    IL_0515:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_051a:  ldloca.s   V_0
     IL_051c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0521:  ldloca.s   V_0
-    IL_0523:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0528:  and
-    IL_0529:  brtrue.s   IL_0536
+    IL_0521:  and
+    IL_0522:  brtrue.s   IL_052f
 
-    IL_052b:  ldloca.s   V_2
-    IL_052d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0533:  ldloc.2
-    IL_0534:  br.s       IL_054a
+    IL_0524:  ldloca.s   V_2
+    IL_0526:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_052c:  ldloc.2
+    IL_052d:  br.s       IL_0543
 
-    IL_0536:  ldloca.s   V_1
+    IL_052f:  ldloca.s   V_1
+    IL_0531:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0536:  ldloca.s   V_0
     IL_0538:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_053d:  ldloca.s   V_0
-    IL_053f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0544:  rem
-    IL_0545:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_054a:  starg.s    a
-    IL_054c:  ldarg.0
-    IL_054d:  stloc.0
-    IL_054e:  ldarg.1
-    IL_054f:  stloc.1
-    IL_0550:  ldloca.s   V_0
+    IL_053d:  rem
+    IL_053e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0543:  starg.s    a
+    IL_0545:  ldarg.0
+    IL_0546:  stloc.0
+    IL_0547:  ldarg.1
+    IL_0548:  stloc.1
+    IL_0549:  ldloca.s   V_0
+    IL_054b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0550:  ldloca.s   V_1
     IL_0552:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0557:  ldloca.s   V_1
-    IL_0559:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_055e:  and
-    IL_055f:  brtrue.s   IL_056c
+    IL_0557:  and
+    IL_0558:  brtrue.s   IL_0565
 
-    IL_0561:  ldloca.s   V_2
-    IL_0563:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0569:  ldloc.2
-    IL_056a:  br.s       IL_0580
+    IL_055a:  ldloca.s   V_2
+    IL_055c:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0562:  ldloc.2
+    IL_0563:  br.s       IL_0579
 
-    IL_056c:  ldloca.s   V_0
+    IL_0565:  ldloca.s   V_0
+    IL_0567:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_056c:  ldloca.s   V_1
     IL_056e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0573:  ldloca.s   V_1
-    IL_0575:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_057a:  and
-    IL_057b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0580:  starg.s    a
-    IL_0582:  ldarg.0
-    IL_0583:  stloc.1
-    IL_0584:  ldarg.1
-    IL_0585:  stloc.0
-    IL_0586:  ldloca.s   V_1
+    IL_0573:  and
+    IL_0574:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0579:  starg.s    a
+    IL_057b:  ldarg.0
+    IL_057c:  stloc.1
+    IL_057d:  ldarg.1
+    IL_057e:  stloc.0
+    IL_057f:  ldloca.s   V_1
+    IL_0581:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0586:  ldloca.s   V_0
     IL_0588:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_058d:  ldloca.s   V_0
-    IL_058f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0594:  and
-    IL_0595:  brtrue.s   IL_05a2
+    IL_058d:  and
+    IL_058e:  brtrue.s   IL_059b
 
-    IL_0597:  ldloca.s   V_2
-    IL_0599:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_059f:  ldloc.2
-    IL_05a0:  br.s       IL_05b6
+    IL_0590:  ldloca.s   V_2
+    IL_0592:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0598:  ldloc.2
+    IL_0599:  br.s       IL_05af
 
-    IL_05a2:  ldloca.s   V_1
+    IL_059b:  ldloca.s   V_1
+    IL_059d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_05a2:  ldloca.s   V_0
     IL_05a4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_05a9:  ldloca.s   V_0
-    IL_05ab:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_05b0:  or
-    IL_05b1:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_05b6:  starg.s    a
-    IL_05b8:  ldarg.0
-    IL_05b9:  stloc.0
-    IL_05ba:  ldarg.1
-    IL_05bb:  stloc.1
-    IL_05bc:  ldloca.s   V_0
+    IL_05a9:  or
+    IL_05aa:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_05af:  starg.s    a
+    IL_05b1:  ldarg.0
+    IL_05b2:  stloc.0
+    IL_05b3:  ldarg.1
+    IL_05b4:  stloc.1
+    IL_05b5:  ldloca.s   V_0
+    IL_05b7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_05bc:  ldloca.s   V_1
     IL_05be:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_05c3:  ldloca.s   V_1
-    IL_05c5:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_05ca:  and
-    IL_05cb:  brtrue.s   IL_05d8
+    IL_05c3:  and
+    IL_05c4:  brtrue.s   IL_05d1
 
-    IL_05cd:  ldloca.s   V_2
-    IL_05cf:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_05d5:  ldloc.2
-    IL_05d6:  br.s       IL_05ec
+    IL_05c6:  ldloca.s   V_2
+    IL_05c8:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_05ce:  ldloc.2
+    IL_05cf:  br.s       IL_05e5
 
-    IL_05d8:  ldloca.s   V_0
+    IL_05d1:  ldloca.s   V_0
+    IL_05d3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_05d8:  ldloca.s   V_1
     IL_05da:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_05df:  ldloca.s   V_1
-    IL_05e1:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_05e6:  xor
-    IL_05e7:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_05ec:  starg.s    a
-    IL_05ee:  ldarg.0
-    IL_05ef:  stloc.1
-    IL_05f0:  ldarg.1
-    IL_05f1:  stloc.0
-    IL_05f2:  ldloca.s   V_1
+    IL_05df:  xor
+    IL_05e0:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_05e5:  starg.s    a
+    IL_05e7:  ldarg.0
+    IL_05e8:  stloc.1
+    IL_05e9:  ldarg.1
+    IL_05ea:  stloc.0
+    IL_05eb:  ldloca.s   V_1
+    IL_05ed:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_05f2:  ldloca.s   V_0
     IL_05f4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_05f9:  ldloca.s   V_0
-    IL_05fb:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0600:  and
-    IL_0601:  brtrue.s   IL_060e
+    IL_05f9:  and
+    IL_05fa:  brtrue.s   IL_0607
 
-    IL_0603:  ldloca.s   V_2
-    IL_0605:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_060b:  ldloc.2
-    IL_060c:  br.s       IL_0625
+    IL_05fc:  ldloca.s   V_2
+    IL_05fe:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0604:  ldloc.2
+    IL_0605:  br.s       IL_061e
 
-    IL_060e:  ldloca.s   V_1
+    IL_0607:  ldloca.s   V_1
+    IL_0609:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_060e:  ldloca.s   V_0
     IL_0610:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0615:  ldloca.s   V_0
-    IL_0617:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_061c:  ldc.i4.s   31
-    IL_061e:  and
-    IL_061f:  shl
-    IL_0620:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0625:  starg.s    a
-    IL_0627:  ldarg.0
-    IL_0628:  stloc.0
-    IL_0629:  ldarg.1
-    IL_062a:  stloc.1
-    IL_062b:  ldloca.s   V_0
+    IL_0615:  ldc.i4.s   31
+    IL_0617:  and
+    IL_0618:  shl
+    IL_0619:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_061e:  starg.s    a
+    IL_0620:  ldarg.0
+    IL_0621:  stloc.0
+    IL_0622:  ldarg.1
+    IL_0623:  stloc.1
+    IL_0624:  ldloca.s   V_0
+    IL_0626:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_062b:  ldloca.s   V_1
     IL_062d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0632:  ldloca.s   V_1
-    IL_0634:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0639:  and
-    IL_063a:  brtrue.s   IL_0647
+    IL_0632:  and
+    IL_0633:  brtrue.s   IL_0640
 
-    IL_063c:  ldloca.s   V_2
-    IL_063e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0644:  ldloc.2
-    IL_0645:  br.s       IL_065e
+    IL_0635:  ldloca.s   V_2
+    IL_0637:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_063d:  ldloc.2
+    IL_063e:  br.s       IL_0657
 
-    IL_0647:  ldloca.s   V_0
+    IL_0640:  ldloca.s   V_0
+    IL_0642:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0647:  ldloca.s   V_1
     IL_0649:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_064e:  ldloca.s   V_1
-    IL_0650:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0655:  ldc.i4.s   31
-    IL_0657:  and
-    IL_0658:  shr
-    IL_0659:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_065e:  starg.s    a
-    IL_0660:  ret
+    IL_064e:  ldc.i4.s   31
+    IL_0650:  and
+    IL_0651:  shr
+    IL_0652:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0657:  starg.s    a
+    IL_0659:  ret
   } // end of method LiftedOperators::IntValueBasic
 
   .method public hidebysig static void  IntValueComplex(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                         class [mscorlib]System.Func`1<int32> x) cil managed
   {
-    // Code size       1365 (0x555)
+    // Code size       1353 (0x549)
     .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              int32 V_1,
@@ -2220,593 +2089,575 @@
     IL_000a:  ldloca.s   V_0
     IL_000c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_0011:  ldloc.1
-    IL_0012:  beq.s      IL_0017
+    IL_0012:  ceq
+    IL_0014:  ldloca.s   V_0
+    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001b:  and
+    IL_001c:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0021:  nop
+    IL_0022:  ldarg.0
+    IL_0023:  stloc.0
+    IL_0024:  ldarg.1
+    IL_0025:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_002a:  stloc.1
+    IL_002b:  ldloca.s   V_0
+    IL_002d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0032:  ldloc.1
+    IL_0033:  ceq
+    IL_0035:  ldloca.s   V_0
+    IL_0037:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_003c:  and
+    IL_003d:  ldc.i4.0
+    IL_003e:  ceq
+    IL_0040:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0045:  nop
+    IL_0046:  ldarg.0
+    IL_0047:  stloc.0
+    IL_0048:  ldarg.1
+    IL_0049:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_004e:  stloc.1
+    IL_004f:  ldloca.s   V_0
+    IL_0051:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0056:  ldloc.1
+    IL_0057:  cgt
+    IL_0059:  ldloca.s   V_0
+    IL_005b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0060:  and
+    IL_0061:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0066:  nop
+    IL_0067:  ldarg.1
+    IL_0068:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_006d:  ldarg.0
+    IL_006e:  stloc.0
+    IL_006f:  ldloca.s   V_0
+    IL_0071:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0076:  ceq
+    IL_0078:  ldloca.s   V_0
+    IL_007a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_007f:  and
+    IL_0080:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0085:  nop
+    IL_0086:  ldarg.1
+    IL_0087:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_008c:  ldarg.0
+    IL_008d:  stloc.0
+    IL_008e:  ldloca.s   V_0
+    IL_0090:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0095:  ceq
+    IL_0097:  ldloca.s   V_0
+    IL_0099:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_009e:  and
+    IL_009f:  ldc.i4.0
+    IL_00a0:  ceq
+    IL_00a2:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00a7:  nop
+    IL_00a8:  ldarg.1
+    IL_00a9:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_00ae:  ldarg.0
+    IL_00af:  stloc.0
+    IL_00b0:  ldloca.s   V_0
+    IL_00b2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00b7:  cgt
+    IL_00b9:  ldloca.s   V_0
+    IL_00bb:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00c0:  and
+    IL_00c1:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00c6:  nop
+    IL_00c7:  ldarg.0
+    IL_00c8:  stloc.0
+    IL_00c9:  ldarg.1
+    IL_00ca:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_00cf:  stloc.1
+    IL_00d0:  ldloca.s   V_0
+    IL_00d2:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00d7:  brtrue.s   IL_00e4
 
-    IL_0014:  ldc.i4.0
-    IL_0015:  br.s       IL_001e
+    IL_00d9:  ldloca.s   V_2
+    IL_00db:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00e1:  ldloc.2
+    IL_00e2:  br.s       IL_00f2
 
-    IL_0017:  ldloca.s   V_0
-    IL_0019:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001e:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0023:  nop
-    IL_0024:  ldarg.0
-    IL_0025:  stloc.0
-    IL_0026:  ldarg.1
-    IL_0027:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_002c:  stloc.1
-    IL_002d:  ldloca.s   V_0
-    IL_002f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0034:  ldloc.1
-    IL_0035:  beq.s      IL_003a
+    IL_00e4:  ldloca.s   V_0
+    IL_00e6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00eb:  ldloc.1
+    IL_00ec:  add
+    IL_00ed:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00f2:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00f7:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_00fc:  nop
+    IL_00fd:  ldarg.0
+    IL_00fe:  stloc.0
+    IL_00ff:  ldarg.1
+    IL_0100:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0105:  stloc.1
+    IL_0106:  ldloca.s   V_0
+    IL_0108:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_010d:  brtrue.s   IL_011a
 
-    IL_0037:  ldc.i4.1
-    IL_0038:  br.s       IL_0044
+    IL_010f:  ldloca.s   V_2
+    IL_0111:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0117:  ldloc.2
+    IL_0118:  br.s       IL_0128
 
-    IL_003a:  ldloca.s   V_0
-    IL_003c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0041:  ldc.i4.0
-    IL_0042:  ceq
-    IL_0044:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0049:  nop
-    IL_004a:  ldarg.0
-    IL_004b:  stloc.0
-    IL_004c:  ldarg.1
-    IL_004d:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0052:  stloc.1
-    IL_0053:  ldloca.s   V_0
-    IL_0055:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_005a:  ldloc.1
-    IL_005b:  bgt.s      IL_0060
+    IL_011a:  ldloca.s   V_0
+    IL_011c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0121:  ldloc.1
+    IL_0122:  sub
+    IL_0123:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0128:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_012d:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0132:  nop
+    IL_0133:  ldarg.0
+    IL_0134:  stloc.0
+    IL_0135:  ldarg.1
+    IL_0136:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_013b:  stloc.1
+    IL_013c:  ldloca.s   V_0
+    IL_013e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0143:  brtrue.s   IL_0150
 
-    IL_005d:  ldc.i4.0
-    IL_005e:  br.s       IL_0067
+    IL_0145:  ldloca.s   V_2
+    IL_0147:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_014d:  ldloc.2
+    IL_014e:  br.s       IL_015e
 
-    IL_0060:  ldloca.s   V_0
-    IL_0062:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0067:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_006c:  nop
-    IL_006d:  ldarg.1
-    IL_006e:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0073:  ldarg.0
-    IL_0074:  stloc.0
-    IL_0075:  ldloca.s   V_0
-    IL_0077:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_007c:  beq.s      IL_0081
+    IL_0150:  ldloca.s   V_0
+    IL_0152:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0157:  ldloc.1
+    IL_0158:  mul
+    IL_0159:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_015e:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0163:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0168:  nop
+    IL_0169:  ldarg.0
+    IL_016a:  stloc.0
+    IL_016b:  ldarg.1
+    IL_016c:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0171:  stloc.1
+    IL_0172:  ldloca.s   V_0
+    IL_0174:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0179:  brtrue.s   IL_0186
 
-    IL_007e:  ldc.i4.0
-    IL_007f:  br.s       IL_0088
+    IL_017b:  ldloca.s   V_2
+    IL_017d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0183:  ldloc.2
+    IL_0184:  br.s       IL_0194
 
-    IL_0081:  ldloca.s   V_0
-    IL_0083:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0088:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_008d:  nop
-    IL_008e:  ldarg.1
-    IL_008f:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0094:  ldarg.0
-    IL_0095:  stloc.0
-    IL_0096:  ldloca.s   V_0
-    IL_0098:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_009d:  beq.s      IL_00a2
+    IL_0186:  ldloca.s   V_0
+    IL_0188:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_018d:  ldloc.1
+    IL_018e:  div
+    IL_018f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0194:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0199:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_019e:  nop
+    IL_019f:  ldarg.0
+    IL_01a0:  stloc.0
+    IL_01a1:  ldarg.1
+    IL_01a2:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_01a7:  stloc.1
+    IL_01a8:  ldloca.s   V_0
+    IL_01aa:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01af:  brtrue.s   IL_01bc
 
-    IL_009f:  ldc.i4.1
-    IL_00a0:  br.s       IL_00ac
+    IL_01b1:  ldloca.s   V_2
+    IL_01b3:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01b9:  ldloc.2
+    IL_01ba:  br.s       IL_01ca
 
-    IL_00a2:  ldloca.s   V_0
-    IL_00a4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00a9:  ldc.i4.0
-    IL_00aa:  ceq
-    IL_00ac:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00b1:  nop
-    IL_00b2:  ldarg.1
-    IL_00b3:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_00b8:  ldarg.0
-    IL_00b9:  stloc.0
-    IL_00ba:  ldloca.s   V_0
-    IL_00bc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00c1:  bgt.s      IL_00c6
+    IL_01bc:  ldloca.s   V_0
+    IL_01be:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_01c3:  ldloc.1
+    IL_01c4:  rem
+    IL_01c5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01ca:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01cf:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01d4:  nop
+    IL_01d5:  ldarg.0
+    IL_01d6:  stloc.0
+    IL_01d7:  ldarg.1
+    IL_01d8:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_01dd:  stloc.1
+    IL_01de:  ldloca.s   V_0
+    IL_01e0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01e5:  brtrue.s   IL_01f2
 
-    IL_00c3:  ldc.i4.0
-    IL_00c4:  br.s       IL_00cd
+    IL_01e7:  ldloca.s   V_2
+    IL_01e9:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01ef:  ldloc.2
+    IL_01f0:  br.s       IL_0200
 
-    IL_00c6:  ldloca.s   V_0
-    IL_00c8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00cd:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00d2:  nop
-    IL_00d3:  ldarg.0
-    IL_00d4:  stloc.0
-    IL_00d5:  ldarg.1
-    IL_00d6:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_00db:  stloc.1
-    IL_00dc:  ldloca.s   V_0
-    IL_00de:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00e3:  brtrue.s   IL_00f0
+    IL_01f2:  ldloca.s   V_0
+    IL_01f4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_01f9:  ldloc.1
+    IL_01fa:  and
+    IL_01fb:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0200:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0205:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_020a:  nop
+    IL_020b:  ldarg.0
+    IL_020c:  stloc.0
+    IL_020d:  ldarg.1
+    IL_020e:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0213:  stloc.1
+    IL_0214:  ldloca.s   V_0
+    IL_0216:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_021b:  brtrue.s   IL_0228
 
-    IL_00e5:  ldloca.s   V_2
-    IL_00e7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_00ed:  ldloc.2
-    IL_00ee:  br.s       IL_00fe
+    IL_021d:  ldloca.s   V_2
+    IL_021f:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0225:  ldloc.2
+    IL_0226:  br.s       IL_0236
 
-    IL_00f0:  ldloca.s   V_0
-    IL_00f2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00f7:  ldloc.1
-    IL_00f8:  add
-    IL_00f9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_00fe:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0103:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0108:  nop
-    IL_0109:  ldarg.0
-    IL_010a:  stloc.0
-    IL_010b:  ldarg.1
-    IL_010c:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0111:  stloc.1
-    IL_0112:  ldloca.s   V_0
-    IL_0114:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0119:  brtrue.s   IL_0126
+    IL_0228:  ldloca.s   V_0
+    IL_022a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_022f:  ldloc.1
+    IL_0230:  or
+    IL_0231:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0236:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_023b:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0240:  nop
+    IL_0241:  ldarg.0
+    IL_0242:  stloc.0
+    IL_0243:  ldarg.1
+    IL_0244:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0249:  stloc.1
+    IL_024a:  ldloca.s   V_0
+    IL_024c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0251:  brtrue.s   IL_025e
 
-    IL_011b:  ldloca.s   V_2
-    IL_011d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0123:  ldloc.2
-    IL_0124:  br.s       IL_0134
+    IL_0253:  ldloca.s   V_2
+    IL_0255:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_025b:  ldloc.2
+    IL_025c:  br.s       IL_026c
 
-    IL_0126:  ldloca.s   V_0
-    IL_0128:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_012d:  ldloc.1
-    IL_012e:  sub
-    IL_012f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0134:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0139:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_013e:  nop
-    IL_013f:  ldarg.0
-    IL_0140:  stloc.0
-    IL_0141:  ldarg.1
-    IL_0142:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0147:  stloc.1
-    IL_0148:  ldloca.s   V_0
-    IL_014a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_014f:  brtrue.s   IL_015c
+    IL_025e:  ldloca.s   V_0
+    IL_0260:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0265:  ldloc.1
+    IL_0266:  xor
+    IL_0267:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_026c:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0271:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0276:  nop
+    IL_0277:  ldarg.0
+    IL_0278:  stloc.0
+    IL_0279:  ldarg.1
+    IL_027a:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_027f:  stloc.1
+    IL_0280:  ldloca.s   V_0
+    IL_0282:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0287:  brtrue.s   IL_0294
 
-    IL_0151:  ldloca.s   V_2
-    IL_0153:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0159:  ldloc.2
-    IL_015a:  br.s       IL_016a
+    IL_0289:  ldloca.s   V_2
+    IL_028b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0291:  ldloc.2
+    IL_0292:  br.s       IL_02a5
 
-    IL_015c:  ldloca.s   V_0
-    IL_015e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0163:  ldloc.1
-    IL_0164:  mul
-    IL_0165:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_016a:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_016f:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0174:  nop
-    IL_0175:  ldarg.0
-    IL_0176:  stloc.0
-    IL_0177:  ldarg.1
-    IL_0178:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_017d:  stloc.1
-    IL_017e:  ldloca.s   V_0
-    IL_0180:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0185:  brtrue.s   IL_0192
+    IL_0294:  ldloca.s   V_0
+    IL_0296:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_029b:  ldloc.1
+    IL_029c:  ldc.i4.s   31
+    IL_029e:  and
+    IL_029f:  shl
+    IL_02a0:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_02a5:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02aa:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_02af:  nop
+    IL_02b0:  ldarg.0
+    IL_02b1:  stloc.0
+    IL_02b2:  ldarg.1
+    IL_02b3:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_02b8:  stloc.1
+    IL_02b9:  ldloca.s   V_0
+    IL_02bb:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02c0:  brtrue.s   IL_02cd
 
-    IL_0187:  ldloca.s   V_2
-    IL_0189:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_018f:  ldloc.2
-    IL_0190:  br.s       IL_01a0
+    IL_02c2:  ldloca.s   V_2
+    IL_02c4:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02ca:  ldloc.2
+    IL_02cb:  br.s       IL_02de
 
-    IL_0192:  ldloca.s   V_0
-    IL_0194:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0199:  ldloc.1
-    IL_019a:  div
-    IL_019b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_01a0:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01a5:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01aa:  nop
-    IL_01ab:  ldarg.0
-    IL_01ac:  stloc.0
-    IL_01ad:  ldarg.1
-    IL_01ae:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_01b3:  stloc.1
-    IL_01b4:  ldloca.s   V_0
-    IL_01b6:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01bb:  brtrue.s   IL_01c8
+    IL_02cd:  ldloca.s   V_0
+    IL_02cf:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_02d4:  ldloc.1
+    IL_02d5:  ldc.i4.s   31
+    IL_02d7:  and
+    IL_02d8:  shr
+    IL_02d9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_02de:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02e3:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_02e8:  nop
+    IL_02e9:  ldarg.0
+    IL_02ea:  stloc.0
+    IL_02eb:  ldloca.s   V_0
+    IL_02ed:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02f2:  brtrue.s   IL_02fc
 
-    IL_01bd:  ldloca.s   V_2
-    IL_01bf:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01c5:  ldloc.2
-    IL_01c6:  br.s       IL_01d6
+    IL_02f4:  ldarg.1
+    IL_02f5:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_02fa:  br.s       IL_0303
 
-    IL_01c8:  ldloca.s   V_0
-    IL_01ca:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_01cf:  ldloc.1
-    IL_01d0:  rem
-    IL_01d1:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_01d6:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01db:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01e0:  nop
-    IL_01e1:  ldarg.0
-    IL_01e2:  stloc.0
-    IL_01e3:  ldarg.1
-    IL_01e4:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_01e9:  stloc.1
-    IL_01ea:  ldloca.s   V_0
-    IL_01ec:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01f1:  brtrue.s   IL_01fe
+    IL_02fc:  ldloca.s   V_0
+    IL_02fe:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0303:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0308:  nop
+    IL_0309:  ldarg.0
+    IL_030a:  stloc.0
+    IL_030b:  ldarg.1
+    IL_030c:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0311:  stloc.1
+    IL_0312:  ldloca.s   V_0
+    IL_0314:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0319:  brtrue.s   IL_0326
 
-    IL_01f3:  ldloca.s   V_2
-    IL_01f5:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01fb:  ldloc.2
-    IL_01fc:  br.s       IL_020c
+    IL_031b:  ldloca.s   V_2
+    IL_031d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0323:  ldloc.2
+    IL_0324:  br.s       IL_0334
 
-    IL_01fe:  ldloca.s   V_0
-    IL_0200:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0205:  ldloc.1
-    IL_0206:  and
-    IL_0207:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_020c:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0211:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0216:  nop
-    IL_0217:  ldarg.0
-    IL_0218:  stloc.0
-    IL_0219:  ldarg.1
-    IL_021a:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_021f:  stloc.1
-    IL_0220:  ldloca.s   V_0
-    IL_0222:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0227:  brtrue.s   IL_0234
+    IL_0326:  ldloca.s   V_0
+    IL_0328:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_032d:  ldloc.1
+    IL_032e:  add
+    IL_032f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0334:  starg.s    a
+    IL_0336:  ldarg.0
+    IL_0337:  stloc.0
+    IL_0338:  ldarg.1
+    IL_0339:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_033e:  stloc.1
+    IL_033f:  ldloca.s   V_0
+    IL_0341:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0346:  brtrue.s   IL_0353
 
-    IL_0229:  ldloca.s   V_2
-    IL_022b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0231:  ldloc.2
-    IL_0232:  br.s       IL_0242
+    IL_0348:  ldloca.s   V_2
+    IL_034a:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0350:  ldloc.2
+    IL_0351:  br.s       IL_0361
 
-    IL_0234:  ldloca.s   V_0
-    IL_0236:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_023b:  ldloc.1
-    IL_023c:  or
-    IL_023d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0242:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0247:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_024c:  nop
-    IL_024d:  ldarg.0
-    IL_024e:  stloc.0
-    IL_024f:  ldarg.1
-    IL_0250:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0255:  stloc.1
-    IL_0256:  ldloca.s   V_0
-    IL_0258:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_025d:  brtrue.s   IL_026a
+    IL_0353:  ldloca.s   V_0
+    IL_0355:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_035a:  ldloc.1
+    IL_035b:  sub
+    IL_035c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0361:  starg.s    a
+    IL_0363:  ldarg.0
+    IL_0364:  stloc.0
+    IL_0365:  ldarg.1
+    IL_0366:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_036b:  stloc.1
+    IL_036c:  ldloca.s   V_0
+    IL_036e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0373:  brtrue.s   IL_0380
 
-    IL_025f:  ldloca.s   V_2
-    IL_0261:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0267:  ldloc.2
-    IL_0268:  br.s       IL_0278
+    IL_0375:  ldloca.s   V_2
+    IL_0377:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_037d:  ldloc.2
+    IL_037e:  br.s       IL_038e
 
-    IL_026a:  ldloca.s   V_0
-    IL_026c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0271:  ldloc.1
-    IL_0272:  xor
-    IL_0273:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0278:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_027d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0282:  nop
-    IL_0283:  ldarg.0
-    IL_0284:  stloc.0
-    IL_0285:  ldarg.1
-    IL_0286:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_028b:  stloc.1
-    IL_028c:  ldloca.s   V_0
-    IL_028e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0293:  brtrue.s   IL_02a0
+    IL_0380:  ldloca.s   V_0
+    IL_0382:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0387:  ldloc.1
+    IL_0388:  mul
+    IL_0389:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_038e:  starg.s    a
+    IL_0390:  ldarg.0
+    IL_0391:  stloc.0
+    IL_0392:  ldarg.1
+    IL_0393:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0398:  stloc.1
+    IL_0399:  ldloca.s   V_0
+    IL_039b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03a0:  brtrue.s   IL_03ad
 
-    IL_0295:  ldloca.s   V_2
-    IL_0297:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_029d:  ldloc.2
-    IL_029e:  br.s       IL_02b1
+    IL_03a2:  ldloca.s   V_2
+    IL_03a4:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03aa:  ldloc.2
+    IL_03ab:  br.s       IL_03bb
 
-    IL_02a0:  ldloca.s   V_0
-    IL_02a2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02a7:  ldloc.1
-    IL_02a8:  ldc.i4.s   31
-    IL_02aa:  and
-    IL_02ab:  shl
-    IL_02ac:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_02b1:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02b6:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_02bb:  nop
-    IL_02bc:  ldarg.0
-    IL_02bd:  stloc.0
-    IL_02be:  ldarg.1
-    IL_02bf:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_02c4:  stloc.1
-    IL_02c5:  ldloca.s   V_0
-    IL_02c7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02cc:  brtrue.s   IL_02d9
+    IL_03ad:  ldloca.s   V_0
+    IL_03af:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03b4:  ldloc.1
+    IL_03b5:  div
+    IL_03b6:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03bb:  starg.s    a
+    IL_03bd:  ldarg.0
+    IL_03be:  stloc.0
+    IL_03bf:  ldarg.1
+    IL_03c0:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_03c5:  stloc.1
+    IL_03c6:  ldloca.s   V_0
+    IL_03c8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03cd:  brtrue.s   IL_03da
 
-    IL_02ce:  ldloca.s   V_2
-    IL_02d0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02d6:  ldloc.2
-    IL_02d7:  br.s       IL_02ea
+    IL_03cf:  ldloca.s   V_2
+    IL_03d1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03d7:  ldloc.2
+    IL_03d8:  br.s       IL_03e8
 
-    IL_02d9:  ldloca.s   V_0
-    IL_02db:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02e0:  ldloc.1
-    IL_02e1:  ldc.i4.s   31
-    IL_02e3:  and
-    IL_02e4:  shr
-    IL_02e5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_02ea:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02ef:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_02f4:  nop
-    IL_02f5:  ldarg.0
-    IL_02f6:  stloc.0
-    IL_02f7:  ldloca.s   V_0
-    IL_02f9:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02fe:  brtrue.s   IL_0308
+    IL_03da:  ldloca.s   V_0
+    IL_03dc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03e1:  ldloc.1
+    IL_03e2:  rem
+    IL_03e3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03e8:  starg.s    a
+    IL_03ea:  ldarg.0
+    IL_03eb:  stloc.0
+    IL_03ec:  ldarg.1
+    IL_03ed:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_03f2:  stloc.1
+    IL_03f3:  ldloca.s   V_0
+    IL_03f5:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03fa:  brtrue.s   IL_0407
 
-    IL_0300:  ldarg.1
-    IL_0301:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0306:  br.s       IL_030f
+    IL_03fc:  ldloca.s   V_2
+    IL_03fe:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0404:  ldloc.2
+    IL_0405:  br.s       IL_0415
 
-    IL_0308:  ldloca.s   V_0
-    IL_030a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_030f:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_0314:  nop
-    IL_0315:  ldarg.0
-    IL_0316:  stloc.0
-    IL_0317:  ldarg.1
-    IL_0318:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_031d:  stloc.1
-    IL_031e:  ldloca.s   V_0
-    IL_0320:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0325:  brtrue.s   IL_0332
+    IL_0407:  ldloca.s   V_0
+    IL_0409:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_040e:  ldloc.1
+    IL_040f:  and
+    IL_0410:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0415:  starg.s    a
+    IL_0417:  ldarg.0
+    IL_0418:  stloc.0
+    IL_0419:  ldarg.1
+    IL_041a:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_041f:  stloc.1
+    IL_0420:  ldloca.s   V_0
+    IL_0422:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0427:  brtrue.s   IL_0434
 
-    IL_0327:  ldloca.s   V_2
-    IL_0329:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_032f:  ldloc.2
-    IL_0330:  br.s       IL_0340
+    IL_0429:  ldloca.s   V_2
+    IL_042b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0431:  ldloc.2
+    IL_0432:  br.s       IL_0442
 
-    IL_0332:  ldloca.s   V_0
-    IL_0334:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0339:  ldloc.1
-    IL_033a:  add
-    IL_033b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0340:  starg.s    a
-    IL_0342:  ldarg.0
-    IL_0343:  stloc.0
-    IL_0344:  ldarg.1
-    IL_0345:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_034a:  stloc.1
-    IL_034b:  ldloca.s   V_0
-    IL_034d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0352:  brtrue.s   IL_035f
+    IL_0434:  ldloca.s   V_0
+    IL_0436:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_043b:  ldloc.1
+    IL_043c:  or
+    IL_043d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0442:  starg.s    a
+    IL_0444:  ldarg.0
+    IL_0445:  stloc.0
+    IL_0446:  ldarg.1
+    IL_0447:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_044c:  stloc.1
+    IL_044d:  ldloca.s   V_0
+    IL_044f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0454:  brtrue.s   IL_0461
 
-    IL_0354:  ldloca.s   V_2
-    IL_0356:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_035c:  ldloc.2
-    IL_035d:  br.s       IL_036d
+    IL_0456:  ldloca.s   V_2
+    IL_0458:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_045e:  ldloc.2
+    IL_045f:  br.s       IL_046f
 
-    IL_035f:  ldloca.s   V_0
-    IL_0361:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0366:  ldloc.1
-    IL_0367:  sub
-    IL_0368:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_036d:  starg.s    a
-    IL_036f:  ldarg.0
-    IL_0370:  stloc.0
-    IL_0371:  ldarg.1
-    IL_0372:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0377:  stloc.1
-    IL_0378:  ldloca.s   V_0
-    IL_037a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_037f:  brtrue.s   IL_038c
+    IL_0461:  ldloca.s   V_0
+    IL_0463:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0468:  ldloc.1
+    IL_0469:  xor
+    IL_046a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_046f:  starg.s    a
+    IL_0471:  ldarg.0
+    IL_0472:  stloc.0
+    IL_0473:  ldarg.1
+    IL_0474:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0479:  stloc.1
+    IL_047a:  ldloca.s   V_0
+    IL_047c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0481:  brtrue.s   IL_048e
 
-    IL_0381:  ldloca.s   V_2
-    IL_0383:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0389:  ldloc.2
-    IL_038a:  br.s       IL_039a
+    IL_0483:  ldloca.s   V_2
+    IL_0485:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_048b:  ldloc.2
+    IL_048c:  br.s       IL_049f
 
-    IL_038c:  ldloca.s   V_0
-    IL_038e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0393:  ldloc.1
-    IL_0394:  mul
-    IL_0395:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_039a:  starg.s    a
-    IL_039c:  ldarg.0
-    IL_039d:  stloc.0
-    IL_039e:  ldarg.1
-    IL_039f:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_03a4:  stloc.1
-    IL_03a5:  ldloca.s   V_0
-    IL_03a7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03ac:  brtrue.s   IL_03b9
+    IL_048e:  ldloca.s   V_0
+    IL_0490:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0495:  ldloc.1
+    IL_0496:  ldc.i4.s   31
+    IL_0498:  and
+    IL_0499:  shl
+    IL_049a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_049f:  starg.s    a
+    IL_04a1:  ldarg.0
+    IL_04a2:  stloc.0
+    IL_04a3:  ldarg.1
+    IL_04a4:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_04a9:  stloc.1
+    IL_04aa:  ldloca.s   V_0
+    IL_04ac:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_04b1:  brtrue.s   IL_04be
 
-    IL_03ae:  ldloca.s   V_2
-    IL_03b0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03b6:  ldloc.2
-    IL_03b7:  br.s       IL_03c7
+    IL_04b3:  ldloca.s   V_2
+    IL_04b5:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_04bb:  ldloc.2
+    IL_04bc:  br.s       IL_04cf
 
-    IL_03b9:  ldloca.s   V_0
-    IL_03bb:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03c0:  ldloc.1
-    IL_03c1:  div
-    IL_03c2:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03c7:  starg.s    a
-    IL_03c9:  ldarg.0
-    IL_03ca:  stloc.0
-    IL_03cb:  ldarg.1
-    IL_03cc:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_03d1:  stloc.1
-    IL_03d2:  ldloca.s   V_0
-    IL_03d4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03d9:  brtrue.s   IL_03e6
+    IL_04be:  ldloca.s   V_0
+    IL_04c0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_04c5:  ldloc.1
+    IL_04c6:  ldc.i4.s   31
+    IL_04c8:  and
+    IL_04c9:  shr
+    IL_04ca:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_04cf:  starg.s    a
+    IL_04d1:  ldarg.1
+    IL_04d2:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_04d7:  stloc.1
+    IL_04d8:  ldarg.0
+    IL_04d9:  stloc.0
+    IL_04da:  ldloca.s   V_0
+    IL_04dc:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_04e1:  brtrue.s   IL_04ee
 
-    IL_03db:  ldloca.s   V_2
-    IL_03dd:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03e3:  ldloc.2
-    IL_03e4:  br.s       IL_03f4
+    IL_04e3:  ldloca.s   V_2
+    IL_04e5:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_04eb:  ldloc.2
+    IL_04ec:  br.s       IL_04fc
 
-    IL_03e6:  ldloca.s   V_0
-    IL_03e8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03ed:  ldloc.1
-    IL_03ee:  rem
-    IL_03ef:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03f4:  starg.s    a
-    IL_03f6:  ldarg.0
-    IL_03f7:  stloc.0
-    IL_03f8:  ldarg.1
-    IL_03f9:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_03fe:  stloc.1
-    IL_03ff:  ldloca.s   V_0
-    IL_0401:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0406:  brtrue.s   IL_0413
+    IL_04ee:  ldloc.1
+    IL_04ef:  ldloca.s   V_0
+    IL_04f1:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_04f6:  add
+    IL_04f7:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_04fc:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0501:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0506:  nop
+    IL_0507:  ldc.i4.0
+    IL_0508:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_050d:  ldc.i4.0
+    IL_050e:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0513:  dup
+    IL_0514:  ldobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0519:  stloc.0
+    IL_051a:  ldarg.1
+    IL_051b:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
+    IL_0520:  stloc.1
+    IL_0521:  ldloca.s   V_0
+    IL_0523:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0528:  brtrue.s   IL_0535
 
-    IL_0408:  ldloca.s   V_2
-    IL_040a:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0410:  ldloc.2
-    IL_0411:  br.s       IL_0421
+    IL_052a:  ldloca.s   V_2
+    IL_052c:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0532:  ldloc.2
+    IL_0533:  br.s       IL_0543
 
-    IL_0413:  ldloca.s   V_0
-    IL_0415:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_041a:  ldloc.1
-    IL_041b:  and
-    IL_041c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0421:  starg.s    a
-    IL_0423:  ldarg.0
-    IL_0424:  stloc.0
-    IL_0425:  ldarg.1
-    IL_0426:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_042b:  stloc.1
-    IL_042c:  ldloca.s   V_0
-    IL_042e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0433:  brtrue.s   IL_0440
-
-    IL_0435:  ldloca.s   V_2
-    IL_0437:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_043d:  ldloc.2
-    IL_043e:  br.s       IL_044e
-
-    IL_0440:  ldloca.s   V_0
-    IL_0442:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0447:  ldloc.1
-    IL_0448:  or
-    IL_0449:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_044e:  starg.s    a
-    IL_0450:  ldarg.0
-    IL_0451:  stloc.0
-    IL_0452:  ldarg.1
-    IL_0453:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0458:  stloc.1
-    IL_0459:  ldloca.s   V_0
-    IL_045b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0460:  brtrue.s   IL_046d
-
-    IL_0462:  ldloca.s   V_2
-    IL_0464:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_046a:  ldloc.2
-    IL_046b:  br.s       IL_047b
-
-    IL_046d:  ldloca.s   V_0
-    IL_046f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0474:  ldloc.1
-    IL_0475:  xor
-    IL_0476:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_047b:  starg.s    a
-    IL_047d:  ldarg.0
-    IL_047e:  stloc.0
-    IL_047f:  ldarg.1
-    IL_0480:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_0485:  stloc.1
-    IL_0486:  ldloca.s   V_0
-    IL_0488:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_048d:  brtrue.s   IL_049a
-
-    IL_048f:  ldloca.s   V_2
-    IL_0491:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0497:  ldloc.2
-    IL_0498:  br.s       IL_04ab
-
-    IL_049a:  ldloca.s   V_0
-    IL_049c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_04a1:  ldloc.1
-    IL_04a2:  ldc.i4.s   31
-    IL_04a4:  and
-    IL_04a5:  shl
-    IL_04a6:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_04ab:  starg.s    a
-    IL_04ad:  ldarg.0
-    IL_04ae:  stloc.0
-    IL_04af:  ldarg.1
-    IL_04b0:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_04b5:  stloc.1
-    IL_04b6:  ldloca.s   V_0
-    IL_04b8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04bd:  brtrue.s   IL_04ca
-
-    IL_04bf:  ldloca.s   V_2
-    IL_04c1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_04c7:  ldloc.2
-    IL_04c8:  br.s       IL_04db
-
-    IL_04ca:  ldloca.s   V_0
-    IL_04cc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_04d1:  ldloc.1
-    IL_04d2:  ldc.i4.s   31
-    IL_04d4:  and
-    IL_04d5:  shr
-    IL_04d6:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_04db:  starg.s    a
-    IL_04dd:  ldarg.1
-    IL_04de:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_04e3:  stloc.1
-    IL_04e4:  ldarg.0
-    IL_04e5:  stloc.0
-    IL_04e6:  ldloca.s   V_0
-    IL_04e8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_04ed:  brtrue.s   IL_04fa
-
-    IL_04ef:  ldloca.s   V_2
-    IL_04f1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_04f7:  ldloc.2
-    IL_04f8:  br.s       IL_0508
-
-    IL_04fa:  ldloc.1
-    IL_04fb:  ldloca.s   V_0
-    IL_04fd:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0502:  add
-    IL_0503:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0508:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_050d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0512:  nop
-    IL_0513:  ldc.i4.0
-    IL_0514:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0519:  ldc.i4.0
-    IL_051a:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_051f:  dup
-    IL_0520:  ldobj      valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0525:  stloc.0
-    IL_0526:  ldarg.1
-    IL_0527:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
-    IL_052c:  stloc.1
-    IL_052d:  ldloca.s   V_0
-    IL_052f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0534:  brtrue.s   IL_0541
-
-    IL_0536:  ldloca.s   V_2
-    IL_0538:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_053e:  ldloc.2
-    IL_053f:  br.s       IL_054f
-
-    IL_0541:  ldloca.s   V_0
-    IL_0543:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0548:  ldloc.1
-    IL_0549:  add
-    IL_054a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_054f:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0554:  ret
+    IL_0535:  ldloca.s   V_0
+    IL_0537:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_053c:  ldloc.1
+    IL_053d:  add
+    IL_053e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0543:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0548:  ret
   } // end of method LiftedOperators::IntValueComplex
 
   .method public hidebysig static void  IntValueConst(valuetype [mscorlib]System.Nullable`1<int32> a) cil managed
   {
-    // Code size       1106 (0x452)
+    // Code size       1094 (0x446)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              int32 V_1,
@@ -2819,493 +2670,475 @@
     IL_0005:  ldloca.s   V_0
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloc.1
-    IL_000d:  beq.s      IL_0012
+    IL_000d:  ceq
+    IL_000f:  ldloca.s   V_0
+    IL_0011:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0016:  and
+    IL_0017:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_001c:  nop
+    IL_001d:  ldarg.0
+    IL_001e:  stloc.0
+    IL_001f:  ldc.i4.2
+    IL_0020:  stloc.1
+    IL_0021:  ldloca.s   V_0
+    IL_0023:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0028:  ldloc.1
+    IL_0029:  ceq
+    IL_002b:  ldloca.s   V_0
+    IL_002d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0032:  and
+    IL_0033:  ldc.i4.0
+    IL_0034:  ceq
+    IL_0036:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_003b:  nop
+    IL_003c:  ldarg.0
+    IL_003d:  stloc.0
+    IL_003e:  ldc.i4.2
+    IL_003f:  stloc.1
+    IL_0040:  ldloca.s   V_0
+    IL_0042:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0047:  ldloc.1
+    IL_0048:  cgt
+    IL_004a:  ldloca.s   V_0
+    IL_004c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0051:  and
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0057:  nop
+    IL_0058:  ldc.i4.2
+    IL_0059:  ldarg.0
+    IL_005a:  stloc.0
+    IL_005b:  ldloca.s   V_0
+    IL_005d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0062:  ceq
+    IL_0064:  ldloca.s   V_0
+    IL_0066:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_006b:  and
+    IL_006c:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_0071:  nop
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldarg.0
+    IL_0074:  stloc.0
+    IL_0075:  ldloca.s   V_0
+    IL_0077:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_007c:  ceq
+    IL_007e:  ldloca.s   V_0
+    IL_0080:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0085:  and
+    IL_0086:  ldc.i4.0
+    IL_0087:  ceq
+    IL_0089:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_008e:  nop
+    IL_008f:  ldc.i4.2
+    IL_0090:  ldarg.0
+    IL_0091:  stloc.0
+    IL_0092:  ldloca.s   V_0
+    IL_0094:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0099:  cgt
+    IL_009b:  ldloca.s   V_0
+    IL_009d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00a2:  and
+    IL_00a3:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00a8:  nop
+    IL_00a9:  ldarg.0
+    IL_00aa:  stloc.0
+    IL_00ab:  ldloca.s   V_0
+    IL_00ad:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00b2:  brtrue.s   IL_00bf
 
-    IL_000f:  ldc.i4.0
-    IL_0010:  br.s       IL_0019
+    IL_00b4:  ldloca.s   V_2
+    IL_00b6:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00bc:  ldloc.2
+    IL_00bd:  br.s       IL_00cd
 
-    IL_0012:  ldloca.s   V_0
-    IL_0014:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0019:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_001e:  nop
-    IL_001f:  ldarg.0
-    IL_0020:  stloc.0
-    IL_0021:  ldc.i4.2
-    IL_0022:  stloc.1
-    IL_0023:  ldloca.s   V_0
-    IL_0025:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_002a:  ldloc.1
-    IL_002b:  beq.s      IL_0030
+    IL_00bf:  ldloca.s   V_0
+    IL_00c1:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00c6:  ldc.i4.2
+    IL_00c7:  add
+    IL_00c8:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00cd:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00d2:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_00d7:  nop
+    IL_00d8:  ldarg.0
+    IL_00d9:  stloc.0
+    IL_00da:  ldloca.s   V_0
+    IL_00dc:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_00e1:  brtrue.s   IL_00ee
 
-    IL_002d:  ldc.i4.1
-    IL_002e:  br.s       IL_003a
+    IL_00e3:  ldloca.s   V_2
+    IL_00e5:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00eb:  ldloc.2
+    IL_00ec:  br.s       IL_00fc
 
-    IL_0030:  ldloca.s   V_0
-    IL_0032:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0037:  ldc.i4.0
-    IL_0038:  ceq
-    IL_003a:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_003f:  nop
-    IL_0040:  ldarg.0
-    IL_0041:  stloc.0
-    IL_0042:  ldc.i4.2
-    IL_0043:  stloc.1
-    IL_0044:  ldloca.s   V_0
-    IL_0046:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_004b:  ldloc.1
-    IL_004c:  bgt.s      IL_0051
+    IL_00ee:  ldloca.s   V_0
+    IL_00f0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_00f5:  ldc.i4.2
+    IL_00f6:  sub
+    IL_00f7:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00fc:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0101:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0106:  nop
+    IL_0107:  ldarg.0
+    IL_0108:  stloc.0
+    IL_0109:  ldloca.s   V_0
+    IL_010b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0110:  brtrue.s   IL_011d
 
-    IL_004e:  ldc.i4.0
-    IL_004f:  br.s       IL_0058
+    IL_0112:  ldloca.s   V_2
+    IL_0114:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_011a:  ldloc.2
+    IL_011b:  br.s       IL_012b
 
-    IL_0051:  ldloca.s   V_0
-    IL_0053:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0058:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_005d:  nop
-    IL_005e:  ldc.i4.2
-    IL_005f:  ldarg.0
-    IL_0060:  stloc.0
-    IL_0061:  ldloca.s   V_0
-    IL_0063:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0068:  beq.s      IL_006d
+    IL_011d:  ldloca.s   V_0
+    IL_011f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0124:  ldc.i4.2
+    IL_0125:  mul
+    IL_0126:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_012b:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0130:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0135:  nop
+    IL_0136:  ldarg.0
+    IL_0137:  stloc.0
+    IL_0138:  ldloca.s   V_0
+    IL_013a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_013f:  brtrue.s   IL_014c
 
-    IL_006a:  ldc.i4.0
-    IL_006b:  br.s       IL_0074
+    IL_0141:  ldloca.s   V_2
+    IL_0143:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0149:  ldloc.2
+    IL_014a:  br.s       IL_015a
 
-    IL_006d:  ldloca.s   V_0
-    IL_006f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0074:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0079:  nop
-    IL_007a:  ldc.i4.2
-    IL_007b:  ldarg.0
-    IL_007c:  stloc.0
-    IL_007d:  ldloca.s   V_0
-    IL_007f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0084:  beq.s      IL_0089
+    IL_014c:  ldloca.s   V_0
+    IL_014e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0153:  ldc.i4.2
+    IL_0154:  div
+    IL_0155:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_015a:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_015f:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0164:  nop
+    IL_0165:  ldarg.0
+    IL_0166:  stloc.0
+    IL_0167:  ldloca.s   V_0
+    IL_0169:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_016e:  brtrue.s   IL_017b
 
-    IL_0086:  ldc.i4.1
-    IL_0087:  br.s       IL_0093
+    IL_0170:  ldloca.s   V_2
+    IL_0172:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0178:  ldloc.2
+    IL_0179:  br.s       IL_0189
 
-    IL_0089:  ldloca.s   V_0
-    IL_008b:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0090:  ldc.i4.0
-    IL_0091:  ceq
-    IL_0093:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0098:  nop
-    IL_0099:  ldc.i4.2
-    IL_009a:  ldarg.0
-    IL_009b:  stloc.0
-    IL_009c:  ldloca.s   V_0
-    IL_009e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00a3:  bgt.s      IL_00a8
+    IL_017b:  ldloca.s   V_0
+    IL_017d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0182:  ldc.i4.2
+    IL_0183:  rem
+    IL_0184:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0189:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_018e:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0193:  nop
+    IL_0194:  ldarg.0
+    IL_0195:  stloc.0
+    IL_0196:  ldloca.s   V_0
+    IL_0198:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_019d:  brtrue.s   IL_01aa
 
-    IL_00a5:  ldc.i4.0
-    IL_00a6:  br.s       IL_00af
+    IL_019f:  ldloca.s   V_2
+    IL_01a1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01a7:  ldloc.2
+    IL_01a8:  br.s       IL_01b8
 
-    IL_00a8:  ldloca.s   V_0
-    IL_00aa:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00af:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00b4:  nop
-    IL_00b5:  ldarg.0
-    IL_00b6:  stloc.0
-    IL_00b7:  ldloca.s   V_0
-    IL_00b9:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00be:  brtrue.s   IL_00cb
+    IL_01aa:  ldloca.s   V_0
+    IL_01ac:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_01b1:  ldc.i4.2
+    IL_01b2:  and
+    IL_01b3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01b8:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01bd:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01c2:  nop
+    IL_01c3:  ldarg.0
+    IL_01c4:  stloc.0
+    IL_01c5:  ldloca.s   V_0
+    IL_01c7:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01cc:  brtrue.s   IL_01d9
 
-    IL_00c0:  ldloca.s   V_2
-    IL_00c2:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_00c8:  ldloc.2
-    IL_00c9:  br.s       IL_00d9
+    IL_01ce:  ldloca.s   V_2
+    IL_01d0:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01d6:  ldloc.2
+    IL_01d7:  br.s       IL_01e7
 
-    IL_00cb:  ldloca.s   V_0
-    IL_00cd:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_00d2:  ldc.i4.2
-    IL_00d3:  add
-    IL_00d4:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_00d9:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_00de:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_00e3:  nop
-    IL_00e4:  ldarg.0
-    IL_00e5:  stloc.0
-    IL_00e6:  ldloca.s   V_0
-    IL_00e8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_00ed:  brtrue.s   IL_00fa
+    IL_01d9:  ldloca.s   V_0
+    IL_01db:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_01e0:  ldc.i4.2
+    IL_01e1:  or
+    IL_01e2:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01e7:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01ec:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01f1:  nop
+    IL_01f2:  ldarg.0
+    IL_01f3:  stloc.0
+    IL_01f4:  ldloca.s   V_0
+    IL_01f6:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_01fb:  brtrue.s   IL_0208
 
-    IL_00ef:  ldloca.s   V_2
-    IL_00f1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_00f7:  ldloc.2
-    IL_00f8:  br.s       IL_0108
+    IL_01fd:  ldloca.s   V_2
+    IL_01ff:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0205:  ldloc.2
+    IL_0206:  br.s       IL_0216
 
-    IL_00fa:  ldloca.s   V_0
-    IL_00fc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0101:  ldc.i4.2
-    IL_0102:  sub
-    IL_0103:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0108:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_010d:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0112:  nop
-    IL_0113:  ldarg.0
-    IL_0114:  stloc.0
-    IL_0115:  ldloca.s   V_0
-    IL_0117:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_011c:  brtrue.s   IL_0129
+    IL_0208:  ldloca.s   V_0
+    IL_020a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_020f:  ldc.i4.2
+    IL_0210:  xor
+    IL_0211:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0216:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_021b:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0220:  nop
+    IL_0221:  ldarg.0
+    IL_0222:  stloc.0
+    IL_0223:  ldloca.s   V_0
+    IL_0225:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_022a:  brtrue.s   IL_0237
 
-    IL_011e:  ldloca.s   V_2
-    IL_0120:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0126:  ldloc.2
-    IL_0127:  br.s       IL_0137
+    IL_022c:  ldloca.s   V_2
+    IL_022e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0234:  ldloc.2
+    IL_0235:  br.s       IL_0245
 
-    IL_0129:  ldloca.s   V_0
-    IL_012b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0130:  ldc.i4.2
-    IL_0131:  mul
-    IL_0132:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0137:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_013c:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0141:  nop
-    IL_0142:  ldarg.0
-    IL_0143:  stloc.0
-    IL_0144:  ldloca.s   V_0
-    IL_0146:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_014b:  brtrue.s   IL_0158
+    IL_0237:  ldloca.s   V_0
+    IL_0239:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_023e:  ldc.i4.2
+    IL_023f:  shl
+    IL_0240:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0245:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_024a:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_024f:  nop
+    IL_0250:  ldarg.0
+    IL_0251:  stloc.0
+    IL_0252:  ldloca.s   V_0
+    IL_0254:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0259:  brtrue.s   IL_0266
 
-    IL_014d:  ldloca.s   V_2
-    IL_014f:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0155:  ldloc.2
-    IL_0156:  br.s       IL_0166
+    IL_025b:  ldloca.s   V_2
+    IL_025d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0263:  ldloc.2
+    IL_0264:  br.s       IL_0274
 
-    IL_0158:  ldloca.s   V_0
-    IL_015a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_015f:  ldc.i4.2
-    IL_0160:  div
-    IL_0161:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0166:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_016b:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0170:  nop
-    IL_0171:  ldarg.0
-    IL_0172:  stloc.0
-    IL_0173:  ldloca.s   V_0
-    IL_0175:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_017a:  brtrue.s   IL_0187
+    IL_0266:  ldloca.s   V_0
+    IL_0268:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_026d:  ldc.i4.2
+    IL_026e:  shr
+    IL_026f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0274:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0279:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_027e:  nop
+    IL_027f:  ldarg.0
+    IL_0280:  stloc.0
+    IL_0281:  ldloca.s   V_0
+    IL_0283:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0288:  brtrue.s   IL_028d
 
-    IL_017c:  ldloca.s   V_2
-    IL_017e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0184:  ldloc.2
-    IL_0185:  br.s       IL_0195
+    IL_028a:  ldc.i4.2
+    IL_028b:  br.s       IL_0294
 
-    IL_0187:  ldloca.s   V_0
-    IL_0189:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_018e:  ldc.i4.2
-    IL_018f:  rem
-    IL_0190:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0195:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_019a:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_019f:  nop
-    IL_01a0:  ldarg.0
-    IL_01a1:  stloc.0
-    IL_01a2:  ldloca.s   V_0
-    IL_01a4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01a9:  brtrue.s   IL_01b6
-
-    IL_01ab:  ldloca.s   V_2
-    IL_01ad:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01b3:  ldloc.2
-    IL_01b4:  br.s       IL_01c4
-
-    IL_01b6:  ldloca.s   V_0
-    IL_01b8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_01bd:  ldc.i4.2
-    IL_01be:  and
-    IL_01bf:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_01c4:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01c9:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01ce:  nop
-    IL_01cf:  ldarg.0
-    IL_01d0:  stloc.0
-    IL_01d1:  ldloca.s   V_0
-    IL_01d3:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_01d8:  brtrue.s   IL_01e5
-
-    IL_01da:  ldloca.s   V_2
-    IL_01dc:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01e2:  ldloc.2
-    IL_01e3:  br.s       IL_01f3
-
-    IL_01e5:  ldloca.s   V_0
-    IL_01e7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_01ec:  ldc.i4.2
-    IL_01ed:  or
-    IL_01ee:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_01f3:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_01f8:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01fd:  nop
-    IL_01fe:  ldarg.0
-    IL_01ff:  stloc.0
-    IL_0200:  ldloca.s   V_0
-    IL_0202:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0207:  brtrue.s   IL_0214
-
-    IL_0209:  ldloca.s   V_2
-    IL_020b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0211:  ldloc.2
-    IL_0212:  br.s       IL_0222
-
-    IL_0214:  ldloca.s   V_0
-    IL_0216:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_021b:  ldc.i4.2
-    IL_021c:  xor
-    IL_021d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0222:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0227:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_022c:  nop
-    IL_022d:  ldarg.0
-    IL_022e:  stloc.0
-    IL_022f:  ldloca.s   V_0
-    IL_0231:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0236:  brtrue.s   IL_0243
-
-    IL_0238:  ldloca.s   V_2
-    IL_023a:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0240:  ldloc.2
-    IL_0241:  br.s       IL_0251
-
-    IL_0243:  ldloca.s   V_0
-    IL_0245:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_024a:  ldc.i4.2
-    IL_024b:  shl
-    IL_024c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0251:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0256:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_025b:  nop
-    IL_025c:  ldarg.0
-    IL_025d:  stloc.0
-    IL_025e:  ldloca.s   V_0
-    IL_0260:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0265:  brtrue.s   IL_0272
-
-    IL_0267:  ldloca.s   V_2
-    IL_0269:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_026f:  ldloc.2
-    IL_0270:  br.s       IL_0280
-
-    IL_0272:  ldloca.s   V_0
-    IL_0274:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0279:  ldc.i4.2
-    IL_027a:  shr
-    IL_027b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0280:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0285:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_028a:  nop
-    IL_028b:  ldarg.0
-    IL_028c:  stloc.0
     IL_028d:  ldloca.s   V_0
-    IL_028f:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0294:  brtrue.s   IL_0299
+    IL_028f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0294:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0299:  nop
+    IL_029a:  ldarg.0
+    IL_029b:  stloc.0
+    IL_029c:  ldloca.s   V_0
+    IL_029e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02a3:  brtrue.s   IL_02b0
 
-    IL_0296:  ldc.i4.2
-    IL_0297:  br.s       IL_02a0
+    IL_02a5:  ldloca.s   V_2
+    IL_02a7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02ad:  ldloc.2
+    IL_02ae:  br.s       IL_02be
 
-    IL_0299:  ldloca.s   V_0
-    IL_029b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02a0:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_02a5:  nop
-    IL_02a6:  ldarg.0
-    IL_02a7:  stloc.0
-    IL_02a8:  ldloca.s   V_0
-    IL_02aa:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02af:  brtrue.s   IL_02bc
+    IL_02b0:  ldloca.s   V_0
+    IL_02b2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_02b7:  ldc.i4.2
+    IL_02b8:  add
+    IL_02b9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_02be:  starg.s    a
+    IL_02c0:  ldarg.0
+    IL_02c1:  stloc.0
+    IL_02c2:  ldloca.s   V_0
+    IL_02c4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02c9:  brtrue.s   IL_02d6
 
-    IL_02b1:  ldloca.s   V_2
-    IL_02b3:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02b9:  ldloc.2
-    IL_02ba:  br.s       IL_02ca
+    IL_02cb:  ldloca.s   V_2
+    IL_02cd:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02d3:  ldloc.2
+    IL_02d4:  br.s       IL_02e4
 
-    IL_02bc:  ldloca.s   V_0
-    IL_02be:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02c3:  ldc.i4.2
-    IL_02c4:  add
-    IL_02c5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_02ca:  starg.s    a
-    IL_02cc:  ldarg.0
-    IL_02cd:  stloc.0
-    IL_02ce:  ldloca.s   V_0
-    IL_02d0:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02d5:  brtrue.s   IL_02e2
+    IL_02d6:  ldloca.s   V_0
+    IL_02d8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_02dd:  ldc.i4.2
+    IL_02de:  sub
+    IL_02df:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_02e4:  starg.s    a
+    IL_02e6:  ldarg.0
+    IL_02e7:  stloc.0
+    IL_02e8:  ldloca.s   V_0
+    IL_02ea:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_02ef:  brtrue.s   IL_02fc
 
-    IL_02d7:  ldloca.s   V_2
-    IL_02d9:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_02df:  ldloc.2
-    IL_02e0:  br.s       IL_02f0
+    IL_02f1:  ldloca.s   V_2
+    IL_02f3:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_02f9:  ldloc.2
+    IL_02fa:  br.s       IL_030a
 
-    IL_02e2:  ldloca.s   V_0
-    IL_02e4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_02e9:  ldc.i4.2
-    IL_02ea:  sub
-    IL_02eb:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_02f0:  starg.s    a
-    IL_02f2:  ldarg.0
-    IL_02f3:  stloc.0
-    IL_02f4:  ldloca.s   V_0
-    IL_02f6:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_02fb:  brtrue.s   IL_0308
+    IL_02fc:  ldloca.s   V_0
+    IL_02fe:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0303:  ldc.i4.2
+    IL_0304:  mul
+    IL_0305:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_030a:  starg.s    a
+    IL_030c:  ldarg.0
+    IL_030d:  stloc.0
+    IL_030e:  ldloca.s   V_0
+    IL_0310:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0315:  brtrue.s   IL_0322
 
-    IL_02fd:  ldloca.s   V_2
-    IL_02ff:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0305:  ldloc.2
-    IL_0306:  br.s       IL_0316
+    IL_0317:  ldloca.s   V_2
+    IL_0319:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_031f:  ldloc.2
+    IL_0320:  br.s       IL_0330
 
-    IL_0308:  ldloca.s   V_0
-    IL_030a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_030f:  ldc.i4.2
-    IL_0310:  mul
-    IL_0311:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0316:  starg.s    a
-    IL_0318:  ldarg.0
-    IL_0319:  stloc.0
-    IL_031a:  ldloca.s   V_0
-    IL_031c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0321:  brtrue.s   IL_032e
+    IL_0322:  ldloca.s   V_0
+    IL_0324:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0329:  ldc.i4.2
+    IL_032a:  div
+    IL_032b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0330:  starg.s    a
+    IL_0332:  ldarg.0
+    IL_0333:  stloc.0
+    IL_0334:  ldloca.s   V_0
+    IL_0336:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_033b:  brtrue.s   IL_0348
 
-    IL_0323:  ldloca.s   V_2
-    IL_0325:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_032b:  ldloc.2
-    IL_032c:  br.s       IL_033c
+    IL_033d:  ldloca.s   V_2
+    IL_033f:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0345:  ldloc.2
+    IL_0346:  br.s       IL_0356
 
-    IL_032e:  ldloca.s   V_0
-    IL_0330:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0335:  ldc.i4.2
-    IL_0336:  div
-    IL_0337:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_033c:  starg.s    a
-    IL_033e:  ldarg.0
-    IL_033f:  stloc.0
-    IL_0340:  ldloca.s   V_0
-    IL_0342:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0347:  brtrue.s   IL_0354
+    IL_0348:  ldloca.s   V_0
+    IL_034a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_034f:  ldc.i4.2
+    IL_0350:  rem
+    IL_0351:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0356:  starg.s    a
+    IL_0358:  ldarg.0
+    IL_0359:  stloc.0
+    IL_035a:  ldloca.s   V_0
+    IL_035c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0361:  brtrue.s   IL_036e
 
-    IL_0349:  ldloca.s   V_2
-    IL_034b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0351:  ldloc.2
-    IL_0352:  br.s       IL_0362
+    IL_0363:  ldloca.s   V_2
+    IL_0365:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_036b:  ldloc.2
+    IL_036c:  br.s       IL_037c
 
-    IL_0354:  ldloca.s   V_0
-    IL_0356:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_035b:  ldc.i4.2
-    IL_035c:  rem
-    IL_035d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0362:  starg.s    a
-    IL_0364:  ldarg.0
-    IL_0365:  stloc.0
-    IL_0366:  ldloca.s   V_0
-    IL_0368:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_036d:  brtrue.s   IL_037a
+    IL_036e:  ldloca.s   V_0
+    IL_0370:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0375:  ldc.i4.2
+    IL_0376:  and
+    IL_0377:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_037c:  starg.s    a
+    IL_037e:  ldarg.0
+    IL_037f:  stloc.0
+    IL_0380:  ldloca.s   V_0
+    IL_0382:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0387:  brtrue.s   IL_0394
 
-    IL_036f:  ldloca.s   V_2
-    IL_0371:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0377:  ldloc.2
-    IL_0378:  br.s       IL_0388
+    IL_0389:  ldloca.s   V_2
+    IL_038b:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0391:  ldloc.2
+    IL_0392:  br.s       IL_03a2
 
-    IL_037a:  ldloca.s   V_0
-    IL_037c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0381:  ldc.i4.2
-    IL_0382:  and
-    IL_0383:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0388:  starg.s    a
-    IL_038a:  ldarg.0
-    IL_038b:  stloc.0
-    IL_038c:  ldloca.s   V_0
-    IL_038e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0393:  brtrue.s   IL_03a0
+    IL_0394:  ldloca.s   V_0
+    IL_0396:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_039b:  ldc.i4.2
+    IL_039c:  or
+    IL_039d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03a2:  starg.s    a
+    IL_03a4:  ldarg.0
+    IL_03a5:  stloc.0
+    IL_03a6:  ldloca.s   V_0
+    IL_03a8:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03ad:  brtrue.s   IL_03ba
 
-    IL_0395:  ldloca.s   V_2
-    IL_0397:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_039d:  ldloc.2
-    IL_039e:  br.s       IL_03ae
+    IL_03af:  ldloca.s   V_2
+    IL_03b1:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03b7:  ldloc.2
+    IL_03b8:  br.s       IL_03c8
 
-    IL_03a0:  ldloca.s   V_0
-    IL_03a2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03a7:  ldc.i4.2
-    IL_03a8:  or
-    IL_03a9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03ae:  starg.s    a
-    IL_03b0:  ldarg.0
-    IL_03b1:  stloc.0
-    IL_03b2:  ldloca.s   V_0
-    IL_03b4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03b9:  brtrue.s   IL_03c6
+    IL_03ba:  ldloca.s   V_0
+    IL_03bc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03c1:  ldc.i4.2
+    IL_03c2:  xor
+    IL_03c3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03c8:  starg.s    a
+    IL_03ca:  ldarg.0
+    IL_03cb:  stloc.0
+    IL_03cc:  ldloca.s   V_0
+    IL_03ce:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03d3:  brtrue.s   IL_03e0
 
-    IL_03bb:  ldloca.s   V_2
-    IL_03bd:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03c3:  ldloc.2
-    IL_03c4:  br.s       IL_03d4
+    IL_03d5:  ldloca.s   V_2
+    IL_03d7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_03dd:  ldloc.2
+    IL_03de:  br.s       IL_03ee
 
-    IL_03c6:  ldloca.s   V_0
-    IL_03c8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03cd:  ldc.i4.2
-    IL_03ce:  xor
-    IL_03cf:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03d4:  starg.s    a
-    IL_03d6:  ldarg.0
-    IL_03d7:  stloc.0
-    IL_03d8:  ldloca.s   V_0
-    IL_03da:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_03df:  brtrue.s   IL_03ec
+    IL_03e0:  ldloca.s   V_0
+    IL_03e2:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_03e7:  ldc.i4.2
+    IL_03e8:  shl
+    IL_03e9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_03ee:  starg.s    a
+    IL_03f0:  ldarg.0
+    IL_03f1:  stloc.0
+    IL_03f2:  ldloca.s   V_0
+    IL_03f4:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_03f9:  brtrue.s   IL_0406
 
-    IL_03e1:  ldloca.s   V_2
-    IL_03e3:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_03e9:  ldloc.2
-    IL_03ea:  br.s       IL_03fa
+    IL_03fb:  ldloca.s   V_2
+    IL_03fd:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0403:  ldloc.2
+    IL_0404:  br.s       IL_0414
 
-    IL_03ec:  ldloca.s   V_0
-    IL_03ee:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_03f3:  ldc.i4.2
-    IL_03f4:  shl
-    IL_03f5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_03fa:  starg.s    a
-    IL_03fc:  ldarg.0
-    IL_03fd:  stloc.0
-    IL_03fe:  ldloca.s   V_0
-    IL_0400:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0405:  brtrue.s   IL_0412
+    IL_0406:  ldloca.s   V_0
+    IL_0408:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_040d:  ldc.i4.2
+    IL_040e:  shr
+    IL_040f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0414:  starg.s    a
+    IL_0416:  ldarg.0
+    IL_0417:  stloc.0
+    IL_0418:  ldloca.s   V_0
+    IL_041a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_041f:  brtrue.s   IL_042c
 
-    IL_0407:  ldloca.s   V_2
-    IL_0409:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_040f:  ldloc.2
-    IL_0410:  br.s       IL_0420
+    IL_0421:  ldloca.s   V_2
+    IL_0423:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0429:  ldloc.2
+    IL_042a:  br.s       IL_043a
 
-    IL_0412:  ldloca.s   V_0
-    IL_0414:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0419:  ldc.i4.2
-    IL_041a:  shr
-    IL_041b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0420:  starg.s    a
-    IL_0422:  ldarg.0
-    IL_0423:  stloc.0
-    IL_0424:  ldloca.s   V_0
-    IL_0426:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_042b:  brtrue.s   IL_0438
-
-    IL_042d:  ldloca.s   V_2
-    IL_042f:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0435:  ldloc.2
-    IL_0436:  br.s       IL_0446
-
-    IL_0438:  ldc.i4.2
-    IL_0439:  ldloca.s   V_0
-    IL_043b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0440:  add
-    IL_0441:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0446:  box        valuetype [mscorlib]System.Nullable`1<int32>
-    IL_044b:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0450:  nop
-    IL_0451:  ret
+    IL_042c:  ldc.i4.2
+    IL_042d:  ldloca.s   V_0
+    IL_042f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0434:  add
+    IL_0435:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_043a:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_043f:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0444:  nop
+    IL_0445:  ret
   } // end of method LiftedOperators::IntValueConst
 
   .method public hidebysig static void  NumberBasic(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> a,
                                                     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> b) cil managed
   {
-    // Code size       465 (0x1d1)
-    .maxstack  2
+    // Code size       433 (0x1b1)
+    .maxstack  3
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_1,
              valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_2,
@@ -3327,227 +3160,195 @@
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
     IL_0013:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_0018:  brtrue.s   IL_001d
+    IL_0018:  ldloca.s   V_1
+    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_001f:  ldloca.s   V_2
+    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0026:  ceq
+    IL_0028:  and
+    IL_0029:  stloc.0
+    IL_002a:  ldloc.0
+    IL_002b:  brfalse.s  IL_0035
 
-    IL_001a:  ldc.i4.0
-    IL_001b:  br.s       IL_002d
-
-    IL_001d:  ldloca.s   V_1
-    IL_001f:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0024:  ldloca.s   V_2
-    IL_0026:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_002b:  ceq
-    IL_002d:  stloc.0
-    IL_002e:  ldloc.0
-    IL_002f:  brfalse.s  IL_0039
-
-    IL_0031:  nop
-    IL_0032:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0037:  nop
-    IL_0038:  nop
-    IL_0039:  ldarg.0
-    IL_003a:  stloc.2
-    IL_003b:  ldarg.1
-    IL_003c:  stloc.1
-    IL_003d:  ldloca.s   V_2
-    IL_003f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0044:  ldloca.s   V_1
-    IL_0046:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_004b:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
+    IL_002d:  nop
+    IL_002e:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0033:  nop
+    IL_0034:  nop
+    IL_0035:  ldarg.0
+    IL_0036:  stloc.2
+    IL_0037:  ldarg.1
+    IL_0038:  stloc.1
+    IL_0039:  ldloca.s   V_2
+    IL_003b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0040:  ldloca.s   V_1
+    IL_0042:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0047:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_0050:  brtrue.s   IL_0055
+    IL_004c:  ldloca.s   V_2
+    IL_004e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0053:  ldloca.s   V_1
+    IL_0055:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_005a:  ceq
+    IL_005c:  and
+    IL_005d:  ldc.i4.0
+    IL_005e:  ceq
+    IL_0060:  stloc.3
+    IL_0061:  ldloc.3
+    IL_0062:  brfalse.s  IL_006c
 
-    IL_0052:  ldc.i4.1
-    IL_0053:  br.s       IL_0068
-
-    IL_0055:  ldloca.s   V_2
-    IL_0057:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_005c:  ldloca.s   V_1
-    IL_005e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0063:  ceq
-    IL_0065:  ldc.i4.0
-    IL_0066:  ceq
-    IL_0068:  stloc.3
-    IL_0069:  ldloc.3
-    IL_006a:  brfalse.s  IL_0074
-
-    IL_006c:  nop
-    IL_006d:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0072:  nop
-    IL_0073:  nop
-    IL_0074:  ldarg.0
-    IL_0075:  stloc.1
-    IL_0076:  ldarg.1
-    IL_0077:  stloc.2
-    IL_0078:  ldloca.s   V_1
-    IL_007a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_007f:  ldloca.s   V_2
-    IL_0081:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0086:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
+    IL_0064:  nop
+    IL_0065:  call       void [mscorlib]System.Console::WriteLine()
+    IL_006a:  nop
+    IL_006b:  nop
+    IL_006c:  ldarg.0
+    IL_006d:  stloc.1
+    IL_006e:  ldarg.1
+    IL_006f:  stloc.2
+    IL_0070:  ldloca.s   V_1
+    IL_0072:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0077:  ldloca.s   V_2
+    IL_0079:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_007e:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
                                                                        valuetype [mscorlib]System.Decimal)
-    IL_008b:  brtrue.s   IL_0090
+    IL_0083:  ldloca.s   V_1
+    IL_0085:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_008a:  ldloca.s   V_2
+    IL_008c:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0091:  and
+    IL_0092:  and
+    IL_0093:  stloc.s    V_4
+    IL_0095:  ldloc.s    V_4
+    IL_0097:  brfalse.s  IL_00a1
 
-    IL_008d:  ldc.i4.0
-    IL_008e:  br.s       IL_009f
-
-    IL_0090:  ldloca.s   V_1
-    IL_0092:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0097:  ldloca.s   V_2
-    IL_0099:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_009e:  and
-    IL_009f:  stloc.s    V_4
-    IL_00a1:  ldloc.s    V_4
-    IL_00a3:  brfalse.s  IL_00ad
-
-    IL_00a5:  nop
-    IL_00a6:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00ab:  nop
-    IL_00ac:  nop
-    IL_00ad:  ldarg.0
-    IL_00ae:  stloc.2
-    IL_00af:  ldarg.1
-    IL_00b0:  stloc.1
-    IL_00b1:  ldloca.s   V_2
-    IL_00b3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00b8:  ldloca.s   V_1
-    IL_00ba:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00bf:  call       bool [mscorlib]System.Decimal::op_LessThan(valuetype [mscorlib]System.Decimal,
+    IL_0099:  nop
+    IL_009a:  call       void [mscorlib]System.Console::WriteLine()
+    IL_009f:  nop
+    IL_00a0:  nop
+    IL_00a1:  ldarg.0
+    IL_00a2:  stloc.2
+    IL_00a3:  ldarg.1
+    IL_00a4:  stloc.1
+    IL_00a5:  ldloca.s   V_2
+    IL_00a7:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00ac:  ldloca.s   V_1
+    IL_00ae:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00b3:  call       bool [mscorlib]System.Decimal::op_LessThan(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_00c4:  brtrue.s   IL_00c9
+    IL_00b8:  ldloca.s   V_2
+    IL_00ba:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00bf:  ldloca.s   V_1
+    IL_00c1:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00c6:  and
+    IL_00c7:  and
+    IL_00c8:  stloc.s    V_5
+    IL_00ca:  ldloc.s    V_5
+    IL_00cc:  brfalse.s  IL_00d6
 
-    IL_00c6:  ldc.i4.0
-    IL_00c7:  br.s       IL_00d8
-
-    IL_00c9:  ldloca.s   V_2
-    IL_00cb:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00d0:  ldloca.s   V_1
-    IL_00d2:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00d7:  and
-    IL_00d8:  stloc.s    V_5
-    IL_00da:  ldloc.s    V_5
-    IL_00dc:  brfalse.s  IL_00e6
-
-    IL_00de:  nop
-    IL_00df:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00e4:  nop
-    IL_00e5:  nop
-    IL_00e6:  ldarg.0
-    IL_00e7:  stloc.1
-    IL_00e8:  ldarg.1
-    IL_00e9:  stloc.2
-    IL_00ea:  ldloca.s   V_1
-    IL_00ec:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00f1:  ldloca.s   V_2
-    IL_00f3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00f8:  call       bool [mscorlib]System.Decimal::op_GreaterThanOrEqual(valuetype [mscorlib]System.Decimal,
+    IL_00ce:  nop
+    IL_00cf:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00d4:  nop
+    IL_00d5:  nop
+    IL_00d6:  ldarg.0
+    IL_00d7:  stloc.1
+    IL_00d8:  ldarg.1
+    IL_00d9:  stloc.2
+    IL_00da:  ldloca.s   V_1
+    IL_00dc:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00e1:  ldloca.s   V_2
+    IL_00e3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00e8:  call       bool [mscorlib]System.Decimal::op_GreaterThanOrEqual(valuetype [mscorlib]System.Decimal,
                                                                               valuetype [mscorlib]System.Decimal)
-    IL_00fd:  brtrue.s   IL_0102
+    IL_00ed:  ldloca.s   V_1
+    IL_00ef:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00f4:  ldloca.s   V_2
+    IL_00f6:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00fb:  and
+    IL_00fc:  and
+    IL_00fd:  stloc.s    V_6
+    IL_00ff:  ldloc.s    V_6
+    IL_0101:  brfalse.s  IL_010b
 
-    IL_00ff:  ldc.i4.0
-    IL_0100:  br.s       IL_0111
-
-    IL_0102:  ldloca.s   V_1
-    IL_0104:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0109:  ldloca.s   V_2
-    IL_010b:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0110:  and
-    IL_0111:  stloc.s    V_6
-    IL_0113:  ldloc.s    V_6
-    IL_0115:  brfalse.s  IL_011f
-
-    IL_0117:  nop
-    IL_0118:  call       void [mscorlib]System.Console::WriteLine()
-    IL_011d:  nop
-    IL_011e:  nop
-    IL_011f:  ldarg.0
-    IL_0120:  stloc.2
-    IL_0121:  ldarg.1
-    IL_0122:  stloc.1
-    IL_0123:  ldloca.s   V_2
-    IL_0125:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_012a:  ldloca.s   V_1
-    IL_012c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0131:  call       bool [mscorlib]System.Decimal::op_LessThanOrEqual(valuetype [mscorlib]System.Decimal,
+    IL_0103:  nop
+    IL_0104:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0109:  nop
+    IL_010a:  nop
+    IL_010b:  ldarg.0
+    IL_010c:  stloc.2
+    IL_010d:  ldarg.1
+    IL_010e:  stloc.1
+    IL_010f:  ldloca.s   V_2
+    IL_0111:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0116:  ldloca.s   V_1
+    IL_0118:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_011d:  call       bool [mscorlib]System.Decimal::op_LessThanOrEqual(valuetype [mscorlib]System.Decimal,
                                                                            valuetype [mscorlib]System.Decimal)
-    IL_0136:  brtrue.s   IL_013b
+    IL_0122:  ldloca.s   V_2
+    IL_0124:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0129:  ldloca.s   V_1
+    IL_012b:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0130:  and
+    IL_0131:  and
+    IL_0132:  stloc.s    V_7
+    IL_0134:  ldloc.s    V_7
+    IL_0136:  brfalse.s  IL_0140
 
-    IL_0138:  ldc.i4.0
-    IL_0139:  br.s       IL_014a
-
-    IL_013b:  ldloca.s   V_2
-    IL_013d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0142:  ldloca.s   V_1
-    IL_0144:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0149:  and
-    IL_014a:  stloc.s    V_7
-    IL_014c:  ldloc.s    V_7
-    IL_014e:  brfalse.s  IL_0158
-
-    IL_0150:  nop
-    IL_0151:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0156:  nop
-    IL_0157:  nop
-    IL_0158:  ldarg.0
-    IL_0159:  stloc.1
-    IL_015a:  ldarg.1
-    IL_015b:  stloc.2
-    IL_015c:  ldloca.s   V_1
-    IL_015e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0163:  ldloca.s   V_2
-    IL_0165:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_016a:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
+    IL_0138:  nop
+    IL_0139:  call       void [mscorlib]System.Console::WriteLine()
+    IL_013e:  nop
+    IL_013f:  nop
+    IL_0140:  ldarg.0
+    IL_0141:  stloc.1
+    IL_0142:  ldarg.1
+    IL_0143:  stloc.2
+    IL_0144:  ldloca.s   V_1
+    IL_0146:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_014b:  ldloca.s   V_2
+    IL_014d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0152:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
                                                                        valuetype [mscorlib]System.Decimal)
-    IL_016f:  brtrue.s   IL_0174
+    IL_0157:  ldloca.s   V_1
+    IL_0159:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_015e:  ldloca.s   V_2
+    IL_0160:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0165:  and
+    IL_0166:  and
+    IL_0167:  ldc.i4.0
+    IL_0168:  ceq
+    IL_016a:  stloc.s    V_8
+    IL_016c:  ldloc.s    V_8
+    IL_016e:  brfalse.s  IL_0178
 
-    IL_0171:  ldc.i4.0
-    IL_0172:  br.s       IL_0183
-
-    IL_0174:  ldloca.s   V_1
-    IL_0176:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_017b:  ldloca.s   V_2
-    IL_017d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0182:  and
-    IL_0183:  ldc.i4.0
-    IL_0184:  ceq
-    IL_0186:  stloc.s    V_8
-    IL_0188:  ldloc.s    V_8
-    IL_018a:  brfalse.s  IL_0194
-
-    IL_018c:  nop
-    IL_018d:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0192:  nop
-    IL_0193:  nop
-    IL_0194:  ldarg.0
-    IL_0195:  stloc.2
-    IL_0196:  ldarg.1
-    IL_0197:  stloc.1
-    IL_0198:  ldloca.s   V_2
-    IL_019a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_019f:  ldloca.s   V_1
-    IL_01a1:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_01a6:  call       bool [mscorlib]System.Decimal::op_LessThan(valuetype [mscorlib]System.Decimal,
+    IL_0170:  nop
+    IL_0171:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0176:  nop
+    IL_0177:  nop
+    IL_0178:  ldarg.0
+    IL_0179:  stloc.2
+    IL_017a:  ldarg.1
+    IL_017b:  stloc.1
+    IL_017c:  ldloca.s   V_2
+    IL_017e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0183:  ldloca.s   V_1
+    IL_0185:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_018a:  call       bool [mscorlib]System.Decimal::op_LessThan(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_01ab:  brtrue.s   IL_01b0
+    IL_018f:  ldloca.s   V_2
+    IL_0191:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0196:  ldloca.s   V_1
+    IL_0198:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_019d:  and
+    IL_019e:  and
+    IL_019f:  ldc.i4.0
+    IL_01a0:  ceq
+    IL_01a2:  stloc.s    V_9
+    IL_01a4:  ldloc.s    V_9
+    IL_01a6:  brfalse.s  IL_01b0
 
-    IL_01ad:  ldc.i4.0
-    IL_01ae:  br.s       IL_01bf
-
-    IL_01b0:  ldloca.s   V_2
-    IL_01b2:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_01b7:  ldloca.s   V_1
-    IL_01b9:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_01be:  and
-    IL_01bf:  ldc.i4.0
-    IL_01c0:  ceq
-    IL_01c2:  stloc.s    V_9
-    IL_01c4:  ldloc.s    V_9
-    IL_01c6:  brfalse.s  IL_01d0
-
-    IL_01c8:  nop
-    IL_01c9:  call       void [mscorlib]System.Console::WriteLine()
-    IL_01ce:  nop
-    IL_01cf:  nop
-    IL_01d0:  ret
+    IL_01a8:  nop
+    IL_01a9:  call       void [mscorlib]System.Console::WriteLine()
+    IL_01ae:  nop
+    IL_01af:  nop
+    IL_01b0:  ret
   } // end of method LiftedOperators::NumberBasic
 
   .method public hidebysig static void  NumberComplex(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> a,
@@ -3570,8 +3371,8 @@
   .method public hidebysig static void  NumberValueBasic(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> a,
                                                          valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> b) cil managed
   {
-    // Code size       959 (0x3bf)
-    .maxstack  2
+    // Code size       939 (0x3ab)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_0,
              valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_1,
              valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_2)
@@ -3586,394 +3387,374 @@
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
     IL_0013:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_0018:  brtrue.s   IL_001d
-
-    IL_001a:  ldc.i4.0
-    IL_001b:  br.s       IL_002d
-
-    IL_001d:  ldloca.s   V_0
-    IL_001f:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0024:  ldloca.s   V_1
-    IL_0026:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_002b:  ceq
-    IL_002d:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0032:  nop
-    IL_0033:  ldarg.0
-    IL_0034:  stloc.1
-    IL_0035:  ldarg.1
-    IL_0036:  stloc.0
-    IL_0037:  ldloca.s   V_1
-    IL_0039:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_003e:  ldloca.s   V_0
-    IL_0040:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0045:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
+    IL_0018:  ldloca.s   V_0
+    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_001f:  ldloca.s   V_1
+    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0026:  ceq
+    IL_0028:  and
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_002e:  nop
+    IL_002f:  ldarg.0
+    IL_0030:  stloc.1
+    IL_0031:  ldarg.1
+    IL_0032:  stloc.0
+    IL_0033:  ldloca.s   V_1
+    IL_0035:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_003a:  ldloca.s   V_0
+    IL_003c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0041:  call       bool [mscorlib]System.Decimal::op_Equality(valuetype [mscorlib]System.Decimal,
                                                                     valuetype [mscorlib]System.Decimal)
-    IL_004a:  brtrue.s   IL_004f
-
-    IL_004c:  ldc.i4.1
-    IL_004d:  br.s       IL_0062
-
-    IL_004f:  ldloca.s   V_1
-    IL_0051:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0056:  ldloca.s   V_0
-    IL_0058:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_005d:  ceq
-    IL_005f:  ldc.i4.0
-    IL_0060:  ceq
-    IL_0062:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0067:  nop
-    IL_0068:  ldarg.0
-    IL_0069:  stloc.0
-    IL_006a:  ldarg.1
-    IL_006b:  stloc.1
-    IL_006c:  ldloca.s   V_0
-    IL_006e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0073:  ldloca.s   V_1
-    IL_0075:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_007a:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
+    IL_0046:  ldloca.s   V_1
+    IL_0048:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_004d:  ldloca.s   V_0
+    IL_004f:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0054:  ceq
+    IL_0056:  and
+    IL_0057:  ldc.i4.0
+    IL_0058:  ceq
+    IL_005a:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_005f:  nop
+    IL_0060:  ldarg.0
+    IL_0061:  stloc.0
+    IL_0062:  ldarg.1
+    IL_0063:  stloc.1
+    IL_0064:  ldloca.s   V_0
+    IL_0066:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_006b:  ldloca.s   V_1
+    IL_006d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0072:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
                                                                        valuetype [mscorlib]System.Decimal)
-    IL_007f:  brtrue.s   IL_0084
-
-    IL_0081:  ldc.i4.0
-    IL_0082:  br.s       IL_0093
-
-    IL_0084:  ldloca.s   V_0
-    IL_0086:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_008b:  ldloca.s   V_1
-    IL_008d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0092:  and
-    IL_0093:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0098:  nop
-    IL_0099:  ldarg.0
-    IL_009a:  stloc.1
-    IL_009b:  ldarg.1
-    IL_009c:  stloc.0
-    IL_009d:  ldloca.s   V_1
-    IL_009f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00a4:  ldloca.s   V_0
-    IL_00a6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00ab:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
+    IL_0077:  ldloca.s   V_0
+    IL_0079:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_007e:  ldloca.s   V_1
+    IL_0080:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0085:  and
+    IL_0086:  and
+    IL_0087:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_008c:  nop
+    IL_008d:  ldarg.0
+    IL_008e:  stloc.1
+    IL_008f:  ldarg.1
+    IL_0090:  stloc.0
+    IL_0091:  ldloca.s   V_1
+    IL_0093:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0098:  ldloca.s   V_0
+    IL_009a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_009f:  call       bool [mscorlib]System.Decimal::op_GreaterThan(valuetype [mscorlib]System.Decimal,
                                                                        valuetype [mscorlib]System.Decimal)
-    IL_00b0:  brtrue.s   IL_00b5
-
-    IL_00b2:  ldc.i4.0
-    IL_00b3:  br.s       IL_00c4
-
-    IL_00b5:  ldloca.s   V_1
-    IL_00b7:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00bc:  ldloca.s   V_0
-    IL_00be:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00c3:  and
-    IL_00c4:  ldc.i4.0
-    IL_00c5:  ceq
-    IL_00c7:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_00cc:  nop
-    IL_00cd:  ldarg.0
-    IL_00ce:  stloc.0
-    IL_00cf:  ldarg.1
-    IL_00d0:  stloc.1
-    IL_00d1:  ldloca.s   V_0
-    IL_00d3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00d8:  ldloca.s   V_1
-    IL_00da:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_00df:  call       bool [mscorlib]System.Decimal::op_LessThanOrEqual(valuetype [mscorlib]System.Decimal,
+    IL_00a4:  ldloca.s   V_1
+    IL_00a6:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00ab:  ldloca.s   V_0
+    IL_00ad:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00b2:  and
+    IL_00b3:  and
+    IL_00b4:  ldc.i4.0
+    IL_00b5:  ceq
+    IL_00b7:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00bc:  nop
+    IL_00bd:  ldarg.0
+    IL_00be:  stloc.0
+    IL_00bf:  ldarg.1
+    IL_00c0:  stloc.1
+    IL_00c1:  ldloca.s   V_0
+    IL_00c3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00c8:  ldloca.s   V_1
+    IL_00ca:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_00cf:  call       bool [mscorlib]System.Decimal::op_LessThanOrEqual(valuetype [mscorlib]System.Decimal,
                                                                            valuetype [mscorlib]System.Decimal)
-    IL_00e4:  brtrue.s   IL_00e9
+    IL_00d4:  ldloca.s   V_0
+    IL_00d6:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00db:  ldloca.s   V_1
+    IL_00dd:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00e2:  and
+    IL_00e3:  and
+    IL_00e4:  ldc.i4.0
+    IL_00e5:  ceq
+    IL_00e7:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_00ec:  nop
+    IL_00ed:  ldarg.0
+    IL_00ee:  stloc.1
+    IL_00ef:  ldarg.1
+    IL_00f0:  stloc.0
+    IL_00f1:  ldloca.s   V_1
+    IL_00f3:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00f8:  ldloca.s   V_0
+    IL_00fa:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_00ff:  and
+    IL_0100:  brtrue.s   IL_010d
 
-    IL_00e6:  ldc.i4.0
-    IL_00e7:  br.s       IL_00f8
+    IL_0102:  ldloca.s   V_2
+    IL_0104:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_010a:  ldloc.2
+    IL_010b:  br.s       IL_0125
 
-    IL_00e9:  ldloca.s   V_0
-    IL_00eb:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00f0:  ldloca.s   V_1
-    IL_00f2:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_00f7:  and
-    IL_00f8:  ldc.i4.0
-    IL_00f9:  ceq
-    IL_00fb:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_0100:  nop
-    IL_0101:  ldarg.0
-    IL_0102:  stloc.1
-    IL_0103:  ldarg.1
-    IL_0104:  stloc.0
-    IL_0105:  ldloca.s   V_1
-    IL_0107:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_010c:  ldloca.s   V_0
-    IL_010e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0113:  and
-    IL_0114:  brtrue.s   IL_0121
-
-    IL_0116:  ldloca.s   V_2
-    IL_0118:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_011e:  ldloc.2
-    IL_011f:  br.s       IL_0139
-
-    IL_0121:  ldloca.s   V_1
-    IL_0123:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0128:  ldloca.s   V_0
-    IL_012a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_012f:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Addition(valuetype [mscorlib]System.Decimal,
+    IL_010d:  ldloca.s   V_1
+    IL_010f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0114:  ldloca.s   V_0
+    IL_0116:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_011b:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Addition(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_0134:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0139:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_013e:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0143:  nop
-    IL_0144:  ldarg.0
-    IL_0145:  stloc.0
-    IL_0146:  ldarg.1
-    IL_0147:  stloc.1
-    IL_0148:  ldloca.s   V_0
-    IL_014a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_014f:  ldloca.s   V_1
-    IL_0151:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0156:  and
-    IL_0157:  brtrue.s   IL_0164
+    IL_0120:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0125:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_012a:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_012f:  nop
+    IL_0130:  ldarg.0
+    IL_0131:  stloc.0
+    IL_0132:  ldarg.1
+    IL_0133:  stloc.1
+    IL_0134:  ldloca.s   V_0
+    IL_0136:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_013b:  ldloca.s   V_1
+    IL_013d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0142:  and
+    IL_0143:  brtrue.s   IL_0150
 
-    IL_0159:  ldloca.s   V_2
-    IL_015b:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0161:  ldloc.2
-    IL_0162:  br.s       IL_017c
+    IL_0145:  ldloca.s   V_2
+    IL_0147:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_014d:  ldloc.2
+    IL_014e:  br.s       IL_0168
 
-    IL_0164:  ldloca.s   V_0
-    IL_0166:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_016b:  ldloca.s   V_1
-    IL_016d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0172:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Subtraction(valuetype [mscorlib]System.Decimal,
+    IL_0150:  ldloca.s   V_0
+    IL_0152:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0157:  ldloca.s   V_1
+    IL_0159:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_015e:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Subtraction(valuetype [mscorlib]System.Decimal,
                                                                                                      valuetype [mscorlib]System.Decimal)
-    IL_0177:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_017c:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0181:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0186:  nop
-    IL_0187:  ldarg.0
-    IL_0188:  stloc.1
-    IL_0189:  ldarg.1
-    IL_018a:  stloc.0
-    IL_018b:  ldloca.s   V_1
-    IL_018d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0192:  ldloca.s   V_0
-    IL_0194:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0199:  and
-    IL_019a:  brtrue.s   IL_01a7
+    IL_0163:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0168:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_016d:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0172:  nop
+    IL_0173:  ldarg.0
+    IL_0174:  stloc.1
+    IL_0175:  ldarg.1
+    IL_0176:  stloc.0
+    IL_0177:  ldloca.s   V_1
+    IL_0179:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_017e:  ldloca.s   V_0
+    IL_0180:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0185:  and
+    IL_0186:  brtrue.s   IL_0193
 
-    IL_019c:  ldloca.s   V_2
-    IL_019e:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_01a4:  ldloc.2
-    IL_01a5:  br.s       IL_01bf
+    IL_0188:  ldloca.s   V_2
+    IL_018a:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0190:  ldloc.2
+    IL_0191:  br.s       IL_01ab
 
-    IL_01a7:  ldloca.s   V_1
-    IL_01a9:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_01ae:  ldloca.s   V_0
-    IL_01b0:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_01b5:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Multiply(valuetype [mscorlib]System.Decimal,
+    IL_0193:  ldloca.s   V_1
+    IL_0195:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_019a:  ldloca.s   V_0
+    IL_019c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_01a1:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Multiply(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_01ba:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_01bf:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_01c4:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_01c9:  nop
-    IL_01ca:  ldarg.0
-    IL_01cb:  stloc.0
-    IL_01cc:  ldarg.1
-    IL_01cd:  stloc.1
-    IL_01ce:  ldloca.s   V_0
-    IL_01d0:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_01d5:  ldloca.s   V_1
-    IL_01d7:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_01dc:  and
-    IL_01dd:  brtrue.s   IL_01ea
+    IL_01a6:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_01ab:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_01b0:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01b5:  nop
+    IL_01b6:  ldarg.0
+    IL_01b7:  stloc.0
+    IL_01b8:  ldarg.1
+    IL_01b9:  stloc.1
+    IL_01ba:  ldloca.s   V_0
+    IL_01bc:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_01c1:  ldloca.s   V_1
+    IL_01c3:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_01c8:  and
+    IL_01c9:  brtrue.s   IL_01d6
 
-    IL_01df:  ldloca.s   V_2
-    IL_01e1:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_01e7:  ldloc.2
-    IL_01e8:  br.s       IL_0202
+    IL_01cb:  ldloca.s   V_2
+    IL_01cd:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_01d3:  ldloc.2
+    IL_01d4:  br.s       IL_01ee
 
-    IL_01ea:  ldloca.s   V_0
-    IL_01ec:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_01f1:  ldloca.s   V_1
-    IL_01f3:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_01f8:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Division(valuetype [mscorlib]System.Decimal,
+    IL_01d6:  ldloca.s   V_0
+    IL_01d8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_01dd:  ldloca.s   V_1
+    IL_01df:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_01e4:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Division(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_01fd:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0202:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0207:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_020c:  nop
-    IL_020d:  ldarg.0
-    IL_020e:  stloc.1
-    IL_020f:  ldarg.1
-    IL_0210:  stloc.0
-    IL_0211:  ldloca.s   V_1
-    IL_0213:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0218:  ldloca.s   V_0
-    IL_021a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_021f:  and
-    IL_0220:  brtrue.s   IL_022d
+    IL_01e9:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_01ee:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_01f3:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_01f8:  nop
+    IL_01f9:  ldarg.0
+    IL_01fa:  stloc.1
+    IL_01fb:  ldarg.1
+    IL_01fc:  stloc.0
+    IL_01fd:  ldloca.s   V_1
+    IL_01ff:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0204:  ldloca.s   V_0
+    IL_0206:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_020b:  and
+    IL_020c:  brtrue.s   IL_0219
 
-    IL_0222:  ldloca.s   V_2
-    IL_0224:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_022a:  ldloc.2
-    IL_022b:  br.s       IL_0245
+    IL_020e:  ldloca.s   V_2
+    IL_0210:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0216:  ldloc.2
+    IL_0217:  br.s       IL_0231
 
-    IL_022d:  ldloca.s   V_1
-    IL_022f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0234:  ldloca.s   V_0
-    IL_0236:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_023b:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Modulus(valuetype [mscorlib]System.Decimal,
+    IL_0219:  ldloca.s   V_1
+    IL_021b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0220:  ldloca.s   V_0
+    IL_0222:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0227:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Modulus(valuetype [mscorlib]System.Decimal,
                                                                                                  valuetype [mscorlib]System.Decimal)
-    IL_0240:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0245:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_024a:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_024f:  nop
-    IL_0250:  ldarg.0
-    IL_0251:  stloc.0
-    IL_0252:  ldloca.s   V_0
-    IL_0254:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0259:  brtrue.s   IL_025e
+    IL_022c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0231:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0236:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_023b:  nop
+    IL_023c:  ldarg.0
+    IL_023d:  stloc.0
+    IL_023e:  ldloca.s   V_0
+    IL_0240:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0245:  brtrue.s   IL_024a
 
-    IL_025b:  ldarg.1
-    IL_025c:  br.s       IL_025f
+    IL_0247:  ldarg.1
+    IL_0248:  br.s       IL_024b
 
-    IL_025e:  ldloc.0
-    IL_025f:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0264:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0269:  nop
-    IL_026a:  ldarg.0
-    IL_026b:  stloc.0
+    IL_024a:  ldloc.0
+    IL_024b:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0250:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0255:  nop
+    IL_0256:  ldarg.0
+    IL_0257:  stloc.0
+    IL_0258:  ldloca.s   V_0
+    IL_025a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_025f:  brtrue.s   IL_026c
+
+    IL_0261:  ldloca.s   V_1
+    IL_0263:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0269:  ldloc.1
+    IL_026a:  br.s       IL_027d
+
     IL_026c:  ldloca.s   V_0
-    IL_026e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0273:  brtrue.s   IL_0280
+    IL_026e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0273:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_UnaryNegation(valuetype [mscorlib]System.Decimal)
+    IL_0278:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_027d:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0282:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0287:  nop
+    IL_0288:  ldarg.0
+    IL_0289:  stloc.0
+    IL_028a:  ldarg.1
+    IL_028b:  stloc.1
+    IL_028c:  ldloca.s   V_0
+    IL_028e:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0293:  ldloca.s   V_1
+    IL_0295:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_029a:  and
+    IL_029b:  brtrue.s   IL_02a8
 
-    IL_0275:  ldloca.s   V_1
-    IL_0277:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_027d:  ldloc.1
-    IL_027e:  br.s       IL_0291
+    IL_029d:  ldloca.s   V_2
+    IL_029f:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_02a5:  ldloc.2
+    IL_02a6:  br.s       IL_02c0
 
-    IL_0280:  ldloca.s   V_0
-    IL_0282:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0287:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_UnaryNegation(valuetype [mscorlib]System.Decimal)
-    IL_028c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0291:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0296:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_029b:  nop
-    IL_029c:  ldarg.0
-    IL_029d:  stloc.0
-    IL_029e:  ldarg.1
-    IL_029f:  stloc.1
-    IL_02a0:  ldloca.s   V_0
-    IL_02a2:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_02a7:  ldloca.s   V_1
-    IL_02a9:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_02ae:  and
-    IL_02af:  brtrue.s   IL_02bc
-
-    IL_02b1:  ldloca.s   V_2
-    IL_02b3:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_02b9:  ldloc.2
-    IL_02ba:  br.s       IL_02d4
-
-    IL_02bc:  ldloca.s   V_0
-    IL_02be:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_02c3:  ldloca.s   V_1
-    IL_02c5:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_02ca:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Addition(valuetype [mscorlib]System.Decimal,
+    IL_02a8:  ldloca.s   V_0
+    IL_02aa:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_02af:  ldloca.s   V_1
+    IL_02b1:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_02b6:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Addition(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_02cf:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_02d4:  starg.s    a
-    IL_02d6:  ldarg.0
-    IL_02d7:  stloc.1
-    IL_02d8:  ldarg.1
-    IL_02d9:  stloc.0
-    IL_02da:  ldloca.s   V_1
-    IL_02dc:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_02e1:  ldloca.s   V_0
-    IL_02e3:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_02e8:  and
-    IL_02e9:  brtrue.s   IL_02f6
+    IL_02bb:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_02c0:  starg.s    a
+    IL_02c2:  ldarg.0
+    IL_02c3:  stloc.1
+    IL_02c4:  ldarg.1
+    IL_02c5:  stloc.0
+    IL_02c6:  ldloca.s   V_1
+    IL_02c8:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_02cd:  ldloca.s   V_0
+    IL_02cf:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_02d4:  and
+    IL_02d5:  brtrue.s   IL_02e2
 
-    IL_02eb:  ldloca.s   V_2
-    IL_02ed:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_02f3:  ldloc.2
-    IL_02f4:  br.s       IL_030e
+    IL_02d7:  ldloca.s   V_2
+    IL_02d9:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_02df:  ldloc.2
+    IL_02e0:  br.s       IL_02fa
 
-    IL_02f6:  ldloca.s   V_1
-    IL_02f8:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_02fd:  ldloca.s   V_0
-    IL_02ff:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0304:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Subtraction(valuetype [mscorlib]System.Decimal,
+    IL_02e2:  ldloca.s   V_1
+    IL_02e4:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_02e9:  ldloca.s   V_0
+    IL_02eb:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_02f0:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Subtraction(valuetype [mscorlib]System.Decimal,
                                                                                                      valuetype [mscorlib]System.Decimal)
-    IL_0309:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_030e:  starg.s    a
-    IL_0310:  ldarg.0
-    IL_0311:  stloc.0
-    IL_0312:  ldarg.1
-    IL_0313:  stloc.1
-    IL_0314:  ldloca.s   V_0
-    IL_0316:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_031b:  ldloca.s   V_1
-    IL_031d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0322:  and
-    IL_0323:  brtrue.s   IL_0330
+    IL_02f5:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_02fa:  starg.s    a
+    IL_02fc:  ldarg.0
+    IL_02fd:  stloc.0
+    IL_02fe:  ldarg.1
+    IL_02ff:  stloc.1
+    IL_0300:  ldloca.s   V_0
+    IL_0302:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0307:  ldloca.s   V_1
+    IL_0309:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_030e:  and
+    IL_030f:  brtrue.s   IL_031c
 
-    IL_0325:  ldloca.s   V_2
-    IL_0327:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_032d:  ldloc.2
-    IL_032e:  br.s       IL_0348
+    IL_0311:  ldloca.s   V_2
+    IL_0313:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0319:  ldloc.2
+    IL_031a:  br.s       IL_0334
 
-    IL_0330:  ldloca.s   V_0
-    IL_0332:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0337:  ldloca.s   V_1
-    IL_0339:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_033e:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Multiply(valuetype [mscorlib]System.Decimal,
+    IL_031c:  ldloca.s   V_0
+    IL_031e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0323:  ldloca.s   V_1
+    IL_0325:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_032a:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Multiply(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_0343:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0348:  starg.s    a
-    IL_034a:  ldarg.0
-    IL_034b:  stloc.1
-    IL_034c:  ldarg.1
-    IL_034d:  stloc.0
-    IL_034e:  ldloca.s   V_1
-    IL_0350:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0355:  ldloca.s   V_0
-    IL_0357:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_035c:  and
-    IL_035d:  brtrue.s   IL_036a
+    IL_032f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0334:  starg.s    a
+    IL_0336:  ldarg.0
+    IL_0337:  stloc.1
+    IL_0338:  ldarg.1
+    IL_0339:  stloc.0
+    IL_033a:  ldloca.s   V_1
+    IL_033c:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0341:  ldloca.s   V_0
+    IL_0343:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0348:  and
+    IL_0349:  brtrue.s   IL_0356
 
-    IL_035f:  ldloca.s   V_2
-    IL_0361:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0367:  ldloc.2
-    IL_0368:  br.s       IL_0382
+    IL_034b:  ldloca.s   V_2
+    IL_034d:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0353:  ldloc.2
+    IL_0354:  br.s       IL_036e
 
-    IL_036a:  ldloca.s   V_1
-    IL_036c:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0371:  ldloca.s   V_0
-    IL_0373:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_0378:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Division(valuetype [mscorlib]System.Decimal,
+    IL_0356:  ldloca.s   V_1
+    IL_0358:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_035d:  ldloca.s   V_0
+    IL_035f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0364:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Division(valuetype [mscorlib]System.Decimal,
                                                                                                   valuetype [mscorlib]System.Decimal)
-    IL_037d:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0382:  starg.s    a
-    IL_0384:  ldarg.0
-    IL_0385:  stloc.0
-    IL_0386:  ldarg.1
-    IL_0387:  stloc.1
-    IL_0388:  ldloca.s   V_0
-    IL_038a:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_038f:  ldloca.s   V_1
-    IL_0391:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
-    IL_0396:  and
-    IL_0397:  brtrue.s   IL_03a4
+    IL_0369:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_036e:  starg.s    a
+    IL_0370:  ldarg.0
+    IL_0371:  stloc.0
+    IL_0372:  ldarg.1
+    IL_0373:  stloc.1
+    IL_0374:  ldloca.s   V_0
+    IL_0376:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_037b:  ldloca.s   V_1
+    IL_037d:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::get_HasValue()
+    IL_0382:  and
+    IL_0383:  brtrue.s   IL_0390
 
-    IL_0399:  ldloca.s   V_2
-    IL_039b:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_03a1:  ldloc.2
-    IL_03a2:  br.s       IL_03bc
+    IL_0385:  ldloca.s   V_2
+    IL_0387:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_038d:  ldloc.2
+    IL_038e:  br.s       IL_03a8
 
-    IL_03a4:  ldloca.s   V_0
-    IL_03a6:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_03ab:  ldloca.s   V_1
-    IL_03ad:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
-    IL_03b2:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Modulus(valuetype [mscorlib]System.Decimal,
+    IL_0390:  ldloca.s   V_0
+    IL_0392:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_0397:  ldloca.s   V_1
+    IL_0399:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::GetValueOrDefault()
+    IL_039e:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Modulus(valuetype [mscorlib]System.Decimal,
                                                                                                  valuetype [mscorlib]System.Decimal)
-    IL_03b7:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_03bc:  starg.s    a
-    IL_03be:  ret
+    IL_03a3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_03a8:  starg.s    a
+    IL_03aa:  ret
   } // end of method LiftedOperators::NumberValueBasic
 
   .method public hidebysig static void  NumberValueComplex(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> a,
@@ -3996,8 +3777,8 @@
   .method public hidebysig static void  CompareWithImplictCast(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                                valuetype [mscorlib]System.Nullable`1<int64> b) cil managed
   {
-    // Code size       175 (0xaf)
-    .maxstack  2
+    // Code size       171 (0xab)
+    .maxstack  3
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<int64> V_1,
              valuetype [mscorlib]System.Nullable`1<int64> V_2,
@@ -4027,72 +3808,66 @@
     IL_002a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
     IL_002f:  ldloca.s   V_2
     IL_0031:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
-    IL_0036:  blt.s      IL_003b
+    IL_0036:  clt
+    IL_0038:  ldloca.s   V_1
+    IL_003a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_003f:  ldloca.s   V_2
+    IL_0041:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0046:  and
+    IL_0047:  and
+    IL_0048:  stloc.0
+    IL_0049:  ldloc.0
+    IL_004a:  brfalse.s  IL_0054
 
-    IL_0038:  ldc.i4.0
-    IL_0039:  br.s       IL_004a
+    IL_004c:  nop
+    IL_004d:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0052:  nop
+    IL_0053:  nop
+    IL_0054:  ldarg.0
+    IL_0055:  stloc.3
+    IL_0056:  ldloca.s   V_3
+    IL_0058:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_005d:  brtrue.s   IL_006b
 
-    IL_003b:  ldloca.s   V_1
-    IL_003d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0042:  ldloca.s   V_2
-    IL_0044:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0049:  and
-    IL_004a:  stloc.0
-    IL_004b:  ldloc.0
-    IL_004c:  brfalse.s  IL_0056
+    IL_005f:  ldloca.s   V_4
+    IL_0061:  initobj    valuetype [mscorlib]System.Nullable`1<int64>
+    IL_0067:  ldloc.s    V_4
+    IL_0069:  br.s       IL_0078
 
-    IL_004e:  nop
-    IL_004f:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0054:  nop
-    IL_0055:  nop
-    IL_0056:  ldarg.0
-    IL_0057:  stloc.3
-    IL_0058:  ldloca.s   V_3
-    IL_005a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_005f:  brtrue.s   IL_006d
+    IL_006b:  ldloca.s   V_3
+    IL_006d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0072:  conv.i8
+    IL_0073:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int64>::.ctor(!0)
+    IL_0078:  stloc.2
+    IL_0079:  ldarg.1
+    IL_007a:  stloc.1
+    IL_007b:  ldloca.s   V_2
+    IL_007d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
+    IL_0082:  ldloca.s   V_1
+    IL_0084:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
+    IL_0089:  ceq
+    IL_008b:  ldloca.s   V_2
+    IL_008d:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0092:  ldloca.s   V_1
+    IL_0094:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0099:  ceq
+    IL_009b:  and
+    IL_009c:  stloc.s    V_5
+    IL_009e:  ldloc.s    V_5
+    IL_00a0:  brfalse.s  IL_00aa
 
-    IL_0061:  ldloca.s   V_4
-    IL_0063:  initobj    valuetype [mscorlib]System.Nullable`1<int64>
-    IL_0069:  ldloc.s    V_4
-    IL_006b:  br.s       IL_007a
-
-    IL_006d:  ldloca.s   V_3
-    IL_006f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0074:  conv.i8
-    IL_0075:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int64>::.ctor(!0)
-    IL_007a:  stloc.2
-    IL_007b:  ldarg.1
-    IL_007c:  stloc.1
-    IL_007d:  ldloca.s   V_2
-    IL_007f:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
-    IL_0084:  ldloca.s   V_1
-    IL_0086:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
-    IL_008b:  beq.s      IL_0090
-
-    IL_008d:  ldc.i4.0
-    IL_008e:  br.s       IL_00a0
-
-    IL_0090:  ldloca.s   V_2
-    IL_0092:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0097:  ldloca.s   V_1
-    IL_0099:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_009e:  ceq
-    IL_00a0:  stloc.s    V_5
-    IL_00a2:  ldloc.s    V_5
-    IL_00a4:  brfalse.s  IL_00ae
-
-    IL_00a6:  nop
-    IL_00a7:  call       void [mscorlib]System.Console::WriteLine()
-    IL_00ac:  nop
-    IL_00ad:  nop
-    IL_00ae:  ret
+    IL_00a2:  nop
+    IL_00a3:  call       void [mscorlib]System.Console::WriteLine()
+    IL_00a8:  nop
+    IL_00a9:  nop
+    IL_00aa:  ret
   } // end of method LiftedOperators::CompareWithImplictCast
 
   .method public hidebysig static void  CompareWithSignChange(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                               valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       120 (0x78)
-    .maxstack  2
+    // Code size       118 (0x76)
+    .maxstack  3
     .locals init (bool V_0,
              valuetype [mscorlib]System.Nullable`1<uint32> V_1,
              valuetype [mscorlib]System.Nullable`1<uint32> V_2,
@@ -4133,25 +3908,22 @@
     IL_004b:  call       instance !0 valuetype [mscorlib]System.Nullable`1<uint32>::GetValueOrDefault()
     IL_0050:  ldloca.s   V_2
     IL_0052:  call       instance !0 valuetype [mscorlib]System.Nullable`1<uint32>::GetValueOrDefault()
-    IL_0057:  blt.un.s   IL_005c
+    IL_0057:  clt.un
+    IL_0059:  ldloca.s   V_1
+    IL_005b:  call       instance bool valuetype [mscorlib]System.Nullable`1<uint32>::get_HasValue()
+    IL_0060:  ldloca.s   V_2
+    IL_0062:  call       instance bool valuetype [mscorlib]System.Nullable`1<uint32>::get_HasValue()
+    IL_0067:  and
+    IL_0068:  and
+    IL_0069:  stloc.0
+    IL_006a:  ldloc.0
+    IL_006b:  brfalse.s  IL_0075
 
-    IL_0059:  ldc.i4.0
-    IL_005a:  br.s       IL_006b
-
-    IL_005c:  ldloca.s   V_1
-    IL_005e:  call       instance bool valuetype [mscorlib]System.Nullable`1<uint32>::get_HasValue()
-    IL_0063:  ldloca.s   V_2
-    IL_0065:  call       instance bool valuetype [mscorlib]System.Nullable`1<uint32>::get_HasValue()
-    IL_006a:  and
-    IL_006b:  stloc.0
-    IL_006c:  ldloc.0
-    IL_006d:  brfalse.s  IL_0077
-
-    IL_006f:  nop
-    IL_0070:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0075:  nop
-    IL_0076:  nop
-    IL_0077:  ret
+    IL_006d:  nop
+    IL_006e:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0073:  nop
+    IL_0074:  nop
+    IL_0075:  ret
   } // end of method LiftedOperators::CompareWithSignChange
 
   .method public hidebysig static void  StructBasic(valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.TS> a,
@@ -5239,8 +5011,8 @@
   .method public hidebysig static bool  RetEq(valuetype [mscorlib]System.Nullable`1<int32> a,
                                               valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       45 (0x2d)
-    .maxstack  2
+    // Code size       43 (0x2b)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
              bool V_2)
@@ -5253,28 +5025,25 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_1
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0013:  beq.s      IL_0018
+    IL_0013:  ceq
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0023:  ceq
+    IL_0025:  and
+    IL_0026:  stloc.2
+    IL_0027:  br.s       IL_0029
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0028
-
-    IL_0018:  ldloca.s   V_0
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001f:  ldloca.s   V_1
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0026:  ceq
-    IL_0028:  stloc.2
-    IL_0029:  br.s       IL_002b
-
-    IL_002b:  ldloc.2
-    IL_002c:  ret
+    IL_0029:  ldloc.2
+    IL_002a:  ret
   } // end of method LiftedOperators::RetEq
 
   .method public hidebysig static bool  RetEqConv(valuetype [mscorlib]System.Nullable`1<int64> a,
                                                   valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       81 (0x51)
-    .maxstack  2
+    // Code size       79 (0x4f)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int64> V_0,
              valuetype [mscorlib]System.Nullable`1<int64> V_1,
              valuetype [mscorlib]System.Nullable`1<int32> V_2,
@@ -5303,26 +5072,23 @@
     IL_0029:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
     IL_002e:  ldloca.s   V_1
     IL_0030:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
-    IL_0035:  beq.s      IL_003a
+    IL_0035:  ceq
+    IL_0037:  ldloca.s   V_0
+    IL_0039:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_003e:  ldloca.s   V_1
+    IL_0040:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0045:  ceq
+    IL_0047:  and
+    IL_0048:  stloc.s    V_4
+    IL_004a:  br.s       IL_004c
 
-    IL_0037:  ldc.i4.0
-    IL_0038:  br.s       IL_004a
-
-    IL_003a:  ldloca.s   V_0
-    IL_003c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0041:  ldloca.s   V_1
-    IL_0043:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0048:  ceq
-    IL_004a:  stloc.s    V_4
-    IL_004c:  br.s       IL_004e
-
-    IL_004e:  ldloc.s    V_4
-    IL_0050:  ret
+    IL_004c:  ldloc.s    V_4
+    IL_004e:  ret
   } // end of method LiftedOperators::RetEqConv
 
   .method public hidebysig static bool  RetEqConst(valuetype [mscorlib]System.Nullable`1<int64> a) cil managed
   {
-    // Code size       32 (0x20)
+    // Code size       30 (0x1e)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<int64> V_0,
              int64 V_1,
@@ -5336,23 +5102,20 @@
     IL_0007:  ldloca.s   V_0
     IL_0009:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
     IL_000e:  ldloc.1
-    IL_000f:  beq.s      IL_0014
+    IL_000f:  ceq
+    IL_0011:  ldloca.s   V_0
+    IL_0013:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0018:  and
+    IL_0019:  stloc.2
+    IL_001a:  br.s       IL_001c
 
-    IL_0011:  ldc.i4.0
-    IL_0012:  br.s       IL_001b
-
-    IL_0014:  ldloca.s   V_0
-    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_001b:  stloc.2
-    IL_001c:  br.s       IL_001e
-
-    IL_001e:  ldloc.2
-    IL_001f:  ret
+    IL_001c:  ldloc.2
+    IL_001d:  ret
   } // end of method LiftedOperators::RetEqConst
 
   .method public hidebysig static bool  RetIneqConst(valuetype [mscorlib]System.Nullable`1<int64> a) cil managed
   {
-    // Code size       35 (0x23)
+    // Code size       33 (0x21)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<int64> V_0,
              int64 V_1,
@@ -5366,27 +5129,24 @@
     IL_0007:  ldloca.s   V_0
     IL_0009:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
     IL_000e:  ldloc.1
-    IL_000f:  beq.s      IL_0014
+    IL_000f:  ceq
+    IL_0011:  ldloca.s   V_0
+    IL_0013:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0018:  and
+    IL_0019:  ldc.i4.0
+    IL_001a:  ceq
+    IL_001c:  stloc.2
+    IL_001d:  br.s       IL_001f
 
-    IL_0011:  ldc.i4.1
-    IL_0012:  br.s       IL_001e
-
-    IL_0014:  ldloca.s   V_0
-    IL_0016:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_001b:  ldc.i4.0
-    IL_001c:  ceq
-    IL_001e:  stloc.2
-    IL_001f:  br.s       IL_0021
-
-    IL_0021:  ldloc.2
-    IL_0022:  ret
+    IL_001f:  ldloc.2
+    IL_0020:  ret
   } // end of method LiftedOperators::RetIneqConst
 
   .method public hidebysig static bool  RetLt(valuetype [mscorlib]System.Nullable`1<int32> a,
                                               valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       44 (0x2c)
-    .maxstack  2
+    // Code size       42 (0x2a)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
              bool V_2)
@@ -5399,26 +5159,23 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_1
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0013:  blt.s      IL_0018
+    IL_0013:  clt
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0023:  and
+    IL_0024:  and
+    IL_0025:  stloc.2
+    IL_0026:  br.s       IL_0028
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0027
-
-    IL_0018:  ldloca.s   V_0
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001f:  ldloca.s   V_1
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0026:  and
-    IL_0027:  stloc.2
-    IL_0028:  br.s       IL_002a
-
-    IL_002a:  ldloc.2
-    IL_002b:  ret
+    IL_0028:  ldloc.2
+    IL_0029:  ret
   } // end of method LiftedOperators::RetLt
 
   .method public hidebysig static bool  RetLtConst(valuetype [mscorlib]System.Nullable`1<int32> a) cil managed
   {
-    // Code size       31 (0x1f)
+    // Code size       29 (0x1d)
     .maxstack  2
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              int32 V_1,
@@ -5431,25 +5188,22 @@
     IL_0006:  ldloca.s   V_0
     IL_0008:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000d:  ldloc.1
-    IL_000e:  blt.s      IL_0013
+    IL_000e:  clt
+    IL_0010:  ldloca.s   V_0
+    IL_0012:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0017:  and
+    IL_0018:  stloc.2
+    IL_0019:  br.s       IL_001b
 
-    IL_0010:  ldc.i4.0
-    IL_0011:  br.s       IL_001a
-
-    IL_0013:  ldloca.s   V_0
-    IL_0015:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001a:  stloc.2
-    IL_001b:  br.s       IL_001d
-
-    IL_001d:  ldloc.2
-    IL_001e:  ret
+    IL_001b:  ldloc.2
+    IL_001c:  ret
   } // end of method LiftedOperators::RetLtConst
 
   .method public hidebysig static bool  RetLtConv(valuetype [mscorlib]System.Nullable`1<int64> a,
                                                   valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       80 (0x50)
-    .maxstack  2
+    // Code size       78 (0x4e)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int64> V_0,
              valuetype [mscorlib]System.Nullable`1<int64> V_1,
              valuetype [mscorlib]System.Nullable`1<int32> V_2,
@@ -5478,28 +5232,25 @@
     IL_0029:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
     IL_002e:  ldloca.s   V_1
     IL_0030:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int64>::GetValueOrDefault()
-    IL_0035:  blt.s      IL_003a
+    IL_0035:  clt
+    IL_0037:  ldloca.s   V_0
+    IL_0039:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_003e:  ldloca.s   V_1
+    IL_0040:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
+    IL_0045:  and
+    IL_0046:  and
+    IL_0047:  stloc.s    V_4
+    IL_0049:  br.s       IL_004b
 
-    IL_0037:  ldc.i4.0
-    IL_0038:  br.s       IL_0049
-
-    IL_003a:  ldloca.s   V_0
-    IL_003c:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0041:  ldloca.s   V_1
-    IL_0043:  call       instance bool valuetype [mscorlib]System.Nullable`1<int64>::get_HasValue()
-    IL_0048:  and
-    IL_0049:  stloc.s    V_4
-    IL_004b:  br.s       IL_004d
-
-    IL_004d:  ldloc.s    V_4
-    IL_004f:  ret
+    IL_004b:  ldloc.s    V_4
+    IL_004d:  ret
   } // end of method LiftedOperators::RetLtConv
 
   .method public hidebysig static bool  RetNotLt(valuetype [mscorlib]System.Nullable`1<int32> a,
                                                  valuetype [mscorlib]System.Nullable`1<int32> b) cil managed
   {
-    // Code size       47 (0x2f)
-    .maxstack  2
+    // Code size       45 (0x2d)
+    .maxstack  3
     .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
              valuetype [mscorlib]System.Nullable`1<int32> V_1,
              bool V_2)
@@ -5512,23 +5263,20 @@
     IL_0007:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
     IL_000c:  ldloca.s   V_1
     IL_000e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0013:  blt.s      IL_0018
+    IL_0013:  clt
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0023:  and
+    IL_0024:  and
+    IL_0025:  ldc.i4.0
+    IL_0026:  ceq
+    IL_0028:  stloc.2
+    IL_0029:  br.s       IL_002b
 
-    IL_0015:  ldc.i4.0
-    IL_0016:  br.s       IL_0027
-
-    IL_0018:  ldloca.s   V_0
-    IL_001a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_001f:  ldloca.s   V_1
-    IL_0021:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0026:  and
-    IL_0027:  ldc.i4.0
-    IL_0028:  ceq
-    IL_002a:  stloc.2
-    IL_002b:  br.s       IL_002d
-
-    IL_002d:  ldloc.2
-    IL_002e:  ret
+    IL_002b:  ldloc.2
+    IL_002c:  ret
   } // end of method LiftedOperators::RetNotLt
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.LiftedOperators

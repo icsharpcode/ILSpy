@@ -70,7 +70,8 @@ namespace ICSharpCode.ILSpy.Controls
 		{
 			string[] sizes = (sizeValue ?? "").Split(';');
 			
-			Debug.Assert(sizes.Length == view.Columns.Count);
+			if (sizes.Length != view.Columns.Count)
+				return;
 			Dictionary<int, Func<double, double>> percentages = new Dictionary<int, Func<double, double>>();
 			double remainingWidth = fullWidth - 30; // 30 is a good offset for the scrollbar
 			

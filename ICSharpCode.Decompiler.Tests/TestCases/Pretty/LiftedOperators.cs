@@ -322,9 +322,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (a == b) {
 				Console.WriteLine();
 			}
+#if ROSLYN
+			// Roslyn 2.9 started invoking op_Equality even if the source code says 'a != b'
+			if (!(a == b)) {
+				Console.WriteLine();
+			}
+#else
 			if (a != b) {
 				Console.WriteLine();
 			}
+#endif
 			if (a > b) {
 				Console.WriteLine();
 			}
@@ -399,7 +406,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void NumberValueBasic(decimal? a, decimal? b)
 		{
 			Console.WriteLine(a == b);
+#if ROSLYN
+			// Roslyn 2.9 started invoking op_Equality even if the source code says 'a != b'
+			Console.WriteLine(!(a == b));
+#else
 			Console.WriteLine(a != b);
+#endif
 			Console.WriteLine(a > b);
 
 			Console.WriteLine(!(a > b));
