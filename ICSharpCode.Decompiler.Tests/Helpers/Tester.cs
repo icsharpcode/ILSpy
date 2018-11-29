@@ -186,9 +186,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
-					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location)
+					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
 			};
 		});
 		
@@ -239,6 +241,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
+				string systemMemoryDestPath = Path.Combine(Path.GetDirectoryName(results.PathToAssembly), Path.GetFileName(typeof(Span<>).Assembly.Location));
+				if (!File.Exists(systemMemoryDestPath))
+					File.Copy(typeof(Span<>).Assembly.Location, systemMemoryDestPath);
 				var emitResult = compilation.Emit(results.PathToAssembly);
 				if (!emitResult.Success) {
 					StringBuilder b = new StringBuilder("Compiler error:");

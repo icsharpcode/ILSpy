@@ -42,6 +42,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>
