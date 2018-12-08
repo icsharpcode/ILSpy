@@ -1669,7 +1669,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		
 		internal TranslatedExpression TranslateTarget(ILInstruction target, bool nonVirtualInvocation,
-			bool memberStatic, IType memberDeclaringType, bool unwrapBoxingConversion = false)
+			bool memberStatic, IType memberDeclaringType)
 		{
 			// If references are missing member.IsStatic might not be set correctly.
 			// Additionally check target for null, in order to avoid a crash.
@@ -1680,9 +1680,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(memberDeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target, memberDeclaringType);
-					if (unwrapBoxingConversion) {
-						translatedTarget = ExpressionBuilder.UnwrapBoxingConversion(translatedTarget);
-					}
 					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref) {
 						// When accessing members on value types, ensure we use a reference of the correct type,
 						// and not a pointer or a reference to a different type (issue #1333)

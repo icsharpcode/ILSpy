@@ -22,7 +22,7 @@ extends [mscorlib]System.Object
 
     call void Program::InlineAssignByte()
     call void Program::Int32OrNativeTests()
-	call void Program::ByRefInstanceCallWithTypeMismatchTests()
+    call void Program::ByRefInstanceCallWithTypeMismatchTests()
 
     ret
   } // end of method Main
