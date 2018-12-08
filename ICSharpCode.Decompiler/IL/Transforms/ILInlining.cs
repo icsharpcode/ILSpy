@@ -360,6 +360,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.LocAllocSpan:
+					return true; // inline size-expressions into localloc.span
 			}
 			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {

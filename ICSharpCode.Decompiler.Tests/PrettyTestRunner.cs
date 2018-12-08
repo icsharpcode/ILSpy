@@ -288,6 +288,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void CS73_StackAllocInitializers([ValueSource(nameof(roslynOnlyOptions))] CSharpCompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void RefLocalsAndReturns([ValueSource(nameof(roslynOnlyOptions))] CSharpCompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

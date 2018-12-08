@@ -186,9 +186,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
-					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location)
+					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
+					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
 			};
 		});
 		
@@ -401,6 +403,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());

@@ -141,8 +141,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression)
 		{
-			base.VisitStackAllocExpression(stackAllocExpression);
-			return true;
+			bool result = base.VisitStackAllocExpression(stackAllocExpression);
+			var rr = stackAllocExpression.GetResolveResult();
+			if (rr?.Type is PointerType)
+				return true;
+			return result;
 		}
 		
 		public override bool VisitInvocationExpression(InvocationExpression invocationExpression)

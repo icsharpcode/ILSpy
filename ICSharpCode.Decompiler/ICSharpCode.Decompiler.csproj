@@ -74,9 +74,7 @@
     <Compile Include="CSharp\Syntax\ErrorNode.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousMethodExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousTypeCreateExpression.cs" />
-    <Compile Include="CSharp\Syntax\Expressions\ArrayCreateExpression.cs">
-      <DependentUpon>ArrayInitializerExpression.cs</DependentUpon>
-    </Compile>
+    <Compile Include="CSharp\Syntax\Expressions\ArrayCreateExpression.cs"  />
     <Compile Include="CSharp\Syntax\Expressions\ArrayInitializerExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AsExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AssignmentExpression.cs" />

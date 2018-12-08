@@ -313,6 +313,7 @@ namespace ICSharpCode.Decompiler.IL
 		ArrayInitializer,
 		CollectionInitializer,
 		ObjectInitializer,
+		StackAllocInitializer,
 		/// <summary>
 		/// Block is used for postfix operator on local variable.
 		/// </summary>
