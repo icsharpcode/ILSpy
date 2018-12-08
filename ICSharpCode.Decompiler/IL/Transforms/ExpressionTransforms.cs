@@ -262,15 +262,82 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			LdcDecimal decimalConstant;
-			if (TransformDecimalCtorToConstant(inst, out decimalConstant)) {
+			if (TransformDecimalCtorToConstant(inst, out LdcDecimal decimalConstant)) {
 				context.Step("TransformDecimalCtorToConstant", inst);
 				inst.ReplaceWith(decimalConstant);
 				return;
 			}
+			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan)) {
+				inst.ReplaceWith(locallocSpan);
+				Block block = null;
+				ILInstruction stmt = locallocSpan;
+				while (stmt.Parent != null) {
+					if (stmt.Parent is Block b) {
+						block = b;
+						break;
+					}
+					stmt = stmt.Parent;
+				}
+				//ILInlining.InlineIfPossible(block, stmt.ChildIndex - 1, context);
+				return;
+			}
 			base.VisitNewObj(inst);
 		}
-		
+
+		/// <summary>
+		/// newobj Span..ctor(localloc(conv i4->u &lt;zero extend&gt;(ldc.i4 sizeInBytes)), numberOfElementsExpr)
+		/// =>
+		/// localloc.span T(numberOfElementsExpr)
+		/// 
+		/// -or-
+		/// 
+		/// newobj Span..ctor(Block IL_0000 (StackAllocInitializer) {
+		///		stloc I_0(localloc(conv i4->u&lt;zero extend>(ldc.i4 sizeInBytes)))
+		///		...
+		///		final: ldloc I_0
+		///	}, numberOfElementsExpr)
+		/// =>
+		/// Block IL_0000 (StackAllocInitializer) {
+		///		stloc I_0(localloc.span T(numberOfElementsExpr))
+		///		...
+		///		final: ldloc I_0
+		/// }
+		/// </summary>
+		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
+		{
+			locallocSpan = null;
+			IType type = newObj.Method.DeclaringType;
+			if (!type.IsKnownType(KnownTypeCode.SpanOfT) && !type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				return false;
+			if (newObj.Arguments.Count != 2 || type.TypeArguments.Count != 1)
+				return false;
+			if (newObj.Arguments[0] is LocAlloc) {
+				locallocSpan = new LocAllocSpan(newObj.Arguments[1], type);
+				return true;
+			}
+			if (newObj.Arguments[0] is Block initializer && initializer.Kind == BlockKind.StackAllocInitializer) {
+				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
+					return false;
+				if (!value.MatchLocAlloc(out _))
+					return false;
+				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
+				foreach (var load in initializerVariable.LoadInstructions.ToArray()) {
+					ILInstruction newInst = new LdLoc(newVariable);
+					newInst.AddILRange(load.ILRange);
+					if (load.Parent != initializer)
+						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
+					load.ReplaceWith(newInst);
+				}
+				foreach (var store in initializerVariable.StoreInstructions.ToArray()) {
+					store.Variable = newVariable;
+				}
+				value.ReplaceWith(new LocAllocSpan(newObj.Arguments[1], type));
+				locallocSpan = initializer;
+				return true;
+			}
+			return false;
+		}
+
 		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
 		{
 			IType t = inst.Method.DeclaringType;

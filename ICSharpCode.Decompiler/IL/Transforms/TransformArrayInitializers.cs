@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("HandleCpblkInitializer", inst);
 					var block = new Block(BlockKind.StackAllocInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
-					block.Instructions.Add(new StLoc(tempStore, new LocAlloc(lengthInst)));
+					block.Instructions.Add(new StLoc(tempStore, locallocExpr));
 
 					while (blob.RemainingBytes > 0) {
 						block.Instructions.Add(StElemPtr(tempStore, blob.Offset, new LdcI4(blob.ReadByte()), elementType));
@@ -138,18 +138,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					body.Instructions[pos] = new StLoc(v, block);
 					body.Instructions.RemoveAt(pos + 1);
 					ILInlining.InlineIfPossible(body, pos, context);
+					ExpressionTransforms.RunOnSingleStatement(body.Instructions[pos], context);
 					return true;
 				}
-				if (HandleSequentialLocAllocInitializer(body, pos + 1, v, lengthInst, out elementType, out StObj[] values, out int instructionsToRemove)) {
+				if (HandleSequentialLocAllocInitializer(body, pos + 1, v, locallocExpr, out elementType, out StObj[] values, out int instructionsToRemove)) {
 					context.Step("HandleSequentialLocAllocInitializer", inst);
 					var block = new Block(BlockKind.StackAllocInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new PointerType(elementType));
-					block.Instructions.Add(new StLoc(tempStore, new LocAlloc(lengthInst)));
+					block.Instructions.Add(new StLoc(tempStore, locallocExpr));
 					block.Instructions.AddRange(values.Where(value => value != null).Select(value => RewrapStore(tempStore, value, elementType)));
 					block.FinalInstruction = new LdLoc(tempStore);
 					body.Instructions[pos] = new StLoc(v, block);
 					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
 					ILInlining.InlineIfPossible(body, pos, context);
+					ExpressionTransforms.RunOnSingleStatement(body.Instructions[pos], context);
 					return true;
 				}
 			}
@@ -178,7 +180,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction lengthInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
+		bool HandleSequentialLocAllocInitializer(Block block, int pos, ILVariable store, ILInstruction locAllocInstruction, out IType elementType, out StObj[] values, out int instructionsToRemove)
 		{
 			int elementCount = 0;
 			long minExpectedOffset = 0;
@@ -186,10 +188,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			elementType = null;
 			instructionsToRemove = 0;
 
+			if (!locAllocInstruction.MatchLocAlloc(out var lengthInstruction))
+				return false;
+
 			if (block.Instructions[pos].MatchInitblk(out var dest, out var value, out var size)
 				&& lengthInstruction.MatchLdcI(out long byteCount))
 			{
-				if (!dest.MatchLdLoc(store) || !value.MatchLdcI4(0) || !size.MatchLdcI(byteCount))
+				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
 					return false;
 				instructionsToRemove++;
 				pos++;
