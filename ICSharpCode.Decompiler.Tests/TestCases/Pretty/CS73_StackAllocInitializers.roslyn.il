@@ -8,6 +8,11 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
+.assembly extern System.Memory
+{
+  .publickeytoken = (CC 7B 13 FF CD 2D DD 51 )                         // .{...-.Q
+  .ver 4:0:1:0
+}
 .assembly CS73_StackAllocInitializers
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
@@ -1248,6 +1253,106 @@
     IL_000b:  ret
   } // end of method CS73_StackAllocInitializers::UsePointer
 
+  .method public hidebysig instance string 
+          GetSpan() cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  2
+    .locals init (valuetype [System.Memory]System.Span`1<int32> V_0,
+             int32 V_1,
+             string V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CS73_StackAllocInitializers::GetSize()
+    IL_0007:  stloc.1
+    IL_0008:  ldloc.1
+    IL_0009:  conv.u
+    IL_000a:  ldc.i4.4
+    IL_000b:  mul.ovf.un
+    IL_000c:  localloc
+    IL_000e:  ldloc.1
+    IL_000f:  newobj     instance void valuetype [System.Memory]System.Span`1<int32>::.ctor(void*,
+                                                                                            int32)
+    IL_0014:  stloc.0
+    IL_0015:  ldarg.0
+    IL_0016:  ldloc.0
+    IL_0017:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CS73_StackAllocInitializers::UseSpan(valuetype [System.Memory]System.Span`1<int32>)
+    IL_001c:  stloc.2
+    IL_001d:  br.s       IL_001f
+
+    IL_001f:  ldloc.2
+    IL_0020:  ret
+  } // end of method CS73_StackAllocInitializers::GetSpan
+
+  .method public hidebysig instance string 
+          GetSpan2() cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  4
+    .locals init (valuetype [System.Memory]System.Span`1<int32> V_0,
+             string V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.s   16
+    IL_0003:  conv.u
+    IL_0004:  localloc
+    IL_0006:  dup
+    IL_0007:  ldc.i4.1
+    IL_0008:  stind.i4
+    IL_0009:  dup
+    IL_000a:  ldc.i4.4
+    IL_000b:  add
+    IL_000c:  ldc.i4.2
+    IL_000d:  stind.i4
+    IL_000e:  dup
+    IL_000f:  ldc.i4.2
+    IL_0010:  conv.i
+    IL_0011:  ldc.i4.4
+    IL_0012:  mul
+    IL_0013:  add
+    IL_0014:  ldc.i4.3
+    IL_0015:  stind.i4
+    IL_0016:  dup
+    IL_0017:  ldc.i4.3
+    IL_0018:  conv.i
+    IL_0019:  ldc.i4.4
+    IL_001a:  mul
+    IL_001b:  add
+    IL_001c:  ldc.i4.4
+    IL_001d:  stind.i4
+    IL_001e:  ldc.i4.4
+    IL_001f:  newobj     instance void valuetype [System.Memory]System.Span`1<int32>::.ctor(void*,
+                                                                                            int32)
+    IL_0024:  stloc.0
+    IL_0025:  ldarg.0
+    IL_0026:  ldloc.0
+    IL_0027:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.CS73_StackAllocInitializers::UseSpan(valuetype [System.Memory]System.Span`1<int32>)
+    IL_002c:  stloc.1
+    IL_002d:  br.s       IL_002f
+
+    IL_002f:  ldloc.1
+    IL_0030:  ret
+  } // end of method CS73_StackAllocInitializers::GetSpan2
+
+  .method public hidebysig instance string 
+          UseSpan(valuetype [System.Memory]System.Span`1<int32> span) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method CS73_StackAllocInitializers::UseSpan
+
+  .method public hidebysig instance int32 
+          GetSize() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method CS73_StackAllocInitializers::GetSize
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1279,20 +1384,21 @@
     .size 55
   } // end of class '__StaticArrayInitTypeSize=55'
 
-  .field static assembly initonly int32 '063AAB58782881806084E1A944FBCEE5F5815405' at I_00003174
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=3' '7037807198C22A7D2B0807371D763779A84FDFCF' at I_0000317C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=55' F623596D706F878F1D12C19353913A8E96904144 at I_00003184
+  .field static assembly initonly int32 '063AAB58782881806084E1A944FBCEE5F5815405' at I_000032F0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=3' '7037807198C22A7D2B0807371D763779A84FDFCF' at I_000032F8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=55' F623596D706F878F1D12C19353913A8E96904144 at I_00003300
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00003174 = bytearray (
+.data cil I_000032F0 = bytearray (
                  00 01 00 01) 
-.data cil I_0000317C = bytearray (
+.data cil I_000032F4 = int8[4]
+.data cil I_000032F8 = bytearray (
                  01 02 03) 
-.data cil I_0000317F = int8[1]
-.data cil I_00003184 = bytearray (
+.data cil I_000032FB = int8[5]
+.data cil I_00003300 = bytearray (
                  01 02 03 05 07 0B 0D 11 13 17 1D 1F 25 29 2B 2F  // ............%)+/
                  35 3B 3D 43 47 49 4F 53 59 61 65 67 6B 6D 71 7F  // 5;=CGIOSYaegkmq.
                  83 89 8B 95 97 9D A3 A7 AD B3 B5 BF C1 C5 C7 D3

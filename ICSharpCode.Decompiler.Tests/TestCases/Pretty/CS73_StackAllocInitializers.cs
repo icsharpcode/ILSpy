@@ -361,5 +361,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return ptr->ToString();
 		}
+
+		public string GetSpan()
+		{
+			Span<int> span = stackalloc int[GetSize()];
+			return UseSpan(span);
+		}
+
+		public string GetSpan2()
+		{
+			Span<int> span = stackalloc int[4] {
+				1,
+				2,
+				3,
+				4
+			};
+			return UseSpan(span);
+		}
+
+		public string UseSpan(Span<int> span)
+		{
+			throw new NotImplementedException();
+		}
+
+		public int GetSize()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
