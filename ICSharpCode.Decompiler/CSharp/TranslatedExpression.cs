@@ -348,9 +348,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 			if (targetType.Kind == TypeKind.ByReference) {
+				var elementType = ((ByReferenceType)targetType).ElementType;
+				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(i => i.OpCode == OpCode.AddressOf)
+					&& thisDir.Expression.GetResolveResult()?.Type.GetStackType() == elementType.GetStackType()) {
+					// When converting a reference to a temporary to a different type,
+					// apply the cast to the temporary instead.
+					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
+					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
+						.WithILInstruction(this.ILInstructions)
+						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, false));
+				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
-				var elementType = ((ByReferenceType)targetType).ElementType;
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				Expression expr;
 				ResolveResult elementRR;
