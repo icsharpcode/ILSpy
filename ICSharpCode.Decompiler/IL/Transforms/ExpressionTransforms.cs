@@ -311,14 +311,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (newObj.Arguments.Count != 2 || type.TypeArguments.Count != 1)
 				return false;
-			if (newObj.Arguments[0] is LocAlloc) {
+			IType elementType = type.TypeArguments[0];
+			if (newObj.Arguments[0].MatchLocAlloc(out var sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])) {
 				locallocSpan = new LocAllocSpan(newObj.Arguments[1], type);
 				return true;
 			}
 			if (newObj.Arguments[0] is Block initializer && initializer.Kind == BlockKind.StackAllocInitializer) {
 				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
 					return false;
-				if (!value.MatchLocAlloc(out _))
+				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
 					return false;
 				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
 				foreach (var load in initializerVariable.LoadInstructions.ToArray()) {
@@ -336,6 +337,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 			return false;
+		}
+
+		bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
+		{
+			var pointerType = new PointerType(elementType);
+			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType, checkForOverflow: true, unwrapZeroExtension: true);
+			if (!elementCountInstr.Match(elementCountInstr2).Success)
+				return false;
+			return true;
 		}
 
 		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
