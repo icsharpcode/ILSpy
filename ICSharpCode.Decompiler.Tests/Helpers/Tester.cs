@@ -241,9 +241,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
-				string systemMemoryDestPath = Path.Combine(Path.GetDirectoryName(results.PathToAssembly), Path.GetFileName(typeof(Span<>).Assembly.Location));
-				if (!File.Exists(systemMemoryDestPath))
-					File.Copy(typeof(Span<>).Assembly.Location, systemMemoryDestPath);
 				var emitResult = compilation.Emit(results.PathToAssembly);
 				if (!emitResult.Success) {
 					StringBuilder b = new StringBuilder("Compiler error:");
@@ -406,6 +403,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var module = new PEFile(assemblyFileName, file, PEStreamOptions.PrefetchEntireImage);
 				var resolver = new UniversalAssemblyResolver(assemblyFileName, false,
 					module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+				resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(Span<>).Assembly.Location));
 				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings);
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAtttributes());
