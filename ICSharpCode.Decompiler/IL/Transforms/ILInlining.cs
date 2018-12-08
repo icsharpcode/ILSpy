@@ -343,6 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (parent is ILiftableInstruction liftable && liftable.IsLifted) {
 				return true; // inline into lifted operators
 			}
+			// decide based on the new parent into which we are inlining:
 			switch (parent.OpCode) {
 				case OpCode.NullCoalescingInstruction:
 					if (NullableType.IsNullable(v.Type))
@@ -360,7 +361,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true; // inline into dynamic compound assignments
 					break;
 			}
-			// decide based on the target into which we are inlining
+			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {
 				case OpCode.Leave:
 				case OpCode.YieldReturn:
