@@ -1710,9 +1710,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(memberDeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target, memberDeclaringType);
-					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref && translatedTarget.Type.GetStackType().IsIntegerType()) {
-						// when accessing members on value types, ensure we use a reference and not a pointer
-						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
+					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType) == StackType.Ref) {
+						// When accessing members on value types, ensure we use a reference of the correct type,
+						// and not a pointer or a reference to a different type (issue #1333)
+						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, memberDeclaringType))) {
+							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(memberDeclaringType), this);
+						}
 					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						// (ref x).member => x.member
@@ -2470,8 +2473,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
+			IType targetTypeHint = null;
+			if (context.TypeHint is ByReferenceType brt) {
+				targetTypeHint = brt.ElementType;
+			} else if (context.TypeHint is PointerType pt) {
+				targetTypeHint = pt.ElementType;
+			}
 			// HACK: this is only correct if the argument is an R-value; otherwise we're missing the copy to the temporary
-			var value = Translate(inst.Value);
+			var value = Translate(inst.Value, targetTypeHint);
 			return new DirectionExpression(FieldDirection.Ref, value)
 				.WithILInstruction(inst)
 				.WithRR(new ByReferenceResolveResult(value.ResolveResult, false));

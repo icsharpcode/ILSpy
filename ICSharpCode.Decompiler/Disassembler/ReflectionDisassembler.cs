@@ -1150,9 +1150,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteAttributes(module, propertyDefinition.GetCustomAttributes());
 			WriteNestedMethod(".get", module, accessors.Getter);
 			WriteNestedMethod(".set", module, accessors.Setter);
-			/*foreach (var method in property.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 
@@ -1213,9 +1213,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteNestedMethod(".addon", module, accessors.Adder);
 			WriteNestedMethod(".removeon", module, accessors.Remover);
 			WriteNestedMethod(".fire", module, accessors.Raiser);
-			/*foreach (var method in ev.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 		#endregion

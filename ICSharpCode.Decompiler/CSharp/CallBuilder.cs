@@ -1185,6 +1185,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
 		{
+			ILInstruction thisArg = inst.Arguments[0];
 			ILInstruction func = inst.Arguments[1];
 			IMethod method;
 			switch (func.OpCode) {
@@ -1203,16 +1204,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool requireTarget;
 			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
 				targetType = method.Parameters[0].Type;
-				target = expressionBuilder.Translate(inst.Arguments[0], targetType);
-				target = ExpressionBuilder.UnwrapBoxingConversion(target);
+				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox) {
+					targetType = ((ByReferenceType)targetType).ElementType;
+					thisArg = thisArgBox.Argument;
+				}
+				target = expressionBuilder.Translate(thisArg, targetType);
 				requireTarget = true;
 			} else {
 				targetType = method.DeclaringType;
-				target = expressionBuilder.TranslateTarget(inst.Arguments[0],
+				if (targetType.IsReferenceType == false && thisArg is Box thisArgBox) {
+					// Normal struct instance method calls (which TranslateTarget is meant for) expect a 'ref T',
+					// but delegate construction uses a 'box T'.
+					if (thisArgBox.Argument is LdObj ldobj) {
+						thisArg = ldobj.Target;
+					} else {
+						thisArg = new AddressOf(thisArgBox.Argument);
+					}
+				}
+				target = expressionBuilder.TranslateTarget(thisArg,
 					nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: method.DeclaringType);
-				target = ExpressionBuilder.UnwrapBoxingConversion(target);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
 			}
