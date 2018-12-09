@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler
 		public IModule Module { get; }
 
 		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
-			: base(message ?? "Error decompiling " + decompiledEntity.FullName + Environment.NewLine, innerException)
+			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
 		{
 			this.Module = module;
 			this.DecompiledEntity = decompiledEntity;
