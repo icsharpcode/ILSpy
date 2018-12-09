@@ -425,17 +425,21 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DoDecompileModuleAndAssemblyAttributes(DecompileRun decompileRun, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
-				var astBuilder = CreateAstBuilder(decompilationContext);
-				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
-				attrSection.AttributeTarget = "assembly";
-				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
-			}
-			foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
-				var astBuilder = CreateAstBuilder(decompilationContext);
-				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
-				attrSection.AttributeTarget = "module";
-				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+			try {
+				foreach (var a in typeSystem.MainModule.GetAssemblyAttributes()) {
+					var astBuilder = CreateAstBuilder(decompilationContext);
+					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
+					attrSection.AttributeTarget = "assembly";
+					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+				}
+				foreach (var a in typeSystem.MainModule.GetModuleAttributes()) {
+					var astBuilder = CreateAstBuilder(decompilationContext);
+					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
+					attrSection.AttributeTarget = "module";
+					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+				}
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, null, innerException, "Error decompiling module and assembly attributes of " + module.AssemblyName);
 			}
 		}
 
@@ -923,82 +927,86 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
-			var typeDecl = entityDecl as TypeDeclaration;
-			if (typeDecl == null) {
-				// e.g. DelegateDeclaration
-				return entityDecl;
-			}
-			foreach (var type in typeDef.NestedTypes) {
-				if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings)) {
-					var nestedType = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
-					SetNewModifier(nestedType);
-					typeDecl.Members.Add(nestedType);
+			try {
+				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+				var typeDecl = entityDecl as TypeDeclaration;
+				if (typeDecl == null) {
+					// e.g. DelegateDeclaration
+					return entityDecl;
 				}
-			}
-			foreach (var field in typeDef.Fields) {
-				if (!field.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, field.MetadataToken, settings)) {
-					var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
-					typeDecl.Members.Add(memberDecl);
-				}
-			}
-			foreach (var property in typeDef.Properties) {
-				if (!property.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, property.MetadataToken, settings)) {
-					var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
-					typeDecl.Members.Add(propDecl);
-				}
-			}
-			foreach (var @event in typeDef.Events) {
-				if (!@event.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, @event.MetadataToken, settings)) {
-					var eventDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
-					typeDecl.Members.Add(eventDecl);
-				}
-			}
-			foreach (var method in typeDef.Methods) {
-				if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings)) {
-					var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
-					typeDecl.Members.Add(memberDecl);
-					typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, method, typeSystemAstBuilder));
-				}
-			}
-			if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
-				// Remove the [DefaultMember] attribute if the class contains indexers
-				RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
-			}
-			if (settings.IntroduceRefModifiersOnStructs) {
-				if (FindAttribute(typeDecl, KnownAttribute.Obsolete, out var attr)) {
-					if (obsoleteAttributePattern.IsMatch(attr)) {
-						if (attr.Parent is AttributeSection section && section.Attributes.Count == 1)
-							section.Remove();
-						else
-							attr.Remove();
+				foreach (var type in typeDef.NestedTypes) {
+					if (!type.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, type.MetadataToken, settings)) {
+						var nestedType = DoDecompile(type, decompileRun, decompilationContext.WithCurrentTypeDefinition(type));
+						SetNewModifier(nestedType);
+						typeDecl.Members.Add(nestedType);
 					}
 				}
-			}
-			if (typeDecl.ClassType == ClassType.Enum) {
-				switch (DetectBestEnumValueDisplayMode(typeDef, module.PEFile)) {
-					case EnumValueDisplayMode.FirstOnly:
-						foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>().Skip(1)) {
-							enumMember.Initializer = null;
-						}
-						break;
-					case EnumValueDisplayMode.None:
-						foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>()) {
-							enumMember.Initializer = null;
-							if (enumMember.GetSymbol() is IField f && f.ConstantValue == null) {
-								typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
-							}
-						}
-						break;
-					case EnumValueDisplayMode.All:
-						// nothing needs to be changed.
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
+				foreach (var field in typeDef.Fields) {
+					if (!field.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, field.MetadataToken, settings)) {
+						var memberDecl = DoDecompile(field, decompileRun, decompilationContext.WithCurrentMember(field));
+						typeDecl.Members.Add(memberDecl);
+					}
 				}
+				foreach (var property in typeDef.Properties) {
+					if (!property.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, property.MetadataToken, settings)) {
+						var propDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property));
+						typeDecl.Members.Add(propDecl);
+					}
+				}
+				foreach (var @event in typeDef.Events) {
+					if (!@event.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, @event.MetadataToken, settings)) {
+						var eventDecl = DoDecompile(@event, decompileRun, decompilationContext.WithCurrentMember(@event));
+						typeDecl.Members.Add(eventDecl);
+					}
+				}
+				foreach (var method in typeDef.Methods) {
+					if (!method.MetadataToken.IsNil && !MemberIsHidden(module.PEFile, method.MetadataToken, settings)) {
+						var memberDecl = DoDecompile(method, decompileRun, decompilationContext.WithCurrentMember(method));
+						typeDecl.Members.Add(memberDecl);
+						typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, method, typeSystemAstBuilder));
+					}
+				}
+				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
+					// Remove the [DefaultMember] attribute if the class contains indexers
+					RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);
+				}
+				if (settings.IntroduceRefModifiersOnStructs) {
+					if (FindAttribute(typeDecl, KnownAttribute.Obsolete, out var attr)) {
+						if (obsoleteAttributePattern.IsMatch(attr)) {
+							if (attr.Parent is AttributeSection section && section.Attributes.Count == 1)
+								section.Remove();
+							else
+								attr.Remove();
+						}
+					}
+				}
+				if (typeDecl.ClassType == ClassType.Enum) {
+					switch (DetectBestEnumValueDisplayMode(typeDef, module.PEFile)) {
+						case EnumValueDisplayMode.FirstOnly:
+							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>().Skip(1)) {
+								enumMember.Initializer = null;
+							}
+							break;
+						case EnumValueDisplayMode.None:
+							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>()) {
+								enumMember.Initializer = null;
+								if (enumMember.GetSymbol() is IField f && f.ConstantValue == null) {
+									typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
+								}
+							}
+							break;
+						case EnumValueDisplayMode.All:
+							// nothing needs to be changed.
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+				return typeDecl;
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, typeDef, innerException);
 			}
-			return typeDecl;
 		}
 
 		enum EnumValueDisplayMode
@@ -1189,8 +1197,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(entityDecl, KnownAttribute.AsyncStateMachine);
 					RemoveAttribute(entityDecl, KnownAttribute.DebuggerStepThrough);
 				}
-			} catch (Exception innerException) when (!(innerException is OperationCanceledException)) {
-				throw new DecompilerException(module.PEFile, (MethodDefinitionHandle)method.MetadataToken, innerException);
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, method, innerException);
 			}
 		}
 
@@ -1241,51 +1249,55 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IField field, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
-				var enumDec = new EnumMemberDeclaration { Name = field.Name };
-				if (field.ConstantValue != null) {
-					long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
-					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
-					if (enumDec.Initializer is PrimitiveExpression primitive
-						&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
-							|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {
-						primitive.SetValue(initValue, $"0x{initValue:X}");
+			try {
+				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
+					var enumDec = new EnumMemberDeclaration { Name = field.Name };
+					if (field.ConstantValue != null) {
+						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+						if (enumDec.Initializer is PrimitiveExpression primitive
+							&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
+								|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {
+							primitive.SetValue(initValue, $"0x{initValue:X}");
+						}
 					}
+					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
+					enumDec.AddAnnotation(new MemberResolveResult(null, field));
+					return enumDec;
 				}
-				enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
-				enumDec.AddAnnotation(new MemberResolveResult(null, field));
-				return enumDec;
-			}
-			typeSystemAstBuilder.UseSpecialConstants = !field.DeclaringType.Equals(field.ReturnType);
-			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
-			SetNewModifier(fieldDecl);
-			if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {
-				var fixedFieldDecl = new FixedFieldDeclaration();
-				fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
-				fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
-				fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
-				fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
-				fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
-				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
-				RemoveAttribute(fixedFieldDecl, KnownAttribute.FixedBuffer);
-				return fixedFieldDecl;
-			}
-			var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
-			if (fieldDefinition.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
-				// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
-				// .data I_X = int32(123)
-				// .field public static int32 _x at I_X
-				string message;
-				try {
-					var initVal = fieldDefinition.GetInitialValue(module.PEFile.Reader, TypeSystem);
-					message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
-				} catch (BadImageFormatException ex) {
-					message = ex.Message;
+				typeSystemAstBuilder.UseSpecialConstants = !field.DeclaringType.Equals(field.ReturnType);
+				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
+				SetNewModifier(fieldDecl);
+				if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {
+					var fixedFieldDecl = new FixedFieldDeclaration();
+					fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
+					fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
+					fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
+					fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+					fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
+					fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
+					RemoveAttribute(fixedFieldDecl, KnownAttribute.FixedBuffer);
+					return fixedFieldDecl;
 				}
-				((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
+				var fieldDefinition = metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
+				if (fieldDefinition.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
+					// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
+					// .data I_X = int32(123)
+					// .field public static int32 _x at I_X
+					string message;
+					try {
+						var initVal = fieldDefinition.GetInitialValue(module.PEFile.Reader, TypeSystem);
+						message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(initVal.ReadBytes(initVal.RemainingBytes)).Replace('-', ' '));
+					} catch (BadImageFormatException ex) {
+						message = ex.Message;
+					}
+					((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
+				}
+				return fieldDecl;
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, field, innerException);
 			}
-			return fieldDecl;
 		}
 
 		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
@@ -1306,55 +1318,63 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
-			if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
-				int lastDot = property.Name.LastIndexOf('.');
-				propertyDecl.Name = property.Name.Substring(lastDot + 1);
+			try {
+				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
+				if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
+					int lastDot = property.Name.LastIndexOf('.');
+					propertyDecl.Name = property.Name.Substring(lastDot + 1);
+				}
+				FixParameterNames(propertyDecl);
+				Accessor getter, setter;
+				if (propertyDecl is PropertyDeclaration) {
+					getter = ((PropertyDeclaration)propertyDecl).Getter;
+					setter = ((PropertyDeclaration)propertyDecl).Setter;
+				} else {
+					getter = ((IndexerDeclaration)propertyDecl).Getter;
+					setter = ((IndexerDeclaration)propertyDecl).Setter;
+				}
+				if (property.CanGet && property.Getter.HasBody) {
+					DecompileBody(property.Getter, getter, decompileRun, decompilationContext);
+				}
+				if (property.CanSet && property.Setter.HasBody) {
+					DecompileBody(property.Setter, setter, decompileRun, decompilationContext);
+				}
+				var accessorHandle = (MethodDefinitionHandle)(property.Getter ?? property.Setter).MetadataToken;
+				var accessor = metadata.GetMethodDefinition(accessorHandle);
+				if (!accessorHandle.GetMethodImplementations(metadata).Any() && accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot))
+					SetNewModifier(propertyDecl);
+				return propertyDecl;
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, property, innerException);
 			}
-			FixParameterNames(propertyDecl);
-			Accessor getter, setter;
-			if (propertyDecl is PropertyDeclaration) {
-				getter = ((PropertyDeclaration)propertyDecl).Getter;
-				setter = ((PropertyDeclaration)propertyDecl).Setter;
-			} else {
-				getter = ((IndexerDeclaration)propertyDecl).Getter;
-				setter = ((IndexerDeclaration)propertyDecl).Setter;
-			}
-			if (property.CanGet && property.Getter.HasBody) {
-				DecompileBody(property.Getter, getter, decompileRun, decompilationContext);
-			}
-			if (property.CanSet && property.Setter.HasBody) {
-				DecompileBody(property.Setter, setter, decompileRun, decompilationContext);
-			}
-			var accessorHandle = (MethodDefinitionHandle)(property.Getter ?? property.Setter).MetadataToken;
-			var accessor = metadata.GetMethodDefinition(accessorHandle);
-			if (!accessorHandle.GetMethodImplementations(metadata).Any() && accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot))
-				SetNewModifier(propertyDecl);
-			return propertyDecl;
 		}
 
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
-			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
-			var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
-			int lastDot = ev.Name.LastIndexOf('.');
-			if (ev.IsExplicitInterfaceImplementation) {
-				eventDecl.Name = ev.Name.Substring(lastDot + 1);
+			try {
+				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
+				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
+				int lastDot = ev.Name.LastIndexOf('.');
+				if (ev.IsExplicitInterfaceImplementation) {
+					eventDecl.Name = ev.Name.Substring(lastDot + 1);
+				}
+				if (ev.CanAdd && ev.AddAccessor.HasBody) {
+					DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
+				}
+				if (ev.CanRemove && ev.RemoveAccessor.HasBody) {
+					DecompileBody(ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompileRun, decompilationContext);
+				}
+				var accessor = metadata.GetMethodDefinition((MethodDefinitionHandle)(ev.AddAccessor ?? ev.RemoveAccessor).MetadataToken);
+				if (accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot)) {
+					SetNewModifier(eventDecl);
+				}
+				return eventDecl;
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException)) {
+				throw new DecompilerException(module, ev, innerException);
 			}
-			if (ev.CanAdd && ev.AddAccessor.HasBody) {
-				DecompileBody(ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompileRun, decompilationContext);
-			}
-			if (ev.CanRemove && ev.RemoveAccessor.HasBody) {
-				DecompileBody(ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompileRun, decompilationContext);
-			}
-			var accessor = metadata.GetMethodDefinition((MethodDefinitionHandle)(ev.AddAccessor ?? ev.RemoveAccessor).MetadataToken);
-			if (accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot)) {
-				SetNewModifier(eventDecl);
-			}
-			return eventDecl;
 		}
 
 		#region Sequence Points
