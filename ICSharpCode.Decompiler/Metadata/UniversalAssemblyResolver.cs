@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 
@@ -30,7 +31,8 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		DotNetCorePathFinder dotNetCorePathFinder;
 		readonly bool throwOnError;
-		readonly PEStreamOptions options;
+		readonly PEStreamOptions streamOptions;
+		readonly MetadataReaderOptions metadataOptions; 
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
 		readonly List<string> directories = new List<string>();
@@ -80,9 +82,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		Version targetFrameworkVersion;
 
 		public UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError, string targetFramework,
-			PEStreamOptions options = PEStreamOptions.Default)
+			PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
-			this.options = options;
+			this.streamOptions = streamOptions;
+			this.metadataOptions = metadataOptions;
 			this.targetFramework = targetFramework ?? string.Empty;
 			(targetFrameworkIdentifier, targetFrameworkVersion) = ParseTargetFramework(this.targetFramework);
 			this.mainAssemblyFileName = mainAssemblyFileName;
@@ -147,7 +150,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), options);
+			return new PEFile(file, new FileStream(file, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
 		}
 
 		public PEFile ResolveModule(PEFile mainModule, string moduleName)
@@ -159,7 +162,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw new Exception($"Module {moduleName} could not be found!");
 				return null;
 			}
-			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), options);
+			return new PEFile(moduleFileName, new FileStream(moduleFileName, FileMode.Open, FileAccess.Read), streamOptions, metadataOptions);
 		}
 
 		public string FindAssemblyFile(IAssemblyReference name)

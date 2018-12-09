@@ -923,6 +923,18 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool applyWindowsRuntimeProjections = true;
+
+		public bool ApplyWindowsRuntimeProjections {
+			get { return applyWindowsRuntimeProjections; }
+			set {
+				if (applyWindowsRuntimeProjections != value) {
+					applyWindowsRuntimeProjections = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		CSharpFormattingOptions csharpFormattingOptions;

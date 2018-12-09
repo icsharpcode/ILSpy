@@ -347,7 +347,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new PEFile(
 				fileName,
 				new FileStream(fileName, FileMode.Open, FileAccess.Read),
-				options: settings.LoadInMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default
+				streamOptions: settings.LoadInMemory ? PEStreamOptions.PrefetchEntireImage : PEStreamOptions.Default,
+				metadataOptions: settings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None
 			);
 		}
 
@@ -356,7 +357,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var file = LoadPEFile(fileName, settings);
 			var resolver = new UniversalAssemblyResolver(fileName, settings.ThrowOnAssemblyResolveErrors,
 				file.Reader.DetectTargetFrameworkId(),
-				settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default);
+				settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default,
+				settings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			return new DecompilerTypeSystem(file, resolver);
 		}
 
