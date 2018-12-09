@@ -714,10 +714,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
-			if (parameter.ConstantValue == null)
-				return arg.ResolveResult.ConstantValue == null;
-			arg = arg.ConvertTo(parameter.Type, expressionBuilder, allowImplicitConversion: true);
-			return parameter.ConstantValue.Equals(arg.ResolveResult.ConstantValue);
+			return object.Equals(parameter.ConstantValue, arg.ResolveResult.ConstantValue);
 		}
 
 		[Flags]

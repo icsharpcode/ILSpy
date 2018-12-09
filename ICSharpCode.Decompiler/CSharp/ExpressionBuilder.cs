@@ -2397,9 +2397,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeHint = NullableType.GetUnderlyingType(typeHint);
 			// Convert to type hint, if this is possible without loss of accuracy
 			if (typeHint.IsKnownType(KnownTypeCode.Boolean)) {
-				if (object.Equals(rr.ConstantValue, 0)) {
+				if (object.Equals(rr.ConstantValue, 0) || object.Equals(rr.ConstantValue, 0u)) {
 					rr = new ConstantResolveResult(typeHint, false);
-				} else if (object.Equals(rr.ConstantValue, 1)) {
+				} else if (object.Equals(rr.ConstantValue, 1) || object.Equals(rr.ConstantValue, 1u)) {
 					rr = new ConstantResolveResult(typeHint, true);
 				}
 			} else if (typeHint.Kind == TypeKind.Enum || typeHint.IsKnownType(KnownTypeCode.Char) || typeHint.IsCSharpSmallIntegerType()) {
