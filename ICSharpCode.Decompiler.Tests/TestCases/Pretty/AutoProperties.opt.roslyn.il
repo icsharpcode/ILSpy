@@ -47,6 +47,8 @@
   .field private int32 '<PropertyWithAttributeOnBackingField>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .custom instance void [mscorlib]System.ObsoleteAttribute::.ctor(string) = ( 01 00 05 46 69 65 6C 64 00 00 )                   // ...Field..
+  .field private initonly int32 '<issue1319>k__BackingField'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig specialname instance int32 
           get_A() cil managed
   {
@@ -135,10 +137,21 @@
     IL_0007:  ret
   } // end of method AutoProperties::set_PropertyWithAttributeOnBackingField
 
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
+  .method public hidebysig specialname instance int32 
+          get_issue1319() cil managed
   {
-    // Code size       21 (0x15)
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::'<issue1319>k__BackingField'
+    IL_0006:  ret
+  } // end of method AutoProperties::get_issue1319
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(int32 issue1319) cil managed
+  {
+    // Code size       28 (0x1c)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldc.i4.1
@@ -148,7 +161,10 @@
     IL_0009:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::'<B>k__BackingField'
     IL_000e:  ldarg.0
     IL_000f:  call       instance void [mscorlib]System.Object::.ctor()
-    IL_0014:  ret
+    IL_0014:  ldarg.0
+    IL_0015:  ldarg.1
+    IL_0016:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::'<issue1319>k__BackingField'
+    IL_001b:  ret
   } // end of method AutoProperties::.ctor
 
   .method private hidebysig specialname rtspecialname static 
@@ -187,6 +203,10 @@
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::get_PropertyWithAttributeOnBackingField()
     .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::set_PropertyWithAttributeOnBackingField(int32)
   } // end of property AutoProperties::PropertyWithAttributeOnBackingField
+  .property instance int32 issue1319()
+  {
+    .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties::get_issue1319()
+  } // end of property AutoProperties::issue1319
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.AutoProperties
 
 

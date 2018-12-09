@@ -219,14 +219,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			if (extraLoad) {
+				inst.ILRange = instructions[i - 2].ILRange;
 				instructions[i - 2].ReplaceWith(inst);
 				instructions.RemoveRange(i - 1, 3);
 				i -= 2;
 			} else {
 				if (keepAssignmentBefore) {
+					inst.ILRange = instructions[i].ILRange;
 					instructions[i].ReplaceWith(inst);
 					instructions.RemoveAt(i + 1);
 				} else {
+					inst.ILRange = instructions[i - 1].ILRange;
 					instructions[i - 1].ReplaceWith(inst);
 					instructions.RemoveRange(i, 2);
 					i--;
@@ -304,7 +307,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
-
+			
+			inst.ILRange = instructions[i - 1].ILRange;
 			instructions[i].ReplaceWith(inst);
 			instructions.RemoveAt(i + 1);
 			instructions.RemoveAt(i - 1);
@@ -493,10 +497,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructions[i + 1].ReplaceWith(inst);
 			if (keepAssignmentBefore) {
 				// delete if (comp(ldloc switchValueVar == ldnull))
+				inst.ILRange = instructions[i].ILRange;
 				instructions.RemoveAt(i);
 				i--;
 			} else {
 				// delete both the if and the assignment before
+				inst.ILRange = instructions[i - 1].ILRange;
 				instructions.RemoveRange(i - 1, 2);
 				i -= 2;
 			}
@@ -711,6 +717,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
+			inst.ILRange = block.Instructions[i].ILRange;
 			block.Instructions[i].ReplaceWith(inst);
 			block.Instructions.RemoveRange(i + 1, 3);
 			info.Transformed = true;
@@ -808,9 +815,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
 			instructions[i].ReplaceWith(newSwitch);
 			if (keepAssignmentBefore) {
+				newSwitch.ILRange = instructions[i - 1].ILRange;
 				instructions.RemoveAt(i - 1);
 				i--;
 			} else {
+				newSwitch.ILRange = instructions[i - 2].ILRange;
 				instructions.RemoveRange(i - 2, 2);
 				i -= 2;
 			}

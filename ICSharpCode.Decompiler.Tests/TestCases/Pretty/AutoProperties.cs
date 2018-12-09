@@ -29,5 +29,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			get;
 			set;
 		}
+
+		public int issue1319 {
+			get;
+		}
+
+		public AutoProperties(int issue1319)
+		{
+			this.issue1319 = issue1319;
+		}
 	}
 }

@@ -34,24 +34,18 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerException : Exception, ISerializable
 	{
-		public string AssemblyName => Module.FullName;
+		public string AssemblyName => Module.AssemblyName;
 
-		public string FileName => Module.FileName;
+		public string FileName => Module.PEFile.FileName;
 
-		public MethodDefinitionHandle DecompiledMethod { get; }
-		public Metadata.PEFile Module { get; }
+		public IEntity DecompiledEntity { get; }
+		public IModule Module { get; }
 
-		public DecompilerException(Metadata.PEFile module, MethodDefinitionHandle decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + GetFullName(decompiledMethod, module.Metadata) + Environment.NewLine, innerException)
+		public DecompilerException(MetadataModule module, IEntity decompiledEntity, Exception innerException, string message = null)
+			: base((message ?? "Error decompiling " + decompiledEntity?.FullName) + Environment.NewLine, innerException)
 		{
 			this.Module = module;
-			this.DecompiledMethod = decompiledMethod;
-		}
-
-		private static string GetFullName(MethodDefinitionHandle decompiledMethod, MetadataReader metadata)
-		{
-			var method = metadata.GetMethodDefinition(decompiledMethod);
-			return $"{method.GetDeclaringType().GetFullTypeName(metadata).ToString()}.{metadata.GetString(method.Name)}";
+			this.DecompiledEntity = decompiledEntity;
 		}
 
 		// This constructor is needed for serialization.

@@ -103,5 +103,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine(new int[checked(a + b)]);
 		}
+
+		public short Unbox(TypeCode c, object b)
+		{
+			checked {
+				switch (c) {
+					case TypeCode.Int32:
+						return (short)((Box<int>)b).Value;
+					case TypeCode.UInt32:
+						return (short)((Box<uint>)b).Value;
+					case TypeCode.Double: {
+						float num = (float)((Box<double>)b).Value;
+						Console.WriteLine(num);
+						return (short)num;
+					}
+					default:
+						throw new Exception();
+				}
+			}
+		}
+	}
+
+	internal class Box<T>
+	{
+		public readonly T Value;
 	}
 }

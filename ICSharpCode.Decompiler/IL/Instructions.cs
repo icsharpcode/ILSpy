@@ -141,6 +141,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
+		/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+		LocAllocSpan,
 		/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
 		Cpblk,
 		/// <summary>memset(address, value, size)</summary>
@@ -3188,6 +3190,60 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LocAlloc;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+	public sealed partial class LocAllocSpan : UnaryInstruction
+	{
+		public LocAllocSpan(ILInstruction argument, IType type) : base(OpCode.LocAllocSpan, argument)
+		{
+			this.type = type;
+		}
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLocAllocSpan(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LocAllocSpan;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -6497,6 +6553,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLocAllocSpan(LocAllocSpan inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitCpblk(Cpblk inst)
 		{
 			Default(inst);
@@ -6872,6 +6932,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLocAlloc(LocAlloc inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst)
 		{
 			return Default(inst);
 		}
@@ -7253,6 +7317,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitCpblk(Cpblk inst, C context)
 		{
 			return Default(inst, context);
@@ -7470,6 +7538,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
+			"localloc.span",
 			"cpblk",
 			"initblk",
 			"ldflda",
@@ -7814,6 +7883,18 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLocAllocSpan(out ILInstruction argument, out IType type)
+		{
+			var inst = this as LocAllocSpan;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 		public bool MatchCpblk(out ILInstruction destAddress, out ILInstruction sourceAddress, out ILInstruction size)

@@ -544,6 +544,53 @@
     IL_0004:  ret
   } // end of method TypeAnalysisTests::CompareStringWithNull
 
+  .method public hidebysig instance bool 
+          CompareType(class [mscorlib]System.Type a,
+                      class [mscorlib]System.Type b) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  call       bool [mscorlib]System.Type::op_Equality(class [mscorlib]System.Type,
+                                                                 class [mscorlib]System.Type)
+    IL_0007:  ret
+  } // end of method TypeAnalysisTests::CompareType
+
+  .method public hidebysig instance bool 
+          CompareTypeByReference(class [mscorlib]System.Type a,
+                                 class [mscorlib]System.Type b) cil managed
+  {
+    // Code size       5 (0x5)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ceq
+    IL_0004:  ret
+  } // end of method TypeAnalysisTests::CompareTypeByReference
+
+  .method public hidebysig instance bool 
+          CompareTypeWithNull(class [mscorlib]System.Type t) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldnull
+    IL_0002:  call       bool [mscorlib]System.Type::op_Equality(class [mscorlib]System.Type,
+                                                                 class [mscorlib]System.Type)
+    IL_0007:  ret
+  } // end of method TypeAnalysisTests::CompareTypeWithNull
+
+  .method public hidebysig instance class [mscorlib]System.Attribute 
+          CallExtensionMethodViaBaseClass(class [mscorlib]System.Type 'type') cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  call       !!0 [mscorlib]System.Reflection.CustomAttributeExtensions::GetCustomAttribute<class [mscorlib]System.AttributeUsageAttribute>(class [mscorlib]System.Reflection.MemberInfo)
+    IL_0006:  ret
+  } // end of method TypeAnalysisTests::CallExtensionMethodViaBaseClass
+
   .method public hidebysig instance valuetype [mscorlib]System.Decimal 
           ImplicitConversionToDecimal(uint8 v) cil managed
   {

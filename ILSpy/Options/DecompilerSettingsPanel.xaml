@@ -16,5 +16,6 @@
 		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
 		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
 		<CheckBox IsChecked="{Binding ExpandMemberDefinitions}">Expand member definitions after decompilation</CheckBox>
+		<CheckBox IsChecked="{Binding ApplyWindowsRuntimeProjections}">Apply Windows Runtime projections on loaded assemblies</CheckBox>
 	</StackPanel>
 </UserControl>
