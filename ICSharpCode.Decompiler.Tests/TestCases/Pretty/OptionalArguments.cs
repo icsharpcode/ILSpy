@@ -45,6 +45,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			Decimal();
 			Decimal(5m);
+
+#if CS72
+			NamedArgument(flag: true);
+			NamedArgument(flag: false);
+#endif
 		}
 
 		private void Conflicts()
@@ -144,6 +149,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private void OnlyDifferenceIsLastArgumentCastNecessary(int a, string b, OptionalArguments args = null)
+		{
+		}
+
+		private void NamedArgument(bool flag)
 		{
 		}
 
