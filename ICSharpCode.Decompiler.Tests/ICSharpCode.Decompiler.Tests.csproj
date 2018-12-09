@@ -73,6 +73,7 @@
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
+    <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
     <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />

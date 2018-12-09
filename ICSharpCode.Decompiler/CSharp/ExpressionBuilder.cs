@@ -383,8 +383,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				);
 			}
 			rr = AdjustConstantToType(rr, context.TypeHint);
-			return ConvertConstantValue(rr, allowImplicitConversion: true)
-				.WithILInstruction(inst);
+			astBuilder.PrintIntegralValuesAsHex = ShouldDisplayAsHex(inst.Value, inst.Parent);
+			try {
+				return ConvertConstantValue(rr, allowImplicitConversion: true)
+					.WithILInstruction(inst);
+			} finally {
+				astBuilder.PrintIntegralValuesAsHex = false;
+			}
 		}
 
 		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst, TranslationContext context)
@@ -402,8 +407,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				);
 			}
 			rr = AdjustConstantToType(rr, context.TypeHint);
-			return ConvertConstantValue(rr, allowImplicitConversion: true)
-				.WithILInstruction(inst);
+			astBuilder.PrintIntegralValuesAsHex = ShouldDisplayAsHex(inst.Value, inst.Parent);
+			try {
+				return ConvertConstantValue(rr, allowImplicitConversion: true)
+					.WithILInstruction(inst);
+			} finally {
+				astBuilder.PrintIntegralValuesAsHex = false;
+			}
 		}
 
 		private bool ShouldDisplayAsHex(long value, ILInstruction parent)

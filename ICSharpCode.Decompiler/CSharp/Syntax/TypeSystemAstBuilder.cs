@@ -186,8 +186,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool UseSpecialConstants { get; set; }
+
+		/// <summary>
+		/// Controls if integral constants should be printed in hexadecimal format.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool PrintIntegralValuesAsHex { get; set; }
 		#endregion
-		
+
 		#region Convert Type
 		public AstType ConvertType(IType type)
 		{
@@ -715,7 +721,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
 					literalType = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
 				}
-				expr = new PrimitiveExpression(constantValue);
+				string literalValue = null;
+				if (PrintIntegralValuesAsHex) {
+					literalValue = $"0x{constantValue:X}";
+				}
+				expr = new PrimitiveExpression(constantValue, literalValue);
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(new ConstantResolveResult(literalType, constantValue));
 				if (smallInteger && !type.Equals(expectedType)) {
