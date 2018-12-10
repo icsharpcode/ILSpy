@@ -40,20 +40,19 @@
           Issue1308([opt] uint64 u) cil managed
   {
     .param [1] = uint64(0x8)
-    // Code size       19 (0x13)
+    // Code size       24 (0x18)
     .maxstack  8
-    IL_0000:  ldarg.1
-    IL_0001:  ldc.i4.m1
-    IL_0002:  conv.u8
-    IL_0003:  and
-    IL_0004:  brtrue.s   IL_0009
-
-    IL_0006:  ldc.i4.0
-    IL_0007:  conv.i8
-    IL_0008:  ret
-
-    IL_0009:  ldc.i8     0xffffffff00000000
-    IL_0012:  ret
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.m1
+    IL_0003:  conv.u8
+    IL_0004:  and
+    IL_0005:  ldc.i4.0
+    IL_0006:  conv.i8
+    IL_0007:  cgt.un
+    IL_0009:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ConstantsTests::Test(bool)
+    IL_000e:  ldc.i8     0xffffffff00000000
+    IL_0017:  ret
   } // end of method ConstantsTests::Issue1308
 
   .method public hidebysig instance void 

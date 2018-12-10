@@ -4,7 +4,8 @@
 	{
 		public ulong Issue1308(ulong u = 8uL)
 		{
-			return ((u & uint.MaxValue) != 0) ? 18446744069414584320uL : 0;
+			Test((u & uint.MaxValue) != 0);
+			return 18446744069414584320uL;
 		}
 
 		public void Byte_BitmaskingInCondition(byte v)
