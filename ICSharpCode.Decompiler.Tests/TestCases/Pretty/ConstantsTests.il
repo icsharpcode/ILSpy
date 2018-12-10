@@ -32,6 +32,35 @@
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.ConstantsTests
        extends [mscorlib]System.Object
 {
+  .method public hidebysig instance uint64 
+          Issue1308([opt] uint64 u) cil managed
+  {
+    .param [1] = uint64(0x8)
+    // Code size       28 (0x1c)
+    .maxstack  2
+    .locals init (uint64 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.m1
+    IL_0003:  conv.u8
+    IL_0004:  and
+    IL_0005:  ldc.i4.0
+    IL_0006:  conv.i8
+    IL_0007:  bne.un.s   IL_000d
+
+    IL_0009:  ldc.i4.0
+    IL_000a:  conv.i8
+    IL_000b:  br.s       IL_0016
+
+    IL_000d:  ldc.i8     0xffffffff00000000
+    IL_0016:  nop
+    IL_0017:  stloc.0
+    IL_0018:  br.s       IL_001a
+
+    IL_001a:  ldloc.0
+    IL_001b:  ret
+  } // end of method ConstantsTests::Issue1308
+
   .method public hidebysig instance void 
           Byte_BitmaskingInCondition(uint8 v) cil managed
   {

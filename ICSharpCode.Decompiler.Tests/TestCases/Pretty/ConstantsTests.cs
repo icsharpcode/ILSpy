@@ -2,6 +2,11 @@
 {
 	internal class ConstantsTests
 	{
+		public ulong Issue1308(ulong u = 8uL)
+		{
+			return ((u & uint.MaxValue) != 0) ? 18446744069414584320uL : 0;
+		}
+
 		public void Byte_BitmaskingInCondition(byte v)
 		{
 			Test((v & 0xF) == 0);
