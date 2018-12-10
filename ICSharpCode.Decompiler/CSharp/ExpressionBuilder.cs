@@ -2385,7 +2385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (newRR == expr.ResolveResult) {
 				return expr;
 			} else {
-				return ConvertConstantValue(newRR).WithILInstruction(expr.ILInstructions);
+				return ConvertConstantValue(newRR, allowImplicitConversion: true).WithILInstruction(expr.ILInstructions);
 			}
 		}
 		
@@ -2395,6 +2395,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return rr;
 			}
 			typeHint = NullableType.GetUnderlyingType(typeHint);
+			if (rr.Type.Equals(typeHint)) {
+				return rr;
+			}
 			// Convert to type hint, if this is possible without loss of accuracy
 			if (typeHint.IsKnownType(KnownTypeCode.Boolean)) {
 				if (object.Equals(rr.ConstantValue, 0) || object.Equals(rr.ConstantValue, 0u)) {
