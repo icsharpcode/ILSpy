@@ -73,7 +73,7 @@
   .method private hidebysig instance void 
           SimpleTests() cil managed
   {
-    // Code size       64 (0x40)
+    // Code size       78 (0x4e)
     .maxstack  3
     IL_0000:  ldarg.0
     IL_0001:  ldc.i4.s   10
@@ -98,7 +98,13 @@
     IL_0034:  ldc.i4.5
     IL_0035:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
     IL_003a:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::Decimal(valuetype [mscorlib]System.Decimal)
-    IL_003f:  ret
+    IL_003f:  ldarg.0
+    IL_0040:  ldc.i4.1
+    IL_0041:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::NamedArgument(bool)
+    IL_0046:  ldarg.0
+    IL_0047:  ldc.i4.0
+    IL_0048:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.OptionalArguments::NamedArgument(bool)
+    IL_004d:  ret
   } // end of method OptionalArguments::SimpleTests
 
   .method private hidebysig instance void 
@@ -401,6 +407,14 @@
     IL_0000:  ret
   } // end of method OptionalArguments::OnlyDifferenceIsLastArgumentCastNecessary
 
+  .method private hidebysig instance void 
+          NamedArgument(bool flag) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::NamedArgument
+
   .method private hidebysig instance string 
           Get([out] int32& a) cil managed
   {
@@ -423,15 +437,16 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002DC4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002DD4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '0F3DD643C5167ACFC541F72809FFF828A6E41494' at I_00002DF8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00002E08
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00002DC4 = bytearray (
+.data cil I_00002DF8 = bytearray (
                  0A 00 00 00 09 00 00 00 08 00 00 00) 
-.data cil I_00002DD4 = bytearray (
+.data cil I_00002E04 = int8[4]
+.data cil I_00002E08 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************

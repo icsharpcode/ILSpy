@@ -591,7 +591,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 				num++;
 			}
-			return -2147483648;
+			return int.MinValue;
 		}
 
 		//public int InterestingLoop()
@@ -615,7 +615,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		//			num++;
 		//		}
 		//		// This instruction is still dominated by the loop header
-		//		num = -2147483648;//int.MinValue;
+		//		num = int.MinValue;
 		//	}
 		//	return num;
 		//}
@@ -638,7 +638,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						num++;
 					}
 				}
-				num = -2147483648;
+				num = int.MinValue;
 			}
 			return num;
 		}
