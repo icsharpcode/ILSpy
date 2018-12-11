@@ -1813,6 +1813,91 @@
     IL_00f3:  ret
   } // end of method Switch::SwitchOnStringInForLoop
 
+  .method public hidebysig static void  SwitchInTryBlock(string 'value') cil managed
+  {
+    // Code size       174 (0xae)
+    .maxstack  2
+    .locals init (string V_0)
+    .try
+    {
+      IL_0000:  ldarg.0
+      IL_0001:  ldc.i4.5
+      IL_0002:  callvirt   instance string [mscorlib]System.String::Substring(int32)
+      IL_0007:  stloc.0
+      IL_0008:  ldloc.0
+      IL_0009:  ldstr      "Name1"
+      IL_000e:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_0013:  brtrue.s   IL_0058
+
+      IL_0015:  ldloc.0
+      IL_0016:  ldstr      "Name2"
+      IL_001b:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_0020:  brtrue.s   IL_0064
+
+      IL_0022:  ldloc.0
+      IL_0023:  ldstr      "Name3"
+      IL_0028:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_002d:  brtrue.s   IL_0070
+
+      IL_002f:  ldloc.0
+      IL_0030:  ldstr      "Name4"
+      IL_0035:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_003a:  brtrue.s   IL_007c
+
+      IL_003c:  ldloc.0
+      IL_003d:  ldstr      "Name5"
+      IL_0042:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_0047:  brtrue.s   IL_0088
+
+      IL_0049:  ldloc.0
+      IL_004a:  ldstr      "Name6"
+      IL_004f:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_0054:  brtrue.s   IL_0088
+
+      IL_0056:  br.s       IL_0094
+
+      IL_0058:  ldstr      "1"
+      IL_005d:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0062:  br.s       IL_009e
+
+      IL_0064:  ldstr      "Name_2"
+      IL_0069:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_006e:  br.s       IL_009e
+
+      IL_0070:  ldstr      "Name_3"
+      IL_0075:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_007a:  br.s       IL_009e
+
+      IL_007c:  ldstr      "No. 4"
+      IL_0081:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0086:  br.s       IL_009e
+
+      IL_0088:  ldstr      "5+6"
+      IL_008d:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0092:  br.s       IL_009e
+
+      IL_0094:  ldstr      "default"
+      IL_0099:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_009e:  leave.s    IL_00ad
+
+    }  // end .try
+    catch [mscorlib]System.Exception 
+    {
+      IL_00a0:  pop
+      IL_00a1:  ldstr      "catch block"
+      IL_00a6:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00ab:  leave.s    IL_00ad
+
+    }  // end handler
+    IL_00ad:  ret
+  } // end of method Switch::SwitchInTryBlock
+
   .method public hidebysig static void  SwitchWithComplexCondition(string[] args) cil managed
   {
     // Code size       126 (0x7e)

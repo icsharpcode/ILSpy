@@ -1629,6 +1629,113 @@
     IL_0134:  ret
   } // end of method Switch::SwitchOnStringInForLoop
 
+  .method public hidebysig static void  SwitchInTryBlock(string 'value') cil managed
+  {
+    // Code size       243 (0xf3)
+    .maxstack  4
+    .locals init (string V_0,
+             int32 V_1)
+    .try
+    {
+      IL_0000:  ldarg.0
+      IL_0001:  ldc.i4.5
+      IL_0002:  callvirt   instance string [mscorlib]System.String::Substring(int32)
+      IL_0007:  dup
+      IL_0008:  stloc.0
+      IL_0009:  brfalse    IL_00d9
+
+      IL_000e:  volatile.
+      IL_0010:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+      IL_0015:  brtrue.s   IL_006c
+
+      IL_0017:  ldc.i4.6
+      IL_0018:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::.ctor(int32)
+      IL_001d:  dup
+      IL_001e:  ldstr      "Name1"
+      IL_0023:  ldc.i4.0
+      IL_0024:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_0029:  dup
+      IL_002a:  ldstr      "Name2"
+      IL_002f:  ldc.i4.1
+      IL_0030:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_0035:  dup
+      IL_0036:  ldstr      "Name3"
+      IL_003b:  ldc.i4.2
+      IL_003c:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_0041:  dup
+      IL_0042:  ldstr      "Name4"
+      IL_0047:  ldc.i4.3
+      IL_0048:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_004d:  dup
+      IL_004e:  ldstr      "Name5"
+      IL_0053:  ldc.i4.4
+      IL_0054:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_0059:  dup
+      IL_005a:  ldstr      "Name6"
+      IL_005f:  ldc.i4.5
+      IL_0060:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+                                                                                                                    !1)
+      IL_0065:  volatile.
+      IL_0067:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+      IL_006c:  volatile.
+      IL_006e:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+      IL_0073:  ldloc.0
+      IL_0074:  ldloca.s   V_1
+      IL_0076:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
+                                                                                                                            !1&)
+      IL_007b:  brfalse.s  IL_00d9
+
+      IL_007d:  ldloc.1
+      IL_007e:  switch     ( 
+                            IL_009d,
+                            IL_00a9,
+                            IL_00b5,
+                            IL_00c1,
+                            IL_00cd,
+                            IL_00cd)
+      IL_009b:  br.s       IL_00d9
+
+      IL_009d:  ldstr      "1"
+      IL_00a2:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00a7:  br.s       IL_00e3
+
+      IL_00a9:  ldstr      "Name_2"
+      IL_00ae:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00b3:  br.s       IL_00e3
+
+      IL_00b5:  ldstr      "Name_3"
+      IL_00ba:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00bf:  br.s       IL_00e3
+
+      IL_00c1:  ldstr      "No. 4"
+      IL_00c6:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00cb:  br.s       IL_00e3
+
+      IL_00cd:  ldstr      "5+6"
+      IL_00d2:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00d7:  br.s       IL_00e3
+
+      IL_00d9:  ldstr      "default"
+      IL_00de:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00e3:  leave.s    IL_00f2
+
+    }  // end .try
+    catch [mscorlib]System.Exception 
+    {
+      IL_00e5:  pop
+      IL_00e6:  ldstr      "catch block"
+      IL_00eb:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_00f0:  leave.s    IL_00f2
+
+    }  // end handler
+    IL_00f2:  ret
+  } // end of method Switch::SwitchInTryBlock
+
   .method public hidebysig static void  SwitchWithComplexCondition(string[] args) cil managed
   {
     // Code size       130 (0x82)
@@ -2829,6 +2936,7 @@
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000015-1'
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000016-1'
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000018-1'
+  .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000019-1'
 } // end of class '<PrivateImplementationDetails>'
 
 

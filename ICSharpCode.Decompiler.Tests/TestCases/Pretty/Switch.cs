@@ -543,6 +543,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void SwitchInTryBlock(string value)
+		{
+			try {
+				switch (value.Substring(5)) {
+					case "Name1":
+						Console.WriteLine("1");
+						break;
+					case "Name2":
+						Console.WriteLine("Name_2");
+						break;
+					case "Name3":
+						Console.WriteLine("Name_3");
+						break;
+					case "Name4":
+						Console.WriteLine("No. 4");
+						break;
+					case "Name5":
+					case "Name6":
+						Console.WriteLine("5+6");
+						break;
+					default:
+						Console.WriteLine("default");
+						break;
+				}
+			} catch (Exception) {
+				Console.WriteLine("catch block");
+			}
+		}
+
 		public static void SwitchWithComplexCondition(string[] args)
 		{
 			switch ((args.Length == 0) ? "dummy" : args[0]) {

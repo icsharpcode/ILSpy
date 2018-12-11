@@ -399,7 +399,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// either br nullCase or leave container
-			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave((BlockContainer)instructions[i].Parent.Parent))
+			var leaveContainer = BlockContainer.FindClosestContainer(instructions[i]);
+			if (leaveContainer.Parent is TryInstruction) {
+				leaveContainer = BlockContainer.FindClosestContainer(leaveContainer.Parent);
+			}
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock) && !exitBlockJump.MatchLeave(leaveContainer))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -436,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!tryGetValueBlock.Instructions[0].MatchIfInstruction(out condition, out var defaultBlockJump))
 				return false;
-			if (!defaultBlockJump.MatchBranch(out var defaultBlock) && !defaultBlockJump.MatchLeave((BlockContainer)tryGetValueBlock.Parent))
+			if (!defaultBlockJump.MatchBranch(out var defaultBlock) && !defaultBlockJump.MatchLeave(leaveContainer))
 				return false;
 			if (!(condition.MatchLogicNot(out var arg) && arg is CallInstruction c && c.Method.Name == "TryGetValue" &&
 				MatchDictionaryFieldLoad(c.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)))
