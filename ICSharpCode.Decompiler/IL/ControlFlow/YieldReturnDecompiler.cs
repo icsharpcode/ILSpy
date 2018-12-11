@@ -696,6 +696,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					// copy over the instruction to the new block
 					newBlock.Instructions.Add(oldInst);
+					newBlock.AddILRange(oldInst.ILRange);
 					UpdateBranchTargets(oldInst);
 				}
 			}
@@ -991,6 +992,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				tryBlock.Instructions.AddRange(block.Instructions);
 				var tryBlockContainer = new BlockContainer();
 				tryBlockContainer.Blocks.Add(tryBlock);
+				tryBlockContainer.ILRange = tryBlock.ILRange;
 				stateToContainer.Add(state, tryBlockContainer);
 
 				ILInstruction finallyBlock;
@@ -1004,7 +1006,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				block.Instructions.Clear();
-				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock));
+				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock) { ILRange = tryBlockContainer.ILRange});
 			}
 
 			IMethod FindFinallyMethod(int state)

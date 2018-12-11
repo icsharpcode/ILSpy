@@ -218,6 +218,8 @@
 			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
+		new OpCode("localloc.span", "Allocates space in the stack frame and wraps it in a Span",
+			CustomClassName("LocAllocSpan"), Unary, HasTypeOperand, ResultType("O"), MayThrow),
 		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
 			CustomArguments(("destAddress", new[] { "I", "Ref" }), ("sourceAddress", new[] { "I", "Ref" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,

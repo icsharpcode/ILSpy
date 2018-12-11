@@ -180,6 +180,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// Remove branch/leave after if; it's getting moved into a section.
 					block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				}
+				sw.ILRange = block.Instructions[block.Instructions.Count - 1].ILRange;
 				block.Instructions[block.Instructions.Count - 1] = sw;
 				
 				// mark all inner blocks that were converted to the switch statement for deletion

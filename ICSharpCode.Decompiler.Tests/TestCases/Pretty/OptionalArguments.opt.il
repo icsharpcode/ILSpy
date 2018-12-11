@@ -425,6 +425,14 @@
     IL_0000:  ret
   } // end of method OptionalArguments::OnlyDifferenceIsLastArgumentCastNecessary
 
+  .method private hidebysig instance void 
+          NamedArgument(bool flag) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method OptionalArguments::NamedArgument
+
   .method private hidebysig instance string 
           Get([out] int32& a) cil managed
   {

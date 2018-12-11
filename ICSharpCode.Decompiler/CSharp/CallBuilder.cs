@@ -593,7 +593,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					parameter = method.Parameters[i - firstParamIndex];
 				}
 				var arg = expressionBuilder.Translate(callArguments[i], parameter.Type);
-				if (IsPrimitiveValueThatShouldHaveNamedArgument(arg, method)) {
+				if (IsPrimitiveValueThatShouldBeNamedArgument(arg, method, parameter)) {
 					isPrimitiveValue.Set(arguments.Count);
 				}
 				if (IsOptionalArgument(parameter, arg)) {
@@ -644,11 +644,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return list;
 		}
 
-		private bool IsPrimitiveValueThatShouldHaveNamedArgument(TranslatedExpression arg, IMethod method)
+		private bool IsPrimitiveValueThatShouldBeNamedArgument(TranslatedExpression arg, IMethod method, IParameter p)
 		{
 			if (!arg.ResolveResult.IsCompileTimeConstant || method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT))
 				return false;
-			return arg.ResolveResult.Type.IsKnownType(KnownTypeCode.Boolean);
+			return p.Type.IsKnownType(KnownTypeCode.Boolean);
 		}
 
 		private bool TransformParamsArgument(ExpectedTargetDetails expectedTargetDetails, ResolveResult targetResolveResult,
@@ -714,8 +714,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerFilePath)
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
-			return (parameter.ConstantValue == null && arg.ResolveResult.ConstantValue == null)
-				|| (parameter.ConstantValue != null && parameter.ConstantValue.Equals(arg.ResolveResult.ConstantValue));
+			return object.Equals(parameter.ConstantValue, arg.ResolveResult.ConstantValue);
 		}
 
 		[Flags]
@@ -1185,6 +1184,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
 		{
+			ILInstruction thisArg = inst.Arguments[0];
 			ILInstruction func = inst.Arguments[1];
 			IMethod method;
 			switch (func.OpCode) {
@@ -1203,16 +1203,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool requireTarget;
 			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
 				targetType = method.Parameters[0].Type;
-				target = expressionBuilder.Translate(inst.Arguments[0], targetType);
-				target = ExpressionBuilder.UnwrapBoxingConversion(target);
+				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox) {
+					targetType = ((ByReferenceType)targetType).ElementType;
+					thisArg = thisArgBox.Argument;
+				}
+				target = expressionBuilder.Translate(thisArg, targetType);
 				requireTarget = true;
 			} else {
 				targetType = method.DeclaringType;
-				target = expressionBuilder.TranslateTarget(inst.Arguments[0],
+				if (targetType.IsReferenceType == false && thisArg is Box thisArgBox) {
+					// Normal struct instance method calls (which TranslateTarget is meant for) expect a 'ref T',
+					// but delegate construction uses a 'box T'.
+					if (thisArgBox.Argument is LdObj ldobj) {
+						thisArg = ldobj.Target;
+					} else {
+						thisArg = new AddressOf(thisArgBox.Argument);
+					}
+				}
+				target = expressionBuilder.TranslateTarget(thisArg,
 					nonVirtualInvocation: func.OpCode == OpCode.LdFtn,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: method.DeclaringType);
-				target = ExpressionBuilder.UnwrapBoxingConversion(target);
 				requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
 					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
 			}

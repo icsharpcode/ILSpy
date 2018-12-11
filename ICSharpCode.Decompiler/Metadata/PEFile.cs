@@ -47,23 +47,23 @@ namespace ICSharpCode.Decompiler.Metadata
 		public PEReader Reader { get; }
 		public MetadataReader Metadata { get; }
 
-		public PEFile(string fileName, PEStreamOptions options = PEStreamOptions.Default)
-			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), options))
+		public PEFile(string fileName, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+			: this(fileName, new PEReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), streamOptions), metadataOptions)
 		{
 		}
 
-		public PEFile(string fileName, Stream stream, PEStreamOptions options = PEStreamOptions.Default)
-			: this(fileName, new PEReader(stream, options))
+		public PEFile(string fileName, Stream stream, PEStreamOptions streamOptions = PEStreamOptions.Default, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+			: this(fileName, new PEReader(stream, streamOptions), metadataOptions)
 		{
 		}
 
-		public PEFile(string fileName, PEReader reader)
+		public PEFile(string fileName, PEReader reader, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 		{
 			this.FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
 			this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
 			if (!reader.HasMetadata)
 				throw new PEFileNotSupportedException("PE file does not contain any managed metadata.");
-			this.Metadata = reader.GetMetadataReader();
+			this.Metadata = reader.GetMetadataReader(metadataOptions);
 		}
 
 		public bool IsAssembly => Metadata.IsAssembly;

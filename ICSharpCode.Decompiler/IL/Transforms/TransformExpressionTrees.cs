@@ -152,11 +152,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return (null, SpecialType.UnknownType);
 			var container = new BlockContainer();
+			container.ILRange = instruction.ILRange;
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var returnType = functionType.GetDelegateInvokeMethod()?.ReturnType;
 			var function = new ILFunction(returnType, parameterList, context.Function.GenericContext, container);
 			function.DelegateType = functionType;
 			function.Variables.AddRange(parameterVariablesList);
+			function.ILRange = instruction.ILRange;
 			lambdaStack.Push(function);
 			var (bodyInstruction, type) = ConvertInstruction(instruction.Arguments[0]);
 			lambdaStack.Pop();

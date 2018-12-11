@@ -51,7 +51,7 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
   </ItemGroup>
 
   <ItemGroup>

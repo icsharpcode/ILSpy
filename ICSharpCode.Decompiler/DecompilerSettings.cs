@@ -90,13 +90,14 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				//introduceUnmanagedTypeConstraint = false;
+				stackAllocInitializers = false;
 				tupleComparisons = false;
 			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (tupleComparisons)
+			if (tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
 				return CSharp.LanguageVersion.CSharp7_2;
@@ -683,6 +684,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool stackAllocInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.3 stackalloc initializers should be used.
+		/// </summary>
+		public bool StackAllocInitializers {
+			get { return stackAllocInitializers; }
+			set {
+				if (stackAllocInitializers != value) {
+					stackAllocInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool tupleTypes = true;
 
 		/// <summary>
@@ -902,6 +918,18 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (throwOnAssemblyResolveErrors != value) {
 					throwOnAssemblyResolveErrors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool applyWindowsRuntimeProjections = true;
+
+		public bool ApplyWindowsRuntimeProjections {
+			get { return applyWindowsRuntimeProjections; }
+			set {
+				if (applyWindowsRuntimeProjections != value) {
+					applyWindowsRuntimeProjections = value;
 					OnPropertyChanged();
 				}
 			}

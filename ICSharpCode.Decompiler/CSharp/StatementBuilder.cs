@@ -965,7 +965,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL initblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
 			return stmt;
 		}
 
@@ -979,7 +979,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL cpblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt;
 		}
 	}

@@ -646,6 +646,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (exitTargetBlock != null)
 				oldEntryPoint.Instructions.Add(new Branch(exitTargetBlock));
 
+			loopContainer.ILRange = newEntryPoint.ILRange;
 			MoveBlocksIntoContainer(loop, loopContainer);
 
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
@@ -731,7 +732,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (exitTargetBlock != null) {
 				block.Instructions.Add(new Branch(exitTargetBlock));
 			}
-
+			
+			switchContainer.ILRange = newEntryPoint.ILRange;
 			MoveBlocksIntoContainer(nodesInSwitch, switchContainer);
 
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
