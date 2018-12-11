@@ -497,15 +497,17 @@ namespace ICSharpCode.ILSpy
 		public static string GetPlatformDisplayName(PEFile module)
 		{
 			var architecture = module.Reader.PEHeaders.CoffHeader.Machine;
-			var flags = module.Reader.PEHeaders.CorHeader.Flags;
+			var characteristics = module.Reader.PEHeaders.CoffHeader.Characteristics;
+			var corflags = module.Reader.PEHeaders.CorHeader.Flags;
 			switch (architecture) {
 				case Machine.I386:
-					if ((flags & CorFlags.Prefers32Bit) != 0)
+					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU (32-bit preferred)";
-					else if ((flags & CorFlags.Requires32Bit) != 0)
+					// According to ECMA-335, II.25.3.3.1 CorFlags.Requires32Bit and Characteristics.Bit32Machine must be in sync
+					// for assemblies containing managed code. However, this is not true for C++/CLI assemblies.
+					if ((corflags & CorFlags.Requires32Bit) != 0 || (characteristics & Characteristics.Bit32Machine) != 0)
 						return "x86";
-					else
-						return "AnyCPU (64-bit preferred)";
+					return "AnyCPU (64-bit preferred)";
 				case Machine.Amd64:
 					return "x64";
 				case Machine.IA64:
