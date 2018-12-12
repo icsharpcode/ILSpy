@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -287,12 +288,25 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				} else {
+					ITypeReference typeRef = null;
+					IMemberReference memberRef = null;
+					if (args.NavigateTo.StartsWith("T:", StringComparison.Ordinal)) {
+						typeRef = IdStringProvider.ParseTypeName(args.NavigateTo);
+					} else {
+						memberRef = IdStringProvider.ParseMemberIdString(args.NavigateTo);
+						typeRef = memberRef.DeclaringTypeReference;
+					}
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						var def = asm.GetPEFileOrNull();
-						if (def != null) {
-							var compilation = new SimpleCompilation(def, MinimalCorlib.Instance);
-							var mr = IdStringProvider.FindEntity(args.NavigateTo, new SimpleTypeResolveContext(compilation));
-							if (mr != null) {
+						var module = asm.GetPEFileOrNull();
+						if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
+							IEntity mr = null;
+							ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
+								? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
+								: new SimpleCompilation(module, MinimalCorlib.Instance);
+							mr = memberRef == null
+								? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
+								: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
+							if (mr != null && mr.ParentModule.PEFile != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
 								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
@@ -318,6 +332,30 @@ namespace ICSharpCode.ILSpy
 				SearchPane.Instance.Show();
 			}
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
+		}
+
+		private bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		{
+			switch (typeRef) {
+				case GetPotentiallyNestedClassTypeReference topLevelType:
+					typeHandle = topLevelType.ResolveInPEFile(module);
+					return !typeHandle.IsNil;
+				case NestedTypeReference nestedType:
+					if (!CanResolveTypeInPEFile(module, nestedType.DeclaringTypeReference, out typeHandle))
+						return false;
+					if (typeHandle.Kind == HandleKind.ExportedType)
+						return true;
+					var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
+					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(t => {
+						var td = module.Metadata.GetTypeDefinition(t);
+						var typeName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(module.Metadata.GetString(td.Name), out int typeParameterCount);
+						return nestedType.AdditionalTypeParameterCount == typeParameterCount && nestedType.Name == typeName;
+					});
+					return !typeHandle.IsNil;
+				default:
+					typeHandle = default;
+					return false;
+			}
 		}
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)

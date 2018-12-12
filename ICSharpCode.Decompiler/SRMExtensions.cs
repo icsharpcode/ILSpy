@@ -241,9 +241,14 @@ namespace ICSharpCode.Decompiler
 
 		public static FullTypeName GetFullTypeName(this ExportedType type, MetadataReader metadata)
 		{
-			string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(type.Name), out int typeParameterCount);
-			return new TopLevelTypeName(ns, name, typeParameterCount);
+			if (type.Implementation.Kind == HandleKind.ExportedType) {
+				var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
+				return outerType.GetFullTypeName(metadata).NestedType(name, typeParameterCount);
+			} else {
+				string ns = type.Namespace.IsNil ? "" : metadata.GetString(type.Namespace);
+				return new TopLevelTypeName(ns, name, typeParameterCount);
+			}
 		}
 
 		public static bool IsAnonymousType(this TypeDefinition type, MetadataReader metadata)
