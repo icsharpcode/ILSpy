@@ -350,9 +350,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!s.Value.MatchBranch(out var block)) 
 					continue;
 
-				var node = controlFlowGraph.GetNode(block);
-				if (!loopContext.MatchContinue(node))
-					caseNodes.Add(node);
+				if (block.Parent == currentContainer) {
+					var node = controlFlowGraph.GetNode(block);
+					if (!loopContext.MatchContinue(node))
+						caseNodes.Add(node);
+				}
 			}
 
 			AddNullCase(flowNodes, caseNodes);
