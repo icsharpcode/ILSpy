@@ -1298,6 +1298,7 @@
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> model
     .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees '<>4__this'
     .field public int32 ID
     .method public hidebysig specialname rtspecialname 
@@ -1316,8 +1317,7 @@
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5' 'CS$<>8__locals6'
-    .field public class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> model
+    .field public bool a
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -1351,7 +1351,7 @@
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public bool a
+    .field public int32 x
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -1364,11 +1364,11 @@
 
   } // end of class '<>c__DisplayClassb'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClassd'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClassf'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public int32 x
+    .field public class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> dict
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -1377,15 +1377,16 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClassd'::.ctor
+    } // end of method '<>c__DisplayClassf'::.ctor
 
-  } // end of class '<>c__DisplayClassd'
+  } // end of class '<>c__DisplayClassf'
 
   .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass11'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> dict
+    .field public int32 i
+    .field public string x
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -1402,8 +1403,7 @@
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public int32 i
-    .field public string x
+    .field public uint8 z
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -1416,24 +1416,7 @@
 
   } // end of class '<>c__DisplayClass13'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass15'
-         extends [mscorlib]System.Object
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    .field public uint8 z
-    .method public hidebysig specialname rtspecialname 
-            instance void  .ctor() cil managed
-    {
-      // Code size       7 (0x7)
-      .maxstack  8
-      IL_0000:  ldarg.0
-      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-      IL_0006:  ret
-    } // end of method '<>c__DisplayClass15'::.ctor
-
-  } // end of class '<>c__DisplayClass15'
-
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass19'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass17'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1447,11 +1430,11 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass19'::.ctor
+    } // end of method '<>c__DisplayClass17'::.ctor
 
-  } // end of class '<>c__DisplayClass19'
+  } // end of class '<>c__DisplayClass17'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1d'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1b'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1464,11 +1447,11 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass1d'::.ctor
+    } // end of method '<>c__DisplayClass1b'::.ctor
 
-  } // end of class '<>c__DisplayClass1d'
+  } // end of class '<>c__DisplayClass1b'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1f'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1d'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1483,11 +1466,11 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass1f'::.ctor
+    } // end of method '<>c__DisplayClass1d'::.ctor
 
-  } // end of class '<>c__DisplayClass1f'
+  } // end of class '<>c__DisplayClass1d'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass22'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass20'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1500,11 +1483,11 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass22'::.ctor
+    } // end of method '<>c__DisplayClass20'::.ctor
 
-  } // end of class '<>c__DisplayClass22'
+  } // end of class '<>c__DisplayClass20'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass24'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass22'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1518,11 +1501,11 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass24'::.ctor
+    } // end of method '<>c__DisplayClass22'::.ctor
 
-  } // end of class '<>c__DisplayClass24'
+  } // end of class '<>c__DisplayClass22'
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass8b'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass89'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1535,19 +1518,19 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass8b'::.ctor
+    } // end of method '<>c__DisplayClass89'::.ctor
 
     .method public hidebysig instance int32 
-            '<Capturing>b__8a'() cil managed
+            '<Capturing>b__88'() cil managed
     {
       // Code size       7 (0x7)
       .maxstack  8
       IL_0000:  ldarg.0
-      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b'::captured
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89'::captured
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass8b'::'<Capturing>b__8a'
+    } // end of method '<>c__DisplayClass89'::'<Capturing>b__88'
 
-  } // end of class '<>c__DisplayClass8b'
+  } // end of class '<>c__DisplayClass89'
 
   .field private int32 'field'
   .field private class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database db
@@ -1555,25 +1538,29 @@
   .custom instance void [System.Core]System.Runtime.CompilerServices.DynamicAttribute::.ctor() = ( 01 00 00 00 ) 
   .field public static initonly object[] SupportedMethods
   .field public static initonly object[] SupportedMethods2
-  .field private static class [mscorlib]System.Func`2<int32,string> 'CS$<>9__CachedAnonymousMethodDelegate10'
+  .field private static class [mscorlib]System.Func`2<int32,string> 'CS$<>9__CachedAnonymousMethodDelegatee'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> 'CS$<>9__CachedAnonymousMethodDelegate18'
+  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> 'CS$<>9__CachedAnonymousMethodDelegate16'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> 'CS$<>9__CachedAnonymousMethodDelegate1c'
+  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> 'CS$<>9__CachedAnonymousMethodDelegate1a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32[],int32> 'CS$<>9__CachedAnonymousMethodDelegate2b'
+  .field private static class [mscorlib]System.Func`2<int32[],int32> 'CS$<>9__CachedAnonymousMethodDelegate29'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32[],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2c'
+  .field private static class [mscorlib]System.Func`3<int32[],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32[0...,0...],int32> 'CS$<>9__CachedAnonymousMethodDelegate2d'
+  .field private static class [mscorlib]System.Func`2<int32[0...,0...],int32> 'CS$<>9__CachedAnonymousMethodDelegate2b'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2e'
+  .field private static class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2c'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32[][],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2f'
+  .field private static class [mscorlib]System.Func`3<int32[][],int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate2d'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32[],int32> 'CS$<>9__CachedAnonymousMethodDelegate32'
+  .field private static class [mscorlib]System.Func`2<int32[],int32> 'CS$<>9__CachedAnonymousMethodDelegate30'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32> 'CS$<>9__CachedAnonymousMethodDelegate33'
+  .field private static class [mscorlib]System.Func`1<int32> 'CS$<>9__CachedAnonymousMethodDelegate31'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate39'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate3a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate3b'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1585,9 +1572,9 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate3f'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate40'
+  .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate45'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegate41'
+  .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate46'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate47'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1595,21 +1582,21 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate49'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate4a'
+  .field private static class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> 'CS$<>9__CachedAnonymousMethodDelegate4c'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<class [mscorlib]System.Type> 'CS$<>9__CachedAnonymousMethodDelegate4b'
+  .field private static class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> 'CS$<>9__CachedAnonymousMethodDelegate4d'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> 'CS$<>9__CachedAnonymousMethodDelegate4e'
+  .field private static class [mscorlib]System.Func`2<object,bool> 'CS$<>9__CachedAnonymousMethodDelegate4f'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> 'CS$<>9__CachedAnonymousMethodDelegate4f'
+  .field private static class [mscorlib]System.Func`2<bool,bool> 'CS$<>9__CachedAnonymousMethodDelegate51'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<object,bool> 'CS$<>9__CachedAnonymousMethodDelegate51'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate54'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<bool,bool> 'CS$<>9__CachedAnonymousMethodDelegate53'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate55'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate56'
+  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate65'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate57'
+  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate66'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate67'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1617,9 +1604,9 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate69'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate6a'
+  .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate6a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate6b'
+  .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate6b'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate6c'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1627,9 +1614,9 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate6e'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate6f'
+  .field private static class [mscorlib]System.Func`3<int16,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate6f'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int64,int32,int64> 'CS$<>9__CachedAnonymousMethodDelegate70'
+  .field private static class [mscorlib]System.Func`3<int32,int16,int32> 'CS$<>9__CachedAnonymousMethodDelegate70'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int16,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate71'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -1637,133 +1624,129 @@
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int16,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate73'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32,int16,int32> 'CS$<>9__CachedAnonymousMethodDelegate74'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate78'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int16,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate75'
+  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate79'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate7a'
+  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate7a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate7b'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate7c'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate80'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`3<int32,int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate7d'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate81'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate82'
+  .field private static class [mscorlib]System.Func`2<int64,int64> 'CS$<>9__CachedAnonymousMethodDelegate82'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate83'
+  .field private static class [mscorlib]System.Func`2<int64,int64> 'CS$<>9__CachedAnonymousMethodDelegate83'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int64,int64> 'CS$<>9__CachedAnonymousMethodDelegate84'
+  .field private static class [mscorlib]System.Func`1<int32> 'CS$<>9__CachedAnonymousMethodDelegate86'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int64,int64> 'CS$<>9__CachedAnonymousMethodDelegate85'
+  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate87'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32> 'CS$<>9__CachedAnonymousMethodDelegate88'
+  .field private static class [mscorlib]System.Func`2<string,string> 'CS$<>9__CachedAnonymousMethodDelegate8f'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,int32> 'CS$<>9__CachedAnonymousMethodDelegate89'
+  .field private static class [mscorlib]System.Func`2<int32,string> 'CS$<>9__CachedAnonymousMethodDelegate90'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<string,string> 'CS$<>9__CachedAnonymousMethodDelegate91'
+  .field private static class [mscorlib]System.Func`2<string,char[]> 'CS$<>9__CachedAnonymousMethodDelegate91'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<int32,string> 'CS$<>9__CachedAnonymousMethodDelegate92'
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<string,char[]> 'CS$<>9__CachedAnonymousMethodDelegate93'
+  .field private static class [mscorlib]System.Func`1<bool> 'CS$<>9__CachedAnonymousMethodDelegate92'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.Func`1<bool> 'CS$<>9__CachedAnonymousMethodDelegate94'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<bool> 'CS$<>9__CachedAnonymousMethodDelegate96'
+  .field private static class [mscorlib]System.Func`1<int32[]> 'CS$<>9__CachedAnonymousMethodDelegate9a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32[]> 'CS$<>9__CachedAnonymousMethodDelegate9c'
+  .field private static class [mscorlib]System.Func`1<int32[]> 'CS$<>9__CachedAnonymousMethodDelegate9b'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32[]> 'CS$<>9__CachedAnonymousMethodDelegate9d'
+  .field private static class [mscorlib]System.Func`1<int32[0...,0...]> 'CS$<>9__CachedAnonymousMethodDelegate9c'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32[0...,0...]> 'CS$<>9__CachedAnonymousMethodDelegate9e'
+  .field private static class [mscorlib]System.Func`1<int32[][]> 'CS$<>9__CachedAnonymousMethodDelegate9d'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32[][]> 'CS$<>9__CachedAnonymousMethodDelegate9f'
+  .field private static class [mscorlib]System.Func`1<int32[][]> 'CS$<>9__CachedAnonymousMethodDelegate9e'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<int32[][]> 'CS$<>9__CachedAnonymousMethodDelegatea0'
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegatea2'
+  .field private static class [mscorlib]System.Func`1<object> 'CS$<>9__CachedAnonymousMethodDelegatea0'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method private hidebysig instance void 
           Issue1249(int32 ID) cil managed
   {
-    // Code size       3832 (0xef8)
+    // Code size       3807 (0xedf)
     .maxstack  21
     .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> V_0,
              valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> V_1,
-             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7' V_2,
-             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5' V_3,
-             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_4,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_5,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_6,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_7,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5' V_2,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_3,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_4,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_5,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_6,
+             class [System.Core]System.Linq.Expressions.Expression[] V_7,
              class [System.Core]System.Linq.Expressions.Expression[] V_8,
              class [System.Core]System.Linq.Expressions.Expression[] V_9,
              class [System.Core]System.Linq.Expressions.Expression[] V_10,
-             class [System.Core]System.Linq.Expressions.Expression[] V_11,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_12,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_13,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_14,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_15,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_11,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_12,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_13,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_14,
+             class [System.Core]System.Linq.Expressions.Expression[] V_15,
              class [System.Core]System.Linq.Expressions.Expression[] V_16,
              class [System.Core]System.Linq.Expressions.Expression[] V_17,
-             class [System.Core]System.Linq.Expressions.Expression[] V_18,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_19,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_20,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_21,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_22,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_18,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_19,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_20,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_21,
+             class [System.Core]System.Linq.Expressions.Expression[] V_22,
              class [System.Core]System.Linq.Expressions.Expression[] V_23,
              class [System.Core]System.Linq.Expressions.Expression[] V_24,
-             class [System.Core]System.Linq.Expressions.Expression[] V_25,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_26,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_27,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_28,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_29,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_25,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_26,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_27,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_28,
+             class [System.Core]System.Linq.Expressions.Expression[] V_29,
              class [System.Core]System.Linq.Expressions.Expression[] V_30,
              class [System.Core]System.Linq.Expressions.Expression[] V_31,
-             class [System.Core]System.Linq.Expressions.Expression[] V_32,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_33,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_34,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_35,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_36,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_32,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_33,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_34,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_35,
+             class [System.Core]System.Linq.Expressions.Expression[] V_36,
              class [System.Core]System.Linq.Expressions.Expression[] V_37,
              class [System.Core]System.Linq.Expressions.Expression[] V_38,
-             class [System.Core]System.Linq.Expressions.Expression[] V_39,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_40,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_41,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_42,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_43,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_39,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_40,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_41,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_42,
+             class [System.Core]System.Linq.Expressions.Expression[] V_43,
              class [System.Core]System.Linq.Expressions.Expression[] V_44,
              class [System.Core]System.Linq.Expressions.Expression[] V_45,
-             class [System.Core]System.Linq.Expressions.Expression[] V_46,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_47,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_48,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_49,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_50,
-             class [mscorlib]System.Reflection.MethodInfo[] V_51,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_52,
-             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_53,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_54,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_55,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_56,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_57,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_58,
-             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_59,
-             class [System.Core]System.Linq.Expressions.ParameterExpression V_60,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_46,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_47,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_48,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_49,
+             class [mscorlib]System.Reflection.MethodInfo[] V_50,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_51,
+             class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo[] V_52,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_53,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_54,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_55,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_56,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_57,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_58,
+             class [System.Core]System.Linq.Expressions.ParameterExpression V_59,
+             class [System.Core]System.Linq.Expressions.ParameterExpression[] V_60,
              valuetype [mscorlib]System.DateTime V_61)
     IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::.ctor()
-    IL_0005:  stloc.3
-    IL_0006:  ldloc.3
+    IL_0005:  stloc.2
+    IL_0006:  ldloc.2
     IL_0007:  ldarg.1
     IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::ID
-    IL_000d:  ldloc.3
+    IL_000d:  ldloc.2
     IL_000e:  ldarg.0
     IL_000f:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::'<>4__this'
-    IL_0014:  ldloc.3
+    IL_0014:  ldloc.2
     IL_0015:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::ID
-    IL_001a:  brtrue.s   IL_0083
+    IL_001a:  brtrue.s   IL_007f
 
     IL_001c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
-    IL_0021:  brtrue.s   IL_0062
+    IL_0021:  brtrue.s   IL_005e
 
     IL_0023:  ldc.i4.0
     IL_0024:  ldstr      "data"
@@ -1771,88 +1754,83 @@
     IL_002e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0033:  ldc.i4.2
     IL_0034:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
-    IL_0039:  stloc.s    V_4
-    IL_003b:  ldloc.s    V_4
-    IL_003d:  ldc.i4.0
-    IL_003e:  ldc.i4.0
-    IL_003f:  ldnull
-    IL_0040:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0039:  stloc.3
+    IL_003a:  ldloc.3
+    IL_003b:  ldc.i4.0
+    IL_003c:  ldc.i4.0
+    IL_003d:  ldnull
+    IL_003e:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0045:  stelem.ref
-    IL_0046:  ldloc.s    V_4
-    IL_0048:  ldc.i4.1
-    IL_0049:  ldc.i4.3
-    IL_004a:  ldnull
-    IL_004b:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0043:  stelem.ref
+    IL_0044:  ldloc.3
+    IL_0045:  ldc.i4.1
+    IL_0046:  ldc.i4.3
+    IL_0047:  ldnull
+    IL_0048:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0050:  stelem.ref
-    IL_0051:  ldloc.s    V_4
-    IL_0053:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+    IL_004d:  stelem.ref
+    IL_004e:  ldloc.3
+    IL_004f:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
                                                                                                                                                               string,
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
-    IL_0058:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_005d:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
-    IL_0062:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
-    IL_0067:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
-    IL_006c:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
-    IL_0071:  ldarg.0
-    IL_0072:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
-    IL_0077:  ldstr      "''"
-    IL_007c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
+    IL_0054:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0059:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
+    IL_005e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
+    IL_0063:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
+    IL_0068:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site1'
+    IL_006d:  ldarg.0
+    IL_006e:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
+    IL_0073:  ldstr      "''"
+    IL_0078:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
-    IL_0081:  pop
-    IL_0082:  ret
+    IL_007d:  pop
+    IL_007e:  ret
 
-    IL_0083:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::.ctor()
-    IL_0088:  stloc.2
-    IL_0089:  ldloc.2
-    IL_008a:  ldloc.3
-    IL_008b:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5' ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::'CS$<>8__locals6'
-    IL_0090:  ldloc.2
-    IL_0091:  ldarg.0
-    IL_0092:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_0097:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Contracts()
-    IL_009c:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract
-    IL_00a1:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_00a6:  ldstr      "a"
-    IL_00ab:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_007f:  ldloc.2
+    IL_0080:  ldarg.0
+    IL_0081:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_0086:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Contracts()
+    IL_008b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract
+    IL_0090:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0095:  ldstr      "a"
+    IL_009a:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_00b0:  stloc.s    V_5
-    IL_00b2:  ldloc.s    V_5
-    IL_00b4:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ID()
-    IL_00b9:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_00be:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_00c3:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_009f:  stloc.s    V_4
+    IL_00a1:  ldloc.s    V_4
+    IL_00a3:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ID()
+    IL_00a8:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_00ad:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_00b2:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_00c8:  ldloc.3
-    IL_00c9:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_00ce:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::ID
-    IL_00d3:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_00d8:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00b7:  ldloc.2
+    IL_00b8:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
+    IL_00bd:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::ID
+    IL_00c2:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_00c7:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_00dd:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00cc:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression)
-    IL_00e2:  ldc.i4.1
-    IL_00e3:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_00e8:  stloc.s    V_6
-    IL_00ea:  ldloc.s    V_6
-    IL_00ec:  ldc.i4.0
-    IL_00ed:  ldloc.s    V_5
-    IL_00ef:  stelem.ref
-    IL_00f0:  ldloc.s    V_6
-    IL_00f2:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00d1:  ldc.i4.1
+    IL_00d2:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_00d7:  stloc.s    V_5
+    IL_00d9:  ldloc.s    V_5
+    IL_00db:  ldc.i4.0
+    IL_00dc:  ldloc.s    V_4
+    IL_00de:  stelem.ref
+    IL_00df:  ldloc.s    V_5
+    IL_00e1:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_00f7:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_00e6:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                   class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_00fc:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract
-    IL_0101:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0106:  ldstr      "a"
-    IL_010b:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_00eb:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract
+    IL_00f0:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00f5:  ldstr      "a"
+    IL_00fa:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0110:  stloc.s    V_7
-    IL_0112:  ldtoken    method instance void class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::.ctor(!0,
+    IL_00ff:  stloc.s    V_6
+    IL_0101:  ldtoken    method instance void class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::.ctor(!0,
                                                                                                                                                                                                                    !1,
                                                                                                                                                                                                                    !2,
                                                                                                                                                                                                                    !3,
@@ -1866,1274 +1844,1274 @@
                                                                                                                                                                                                                    !11,
                                                                                                                                                                                                                    !12,
                                                                                                                                                                                                                    !13)
-    IL_0117:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_011c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0106:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_010b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0121:  castclass  [mscorlib]System.Reflection.ConstructorInfo
-    IL_0126:  ldc.i4.s   14
-    IL_0128:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_012d:  stloc.s    V_8
-    IL_012f:  ldloc.s    V_8
-    IL_0131:  ldc.i4.0
-    IL_0132:  ldloc.s    V_7
-    IL_0134:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ID()
-    IL_0139:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_013e:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0143:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0110:  castclass  [mscorlib]System.Reflection.ConstructorInfo
+    IL_0115:  ldc.i4.s   14
+    IL_0117:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_011c:  stloc.s    V_7
+    IL_011e:  ldloc.s    V_7
+    IL_0120:  ldc.i4.0
+    IL_0121:  ldloc.s    V_6
+    IL_0123:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ID()
+    IL_0128:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_012d:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0132:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0148:  stelem.ref
-    IL_0149:  ldloc.s    V_8
-    IL_014b:  ldc.i4.1
-    IL_014c:  ldloc.s    V_7
-    IL_014e:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
-    IL_0153:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0158:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_015d:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0137:  stelem.ref
+    IL_0138:  ldloc.s    V_7
+    IL_013a:  ldc.i4.1
+    IL_013b:  ldloc.s    V_6
+    IL_013d:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
+    IL_0142:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0147:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_014c:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0162:  stelem.ref
-    IL_0163:  ldloc.s    V_8
-    IL_0165:  ldc.i4.2
-    IL_0166:  ldloc.s    V_7
-    IL_0168:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_HouseAddress()
-    IL_016d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0172:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0177:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0151:  stelem.ref
+    IL_0152:  ldloc.s    V_7
+    IL_0154:  ldc.i4.2
+    IL_0155:  ldloc.s    V_6
+    IL_0157:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_HouseAddress()
+    IL_015c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0161:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0166:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_017c:  stelem.ref
-    IL_017d:  ldloc.s    V_8
-    IL_017f:  ldc.i4.3
-    IL_0180:  ldnull
-    IL_0181:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0186:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_018b:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0190:  ldc.i4.1
-    IL_0191:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0196:  stloc.s    V_9
-    IL_0198:  ldloc.s    V_9
-    IL_019a:  ldc.i4.0
-    IL_019b:  ldnull
-    IL_019c:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_016b:  stelem.ref
+    IL_016c:  ldloc.s    V_7
+    IL_016e:  ldc.i4.3
+    IL_016f:  ldnull
+    IL_0170:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_0175:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_017a:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_017f:  ldc.i4.1
+    IL_0180:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0185:  stloc.s    V_8
+    IL_0187:  ldloc.s    V_8
+    IL_0189:  ldc.i4.0
+    IL_018a:  ldnull
+    IL_018b:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                                       class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_01a1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_01a6:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_01ab:  ldc.i4.2
-    IL_01ac:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_01b1:  stloc.s    V_10
-    IL_01b3:  ldloc.s    V_10
-    IL_01b5:  ldc.i4.0
-    IL_01b6:  ldnull
-    IL_01b7:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0190:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0195:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_019a:  ldc.i4.2
+    IL_019b:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_01a0:  stloc.s    V_9
+    IL_01a2:  ldloc.s    V_9
+    IL_01a4:  ldc.i4.0
+    IL_01a5:  ldnull
+    IL_01a6:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_01bc:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_01c1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_01c6:  ldc.i4.2
-    IL_01c7:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_01cc:  stloc.s    V_11
-    IL_01ce:  ldloc.s    V_11
-    IL_01d0:  ldc.i4.0
-    IL_01d1:  ldarg.0
-    IL_01d2:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_01d7:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_01dc:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_01e1:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_01ab:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_01b0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_01b5:  ldc.i4.2
+    IL_01b6:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_01bb:  stloc.s    V_10
+    IL_01bd:  ldloc.s    V_10
+    IL_01bf:  ldc.i4.0
+    IL_01c0:  ldarg.0
+    IL_01c1:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_01c6:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_01cb:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_01d0:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_01e6:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_01eb:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_01f0:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_01d5:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_01da:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_01df:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_01f5:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Administrator()
-    IL_01fa:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_01ff:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0204:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_01e4:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Administrator()
+    IL_01e9:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_01ee:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_01f3:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0209:  stelem.ref
-    IL_020a:  ldloc.s    V_11
-    IL_020c:  ldc.i4.1
-    IL_020d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
-    IL_0212:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0217:  ldstr      "b"
-    IL_021c:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_01f8:  stelem.ref
+    IL_01f9:  ldloc.s    V_10
+    IL_01fb:  ldc.i4.1
+    IL_01fc:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
+    IL_0201:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0206:  ldstr      "b"
+    IL_020b:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0221:  stloc.s    V_12
-    IL_0223:  ldloc.s    V_12
-    IL_0225:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_ID()
-    IL_022a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_022f:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0234:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0210:  stloc.s    V_11
+    IL_0212:  ldloc.s    V_11
+    IL_0214:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_ID()
+    IL_0219:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_021e:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0223:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0239:  ldloc.s    V_7
-    IL_023b:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_AdminID()
-    IL_0240:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0245:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_024a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0228:  ldloc.s    V_6
+    IL_022a:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_AdminID()
+    IL_022f:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0234:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0239:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_024f:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_023e:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression)
-    IL_0254:  ldc.i4.1
-    IL_0255:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_025a:  stloc.s    V_13
-    IL_025c:  ldloc.s    V_13
-    IL_025e:  ldc.i4.0
-    IL_025f:  ldloc.s    V_12
-    IL_0261:  stelem.ref
-    IL_0262:  ldloc.s    V_13
-    IL_0264:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0243:  ldc.i4.1
+    IL_0244:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0249:  stloc.s    V_12
+    IL_024b:  ldloc.s    V_12
+    IL_024d:  ldc.i4.0
+    IL_024e:  ldloc.s    V_11
+    IL_0250:  stelem.ref
+    IL_0251:  ldloc.s    V_12
+    IL_0253:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0269:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_026e:  stelem.ref
-    IL_026f:  ldloc.s    V_11
-    IL_0271:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0258:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_025d:  stelem.ref
+    IL_025e:  ldloc.s    V_10
+    IL_0260:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0276:  stelem.ref
-    IL_0277:  ldloc.s    V_10
-    IL_0279:  ldc.i4.1
-    IL_027a:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
-    IL_027f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0284:  ldstr      "b"
-    IL_0289:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0265:  stelem.ref
+    IL_0266:  ldloc.s    V_9
+    IL_0268:  ldc.i4.1
+    IL_0269:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
+    IL_026e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0273:  ldstr      "b"
+    IL_0278:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_028e:  stloc.s    V_14
-    IL_0290:  ldloc.s    V_14
-    IL_0292:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_TrueName()
-    IL_0297:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_029c:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_02a1:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_027d:  stloc.s    V_13
+    IL_027f:  ldloc.s    V_13
+    IL_0281:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_TrueName()
+    IL_0286:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_028b:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0290:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_02a6:  ldc.i4.1
-    IL_02a7:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_02ac:  stloc.s    V_15
-    IL_02ae:  ldloc.s    V_15
-    IL_02b0:  ldc.i4.0
-    IL_02b1:  ldloc.s    V_14
-    IL_02b3:  stelem.ref
-    IL_02b4:  ldloc.s    V_15
-    IL_02b6:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0295:  ldc.i4.1
+    IL_0296:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_029b:  stloc.s    V_14
+    IL_029d:  ldloc.s    V_14
+    IL_029f:  ldc.i4.0
+    IL_02a0:  ldloc.s    V_13
+    IL_02a2:  stelem.ref
+    IL_02a3:  ldloc.s    V_14
+    IL_02a5:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                        class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_02bb:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_02c0:  stelem.ref
-    IL_02c1:  ldloc.s    V_10
-    IL_02c3:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_02aa:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_02af:  stelem.ref
+    IL_02b0:  ldloc.s    V_9
+    IL_02b2:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_02c8:  stelem.ref
-    IL_02c9:  ldloc.s    V_9
-    IL_02cb:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_02b7:  stelem.ref
+    IL_02b8:  ldloc.s    V_8
+    IL_02ba:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_02d0:  stelem.ref
-    IL_02d1:  ldloc.s    V_8
-    IL_02d3:  ldc.i4.4
-    IL_02d4:  ldnull
-    IL_02d5:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_02da:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_02df:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_02e4:  ldc.i4.1
-    IL_02e5:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_02ea:  stloc.s    V_16
-    IL_02ec:  ldloc.s    V_16
-    IL_02ee:  ldc.i4.0
-    IL_02ef:  ldnull
-    IL_02f0:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_02bf:  stelem.ref
+    IL_02c0:  ldloc.s    V_7
+    IL_02c2:  ldc.i4.4
+    IL_02c3:  ldnull
+    IL_02c4:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_02c9:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_02ce:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_02d3:  ldc.i4.1
+    IL_02d4:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_02d9:  stloc.s    V_15
+    IL_02db:  ldloc.s    V_15
+    IL_02dd:  ldc.i4.0
+    IL_02de:  ldnull
+    IL_02df:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_02f5:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_02fa:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_02ff:  ldc.i4.2
-    IL_0300:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0305:  stloc.s    V_17
-    IL_0307:  ldloc.s    V_17
-    IL_0309:  ldc.i4.0
-    IL_030a:  ldnull
-    IL_030b:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_02e4:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_02e9:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_02ee:  ldc.i4.2
+    IL_02ef:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_02f4:  stloc.s    V_16
+    IL_02f6:  ldloc.s    V_16
+    IL_02f8:  ldc.i4.0
+    IL_02f9:  ldnull
+    IL_02fa:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                       class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_0310:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0315:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_031a:  ldc.i4.2
-    IL_031b:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0320:  stloc.s    V_18
-    IL_0322:  ldloc.s    V_18
-    IL_0324:  ldc.i4.0
-    IL_0325:  ldarg.0
-    IL_0326:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_032b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0330:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0335:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_02ff:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0304:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0309:  ldc.i4.2
+    IL_030a:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_030f:  stloc.s    V_17
+    IL_0311:  ldloc.s    V_17
+    IL_0313:  ldc.i4.0
+    IL_0314:  ldarg.0
+    IL_0315:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_031a:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_031f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0324:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_033a:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_033f:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_0344:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0329:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_032e:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0333:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0349:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Store()
-    IL_034e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0353:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0358:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0338:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Store()
+    IL_033d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0342:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0347:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_035d:  stelem.ref
-    IL_035e:  ldloc.s    V_18
-    IL_0360:  ldc.i4.1
-    IL_0361:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store
-    IL_0366:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_036b:  ldstr      "b"
-    IL_0370:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_034c:  stelem.ref
+    IL_034d:  ldloc.s    V_17
+    IL_034f:  ldc.i4.1
+    IL_0350:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store
+    IL_0355:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_035a:  ldstr      "b"
+    IL_035f:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0375:  stloc.s    V_19
-    IL_0377:  ldloc.s    V_19
-    IL_0379:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store::get_ID()
-    IL_037e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0383:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0388:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0364:  stloc.s    V_18
+    IL_0366:  ldloc.s    V_18
+    IL_0368:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store::get_ID()
+    IL_036d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0372:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0377:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_038d:  ldloc.s    V_7
-    IL_038f:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_StoreID()
-    IL_0394:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0399:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_039e:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_037c:  ldloc.s    V_6
+    IL_037e:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_StoreID()
+    IL_0383:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0388:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_038d:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_03a3:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0392:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression)
-    IL_03a8:  ldc.i4.1
-    IL_03a9:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_03ae:  stloc.s    V_20
-    IL_03b0:  ldloc.s    V_20
-    IL_03b2:  ldc.i4.0
-    IL_03b3:  ldloc.s    V_19
-    IL_03b5:  stelem.ref
-    IL_03b6:  ldloc.s    V_20
-    IL_03b8:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0397:  ldc.i4.1
+    IL_0398:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_039d:  stloc.s    V_19
+    IL_039f:  ldloc.s    V_19
+    IL_03a1:  ldc.i4.0
+    IL_03a2:  ldloc.s    V_18
+    IL_03a4:  stelem.ref
+    IL_03a5:  ldloc.s    V_19
+    IL_03a7:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                              class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_03bd:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_03c2:  stelem.ref
-    IL_03c3:  ldloc.s    V_18
-    IL_03c5:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_03ac:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_03b1:  stelem.ref
+    IL_03b2:  ldloc.s    V_17
+    IL_03b4:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_03ca:  stelem.ref
-    IL_03cb:  ldloc.s    V_17
-    IL_03cd:  ldc.i4.1
-    IL_03ce:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store
-    IL_03d3:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_03d8:  ldstr      "b"
-    IL_03dd:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_03b9:  stelem.ref
+    IL_03ba:  ldloc.s    V_16
+    IL_03bc:  ldc.i4.1
+    IL_03bd:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store
+    IL_03c2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_03c7:  ldstr      "b"
+    IL_03cc:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_03e2:  stloc.s    V_21
-    IL_03e4:  ldloc.s    V_21
-    IL_03e6:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store::get_Name()
-    IL_03eb:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_03f0:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_03f5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_03d1:  stloc.s    V_20
+    IL_03d3:  ldloc.s    V_20
+    IL_03d5:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store::get_Name()
+    IL_03da:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_03df:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_03e4:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_03fa:  ldc.i4.1
-    IL_03fb:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0400:  stloc.s    V_22
-    IL_0402:  ldloc.s    V_22
-    IL_0404:  ldc.i4.0
-    IL_0405:  ldloc.s    V_21
-    IL_0407:  stelem.ref
-    IL_0408:  ldloc.s    V_22
-    IL_040a:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_03e9:  ldc.i4.1
+    IL_03ea:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_03ef:  stloc.s    V_21
+    IL_03f1:  ldloc.s    V_21
+    IL_03f3:  ldc.i4.0
+    IL_03f4:  ldloc.s    V_20
+    IL_03f6:  stelem.ref
+    IL_03f7:  ldloc.s    V_21
+    IL_03f9:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Store,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_040f:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0414:  stelem.ref
-    IL_0415:  ldloc.s    V_17
-    IL_0417:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_03fe:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0403:  stelem.ref
+    IL_0404:  ldloc.s    V_16
+    IL_0406:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_041c:  stelem.ref
-    IL_041d:  ldloc.s    V_16
-    IL_041f:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_040b:  stelem.ref
+    IL_040c:  ldloc.s    V_15
+    IL_040e:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0424:  stelem.ref
-    IL_0425:  ldloc.s    V_8
-    IL_0427:  ldc.i4.5
-    IL_0428:  ldloc.s    V_7
-    IL_042a:  ldtoken    method instance valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_SigningTime()
-    IL_042f:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0434:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0439:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0413:  stelem.ref
+    IL_0414:  ldloc.s    V_7
+    IL_0416:  ldc.i4.5
+    IL_0417:  ldloc.s    V_6
+    IL_0419:  ldtoken    method instance valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_SigningTime()
+    IL_041e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0423:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0428:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_043e:  stelem.ref
-    IL_043f:  ldloc.s    V_8
-    IL_0441:  ldc.i4.6
-    IL_0442:  ldnull
-    IL_0443:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0448:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_044d:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0452:  ldc.i4.1
-    IL_0453:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0458:  stloc.s    V_23
-    IL_045a:  ldloc.s    V_23
-    IL_045c:  ldc.i4.0
-    IL_045d:  ldnull
-    IL_045e:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_042d:  stelem.ref
+    IL_042e:  ldloc.s    V_7
+    IL_0430:  ldc.i4.6
+    IL_0431:  ldnull
+    IL_0432:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_0437:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_043c:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0441:  ldc.i4.1
+    IL_0442:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0447:  stloc.s    V_22
+    IL_0449:  ldloc.s    V_22
+    IL_044b:  ldc.i4.0
+    IL_044c:  ldnull
+    IL_044d:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                                       class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0463:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0468:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_046d:  ldc.i4.2
-    IL_046e:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0473:  stloc.s    V_24
-    IL_0475:  ldloc.s    V_24
-    IL_0477:  ldc.i4.0
-    IL_0478:  ldnull
-    IL_0479:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0452:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0457:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_045c:  ldc.i4.2
+    IL_045d:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0462:  stloc.s    V_23
+    IL_0464:  ldloc.s    V_23
+    IL_0466:  ldc.i4.0
+    IL_0467:  ldnull
+    IL_0468:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_047e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0483:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0488:  ldc.i4.2
-    IL_0489:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_048e:  stloc.s    V_25
-    IL_0490:  ldloc.s    V_25
-    IL_0492:  ldc.i4.0
-    IL_0493:  ldarg.0
-    IL_0494:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0499:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_049e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_04a3:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_046d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0472:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0477:  ldc.i4.2
+    IL_0478:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_047d:  stloc.s    V_24
+    IL_047f:  ldloc.s    V_24
+    IL_0481:  ldc.i4.0
+    IL_0482:  ldarg.0
+    IL_0483:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0488:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_048d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0492:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_04a8:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_04ad:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_04b2:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0497:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_049c:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_04a1:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_04b7:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Administrator()
-    IL_04bc:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_04c1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_04c6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_04a6:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Administrator()
+    IL_04ab:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_04b0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_04b5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_04cb:  stelem.ref
-    IL_04cc:  ldloc.s    V_25
-    IL_04ce:  ldc.i4.1
-    IL_04cf:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
-    IL_04d4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_04d9:  ldstr      "b"
-    IL_04de:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_04ba:  stelem.ref
+    IL_04bb:  ldloc.s    V_24
+    IL_04bd:  ldc.i4.1
+    IL_04be:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
+    IL_04c3:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_04c8:  ldstr      "b"
+    IL_04cd:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_04e3:  stloc.s    V_26
-    IL_04e5:  ldloc.s    V_26
-    IL_04e7:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_ID()
-    IL_04ec:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_04f1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_04f6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_04d2:  stloc.s    V_25
+    IL_04d4:  ldloc.s    V_25
+    IL_04d6:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_ID()
+    IL_04db:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_04e0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_04e5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_04fb:  ldloc.s    V_7
-    IL_04fd:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_AdminID()
-    IL_0502:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0507:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_050c:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_04ea:  ldloc.s    V_6
+    IL_04ec:  ldtoken    method instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_AdminID()
+    IL_04f1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_04f6:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_04fb:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0511:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0500:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression)
-    IL_0516:  ldc.i4.1
-    IL_0517:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_051c:  stloc.s    V_27
-    IL_051e:  ldloc.s    V_27
-    IL_0520:  ldc.i4.0
-    IL_0521:  ldloc.s    V_26
-    IL_0523:  stelem.ref
-    IL_0524:  ldloc.s    V_27
-    IL_0526:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0505:  ldc.i4.1
+    IL_0506:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_050b:  stloc.s    V_26
+    IL_050d:  ldloc.s    V_26
+    IL_050f:  ldc.i4.0
+    IL_0510:  ldloc.s    V_25
+    IL_0512:  stelem.ref
+    IL_0513:  ldloc.s    V_26
+    IL_0515:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_052b:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0530:  stelem.ref
-    IL_0531:  ldloc.s    V_25
-    IL_0533:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_051a:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_051f:  stelem.ref
+    IL_0520:  ldloc.s    V_24
+    IL_0522:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0538:  stelem.ref
-    IL_0539:  ldloc.s    V_24
-    IL_053b:  ldc.i4.1
-    IL_053c:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
-    IL_0541:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0546:  ldstr      "b"
-    IL_054b:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0527:  stelem.ref
+    IL_0528:  ldloc.s    V_23
+    IL_052a:  ldc.i4.1
+    IL_052b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator
+    IL_0530:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0535:  ldstr      "b"
+    IL_053a:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0550:  stloc.s    V_28
-    IL_0552:  ldloc.s    V_28
-    IL_0554:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_Phone()
-    IL_0559:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_055e:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0563:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_053f:  stloc.s    V_27
+    IL_0541:  ldloc.s    V_27
+    IL_0543:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator::get_Phone()
+    IL_0548:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_054d:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0552:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0568:  ldc.i4.1
-    IL_0569:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_056e:  stloc.s    V_29
-    IL_0570:  ldloc.s    V_29
-    IL_0572:  ldc.i4.0
-    IL_0573:  ldloc.s    V_28
-    IL_0575:  stelem.ref
-    IL_0576:  ldloc.s    V_29
-    IL_0578:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0557:  ldc.i4.1
+    IL_0558:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_055d:  stloc.s    V_28
+    IL_055f:  ldloc.s    V_28
+    IL_0561:  ldc.i4.0
+    IL_0562:  ldloc.s    V_27
+    IL_0564:  stelem.ref
+    IL_0565:  ldloc.s    V_28
+    IL_0567:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Administrator,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                        class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_057d:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0582:  stelem.ref
-    IL_0583:  ldloc.s    V_24
-    IL_0585:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_056c:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0571:  stelem.ref
+    IL_0572:  ldloc.s    V_23
+    IL_0574:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_058a:  stelem.ref
-    IL_058b:  ldloc.s    V_23
-    IL_058d:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0579:  stelem.ref
+    IL_057a:  ldloc.s    V_22
+    IL_057c:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0592:  stelem.ref
-    IL_0593:  ldloc.s    V_8
-    IL_0595:  ldc.i4.7
-    IL_0596:  ldloc.s    V_7
-    IL_0598:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_BuyerName()
-    IL_059d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_05a2:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_05a7:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0581:  stelem.ref
+    IL_0582:  ldloc.s    V_7
+    IL_0584:  ldc.i4.7
+    IL_0585:  ldloc.s    V_6
+    IL_0587:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_BuyerName()
+    IL_058c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0591:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0596:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_05ac:  stelem.ref
-    IL_05ad:  ldloc.s    V_8
-    IL_05af:  ldc.i4.8
-    IL_05b0:  ldloc.s    V_7
-    IL_05b2:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_BuyerTelephone()
-    IL_05b7:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_05bc:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_05c1:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_059b:  stelem.ref
+    IL_059c:  ldloc.s    V_7
+    IL_059e:  ldc.i4.8
+    IL_059f:  ldloc.s    V_6
+    IL_05a1:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_BuyerTelephone()
+    IL_05a6:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_05ab:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_05b0:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_05c6:  stelem.ref
-    IL_05c7:  ldloc.s    V_8
-    IL_05c9:  ldc.i4.s   9
-    IL_05cb:  ldloc.s    V_7
-    IL_05cd:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_Customer()
-    IL_05d2:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_05d7:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_05dc:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_05b5:  stelem.ref
+    IL_05b6:  ldloc.s    V_7
+    IL_05b8:  ldc.i4.s   9
+    IL_05ba:  ldloc.s    V_6
+    IL_05bc:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_Customer()
+    IL_05c1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_05c6:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_05cb:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_05e1:  stelem.ref
-    IL_05e2:  ldloc.s    V_8
-    IL_05e4:  ldc.i4.s   10
-    IL_05e6:  ldloc.s    V_7
-    IL_05e8:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_CustTelephone()
-    IL_05ed:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_05f2:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_05f7:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_05d0:  stelem.ref
+    IL_05d1:  ldloc.s    V_7
+    IL_05d3:  ldc.i4.s   10
+    IL_05d5:  ldloc.s    V_6
+    IL_05d7:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_CustTelephone()
+    IL_05dc:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_05e1:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_05e6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_05fc:  stelem.ref
-    IL_05fd:  ldloc.s    V_8
-    IL_05ff:  ldc.i4.s   11
-    IL_0601:  ldnull
-    IL_0602:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0607:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_060c:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0611:  ldc.i4.1
-    IL_0612:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0617:  stloc.s    V_30
-    IL_0619:  ldloc.s    V_30
-    IL_061b:  ldc.i4.0
-    IL_061c:  ldnull
-    IL_061d:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_05eb:  stelem.ref
+    IL_05ec:  ldloc.s    V_7
+    IL_05ee:  ldc.i4.s   11
+    IL_05f0:  ldnull
+    IL_05f1:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_05f6:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_05fb:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0600:  ldc.i4.1
+    IL_0601:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0606:  stloc.s    V_29
+    IL_0608:  ldloc.s    V_29
+    IL_060a:  ldc.i4.0
+    IL_060b:  ldnull
+    IL_060c:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                              class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0622:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0627:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_062c:  ldc.i4.2
-    IL_062d:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0632:  stloc.s    V_31
-    IL_0634:  ldloc.s    V_31
-    IL_0636:  ldc.i4.0
-    IL_0637:  ldnull
-    IL_0638:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0611:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0616:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_061b:  ldc.i4.2
+    IL_061c:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0621:  stloc.s    V_30
+    IL_0623:  ldloc.s    V_30
+    IL_0625:  ldc.i4.0
+    IL_0626:  ldnull
+    IL_0627:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_063d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0642:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0647:  ldc.i4.2
-    IL_0648:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_064d:  stloc.s    V_32
-    IL_064f:  ldloc.s    V_32
-    IL_0651:  ldc.i4.0
-    IL_0652:  ldarg.0
-    IL_0653:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0658:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_065d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0662:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_062c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0631:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0636:  ldc.i4.2
+    IL_0637:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_063c:  stloc.s    V_31
+    IL_063e:  ldloc.s    V_31
+    IL_0640:  ldc.i4.0
+    IL_0641:  ldarg.0
+    IL_0642:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0647:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_064c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0651:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0667:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_066c:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_0671:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0656:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_065b:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0660:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0676:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
-    IL_067b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0680:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0685:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0665:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
+    IL_066a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_066f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0674:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_068a:  stelem.ref
-    IL_068b:  ldloc.s    V_32
-    IL_068d:  ldc.i4.1
-    IL_068e:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0693:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0698:  ldstr      "b"
-    IL_069d:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0679:  stelem.ref
+    IL_067a:  ldloc.s    V_31
+    IL_067c:  ldc.i4.1
+    IL_067d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0682:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0687:  ldstr      "b"
+    IL_068c:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_06a2:  stloc.s    V_33
-    IL_06a4:  ldloc.s    V_33
-    IL_06a6:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
-    IL_06ab:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_06b0:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_06b5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0691:  stloc.s    V_32
+    IL_0693:  ldloc.s    V_32
+    IL_0695:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
+    IL_069a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_069f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_06a4:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_06ba:  ldloc.s    V_7
-    IL_06bc:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
-    IL_06c1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_06c6:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_06cb:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_06a9:  ldloc.s    V_6
+    IL_06ab:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
+    IL_06b0:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_06b5:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_06ba:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_06d0:  ldc.i4.0
-    IL_06d1:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
+    IL_06bf:  ldc.i4.0
+    IL_06c0:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
                                                                           string)
-    IL_06d6:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_06db:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_06e0:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_06c5:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_06ca:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_06cf:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             bool,
                                                                                                                                             class [mscorlib]System.Reflection.MethodInfo)
-    IL_06e5:  ldc.i4.1
-    IL_06e6:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_06eb:  stloc.s    V_34
-    IL_06ed:  ldloc.s    V_34
-    IL_06ef:  ldc.i4.0
-    IL_06f0:  ldloc.s    V_33
-    IL_06f2:  stelem.ref
-    IL_06f3:  ldloc.s    V_34
-    IL_06f5:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_06d4:  ldc.i4.1
+    IL_06d5:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_06da:  stloc.s    V_33
+    IL_06dc:  ldloc.s    V_33
+    IL_06de:  ldc.i4.0
+    IL_06df:  ldloc.s    V_32
+    IL_06e1:  stelem.ref
+    IL_06e2:  ldloc.s    V_33
+    IL_06e4:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_06fa:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_06ff:  stelem.ref
-    IL_0700:  ldloc.s    V_32
-    IL_0702:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_06e9:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_06ee:  stelem.ref
+    IL_06ef:  ldloc.s    V_31
+    IL_06f1:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0707:  stelem.ref
-    IL_0708:  ldloc.s    V_31
-    IL_070a:  ldc.i4.1
-    IL_070b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0710:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0715:  ldstr      "b"
-    IL_071a:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_06f6:  stelem.ref
+    IL_06f7:  ldloc.s    V_30
+    IL_06f9:  ldc.i4.1
+    IL_06fa:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_06ff:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0704:  ldstr      "b"
+    IL_0709:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_071f:  stloc.s    V_35
-    IL_0721:  ldloc.s    V_35
-    IL_0723:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_Credit()
-    IL_0728:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_072d:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0732:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_070e:  stloc.s    V_34
+    IL_0710:  ldloc.s    V_34
+    IL_0712:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_Credit()
+    IL_0717:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_071c:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0721:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0737:  ldc.i4.1
-    IL_0738:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_073d:  stloc.s    V_36
-    IL_073f:  ldloc.s    V_36
-    IL_0741:  ldc.i4.0
-    IL_0742:  ldloc.s    V_35
-    IL_0744:  stelem.ref
-    IL_0745:  ldloc.s    V_36
-    IL_0747:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0726:  ldc.i4.1
+    IL_0727:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_072c:  stloc.s    V_35
+    IL_072e:  ldloc.s    V_35
+    IL_0730:  ldc.i4.0
+    IL_0731:  ldloc.s    V_34
+    IL_0733:  stelem.ref
+    IL_0734:  ldloc.s    V_35
+    IL_0736:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_074c:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0751:  stelem.ref
-    IL_0752:  ldloc.s    V_31
-    IL_0754:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_073b:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0740:  stelem.ref
+    IL_0741:  ldloc.s    V_30
+    IL_0743:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0759:  stelem.ref
-    IL_075a:  ldloc.s    V_30
-    IL_075c:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0748:  stelem.ref
+    IL_0749:  ldloc.s    V_29
+    IL_074b:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0761:  stelem.ref
-    IL_0762:  ldloc.s    V_8
-    IL_0764:  ldc.i4.s   12
-    IL_0766:  ldnull
-    IL_0767:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_076c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0771:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0776:  ldc.i4.1
-    IL_0777:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_077c:  stloc.s    V_37
-    IL_077e:  ldloc.s    V_37
-    IL_0780:  ldc.i4.0
-    IL_0781:  ldnull
-    IL_0782:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0750:  stelem.ref
+    IL_0751:  ldloc.s    V_7
+    IL_0753:  ldc.i4.s   12
+    IL_0755:  ldnull
+    IL_0756:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_075b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0760:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0765:  ldc.i4.1
+    IL_0766:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_076b:  stloc.s    V_36
+    IL_076d:  ldloc.s    V_36
+    IL_076f:  ldc.i4.0
+    IL_0770:  ldnull
+    IL_0771:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                              class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0787:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_078c:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0791:  ldc.i4.2
-    IL_0792:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0797:  stloc.s    V_38
-    IL_0799:  ldloc.s    V_38
-    IL_079b:  ldc.i4.0
-    IL_079c:  ldnull
-    IL_079d:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0776:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_077b:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0780:  ldc.i4.2
+    IL_0781:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0786:  stloc.s    V_37
+    IL_0788:  ldloc.s    V_37
+    IL_078a:  ldc.i4.0
+    IL_078b:  ldnull
+    IL_078c:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_07a2:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_07a7:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_07ac:  ldc.i4.2
-    IL_07ad:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_07b2:  stloc.s    V_39
-    IL_07b4:  ldloc.s    V_39
-    IL_07b6:  ldc.i4.0
-    IL_07b7:  ldarg.0
-    IL_07b8:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_07bd:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_07c2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_07c7:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_0791:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0796:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_079b:  ldc.i4.2
+    IL_079c:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_07a1:  stloc.s    V_38
+    IL_07a3:  ldloc.s    V_38
+    IL_07a5:  ldc.i4.0
+    IL_07a6:  ldarg.0
+    IL_07a7:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_07ac:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_07b1:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_07b6:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_07cc:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_07d1:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_07d6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_07bb:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_07c0:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_07c5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_07db:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
-    IL_07e0:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_07e5:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_07ea:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_07ca:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
+    IL_07cf:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_07d4:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_07d9:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_07ef:  stelem.ref
-    IL_07f0:  ldloc.s    V_39
-    IL_07f2:  ldc.i4.1
-    IL_07f3:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_07f8:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_07fd:  ldstr      "b"
-    IL_0802:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_07de:  stelem.ref
+    IL_07df:  ldloc.s    V_38
+    IL_07e1:  ldc.i4.1
+    IL_07e2:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_07e7:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_07ec:  ldstr      "b"
+    IL_07f1:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0807:  stloc.s    V_40
-    IL_0809:  ldloc.s    V_40
-    IL_080b:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
-    IL_0810:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0815:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_081a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_07f6:  stloc.s    V_39
+    IL_07f8:  ldloc.s    V_39
+    IL_07fa:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
+    IL_07ff:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0804:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0809:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_081f:  ldloc.s    V_7
-    IL_0821:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
-    IL_0826:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_082b:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0830:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_080e:  ldloc.s    V_6
+    IL_0810:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
+    IL_0815:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_081a:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_081f:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0835:  ldc.i4.0
-    IL_0836:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
+    IL_0824:  ldc.i4.0
+    IL_0825:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
                                                                           string)
-    IL_083b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0840:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0845:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_082a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_082f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0834:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             bool,
                                                                                                                                             class [mscorlib]System.Reflection.MethodInfo)
-    IL_084a:  ldc.i4.1
-    IL_084b:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0850:  stloc.s    V_41
-    IL_0852:  ldloc.s    V_41
-    IL_0854:  ldc.i4.0
-    IL_0855:  ldloc.s    V_40
-    IL_0857:  stelem.ref
-    IL_0858:  ldloc.s    V_41
-    IL_085a:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0839:  ldc.i4.1
+    IL_083a:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_083f:  stloc.s    V_40
+    IL_0841:  ldloc.s    V_40
+    IL_0843:  ldc.i4.0
+    IL_0844:  ldloc.s    V_39
+    IL_0846:  stelem.ref
+    IL_0847:  ldloc.s    V_40
+    IL_0849:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_085f:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0864:  stelem.ref
-    IL_0865:  ldloc.s    V_39
-    IL_0867:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_084e:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0853:  stelem.ref
+    IL_0854:  ldloc.s    V_38
+    IL_0856:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_086c:  stelem.ref
-    IL_086d:  ldloc.s    V_38
-    IL_086f:  ldc.i4.1
-    IL_0870:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0875:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_087a:  ldstr      "b"
-    IL_087f:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_085b:  stelem.ref
+    IL_085c:  ldloc.s    V_37
+    IL_085e:  ldc.i4.1
+    IL_085f:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0864:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0869:  ldstr      "b"
+    IL_086e:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0884:  stloc.s    V_42
-    IL_0886:  ldloc.s    V_42
-    IL_0888:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_LoanBank()
-    IL_088d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0892:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0897:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0873:  stloc.s    V_41
+    IL_0875:  ldloc.s    V_41
+    IL_0877:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_LoanBank()
+    IL_087c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0881:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0886:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_089c:  ldc.i4.1
-    IL_089d:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_08a2:  stloc.s    V_43
-    IL_08a4:  ldloc.s    V_43
-    IL_08a6:  ldc.i4.0
-    IL_08a7:  ldloc.s    V_42
-    IL_08a9:  stelem.ref
-    IL_08aa:  ldloc.s    V_43
-    IL_08ac:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_088b:  ldc.i4.1
+    IL_088c:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0891:  stloc.s    V_42
+    IL_0893:  ldloc.s    V_42
+    IL_0895:  ldc.i4.0
+    IL_0896:  ldloc.s    V_41
+    IL_0898:  stelem.ref
+    IL_0899:  ldloc.s    V_42
+    IL_089b:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_08b1:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_08b6:  stelem.ref
-    IL_08b7:  ldloc.s    V_38
-    IL_08b9:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_08a0:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_08a5:  stelem.ref
+    IL_08a6:  ldloc.s    V_37
+    IL_08a8:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_08be:  stelem.ref
-    IL_08bf:  ldloc.s    V_37
-    IL_08c1:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_08ad:  stelem.ref
+    IL_08ae:  ldloc.s    V_36
+    IL_08b0:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_08c6:  stelem.ref
-    IL_08c7:  ldloc.s    V_8
-    IL_08c9:  ldc.i4.s   13
-    IL_08cb:  ldnull
-    IL_08cc:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_08d1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_08d6:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_08db:  ldc.i4.1
-    IL_08dc:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_08e1:  stloc.s    V_44
-    IL_08e3:  ldloc.s    V_44
-    IL_08e5:  ldc.i4.0
-    IL_08e6:  ldnull
-    IL_08e7:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_08b5:  stelem.ref
+    IL_08b6:  ldloc.s    V_7
+    IL_08b8:  ldc.i4.s   13
+    IL_08ba:  ldnull
+    IL_08bb:  ldtoken    method !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<string>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_08c0:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_08c5:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_08ca:  ldc.i4.1
+    IL_08cb:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_08d0:  stloc.s    V_43
+    IL_08d2:  ldloc.s    V_43
+    IL_08d4:  ldc.i4.0
+    IL_08d5:  ldnull
+    IL_08d6:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                              class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_08ec:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_08f1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_08f6:  ldc.i4.2
-    IL_08f7:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_08fc:  stloc.s    V_45
-    IL_08fe:  ldloc.s    V_45
-    IL_0900:  ldc.i4.0
-    IL_0901:  ldnull
-    IL_0902:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_08db:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_08e0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_08e5:  ldc.i4.2
+    IL_08e6:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_08eb:  stloc.s    V_44
+    IL_08ed:  ldloc.s    V_44
+    IL_08ef:  ldc.i4.0
+    IL_08f0:  ldnull
+    IL_08f1:  ldtoken    method class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_0907:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_090c:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0911:  ldc.i4.2
-    IL_0912:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0917:  stloc.s    V_46
-    IL_0919:  ldloc.s    V_46
-    IL_091b:  ldc.i4.0
-    IL_091c:  ldarg.0
-    IL_091d:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0922:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0927:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_092c:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_08f6:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_08fb:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0900:  ldc.i4.2
+    IL_0901:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0906:  stloc.s    V_45
+    IL_0908:  ldloc.s    V_45
+    IL_090a:  ldc.i4.0
+    IL_090b:  ldarg.0
+    IL_090c:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0911:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0916:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_091b:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0931:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_0936:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_093b:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0920:  ldtoken    field class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_0925:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_092a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0940:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
-    IL_0945:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_094a:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_094f:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_092f:  ldtoken    method instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
+    IL_0934:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0939:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_093e:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0954:  stelem.ref
-    IL_0955:  ldloc.s    V_46
-    IL_0957:  ldc.i4.1
-    IL_0958:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_095d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0962:  ldstr      "b"
-    IL_0967:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0943:  stelem.ref
+    IL_0944:  ldloc.s    V_45
+    IL_0946:  ldc.i4.1
+    IL_0947:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_094c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0951:  ldstr      "b"
+    IL_0956:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_096c:  stloc.s    V_47
-    IL_096e:  ldloc.s    V_47
-    IL_0970:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
-    IL_0975:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_097a:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_097f:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_095b:  stloc.s    V_46
+    IL_095d:  ldloc.s    V_46
+    IL_095f:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
+    IL_0964:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0969:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_096e:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0984:  ldloc.s    V_7
-    IL_0986:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
-    IL_098b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0990:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0995:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0973:  ldloc.s    V_6
+    IL_0975:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract::get_ContractNo()
+    IL_097a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_097f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0984:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_099a:  ldc.i4.0
-    IL_099b:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
+    IL_0989:  ldc.i4.0
+    IL_098a:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
                                                                           string)
-    IL_09a0:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_09a5:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_09aa:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_098f:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0994:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0999:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             bool,
                                                                                                                                             class [mscorlib]System.Reflection.MethodInfo)
-    IL_09af:  ldc.i4.1
-    IL_09b0:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_09b5:  stloc.s    V_48
-    IL_09b7:  ldloc.s    V_48
-    IL_09b9:  ldc.i4.0
-    IL_09ba:  ldloc.s    V_47
-    IL_09bc:  stelem.ref
-    IL_09bd:  ldloc.s    V_48
-    IL_09bf:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_099e:  ldc.i4.1
+    IL_099f:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_09a4:  stloc.s    V_47
+    IL_09a6:  ldloc.s    V_47
+    IL_09a8:  ldc.i4.0
+    IL_09a9:  ldloc.s    V_46
+    IL_09ab:  stelem.ref
+    IL_09ac:  ldloc.s    V_47
+    IL_09ae:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_09c4:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_09c9:  stelem.ref
-    IL_09ca:  ldloc.s    V_46
-    IL_09cc:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_09b3:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_09b8:  stelem.ref
+    IL_09b9:  ldloc.s    V_45
+    IL_09bb:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_09d1:  stelem.ref
-    IL_09d2:  ldloc.s    V_45
-    IL_09d4:  ldc.i4.1
-    IL_09d5:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_09da:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_09df:  ldstr      "b"
-    IL_09e4:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_09c0:  stelem.ref
+    IL_09c1:  ldloc.s    V_44
+    IL_09c3:  ldc.i4.1
+    IL_09c4:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_09c9:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_09ce:  ldstr      "b"
+    IL_09d3:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_09e9:  stloc.s    V_49
-    IL_09eb:  ldloc.s    V_49
-    IL_09ed:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_Remarks()
-    IL_09f2:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_09f7:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_09fc:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_09d8:  stloc.s    V_48
+    IL_09da:  ldloc.s    V_48
+    IL_09dc:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_Remarks()
+    IL_09e1:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_09e6:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_09eb:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0a01:  ldc.i4.1
-    IL_0a02:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0a07:  stloc.s    V_50
-    IL_0a09:  ldloc.s    V_50
-    IL_0a0b:  ldc.i4.0
-    IL_0a0c:  ldloc.s    V_49
-    IL_0a0e:  stelem.ref
-    IL_0a0f:  ldloc.s    V_50
-    IL_0a11:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_09f0:  ldc.i4.1
+    IL_09f1:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_09f6:  stloc.s    V_49
+    IL_09f8:  ldloc.s    V_49
+    IL_09fa:  ldc.i4.0
+    IL_09fb:  ldloc.s    V_48
+    IL_09fd:  stelem.ref
+    IL_09fe:  ldloc.s    V_49
+    IL_0a00:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,string>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0a16:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0a1b:  stelem.ref
-    IL_0a1c:  ldloc.s    V_45
-    IL_0a1e:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0a05:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Quote(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0a0a:  stelem.ref
+    IL_0a0b:  ldloc.s    V_44
+    IL_0a0d:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0a23:  stelem.ref
-    IL_0a24:  ldloc.s    V_44
-    IL_0a26:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0a12:  stelem.ref
+    IL_0a13:  ldloc.s    V_43
+    IL_0a15:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0a2b:  stelem.ref
-    IL_0a2c:  ldloc.s    V_8
-    IL_0a2e:  ldc.i4.s   14
-    IL_0a30:  newarr     [mscorlib]System.Reflection.MethodInfo
-    IL_0a35:  stloc.s    V_51
-    IL_0a37:  ldloc.s    V_51
-    IL_0a39:  ldc.i4.0
-    IL_0a3a:  ldtoken    method instance !0 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ID()
-    IL_0a3f:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0a44:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a1a:  stelem.ref
+    IL_0a1b:  ldloc.s    V_7
+    IL_0a1d:  ldc.i4.s   14
+    IL_0a1f:  newarr     [mscorlib]System.Reflection.MethodInfo
+    IL_0a24:  stloc.s    V_50
+    IL_0a26:  ldloc.s    V_50
+    IL_0a28:  ldc.i4.0
+    IL_0a29:  ldtoken    method instance !0 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ID()
+    IL_0a2e:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0a33:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a49:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0a4e:  stelem.ref
-    IL_0a4f:  ldloc.s    V_51
-    IL_0a51:  ldc.i4.1
-    IL_0a52:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
-    IL_0a57:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0a5c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a38:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0a3d:  stelem.ref
+    IL_0a3e:  ldloc.s    V_50
+    IL_0a40:  ldc.i4.1
+    IL_0a41:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
+    IL_0a46:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0a4b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a61:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0a66:  stelem.ref
-    IL_0a67:  ldloc.s    V_51
-    IL_0a69:  ldc.i4.2
-    IL_0a6a:  ldtoken    method instance !2 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_HouseAddress()
-    IL_0a6f:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0a74:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a50:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0a55:  stelem.ref
+    IL_0a56:  ldloc.s    V_50
+    IL_0a58:  ldc.i4.2
+    IL_0a59:  ldtoken    method instance !2 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_HouseAddress()
+    IL_0a5e:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0a63:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a79:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0a7e:  stelem.ref
-    IL_0a7f:  ldloc.s    V_51
-    IL_0a81:  ldc.i4.3
-    IL_0a82:  ldtoken    method instance !3 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_AdminID()
-    IL_0a87:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0a8c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a68:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0a6d:  stelem.ref
+    IL_0a6e:  ldloc.s    V_50
+    IL_0a70:  ldc.i4.3
+    IL_0a71:  ldtoken    method instance !3 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_AdminID()
+    IL_0a76:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0a7b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0a91:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0a96:  stelem.ref
-    IL_0a97:  ldloc.s    V_51
-    IL_0a99:  ldc.i4.4
-    IL_0a9a:  ldtoken    method instance !4 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_StoreID()
-    IL_0a9f:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0aa4:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a80:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0a85:  stelem.ref
+    IL_0a86:  ldloc.s    V_50
+    IL_0a88:  ldc.i4.4
+    IL_0a89:  ldtoken    method instance !4 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_StoreID()
+    IL_0a8e:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0a93:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0aa9:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0aae:  stelem.ref
-    IL_0aaf:  ldloc.s    V_51
-    IL_0ab1:  ldc.i4.5
-    IL_0ab2:  ldtoken    method instance !5 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_SigningTime()
-    IL_0ab7:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0abc:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0a98:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0a9d:  stelem.ref
+    IL_0a9e:  ldloc.s    V_50
+    IL_0aa0:  ldc.i4.5
+    IL_0aa1:  ldtoken    method instance !5 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_SigningTime()
+    IL_0aa6:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0aab:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0ac1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0ac6:  stelem.ref
-    IL_0ac7:  ldloc.s    V_51
-    IL_0ac9:  ldc.i4.6
-    IL_0aca:  ldtoken    method instance !6 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_YeWuPhone()
-    IL_0acf:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0ad4:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0ab0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0ab5:  stelem.ref
+    IL_0ab6:  ldloc.s    V_50
+    IL_0ab8:  ldc.i4.6
+    IL_0ab9:  ldtoken    method instance !6 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_YeWuPhone()
+    IL_0abe:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0ac3:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0ad9:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0ade:  stelem.ref
-    IL_0adf:  ldloc.s    V_51
-    IL_0ae1:  ldc.i4.7
-    IL_0ae2:  ldtoken    method instance !7 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_BuyerName()
-    IL_0ae7:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0aec:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0ac8:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0acd:  stelem.ref
+    IL_0ace:  ldloc.s    V_50
+    IL_0ad0:  ldc.i4.7
+    IL_0ad1:  ldtoken    method instance !7 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_BuyerName()
+    IL_0ad6:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0adb:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0af1:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0af6:  stelem.ref
-    IL_0af7:  ldloc.s    V_51
-    IL_0af9:  ldc.i4.8
-    IL_0afa:  ldtoken    method instance !8 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_BuyerTelephone()
-    IL_0aff:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b04:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0ae0:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0ae5:  stelem.ref
+    IL_0ae6:  ldloc.s    V_50
+    IL_0ae8:  ldc.i4.8
+    IL_0ae9:  ldtoken    method instance !8 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_BuyerTelephone()
+    IL_0aee:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0af3:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b09:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b0e:  stelem.ref
-    IL_0b0f:  ldloc.s    V_51
-    IL_0b11:  ldc.i4.s   9
-    IL_0b13:  ldtoken    method instance !9 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Customer()
-    IL_0b18:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b1d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0af8:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0afd:  stelem.ref
+    IL_0afe:  ldloc.s    V_50
+    IL_0b00:  ldc.i4.s   9
+    IL_0b02:  ldtoken    method instance !9 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Customer()
+    IL_0b07:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0b0c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b22:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b27:  stelem.ref
-    IL_0b28:  ldloc.s    V_51
-    IL_0b2a:  ldc.i4.s   10
-    IL_0b2c:  ldtoken    method instance !10 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_CustTelephone()
-    IL_0b31:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b36:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0b11:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0b16:  stelem.ref
+    IL_0b17:  ldloc.s    V_50
+    IL_0b19:  ldc.i4.s   10
+    IL_0b1b:  ldtoken    method instance !10 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_CustTelephone()
+    IL_0b20:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0b25:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b3b:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b40:  stelem.ref
-    IL_0b41:  ldloc.s    V_51
-    IL_0b43:  ldc.i4.s   11
-    IL_0b45:  ldtoken    method instance !11 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Credit()
-    IL_0b4a:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b4f:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0b2a:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0b2f:  stelem.ref
+    IL_0b30:  ldloc.s    V_50
+    IL_0b32:  ldc.i4.s   11
+    IL_0b34:  ldtoken    method instance !11 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Credit()
+    IL_0b39:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0b3e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b54:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b59:  stelem.ref
-    IL_0b5a:  ldloc.s    V_51
-    IL_0b5c:  ldc.i4.s   12
-    IL_0b5e:  ldtoken    method instance !12 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_LoanBank()
-    IL_0b63:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b68:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0b43:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0b48:  stelem.ref
+    IL_0b49:  ldloc.s    V_50
+    IL_0b4b:  ldc.i4.s   12
+    IL_0b4d:  ldtoken    method instance !12 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_LoanBank()
+    IL_0b52:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0b57:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b6d:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b72:  stelem.ref
-    IL_0b73:  ldloc.s    V_51
-    IL_0b75:  ldc.i4.s   13
-    IL_0b77:  ldtoken    method instance !13 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Remarks()
-    IL_0b7c:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0b81:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0b5c:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0b61:  stelem.ref
+    IL_0b62:  ldloc.s    V_50
+    IL_0b64:  ldc.i4.s   13
+    IL_0b66:  ldtoken    method instance !13 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_Remarks()
+    IL_0b6b:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0b70:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0b86:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0b8b:  stelem.ref
-    IL_0b8c:  ldloc.s    V_51
-    IL_0b8e:  call       class [System.Core]System.Linq.Expressions.NewExpression [System.Core]System.Linq.Expressions.Expression::New(class [mscorlib]System.Reflection.ConstructorInfo,
+    IL_0b75:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0b7a:  stelem.ref
+    IL_0b7b:  ldloc.s    V_50
+    IL_0b7d:  call       class [System.Core]System.Linq.Expressions.NewExpression [System.Core]System.Linq.Expressions.Expression::New(class [mscorlib]System.Reflection.ConstructorInfo,
                                                                                                                                        class [mscorlib]System.Collections.Generic.IEnumerable`1<class [System.Core]System.Linq.Expressions.Expression>,
                                                                                                                                        class [mscorlib]System.Reflection.MemberInfo[])
-    IL_0b93:  ldc.i4.1
-    IL_0b94:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0b99:  stloc.s    V_52
-    IL_0b9b:  ldloc.s    V_52
-    IL_0b9d:  ldc.i4.0
-    IL_0b9e:  ldloc.s    V_7
-    IL_0ba0:  stelem.ref
-    IL_0ba1:  ldloc.s    V_52
-    IL_0ba3:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0b82:  ldc.i4.1
+    IL_0b83:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0b88:  stloc.s    V_51
+    IL_0b8a:  ldloc.s    V_51
+    IL_0b8c:  ldc.i4.0
+    IL_0b8d:  ldloc.s    V_6
+    IL_0b8f:  stelem.ref
+    IL_0b90:  ldloc.s    V_51
+    IL_0b92:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                                                                                                                                                                          class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0ba8:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0b97:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Contract,class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                                                                                                                                                                                  class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0bad:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0bb2:  stfld      class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::model
-    IL_0bb7:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
-    IL_0bbc:  brtrue.s   IL_0bfd
+    IL_0b9c:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_0ba1:  stfld      class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::model
+    IL_0ba6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
+    IL_0bab:  brtrue.s   IL_0bec
 
-    IL_0bbe:  ldc.i4.0
-    IL_0bbf:  ldstr      "data"
-    IL_0bc4:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0bc9:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0bce:  ldc.i4.2
-    IL_0bcf:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
-    IL_0bd4:  stloc.s    V_53
-    IL_0bd6:  ldloc.s    V_53
-    IL_0bd8:  ldc.i4.0
-    IL_0bd9:  ldc.i4.0
-    IL_0bda:  ldnull
-    IL_0bdb:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0bad:  ldc.i4.0
+    IL_0bae:  ldstr      "data"
+    IL_0bb3:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0bb8:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0bbd:  ldc.i4.2
+    IL_0bbe:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0bc3:  stloc.s    V_52
+    IL_0bc5:  ldloc.s    V_52
+    IL_0bc7:  ldc.i4.0
+    IL_0bc8:  ldc.i4.0
+    IL_0bc9:  ldnull
+    IL_0bca:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0be0:  stelem.ref
-    IL_0be1:  ldloc.s    V_53
-    IL_0be3:  ldc.i4.1
-    IL_0be4:  ldc.i4.0
-    IL_0be5:  ldnull
-    IL_0be6:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0bcf:  stelem.ref
+    IL_0bd0:  ldloc.s    V_52
+    IL_0bd2:  ldc.i4.1
+    IL_0bd3:  ldc.i4.0
+    IL_0bd4:  ldnull
+    IL_0bd5:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0beb:  stelem.ref
-    IL_0bec:  ldloc.s    V_53
-    IL_0bee:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+    IL_0bda:  stelem.ref
+    IL_0bdb:  ldloc.s    V_52
+    IL_0bdd:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
                                                                                                                                                               string,
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
-    IL_0bf3:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0bf8:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
-    IL_0bfd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
-    IL_0c02:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
-    IL_0c07:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
-    IL_0c0c:  ldarg.0
-    IL_0c0d:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
-    IL_0c12:  ldloc.2
-    IL_0c13:  ldfld      class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::model
-    IL_0c18:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ToJson(object)
-    IL_0c1d:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
+    IL_0be2:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0be7:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
+    IL_0bec:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
+    IL_0bf1:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>>::Target
+    IL_0bf6:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site2'
+    IL_0bfb:  ldarg.0
+    IL_0bfc:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
+    IL_0c01:  ldloc.2
+    IL_0c02:  ldfld      class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::model
+    IL_0c07:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ToJson(object)
+    IL_0c0c:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,object,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
-    IL_0c22:  pop
-    IL_0c23:  ldarg.0
-    IL_0c24:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_0c29:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
-    IL_0c2e:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0c33:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0c38:  ldstr      "b"
-    IL_0c3d:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0c11:  pop
+    IL_0c12:  ldarg.0
+    IL_0c13:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_0c18:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
+    IL_0c1d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0c22:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0c27:  ldstr      "b"
+    IL_0c2c:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0c42:  stloc.s    V_54
-    IL_0c44:  ldloc.s    V_54
-    IL_0c46:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
-    IL_0c4b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0c50:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0c55:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0c31:  stloc.s    V_53
+    IL_0c33:  ldloc.s    V_53
+    IL_0c35:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
+    IL_0c3a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0c3f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0c44:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0c5a:  ldloc.2
-    IL_0c5b:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0c60:  ldtoken    field class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::model
-    IL_0c65:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_0c6a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0c49:  ldloc.2
+    IL_0c4a:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
+    IL_0c4f:  ldtoken    field class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::model
+    IL_0c54:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0c59:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0c6f:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
-    IL_0c74:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0c79:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0c5e:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
+    IL_0c63:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0c68:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0c7e:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0c83:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0c6d:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0c72:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0c88:  ldc.i4.0
-    IL_0c89:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
+    IL_0c77:  ldc.i4.0
+    IL_0c78:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
                                                                           string)
-    IL_0c8e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0c93:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0c98:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0c7d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0c82:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0c87:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             bool,
                                                                                                                                             class [mscorlib]System.Reflection.MethodInfo)
-    IL_0c9d:  ldc.i4.1
-    IL_0c9e:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0ca3:  stloc.s    V_55
-    IL_0ca5:  ldloc.s    V_55
-    IL_0ca7:  ldc.i4.0
-    IL_0ca8:  ldloc.s    V_54
-    IL_0caa:  stelem.ref
-    IL_0cab:  ldloc.s    V_55
-    IL_0cad:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0c8c:  ldc.i4.1
+    IL_0c8d:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0c92:  stloc.s    V_54
+    IL_0c94:  ldloc.s    V_54
+    IL_0c96:  ldc.i4.0
+    IL_0c97:  ldloc.s    V_53
+    IL_0c99:  stelem.ref
+    IL_0c9a:  ldloc.s    V_54
+    IL_0c9c:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0cb2:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0ca1:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_0cb7:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0cbc:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0cc1:  ldstr      "b"
-    IL_0cc6:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0ca6:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0cab:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0cb0:  ldstr      "b"
+    IL_0cb5:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0ccb:  stloc.s    V_56
-    IL_0ccd:  ldloc.s    V_56
-    IL_0ccf:  ldtoken    method instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ShenDate()
-    IL_0cd4:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0cd9:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0cde:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0cba:  stloc.s    V_55
+    IL_0cbc:  ldloc.s    V_55
+    IL_0cbe:  ldtoken    method instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ShenDate()
+    IL_0cc3:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0cc8:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0ccd:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0ce3:  ldc.i4.1
-    IL_0ce4:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0ce9:  stloc.s    V_57
-    IL_0ceb:  ldloc.s    V_57
-    IL_0ced:  ldc.i4.0
-    IL_0cee:  ldloc.s    V_56
-    IL_0cf0:  stelem.ref
-    IL_0cf1:  ldloc.s    V_57
-    IL_0cf3:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0cd2:  ldc.i4.1
+    IL_0cd3:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0cd8:  stloc.s    V_56
+    IL_0cda:  ldloc.s    V_56
+    IL_0cdc:  ldc.i4.0
+    IL_0cdd:  ldloc.s    V_55
+    IL_0cdf:  stelem.ref
+    IL_0ce0:  ldloc.s    V_56
+    IL_0ce2:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                                                                                   class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0cf8:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0ce7:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0cfd:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0d02:  stloc.0
-    IL_0d03:  ldarg.0
-    IL_0d04:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
-    IL_0d09:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
-    IL_0d0e:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0d13:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0d18:  ldstr      "b"
-    IL_0d1d:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0cec:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_0cf1:  stloc.0
+    IL_0cf2:  ldarg.0
+    IL_0cf3:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::db
+    IL_0cf8:  callvirt   instance class [System.Core]System.Linq.IQueryable`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Database::get_Loan()
+    IL_0cfd:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0d02:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0d07:  ldstr      "b"
+    IL_0d0c:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0d22:  stloc.s    V_58
-    IL_0d24:  ldloc.s    V_58
-    IL_0d26:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
-    IL_0d2b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0d30:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0d35:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d11:  stloc.s    V_57
+    IL_0d13:  ldloc.s    V_57
+    IL_0d15:  ldtoken    method instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_ContractNo()
+    IL_0d1a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0d1f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0d24:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0d3a:  ldloc.2
-    IL_0d3b:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0d40:  ldtoken    field class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::model
-    IL_0d45:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_0d4a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d29:  ldloc.2
+    IL_0d2a:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
+    IL_0d2f:  ldtoken    field class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass5'::model
+    IL_0d34:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0d39:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0d4f:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
-    IL_0d54:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
-    IL_0d59:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
+    IL_0d3e:  ldtoken    method instance !1 class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>::get_ContractNo()
+    IL_0d43:  ldtoken    class '<>f__AnonymousType0`14'<int32,string,string,string,string,valuetype [mscorlib]System.DateTime,string,string,string,string,string,string,string,string>
+    IL_0d48:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
                                                                                                                                   valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0d5e:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0d63:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d4d:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0d52:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0d68:  ldc.i4.0
-    IL_0d69:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
+    IL_0d57:  ldc.i4.0
+    IL_0d58:  ldtoken    method bool [mscorlib]System.String::op_Equality(string,
                                                                           string)
-    IL_0d6e:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0d73:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0d78:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d5d:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0d62:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0d67:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::Equal(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             bool,
                                                                                                                                             class [mscorlib]System.Reflection.MethodInfo)
-    IL_0d7d:  ldc.i4.1
-    IL_0d7e:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0d83:  stloc.s    V_59
-    IL_0d85:  ldloc.s    V_59
-    IL_0d87:  ldc.i4.0
-    IL_0d88:  ldloc.s    V_58
-    IL_0d8a:  stelem.ref
-    IL_0d8b:  ldloc.s    V_59
-    IL_0d8d:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d6c:  ldc.i4.1
+    IL_0d6d:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0d72:  stloc.s    V_58
+    IL_0d74:  ldloc.s    V_58
+    IL_0d76:  ldc.i4.0
+    IL_0d77:  ldloc.s    V_57
+    IL_0d79:  stelem.ref
+    IL_0d7a:  ldloc.s    V_58
+    IL_0d7c:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0d92:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0d81:  call       class [System.Core]System.Linq.IQueryable`1<!!0> [System.Core]System.Linq.Queryable::Where<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,bool>>)
-    IL_0d97:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
-    IL_0d9c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0da1:  ldstr      "b"
-    IL_0da6:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
+    IL_0d86:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan
+    IL_0d8b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0d90:  ldstr      "b"
+    IL_0d95:  call       class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,
                                                                                                                                                    string)
-    IL_0dab:  stloc.s    V_60
-    IL_0dad:  ldloc.s    V_60
-    IL_0daf:  ldtoken    method instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_LoanDate()
-    IL_0db4:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0db9:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0dbe:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0d9a:  stloc.s    V_59
+    IL_0d9c:  ldloc.s    V_59
+    IL_0d9e:  ldtoken    method instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan::get_LoanDate()
+    IL_0da3:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0da8:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0dad:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Property(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo)
-    IL_0dc3:  ldc.i4.1
-    IL_0dc4:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0dc9:  stloc.s    V_6
-    IL_0dcb:  ldloc.s    V_6
-    IL_0dcd:  ldc.i4.0
-    IL_0dce:  ldloc.s    V_60
-    IL_0dd0:  stelem.ref
-    IL_0dd1:  ldloc.s    V_6
-    IL_0dd3:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0db2:  ldc.i4.1
+    IL_0db3:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0db8:  stloc.s    V_60
+    IL_0dba:  ldloc.s    V_60
+    IL_0dbc:  ldc.i4.0
+    IL_0dbd:  ldloc.s    V_59
+    IL_0dbf:  stelem.ref
+    IL_0dc0:  ldloc.s    V_60
+    IL_0dc2:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                                                                                                                                   class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0dd8:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
+    IL_0dc7:  call       class [System.Core]System.Linq.IQueryable`1<!!1> [System.Core]System.Linq.Queryable::Select<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/Loan,valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>,
                                                                                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`2<!!0,!!1>>)
-    IL_0ddd:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
-    IL_0de2:  stloc.1
-    IL_0de3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
-    IL_0de8:  brtrue.s   IL_0e29
+    IL_0dcc:  call       !!0 [System.Core]System.Linq.Queryable::FirstOrDefault<valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>>(class [System.Core]System.Linq.IQueryable`1<!!0>)
+    IL_0dd1:  stloc.1
+    IL_0dd2:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
+    IL_0dd7:  brtrue.s   IL_0e14
 
-    IL_0dea:  ldc.i4.0
-    IL_0deb:  ldstr      "ShenDate"
-    IL_0df0:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0df5:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0dfa:  ldc.i4.2
-    IL_0dfb:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
-    IL_0e00:  stloc.s    V_4
-    IL_0e02:  ldloc.s    V_4
-    IL_0e04:  ldc.i4.0
-    IL_0e05:  ldc.i4.0
-    IL_0e06:  ldnull
-    IL_0e07:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0dd9:  ldc.i4.0
+    IL_0dda:  ldstr      "ShenDate"
+    IL_0ddf:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0de4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0de9:  ldc.i4.2
+    IL_0dea:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0def:  stloc.3
+    IL_0df0:  ldloc.3
+    IL_0df1:  ldc.i4.0
+    IL_0df2:  ldc.i4.0
+    IL_0df3:  ldnull
+    IL_0df4:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0e0c:  stelem.ref
-    IL_0e0d:  ldloc.s    V_4
-    IL_0e0f:  ldc.i4.1
-    IL_0e10:  ldc.i4.1
-    IL_0e11:  ldnull
-    IL_0e12:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0df9:  stelem.ref
+    IL_0dfa:  ldloc.3
+    IL_0dfb:  ldc.i4.1
+    IL_0dfc:  ldc.i4.1
+    IL_0dfd:  ldnull
+    IL_0dfe:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0e17:  stelem.ref
-    IL_0e18:  ldloc.s    V_4
-    IL_0e1a:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+    IL_0e03:  stelem.ref
+    IL_0e04:  ldloc.3
+    IL_0e05:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
                                                                                                                                                               string,
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
-    IL_0e1f:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0e24:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
-    IL_0e29:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
-    IL_0e2e:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
-    IL_0e33:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
-    IL_0e38:  ldarg.0
-    IL_0e39:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
-    IL_0e3e:  ldloca.s   V_0
-    IL_0e40:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>::get_HasValue()
-    IL_0e45:  brfalse.s  IL_0e62
+    IL_0e0a:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0e0f:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
+    IL_0e14:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
+    IL_0e19:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
+    IL_0e1e:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site3'
+    IL_0e23:  ldarg.0
+    IL_0e24:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
+    IL_0e29:  ldloca.s   V_0
+    IL_0e2b:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>::get_HasValue()
+    IL_0e30:  brfalse.s  IL_0e4d
 
-    IL_0e47:  ldloc.0
-    IL_0e48:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>
-    IL_0e4d:  call       valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ParseDateTime(object)
-    IL_0e52:  stloc.s    V_61
-    IL_0e54:  ldloca.s   V_61
-    IL_0e56:  ldstr      "yyyy-MM-dd"
-    IL_0e5b:  call       instance string [mscorlib]System.DateTime::ToString(string)
-    IL_0e60:  br.s       IL_0e67
+    IL_0e32:  ldloc.0
+    IL_0e33:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>
+    IL_0e38:  call       valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ParseDateTime(object)
+    IL_0e3d:  stloc.s    V_61
+    IL_0e3f:  ldloca.s   V_61
+    IL_0e41:  ldstr      "yyyy-MM-dd"
+    IL_0e46:  call       instance string [mscorlib]System.DateTime::ToString(string)
+    IL_0e4b:  br.s       IL_0e52
 
-    IL_0e62:  ldstr      ""
-    IL_0e67:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
+    IL_0e4d:  ldstr      ""
+    IL_0e52:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
-    IL_0e6c:  pop
-    IL_0e6d:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
-    IL_0e72:  brtrue.s   IL_0eb3
+    IL_0e57:  pop
+    IL_0e58:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
+    IL_0e5d:  brtrue.s   IL_0e9a
 
-    IL_0e74:  ldc.i4.0
-    IL_0e75:  ldstr      "LoanDate"
-    IL_0e7a:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
-    IL_0e7f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0e84:  ldc.i4.2
-    IL_0e85:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
-    IL_0e8a:  stloc.s    V_4
-    IL_0e8c:  ldloc.s    V_4
-    IL_0e8e:  ldc.i4.0
-    IL_0e8f:  ldc.i4.0
-    IL_0e90:  ldnull
-    IL_0e91:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0e5f:  ldc.i4.0
+    IL_0e60:  ldstr      "LoanDate"
+    IL_0e65:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees
+    IL_0e6a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0e6f:  ldc.i4.2
+    IL_0e70:  newarr     [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+    IL_0e75:  stloc.3
+    IL_0e76:  ldloc.3
+    IL_0e77:  ldc.i4.0
+    IL_0e78:  ldc.i4.0
+    IL_0e79:  ldnull
+    IL_0e7a:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0e96:  stelem.ref
-    IL_0e97:  ldloc.s    V_4
-    IL_0e99:  ldc.i4.1
-    IL_0e9a:  ldc.i4.1
-    IL_0e9b:  ldnull
-    IL_0e9c:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
+    IL_0e7f:  stelem.ref
+    IL_0e80:  ldloc.3
+    IL_0e81:  ldc.i4.1
+    IL_0e82:  ldc.i4.1
+    IL_0e83:  ldnull
+    IL_0e84:  call       class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo::Create(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfoFlags,
                                                                                                                                                                                string)
-    IL_0ea1:  stelem.ref
-    IL_0ea2:  ldloc.s    V_4
-    IL_0ea4:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
+    IL_0e89:  stelem.ref
+    IL_0e8a:  ldloc.3
+    IL_0e8b:  call       class [System.Core]System.Runtime.CompilerServices.CallSiteBinder [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.Binder::SetMember(valuetype [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpBinderFlags,
                                                                                                                                                               string,
                                                                                                                                                               class [mscorlib]System.Type,
                                                                                                                                                               class [mscorlib]System.Collections.Generic.IEnumerable`1<class [Microsoft.CSharp]Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo>)
-    IL_0ea9:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
-    IL_0eae:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
-    IL_0eb3:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
-    IL_0eb8:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
-    IL_0ebd:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
-    IL_0ec2:  ldarg.0
-    IL_0ec3:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
-    IL_0ec8:  ldloca.s   V_1
-    IL_0eca:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>::get_HasValue()
-    IL_0ecf:  brfalse.s  IL_0eec
+    IL_0e90:  call       class [System.Core]System.Runtime.CompilerServices.CallSite`1<!0> class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Create(class [System.Core]System.Runtime.CompilerServices.CallSiteBinder)
+    IL_0e95:  stsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
+    IL_0e9a:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
+    IL_0e9f:  ldfld      !0 class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>>::Target
+    IL_0ea4:  ldsfld     class [System.Core]System.Runtime.CompilerServices.CallSite`1<class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<Issue1249>o__SiteContainer0'::'<>p__Site4'
+    IL_0ea9:  ldarg.0
+    IL_0eaa:  ldfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ViewBag
+    IL_0eaf:  ldloca.s   V_1
+    IL_0eb1:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>::get_HasValue()
+    IL_0eb6:  brfalse.s  IL_0ed3
 
-    IL_0ed1:  ldloc.1
-    IL_0ed2:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>
-    IL_0ed7:  call       valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ParseDateTime(object)
-    IL_0edc:  stloc.s    V_61
-    IL_0ede:  ldloca.s   V_61
-    IL_0ee0:  ldstr      "yyyy-MM-dd"
-    IL_0ee5:  call       instance string [mscorlib]System.DateTime::ToString(string)
-    IL_0eea:  br.s       IL_0ef1
+    IL_0eb8:  ldloc.1
+    IL_0eb9:  box        valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.DateTime>
+    IL_0ebe:  call       valuetype [mscorlib]System.DateTime ICSharpCode.Decompiler.Tests.TestCases.Pretty.Extensions::ParseDateTime(object)
+    IL_0ec3:  stloc.s    V_61
+    IL_0ec5:  ldloca.s   V_61
+    IL_0ec7:  ldstr      "yyyy-MM-dd"
+    IL_0ecc:  call       instance string [mscorlib]System.DateTime::ToString(string)
+    IL_0ed1:  br.s       IL_0ed8
 
-    IL_0eec:  ldstr      ""
-    IL_0ef1:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
+    IL_0ed3:  ldstr      ""
+    IL_0ed8:  callvirt   instance !3 class [mscorlib]System.Func`4<class [System.Core]System.Runtime.CompilerServices.CallSite,object,string,object>::Invoke(!0,
                                                                                                                                                              !1,
                                                                                                                                                              !2)
-    IL_0ef6:  pop
-    IL_0ef7:  ret
+    IL_0edd:  pop
+    IL_0ede:  ret
   } // end of method ExpressionTrees::Issue1249
 
   .method private hidebysig static object 
@@ -3190,16 +3168,16 @@
   {
     // Code size       57 (0x39)
     .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldarg.1
-    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::a
+    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::a
     IL_000d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0012:  ldloc.0
     IL_0013:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0018:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::a
+    IL_0018:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass7'::a
     IL_001d:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0022:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -3218,16 +3196,16 @@
   {
     // Code size       57 (0x39)
     .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.1
-    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::a
+    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::a
     IL_000d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0012:  ldloc.0
     IL_0013:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0018:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::a
+    IL_0018:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass9'::a
     IL_001d:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0022:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -3277,12 +3255,12 @@
   {
     // Code size       109 (0x6d)
     .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassd' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassd'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldarg.1
-    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassd'::x
+    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::x
     IL_000d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0012:  ldc.i4.1
     IL_0013:  box        [mscorlib]System.Int32
@@ -3292,7 +3270,7 @@
                                                                                                                                                  class [mscorlib]System.Type)
     IL_0027:  ldloc.0
     IL_0028:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_002d:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassd'::x
+    IL_002d:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassb'::x
     IL_0032:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0037:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -3799,31 +3777,31 @@
   {
     // Code size       180 (0xb4)
     .maxstack  7
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11' V_0,
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassf' V_0,
              class [System.Core]System.Linq.Expressions.Expression[] V_1)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::.ctor()
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassf'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.1
     IL_0008:  ldc.i4.s   20
     IL_000a:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<int32> [System.Core]System.Linq.Enumerable::Range(int32,
                                                                                                                                     int32)
-    IL_000f:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate10'
+    IL_000f:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatee'
     IL_0014:  brtrue.s   IL_0027
 
     IL_0016:  ldnull
-    IL_0017:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<IndexerAccess>b__f'(int32)
+    IL_0017:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<IndexerAccess>b__d'(int32)
     IL_001d:  newobj     instance void class [mscorlib]System.Func`2<int32,string>::.ctor(object,
                                                                                           native int)
-    IL_0022:  stsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate10'
-    IL_0027:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate10'
+    IL_0022:  stsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatee'
+    IL_0027:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatee'
     IL_002c:  call       class [mscorlib]System.Collections.Generic.Dictionary`2<!!1,!!0> [System.Core]System.Linq.Enumerable::ToDictionary<int32,string>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                           class [mscorlib]System.Func`2<!!0,!!1>)
-    IL_0031:  stfld      class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::dict
+    IL_0031:  stfld      class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassf'::dict
     IL_0036:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_003b:  ldloc.0
     IL_003c:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0041:  ldtoken    field class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::dict
+    IL_0041:  ldtoken    field class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClassf'::dict
     IL_0046:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_004b:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -4407,15 +4385,15 @@
   {
     // Code size       376 (0x178)
     .maxstack  8
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.1
-    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::i
+    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::i
     IL_000d:  ldloc.0
     IL_000e:  ldstr      "X"
-    IL_0013:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::x
+    IL_0013:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::x
     IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_001d:  ldstr      "a\n\\b"
     IL_0022:  ldtoken    [mscorlib]System.String
@@ -4424,7 +4402,7 @@
                                                                                                                                                  class [mscorlib]System.Type)
     IL_0031:  ldloc.0
     IL_0032:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0037:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::x
+    IL_0037:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::x
     IL_003c:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0041:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -4432,7 +4410,7 @@
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression)
     IL_004b:  ldloc.0
     IL_004c:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0051:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::x
+    IL_0051:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::x
     IL_0056:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_005b:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -4477,7 +4455,7 @@
                                                                                                                                                  class [mscorlib]System.Type)
     IL_00e6:  ldloc.0
     IL_00e7:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_00ec:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::i
+    IL_00ec:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass11'::i
     IL_00f1:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_00f6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -4529,16 +4507,16 @@
   {
     // Code size       104 (0x68)
     .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass15' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass15'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.s   42
-    IL_0009:  stfld      uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass15'::z
+    IL_0009:  stfld      uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::z
     IL_000e:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0013:  ldloc.0
     IL_0014:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0019:  ldtoken    field uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass15'::z
+    IL_0019:  ldtoken    field uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass13'::z
     IL_001e:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0023:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -5176,7 +5154,7 @@
   {
     // Code size       917 (0x395)
     .maxstack  11
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19' V_0,
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17' V_0,
              class [System.Core]System.Linq.Expressions.Expression[] V_1,
              class [System.Core]System.Linq.Expressions.Expression[] V_2,
              class [System.Core]System.Linq.Expressions.Expression[] V_3,
@@ -5185,7 +5163,7 @@
              class [System.Core]System.Linq.Expressions.Expression[] V_6,
              class [System.Core]System.Linq.Expressions.Expression[] V_7,
              class [System.Core]System.Linq.Expressions.Expression[] V_8)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19'::.ctor()
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_000b:  ldnull
@@ -5300,7 +5278,7 @@
     IL_0147:  pop
     IL_0148:  ldloc.0
     IL_0149:  newobj     instance void class [System.Core]System.Collections.Generic.HashSet`1<int32>::.ctor()
-    IL_014e:  stfld      class [System.Core]System.Collections.Generic.HashSet`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19'::set
+    IL_014e:  stfld      class [System.Core]System.Collections.Generic.HashSet`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17'::set
     IL_0153:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0158:  ldnull
     IL_0159:  ldtoken    method bool [System.Core]System.Linq.Enumerable::All<int32>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
@@ -5390,7 +5368,7 @@
     IL_0267:  ldc.i4.1
     IL_0268:  ldloc.0
     IL_0269:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_026e:  ldtoken    field class [System.Core]System.Collections.Generic.HashSet`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19'::set
+    IL_026e:  ldtoken    field class [System.Core]System.Collections.Generic.HashSet`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17'::set
     IL_0273:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0278:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -5416,20 +5394,20 @@
                                                                                                             class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
     IL_02ac:  pop
     IL_02ad:  ldloc.0
-    IL_02ae:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate18'
+    IL_02ae:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate16'
     IL_02b3:  brtrue.s   IL_02c6
 
     IL_02b5:  ldnull
-    IL_02b6:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<MethodGroupConstant>b__17'(class [mscorlib]System.Func`3<object,object,bool>)
+    IL_02b6:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<MethodGroupConstant>b__15'(class [mscorlib]System.Func`3<object,object,bool>)
     IL_02bc:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool>::.ctor(object,
                                                                                                                                     native int)
-    IL_02c1:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate18'
-    IL_02c6:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate18'
-    IL_02cb:  stfld      class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19'::sink
+    IL_02c1:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate16'
+    IL_02c6:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate16'
+    IL_02cb:  stfld      class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17'::sink
     IL_02d0:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_02d5:  ldloc.0
     IL_02d6:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_02db:  ldtoken    field class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass19'::sink
+    IL_02db:  ldtoken    field class [mscorlib]System.Func`2<class [mscorlib]System.Func`3<object,object,bool>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass17'::sink
     IL_02e0:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_02e5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -5588,7 +5566,7 @@
   {
     // Code size       572 (0x23c)
     .maxstack  10
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d' V_0,
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1b' V_0,
              class [System.Core]System.Linq.Expressions.Expression[] V_1,
              class [System.Core]System.Linq.Expressions.Expression[] V_2,
              class [System.Core]System.Linq.Expressions.Expression[] V_3,
@@ -5599,23 +5577,23 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression V_8,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_9,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_10)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::.ctor()
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1b'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
-    IL_0007:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1c'
+    IL_0007:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1a'
     IL_000c:  brtrue.s   IL_001f
 
     IL_000e:  ldnull
-    IL_000f:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NestedLambda>b__1b'(class [mscorlib]System.Func`1<int32>)
+    IL_000f:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NestedLambda>b__19'(class [mscorlib]System.Func`1<int32>)
     IL_0015:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32>::.ctor(object,
                                                                                                                         native int)
-    IL_001a:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1c'
-    IL_001f:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1c'
-    IL_0024:  stfld      class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::'call'
+    IL_001a:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1a'
+    IL_001f:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate1a'
+    IL_0024:  stfld      class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1b'::'call'
     IL_0029:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_002e:  ldloc.0
     IL_002f:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0034:  ldtoken    field class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::'call'
+    IL_0034:  ldtoken    field class [mscorlib]System.Func`2<class [mscorlib]System.Func`1<int32>,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1b'::'call'
     IL_0039:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_003e:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6616,22 +6594,22 @@
   {
     // Code size       240 (0xf0)
     .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.1
-    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::x
+    IL_0008:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::x
     IL_000d:  ldloc.0
     IL_000e:  ldc.i4.3
-    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::y
+    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::y
     IL_0014:  ldloc.0
     IL_0015:  ldc.i4.s   42
-    IL_0017:  stfld      uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::z
+    IL_0017:  stfld      uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::z
     IL_001c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0021:  ldloc.0
     IL_0022:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0027:  ldtoken    field uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::z
+    IL_0027:  ldtoken    field uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::z
     IL_002c:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0031:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6658,7 +6636,7 @@
     IL_0075:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_007a:  ldloc.0
     IL_007b:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0080:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::y
+    IL_0080:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::y
     IL_0085:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_008a:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6681,7 +6659,7 @@
     IL_00bf:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_00c4:  ldloc.0
     IL_00c5:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_00ca:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1f'::x
+    IL_00ca:  ldtoken    field bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass1d'::x
     IL_00cf:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_00d4:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6702,10 +6680,10 @@
     // Code size       275 (0x113)
     .maxstack  7
     .locals init (class [System.Xml]System.Xml.XmlReaderSettings V_0,
-             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22' V_1,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20' V_1,
              class [System.Core]System.Linq.Expressions.MemberBinding[] V_2,
              class [System.Core]System.Linq.Expressions.Expression[] V_3)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::.ctor()
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20'::.ctor()
     IL_0005:  stloc.1
     IL_0006:  ldloc.1
     IL_0007:  newobj     instance void [System.Xml]System.Xml.XmlReaderSettings::.ctor()
@@ -6717,7 +6695,7 @@
     IL_0015:  ldc.i4.0
     IL_0016:  callvirt   instance void [System.Xml]System.Xml.XmlReaderSettings::set_CheckCharacters(bool)
     IL_001b:  ldloc.0
-    IL_001c:  stfld      class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::s
+    IL_001c:  stfld      class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20'::s
     IL_0021:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_0026:  ldtoken    method instance void [System.Xml]System.Xml.XmlReaderSettings::.ctor()
     IL_002b:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
@@ -6736,7 +6714,7 @@
     IL_0053:  castclass  [mscorlib]System.Reflection.MethodInfo
     IL_0058:  ldloc.1
     IL_0059:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_005e:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::s
+    IL_005e:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20'::s
     IL_0063:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0068:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6755,7 +6733,7 @@
     IL_0093:  castclass  [mscorlib]System.Reflection.MethodInfo
     IL_0098:  ldloc.1
     IL_0099:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_009e:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::s
+    IL_009e:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20'::s
     IL_00a3:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_00a8:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -6780,7 +6758,7 @@
     IL_00e4:  ldc.i4.0
     IL_00e5:  ldloc.1
     IL_00e6:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_00eb:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::s
+    IL_00eb:  ldtoken    field class [System.Xml]System.Xml.XmlReaderSettings ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass20'::s
     IL_00f0:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_00f5:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -7448,15 +7426,15 @@
   {
     // Code size       376 (0x178)
     .maxstack  8
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.1
-    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::i
+    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::i
     IL_000d:  ldloc.0
     IL_000e:  ldstr      "X"
-    IL_0013:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::x
+    IL_0013:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::x
     IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::X()
     IL_001d:  ldstr      "a\n\\b"
     IL_0022:  ldtoken    [mscorlib]System.String
@@ -7465,7 +7443,7 @@
                                                                                                                                                  class [mscorlib]System.Type)
     IL_0031:  ldloc.0
     IL_0032:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0037:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::x
+    IL_0037:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::x
     IL_003c:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0041:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -7473,7 +7451,7 @@
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression)
     IL_004b:  ldloc.0
     IL_004c:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_0051:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::x
+    IL_0051:  ldtoken    field string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::x
     IL_0056:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_005b:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -7518,7 +7496,7 @@
                                                                                                                                                  class [mscorlib]System.Type)
     IL_00e6:  ldloc.0
     IL_00e7:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_00ec:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass24'::i
+    IL_00ec:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass22'::i
     IL_00f1:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_00f6:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -7709,15 +7687,15 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression V_12,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_13,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_14)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate29'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__26'(int32[])
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__24'(int32[])
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<int32[],int32>::.ctor(object,
                                                                                            native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate29'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate29'
     IL_001d:  ldtoken    int32[]
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "array"
@@ -7745,16 +7723,16 @@
                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_005e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32[],int32>>(!!0,
                                                                                                                                                 class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0063:  ldsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
+    IL_0063:  ldsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2a'
     IL_0068:  brtrue.s   IL_007b
 
     IL_006a:  ldnull
-    IL_006b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__27'(int32[],
+    IL_006b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__25'(int32[],
                                                                                                                     int32)
     IL_0071:  newobj     instance void class [mscorlib]System.Func`3<int32[],int32,int32>::.ctor(object,
                                                                                                  native int)
-    IL_0076:  stsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
-    IL_007b:  ldsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
+    IL_0076:  stsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2a'
+    IL_007b:  ldsfld     class [mscorlib]System.Func`3<int32[],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2a'
     IL_0080:  ldtoken    int32[]
     IL_0085:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_008a:  ldstr      "array"
@@ -7787,15 +7765,15 @@
                                                                                                                                                                                                   class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00ca:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32[],int32,int32>>(!!0,
                                                                                                                                                       class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00cf:  ldsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
+    IL_00cf:  ldsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
     IL_00d4:  brtrue.s   IL_00e7
 
     IL_00d6:  ldnull
-    IL_00d7:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__28'(int32[0...,0...])
+    IL_00d7:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__26'(int32[0...,0...])
     IL_00dd:  newobj     instance void class [mscorlib]System.Func`2<int32[0...,0...],int32>::.ctor(object,
                                                                                                     native int)
-    IL_00e2:  stsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
-    IL_00e7:  ldsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
+    IL_00e2:  stsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
+    IL_00e7:  ldsfld     class [mscorlib]System.Func`2<int32[0...,0...],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2b'
     IL_00ec:  ldtoken    int32[0...,0...]
     IL_00f1:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00f6:  ldstr      "array"
@@ -7839,16 +7817,16 @@
                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_015a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32[0...,0...],int32>>(!!0,
                                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_015f:  ldsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2e'
+    IL_015f:  ldsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
     IL_0164:  brtrue.s   IL_0177
 
     IL_0166:  ldnull
-    IL_0167:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__29'(int32[0...,0...],
+    IL_0167:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__27'(int32[0...,0...],
                                                                                                                     int32)
     IL_016d:  newobj     instance void class [mscorlib]System.Func`3<int32[0...,0...],int32,int32>::.ctor(object,
                                                                                                           native int)
-    IL_0172:  stsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2e'
-    IL_0177:  ldsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2e'
+    IL_0172:  stsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
+    IL_0177:  ldsfld     class [mscorlib]System.Func`3<int32[0...,0...],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2c'
     IL_017c:  ldtoken    int32[0...,0...]
     IL_0181:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0186:  ldstr      "array"
@@ -7897,16 +7875,16 @@
                                                                                                                                                                                                            class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_01f3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32[0...,0...],int32,int32>>(!!0,
                                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_01f8:  ldsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2f'
+    IL_01f8:  ldsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
     IL_01fd:  brtrue.s   IL_0210
 
     IL_01ff:  ldnull
-    IL_0200:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__2a'(int32[][],
+    IL_0200:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayIndexer>b__28'(int32[][],
                                                                                                                     int32)
     IL_0206:  newobj     instance void class [mscorlib]System.Func`3<int32[][],int32,int32>::.ctor(object,
                                                                                                    native int)
-    IL_020b:  stsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2f'
-    IL_0210:  ldsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2f'
+    IL_020b:  stsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
+    IL_0210:  ldsfld     class [mscorlib]System.Func`3<int32[][],int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate2d'
     IL_0215:  ldtoken    int32[][]
     IL_021a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_021f:  ldstr      "array"
@@ -7956,15 +7934,15 @@
     .maxstack  5
     .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate32'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate30'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayLength>b__30'(int32[])
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayLength>b__2e'(int32[])
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<int32[],int32>::.ctor(object,
                                                                                            native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate32'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate32'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate30'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32[],int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate30'
     IL_001d:  ldtoken    int32[]
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "array"
@@ -7985,15 +7963,15 @@
                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0049:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32[],int32>>(!!0,
                                                                                                                                                 class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_004e:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate33'
+    IL_004e:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate31'
     IL_0053:  brtrue.s   IL_0066
 
     IL_0055:  ldnull
-    IL_0056:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayLength>b__31'()
+    IL_0056:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayLength>b__2f'()
     IL_005c:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
-    IL_0061:  stsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate33'
-    IL_0066:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate33'
+    IL_0061:  stsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate31'
+    IL_0066:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate31'
     IL_006b:  ldnull
     IL_006c:  box        [mscorlib]System.Array
     IL_0071:  ldtoken    [mscorlib]System.Array
@@ -8021,15 +7999,15 @@
     .locals init (class [System.Core]System.Linq.Expressions.Expression[] V_0,
              class [System.Core]System.Linq.Expressions.Expression[] V_1,
              class [System.Core]System.Linq.Expressions.Expression[] V_2)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate39'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__34'()
+    IL_0008:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__32'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate39'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate39'
     IL_001d:  ldtoken    method instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleType::.ctor()
     IL_0022:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
     IL_0027:  castclass  [mscorlib]System.Reflection.ConstructorInfo
@@ -8043,15 +8021,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0042:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0047:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
+    IL_0047:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3a'
     IL_004c:  brtrue.s   IL_005f
 
     IL_004e:  ldnull
-    IL_004f:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__35'()
+    IL_004f:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__33'()
     IL_0055:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_005a:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
-    IL_005f:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
+    IL_005a:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3a'
+    IL_005f:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3a'
     IL_0064:  ldtoken    method instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithCtor::.ctor(int32)
     IL_0069:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
     IL_006e:  castclass  [mscorlib]System.Reflection.ConstructorInfo
@@ -8076,15 +8054,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00a3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00a8:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
+    IL_00a8:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
     IL_00ad:  brtrue.s   IL_00c0
 
     IL_00af:  ldnull
-    IL_00b0:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__36'()
+    IL_00b0:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__34'()
     IL_00b6:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_00bb:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
-    IL_00c0:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
+    IL_00bb:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
+    IL_00c0:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3b'
     IL_00c5:  ldtoken    method instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor()
     IL_00ca:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
     IL_00cf:  castclass  [mscorlib]System.Reflection.ConstructorInfo
@@ -8098,15 +8076,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00ea:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00ef:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
+    IL_00ef:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
     IL_00f4:  brtrue.s   IL_0107
 
     IL_00f6:  ldnull
-    IL_00f7:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__37'()
+    IL_00f7:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__35'()
     IL_00fd:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_0102:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
-    IL_0107:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
+    IL_0102:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
+    IL_0107:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3c'
     IL_010c:  ldtoken    method instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor(int32)
     IL_0111:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
     IL_0116:  castclass  [mscorlib]System.Reflection.ConstructorInfo
@@ -8131,15 +8109,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_014b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0150:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
+    IL_0150:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
     IL_0155:  brtrue.s   IL_0168
 
     IL_0157:  ldnull
-    IL_0158:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__38'()
+    IL_0158:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__36'()
     IL_015e:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_0163:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
-    IL_0168:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
+    IL_0163:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
+    IL_0168:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3d'
     IL_016d:  ldtoken    method instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<int32>::.ctor()
     IL_0172:  ldtoken    class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<int32>
     IL_0177:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
@@ -8155,15 +8133,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0197:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_019c:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate40'
+    IL_019c:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
     IL_01a1:  brtrue.s   IL_01b4
 
     IL_01a3:  ldnull
-    IL_01a4:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__39'()
+    IL_01a4:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__37'()
     IL_01aa:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_01af:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate40'
-    IL_01b4:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate40'
+    IL_01af:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
+    IL_01b4:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3e'
     IL_01b9:  ldtoken    method instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithCtor`1<int32>::.ctor()
     IL_01be:  ldtoken    class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithCtor`1<int32>
     IL_01c3:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
@@ -8179,15 +8157,15 @@
                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_01e3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<object>>(!!0,
                                                                                                                                          class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_01e8:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate41'
+    IL_01e8:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
     IL_01ed:  brtrue.s   IL_0200
 
     IL_01ef:  ldnull
-    IL_01f0:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__3a'()
+    IL_01f0:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<NewObj>b__38'()
     IL_01f6:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_01fb:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate41'
-    IL_0200:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate41'
+    IL_01fb:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
+    IL_0200:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate3f'
     IL_0205:  ldtoken    method instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithMultipleCtors`1<int32>::.ctor(int32)
     IL_020a:  ldtoken    class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithMultipleCtors`1<int32>
     IL_020f:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle,
@@ -8221,15 +8199,15 @@
   {
     // Code size       376 (0x178)
     .maxstack  3
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate45'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__42'()
+    IL_0008:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__40'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<class [mscorlib]System.Type>::.ctor(object,
                                                                                                          native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate45'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate45'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  box        [mscorlib]System.Type
@@ -8243,15 +8221,15 @@
                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0046:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<class [mscorlib]System.Type>>(!!0,
                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_004b:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
+    IL_004b:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate46'
     IL_0050:  brtrue.s   IL_0063
 
     IL_0052:  ldnull
-    IL_0053:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__43'()
+    IL_0053:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__41'()
     IL_0059:  newobj     instance void class [mscorlib]System.Func`1<class [mscorlib]System.Type>::.ctor(object,
                                                                                                          native int)
-    IL_005e:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
-    IL_0063:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
+    IL_005e:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate46'
+    IL_0063:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate46'
     IL_0068:  ldtoken    [mscorlib]System.Object
     IL_006d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0072:  box        [mscorlib]System.Type
@@ -8265,15 +8243,15 @@
                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0091:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<class [mscorlib]System.Type>>(!!0,
                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0096:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
+    IL_0096:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
     IL_009b:  brtrue.s   IL_00ae
 
     IL_009d:  ldnull
-    IL_009e:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__44'()
+    IL_009e:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__42'()
     IL_00a4:  newobj     instance void class [mscorlib]System.Func`1<class [mscorlib]System.Type>::.ctor(object,
                                                                                                          native int)
-    IL_00a9:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
-    IL_00ae:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
+    IL_00a9:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
+    IL_00ae:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate47'
     IL_00b3:  ldtoken    [mscorlib]System.Collections.Generic.List`1
     IL_00b8:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00bd:  box        [mscorlib]System.Type
@@ -8287,15 +8265,15 @@
                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00dc:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<class [mscorlib]System.Type>>(!!0,
                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00e1:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4a'
+    IL_00e1:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
     IL_00e6:  brtrue.s   IL_00f9
 
     IL_00e8:  ldnull
-    IL_00e9:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__45'()
+    IL_00e9:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__43'()
     IL_00ef:  newobj     instance void class [mscorlib]System.Func`1<class [mscorlib]System.Type>::.ctor(object,
                                                                                                          native int)
-    IL_00f4:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4a'
-    IL_00f9:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4a'
+    IL_00f4:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
+    IL_00f9:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate48'
     IL_00fe:  ldtoken    class [mscorlib]System.Collections.Generic.List`1<int32>
     IL_0103:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0108:  box        [mscorlib]System.Type
@@ -8309,15 +8287,15 @@
                                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0127:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<class [mscorlib]System.Type>>(!!0,
                                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_012c:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4b'
+    IL_012c:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
     IL_0131:  brtrue.s   IL_0144
 
     IL_0133:  ldnull
-    IL_0134:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__46'()
+    IL_0134:  ldftn      class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<TypeOfExpr>b__44'()
     IL_013a:  newobj     instance void class [mscorlib]System.Func`1<class [mscorlib]System.Type>::.ctor(object,
                                                                                                          native int)
-    IL_013f:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4b'
-    IL_0144:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4b'
+    IL_013f:  stsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
+    IL_0144:  ldsfld     class [mscorlib]System.Func`1<class [mscorlib]System.Type> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate49'
     IL_0149:  ldtoken    int32*
     IL_014e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0153:  box        [mscorlib]System.Type
@@ -8342,15 +8320,15 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_2,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_3)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4e'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4c'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AsTypeExpr>b__4c'(object)
+    IL_0008:  ldftn      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AsTypeExpr>b__4a'(object)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass>::.ctor(object,
                                                                                                                                                                 native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4e'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4e'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4c'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4c'
     IL_001d:  ldtoken    [mscorlib]System.Object
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "obj"
@@ -8374,15 +8352,15 @@
                                                                                                                                                                                                                                                                  class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0053:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass>>(!!0,
                                                                                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0058:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
+    IL_0058:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4d'
     IL_005d:  brtrue.s   IL_0070
 
     IL_005f:  ldnull
-    IL_0060:  ldftn      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AsTypeExpr>b__4d'(object)
+    IL_0060:  ldftn      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AsTypeExpr>b__4b'(object)
     IL_0066:  newobj     instance void class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>>::.ctor(object,
                                                                                                                                                                                native int)
-    IL_006b:  stsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
-    IL_0070:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
+    IL_006b:  stsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4d'
+    IL_0070:  ldsfld     class [mscorlib]System.Func`2<object,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4d'
     IL_0075:  ldtoken    [mscorlib]System.Object
     IL_007a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_007f:  ldstr      "obj"
@@ -8415,15 +8393,15 @@
     .maxstack  5
     .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<IsTypeExpr>b__50'(object)
+    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<IsTypeExpr>b__4e'(object)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<object,bool>::.ctor(object,
                                                                                          native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<object,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate4f'
     IL_001d:  ldtoken    [mscorlib]System.Object
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "obj"
@@ -8456,15 +8434,15 @@
     .maxstack  5
     .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate53'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryLogicalOperators>b__52'(bool)
+    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryLogicalOperators>b__50'(bool)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<bool,bool>::.ctor(object,
                                                                                        native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate53'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate53'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate51'
     IL_001d:  ldtoken    [mscorlib]System.Boolean
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "a"
@@ -9534,15 +9512,15 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_2,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_3)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate56'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate54'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryArithmeticOperators>b__54'(int32)
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryArithmeticOperators>b__52'(int32)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate56'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate56'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate54'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate54'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "a"
@@ -9562,15 +9540,15 @@
                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0044:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32,int32>>(!!0,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0049:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate57'
+    IL_0049:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate55'
     IL_004e:  brtrue.s   IL_0061
 
     IL_0050:  ldnull
-    IL_0051:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryArithmeticOperators>b__55'(int32)
+    IL_0051:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<UnaryArithmeticOperators>b__53'(int32)
     IL_0057:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_005c:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate57'
-    IL_0061:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate57'
+    IL_005c:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate55'
+    IL_0061:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate55'
     IL_0066:  ldtoken    [mscorlib]System.Int32
     IL_006b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0070:  ldstr      "a"
@@ -9643,16 +9621,16 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression V_42,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_43,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_44)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate65'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__58'(int32,
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__56'(int32,
                                                                                                                                  int32)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
+    IL_0013:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate65'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate65'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "a"
@@ -9685,16 +9663,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0063:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0068:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
+    IL_0068:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate66'
     IL_006d:  brtrue.s   IL_0080
 
     IL_006f:  ldnull
-    IL_0070:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__59'(int32,
+    IL_0070:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__57'(int32,
                                                                                                                                  int32)
     IL_0076:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_007b:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
-    IL_0080:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
+    IL_007b:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate66'
+    IL_0080:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate66'
     IL_0085:  ldtoken    [mscorlib]System.Int32
     IL_008a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_008f:  ldstr      "a"
@@ -9727,16 +9705,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00d2:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00d7:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
+    IL_00d7:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
     IL_00dc:  brtrue.s   IL_00ef
 
     IL_00de:  ldnull
-    IL_00df:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5a'(int32,
+    IL_00df:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__58'(int32,
                                                                                                                                  int32)
     IL_00e5:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_00ea:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
-    IL_00ef:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
+    IL_00ea:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
+    IL_00ef:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate67'
     IL_00f4:  ldtoken    [mscorlib]System.Int32
     IL_00f9:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00fe:  ldstr      "a"
@@ -9769,16 +9747,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0144:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0149:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
+    IL_0149:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
     IL_014e:  brtrue.s   IL_0161
 
     IL_0150:  ldnull
-    IL_0151:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5b'(int32,
+    IL_0151:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__59'(int32,
                                                                                                                                  int32)
     IL_0157:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_015c:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
-    IL_0161:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
+    IL_015c:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
+    IL_0161:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate68'
     IL_0166:  ldtoken    [mscorlib]System.Int32
     IL_016b:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0170:  ldstr      "a"
@@ -9811,16 +9789,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_01b6:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_01bb:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
+    IL_01bb:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
     IL_01c0:  brtrue.s   IL_01d3
 
     IL_01c2:  ldnull
-    IL_01c3:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5c'(int32,
+    IL_01c3:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5a'(int32,
                                                                                                                                  int32)
     IL_01c9:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_01ce:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
-    IL_01d3:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
+    IL_01ce:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
+    IL_01d3:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate69'
     IL_01d8:  ldtoken    [mscorlib]System.Int32
     IL_01dd:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_01e2:  ldstr      "a"
@@ -9853,16 +9831,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0228:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_022d:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
+    IL_022d:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
     IL_0232:  brtrue.s   IL_0245
 
     IL_0234:  ldnull
-    IL_0235:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5d'(int64,
+    IL_0235:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5b'(int64,
                                                                                                                                  int32)
     IL_023b:  newobj     instance void class [mscorlib]System.Func`3<int64,int32,int64>::.ctor(object,
                                                                                                native int)
-    IL_0240:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
-    IL_0245:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
+    IL_0240:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
+    IL_0245:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6a'
     IL_024a:  ldtoken    [mscorlib]System.Int64
     IL_024f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0254:  ldstr      "a"
@@ -9899,16 +9877,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_02a9:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int64,int32,int64>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_02ae:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
+    IL_02ae:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
     IL_02b3:  brtrue.s   IL_02c6
 
     IL_02b5:  ldnull
-    IL_02b6:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5e'(int64,
+    IL_02b6:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5c'(int64,
                                                                                                                                  int32)
     IL_02bc:  newobj     instance void class [mscorlib]System.Func`3<int64,int32,int64>::.ctor(object,
                                                                                                native int)
-    IL_02c1:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
-    IL_02c6:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
+    IL_02c1:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
+    IL_02c6:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6b'
     IL_02cb:  ldtoken    [mscorlib]System.Int64
     IL_02d0:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_02d5:  ldstr      "a"
@@ -9945,16 +9923,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_032a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int64,int32,int64>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_032f:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
+    IL_032f:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
     IL_0334:  brtrue.s   IL_0347
 
     IL_0336:  ldnull
-    IL_0337:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5f'(int64,
+    IL_0337:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5d'(int64,
                                                                                                                                  int32)
     IL_033d:  newobj     instance void class [mscorlib]System.Func`3<int64,int32,int64>::.ctor(object,
                                                                                                native int)
-    IL_0342:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
-    IL_0347:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
+    IL_0342:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
+    IL_0347:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6c'
     IL_034c:  ldtoken    [mscorlib]System.Int64
     IL_0351:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0356:  ldstr      "a"
@@ -9991,16 +9969,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_03ab:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int64,int32,int64>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_03b0:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
+    IL_03b0:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
     IL_03b5:  brtrue.s   IL_03c8
 
     IL_03b7:  ldnull
-    IL_03b8:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__60'(int64,
+    IL_03b8:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5e'(int64,
                                                                                                                                  int32)
     IL_03be:  newobj     instance void class [mscorlib]System.Func`3<int64,int32,int64>::.ctor(object,
                                                                                                native int)
-    IL_03c3:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
-    IL_03c8:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
+    IL_03c3:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
+    IL_03c8:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6d'
     IL_03cd:  ldtoken    [mscorlib]System.Int64
     IL_03d2:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_03d7:  ldstr      "a"
@@ -10037,16 +10015,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_042c:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int64,int32,int64>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0431:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
+    IL_0431:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
     IL_0436:  brtrue.s   IL_0449
 
     IL_0438:  ldnull
-    IL_0439:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__61'(int64,
+    IL_0439:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__5f'(int64,
                                                                                                                                  int32)
     IL_043f:  newobj     instance void class [mscorlib]System.Func`3<int64,int32,int64>::.ctor(object,
                                                                                                native int)
-    IL_0444:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
-    IL_0449:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
+    IL_0444:  stsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
+    IL_0449:  ldsfld     class [mscorlib]System.Func`3<int64,int32,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6e'
     IL_044e:  ldtoken    [mscorlib]System.Int64
     IL_0453:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0458:  ldstr      "a"
@@ -10083,16 +10061,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_04ad:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int64,int32,int64>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_04b2:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
+    IL_04b2:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
     IL_04b7:  brtrue.s   IL_04ca
 
     IL_04b9:  ldnull
-    IL_04ba:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__62'(int16,
+    IL_04ba:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__60'(int16,
                                                                                                                                  int32)
     IL_04c0:  newobj     instance void class [mscorlib]System.Func`3<int16,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_04c5:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
-    IL_04ca:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
+    IL_04c5:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
+    IL_04ca:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate6f'
     IL_04cf:  ldtoken    [mscorlib]System.Int16
     IL_04d4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_04d9:  ldstr      "a"
@@ -10129,16 +10107,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_052e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int16,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0533:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
+    IL_0533:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
     IL_0538:  brtrue.s   IL_054b
 
     IL_053a:  ldnull
-    IL_053b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__63'(int32,
+    IL_053b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__61'(int32,
                                                                                                                                  int16)
     IL_0541:  newobj     instance void class [mscorlib]System.Func`3<int32,int16,int32>::.ctor(object,
                                                                                                native int)
-    IL_0546:  stsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
-    IL_054b:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
+    IL_0546:  stsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
+    IL_054b:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate70'
     IL_0550:  ldtoken    [mscorlib]System.Int32
     IL_0555:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_055a:  ldstr      "a"
@@ -10175,16 +10153,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_05af:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int16,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_05b4:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
+    IL_05b4:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
     IL_05b9:  brtrue.s   IL_05cc
 
     IL_05bb:  ldnull
-    IL_05bc:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__64'(int16,
+    IL_05bc:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__62'(int16,
                                                                                                                                  int32)
     IL_05c2:  newobj     instance void class [mscorlib]System.Func`3<int16,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_05c7:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
-    IL_05cc:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
+    IL_05c7:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
+    IL_05cc:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate71'
     IL_05d1:  ldtoken    [mscorlib]System.Int16
     IL_05d6:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_05db:  ldstr      "a"
@@ -10221,16 +10199,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0630:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int16,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0635:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate74'
+    IL_0635:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
     IL_063a:  brtrue.s   IL_064d
 
     IL_063c:  ldnull
-    IL_063d:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__65'(int32,
+    IL_063d:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__63'(int32,
                                                                                                                                  int16)
     IL_0643:  newobj     instance void class [mscorlib]System.Func`3<int32,int16,int32>::.ctor(object,
                                                                                                native int)
-    IL_0648:  stsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate74'
-    IL_064d:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate74'
+    IL_0648:  stsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
+    IL_064d:  ldsfld     class [mscorlib]System.Func`3<int32,int16,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate72'
     IL_0652:  ldtoken    [mscorlib]System.Int32
     IL_0657:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_065c:  ldstr      "a"
@@ -10267,16 +10245,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_06b1:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int16,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_06b6:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate75'
+    IL_06b6:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
     IL_06bb:  brtrue.s   IL_06ce
 
     IL_06bd:  ldnull
-    IL_06be:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__66'(int16,
+    IL_06be:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BinaryArithmeticOperators>b__64'(int16,
                                                                                                                                  int32)
     IL_06c4:  newobj     instance void class [mscorlib]System.Func`3<int16,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_06c9:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate75'
-    IL_06ce:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate75'
+    IL_06c9:  stsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
+    IL_06ce:  ldsfld     class [mscorlib]System.Func`3<int16,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate73'
     IL_06d3:  ldtoken    [mscorlib]System.Int16
     IL_06d8:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_06dd:  ldstr      "a"
@@ -10331,15 +10309,15 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression V_8,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_9,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_10)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate78'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__76'(int32)
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__74'(int32)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate78'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate78'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "a"
@@ -10360,16 +10338,16 @@
                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0049:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32,int32>>(!!0,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_004e:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
+    IL_004e:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate79'
     IL_0053:  brtrue.s   IL_0066
 
     IL_0055:  ldnull
-    IL_0056:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__77'(int32,
+    IL_0056:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__75'(int32,
                                                                                                                     int32)
     IL_005c:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_0061:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
-    IL_0066:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
+    IL_0061:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate79'
+    IL_0066:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate79'
     IL_006b:  ldtoken    [mscorlib]System.Int32
     IL_0070:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0075:  ldstr      "a"
@@ -10402,16 +10380,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00b5:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00ba:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7c'
+    IL_00ba:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
     IL_00bf:  brtrue.s   IL_00d2
 
     IL_00c1:  ldnull
-    IL_00c2:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__78'(int32,
+    IL_00c2:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__76'(int32,
                                                                                                                     int32)
     IL_00c8:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_00cd:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7c'
-    IL_00d2:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7c'
+    IL_00cd:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
+    IL_00d2:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7a'
     IL_00d7:  ldtoken    [mscorlib]System.Int32
     IL_00dc:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00e1:  ldstr      "a"
@@ -10444,16 +10422,16 @@
                                                                                                                                                                                                 class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0127:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`3<int32,int32,int32>>(!!0,
                                                                                                                                                     class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_012c:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7d'
+    IL_012c:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
     IL_0131:  brtrue.s   IL_0144
 
     IL_0133:  ldnull
-    IL_0134:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__79'(int32,
+    IL_0134:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<BitOperators>b__77'(int32,
                                                                                                                     int32)
     IL_013a:  newobj     instance void class [mscorlib]System.Func`3<int32,int32,int32>::.ctor(object,
                                                                                                native int)
-    IL_013f:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7d'
-    IL_0144:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7d'
+    IL_013f:  stsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
+    IL_0144:  ldsfld     class [mscorlib]System.Func`3<int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate7b'
     IL_0149:  ldtoken    [mscorlib]System.Int32
     IL_014e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0153:  ldstr      "a"
@@ -10501,15 +10479,15 @@
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_5,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_6,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_7)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate80'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7e'(int32)
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7c'(int32)
     IL_000e:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
+    IL_0013:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate80'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate80'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "a"
@@ -10537,15 +10515,15 @@
                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_005e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32,int32>>(!!0,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0063:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
+    IL_0063:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate81'
     IL_0068:  brtrue.s   IL_007b
 
     IL_006a:  ldnull
-    IL_006b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7f'(int32)
+    IL_006b:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7d'(int32)
     IL_0071:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_0076:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
-    IL_007b:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
+    IL_0076:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate81'
+    IL_007b:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate81'
     IL_0080:  ldtoken    [mscorlib]System.Int32
     IL_0085:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_008a:  ldstr      "a"
@@ -10573,15 +10551,15 @@
                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00c1:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32,int32>>(!!0,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00c6:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate84'
+    IL_00c6:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
     IL_00cb:  brtrue.s   IL_00de
 
     IL_00cd:  ldnull
-    IL_00ce:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__80'(int64)
+    IL_00ce:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7e'(int64)
     IL_00d4:  newobj     instance void class [mscorlib]System.Func`2<int64,int64>::.ctor(object,
                                                                                          native int)
-    IL_00d9:  stsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate84'
-    IL_00de:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate84'
+    IL_00d9:  stsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
+    IL_00de:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate82'
     IL_00e3:  ldtoken    [mscorlib]System.Int64
     IL_00e8:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00ed:  ldstr      "a"
@@ -10609,15 +10587,15 @@
                                                                                                                                                                                           class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_012a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int64,int64>>(!!0,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_012f:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate85'
+    IL_012f:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
     IL_0134:  brtrue.s   IL_0147
 
     IL_0136:  ldnull
-    IL_0137:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__81'(int64)
+    IL_0137:  ldftn      int64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ShiftOperators>b__7f'(int64)
     IL_013d:  newobj     instance void class [mscorlib]System.Func`2<int64,int64>::.ctor(object,
                                                                                          native int)
-    IL_0142:  stsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate85'
-    IL_0147:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate85'
+    IL_0142:  stsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
+    IL_0147:  ldsfld     class [mscorlib]System.Func`2<int64,int64> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate83'
     IL_014c:  ldtoken    [mscorlib]System.Int64
     IL_0151:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0156:  ldstr      "a"
@@ -10654,15 +10632,15 @@
     .maxstack  5
     .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_1)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate88'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate86'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<SimpleExpressions>b__86'()
+    IL_0008:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<SimpleExpressions>b__84'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate88'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate88'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate86'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate86'
     IL_001d:  ldc.i4.0
     IL_001e:  box        [mscorlib]System.Int32
     IL_0023:  ldtoken    [mscorlib]System.Int32
@@ -10675,15 +10653,15 @@
                                                                                                                                                                                     class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_003d:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<int32>>(!!0,
                                                                                                                                         class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_0042:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate89'
+    IL_0042:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate87'
     IL_0047:  brtrue.s   IL_005a
 
     IL_0049:  ldnull
-    IL_004a:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<SimpleExpressions>b__87'(int32)
+    IL_004a:  ldftn      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<SimpleExpressions>b__85'(int32)
     IL_0050:  newobj     instance void class [mscorlib]System.Func`2<int32,int32>::.ctor(object,
                                                                                          native int)
-    IL_0055:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate89'
-    IL_005a:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate89'
+    IL_0055:  stsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate87'
+    IL_005a:  ldsfld     class [mscorlib]System.Func`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate87'
     IL_005f:  ldtoken    [mscorlib]System.Int32
     IL_0064:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0069:  ldstr      "a"
@@ -10710,19 +10688,19 @@
   {
     // Code size       63 (0x3f)
     .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b' V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b'::.ctor()
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89' V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89'::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
     IL_0007:  ldc.i4.5
-    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b'::captured
+    IL_0008:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89'::captured
     IL_000d:  ldloc.0
-    IL_000e:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b'::'<Capturing>b__8a'()
+    IL_000e:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89'::'<Capturing>b__88'()
     IL_0014:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                    native int)
     IL_0019:  ldloc.0
     IL_001a:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object)
-    IL_001f:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass8b'::captured
+    IL_001f:  ldtoken    field int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/'<>c__DisplayClass89'::captured
     IL_0024:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0029:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
@@ -10970,15 +10948,15 @@
     IL_0048:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::ToCode<string>(object,
                                                                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Action`1<!!0>>)
     IL_004d:  pop
-    IL_004e:  ldsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
+    IL_004e:  ldsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate8f'
     IL_0053:  brtrue.s   IL_0066
 
     IL_0055:  ldnull
-    IL_0056:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8d'(string)
+    IL_0056:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8b'(string)
     IL_005c:  newobj     instance void class [mscorlib]System.Func`2<string,string>::.ctor(object,
                                                                                            native int)
-    IL_0061:  stsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
-    IL_0066:  ldsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
+    IL_0061:  stsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate8f'
+    IL_0066:  ldsfld     class [mscorlib]System.Func`2<string,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate8f'
     IL_006b:  ldtoken    [mscorlib]System.String
     IL_0070:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0075:  ldstr      "a"
@@ -11006,15 +10984,15 @@
                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00af:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<string,string>>(!!0,
                                                                                                                                                 class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00b4:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
+    IL_00b4:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate90'
     IL_00b9:  brtrue.s   IL_00cc
 
     IL_00bb:  ldnull
-    IL_00bc:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8e'(int32)
+    IL_00bc:  ldftn      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8c'(int32)
     IL_00c2:  newobj     instance void class [mscorlib]System.Func`2<int32,string>::.ctor(object,
                                                                                           native int)
-    IL_00c7:  stsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
-    IL_00cc:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
+    IL_00c7:  stsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate90'
+    IL_00cc:  ldsfld     class [mscorlib]System.Func`2<int32,string> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate90'
     IL_00d1:  ldtoken    [mscorlib]System.Int32
     IL_00d6:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00db:  ldstr      "a"
@@ -11042,15 +11020,15 @@
                                                                                                                                                                                            class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0118:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<int32,string>>(!!0,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_011d:  ldsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate93'
+    IL_011d:  ldsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
     IL_0122:  brtrue.s   IL_0135
 
     IL_0124:  ldnull
-    IL_0125:  ldftn      char[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8f'(string)
+    IL_0125:  ldftn      char[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8d'(string)
     IL_012b:  newobj     instance void class [mscorlib]System.Func`2<string,char[]>::.ctor(object,
                                                                                            native int)
-    IL_0130:  stsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate93'
-    IL_0135:  ldsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate93'
+    IL_0130:  stsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
+    IL_0135:  ldsfld     class [mscorlib]System.Func`2<string,char[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate91'
     IL_013a:  ldtoken    [mscorlib]System.String
     IL_013f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0144:  ldstr      "a"
@@ -11084,15 +11062,15 @@
                                                                                                                                                                                             class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_018a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`2<string,char[]>>(!!0,
                                                                                                                                                 class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_018f:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
+    IL_018f:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
     IL_0194:  brtrue.s   IL_01a7
 
     IL_0196:  ldnull
-    IL_0197:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__90'()
+    IL_0197:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Call>b__8e'()
     IL_019d:  newobj     instance void class [mscorlib]System.Func`1<bool>::.ctor(object,
                                                                                   native int)
-    IL_01a2:  stsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
-    IL_01a7:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
+    IL_01a2:  stsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
+    IL_01a7:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate92'
     IL_01ac:  ldc.i4.s   97
     IL_01ae:  box        [mscorlib]System.Char
     IL_01b3:  ldtoken    [mscorlib]System.Char
@@ -11142,15 +11120,15 @@
     .locals init (class [System.Core]System.Linq.Expressions.ParameterExpression V_0,
              class [System.Core]System.Linq.Expressions.ParameterExpression V_1,
              class [System.Core]System.Linq.Expressions.ParameterExpression[] V_2)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate96'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Quote>b__95'()
+    IL_0008:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<Quote>b__93'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<bool>::.ctor(object,
                                                                                   native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate96'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate96'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate94'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldstr      "n"
@@ -11226,15 +11204,15 @@
              class [System.Core]System.Linq.Expressions.Expression[] V_3,
              class [System.Core]System.Linq.Expressions.Expression[] V_4,
              class [System.Core]System.Linq.Expressions.Expression[] V_5)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9a'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__97'()
+    IL_0008:  ldftn      int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__95'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<int32[]>::.ctor(object,
                                                                                      native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9a'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9a'
     IL_001d:  ldtoken    [mscorlib]System.Int32
     IL_0022:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0027:  ldc.i4.3
@@ -11276,15 +11254,15 @@
                                                                                                                                                                                       class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0087:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<int32[]>>(!!0,
                                                                                                                                           class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_008c:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
+    IL_008c:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9b'
     IL_0091:  brtrue.s   IL_00a4
 
     IL_0093:  ldnull
-    IL_0094:  ldftn      int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__98'()
+    IL_0094:  ldftn      int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__96'()
     IL_009a:  newobj     instance void class [mscorlib]System.Func`1<int32[]>::.ctor(object,
                                                                                      native int)
-    IL_009f:  stsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
-    IL_00a4:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
+    IL_009f:  stsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9b'
+    IL_00a4:  ldsfld     class [mscorlib]System.Func`1<int32[]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9b'
     IL_00a9:  ldtoken    [mscorlib]System.Int32
     IL_00ae:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_00b3:  ldc.i4.1
@@ -11308,15 +11286,15 @@
                                                                                                                                                                                       class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_00e3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<int32[]>>(!!0,
                                                                                                                                           class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_00e8:  ldsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
+    IL_00e8:  ldsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
     IL_00ed:  brtrue.s   IL_0100
 
     IL_00ef:  ldnull
-    IL_00f0:  ldftn      int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__99'()
+    IL_00f0:  ldftn      int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__97'()
     IL_00f6:  newobj     instance void class [mscorlib]System.Func`1<int32[0...,0...]>::.ctor(object,
                                                                                               native int)
-    IL_00fb:  stsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
-    IL_0100:  ldsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
+    IL_00fb:  stsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
+    IL_0100:  ldsfld     class [mscorlib]System.Func`1<int32[0...,0...]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9c'
     IL_0105:  ldtoken    [mscorlib]System.Int32
     IL_010a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_010f:  ldc.i4.2
@@ -11349,15 +11327,15 @@
                                                                                                                                                                                                class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0157:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<int32[0...,0...]>>(!!0,
                                                                                                                                                    class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_015c:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9f'
+    IL_015c:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
     IL_0161:  brtrue.s   IL_0174
 
     IL_0163:  ldnull
-    IL_0164:  ldftn      int32[][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__9a'()
+    IL_0164:  ldftn      int32[][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__98'()
     IL_016a:  newobj     instance void class [mscorlib]System.Func`1<int32[][]>::.ctor(object,
                                                                                        native int)
-    IL_016f:  stsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9f'
-    IL_0174:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9f'
+    IL_016f:  stsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
+    IL_0174:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9d'
     IL_0179:  ldtoken    int32[]
     IL_017e:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_0183:  ldc.i4.1
@@ -11381,15 +11359,15 @@
                                                                                                                                                                                         class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_01b3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::Test<class [mscorlib]System.Func`1<int32[][]>>(!!0,
                                                                                                                                             class [System.Core]System.Linq.Expressions.Expression`1<!!0>)
-    IL_01b8:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
+    IL_01b8:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
     IL_01bd:  brtrue.s   IL_01d0
 
     IL_01bf:  ldnull
-    IL_01c0:  ldftn      int32[][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__9b'()
+    IL_01c0:  ldftn      int32[][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<ArrayInitializer>b__99'()
     IL_01c6:  newobj     instance void class [mscorlib]System.Func`1<int32[][]>::.ctor(object,
                                                                                        native int)
-    IL_01cb:  stsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
-    IL_01d0:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
+    IL_01cb:  stsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
+    IL_01d0:  ldsfld     class [mscorlib]System.Func`1<int32[][]> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegate9e'
     IL_01d5:  ldtoken    int32[]
     IL_01da:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_01df:  ldc.i4.1
@@ -11451,15 +11429,15 @@
     .maxstack  7
     .locals init (class [System.Core]System.Linq.Expressions.Expression[] V_0,
              class [mscorlib]System.Reflection.MethodInfo[] V_1)
-    IL_0000:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea2'
+    IL_0000:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
     IL_0005:  brtrue.s   IL_0018
 
     IL_0007:  ldnull
-    IL_0008:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AnonymousTypes>b__a1'()
+    IL_0008:  ldftn      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'<AnonymousTypes>b__9f'()
     IL_000e:  newobj     instance void class [mscorlib]System.Func`1<object>::.ctor(object,
                                                                                     native int)
-    IL_0013:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea2'
-    IL_0018:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea2'
+    IL_0013:  stsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
+    IL_0018:  ldsfld     class [mscorlib]System.Func`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::'CS$<>9__CachedAnonymousMethodDelegatea0'
     IL_001d:  ldtoken    method instance void class '<>f__AnonymousType3`2'<int32,string>::.ctor(!0,
                                                                                                  !1)
     IL_0022:  ldtoken    class '<>f__AnonymousType3`2'<int32,string>
@@ -11586,7 +11564,7 @@
   } // end of method ExpressionTrees::.ctor
 
   .method private hidebysig static string 
-          '<IndexerAccess>b__f'(int32 n) cil managed
+          '<IndexerAccess>b__d'(int32 n) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       8 (0x8)
@@ -11594,9 +11572,9 @@
     IL_0000:  ldarga.s   n
     IL_0002:  call       instance string [mscorlib]System.Int32::ToString()
     IL_0007:  ret
-  } // end of method ExpressionTrees::'<IndexerAccess>b__f'
+  } // end of method ExpressionTrees::'<IndexerAccess>b__d'
 
-  .method private hidebysig static bool  '<MethodGroupConstant>b__17'(class [mscorlib]System.Func`3<object,object,bool> f) cil managed
+  .method private hidebysig static bool  '<MethodGroupConstant>b__15'(class [mscorlib]System.Func`3<object,object,bool> f) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       9 (0x9)
@@ -11607,10 +11585,10 @@
     IL_0003:  callvirt   instance !2 class [mscorlib]System.Func`3<object,object,bool>::Invoke(!0,
                                                                                                !1)
     IL_0008:  ret
-  } // end of method ExpressionTrees::'<MethodGroupConstant>b__17'
+  } // end of method ExpressionTrees::'<MethodGroupConstant>b__15'
 
   .method private hidebysig static int32 
-          '<NestedLambda>b__1b'(class [mscorlib]System.Func`1<int32> f) cil managed
+          '<NestedLambda>b__19'(class [mscorlib]System.Func`1<int32> f) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -11618,10 +11596,10 @@
     IL_0000:  ldarg.0
     IL_0001:  callvirt   instance !0 class [mscorlib]System.Func`1<int32>::Invoke()
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<NestedLambda>b__1b'
+  } // end of method ExpressionTrees::'<NestedLambda>b__19'
 
   .method private hidebysig static int32 
-          '<ArrayIndexer>b__26'(int32[] 'array') cil managed
+          '<ArrayIndexer>b__24'(int32[] 'array') cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
@@ -11630,10 +11608,10 @@
     IL_0001:  ldc.i4.0
     IL_0002:  ldelem.i4
     IL_0003:  ret
-  } // end of method ExpressionTrees::'<ArrayIndexer>b__26'
+  } // end of method ExpressionTrees::'<ArrayIndexer>b__24'
 
   .method private hidebysig static int32 
-          '<ArrayIndexer>b__27'(int32[] 'array',
+          '<ArrayIndexer>b__25'(int32[] 'array',
                                 int32 index) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -11643,10 +11621,10 @@
     IL_0001:  ldarg.1
     IL_0002:  ldelem.i4
     IL_0003:  ret
-  } // end of method ExpressionTrees::'<ArrayIndexer>b__27'
+  } // end of method ExpressionTrees::'<ArrayIndexer>b__25'
 
   .method private hidebysig static int32 
-          '<ArrayIndexer>b__28'(int32[0...,0...] 'array') cil managed
+          '<ArrayIndexer>b__26'(int32[0...,0...] 'array') cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       9 (0x9)
@@ -11657,10 +11635,10 @@
     IL_0003:  call       instance int32 int32[0...,0...]::Get(int32,
                                                               int32)
     IL_0008:  ret
-  } // end of method ExpressionTrees::'<ArrayIndexer>b__28'
+  } // end of method ExpressionTrees::'<ArrayIndexer>b__26'
 
   .method private hidebysig static int32 
-          '<ArrayIndexer>b__29'(int32[0...,0...] 'array',
+          '<ArrayIndexer>b__27'(int32[0...,0...] 'array',
                                 int32 index) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -11672,10 +11650,10 @@
     IL_0003:  call       instance int32 int32[0...,0...]::Get(int32,
                                                               int32)
     IL_0008:  ret
-  } // end of method ExpressionTrees::'<ArrayIndexer>b__29'
+  } // end of method ExpressionTrees::'<ArrayIndexer>b__27'
 
   .method private hidebysig static int32 
-          '<ArrayIndexer>b__2a'(int32[][] 'array',
+          '<ArrayIndexer>b__28'(int32[][] 'array',
                                 int32 index) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -11687,10 +11665,10 @@
     IL_0003:  ldc.i4.7
     IL_0004:  ldelem.i4
     IL_0005:  ret
-  } // end of method ExpressionTrees::'<ArrayIndexer>b__2a'
+  } // end of method ExpressionTrees::'<ArrayIndexer>b__28'
 
   .method private hidebysig static int32 
-          '<ArrayLength>b__30'(int32[] 'array') cil managed
+          '<ArrayLength>b__2e'(int32[] 'array') cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
@@ -11699,10 +11677,10 @@
     IL_0001:  ldlen
     IL_0002:  conv.i4
     IL_0003:  ret
-  } // end of method ExpressionTrees::'<ArrayLength>b__30'
+  } // end of method ExpressionTrees::'<ArrayLength>b__2e'
 
   .method private hidebysig static int32 
-          '<ArrayLength>b__31'() cil managed
+          '<ArrayLength>b__2f'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -11710,7 +11688,28 @@
     IL_0000:  ldnull
     IL_0001:  callvirt   instance int32 [mscorlib]System.Array::get_Length()
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<ArrayLength>b__31'
+  } // end of method ExpressionTrees::'<ArrayLength>b__2f'
+
+  .method private hidebysig static object 
+          '<NewObj>b__32'() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleType::.ctor()
+    IL_0005:  ret
+  } // end of method ExpressionTrees::'<NewObj>b__32'
+
+  .method private hidebysig static object 
+          '<NewObj>b__33'() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldc.i4.5
+    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithCtor::.ctor(int32)
+    IL_0006:  ret
+  } // end of method ExpressionTrees::'<NewObj>b__33'
 
   .method private hidebysig static object 
           '<NewObj>b__34'() cil managed
@@ -11718,7 +11717,7 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       6 (0x6)
     .maxstack  8
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleType::.ctor()
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor()
     IL_0005:  ret
   } // end of method ExpressionTrees::'<NewObj>b__34'
 
@@ -11729,7 +11728,7 @@
     // Code size       7 (0x7)
     .maxstack  8
     IL_0000:  ldc.i4.5
-    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithCtor::.ctor(int32)
+    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor(int32)
     IL_0006:  ret
   } // end of method ExpressionTrees::'<NewObj>b__35'
 
@@ -11739,7 +11738,7 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       6 (0x6)
     .maxstack  8
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor()
+    IL_0000:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<int32>::.ctor()
     IL_0005:  ret
   } // end of method ExpressionTrees::'<NewObj>b__36'
 
@@ -11747,35 +11746,14 @@
           '<NewObj>b__37'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       7 (0x7)
-    .maxstack  8
-    IL_0000:  ldc.i4.5
-    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/SimpleTypeWithMultipleCtors::.ctor(int32)
-    IL_0006:  ret
-  } // end of method ExpressionTrees::'<NewObj>b__37'
-
-  .method private hidebysig static object 
-          '<NewObj>b__38'() cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       6 (0x6)
-    .maxstack  8
-    IL_0000:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<int32>::.ctor()
-    IL_0005:  ret
-  } // end of method ExpressionTrees::'<NewObj>b__38'
-
-  .method private hidebysig static object 
-          '<NewObj>b__39'() cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       6 (0x6)
     .maxstack  8
     IL_0000:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithCtor`1<int32>::.ctor()
     IL_0005:  ret
-  } // end of method ExpressionTrees::'<NewObj>b__39'
+  } // end of method ExpressionTrees::'<NewObj>b__37'
 
   .method private hidebysig static object 
-          '<NewObj>b__3a'() cil managed
+          '<NewObj>b__38'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -11783,7 +11761,29 @@
     IL_0000:  ldc.i4.5
     IL_0001:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClassWithMultipleCtors`1<int32>::.ctor(int32)
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<NewObj>b__3a'
+  } // end of method ExpressionTrees::'<NewObj>b__38'
+
+  .method private hidebysig static class [mscorlib]System.Type 
+          '<TypeOfExpr>b__40'() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldtoken    [mscorlib]System.Int32
+    IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_000a:  ret
+  } // end of method ExpressionTrees::'<TypeOfExpr>b__40'
+
+  .method private hidebysig static class [mscorlib]System.Type 
+          '<TypeOfExpr>b__41'() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldtoken    [mscorlib]System.Object
+    IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_000a:  ret
+  } // end of method ExpressionTrees::'<TypeOfExpr>b__41'
 
   .method private hidebysig static class [mscorlib]System.Type 
           '<TypeOfExpr>b__42'() cil managed
@@ -11791,7 +11791,7 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  8
-    IL_0000:  ldtoken    [mscorlib]System.Int32
+    IL_0000:  ldtoken    [mscorlib]System.Collections.Generic.List`1
     IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_000a:  ret
   } // end of method ExpressionTrees::'<TypeOfExpr>b__42'
@@ -11802,7 +11802,7 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  8
-    IL_0000:  ldtoken    [mscorlib]System.Object
+    IL_0000:  ldtoken    class [mscorlib]System.Collections.Generic.List`1<int32>
     IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_000a:  ret
   } // end of method ExpressionTrees::'<TypeOfExpr>b__43'
@@ -11813,35 +11813,13 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  8
-    IL_0000:  ldtoken    [mscorlib]System.Collections.Generic.List`1
+    IL_0000:  ldtoken    int32*
     IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
     IL_000a:  ret
   } // end of method ExpressionTrees::'<TypeOfExpr>b__44'
 
-  .method private hidebysig static class [mscorlib]System.Type 
-          '<TypeOfExpr>b__45'() cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       11 (0xb)
-    .maxstack  8
-    IL_0000:  ldtoken    class [mscorlib]System.Collections.Generic.List`1<int32>
-    IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_000a:  ret
-  } // end of method ExpressionTrees::'<TypeOfExpr>b__45'
-
-  .method private hidebysig static class [mscorlib]System.Type 
-          '<TypeOfExpr>b__46'() cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       11 (0xb)
-    .maxstack  8
-    IL_0000:  ldtoken    int32*
-    IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_000a:  ret
-  } // end of method ExpressionTrees::'<TypeOfExpr>b__46'
-
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass 
-          '<AsTypeExpr>b__4c'(object obj) cil managed
+          '<AsTypeExpr>b__4a'(object obj) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -11849,10 +11827,10 @@
     IL_0000:  ldarg.0
     IL_0001:  isinst     ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/MyClass
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<AsTypeExpr>b__4c'
+  } // end of method ExpressionTrees::'<AsTypeExpr>b__4a'
 
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object> 
-          '<AsTypeExpr>b__4d'(object obj) cil managed
+          '<AsTypeExpr>b__4b'(object obj) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -11860,9 +11838,9 @@
     IL_0000:  ldarg.0
     IL_0001:  isinst     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees/GenericClass`1<object>
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<AsTypeExpr>b__4d'
+  } // end of method ExpressionTrees::'<AsTypeExpr>b__4b'
 
-  .method private hidebysig static bool  '<IsTypeExpr>b__50'(object obj) cil managed
+  .method private hidebysig static bool  '<IsTypeExpr>b__4e'(object obj) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       10 (0xa)
@@ -11872,9 +11850,9 @@
     IL_0006:  ldnull
     IL_0007:  cgt.un
     IL_0009:  ret
-  } // end of method ExpressionTrees::'<IsTypeExpr>b__50'
+  } // end of method ExpressionTrees::'<IsTypeExpr>b__4e'
 
-  .method private hidebysig static bool  '<UnaryLogicalOperators>b__52'(bool a) cil managed
+  .method private hidebysig static bool  '<UnaryLogicalOperators>b__50'(bool a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       5 (0x5)
@@ -11883,20 +11861,20 @@
     IL_0001:  ldc.i4.0
     IL_0002:  ceq
     IL_0004:  ret
-  } // end of method ExpressionTrees::'<UnaryLogicalOperators>b__52'
+  } // end of method ExpressionTrees::'<UnaryLogicalOperators>b__50'
 
   .method private hidebysig static int32 
-          '<UnaryArithmeticOperators>b__54'(int32 a) cil managed
+          '<UnaryArithmeticOperators>b__52'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       2 (0x2)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ret
-  } // end of method ExpressionTrees::'<UnaryArithmeticOperators>b__54'
+  } // end of method ExpressionTrees::'<UnaryArithmeticOperators>b__52'
 
   .method private hidebysig static int32 
-          '<UnaryArithmeticOperators>b__55'(int32 a) cil managed
+          '<UnaryArithmeticOperators>b__53'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       3 (0x3)
@@ -11904,7 +11882,33 @@
     IL_0000:  ldarg.0
     IL_0001:  neg
     IL_0002:  ret
-  } // end of method ExpressionTrees::'<UnaryArithmeticOperators>b__55'
+  } // end of method ExpressionTrees::'<UnaryArithmeticOperators>b__53'
+
+  .method private hidebysig static int32 
+          '<BinaryArithmeticOperators>b__56'(int32 a,
+                                             int32 b) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  add
+    IL_0003:  ret
+  } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__56'
+
+  .method private hidebysig static int32 
+          '<BinaryArithmeticOperators>b__57'(int32 a,
+                                             int32 b) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  sub
+    IL_0003:  ret
+  } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__57'
 
   .method private hidebysig static int32 
           '<BinaryArithmeticOperators>b__58'(int32 a,
@@ -11915,7 +11919,7 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  add
+    IL_0002:  mul
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__58'
 
@@ -11928,7 +11932,7 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  sub
+    IL_0002:  div
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__59'
 
@@ -11941,34 +11945,36 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  mul
+    IL_0002:  rem
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5a'
 
-  .method private hidebysig static int32 
-          '<BinaryArithmeticOperators>b__5b'(int32 a,
+  .method private hidebysig static int64 
+          '<BinaryArithmeticOperators>b__5b'(int64 a,
                                              int32 b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
+    // Code size       5 (0x5)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  div
-    IL_0003:  ret
+    IL_0002:  conv.i8
+    IL_0003:  add
+    IL_0004:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5b'
 
-  .method private hidebysig static int32 
-          '<BinaryArithmeticOperators>b__5c'(int32 a,
+  .method private hidebysig static int64 
+          '<BinaryArithmeticOperators>b__5c'(int64 a,
                                              int32 b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
+    // Code size       5 (0x5)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  rem
-    IL_0003:  ret
+    IL_0002:  conv.i8
+    IL_0003:  sub
+    IL_0004:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5c'
 
   .method private hidebysig static int64 
@@ -11981,7 +11987,7 @@
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
     IL_0002:  conv.i8
-    IL_0003:  add
+    IL_0003:  mul
     IL_0004:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5d'
 
@@ -11995,7 +12001,7 @@
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
     IL_0002:  conv.i8
-    IL_0003:  sub
+    IL_0003:  div
     IL_0004:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5e'
 
@@ -12009,36 +12015,34 @@
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
     IL_0002:  conv.i8
-    IL_0003:  mul
+    IL_0003:  rem
     IL_0004:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__5f'
 
-  .method private hidebysig static int64 
-          '<BinaryArithmeticOperators>b__60'(int64 a,
+  .method private hidebysig static int32 
+          '<BinaryArithmeticOperators>b__60'(int16 a,
                                              int32 b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       5 (0x5)
+    // Code size       4 (0x4)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  conv.i8
-    IL_0003:  div
-    IL_0004:  ret
+    IL_0002:  add
+    IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__60'
 
-  .method private hidebysig static int64 
-          '<BinaryArithmeticOperators>b__61'(int64 a,
-                                             int32 b) cil managed
+  .method private hidebysig static int32 
+          '<BinaryArithmeticOperators>b__61'(int32 a,
+                                             int16 b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       5 (0x5)
+    // Code size       4 (0x4)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  conv.i8
-    IL_0003:  rem
-    IL_0004:  ret
+    IL_0002:  sub
+    IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__61'
 
   .method private hidebysig static int32 
@@ -12050,7 +12054,7 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  add
+    IL_0002:  mul
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__62'
 
@@ -12063,7 +12067,7 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  sub
+    IL_0002:  div
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__63'
 
@@ -12076,38 +12080,12 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  mul
+    IL_0002:  rem
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__64'
 
   .method private hidebysig static int32 
-          '<BinaryArithmeticOperators>b__65'(int32 a,
-                                             int16 b) cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldarg.1
-    IL_0002:  div
-    IL_0003:  ret
-  } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__65'
-
-  .method private hidebysig static int32 
-          '<BinaryArithmeticOperators>b__66'(int16 a,
-                                             int32 b) cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldarg.1
-    IL_0002:  rem
-    IL_0003:  ret
-  } // end of method ExpressionTrees::'<BinaryArithmeticOperators>b__66'
-
-  .method private hidebysig static int32 
-          '<BitOperators>b__76'(int32 a) cil managed
+          '<BitOperators>b__74'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       3 (0x3)
@@ -12115,6 +12093,32 @@
     IL_0000:  ldarg.0
     IL_0001:  not
     IL_0002:  ret
+  } // end of method ExpressionTrees::'<BitOperators>b__74'
+
+  .method private hidebysig static int32 
+          '<BitOperators>b__75'(int32 a,
+                                int32 b) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  and
+    IL_0003:  ret
+  } // end of method ExpressionTrees::'<BitOperators>b__75'
+
+  .method private hidebysig static int32 
+          '<BitOperators>b__76'(int32 a,
+                                int32 b) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  or
+    IL_0003:  ret
   } // end of method ExpressionTrees::'<BitOperators>b__76'
 
   .method private hidebysig static int32 
@@ -12126,38 +12130,36 @@
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldarg.1
-    IL_0002:  and
+    IL_0002:  xor
     IL_0003:  ret
   } // end of method ExpressionTrees::'<BitOperators>b__77'
 
   .method private hidebysig static int32 
-          '<BitOperators>b__78'(int32 a,
-                                int32 b) cil managed
+          '<ShiftOperators>b__7c'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldarg.1
-    IL_0002:  or
+    IL_0001:  ldc.i4.2
+    IL_0002:  shr
     IL_0003:  ret
-  } // end of method ExpressionTrees::'<BitOperators>b__78'
+  } // end of method ExpressionTrees::'<ShiftOperators>b__7c'
 
   .method private hidebysig static int32 
-          '<BitOperators>b__79'(int32 a,
-                                int32 b) cil managed
+          '<ShiftOperators>b__7d'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldarg.1
-    IL_0002:  xor
+    IL_0001:  ldc.i4.2
+    IL_0002:  shl
     IL_0003:  ret
-  } // end of method ExpressionTrees::'<BitOperators>b__79'
+  } // end of method ExpressionTrees::'<ShiftOperators>b__7d'
 
-  .method private hidebysig static int32 
-          '<ShiftOperators>b__7e'(int32 a) cil managed
+  .method private hidebysig static int64 
+          '<ShiftOperators>b__7e'(int64 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
@@ -12168,8 +12170,8 @@
     IL_0003:  ret
   } // end of method ExpressionTrees::'<ShiftOperators>b__7e'
 
-  .method private hidebysig static int32 
-          '<ShiftOperators>b__7f'(int32 a) cil managed
+  .method private hidebysig static int64 
+          '<ShiftOperators>b__7f'(int64 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       4 (0x4)
@@ -12180,52 +12182,28 @@
     IL_0003:  ret
   } // end of method ExpressionTrees::'<ShiftOperators>b__7f'
 
-  .method private hidebysig static int64 
-          '<ShiftOperators>b__80'(int64 a) cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldc.i4.2
-    IL_0002:  shr
-    IL_0003:  ret
-  } // end of method ExpressionTrees::'<ShiftOperators>b__80'
-
-  .method private hidebysig static int64 
-          '<ShiftOperators>b__81'(int64 a) cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       4 (0x4)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldc.i4.2
-    IL_0002:  shl
-    IL_0003:  ret
-  } // end of method ExpressionTrees::'<ShiftOperators>b__81'
-
   .method private hidebysig static int32 
-          '<SimpleExpressions>b__86'() cil managed
+          '<SimpleExpressions>b__84'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       2 (0x2)
     .maxstack  8
     IL_0000:  ldc.i4.0
     IL_0001:  ret
-  } // end of method ExpressionTrees::'<SimpleExpressions>b__86'
+  } // end of method ExpressionTrees::'<SimpleExpressions>b__84'
 
   .method private hidebysig static int32 
-          '<SimpleExpressions>b__87'(int32 a) cil managed
+          '<SimpleExpressions>b__85'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       2 (0x2)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ret
-  } // end of method ExpressionTrees::'<SimpleExpressions>b__87'
+  } // end of method ExpressionTrees::'<SimpleExpressions>b__85'
 
   .method private hidebysig static string 
-          '<Call>b__8d'(string a) cil managed
+          '<Call>b__8b'(string a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -12233,10 +12211,10 @@
     IL_0000:  ldarg.0
     IL_0001:  callvirt   instance string [mscorlib]System.Object::ToString()
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<Call>b__8d'
+  } // end of method ExpressionTrees::'<Call>b__8b'
 
   .method private hidebysig static string 
-          '<Call>b__8e'(int32 a) cil managed
+          '<Call>b__8c'(int32 a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       8 (0x8)
@@ -12244,10 +12222,10 @@
     IL_0000:  ldarga.s   a
     IL_0002:  call       instance string [mscorlib]System.Int32::ToString()
     IL_0007:  ret
-  } // end of method ExpressionTrees::'<Call>b__8e'
+  } // end of method ExpressionTrees::'<Call>b__8c'
 
   .method private hidebysig static char[] 
-          '<Call>b__8f'(string a) cil managed
+          '<Call>b__8d'(string a) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -12255,9 +12233,9 @@
     IL_0000:  ldarg.0
     IL_0001:  call       !!0[] [System.Core]System.Linq.Enumerable::ToArray<char>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<Call>b__8f'
+  } // end of method ExpressionTrees::'<Call>b__8d'
 
-  .method private hidebysig static bool  '<Call>b__90'() cil managed
+  .method private hidebysig static bool  '<Call>b__8e'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       16 (0x10)
@@ -12271,9 +12249,9 @@
     IL_000c:  ldc.i4.0
     IL_000d:  clt
     IL_000f:  ret
-  } // end of method ExpressionTrees::'<Call>b__90'
+  } // end of method ExpressionTrees::'<Call>b__8e'
 
-  .method private hidebysig static bool  '<Quote>b__95'() cil managed
+  .method private hidebysig static bool  '<Quote>b__93'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       118 (0x76)
@@ -12329,10 +12307,10 @@
     IL_0072:  ldc.i4.0
     IL_0073:  ceq
     IL_0075:  ret
-  } // end of method ExpressionTrees::'<Quote>b__95'
+  } // end of method ExpressionTrees::'<Quote>b__93'
 
   .method private hidebysig static int32[] 
-          '<ArrayInitializer>b__97'() cil managed
+          '<ArrayInitializer>b__95'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       18 (0x12)
@@ -12340,14 +12318,14 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     [mscorlib]System.Int32
     IL_0006:  dup
-    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x600010e-1'
+    IL_0007:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x600010d-1'
     IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0011:  ret
-  } // end of method ExpressionTrees::'<ArrayInitializer>b__97'
+  } // end of method ExpressionTrees::'<ArrayInitializer>b__95'
 
   .method private hidebysig static int32[] 
-          '<ArrayInitializer>b__98'() cil managed
+          '<ArrayInitializer>b__96'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -12355,10 +12333,10 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     [mscorlib]System.Int32
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<ArrayInitializer>b__98'
+  } // end of method ExpressionTrees::'<ArrayInitializer>b__96'
 
   .method private hidebysig static int32[0...,0...] 
-          '<ArrayInitializer>b__99'() cil managed
+          '<ArrayInitializer>b__97'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       8 (0x8)
@@ -12368,10 +12346,10 @@
     IL_0002:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0007:  ret
-  } // end of method ExpressionTrees::'<ArrayInitializer>b__99'
+  } // end of method ExpressionTrees::'<ArrayInitializer>b__97'
 
   .method private hidebysig static int32[][] 
-          '<ArrayInitializer>b__9a'() cil managed
+          '<ArrayInitializer>b__98'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       7 (0x7)
@@ -12379,10 +12357,10 @@
     IL_0000:  ldc.i4.3
     IL_0001:  newarr     int32[]
     IL_0006:  ret
-  } // end of method ExpressionTrees::'<ArrayInitializer>b__9a'
+  } // end of method ExpressionTrees::'<ArrayInitializer>b__98'
 
   .method private hidebysig static int32[][] 
-          '<ArrayInitializer>b__9b'() cil managed
+          '<ArrayInitializer>b__99'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       29 (0x1d)
@@ -12396,16 +12374,16 @@
     IL_0009:  ldc.i4.3
     IL_000a:  newarr     [mscorlib]System.Int32
     IL_000f:  dup
-    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000112-1'
+    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000111-1'
     IL_0015:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001a:  stelem.ref
     IL_001b:  ldloc.0
     IL_001c:  ret
-  } // end of method ExpressionTrees::'<ArrayInitializer>b__9b'
+  } // end of method ExpressionTrees::'<ArrayInitializer>b__99'
 
   .method private hidebysig static object 
-          '<AnonymousTypes>b__a1'() cil managed
+          '<AnonymousTypes>b__9f'() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       12 (0xc)
@@ -12415,7 +12393,7 @@
     IL_0006:  newobj     instance void class '<>f__AnonymousType3`2'<int32,string>::.ctor(!0,
                                                                                           !1)
     IL_000b:  ret
-  } // end of method ExpressionTrees::'<AnonymousTypes>b__a1'
+  } // end of method ExpressionTrees::'<AnonymousTypes>b__9f'
 
   .method private hidebysig specialname rtspecialname static 
           void  .cctor() cil managed
@@ -14085,8 +14063,8 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x600010e-1' at I_00008D60
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000112-1' at I_00008D98
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x600010d-1' at I_00008D40
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000111-1' at I_00008D78
 } // end of class '<PrivateImplementationDetails>'
 
 .class private auto ansi sealed beforefieldinit '<>f__AnonymousType3`2'<'<A>j__TPar','<B>j__TPar'>
@@ -14252,9 +14230,9 @@
 
 // =============================================================
 
-.data cil I_00008D60 = bytearray (
+.data cil I_00008D40 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
-.data cil I_00008D6C = int8[4]
-.data cil I_00008D98 = bytearray (
+.data cil I_00008D4C = int8[4]
+.data cil I_00008D78 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************
