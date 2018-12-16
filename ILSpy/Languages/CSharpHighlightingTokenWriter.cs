@@ -273,6 +273,7 @@ namespace ICSharpCode.ILSpy
 				case "ulong":
 					color = valueTypeKeywordsColor;
 					break;
+				case "class":
 				case "object":
 				case "string":
 				case "void":
