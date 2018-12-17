@@ -344,6 +344,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static PEFile LoadPEFile(string fileName, DecompilerSettings settings)
 		{
+			settings.LoadInMemory = true;
 			return new PEFile(
 				fileName,
 				new FileStream(fileName, FileMode.Open, FileAccess.Read),
@@ -354,6 +355,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static DecompilerTypeSystem CreateTypeSystemFromFile(string fileName, DecompilerSettings settings)
 		{
+			settings.LoadInMemory = true;
 			var file = LoadPEFile(fileName, settings);
 			var resolver = new UniversalAssemblyResolver(fileName, settings.ThrowOnAssemblyResolveErrors,
 				file.Reader.DetectTargetFrameworkId(),
