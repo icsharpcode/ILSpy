@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Newer Roslyn versions use the format "&ltcallerName&gtg__functionName|x_y"
 		/// Older versions use "&ltcallerName&gtg__functionNamex_y"
 		/// </summary>
-		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__(.*)\|{0,1}\d+_\d+$", RegexOptions.Compiled);
+		static readonly Regex functionNameRegex = new Regex(@"^<(.*)>g__(.*)\|{0,1}\d+(_\d+)?$", RegexOptions.Compiled);
 
 		static bool ParseLocalFunctionName(string name, out string callerName, out string functionName)
 		{
