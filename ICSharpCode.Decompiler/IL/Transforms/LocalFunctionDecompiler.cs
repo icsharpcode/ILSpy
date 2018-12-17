@@ -21,8 +21,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var metadata = module.Metadata;
 			var method = metadata.GetMethodDefinition(methodHandle);
+			var declaringType = method.GetDeclaringType();
 
-			if ((method.Attributes & MethodAttributes.Assembly) == 0 || !method.IsCompilerGenerated(metadata))
+			if ((method.Attributes & MethodAttributes.Assembly) == 0 || !(method.IsCompilerGenerated(metadata) || declaringType.IsCompilerGenerated(metadata)))
 				return false;
 
 			if (!ParseLocalFunctionName(metadata.GetString(method.Name), out _, out _))

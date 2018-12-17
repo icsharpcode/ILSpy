@@ -155,6 +155,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (!IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod))
 				return null;
+			if (LocalFunctionDecompiler.IsLocalFunctionMethod(targetMethod.ParentModule.PEFile, (MethodDefinitionHandle)targetMethod.MetadataToken))
+				return null;
 			target = value.Arguments[0];
 			if (targetMethod.MetadataToken.IsNil)
 				return null;

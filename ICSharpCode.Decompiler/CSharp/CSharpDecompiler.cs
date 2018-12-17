@@ -517,11 +517,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				var part = method;
 
 				var connectedMethods = new Queue<MethodDefinitionHandle>();
+				var processedMethods = new HashSet<MethodDefinitionHandle>();
 				var processedNestedTypes = new HashSet<TypeDefinitionHandle>();
 				connectedMethods.Enqueue(part);
 
 				while (connectedMethods.Count > 0) {
 					part = connectedMethods.Dequeue();
+					if (!processedMethods.Add(part))
+						continue;
 					try {
 						ReadCodeMappingInfo(module, declaringType, info, parent, part, connectedMethods, processedNestedTypes);
 					} catch (BadImageFormatException) {
