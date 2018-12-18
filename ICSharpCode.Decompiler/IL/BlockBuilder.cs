@@ -166,7 +166,12 @@ namespace ICSharpCode.Decompiler.IL
 					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: true);
 			}
 			FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
-			containerStack.Clear();
+			// Finish up all containers
+			while (containerStack.Count > 0) {
+				currentContainer = containerStack.Pop();
+				currentBlock = currentContainer.Blocks.Last();
+				FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
+			}
 			ConnectBranches(mainContainer, cancellationToken);
 		}
 
