@@ -60,10 +60,10 @@ namespace ICSharpCode.Decompiler.IL
 				handlerBlock.Blocks.Add(new Block());
 				handlerContainers.Add(handlerBlock.ILRange.Start, handlerBlock);
 				
-				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Fault || eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally) {
+				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally) {
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
-					if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally)
+					if (eh.Kind == ExceptionRegionKind.Finally)
 						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock));
 					else
 						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock));
