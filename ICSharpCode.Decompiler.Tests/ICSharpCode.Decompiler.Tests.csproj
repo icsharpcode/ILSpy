@@ -73,6 +73,7 @@
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
+    <None Include="TestCases\ILPretty\Issue1325.cs" />
     <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
     <Compile Include="TestCases\Pretty\CS73_StackAllocInitializers.cs" />
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="TestCases\Pretty\YieldReturn.cs" />
     <None Include="TestCases\ILPretty\Issue1256.il" />
     <None Include="TestCases\ILPretty\Issue1323.il" />
+    <None Include="TestCases\ILPretty\Issue1325.il" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Include="TestCases\Ugly\NoDecimalConstants.cs" />
     <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />

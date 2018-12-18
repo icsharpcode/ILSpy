@@ -131,6 +131,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1325()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();

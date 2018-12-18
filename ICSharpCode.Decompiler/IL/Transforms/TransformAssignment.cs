@@ -138,8 +138,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
 					return false;
-				if (!call.Method.Equals((call.Method.AccessorOwner as IProperty)?.Setter))
+				IProperty property = call.Method.AccessorOwner as IProperty;
+				if (property == null)
 					return false;
+				if (!call.Method.Equals(property.Setter))
+					return false;
+				if (!(property.IsIndexer || property.Setter.Parameters.Count == 1)) {
+					// this is a parameterized property, which cannot be expressed as C# code.
+					// setter calls are not valid in expression context, if property syntax cannot be used.
+					return false;
+				}
 				if (!call.Arguments.Last().MatchLdLoc(inst.Variable))
 					return false;
 				foreach (var arg in call.Arguments.SkipLast(1)) {
