@@ -435,16 +435,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdcF4(LdcF4 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Single), inst.Value));
+			var expr = astBuilder.ConvertConstantValue(compilation.FindType(KnownTypeCode.Single), inst.Value);
+			return new TranslatedExpression(expr.WithILInstruction(inst));
 		}
 
 		protected internal override TranslatedExpression VisitLdcF8(LdcF8 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Double), inst.Value));
+			var expr = astBuilder.ConvertConstantValue(compilation.FindType(KnownTypeCode.Double), inst.Value);
+			return new TranslatedExpression(expr.WithILInstruction(inst));
 		}
 
 		protected internal override TranslatedExpression VisitLdcDecimal(LdcDecimal inst, TranslationContext context)
