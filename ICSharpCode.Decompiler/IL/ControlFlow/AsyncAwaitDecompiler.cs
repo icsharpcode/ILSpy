@@ -36,7 +36,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
-			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+			if (type.IsNil || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+				return false;
+			if (!(type.IsCompilerGenerated(metadata) || td.GetDeclaringType().IsCompilerGenerated(metadata)))
 				return false;
 			foreach (var i in td.GetInterfaceImplementations()) {
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);

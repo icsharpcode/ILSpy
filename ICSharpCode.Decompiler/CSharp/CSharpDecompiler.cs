@@ -526,7 +526,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!processedMethods.Add(part))
 						continue;
 					try {
-						ReadCodeMappingInfo(module, declaringType, info, parent, part, connectedMethods, processedNestedTypes);
+						ReadCodeMappingInfo(module, info, parent, part, connectedMethods, processedNestedTypes);
 					} catch (BadImageFormatException) {
 						// ignore invalid IL
 					}
@@ -536,14 +536,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return info;
 		}
 
-		private static void ReadCodeMappingInfo(PEFile module, TypeDefinitionHandle declaringType, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
+		private static void ReadCodeMappingInfo(PEFile module, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
 		{
 			var md = module.Metadata.GetMethodDefinition(part);
 
 			if (!md.HasBody()) {
 				info.AddMapping(parent, part);
 				return;
-			} 
+			}
+
+			var declaringType = md.GetDeclaringType();
 
 			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 			while (blob.RemainingBytes > 0) {
