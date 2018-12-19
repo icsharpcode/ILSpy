@@ -64,9 +64,9 @@ namespace ICSharpCode.Decompiler.IL
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
 					if (eh.Kind == ExceptionRegionKind.Finally)
-						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock));
+						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock) { ILRange = tryRange });
 					else
-						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock));
+						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock) { ILRange = tryRange });
 					continue;
 				}
 				// 
@@ -134,6 +134,12 @@ namespace ICSharpCode.Decompiler.IL
 					while (start >= currentContainer.ILRange.End) {
 						currentContainer = containerStack.Pop();
 						currentBlock = currentContainer.Blocks.Last();
+						// this container is skipped (i.e. the loop will execute again)
+						// set ILRange to the last instruction offset inside the block.
+						if (start >= currentContainer.ILRange.End) {
+							Debug.Assert(currentBlock.ILRange.IsEmpty);
+							currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, start);
+						}
 					}
 					// Enter a handler if necessary
 					BlockContainer handlerContainer;
