@@ -598,9 +598,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos--;
 			}
 
-			// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
-			if (!MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs))
+			if (MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs)) {
+				// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+			} else if (MatchCall(block.Instructions[pos], "AwaitOnCompleted", out callArgs)) {
+				// call AwaitOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+				// The C# compiler emits the non-unsafe call when the awaiter does not implement
+				// ICriticalNotifyCompletion.
+			} else {
 				return false;
+			}
 			if (callArgs.Count != 3)
 				return false;
 			if (!IsBuilderFieldOnThis(callArgs[0]))

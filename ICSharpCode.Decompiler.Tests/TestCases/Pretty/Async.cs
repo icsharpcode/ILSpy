@@ -51,6 +51,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			await default(YieldAwaitable);
 		}
 
+		public async void AwaitDefaultHopToThreadPool()
+		{
+			// unlike YieldAwaitable which implements ICriticalNotifyCompletion,
+			// the HopToThreadPoolAwaitable struct only implements
+			// INotifyCompletion, so this results in different codegen
+			await default(HopToThreadPoolAwaitable);
+		}
+
 		public async Task SimpleVoidTaskMethod()
 		{
 			Console.WriteLine("Before");
@@ -85,6 +93,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			while (await SimpleBoolTaskMethod()) {
 				Console.WriteLine("Body");
 			}
+		}
+	}
+
+	public struct HopToThreadPoolAwaitable : INotifyCompletion
+	{
+		public bool IsCompleted {
+			get;
+			set;
+		}
+
+		public HopToThreadPoolAwaitable GetAwaiter()
+		{
+			return this;
+		}
+
+		public void OnCompleted(Action continuation)
+		{
+			Task.Run(continuation);
+		}
+
+		public void GetResult()
+		{
 		}
 	}
 }
