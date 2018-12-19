@@ -241,6 +241,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			}
 		}
 
+		public class OtherItem2
+		{
+			public readonly OtherItem Data;
+
+			public OtherItem Data2 {
+				get;
+				private set;
+			}
+#if CS60
+			public OtherItem Data3 {
+				get;
+			}
+#endif
+		}
+
 		// Helper methods used to ensure initializers used within expressions work correctly
 		private static void X(object a, object b)
 		{
@@ -761,5 +776,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			throw new NotImplementedException();
 		}
+
+		public OtherItem2 Issue1345()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data.Nullable = 3m;
+			return otherItem;
+		}
+
+		public OtherItem2 Issue1345b()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data2.Nullable = 3m;
+			return otherItem;
+		}
+#if CS60
+		public OtherItem2 Issue1345c()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data3.Nullable = 3m;
+			return otherItem;
+		}
+#endif
 	}
 }
