@@ -852,8 +852,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			ITypeDefinition enumDefinition = type.GetDefinition();
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
-			foreach (IField field in enumDefinition.Fields) {
-				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val)) {
+			foreach (IField field in enumDefinition.Fields.Where(fld => fld.IsConst)) {
+				object constantValue = field.GetConstantValue();
+				if (constantValue == null)
+					continue;
+				if (object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false), val)) {
 					MemberReferenceExpression mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
 					if (AddResolveResultAnnotations)
 						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
@@ -881,7 +884,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				Expression negatedExpr = null;
 				foreach (IField field in enumDefinition.Fields.Where(fld => fld.IsConst)) {
-					long fieldValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+					object constantValue = field.GetConstantValue();
+					long fieldValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
 					if (fieldValue == 0)
 						continue;	// skip None enum value
 
@@ -946,7 +950,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Name = parameter.Name;
 			}
 			if (parameter.IsOptional && parameter.HasConstantValueInSignature && this.ShowConstantValues) {
-				decl.DefaultExpression = ConvertConstantValue(parameter.Type, parameter.ConstantValue);
+				try {
+					decl.DefaultExpression = ConvertConstantValue(parameter.Type, parameter.GetConstantValue(throwOnInvalidMetadata: true));
+				} catch (BadImageFormatException ex) {
+					decl.DefaultExpression = new ErrorExpression(ex.Message);
+				}
 			}
 			return decl;
 		}
@@ -1158,8 +1166,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			decl.ReturnType = ConvertType(field.ReturnType);
 			Expression initializer = null;
-			if (field.IsConst && this.ShowConstantValues)
-				initializer = ConvertConstantValue(field.Type, field.ConstantValue);
+			if (field.IsConst && this.ShowConstantValues) {
+				try {
+					initializer = ConvertConstantValue(field.Type, field.GetConstantValue(throwOnInvalidMetadata: true));
+				} catch (BadImageFormatException ex) {
+					initializer = new ErrorExpression(ex.Message);
+				}
+			}
 			decl.Variables.Add(new VariableInitializer(field.Name, initializer));
 			return decl;
 		}
@@ -1463,8 +1476,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			decl.Modifiers = v.IsConst ? Modifiers.Const : Modifiers.None;
 			decl.Type = ConvertType(v.Type);
 			Expression initializer = null;
-			if (v.IsConst)
-				initializer = ConvertConstantValue(v.Type, v.ConstantValue);
+			if (v.IsConst) {
+				try {
+					initializer = ConvertConstantValue(v.Type, v.GetConstantValue(throwOnInvalidMetadata: true));
+				} catch (BadImageFormatException ex) {
+					initializer = new ErrorExpression(ex.Message);
+				}
+			}
 			decl.Variables.Add(new VariableInitializer(v.Name, initializer));
 			return decl;
 		}

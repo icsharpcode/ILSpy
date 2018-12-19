@@ -998,7 +998,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						case EnumValueDisplayMode.None:
 							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>()) {
 								enumMember.Initializer = null;
-								if (enumMember.GetSymbol() is IField f && f.ConstantValue == null) {
+								if (enumMember.GetSymbol() is IField f && f.GetConstantValue() == null) {
 									typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
 								}
 							}
@@ -1030,8 +1030,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
 			foreach (var field in typeDef.Fields) {
-				if (MemberIsHidden(module, field.MetadataToken, settings) || field.ConstantValue == null) continue;
-				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+				if (MemberIsHidden(module, field.MetadataToken, settings))
+					continue;
+				object constantValue = field.GetConstantValue();
+				if (constantValue == null)
+					continue;
+				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
 				if (first) {
 					firstValue = currentValue;
 					first = false;
@@ -1260,9 +1264,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
-					if (field.ConstantValue != null) {
-						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
-						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+					object constantValue = field.GetConstantValue();
+					if (constantValue != null) {
+						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
 						if (enumDec.Initializer is PrimitiveExpression primitive
 							&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
 								|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {
