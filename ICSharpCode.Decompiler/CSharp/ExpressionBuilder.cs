@@ -2232,7 +2232,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithoutILInstruction();
 			} else {
 				return new NamedExpression(valuePath.Member.Name, value)
-					.WithRR(new MemberResolveResult(rr, memberPath.Member))
+					.WithRR(new MemberResolveResult(rr, valuePath.Member))
 					.WithoutILInstruction();
 			}
 		}
