@@ -397,10 +397,12 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			string folder = GetSubFolderForVersion();
 
-			foreach (var path in frameworkPaths) {
-				var basePath = Path.Combine(path, folder);
-				if (Directory.Exists(basePath))
-					return basePath;
+			if  (folder != null) {
+				foreach (var path in frameworkPaths) {
+					var basePath = Path.Combine(path, folder);
+					if (Directory.Exists(basePath))
+						return basePath;
+				}
 			}
 
 			if (throwOnError)
@@ -415,7 +417,6 @@ namespace ICSharpCode.Decompiler.Metadata
 							return "v1.0.3705";
 						return "v1.1.4322";
 					case 2:
-					case 3:
 						return "v2.0.50727";
 					case 4:
 						return "v4.0.30319";
