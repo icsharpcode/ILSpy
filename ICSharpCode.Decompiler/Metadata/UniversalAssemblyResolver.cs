@@ -405,6 +405,17 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
+			if (version.Major == 3 && version.Minor == 5) {
+				string cfBasePath = Path.Combine((Environment.Is64BitOperatingSystem ?
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) :
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)),
+					@"Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE\");
+
+				if (Directory.Exists(cfBasePath)) {
+					return cfBasePath;
+				}
+			}
+
 			if (throwOnError)
 				throw new NotSupportedException("Version not supported: " + version);
 			return null;
