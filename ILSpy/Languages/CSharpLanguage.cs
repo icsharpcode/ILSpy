@@ -270,7 +270,7 @@ namespace ICSharpCode.ILSpy
 			PEFile assembly = @event.ParentModule.PEFile;
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
-			base.WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
+			WriteCommentLine(output, TypeToString(@event.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(@event.MetadataToken), decompiler.TypeSystem);
 		}
@@ -455,10 +455,16 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(type));
 			var ambience = CreateAmbience();
 			// Do not forget to update CSharpAmbienceTests.ILSpyMainTreeViewFlags, if this ever changes.
-			if (includeNamespace)
+			if (includeNamespace) {
 				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedTypeNames;
+				ambience.ConversionFlags |= ConversionFlags.UseFullyQualifiedEntityNames;
+			}
 			if (type is ITypeDefinition definition) {
 				return ambience.ConvertSymbol(definition);
+				// HACK : UnknownType is not supported by CSharpAmbience.
+			} else if (type.Kind == TypeKind.Unknown) {
+				return (includeNamespace ? type.FullName : type.Name)
+					+ (type.TypeParameterCount > 0 ? "<" + string.Join(",", type.TypeArguments.Select(t => t.Name)) + ">" : "");
 			} else {
 				return ambience.ConvertType(type);
 			}
