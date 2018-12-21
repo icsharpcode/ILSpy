@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"PublicKeyToken={publicKey}{properties}";
 		}
 
-		static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
+		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
 			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)
