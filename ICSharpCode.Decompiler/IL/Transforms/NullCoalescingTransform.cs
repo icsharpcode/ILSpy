@@ -55,11 +55,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
+			if (!(condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()))
+				return false;
 			trueInst = Block.Unwrap(trueInst);
-			if (condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()
-				&& trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)
-			) {
-				context.Step("NullCoalescingTransform (reference types)", stloc);
+			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)) {
+				context.Step("NullCoalescingTransform: simple (reference types)", stloc);
+				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
+				block.Instructions.RemoveAt(pos + 1); // remove if instruction
+				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
+				return true;
+			}
+			// sometimes the compiler generates:
+			// stloc s(valueInst)
+			// if (comp(ldloc s == ldnull)) {
+			//		stloc v(fallbackInst)
+			//      stloc s(ldloc v)
+			// }
+			// v must be single-assign and single-use.
+			if (trueInst is Block trueBlock && trueBlock.Instructions.Count == 2
+				&& trueBlock.Instructions[0].MatchStLoc(out var temporary, out fallbackValue)
+				&& temporary.IsSingleDefinition && temporary.LoadCount == 1
+				&& trueBlock.Instructions[1].MatchStLoc(stloc.Variable, out var useOfTemporary)
+				&& useOfTemporary.MatchLdLoc(temporary)) {
+				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
