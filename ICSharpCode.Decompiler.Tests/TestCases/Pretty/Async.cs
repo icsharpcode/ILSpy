@@ -94,6 +94,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Body");
 			}
 		}
+
+#if CS60
+		public async Task AwaitInCatch(bool b, Task<int> task1, Task<int> task2)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} catch (Exception) {
+				if (!b) {
+					await task2;
+				} else {
+					Console.WriteLine("No await");
+				}
+			}
+		}
+
+		public async Task AwaitInFinally(bool b, Task<int> task1, Task<int> task2)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} finally {
+				if (!b) {
+					await task2;
+				} else {
+					Console.WriteLine("No await");
+				}
+			}
+		}
+#endif
 	}
 
 	public struct HopToThreadPoolAwaitable : INotifyCompletion
