@@ -101,52 +101,40 @@ namespace ICSharpCode.ILSpy
 			return false;
 		}
 		*/
-		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.EntityHandle handle)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
 				return string.Empty;
 
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			int token = System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(handle);
+			if (DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokensInBase10)
+				return " @" + token;
+			return " @" + token.ToString("x8");
 		}
 
-		public static string ToSuffixString(this System.Reflection.Metadata.MethodDefinitionHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.MethodDefinitionHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
-				return string.Empty;
-
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
-		public static string ToSuffixString(this System.Reflection.Metadata.PropertyDefinitionHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.PropertyDefinitionHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
-				return string.Empty;
-
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
-		public static string ToSuffixString(this System.Reflection.Metadata.EventDefinitionHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.EventDefinitionHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
-				return string.Empty;
-
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
-		public static string ToSuffixString(this System.Reflection.Metadata.FieldDefinitionHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.FieldDefinitionHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
-				return string.Empty;
-
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
-		public static string ToSuffixString(this System.Reflection.Metadata.TypeDefinitionHandle token)
+		public static string ToSuffixString(this System.Reflection.Metadata.TypeDefinitionHandle handle)
 		{
-			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
-				return string.Empty;
-
-			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+			return ToSuffixString((System.Reflection.Metadata.EntityHandle)handle);
 		}
 
 		/// <summary>

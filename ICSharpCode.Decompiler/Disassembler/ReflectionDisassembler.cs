@@ -56,6 +56,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
+		public bool ShowMetadataTokensInBase10 {
+			get => methodBodyDisassembler.ShowMetadataTokensInBase10;
+			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
+		}
+
 		public IDebugInfoProvider DebugInfo {
 			get => methodBodyDisassembler.DebugInfo;
 			set => methodBodyDisassembler.DebugInfo = value;
