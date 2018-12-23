@@ -131,6 +131,30 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool foldBraces = false;
+
+		public bool FoldBraces {
+			get { return foldBraces; }
+			set {
+				if (foldBraces != value) {
+					foldBraces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool expandMemberDefinitions = false;
+
+		public bool ExpandMemberDefinitions {
+			get { return expandMemberDefinitions; }
+			set {
+				if (expandMemberDefinitions != value) {
+					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -140,6 +164,8 @@ namespace ICSharpCode.ILSpy.Options
 			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;
+			this.FoldBraces = s.foldBraces;
+			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
 		}
 	}
 }

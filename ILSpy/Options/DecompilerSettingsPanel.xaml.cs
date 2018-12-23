@@ -53,8 +53,6 @@ namespace ICSharpCode.ILSpy.Options
 			DecompilerSettings s = new DecompilerSettings();
 			s.ShowDebugInfo = (bool?)e.Attribute("showDebugInfo") ?? s.ShowDebugInfo;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
-			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
-			s.ExpandMemberDefinitions = (bool?)e.Attribute("expandMemberDefinitions") ?? s.ExpandMemberDefinitions;
 			s.RemoveDeadCode = (bool?)e.Attribute("removeDeadCode") ?? s.RemoveDeadCode;
 			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
 			s.AlwaysUseBraces = (bool?)e.Attribute("alwaysUseBraces") ?? s.AlwaysUseBraces;
@@ -69,8 +67,6 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);
 			section.SetAttributeValue("showDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
-			section.SetAttributeValue("foldBraces", s.FoldBraces);
-			section.SetAttributeValue("expandMemberDefinitions", s.ExpandMemberDefinitions);
 			section.SetAttributeValue("removeDeadCode", s.RemoveDeadCode);
 			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
 			section.SetAttributeValue("alwaysUseBraces", s.AlwaysUseBraces);
@@ -98,30 +94,6 @@ namespace ICSharpCode.ILSpy.Options
 			set {
 				if (showXmlDocumentation != value) {
 					showXmlDocumentation = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool foldBraces = false;
-
-		public bool FoldBraces {
-			get { return foldBraces; }
-			set {
-				if (foldBraces != value) {
-					foldBraces = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool expandMemberDefinitions = false;
-
-		public bool ExpandMemberDefinitions {
-			get { return expandMemberDefinitions; }
-			set {
-				if (expandMemberDefinitions != value) {
-					expandMemberDefinitions = value;
 					OnPropertyChanged();
 				}
 			}
