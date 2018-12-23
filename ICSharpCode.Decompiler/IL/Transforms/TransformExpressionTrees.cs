@@ -214,6 +214,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return false;
 						if (!this.parameters.TryGetValue(v, out var value))
 							return false;
+						// Parameter variable cannot be used in two different compiler-generated expression trees,
+						// therefore we have to abort if the parameter is already mapped to a variable.
+						if (this.parameterMapping.ContainsKey(v))
+							return false;
 						var param = new ILVariable(VariableKind.Parameter, value.Item1, i) { Name = value.Item2 };
 						parameterMapping.Add(v, param);
 						parameterVariables.Add(param);
