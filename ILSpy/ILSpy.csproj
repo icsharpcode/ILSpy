@@ -299,7 +299,7 @@
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
     <EmbeddedResource Include="README.txt" />
-	<EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
+    <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
 
   <ItemGroup>
@@ -311,7 +311,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
-	<Page Include="NugetPackageBrowserDialog.xaml" />
+    <Page Include="NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -367,7 +367,8 @@
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
     <Resource Include="Images\PInvokeMethod.png" />
-	<Resource Include="Images\Warning.png" />
+    <Resource Include="Images\Warning.png" />
+    <Resource Include="Images\ShowAll.png" />
   </ItemGroup>
 
   <ItemGroup>
