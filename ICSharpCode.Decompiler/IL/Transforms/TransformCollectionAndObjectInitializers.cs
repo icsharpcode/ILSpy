@@ -265,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instruction = call.Arguments[0];
 						if (method.IsAccessor) {
 							var property = method.AccessorOwner as IProperty;
-							if (!property.CanSet || !(property.Accessibility == property.Setter.Accessibility || IsAccessorAccessible(property.Setter, resolveContext))) goto default;
+							if (!CanBeUsedInInitializer(property, resolveContext, kind, path)) goto default;
 							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (indices.Length > 0 && !settings.DictionaryInitializers) goto default;
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						break;
 					case LdObj ldobj: {
-						if (ldobj.Target is LdFlda ldflda && !ldflda.Field.IsReadOnly) {
+						if (ldobj.Target is LdFlda ldflda && (kind != AccessPathKind.Setter || !ldflda.Field.IsReadOnly)) {
 							path.Insert(0, new AccessPathElement(ldobj.OpCode, ldflda.Field));
 							instruction = ldflda.Target;
 							break;
@@ -333,6 +333,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 				kind = AccessPathKind.Invalid;
 			return (kind, path, values, target);
+		}
+
+		private static bool CanBeUsedInInitializer(IProperty property, CSharpTypeResolveContext resolveContext, AccessPathKind kind, List<AccessPathElement> path)
+		{
+			if (property.CanSet && (property.Accessibility == property.Setter.Accessibility || IsAccessorAccessible(property.Setter, resolveContext)))
+				return true;
+			return kind != AccessPathKind.Setter;
 		}
 
 		private static bool IsAccessorAccessible(IMethod setter, CSharpTypeResolveContext resolveContext)

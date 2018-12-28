@@ -119,7 +119,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				get;
 				set;
 			}
-
+#if CS60
+			public List<MyEnum2> ReadOnlyPropertyList {
+				get;
+			}
+#endif
 			public Data MoreData {
 				get;
 				set;
@@ -796,6 +800,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			OtherItem2 otherItem = new OtherItem2();
 			otherItem.Data3.Nullable = 3m;
 			return otherItem;
+		}
+
+		private Data Issue1345_FalsePositive()
+		{
+			return new Data {
+				ReadOnlyPropertyList = {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			};
 		}
 #endif
 	}
