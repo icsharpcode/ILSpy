@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		(ILInstruction, IType) ConvertInstruction(ILInstruction instruction)
+		(ILInstruction, IType) ConvertInstruction(ILInstruction instruction, IType typeHint = null)
 		{
 			var result = Convert();
 			if (result.Item1 != null) {
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "ExclusiveOr":
 								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor);
 							case "Field":
-								return ConvertField(invocation);
+								return ConvertField(invocation, typeHint);
 							case "GreaterThan":
 								return ConvertComparison(invocation, ComparisonKind.GreaterThan);
 							case "GreaterThanOrEqual":
@@ -349,8 +349,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (IsExpressionTreeParameter(ldloc.Variable)) {
 							// Replace an already mapped parameter with the actual ILVariable,
 							// we generated earlier.
-							if (parameterMapping.TryGetValue(ldloc.Variable, out var v))
+							if (parameterMapping.TryGetValue(ldloc.Variable, out var v)) {
+								if (typeHint.SkipModifiers() is ByReferenceType brt && !v.Type.IsByRefLike)
+									return (new LdLoca(v), typeHint);
 								return (new LdLoc(v), v.Type);
+							}
 							// This is a parameter variable from an outer scope.
 							// We can't replace these variables just yet, because the transform works backwards.
 							// We simply return the same instruction again, but return the actual expected type,
@@ -494,11 +497,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (arguments == null)
 				return (null, SpecialType.UnknownType);
-			// TODO : do we need the types here?
-			arguments = arguments.Select(i => ConvertInstruction(i).Item1).ToArray();
-			if (arguments.Any(p => p == null))
-				return (null, SpecialType.UnknownType);
 			IMethod method = (IMethod)member;
+			Debug.Assert(arguments.Count == method.Parameters.Count);
+			for (int i = 0; i < arguments.Count; i++) {
+				var expectedType = method.Parameters[i].Type;
+				var (argument, argumentType) = ConvertInstruction(arguments[i], expectedType);
+				if (argument == null)
+					return (null, SpecialType.UnknownType);
+				arguments[i] = argument;
+			}
 			if (method.FullName == "System.Reflection.MethodInfo.CreateDelegate" && method.Parameters.Count == 2) {
 				if (!MatchGetMethodFromHandle(target, out var targetMethod))
 					return (null, SpecialType.UnknownType);
@@ -672,7 +679,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (call, member.ReturnType);
 		}
 
-		(ILInstruction, IType) ConvertField(CallInstruction invocation)
+		(ILInstruction, IType) ConvertField(CallInstruction invocation, IType typeHint)
 		{
 			if (invocation.Arguments.Count != 2)
 				return (null, SpecialType.UnknownType);
@@ -684,15 +691,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (!MatchGetFieldFromHandle(invocation.Arguments[1], out var member))
 				return (null, SpecialType.UnknownType);
+			IType type = member.ReturnType;
+			ILInstruction inst;
 			if (target == null) {
-				return (new LdObj(new LdsFlda((IField)member), member.ReturnType), member.ReturnType);
+				inst = new LdsFlda((IField)member);
 			} else {
 				if (member.DeclaringType.IsReferenceType == true) {
-					return (new LdObj(new LdFlda(target, (IField)member), member.ReturnType), member.ReturnType);
+					inst = new LdFlda(target, (IField)member);
 				} else {
-					return (new LdObj(new LdFlda(new AddressOf(target), (IField)member), member.ReturnType), member.ReturnType);
+					inst = new LdFlda(new AddressOf(target), (IField)member);
 				}
 			}
+			if (typeHint.SkipModifiers() is ByReferenceType brt && !member.ReturnType.IsByRefLike) {
+				type = typeHint;
+			} else {
+				inst = new LdObj(inst, member.ReturnType);
+			}
+			return (inst, type);
 		}
 
 		(ILInstruction, IType) ConvertInvoke(CallInstruction invocation)
