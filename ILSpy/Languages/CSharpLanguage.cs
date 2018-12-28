@@ -381,6 +381,21 @@ namespace ICSharpCode.ILSpy
 					if (runtimeName != null) {
 						output.WriteLine("// Runtime: " + runtimeName);
 					}
+					if ((corHeader.Flags & System.Reflection.PortableExecutable.CorFlags.StrongNameSigned) != 0) {
+						output.WriteLine("// This assembly is signed with a strong name key.");
+					}
+					if (metadata.IsAssembly) {
+						var asm = metadata.GetAssemblyDefinition();
+						if (asm.HashAlgorithm != System.Reflection.AssemblyHashAlgorithm.None)
+							output.WriteLine("// Hash algorithm: " + asm.HashAlgorithm.ToString().ToUpper());
+						if (!asm.PublicKey.IsNil) {
+							output.Write("// Public key: ");
+							var reader = metadata.GetBlobReader(asm.PublicKey);
+							while (reader.RemainingBytes > 0)
+								output.Write(reader.ReadByte().ToString("x"));
+							output.WriteLine();
+						}
+					}
 					var debugInfo = assembly.GetDebugInfoOrNull();
 					if (debugInfo != null) {
 						output.WriteLine("// Debug info: " + debugInfo.Description);
