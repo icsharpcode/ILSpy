@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (searchTerm != value) {
 					searchTerm = value;
-					OnPropertyChanged("SearchTerm");
+					OnPropertyChanged(nameof(SearchTerm));
 				}
 			}
 		}
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy
 			set {
 				if (showApiLevel != value) {
 					showApiLevel = value;
-					OnPropertyChanged("ShowApiLevel");
+					OnPropertyChanged(nameof(ShowApiLevel));
 				}
 			}
 		}
@@ -102,8 +102,8 @@ namespace ICSharpCode.ILSpy
 				} else {
 					ShowApiLevel = ApiVisibility.PublicAndInternal;
 				}
-				OnPropertyChanged("ShowInternalApi");
-				OnPropertyChanged("ShowAllApi");
+				OnPropertyChanged(nameof(ShowInternalApi));
+				OnPropertyChanged(nameof(ShowAllApi));
 			}
 		}
 
@@ -114,10 +114,10 @@ namespace ICSharpCode.ILSpy
 					ShowApiLevel = ApiVisibility.PublicOnly;
 				} else {
 					ShowApiLevel = ApiVisibility.All;
-				}
-				OnPropertyChanged("ShowInternalApi");
-				OnPropertyChanged("ShowAllApi");
-			}
+                }
+                OnPropertyChanged(nameof(ShowInternalApi));
+                OnPropertyChanged(nameof(ShowAllApi));
+            }
 		}
 
 		Language language;
