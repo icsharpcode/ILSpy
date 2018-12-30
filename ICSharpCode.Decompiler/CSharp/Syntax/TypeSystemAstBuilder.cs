@@ -1330,6 +1330,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (IParameter p in op.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
+			if (ShowAttributes) {
+				decl.Attributes.AddRange(ConvertAttributes(op.GetAttributes()));
+				decl.Attributes.AddRange(ConvertAttributes(op.GetReturnTypeAttributes(), "return"));
+			}
 			if (AddResolveResultAnnotations) {
 				decl.AddAnnotation(new MemberResolveResult(null, op));
 			}
