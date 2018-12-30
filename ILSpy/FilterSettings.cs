@@ -114,10 +114,10 @@ namespace ICSharpCode.ILSpy
 					ShowApiLevel = ApiVisibility.PublicOnly;
 				} else {
 					ShowApiLevel = ApiVisibility.All;
-                }
-                OnPropertyChanged(nameof(ShowInternalApi));
-                OnPropertyChanged(nameof(ShowAllApi));
-            }
+				}
+				OnPropertyChanged(nameof(ShowInternalApi));
+				OnPropertyChanged(nameof(ShowAllApi));
+			}
 		}
 
 		Language language;
