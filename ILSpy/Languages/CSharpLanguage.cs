@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
@@ -562,22 +563,36 @@ namespace ICSharpCode.ILSpy
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					declaringType = md.GetDeclaringType();
 					string methodName = metadata.GetString(md.Name);
-					if (methodName == ".ctor" || methodName == ".cctor") {
-						var td = metadata.GetTypeDefinition(declaringType);
-						methodName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
-					} else {
-						var genericParams = md.GetGenericParameters();
-						if (genericParams.Count > 0) {
-							methodName += "<";
-							int i = 0;
-							foreach (var h in genericParams) {
-								if (i > 0)
-									methodName += ",";
-								var gp = metadata.GetGenericParameter(h);
-								methodName += metadata.GetString(gp.Name);
+					switch (methodName) {
+						case ".ctor":
+						case ".cctor":
+							var td = metadata.GetTypeDefinition(declaringType);
+							methodName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
+							break;
+						case "Finalize":
+							const MethodAttributes finalizerAttributes = (MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
+							if ((md.Attributes & finalizerAttributes) != finalizerAttributes)
+								goto default;
+							MethodSignature<IType> methodSignature = md.DecodeSignature(MetadataExtensions.MinimalSignatureTypeProvider, default);
+							if (methodSignature.GenericParameterCount != 0 || methodSignature.ParameterTypes.Length != 0)
+								goto default;
+							td = metadata.GetTypeDefinition(declaringType);
+							methodName = "~" + ReflectionHelper.SplitTypeParameterCountFromReflectionName(metadata.GetString(td.Name));
+							break;
+						default:
+							var genericParams = md.GetGenericParameters();
+							if (genericParams.Count > 0) {
+								methodName += "<";
+								int i = 0;
+								foreach (var h in genericParams) {
+									if (i > 0)
+										methodName += ",";
+									var gp = metadata.GetGenericParameter(h);
+									methodName += metadata.GetString(gp.Name);
+								}
+								methodName += ">";
 							}
-							methodName += ">";
-						}
+							break;
 					}
 					if (fullName)
 						return ToCSharpString(metadata, declaringType, fullName) + "." + methodName;

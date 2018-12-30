@@ -152,6 +152,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			get => minimalCorlibTypeProvider;
 		}
 
+		public static ISignatureTypeProvider<IType, TypeSystem.GenericContext> MinimalSignatureTypeProvider {
+			get => minimalCorlibTypeProvider;
+		}
+
 		public static PrimitiveTypeCode ToPrimitiveTypeCode(this KnownTypeCode typeCode)
 		{
 			switch (typeCode) {
