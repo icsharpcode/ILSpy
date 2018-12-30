@@ -1358,6 +1358,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		DestructorDeclaration ConvertDestructor(IMethod dtor)
 		{
 			DestructorDeclaration decl = new DestructorDeclaration();
+			if (ShowAttributes)
+				decl.Attributes.AddRange(ConvertAttributes(dtor.GetAttributes()));
 			if (dtor.DeclaringTypeDefinition != null)
 				decl.Name = dtor.DeclaringTypeDefinition.Name;
 			if (AddResolveResultAnnotations) {

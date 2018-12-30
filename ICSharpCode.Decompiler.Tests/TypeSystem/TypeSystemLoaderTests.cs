@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			Assert.IsFalse(method.IsVirtual);
 			Assert.IsFalse(method.IsStatic);
 			Assert.AreEqual(0, method.Parameters.Count);
-			Assert.AreEqual(0, method.GetAttributes().Count());
+			Assert.AreEqual(1, method.GetAttributes().Count());
 			Assert.IsTrue(method.HasBody);
 			Assert.IsNull(method.AccessorOwner);
 		}
