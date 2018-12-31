@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			// non-generic IEnumerator does not implement IDisposable.
 			// This is a workaround for non-generic foreach.
-			if (type.IsKnownType(KnownTypeCode.IEnumerator))
+			if (type.IsKnownType(KnownTypeCode.IEnumerator) || type.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IEnumerator)))
 				return true;
 			if (NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable)))
 				return true;
