@@ -2040,6 +2040,20 @@
     IL_0018:  ret
   } // end of method TestCases::Issue1250_Test1
 
+  .method private hidebysig instance uint8[] 
+          Issue1314() cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  newarr     [mscorlib]System.Byte
+    IL_0006:  dup
+    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x600002e-1'
+    IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0011:  ret
+  } // end of method TestCases::Issue1314
+
   .method private hidebysig instance void 
           Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
@@ -2176,7 +2190,16 @@
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases
 
+.class private auto ansi '<PrivateImplementationDetails>'
+       extends [mscorlib]System.Object
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field static assembly int32 '$$method0x600002e-1' at I_000028A0
+} // end of class '<PrivateImplementationDetails>'
+
 
 // =============================================================
 
+.data cil I_000028A0 = bytearray (
+                 00 01 02 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

@@ -733,6 +733,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 #endif
 
+		private byte[] Issue1314()
+		{
+			return new byte[4] {
+				0,
+				1,
+				2,
+				255
+			};
+		}
+
 		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
 		{
 			list.Add(new Item {

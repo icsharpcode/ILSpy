@@ -2136,6 +2136,20 @@
     IL_0023:  ret
   } // end of method TestCases::Issue1250_Test4
 
+  .method private hidebysig instance uint8[] 
+          Issue1314() cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  newarr     [mscorlib]System.Byte
+    IL_0006:  dup
+    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::C62C27924F4C967F5EDDB1850C091D54C7A2AB58
+    IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0011:  ret
+  } // end of method TestCases::Issue1314
+
   .method private hidebysig instance void 
           Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
@@ -2251,13 +2265,17 @@
     .size 40
   } // end of class '__StaticArrayInitTypeSize=40'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00005180
+  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_000051F0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_000051F8
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00005180 = bytearray (
+.data cil I_000051F0 = bytearray (
+                 00 01 02 FF) 
+.data cil I_000051F4 = int8[4]
+.data cil I_000051F8 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
