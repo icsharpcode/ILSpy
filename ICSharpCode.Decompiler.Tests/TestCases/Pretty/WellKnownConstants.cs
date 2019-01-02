@@ -83,6 +83,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float Float_LooksLikePI = 3.1415925f;
 		public const float Float_LooksLikePI2 = 3.14159f;
 		public const float Float_LooksLikePI3 = 3.141f;
+		public const float Float_BeforePI = 3.1415925f;
+		public const float Float_AfterPI = 3.141593f;
 		public const float Float_Negated_PI = -(float)Math.PI;
 		public const float Float_Negated_HalfOfPI = -(float)Math.PI / 2f;
 		public const float Float_Negated_QuarterOfPI = -(float)Math.PI / 4f;
@@ -97,6 +99,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float Float_Negated_PITimes90 = (float)Math.PI * -90f;
 		public const float Float_Negated_PITimes180 = (float)Math.PI * -180f;
 		public const float Float_Negated_LooksLikePI = -3.141f;
+		public const float Float_Negated_BeforePI = -3.1415925f;
+		public const float Float_Negated_AfterPI = -3.141593f;
 
 		public const float Float_E = (float)Math.E;
 		public const float Float_Negated_E = -(float)Math.E;
@@ -117,6 +121,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_LooksLikePI = 3.1415926;
 		public const double Double_LooksLikePI2 = 3.14159;
 		public const double Double_LooksLikePI3 = 3.141;
+		public const double Double_BeforePI = 3.1415926535897927;
+		public const double Double_AfterPI = 3.1415926535897936;
 		public const double Double_Negated_PI = -Math.PI;
 		public const double Double_Negated_HalfOfPI = -Math.PI / 2.0;
 		public const double Double_Negated_QuarterOfPI = -Math.PI / 4.0;
@@ -131,8 +137,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_Negated_PITimes90 = Math.PI * -90.0;
 		public const double Double_Negated_PITimes180 = Math.PI * -180.0;
 		public const double Double_Negated_LooksLikePI = -3.141;
+		public const double Double_Negated_BeforePI = -3.1415926535897927;
+		public const double Double_Negated_AfterPI = -3.1415926535897936;
 
 		public const double Double_E = Math.E;
+		public const double Double_BeforeE = 2.7182818284590446;
+		public const double Double_AfterE = 2.7182818284590455;
 		public const double Double_Negated_E = -Math.E;
+		public const double Double_Negated_BeforeE = -2.7182818284590446;
+		public const double Double_Negated_AfterE = -2.7182818284590455;
 	}
 }

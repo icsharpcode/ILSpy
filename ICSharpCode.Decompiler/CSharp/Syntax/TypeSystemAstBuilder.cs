@@ -930,9 +930,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		const int MAX_DENOMINATOR = 1000;
 
-		const double DOUBLE_THRESHOLD = 1e-10;
-		const float FLOAT_THRESHOLD = 1e-10f;
-
 		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
 		{
 			bool isDouble = type.IsKnownType(KnownTypeCode.Double);
@@ -963,8 +960,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			
 			if (expr == null) {
 				(long num, long den) = isDouble
-					? DoubleFractionApprox((double)constantValue, MAX_DENOMINATOR)
-					: FloatFractionApprox((float)constantValue, MAX_DENOMINATOR);
+					? FractionApprox((double)constantValue, MAX_DENOMINATOR)
+					: FractionApprox((float)constantValue, MAX_DENOMINATOR);
 
 				if (IsValidFraction(num, den) && Math.Abs(num) != 1 && Math.Abs(den) != 1) {
 					var left = MakeConstant(type, num);
@@ -1025,12 +1022,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 
 				if (isDouble) {
-					if (Math.Abs((double)literalValue - (memberName == "PI" ? Math.PI : Math.E) * n / d) < DOUBLE_THRESHOLD)
+					double approxValue = n / (double)d * (memberName == "PI" ? Math.PI : Math.E);
+					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
-					float approxValue = (memberName == "PI" ? MathF_PI : MathF_E) * n / d;
-					float diff = (float)literalValue - approxValue;
-					if ((float)Math.Abs(diff) < FLOAT_THRESHOLD)
+					float approxValue = n / (float)d * (memberName == "PI" ? MathF_PI : MathF_E);
+					if (approxValue == (float)literalValue)
 						return expr;
 				}
 
@@ -1042,12 +1039,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 
 				if (isDouble) {
-					if (Math.Abs((double)literalValue - (n / (d * (memberName == "PI" ? Math.PI : Math.E)))) < DOUBLE_THRESHOLD)
+					double approxValue = n / (d * (memberName == "PI" ? Math.PI : Math.E));
+					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
 					float approxValue = n / (d * (memberName == "PI" ? MathF_PI : MathF_E));
-					float diff = (float)literalValue - approxValue;
-					if ((float)Math.Abs(diff) < FLOAT_THRESHOLD)
+					if (approxValue == (float)literalValue)
 						return expr;
 				}
 
@@ -1055,16 +1052,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 
 			(long num, long den) = isDouble
-				? DoubleFractionApprox((double)literalValue / (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
-				: FloatFractionApprox((float)literalValue / (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
+				? FractionApprox((double)literalValue / (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
+				: FractionApprox((float)literalValue / (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
 
 			if (IsValidFraction(num, den)) {
 				return ExtractExpression(num, den);
 			}
 
 			(num, den) = isDouble
-				? DoubleFractionApprox((double)literalValue * (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
-				: FloatFractionApprox((float)literalValue * (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
+				? FractionApprox((double)literalValue * (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
+				: FractionApprox((float)literalValue * (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
 
 			if (IsValidFraction(num, den)) {
 				return ExtractExpression(num, den);
@@ -1073,7 +1070,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return null;
 		}
 
-		#region FractionApprox
 		// based on https://www.ics.uci.edu/~eppstein/numth/frap.c
 		// find rational approximation to given real number
 		// David Eppstein / UC Irvine / 8 Aug 1993
@@ -1094,7 +1090,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		//  ( 1  0 ) ( 1  0 ) ( 1  0 )
 		// Instead of keeping the sequence of continued fraction terms,
 		// we just keep the last partial product of these matrices.
-		static (long Num, long Den) DoubleFractionApprox(double value, int maxDenominator)
+		static (long Num, long Den) FractionApprox(double value, int maxDenominator)
 		{
 			if (value > 0x7FFFFFFF)
 				return (0, 0);
@@ -1102,7 +1098,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			double startValue = value;
 			if (value < 0)
 				value = -value;
-			bool IsValid(long num, long den) => den > 0 && (double)Math.Abs(value - num / (double)den) < DOUBLE_THRESHOLD;
 
 			long ai;
 			long[,] m = new long[2, 2];
@@ -1127,64 +1122,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (m[1, 0] == 0)
 				return (0, 0);
 
-			if (!IsValid(num: m[0, 0], den: m[1, 0])) {
-				ai = (maxDenominator - m[1, 1]) / m[1, 0];
-				m[0, 0] = m[0, 0] * ai + m[0, 1];
-				m[1, 0] = m[1, 0] * ai + m[1, 1];
-			}
+			long firstN = m[0, 0];
+			long firstD = m[1, 0];
 
-			if (!IsValid(num: m[0, 0], den: m[1, 0]))
-				return (0, 0);
+			ai = (maxDenominator - m[1, 1]) / m[1, 0];
+			long secondN = m[0, 0] * ai + m[0, 1];
+			long secondD = m[1, 0] * ai + m[1, 1];
 
-			return ((startValue < 0 ? -m[0, 0] : m[0, 0]), m[1, 0]);
+			double firstDelta = Math.Abs(value - firstN / (double)firstD);
+			double secondDelta = Math.Abs(value - secondN / (double)secondD);
+
+			if (firstDelta < secondDelta)
+				return (startValue < 0 ? -firstN : firstN, firstD);
+			return (startValue < 0 ? -secondN : secondN, secondD);
 		}
-
-		static (long Num, long Den) FloatFractionApprox(float value, int maxDenominator)
-		{
-			if (value > 0x7FFFFFFF)
-				return (0, 0);
-
-			float startValue = value;
-			if (value < 0)
-				value = -value;
-
-			bool IsValid(long num, long den) => den > 0 && (float)Math.Abs(value - num / (float)den) < 1e-9f;
-
-			long ai;
-			long[,] m = new long[2, 2];
-
-			m[0, 0] = m[1, 1] = 1;
-			m[0, 1] = m[1, 0] = 0;
-
-			float v = value;
-
-			while (m[1, 0] * (ai = (long)v) + m[1, 1] <= maxDenominator) {
-				long t = m[0, 0] * ai + m[0, 1];
-				m[0, 1] = m[0, 0];
-				m[0, 0] = t;
-				t = m[1, 0] * ai + m[1, 1];
-				m[1, 1] = m[1, 0];
-				m[1, 0] = t;
-				if (v - ai == 0) break;
-				v = 1 / (v - ai);
-				if (Math.Abs(v) > long.MaxValue) break; // value cannot be stored in fraction without overflow
-			}
-
-			if (m[1, 0] == 0)
-				return (0, 0);
-
-			if (!IsValid(num: m[0, 0], den: m[1, 0])) {
-				ai = (maxDenominator - m[1, 1]) / m[1, 0];
-				m[0, 0] = m[0, 0] * ai + m[0, 1];
-				m[1, 0] = m[1, 0] * ai + m[1, 1];
-			}
-
-			if (!IsValid(num: m[0, 0], den: m[1, 0]))
-				return (0, 0);
-
-			return (startValue < 0 ? -m[0, 0] : m[0, 0], m[1, 0]);
-		}
-		#endregion
 		#endregion
 
 		#region Convert Parameter

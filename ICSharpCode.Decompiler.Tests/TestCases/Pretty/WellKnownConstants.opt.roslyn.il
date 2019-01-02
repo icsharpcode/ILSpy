@@ -130,6 +130,8 @@
   .field public static literal float64 Double_LooksLikePI = float64(3.1415926000000001)
   .field public static literal float64 Double_LooksLikePI2 = float64(3.1415899999999999)
   .field public static literal float64 Double_LooksLikePI3 = float64(3.141)
+  .field public static literal float64 Double_BeforePI = float64(3.1415926535897927)
+  .field public static literal float64 Double_AfterPI = float64(3.1415926535897936)
   .field public static literal float64 Double_Negated_PI = float64(-3.1415926535897931)
   .field public static literal float64 Double_Negated_HalfOfPI = float64(-1.5707963267948966)
   .field public static literal float64 Double_Negated_QuarterOfPI = float64(-0.78539816339744828)
@@ -144,8 +146,14 @@
   .field public static literal float64 Double_Negated_PITimes90 = float64(-282.74333882308139)
   .field public static literal float64 Double_Negated_PITimes180 = float64(-565.48667764616278)
   .field public static literal float64 Double_Negated_LooksLikePI = float64(-3.141)
+  .field public static literal float64 Double_Negated_BeforePI = float64(-3.1415926535897927)
+  .field public static literal float64 Double_Negated_AfterPI = float64(-3.1415926535897936)
   .field public static literal float64 Double_E = float64(2.7182818284590451)
+  .field public static literal float64 Double_BeforeE = float64(2.7182818284590446)
+  .field public static literal float64 Double_AfterE = float64(2.7182818284590455)
   .field public static literal float64 Double_Negated_E = float64(-2.7182818284590451)
+  .field public static literal float64 Double_Negated_BeforeE = float64(-2.7182818284590446)
+  .field public static literal float64 Double_Negated_AfterE = float64(-2.7182818284590455)
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
