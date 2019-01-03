@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			try {
-				if (DoTransform(block, pos))
+				if (DoTransform(context.Function, block, pos))
 					return;
 				if (DoTransformMultiDim(block, pos))
 					return;
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool DoTransform(Block body, int pos)
+		bool DoTransform(ILFunction function, Block body, int pos)
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 				if (arrayLength.Length == 1) {
-					if (HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out values, out var instructionsToRemove)) {
+					if (HandleSimpleArrayInitializer(function, body, pos + 1, v, elementType, arrayLength[0], out values, out var instructionsToRemove)) {
 						context.Step("HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		internal static bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int elementCount)
+		internal static bool HandleSimpleArrayInitializer(ILFunction function, Block block, int pos, ILVariable store, IType elementType, int length, out ILInstruction[] values, out int elementCount)
 		{
 			elementCount = 0;
 			values = new ILInstruction[length];
@@ -309,7 +309,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (pos + elementCount >= block.Instructions.Count)
 				return false;
-			return elementCount > 0;
+			return ShouldTransformToInitializer(function, block, pos, elementCount, length);
+		}
+
+		static bool ShouldTransformToInitializer(ILFunction function, Block block, int startPos, int elementCount, int length)
+		{
+			if (elementCount >= Math.Min(length / 3 + 5, length))
+				return true;
+			int? unused = null;
+			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos], ref unused))
+				return true;
+			return false;
 		}
 
 		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
