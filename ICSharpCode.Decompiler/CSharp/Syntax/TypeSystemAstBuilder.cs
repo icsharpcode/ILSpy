@@ -949,17 +949,36 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ICompilation compilation = type.GetDefinition().Compilation;
 			Expression expr = null;
 
+			string str;
 			if (isDouble) {
 				if (Math.Floor((double)constantValue) == (double)constantValue) {
 					expr = new PrimitiveExpression(constantValue);
 				}
+
+				str = ((double)constantValue).ToString("r");
 			} else {
 				if (Math.Floor((float)constantValue) == (float)constantValue) {
 					expr = new PrimitiveExpression(constantValue);
 				}
+
+				str = ((float)constantValue).ToString("r");
 			}
 
-			if (expr == null) {
+			bool useFraction = (str.Length - (str.StartsWith("-", StringComparison.OrdinalIgnoreCase) ? 2 : 1) > 5);
+
+			if (useFraction && expr == null && UseSpecialConstants) {
+				IType mathType;
+				if (isDouble)
+					mathType = compilation.FindType(typeof(Math));
+				else
+					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
+						?? compilation.FindType(typeof(Math));
+
+				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
+					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
+			}
+
+			if (useFraction && expr == null) {
 				(long num, long den) = isDouble
 					? FractionApprox((double)constantValue, MAX_DENOMINATOR)
 					: FractionApprox((float)constantValue, MAX_DENOMINATOR);
@@ -970,18 +989,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
 						.WithRR(new ConstantResolveResult(type, constantValue));
 				}
-			}
-
-			if (expr == null && UseSpecialConstants) {
-				IType mathType;
-				if (isDouble)
-					mathType = compilation.FindType(typeof(Math));
-				else
-					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
-						?? compilation.FindType(typeof(Math));
-
-				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
-					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
 			}
 
 			if (expr == null)
