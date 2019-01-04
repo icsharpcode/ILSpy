@@ -2270,9 +2270,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					container.Peek().Elements.Add(aie);
 					container.Push(aie);
 				}
-				astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType();
-				var val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
-				astBuilder.UseSpecialConstants = true;
+				TranslatedExpression val;
+				var old = astBuilder.UseSpecialConstants;
+				try {
+					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType();
+					val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
+				} finally {
+					astBuilder.UseSpecialConstants = old;
+				}
 				container.Peek().Elements.Add(val);
 				elementResolveResults.Add(val.ResolveResult);
 				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {

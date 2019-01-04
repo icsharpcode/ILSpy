@@ -78,6 +78,10 @@
                                                                                                   uint32,
                                                                                                   uint32) = ( 01 00 00 80 FF FF FF FF FF FF FF FF FF FF FF FF 
                                                                                                               00 00 ) 
+  .field public static literal float32 Float_One = float32(1.)
+  .field public static literal float64 Double_One = float64(1.)
+  .field public static literal float32 Float_Two = float32(2.)
+  .field public static literal float64 Double_Two = float64(2.)
   .field public static literal float32 Float_PI = float32(3.1415927)
   .field public static literal float32 Float_HalfOfPI = float32(1.5707964)
   .field public static literal float32 Float_QuarterOfPI = float32(0.78539819)

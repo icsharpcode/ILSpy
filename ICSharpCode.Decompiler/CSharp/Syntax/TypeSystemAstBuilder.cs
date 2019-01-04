@@ -937,11 +937,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Expression expr = null;
 
 			if (isDouble) {
-				if ((double)constantValue >= int.MaxValue || (double)constantValue <= int.MinValue) {
+				if (Math.Floor((double)constantValue) == (double)constantValue) {
 					expr = new PrimitiveExpression(constantValue);
 				}
 			} else {
-				if ((float)constantValue >= int.MaxValue || (float)constantValue <= int.MinValue) {
+				if (Math.Floor((float)constantValue) == (float)constantValue) {
 					expr = new PrimitiveExpression(constantValue);
 				}
 			}

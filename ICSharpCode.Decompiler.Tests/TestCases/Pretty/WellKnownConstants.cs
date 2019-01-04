@@ -67,6 +67,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const decimal DecimalMaxValue = decimal.MaxValue;
 		public const decimal DecimalMinValue = decimal.MinValue;
 
+		public const float Float_One = 1f;
+		public const double Double_One = 1.0;
+		public const float Float_Two = 2f;
+		public const double Double_Two = 2.0;
+
 		public const float Float_PI = (float)Math.PI;
 		public const float Float_HalfOfPI = (float)Math.PI / 2f;
 		public const float Float_QuarterOfPI = (float)Math.PI / 4f;
