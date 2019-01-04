@@ -3617,6 +3617,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3639,7 +3641,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdFlda;
-			return o != null && this.target.PerformMatch(o.target, ref match) && field.Equals(o.field);
+			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
 		}
 	}
 }
@@ -4642,6 +4644,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			if (IsReadOnly)
 				output.Write("readonly.");
 			output.Write(OpCode);
@@ -4670,7 +4674,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdElema;
-			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && IsReadOnly == o.IsReadOnly;
+			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
 		}
 	}
 }
