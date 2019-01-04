@@ -713,6 +713,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else {
 				if (IsSpecialConstant(type, constantValue, out var expr))
 					return expr;
+				if (type.IsKnownType(KnownTypeCode.Double) || type.IsKnownType(KnownTypeCode.Single))
+					return ConvertFloatingPointLiteral(type, constantValue);
 				IType literalType = type;
 				bool smallInteger = type.IsCSharpSmallIntegerType();
 				if (smallInteger) { 
@@ -919,9 +921,256 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 		}
-		
+
+		static bool IsValidFraction(long num, long den)
+		{
+			if (!(den > 0 && num != 0))
+				return false;
+
+			if (den == 1 || Math.Abs(num) == 1)
+				return true;
+			return Math.Abs(num) < den && new int[] { 2, 3, 5 }.Any(x => den % x == 0);
+		}
+
+		static bool IsEqual(long num, long den, object constantValue, bool isDouble)
+		{
+			if (isDouble) {
+				return (double)constantValue == num / (double)den;
+			} else {
+				return (float)constantValue == num / (float)den;
+			}
+		}
+
+		const int MAX_DENOMINATOR = 1000;
+
+		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
+		{
+			bool isDouble = type.IsKnownType(KnownTypeCode.Double);
+			ICompilation compilation = type.GetDefinition().Compilation;
+			Expression expr = null;
+
+			string str;
+			if (isDouble) {
+				if (Math.Floor((double)constantValue) == (double)constantValue) {
+					expr = new PrimitiveExpression(constantValue);
+				}
+
+				str = ((double)constantValue).ToString("r");
+			} else {
+				if (Math.Floor((float)constantValue) == (float)constantValue) {
+					expr = new PrimitiveExpression(constantValue);
+				}
+
+				str = ((float)constantValue).ToString("r");
+			}
+
+			bool useFraction = (str.Length - (str.StartsWith("-", StringComparison.OrdinalIgnoreCase) ? 2 : 1) > 5);
+
+			if (useFraction && expr == null && UseSpecialConstants) {
+				IType mathType;
+				if (isDouble)
+					mathType = compilation.FindType(typeof(Math));
+				else
+					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
+						?? compilation.FindType(typeof(Math));
+
+				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
+					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
+			}
+
+			if (useFraction && expr == null) {
+				(long num, long den) = isDouble
+					? FractionApprox((double)constantValue, MAX_DENOMINATOR)
+					: FractionApprox((float)constantValue, MAX_DENOMINATOR);
+
+				if (IsValidFraction(num, den) && IsEqual(num, den, constantValue, isDouble) && Math.Abs(num) != 1 && Math.Abs(den) != 1) {
+					var left = MakeConstant(type, num);
+					var right = MakeConstant(type, den);
+					return new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
+						.WithRR(new ConstantResolveResult(type, constantValue));
+				}
+			}
+
+			if (expr == null)
+				expr = new PrimitiveExpression(constantValue);
+
+			if (AddResolveResultAnnotations)
+				expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
+
+			return expr;
+		}
+
+		Expression MakeConstant(IType type, long c)
+		{
+			return new PrimitiveExpression(CSharpPrimitiveCast.Cast(type.GetTypeCode(), c, checkForOverflow: true));
+		}
+
+		const float MathF_PI = 3.14159274f;
+		const float MathF_E = 2.71828175f;
+
+		Expression TryExtractExpression(IType mathType, IType type, object literalValue, string memberName, bool isDouble)
+		{
+			Expression MakeFieldReference()
+			{
+				AstType mathAstType = ConvertType(mathType);
+				var fieldRef = new MemberReferenceExpression(new TypeReferenceExpression(mathAstType), memberName);
+				if (AddResolveResultAnnotations)
+					fieldRef.WithRR(new MemberResolveResult(mathAstType.GetResolveResult(), mathType.GetFields(f => f.Name == memberName).Single()));
+				if (type.IsKnownType(KnownTypeCode.Double))
+					return fieldRef;
+				if (mathType.Name == "MathF")
+					return fieldRef;
+				return new CastExpression(ConvertType(type), fieldRef);
+			}
+
+			Expression ExtractExpression(long n, long d)
+			{
+				Expression fieldReference = MakeFieldReference();
+
+				// Math.PI or Math.E or (float)Math.PI or (float)Math.E or MathF.PI or MathF.E
+				Expression expr = fieldReference;
+
+				if (n != 1) {
+					if (n == -1) {
+						// -field
+						expr = new UnaryOperatorExpression(UnaryOperatorType.Minus, expr);
+					} else {
+						// field * n
+						expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Multiply, MakeConstant(type, n));
+					}
+				}
+
+				if (d != 1) {
+					// field * n / d or -field / d or field / d
+					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Divide, MakeConstant(type, d));
+				}
+
+				if (isDouble) {
+					double field = memberName == "PI" ? Math.PI : Math.E;
+					double approxValue = field * n / d;
+					if (approxValue == (double)literalValue)
+						return expr;
+				} else {
+					float field = memberName == "PI" ? MathF_PI : MathF_E;
+					float approxValue = field * n / d;
+					if (approxValue == (float)literalValue)
+						return expr;
+				}
+
+				// Math.PI or Math.E or (float)Math.PI or (float)Math.E or MathF.PI or MathF.E
+				expr = fieldReference.Detach();
+
+				if (d == 1) {
+					// n / field
+					expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
+				} else {
+					// n / (d * field)
+					expr = new BinaryOperatorExpression(MakeConstant(type, d), BinaryOperatorType.Multiply, expr);
+					expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
+				}
+
+				if (isDouble) {
+					double field = memberName == "PI" ? Math.PI : Math.E;
+					double approxValue = (double)n / ((double)d * field);
+					if (approxValue == (double)literalValue)
+						return expr;
+				} else {
+					float field = memberName == "PI" ? MathF_PI : MathF_E;
+					float approxValue = (float)n / ((float)d * field);
+					if (approxValue == (float)literalValue)
+						return expr;
+				}
+
+				return null;
+			}
+
+			(long num, long den) = isDouble
+				? FractionApprox((double)literalValue / (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
+				: FractionApprox((float)literalValue / (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
+
+			if (IsValidFraction(num, den)) {
+				return ExtractExpression(num, den);
+			}
+
+			(num, den) = isDouble
+				? FractionApprox((double)literalValue * (memberName == "PI" ? Math.PI : Math.E), MAX_DENOMINATOR)
+				: FractionApprox((float)literalValue * (memberName == "PI" ? MathF_PI : MathF_E), MAX_DENOMINATOR);
+
+			if (IsValidFraction(num, den)) {
+				return ExtractExpression(num, den);
+			}
+
+			return null;
+		}
+
+		// based on https://www.ics.uci.edu/~eppstein/numth/frap.c
+		// find rational approximation to given real number
+		// David Eppstein / UC Irvine / 8 Aug 1993
+		// 
+		// With corrections from Arno Formella, May 2008
+		// 
+		// usage: a.out r d
+		//   r is real number to approx
+		//   d is the maximum denominator allowed
+		// 
+		// based on the theory of continued fractions
+		// if x = a1 + 1/(a2 + 1/(a3 + 1/(a4 + ...)))
+		// then best approximation is found by truncating this series
+		// (with some adjustments in the last term).
+		// 
+		// Note the fraction can be recovered as the first column of the matrix
+		//  ( a1 1 ) ( a2 1 ) ( a3 1 ) ...
+		//  ( 1  0 ) ( 1  0 ) ( 1  0 )
+		// Instead of keeping the sequence of continued fraction terms,
+		// we just keep the last partial product of these matrices.
+		static (long Num, long Den) FractionApprox(double value, int maxDenominator)
+		{
+			if (value > 0x7FFFFFFF)
+				return (0, 0);
+
+			double startValue = value;
+			if (value < 0)
+				value = -value;
+
+			long ai;
+			long[,] m = new long[2, 2];
+
+			m[0, 0] = m[1, 1] = 1;
+			m[0, 1] = m[1, 0] = 0;
+
+			double v = value;
+
+			while (m[1, 0] * (ai = (long)v) + m[1, 1] <= maxDenominator) {
+				long t = m[0, 0] * ai + m[0, 1];
+				m[0, 1] = m[0, 0];
+				m[0, 0] = t;
+				t = m[1, 0] * ai + m[1, 1];
+				m[1, 1] = m[1, 0];
+				m[1, 0] = t;
+				if (v - ai == 0) break;
+				v = 1 / (v - ai);
+				if (Math.Abs(v) > long.MaxValue) break; // value cannot be stored in fraction without overflow
+			}
+
+			if (m[1, 0] == 0)
+				return (0, 0);
+
+			long firstN = m[0, 0];
+			long firstD = m[1, 0];
+
+			ai = (maxDenominator - m[1, 1]) / m[1, 0];
+			long secondN = m[0, 0] * ai + m[0, 1];
+			long secondD = m[1, 0] * ai + m[1, 1];
+
+			double firstDelta = Math.Abs(value - firstN / (double)firstD);
+			double secondDelta = Math.Abs(value - secondN / (double)secondD);
+
+			if (firstDelta < secondDelta)
+				return (startValue < 0 ? -firstN : firstN, firstD);
+			return (startValue < 0 ? -secondN : secondN, secondD);
+		}
 		#endregion
-		
+
 		#region Convert Parameter
 		public ParameterDeclaration ConvertParameter(IParameter parameter)
 		{

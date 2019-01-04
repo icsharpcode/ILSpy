@@ -1278,7 +1278,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
 					return enumDec;
 				}
-				typeSystemAstBuilder.UseSpecialConstants = !field.DeclaringType.Equals(field.ReturnType);
+				bool isMathPIOrE = ((field.Name == "PI" || field.Name == "E") && (field.DeclaringType.FullName == "System.Math" || field.DeclaringType.FullName == "System.MathF"));
+				typeSystemAstBuilder.UseSpecialConstants = !(field.DeclaringType.Equals(field.ReturnType) || isMathPIOrE);
 				var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 				SetNewModifier(fieldDecl);
 				if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {

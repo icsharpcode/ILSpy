@@ -605,32 +605,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				7,
 				8,
 				254,
-				byte.MaxValue
+				255
 			});
 		}
 
 		public static void ArraySByte()
 		{
 			X(Y(), new sbyte[8] {
-				sbyte.MinValue,
+				-128,
 				-127,
 				0,
 				1,
 				2,
 				3,
 				4,
-				sbyte.MaxValue
+				127
 			});
 		}
 
 		public static void ArrayShort()
 		{
 			X(Y(), new short[5] {
-				short.MinValue,
+				-32768,
 				-1,
 				0,
 				1,
-				short.MaxValue
+				32767
 			});
 		}
 
@@ -642,7 +642,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				32767,
 				32768,
 				65534,
-				ushort.MaxValue
+				65535
 			});
 		}
 
@@ -735,8 +735,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				-100m,
 				0m,
 				100m,
-				decimal.MinValue,
-				decimal.MaxValue,
+				-79228162514264337593543950335m,
+				79228162514264337593543950335m,
 				0.0000001m
 			});
 		}
@@ -1412,6 +1412,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), new C {
 				Z = (int)value
 			});
+		}
+
+		private byte[] Issue1314()
+		{
+			return new byte[4] {
+				0,
+				1,
+				2,
+				255
+			};
 		}
 
 		private void Issue1251_Test(List<Item> list, OtherItem otherItem)

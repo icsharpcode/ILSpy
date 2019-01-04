@@ -435,16 +435,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLdcF4(LdcF4 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Single), inst.Value));
+			var expr = astBuilder.ConvertConstantValue(compilation.FindType(KnownTypeCode.Single), inst.Value);
+			return new TranslatedExpression(expr.WithILInstruction(inst));
 		}
 
 		protected internal override TranslatedExpression VisitLdcF8(LdcF8 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Double), inst.Value));
+			var expr = astBuilder.ConvertConstantValue(compilation.FindType(KnownTypeCode.Double), inst.Value);
+			return new TranslatedExpression(expr.WithILInstruction(inst));
 		}
 
 		protected internal override TranslatedExpression VisitLdcDecimal(LdcDecimal inst, TranslationContext context)
@@ -2272,7 +2270,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					container.Peek().Elements.Add(aie);
 					container.Push(aie);
 				}
-				var val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
+				TranslatedExpression val;
+				var old = astBuilder.UseSpecialConstants;
+				try {
+					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType() && !type.IsKnownType(KnownTypeCode.Decimal);
+					val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
+				} finally {
+					astBuilder.UseSpecialConstants = old;
+				}
 				container.Peek().Elements.Add(val);
 				elementResolveResults.Add(val.ResolveResult);
 				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
