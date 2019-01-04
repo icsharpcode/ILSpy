@@ -1109,9 +1109,9 @@
     } // end of property OtherItem2::Data2
   } // end of class OtherItem2
 
-  .field private static class [mscorlib]System.EventHandler 'CS$<>9__CachedAnonymousMethodDelegate9'
+  .field private static class [mscorlib]System.EventHandler 'CS$<>9__CachedAnonymousMethodDelegate6'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> 'CS$<>9__CachedAnonymousMethodDelegate1d'
+  .field private static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> 'CS$<>9__CachedAnonymousMethodDelegate1a'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method private hidebysig static void  X(object a,
                                            object b) cil managed
@@ -1147,6 +1147,813 @@
     IL_0000:  ldarg.1
     IL_0001:  ret
   } // end of method TestCases::TestCall
+
+  .method private hidebysig static int32 
+          GetInt() cil managed
+  {
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.1
+    IL_0001:  ret
+  } // end of method TestCases::GetInt
+
+  .method private hidebysig static string 
+          GetString() cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldstr      "Test"
+    IL_0005:  ret
+  } // end of method TestCases::GetString
+
+  .method private hidebysig static void  NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] 'array') cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method TestCases::NoOp
+
+  .method private hidebysig instance void 
+          Data_TestEvent(object sender,
+                         class [mscorlib]System.EventArgs e) cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0005:  throw
+  } // end of method TestCases::Data_TestEvent
+
+  .method public hidebysig static void  Array1() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.s   10
+    IL_0007:  newarr     [mscorlib]System.Int32
+    IL_000c:  dup
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000a-1'
+    IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001c:  ret
+  } // end of method TestCases::Array1
+
+  .method public hidebysig static void  Array2(int32 a,
+                                               int32 b,
+                                               int32 c) cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  4
+    .locals init (int32[] V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.5
+    IL_0006:  newarr     [mscorlib]System.Int32
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldarg.0
+    IL_000f:  stelem.i4
+    IL_0010:  ldloc.0
+    IL_0011:  ldc.i4.2
+    IL_0012:  ldarg.1
+    IL_0013:  stelem.i4
+    IL_0014:  ldloc.0
+    IL_0015:  ldc.i4.4
+    IL_0016:  ldarg.2
+    IL_0017:  stelem.i4
+    IL_0018:  ldloc.0
+    IL_0019:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001e:  ret
+  } // end of method TestCases::Array2
+
+  .method public hidebysig static void  NestedArray(int32 a,
+                                                    int32 b,
+                                                    int32 c) cil managed
+  {
+    // Code size       83 (0x53)
+    .maxstack  6
+    .locals init (int32[][] V_0,
+             int32[] V_1)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.3
+    IL_0006:  newarr     int32[]
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldc.i4.s   10
+    IL_0010:  newarr     [mscorlib]System.Int32
+    IL_0015:  dup
+    IL_0016:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000c-1'
+    IL_001b:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0020:  stelem.ref
+    IL_0021:  ldloc.0
+    IL_0022:  ldc.i4.1
+    IL_0023:  ldc.i4.3
+    IL_0024:  newarr     [mscorlib]System.Int32
+    IL_0029:  stloc.1
+    IL_002a:  ldloc.1
+    IL_002b:  ldc.i4.0
+    IL_002c:  ldarg.0
+    IL_002d:  stelem.i4
+    IL_002e:  ldloc.1
+    IL_002f:  ldc.i4.1
+    IL_0030:  ldarg.1
+    IL_0031:  stelem.i4
+    IL_0032:  ldloc.1
+    IL_0033:  ldc.i4.2
+    IL_0034:  ldarg.2
+    IL_0035:  stelem.i4
+    IL_0036:  ldloc.1
+    IL_0037:  stelem.ref
+    IL_0038:  ldloc.0
+    IL_0039:  ldc.i4.2
+    IL_003a:  ldc.i4.6
+    IL_003b:  newarr     [mscorlib]System.Int32
+    IL_0040:  dup
+    IL_0041:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x600000c-2'
+    IL_0046:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_004b:  stelem.ref
+    IL_004c:  ldloc.0
+    IL_004d:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0052:  ret
+  } // end of method TestCases::NestedArray
+
+  .method public hidebysig static void  NestedNullableArray(int32 a,
+                                                            int32 b,
+                                                            int32 c) cil managed
+  {
+    // Code size       473 (0x1d9)
+    .maxstack  5
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32>[][] V_0,
+             valuetype [mscorlib]System.Nullable`1<int32>[] V_1,
+             valuetype [mscorlib]System.Nullable`1<int32> V_2,
+             valuetype [mscorlib]System.Nullable`1<int32>[] V_3,
+             valuetype [mscorlib]System.Nullable`1<int32> V_4,
+             valuetype [mscorlib]System.Nullable`1<int32>[] V_5,
+             valuetype [mscorlib]System.Nullable`1<int32> V_6)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.3
+    IL_0006:  newarr     valuetype [mscorlib]System.Nullable`1<int32>[]
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldc.i4.s   11
+    IL_0010:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0015:  stloc.1
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.0
+    IL_0018:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_001d:  ldc.i4.1
+    IL_001e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0023:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0028:  ldloc.1
+    IL_0029:  ldc.i4.1
+    IL_002a:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_002f:  ldc.i4.2
+    IL_0030:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0035:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_003a:  ldloc.1
+    IL_003b:  ldc.i4.2
+    IL_003c:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0041:  ldc.i4.3
+    IL_0042:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0047:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_004c:  ldloc.1
+    IL_004d:  ldc.i4.3
+    IL_004e:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0053:  ldc.i4.4
+    IL_0054:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0059:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_005e:  ldloc.1
+    IL_005f:  ldc.i4.4
+    IL_0060:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0065:  ldc.i4.5
+    IL_0066:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_006b:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0070:  ldloc.1
+    IL_0071:  ldc.i4.5
+    IL_0072:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0077:  ldc.i4.6
+    IL_0078:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_007d:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0082:  ldloc.1
+    IL_0083:  ldc.i4.6
+    IL_0084:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0089:  ldc.i4.7
+    IL_008a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_008f:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0094:  ldloc.1
+    IL_0095:  ldc.i4.7
+    IL_0096:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_009b:  ldc.i4.8
+    IL_009c:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00a1:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00a6:  ldloc.1
+    IL_00a7:  ldc.i4.8
+    IL_00a8:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00ad:  ldc.i4.s   9
+    IL_00af:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00b4:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00b9:  ldloc.1
+    IL_00ba:  ldc.i4.s   9
+    IL_00bc:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00c1:  ldc.i4.s   10
+    IL_00c3:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00c8:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00cd:  ldloc.1
+    IL_00ce:  ldc.i4.s   10
+    IL_00d0:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00d5:  ldloca.s   V_2
+    IL_00d7:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00dd:  ldloc.2
+    IL_00de:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00e3:  ldloc.1
+    IL_00e4:  stelem.ref
+    IL_00e5:  ldloc.0
+    IL_00e6:  ldc.i4.1
+    IL_00e7:  ldc.i4.4
+    IL_00e8:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00ed:  stloc.3
+    IL_00ee:  ldloc.3
+    IL_00ef:  ldc.i4.0
+    IL_00f0:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_00f5:  ldarg.0
+    IL_00f6:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_00fb:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0100:  ldloc.3
+    IL_0101:  ldc.i4.1
+    IL_0102:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0107:  ldarg.1
+    IL_0108:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_010d:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0112:  ldloc.3
+    IL_0113:  ldc.i4.2
+    IL_0114:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0119:  ldarg.2
+    IL_011a:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_011f:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0124:  ldloc.3
+    IL_0125:  ldc.i4.3
+    IL_0126:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_012b:  ldloca.s   V_4
+    IL_012d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0133:  ldloc.s    V_4
+    IL_0135:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_013a:  ldloc.3
+    IL_013b:  stelem.ref
+    IL_013c:  ldloc.0
+    IL_013d:  ldc.i4.2
+    IL_013e:  ldc.i4.7
+    IL_013f:  newarr     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0144:  stloc.s    V_5
+    IL_0146:  ldloc.s    V_5
+    IL_0148:  ldc.i4.0
+    IL_0149:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_014e:  ldc.i4.1
+    IL_014f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0154:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0159:  ldloc.s    V_5
+    IL_015b:  ldc.i4.1
+    IL_015c:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0161:  ldc.i4.2
+    IL_0162:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0167:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_016c:  ldloc.s    V_5
+    IL_016e:  ldc.i4.2
+    IL_016f:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0174:  ldc.i4.3
+    IL_0175:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_017a:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_017f:  ldloc.s    V_5
+    IL_0181:  ldc.i4.3
+    IL_0182:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0187:  ldc.i4.4
+    IL_0188:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_018d:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0192:  ldloc.s    V_5
+    IL_0194:  ldc.i4.4
+    IL_0195:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_019a:  ldc.i4.5
+    IL_019b:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01a0:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01a5:  ldloc.s    V_5
+    IL_01a7:  ldc.i4.5
+    IL_01a8:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01ad:  ldc.i4.6
+    IL_01ae:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_01b3:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01b8:  ldloc.s    V_5
+    IL_01ba:  ldc.i4.6
+    IL_01bb:  ldelema    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01c0:  ldloca.s   V_6
+    IL_01c2:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01c8:  ldloc.s    V_6
+    IL_01ca:  stobj      valuetype [mscorlib]System.Nullable`1<int32>
+    IL_01cf:  ldloc.s    V_5
+    IL_01d1:  stelem.ref
+    IL_01d2:  ldloc.0
+    IL_01d3:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_01d8:  ret
+  } // end of method TestCases::NestedNullableArray
+
+  .method public hidebysig static void  NestedPointerArray(int32 a,
+                                                           int32 b,
+                                                           int32 c) cil managed
+  {
+    // Code size       82 (0x52)
+    .maxstack  6
+    .locals init (void*[][] V_0,
+             void*[] V_1,
+             void*[] V_2,
+             void*[] V_3)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.3
+    IL_0006:  newarr     void*[]
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldc.i4.1
+    IL_000f:  newarr     void*
+    IL_0014:  stloc.1
+    IL_0015:  ldloc.1
+    IL_0016:  ldc.i4.0
+    IL_0017:  ldc.i4.0
+    IL_0018:  conv.u
+    IL_0019:  stelem.i
+    IL_001a:  ldloc.1
+    IL_001b:  stelem.ref
+    IL_001c:  ldloc.0
+    IL_001d:  ldc.i4.1
+    IL_001e:  ldc.i4.2
+    IL_001f:  newarr     void*
+    IL_0024:  stloc.2
+    IL_0025:  ldloc.2
+    IL_0026:  ldc.i4.0
+    IL_0027:  ldc.i4     0xc8
+    IL_002c:  conv.i
+    IL_002d:  stelem.i
+    IL_002e:  ldloc.2
+    IL_002f:  ldc.i4.1
+    IL_0030:  ldc.i4.0
+    IL_0031:  conv.u
+    IL_0032:  stelem.i
+    IL_0033:  ldloc.2
+    IL_0034:  stelem.ref
+    IL_0035:  ldloc.0
+    IL_0036:  ldc.i4.2
+    IL_0037:  ldc.i4.2
+    IL_0038:  newarr     void*
+    IL_003d:  stloc.3
+    IL_003e:  ldloc.3
+    IL_003f:  ldc.i4.0
+    IL_0040:  ldc.i4.s   100
+    IL_0042:  conv.i
+    IL_0043:  stelem.i
+    IL_0044:  ldloc.3
+    IL_0045:  ldc.i4.1
+    IL_0046:  ldc.i4.0
+    IL_0047:  conv.u
+    IL_0048:  stelem.i
+    IL_0049:  ldloc.3
+    IL_004a:  stelem.ref
+    IL_004b:  ldloc.0
+    IL_004c:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0051:  ret
+  } // end of method TestCases::NestedPointerArray
+
+  .method public hidebysig static void  ArrayBoolean() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.8
+    IL_0006:  newarr     [mscorlib]System.Boolean
+    IL_000b:  dup
+    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x600000f-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayBoolean
+
+  .method public hidebysig static void  ArrayByte() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.s   10
+    IL_0007:  newarr     [mscorlib]System.Byte
+    IL_000c:  dup
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000010-1'
+    IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001c:  ret
+  } // end of method TestCases::ArrayByte
+
+  .method public hidebysig static void  ArraySByte() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.8
+    IL_0006:  newarr     [mscorlib]System.SByte
+    IL_000b:  dup
+    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000011-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArraySByte
+
+  .method public hidebysig static void  ArrayShort() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.5
+    IL_0006:  newarr     [mscorlib]System.Int16
+    IL_000b:  dup
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000012-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayShort
+
+  .method public hidebysig static void  ArrayUShort() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.6
+    IL_0006:  newarr     [mscorlib]System.UInt16
+    IL_000b:  dup
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000013-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayUShort
+
+  .method public hidebysig static void  ArrayInt() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.s   10
+    IL_0007:  newarr     [mscorlib]System.Int32
+    IL_000c:  dup
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000014-1'
+    IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001c:  ret
+  } // end of method TestCases::ArrayInt
+
+  .method public hidebysig static void  ArrayUInt() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.s   10
+    IL_0007:  newarr     [mscorlib]System.UInt32
+    IL_000c:  dup
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000015-1'
+    IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001c:  ret
+  } // end of method TestCases::ArrayUInt
+
+  .method public hidebysig static void  ArrayLong() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.5
+    IL_0006:  newarr     [mscorlib]System.Int64
+    IL_000b:  dup
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000016-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayLong
+
+  .method public hidebysig static void  ArrayULong() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.s   10
+    IL_0007:  newarr     [mscorlib]System.UInt64
+    IL_000c:  dup
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '<PrivateImplementationDetails>'::'$$method0x6000017-1'
+    IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001c:  ret
+  } // end of method TestCases::ArrayULong
+
+  .method public hidebysig static void  ArrayFloat() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.6
+    IL_0006:  newarr     [mscorlib]System.Single
+    IL_000b:  dup
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x6000018-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayFloat
+
+  .method public hidebysig static void  ArrayDouble() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  8
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.6
+    IL_0006:  newarr     [mscorlib]System.Double
+    IL_000b:  dup
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+    IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001b:  ret
+  } // end of method TestCases::ArrayDouble
+
+  .method public hidebysig static void  ArrayDecimal() cil managed
+  {
+    // Code size       127 (0x7f)
+    .maxstack  7
+    .locals init (valuetype [mscorlib]System.Decimal[] V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.6
+    IL_0006:  newarr     [mscorlib]System.Decimal
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldelema    [mscorlib]System.Decimal
+    IL_0013:  ldc.i4.s   -100
+    IL_0015:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_001a:  stobj      [mscorlib]System.Decimal
+    IL_001f:  ldloc.0
+    IL_0020:  ldc.i4.2
+    IL_0021:  ldelema    [mscorlib]System.Decimal
+    IL_0026:  ldc.i4.s   100
+    IL_0028:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_002d:  stobj      [mscorlib]System.Decimal
+    IL_0032:  ldloc.0
+    IL_0033:  ldc.i4.3
+    IL_0034:  ldelema    [mscorlib]System.Decimal
+    IL_0039:  ldc.i4.m1
+    IL_003a:  ldc.i4.m1
+    IL_003b:  ldc.i4.m1
+    IL_003c:  ldc.i4     0x80
+    IL_0041:  ldc.i4.0
+    IL_0042:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32,
+                                                                       int32,
+                                                                       int32,
+                                                                       bool,
+                                                                       uint8)
+    IL_0047:  stobj      [mscorlib]System.Decimal
+    IL_004c:  ldloc.0
+    IL_004d:  ldc.i4.4
+    IL_004e:  ldelema    [mscorlib]System.Decimal
+    IL_0053:  ldc.i4.m1
+    IL_0054:  ldc.i4.m1
+    IL_0055:  ldc.i4.m1
+    IL_0056:  ldc.i4.0
+    IL_0057:  ldc.i4.0
+    IL_0058:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32,
+                                                                       int32,
+                                                                       int32,
+                                                                       bool,
+                                                                       uint8)
+    IL_005d:  stobj      [mscorlib]System.Decimal
+    IL_0062:  ldloc.0
+    IL_0063:  ldc.i4.5
+    IL_0064:  ldelema    [mscorlib]System.Decimal
+    IL_0069:  ldc.i4.1
+    IL_006a:  ldc.i4.0
+    IL_006b:  ldc.i4.0
+    IL_006c:  ldc.i4.0
+    IL_006d:  ldc.i4.7
+    IL_006e:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32,
+                                                                       int32,
+                                                                       int32,
+                                                                       bool,
+                                                                       uint8)
+    IL_0073:  stobj      [mscorlib]System.Decimal
+    IL_0078:  ldloc.0
+    IL_0079:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_007e:  ret
+  } // end of method TestCases::ArrayDecimal
+
+  .method public hidebysig static void  ArrayString() cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  4
+    .locals init (string[] V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.4
+    IL_0006:  newarr     [mscorlib]System.String
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.0
+    IL_000e:  ldstr      ""
+    IL_0013:  stelem.ref
+    IL_0014:  ldloc.0
+    IL_0015:  ldc.i4.2
+    IL_0016:  ldstr      "Hello"
+    IL_001b:  stelem.ref
+    IL_001c:  ldloc.0
+    IL_001d:  ldc.i4.3
+    IL_001e:  ldstr      "World"
+    IL_0023:  stelem.ref
+    IL_0024:  ldloc.0
+    IL_0025:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_002a:  ret
+  } // end of method TestCases::ArrayString
+
+  .method public hidebysig static void  ArrayEnum() cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  4
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum[] V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldc.i4.4
+    IL_0006:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum
+    IL_000b:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  ldc.i4.1
+    IL_000e:  ldc.i4.1
+    IL_000f:  stelem.i4
+    IL_0010:  ldloc.0
+    IL_0011:  ldc.i4.3
+    IL_0012:  ldc.i4.1
+    IL_0013:  stelem.i4
+    IL_0014:  ldloc.0
+    IL_0015:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001a:  ret
+  } // end of method TestCases::ArrayEnum
+
+  .method public hidebysig static void  RecursiveArrayInitializer() cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  4
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.3
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldc.i4.1
+    IL_000a:  stelem.i4
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.1
+    IL_000d:  ldc.i4.2
+    IL_000e:  stelem.i4
+    IL_000f:  ldloc.0
+    IL_0010:  ldc.i4.2
+    IL_0011:  ldloc.0
+    IL_0012:  ldc.i4.1
+    IL_0013:  ldelem.i4
+    IL_0014:  ldc.i4.1
+    IL_0015:  add
+    IL_0016:  stelem.i4
+    IL_0017:  ldloc.0
+    IL_0018:  ldc.i4.0
+    IL_0019:  ldc.i4.0
+    IL_001a:  stelem.i4
+    IL_001b:  ret
+  } // end of method TestCases::RecursiveArrayInitializer
+
+  .method public hidebysig static void  InvalidIndices(int32 a) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.1
+    IL_0009:  ldarg.0
+    IL_000a:  stelem.i4
+    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0010:  ldloc.0
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0016:  ret
+  } // end of method TestCases::InvalidIndices
+
+  .method public hidebysig static void  InvalidIndices2(int32 a) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.m1
+    IL_0009:  ldarg.0
+    IL_000a:  stelem.i4
+    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0010:  ldloc.0
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0016:  ret
+  } // end of method TestCases::InvalidIndices2
+
+  .method public hidebysig static void  IndicesInWrongOrder(int32 a,
+                                                            int32 b) cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  3
+    .locals init (int32[] V_0)
+    IL_0000:  ldc.i4.5
+    IL_0001:  newarr     [mscorlib]System.Int32
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.2
+    IL_0009:  ldarg.1
+    IL_000a:  stelem.i4
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.1
+    IL_000d:  ldarg.0
+    IL_000e:  stelem.i4
+    IL_000f:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0014:  ldloc.0
+    IL_0015:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001a:  ret
+  } // end of method TestCases::IndicesInWrongOrder
+
+  .method public hidebysig static void  Issue953_MissingNullableSpecifierForArrayInitializer() cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldelema    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_000e:  ldsfld     valuetype [mscorlib]System.Guid [mscorlib]System.Guid::Empty
+    IL_0013:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>::.ctor(!0)
+    IL_0018:  stobj      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_001d:  ldloc.0
+    IL_001e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[])
+    IL_0023:  ret
+  } // end of method TestCases::Issue953_MissingNullableSpecifierForArrayInitializer
+
+  .method private hidebysig instance void 
+          Issue907_Test3(string text) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  4
+    .locals init (class [mscorlib]System.Collections.Generic.Dictionary`2<string,object> V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,object>::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldstr      ""
+    IL_0011:  ldarg.1
+    IL_0012:  callvirt   instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,object>::Add(!0,
+                                                                                                                   !1)
+    IL_0017:  ldloc.0
+    IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_001d:  ret
+  } // end of method TestCases::Issue907_Test3
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C 
           Test1() cil managed
@@ -1276,67 +2083,599 @@
     IL_0026:  ret
   } // end of method TestCases::Test4
 
-  .method public hidebysig static void  InvalidIndices(int32 a) cil managed
+  .method public hidebysig static void  ObjectInitializer() cil managed
   {
-    // Code size       23 (0x17)
+    // Code size       25 (0x19)
     .maxstack  3
-    .locals init (int32[] V_0)
-    IL_0000:  ldc.i4.1
-    IL_0001:  newarr     [mscorlib]System.Int32
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  ldc.i4.1
-    IL_0009:  ldarg.0
-    IL_000a:  stelem.i4
-    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0010:  ldloc.0
-    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.0
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_0016:  ret
-  } // end of method TestCases::InvalidIndices
+    IL_0018:  ret
+  } // end of method TestCases::ObjectInitializer
 
-  .method public hidebysig static void  InvalidIndices2(int32 a) cil managed
+  .method public hidebysig static void  NotAnObjectInitializer() cil managed
   {
-    // Code size       23 (0x17)
-    .maxstack  3
-    .locals init (int32[] V_0)
-    IL_0000:  ldc.i4.1
-    IL_0001:  newarr     [mscorlib]System.Int32
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  ldc.i4.m1
-    IL_0009:  ldarg.0
-    IL_000a:  stelem.i4
-    IL_000b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0010:  ldloc.0
-    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    // Code size       25 (0x19)
+    .maxstack  2
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  ldc.i4.0
+    IL_0008:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_000d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0012:  ldloc.0
+    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_0016:  ret
-  } // end of method TestCases::InvalidIndices2
+    IL_0018:  ret
+  } // end of method TestCases::NotAnObjectInitializer
 
-  .method public hidebysig static void  IndicesInWrongOrder(int32 a,
-                                                            int32 b) cil managed
+  .method public hidebysig static void  NotAnObjectInitializerWithEvent() cil managed
   {
-    // Code size       27 (0x1b)
+    // Code size       53 (0x35)
     .maxstack  3
-    .locals init (int32[] V_0)
-    IL_0000:  ldc.i4.5
-    IL_0001:  newarr     [mscorlib]System.Int32
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  ldc.i4.2
-    IL_0009:  ldarg.1
-    IL_000a:  stelem.i4
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate6'
+    IL_000c:  brtrue.s   IL_001f
+
+    IL_000e:  ldnull
+    IL_000f:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'<NotAnObjectInitializerWithEvent>b__5'(object,
+                                                                                                                                                class [mscorlib]System.EventArgs)
+    IL_0015:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
+                                                                            native int)
+    IL_001a:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate6'
+    IL_001f:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate6'
+    IL_0024:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
+    IL_0029:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_002e:  ldloc.0
+    IL_002f:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0034:  ret
+  } // end of method TestCases::NotAnObjectInitializerWithEvent
+
+  .method public hidebysig static void  ObjectInitializerAssignCollectionToField() cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  4
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> V_1)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.0
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::.ctor()
+    IL_0018:  stloc.1
+    IL_0019:  ldloc.1
+    IL_001a:  ldc.i4.0
+    IL_001b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_0020:  ldloc.1
+    IL_0021:  ldc.i4.1
+    IL_0022:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_0027:  ldloc.1
+    IL_0028:  stfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
+    IL_002d:  ldloc.0
+    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0033:  ret
+  } // end of method TestCases::ObjectInitializerAssignCollectionToField
+
+  .method public hidebysig static void  ObjectInitializerAddToCollectionInField() cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.0
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
+    IL_0018:  ldc.i4.0
+    IL_0019:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_001e:  ldloc.0
+    IL_001f:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
+    IL_0024:  ldc.i4.1
+    IL_0025:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_002a:  ldloc.0
+    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0030:  ret
+  } // end of method TestCases::ObjectInitializerAddToCollectionInField
+
+  .method public hidebysig static void  ObjectInitializerAssignCollectionToProperty() cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  4
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> V_1)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.0
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::.ctor()
+    IL_0018:  stloc.1
+    IL_0019:  ldloc.1
+    IL_001a:  ldc.i4.0
+    IL_001b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_0020:  ldloc.1
+    IL_0021:  ldc.i4.1
+    IL_0022:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_0027:  ldloc.1
+    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_PropertyList(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>)
+    IL_002d:  ldloc.0
+    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0033:  ret
+  } // end of method TestCases::ObjectInitializerAssignCollectionToProperty
+
+  .method public hidebysig static void  ObjectInitializerAddToCollectionInProperty() cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldc.i4.0
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
+    IL_0018:  ldc.i4.0
+    IL_0019:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_001e:  ldloc.0
+    IL_001f:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
+    IL_0024:  ldc.i4.1
+    IL_0025:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_002a:  ldloc.0
+    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0030:  ret
+  } // end of method TestCases::ObjectInitializerAddToCollectionInProperty
+
+  .method public hidebysig static void  ObjectInitializerWithInitializationOfNestedObjects() cil managed
+  {
+    // Code size       47 (0x2f)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0011:  ldc.i4.0
+    IL_0012:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0017:  ldloc.0
+    IL_0018:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_001d:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0022:  ldc.i4.1
+    IL_0023:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0028:  ldloc.0
+    IL_0029:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_002e:  ret
+  } // end of method TestCases::ObjectInitializerWithInitializationOfNestedObjects
+
+  .method public hidebysig static void  ObjectInitializerWithInitializationOfDeeplyNestedObjects() cil managed
+  {
+    // Code size       79 (0x4f)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
     IL_000b:  ldloc.0
     IL_000c:  ldc.i4.1
-    IL_000d:  ldarg.0
-    IL_000e:  stelem.i4
-    IL_000f:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0014:  ldloc.0
-    IL_0015:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0012:  ldloc.0
+    IL_0013:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0018:  ldc.i4.0
+    IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_001e:  ldloc.0
+    IL_001f:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0024:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0029:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_002e:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0033:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0038:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_003d:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
+    IL_0042:  ldc.i4.1
+    IL_0043:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0048:  ldloc.0
+    IL_0049:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_001a:  ret
-  } // end of method TestCases::IndicesInWrongOrder
+    IL_004e:  ret
+  } // end of method TestCases::ObjectInitializerWithInitializationOfDeeplyNestedObjects
+
+  .method public hidebysig static void  CollectionInitializerInsideObjectInitializers() cil managed
+  {
+    // Code size       57 (0x39)
+    .maxstack  4
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_1)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0011:  stloc.1
+    IL_0012:  ldloc.1
+    IL_0013:  ldc.i4.0
+    IL_0014:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0019:  ldloc.1
+    IL_001a:  ldc.i4.1
+    IL_001b:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_b(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0020:  ldloc.1
+    IL_0021:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
+    IL_0026:  ldc.i4.0
+    IL_0027:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_002c:  ldloc.1
+    IL_002d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_MoreData(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data)
+    IL_0032:  ldloc.0
+    IL_0033:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0038:  ret
+  } // end of method TestCases::CollectionInitializerInsideObjectInitializers
+
+  .method public hidebysig static void  NotAStructInitializer_DefaultConstructor() cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0008:  ldloca.s   V_0
+    IL_000a:  ldc.i4.1
+    IL_000b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
+    IL_0010:  ldloca.s   V_0
+    IL_0012:  ldc.i4.2
+    IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
+    IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_001d:  ldloc.0
+    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0028:  ret
+  } // end of method TestCases::NotAStructInitializer_DefaultConstructor
+
+  .method public hidebysig static void  StructInitializer_DefaultConstructor() cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  3
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_000d:  ldloca.s   V_0
+    IL_000f:  ldc.i4.1
+    IL_0010:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  ldc.i4.2
+    IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
+    IL_001d:  ldloc.0
+    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0028:  ret
+  } // end of method TestCases::StructInitializer_DefaultConstructor
+
+  .method public hidebysig static void  NotAStructInitializer_ExplicitConstructor() cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  ldc.i4.0
+    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
+    IL_0008:  ldloca.s   V_0
+    IL_000a:  ldc.i4.1
+    IL_000b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
+    IL_0010:  ldloca.s   V_0
+    IL_0012:  ldc.i4.2
+    IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
+    IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_001d:  ldloc.0
+    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0028:  ret
+  } // end of method TestCases::NotAStructInitializer_ExplicitConstructor
+
+  .method public hidebysig static void  StructInitializer_ExplicitConstructor() cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  3
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  ldc.i4.0
+    IL_0008:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
+    IL_000d:  ldloca.s   V_0
+    IL_000f:  ldc.i4.1
+    IL_0010:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
+    IL_0015:  ldloca.s   V_0
+    IL_0017:  ldc.i4.2
+    IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
+    IL_001d:  ldloc.0
+    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0028:  ret
+  } // end of method TestCases::StructInitializer_ExplicitConstructor
+
+  .method public hidebysig static void  StructInitializerWithInitializationOfNestedObjects() cil managed
+  {
+    // Code size       74 (0x4a)
+    .maxstack  3
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_000d:  ldloca.s   V_0
+    IL_000f:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
+    IL_0014:  ldc.i4.0
+    IL_0015:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_001a:  ldloca.s   V_0
+    IL_001c:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
+    IL_0021:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
+    IL_0026:  ldc.i4.0
+    IL_0027:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_002c:  ldloca.s   V_0
+    IL_002e:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
+    IL_0033:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
+    IL_0038:  ldc.i4.1
+    IL_0039:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
+    IL_003e:  ldloc.0
+    IL_003f:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
+    IL_0044:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0049:  ret
+  } // end of method TestCases::StructInitializerWithInitializationOfNestedObjects
+
+  .method public hidebysig static void  StructInitializerWithinObjectInitializer() cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  4
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_1)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldloca.s   V_1
+    IL_000e:  ldc.i4.2
+    IL_000f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
+    IL_0014:  ldloca.s   V_1
+    IL_0016:  ldc.i4.1
+    IL_0017:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
+    IL_001c:  ldloca.s   V_1
+    IL_001e:  ldc.i4.2
+    IL_001f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
+    IL_0024:  ldloc.1
+    IL_0025:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_NestedStruct(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData)
+    IL_002a:  ldloc.0
+    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0030:  ret
+  } // end of method TestCases::StructInitializerWithinObjectInitializer
+
+  .method public hidebysig static void  Issue270_NestedInitialisers() cil managed
+  {
+    // Code size       119 (0x77)
+    .maxstack  6
+    .locals init (class [mscorlib]System.Globalization.NumberFormatInfo[] V_0,
+             class [mscorlib]System.Threading.Thread V_1,
+             class [mscorlib]System.Globalization.CultureInfo V_2,
+             class [mscorlib]System.Globalization.DateTimeFormatInfo V_3)
+    IL_0000:  ldnull
+    IL_0001:  stloc.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  ldnull
+    IL_0004:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue270_NestedInitialisers()
+    IL_000a:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
+                                                                                     native int)
+    IL_000f:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
+    IL_0014:  stloc.1
+    IL_0015:  ldloc.1
+    IL_0016:  ldc.i4.1
+    IL_0017:  callvirt   instance void [mscorlib]System.Threading.Thread::set_Priority(valuetype [mscorlib]System.Threading.ThreadPriority)
+    IL_001c:  ldloc.1
+    IL_001d:  ldc.i4.0
+    IL_001e:  newobj     instance void [mscorlib]System.Globalization.CultureInfo::.ctor(int32)
+    IL_0023:  stloc.2
+    IL_0024:  ldloc.2
+    IL_0025:  newobj     instance void [mscorlib]System.Globalization.DateTimeFormatInfo::.ctor()
+    IL_002a:  stloc.3
+    IL_002b:  ldloc.3
+    IL_002c:  ldstr      "ddmmyy"
+    IL_0031:  callvirt   instance void [mscorlib]System.Globalization.DateTimeFormatInfo::set_ShortDatePattern(string)
+    IL_0036:  ldloc.3
+    IL_0037:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_DateTimeFormat(class [mscorlib]System.Globalization.DateTimeFormatInfo)
+    IL_003c:  ldloc.2
+    IL_003d:  ldloc.0
+    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1a'
+    IL_0043:  brtrue.s   IL_0056
+
+    IL_0045:  ldnull
+    IL_0046:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'<Issue270_NestedInitialisers>b__19'(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_004c:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
+                                                                                                                                        native int)
+    IL_0051:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1a'
+    IL_0056:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1a'
+    IL_005b:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
+                                                                                                                                                                                         class [mscorlib]System.Func`2<!!0,bool>)
+    IL_0060:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
+    IL_0065:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_NumberFormat(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_006a:  ldloc.2
+    IL_006b:  callvirt   instance void [mscorlib]System.Threading.Thread::set_CurrentCulture(class [mscorlib]System.Globalization.CultureInfo)
+    IL_0070:  ldloc.1
+    IL_0071:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::TestCall(int32,
+                                                                                                                 class [mscorlib]System.Threading.Thread)
+    IL_0076:  ret
+  } // end of method TestCases::Issue270_NestedInitialisers
+
+  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 
+          Issue1345() cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  2
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::.ctor()
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::Data
+    IL_000c:  ldc.i4.3
+    IL_000d:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_0012:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0017:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+    IL_001c:  ldloc.0
+    IL_001d:  ret
+  } // end of method TestCases::Issue1345
+
+  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 
+          Issue1345b() cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  2
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 V_0)
+    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::.ctor()
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::get_Data2()
+    IL_000c:  ldc.i4.3
+    IL_000d:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
+    IL_0012:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
+    IL_0017:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
+    IL_001c:  ldloc.0
+    IL_001d:  ret
+  } // end of method TestCases::Issue1345b
+
+  .method private hidebysig instance void 
+          Issue1250_Test1(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum 'value') cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C V_0)
+    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
+    IL_000a:  stloc.0
+    IL_000b:  ldloc.0
+    IL_000c:  ldarg.1
+    IL_000d:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::Z
+    IL_0012:  ldloc.0
+    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+                                                                                                          object)
+    IL_0018:  ret
+  } // end of method TestCases::Issue1250_Test1
+
+  .method private hidebysig instance void 
+          Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
+                         class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
+  {
+    // Code size       154 (0x9a)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item V_0,
+             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_1,
+             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_2,
+             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_3,
+             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_4)
+    IL_0000:  ldarg.1
+    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::.ctor()
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldstr      "Text"
+    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Text(string)
+    IL_0012:  ldloc.0
+    IL_0013:  ldarg.2
+    IL_0014:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value()
+    IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value(valuetype [mscorlib]System.Decimal)
+    IL_001e:  ldloc.0
+    IL_001f:  ldarg.2
+    IL_0020:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value2()
+    IL_0025:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value2(valuetype [mscorlib]System.Decimal)
+    IL_002a:  ldloc.0
+    IL_002b:  ldarg.2
+    IL_002c:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable()
+    IL_0031:  stloc.1
+    IL_0032:  ldloca.s   V_1
+    IL_0034:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_003a:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_003f:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value3(string)
+    IL_0044:  ldloc.0
+    IL_0045:  ldarg.2
+    IL_0046:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable2()
+    IL_004b:  stloc.2
+    IL_004c:  ldloca.s   V_2
+    IL_004e:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0054:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0059:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value4(string)
+    IL_005e:  ldloc.0
+    IL_005f:  ldarg.2
+    IL_0060:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable3()
+    IL_0065:  stloc.3
+    IL_0066:  ldloca.s   V_3
+    IL_0068:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_006e:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_0073:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value5(string)
+    IL_0078:  ldloc.0
+    IL_0079:  ldarg.2
+    IL_007a:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable4()
+    IL_007f:  stloc.s    V_4
+    IL_0081:  ldloca.s   V_4
+    IL_0083:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
+    IL_0089:  callvirt   instance string [mscorlib]System.Object::ToString()
+    IL_008e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value6(string)
+    IL_0093:  ldloc.0
+    IL_0094:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item>::Add(!0)
+    IL_0099:  ret
+  } // end of method TestCases::Issue1251_Test
+
+  .method private hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data 
+          Issue1279(int32 p) cil managed
+  {
+    // Code size       39 (0x27)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.1
+    IL_0002:  bne.un.s   IL_0025
+
+    IL_0004:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
+    IL_0009:  stloc.0
+    IL_000a:  ldloc.0
+    IL_000b:  ldc.i4.0
+    IL_000c:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
+    IL_0011:  ldloc.0
+    IL_0012:  ldarg.0
+    IL_0013:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Data_TestEvent(object,
+                                                                                                                                class [mscorlib]System.EventArgs)
+    IL_0019:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
+                                                                            native int)
+    IL_001e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
+    IL_0023:  ldloc.0
+    IL_0024:  ret
+
+    IL_0025:  ldnull
+    IL_0026:  ret
+  } // end of method TestCases::Issue1279
 
   .method public hidebysig static void  ExtensionMethodInCollectionInitializer() cil managed
   {
@@ -1557,674 +2896,6 @@
     IL_0026:  ret
   } // end of method TestCases::NotACollectionInitializer
 
-  .method public hidebysig static void  ObjectInitializer() cil managed
-  {
-    // Code size       25 (0x19)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.0
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0018:  ret
-  } // end of method TestCases::ObjectInitializer
-
-  .method public hidebysig static void  NotAnObjectInitializer() cil managed
-  {
-    // Code size       25 (0x19)
-    .maxstack  2
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  ldc.i4.0
-    IL_0008:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_000d:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0012:  ldloc.0
-    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0018:  ret
-  } // end of method TestCases::NotAnObjectInitializer
-
-  .method public hidebysig static void  NotAnObjectInitializerWithEvent() cil managed
-  {
-    // Code size       53 (0x35)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate9'
-    IL_000c:  brtrue.s   IL_001f
-
-    IL_000e:  ldnull
-    IL_000f:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'<NotAnObjectInitializerWithEvent>b__8'(object,
-                                                                                                                                                class [mscorlib]System.EventArgs)
-    IL_0015:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
-                                                                            native int)
-    IL_001a:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate9'
-    IL_001f:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate9'
-    IL_0024:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
-    IL_0029:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_002e:  ldloc.0
-    IL_002f:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0034:  ret
-  } // end of method TestCases::NotAnObjectInitializerWithEvent
-
-  .method public hidebysig static void  ObjectInitializerAssignCollectionToField() cil managed
-  {
-    // Code size       52 (0x34)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
-             class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> V_1)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.0
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::.ctor()
-    IL_0018:  stloc.1
-    IL_0019:  ldloc.1
-    IL_001a:  ldc.i4.0
-    IL_001b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_0020:  ldloc.1
-    IL_0021:  ldc.i4.1
-    IL_0022:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_0027:  ldloc.1
-    IL_0028:  stfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
-    IL_002d:  ldloc.0
-    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0033:  ret
-  } // end of method TestCases::ObjectInitializerAssignCollectionToField
-
-  .method public hidebysig static void  ObjectInitializerAddToCollectionInField() cil managed
-  {
-    // Code size       49 (0x31)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.0
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
-    IL_0018:  ldc.i4.0
-    IL_0019:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_001e:  ldloc.0
-    IL_001f:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
-    IL_0024:  ldc.i4.1
-    IL_0025:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_002a:  ldloc.0
-    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0030:  ret
-  } // end of method TestCases::ObjectInitializerAddToCollectionInField
-
-  .method public hidebysig static void  ObjectInitializerAssignCollectionToProperty() cil managed
-  {
-    // Code size       52 (0x34)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
-             class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> V_1)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.0
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::.ctor()
-    IL_0018:  stloc.1
-    IL_0019:  ldloc.1
-    IL_001a:  ldc.i4.0
-    IL_001b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_0020:  ldloc.1
-    IL_0021:  ldc.i4.1
-    IL_0022:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_0027:  ldloc.1
-    IL_0028:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_PropertyList(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>)
-    IL_002d:  ldloc.0
-    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0033:  ret
-  } // end of method TestCases::ObjectInitializerAssignCollectionToProperty
-
-  .method public hidebysig static void  ObjectInitializerAddToCollectionInProperty() cil managed
-  {
-    // Code size       49 (0x31)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.0
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
-    IL_0018:  ldc.i4.0
-    IL_0019:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_001e:  ldloc.0
-    IL_001f:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
-    IL_0024:  ldc.i4.1
-    IL_0025:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_002a:  ldloc.0
-    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0030:  ret
-  } // end of method TestCases::ObjectInitializerAddToCollectionInProperty
-
-  .method public hidebysig static void  ObjectInitializerWithInitializationOfNestedObjects() cil managed
-  {
-    // Code size       47 (0x2f)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0011:  ldc.i4.0
-    IL_0012:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0017:  ldloc.0
-    IL_0018:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_001d:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0022:  ldc.i4.1
-    IL_0023:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0028:  ldloc.0
-    IL_0029:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_002e:  ret
-  } // end of method TestCases::ObjectInitializerWithInitializationOfNestedObjects
-
-  .method private hidebysig static int32 
-          GetInt() cil managed
-  {
-    // Code size       2 (0x2)
-    .maxstack  8
-    IL_0000:  ldc.i4.1
-    IL_0001:  ret
-  } // end of method TestCases::GetInt
-
-  .method private hidebysig static string 
-          GetString() cil managed
-  {
-    // Code size       6 (0x6)
-    .maxstack  8
-    IL_0000:  ldstr      "Test"
-    IL_0005:  ret
-  } // end of method TestCases::GetString
-
-  .method private hidebysig static void  NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] 'array') cil managed
-  {
-    // Code size       1 (0x1)
-    .maxstack  8
-    IL_0000:  ret
-  } // end of method TestCases::NoOp
-
-  .method public hidebysig static void  ObjectInitializerWithInitializationOfDeeplyNestedObjects() cil managed
-  {
-    // Code size       79 (0x4f)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldc.i4.1
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0012:  ldloc.0
-    IL_0013:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0018:  ldc.i4.0
-    IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_001e:  ldloc.0
-    IL_001f:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0024:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0029:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_002e:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0033:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0038:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_003d:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_MoreData()
-    IL_0042:  ldc.i4.1
-    IL_0043:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0048:  ldloc.0
-    IL_0049:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_004e:  ret
-  } // end of method TestCases::ObjectInitializerWithInitializationOfDeeplyNestedObjects
-
-  .method public hidebysig static void  CollectionInitializerInsideObjectInitializers() cil managed
-  {
-    // Code size       57 (0x39)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
-             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_1)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_0011:  stloc.1
-    IL_0012:  ldloc.1
-    IL_0013:  ldc.i4.0
-    IL_0014:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0019:  ldloc.1
-    IL_001a:  ldc.i4.1
-    IL_001b:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_b(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0020:  ldloc.1
-    IL_0021:  callvirt   instance class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::get_PropertyList()
-    IL_0026:  ldc.i4.0
-    IL_0027:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_002c:  ldloc.1
-    IL_002d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_MoreData(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data)
-    IL_0032:  ldloc.0
-    IL_0033:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0038:  ret
-  } // end of method TestCases::CollectionInitializerInsideObjectInitializers
-
-  .method public hidebysig static void  NotAStructInitializer_DefaultConstructor() cil managed
-  {
-    // Code size       41 (0x29)
-    .maxstack  2
-    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
-    IL_0000:  ldloca.s   V_0
-    IL_0002:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0008:  ldloca.s   V_0
-    IL_000a:  ldc.i4.1
-    IL_000b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
-    IL_0010:  ldloca.s   V_0
-    IL_0012:  ldc.i4.2
-    IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
-    IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_001d:  ldloc.0
-    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0028:  ret
-  } // end of method TestCases::NotAStructInitializer_DefaultConstructor
-
-  .method public hidebysig static void  StructInitializer_DefaultConstructor() cil managed
-  {
-    // Code size       41 (0x29)
-    .maxstack  3
-    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  ldloca.s   V_0
-    IL_0007:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_000d:  ldloca.s   V_0
-    IL_000f:  ldc.i4.1
-    IL_0010:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
-    IL_0015:  ldloca.s   V_0
-    IL_0017:  ldc.i4.2
-    IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
-    IL_001d:  ldloc.0
-    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0028:  ret
-  } // end of method TestCases::StructInitializer_DefaultConstructor
-
-  .method public hidebysig static void  NotAStructInitializer_ExplicitConstructor() cil managed
-  {
-    // Code size       41 (0x29)
-    .maxstack  2
-    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
-    IL_0000:  ldloca.s   V_0
-    IL_0002:  ldc.i4.0
-    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
-    IL_0008:  ldloca.s   V_0
-    IL_000a:  ldc.i4.1
-    IL_000b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
-    IL_0010:  ldloca.s   V_0
-    IL_0012:  ldc.i4.2
-    IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
-    IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_001d:  ldloc.0
-    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0028:  ret
-  } // end of method TestCases::NotAStructInitializer_ExplicitConstructor
-
-  .method public hidebysig static void  StructInitializer_ExplicitConstructor() cil managed
-  {
-    // Code size       41 (0x29)
-    .maxstack  3
-    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  ldloca.s   V_0
-    IL_0007:  ldc.i4.0
-    IL_0008:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
-    IL_000d:  ldloca.s   V_0
-    IL_000f:  ldc.i4.1
-    IL_0010:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
-    IL_0015:  ldloca.s   V_0
-    IL_0017:  ldc.i4.2
-    IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
-    IL_001d:  ldloc.0
-    IL_001e:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0023:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0028:  ret
-  } // end of method TestCases::StructInitializer_ExplicitConstructor
-
-  .method public hidebysig static void  StructInitializerWithInitializationOfNestedObjects() cil managed
-  {
-    // Code size       74 (0x4a)
-    .maxstack  3
-    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  ldloca.s   V_0
-    IL_0007:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_000d:  ldloca.s   V_0
-    IL_000f:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
-    IL_0014:  ldc.i4.0
-    IL_0015:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_001a:  ldloca.s   V_0
-    IL_001c:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
-    IL_0021:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
-    IL_0026:  ldc.i4.0
-    IL_0027:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_002c:  ldloca.s   V_0
-    IL_002e:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::get_MoreData()
-    IL_0033:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::FieldList
-    IL_0038:  ldc.i4.1
-    IL_0039:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum2>::Add(!0)
-    IL_003e:  ldloc.0
-    IL_003f:  box        ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData
-    IL_0044:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0049:  ret
-  } // end of method TestCases::StructInitializerWithInitializationOfNestedObjects
-
-  .method public hidebysig static void  StructInitializerWithinObjectInitializer() cil managed
-  {
-    // Code size       49 (0x31)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0,
-             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData V_1)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldloca.s   V_1
-    IL_000e:  ldc.i4.2
-    IL_000f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::.ctor(int32)
-    IL_0014:  ldloca.s   V_1
-    IL_0016:  ldc.i4.1
-    IL_0017:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::Field
-    IL_001c:  ldloca.s   V_1
-    IL_001e:  ldc.i4.2
-    IL_001f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData::set_Property(int32)
-    IL_0024:  ldloc.1
-    IL_0025:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_NestedStruct(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/StructData)
-    IL_002a:  ldloc.0
-    IL_002b:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0030:  ret
-  } // end of method TestCases::StructInitializerWithinObjectInitializer
-
-  .method public hidebysig static void  Bug270_NestedInitialisers() cil managed
-  {
-    // Code size       119 (0x77)
-    .maxstack  6
-    .locals init (class [mscorlib]System.Globalization.NumberFormatInfo[] V_0,
-             class [mscorlib]System.Threading.Thread V_1,
-             class [mscorlib]System.Globalization.CultureInfo V_2,
-             class [mscorlib]System.Globalization.DateTimeFormatInfo V_3)
-    IL_0000:  ldnull
-    IL_0001:  stloc.0
-    IL_0002:  ldc.i4.0
-    IL_0003:  ldnull
-    IL_0004:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Bug270_NestedInitialisers()
-    IL_000a:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
-                                                                                     native int)
-    IL_000f:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
-    IL_0014:  stloc.1
-    IL_0015:  ldloc.1
-    IL_0016:  ldc.i4.1
-    IL_0017:  callvirt   instance void [mscorlib]System.Threading.Thread::set_Priority(valuetype [mscorlib]System.Threading.ThreadPriority)
-    IL_001c:  ldloc.1
-    IL_001d:  ldc.i4.0
-    IL_001e:  newobj     instance void [mscorlib]System.Globalization.CultureInfo::.ctor(int32)
-    IL_0023:  stloc.2
-    IL_0024:  ldloc.2
-    IL_0025:  newobj     instance void [mscorlib]System.Globalization.DateTimeFormatInfo::.ctor()
-    IL_002a:  stloc.3
-    IL_002b:  ldloc.3
-    IL_002c:  ldstr      "ddmmyy"
-    IL_0031:  callvirt   instance void [mscorlib]System.Globalization.DateTimeFormatInfo::set_ShortDatePattern(string)
-    IL_0036:  ldloc.3
-    IL_0037:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_DateTimeFormat(class [mscorlib]System.Globalization.DateTimeFormatInfo)
-    IL_003c:  ldloc.2
-    IL_003d:  ldloc.0
-    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1d'
-    IL_0043:  brtrue.s   IL_0056
-
-    IL_0045:  ldnull
-    IL_0046:  ldftn      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'<Bug270_NestedInitialisers>b__1c'(class [mscorlib]System.Globalization.NumberFormatInfo)
-    IL_004c:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
-                                                                                                                                        native int)
-    IL_0051:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1d'
-    IL_0056:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::'CS$<>9__CachedAnonymousMethodDelegate1d'
-    IL_005b:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
-                                                                                                                                                                                         class [mscorlib]System.Func`2<!!0,bool>)
-    IL_0060:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
-    IL_0065:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_NumberFormat(class [mscorlib]System.Globalization.NumberFormatInfo)
-    IL_006a:  ldloc.2
-    IL_006b:  callvirt   instance void [mscorlib]System.Threading.Thread::set_CurrentCulture(class [mscorlib]System.Globalization.CultureInfo)
-    IL_0070:  ldloc.1
-    IL_0071:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::TestCall(int32,
-                                                                                                                 class [mscorlib]System.Threading.Thread)
-    IL_0076:  ret
-  } // end of method TestCases::Bug270_NestedInitialisers
-
-  .method public hidebysig static void  Bug953_MissingNullableSpecifierForArrayInitializer() cil managed
-  {
-    // Code size       36 (0x24)
-    .maxstack  2
-    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] V_0)
-    IL_0000:  ldc.i4.1
-    IL_0001:  newarr     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  ldc.i4.0
-    IL_0009:  ldelema    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
-    IL_000e:  ldsfld     valuetype [mscorlib]System.Guid [mscorlib]System.Guid::Empty
-    IL_0013:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>::.ctor(!0)
-    IL_0018:  stobj      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
-    IL_001d:  ldloc.0
-    IL_001e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[])
-    IL_0023:  ret
-  } // end of method TestCases::Bug953_MissingNullableSpecifierForArrayInitializer
-
-  .method private hidebysig instance void 
-          Issue907_Test3(string text) cil managed
-  {
-    // Code size       30 (0x1e)
-    .maxstack  4
-    .locals init (class [mscorlib]System.Collections.Generic.Dictionary`2<string,object> V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,object>::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldstr      ""
-    IL_0011:  ldarg.1
-    IL_0012:  callvirt   instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,object>::Add(!0,
-                                                                                                                   !1)
-    IL_0017:  ldloc.0
-    IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_001d:  ret
-  } // end of method TestCases::Issue907_Test3
-
-  .method private hidebysig instance void 
-          Issue1250_Test1(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum 'value') cil managed
-  {
-    // Code size       25 (0x19)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C V_0)
-    IL_0000:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::.ctor()
-    IL_000a:  stloc.0
-    IL_000b:  ldloc.0
-    IL_000c:  ldarg.1
-    IL_000d:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C::Z
-    IL_0012:  ldloc.0
-    IL_0013:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
-                                                                                                          object)
-    IL_0018:  ret
-  } // end of method TestCases::Issue1250_Test1
-
-  .method private hidebysig instance void 
-          Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
-                         class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
-  {
-    // Code size       154 (0x9a)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item V_0,
-             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_1,
-             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_2,
-             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_3,
-             valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> V_4)
-    IL_0000:  ldarg.1
-    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::.ctor()
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  ldstr      "Text"
-    IL_000d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Text(string)
-    IL_0012:  ldloc.0
-    IL_0013:  ldarg.2
-    IL_0014:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value()
-    IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value(valuetype [mscorlib]System.Decimal)
-    IL_001e:  ldloc.0
-    IL_001f:  ldarg.2
-    IL_0020:  callvirt   instance valuetype [mscorlib]System.Decimal ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Value2()
-    IL_0025:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value2(valuetype [mscorlib]System.Decimal)
-    IL_002a:  ldloc.0
-    IL_002b:  ldarg.2
-    IL_002c:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable()
-    IL_0031:  stloc.1
-    IL_0032:  ldloca.s   V_1
-    IL_0034:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_003a:  callvirt   instance string [mscorlib]System.Object::ToString()
-    IL_003f:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value3(string)
-    IL_0044:  ldloc.0
-    IL_0045:  ldarg.2
-    IL_0046:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable2()
-    IL_004b:  stloc.2
-    IL_004c:  ldloca.s   V_2
-    IL_004e:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0054:  callvirt   instance string [mscorlib]System.Object::ToString()
-    IL_0059:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value4(string)
-    IL_005e:  ldloc.0
-    IL_005f:  ldarg.2
-    IL_0060:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable3()
-    IL_0065:  stloc.3
-    IL_0066:  ldloca.s   V_3
-    IL_0068:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_006e:  callvirt   instance string [mscorlib]System.Object::ToString()
-    IL_0073:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value5(string)
-    IL_0078:  ldloc.0
-    IL_0079:  ldarg.2
-    IL_007a:  callvirt   instance valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::get_Nullable4()
-    IL_007f:  stloc.s    V_4
-    IL_0081:  ldloca.s   V_4
-    IL_0083:  constrained. valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>
-    IL_0089:  callvirt   instance string [mscorlib]System.Object::ToString()
-    IL_008e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item::set_Value6(string)
-    IL_0093:  ldloc.0
-    IL_0094:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item>::Add(!0)
-    IL_0099:  ret
-  } // end of method TestCases::Issue1251_Test
-
-  .method private hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data 
-          Issue1279(int32 p) cil managed
-  {
-    // Code size       39 (0x27)
-    .maxstack  3
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data V_0)
-    IL_0000:  ldarg.1
-    IL_0001:  ldc.i4.1
-    IL_0002:  bne.un.s   IL_0025
-
-    IL_0004:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
-    IL_0009:  stloc.0
-    IL_000a:  ldloc.0
-    IL_000b:  ldc.i4.0
-    IL_000c:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::set_a(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/MyEnum)
-    IL_0011:  ldloc.0
-    IL_0012:  ldarg.0
-    IL_0013:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Data_TestEvent(object,
-                                                                                                                                class [mscorlib]System.EventArgs)
-    IL_0019:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
-                                                                            native int)
-    IL_001e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
-    IL_0023:  ldloc.0
-    IL_0024:  ret
-
-    IL_0025:  ldnull
-    IL_0026:  ret
-  } // end of method TestCases::Issue1279
-
-  .method private hidebysig instance void 
-          Data_TestEvent(object sender,
-                         class [mscorlib]System.EventArgs e) cil managed
-  {
-    // Code size       6 (0x6)
-    .maxstack  8
-    IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
-    IL_0005:  throw
-  } // end of method TestCases::Data_TestEvent
-
-  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 
-          Issue1345() cil managed
-  {
-    // Code size       30 (0x1e)
-    .maxstack  2
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::.ctor()
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::Data
-    IL_000c:  ldc.i4.3
-    IL_000d:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
-    IL_0012:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0017:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
-    IL_001c:  ldloc.0
-    IL_001d:  ret
-  } // end of method TestCases::Issue1345
-
-  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 
-          Issue1345b() cil managed
-  {
-    // Code size       30 (0x1e)
-    .maxstack  2
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2 V_0)
-    IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::.ctor()
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem2::get_Data2()
-    IL_000c:  ldc.i4.3
-    IL_000d:  newobj     instance void [mscorlib]System.Decimal::.ctor(int32)
-    IL_0012:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>::.ctor(!0)
-    IL_0017:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem::set_Nullable(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Decimal>)
-    IL_001c:  ldloc.0
-    IL_001d:  ret
-  } // end of method TestCases::Issue1345b
-
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -2235,7 +2906,7 @@
     IL_0006:  ret
   } // end of method TestCases::.ctor
 
-  .method private hidebysig static void  '<NotAnObjectInitializerWithEvent>b__8'(object param0,
+  .method private hidebysig static void  '<NotAnObjectInitializerWithEvent>b__5'(object param0,
                                                                                  class [mscorlib]System.EventArgs param1) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -2243,9 +2914,9 @@
     .maxstack  8
     IL_0000:  call       void [mscorlib]System.Console::WriteLine()
     IL_0005:  ret
-  } // end of method TestCases::'<NotAnObjectInitializerWithEvent>b__8'
+  } // end of method TestCases::'<NotAnObjectInitializerWithEvent>b__5'
 
-  .method private hidebysig static bool  '<Bug270_NestedInitialisers>b__1c'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
+  .method private hidebysig static bool  '<Issue270_NestedInitialisers>b__19'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       17 (0x11)
@@ -2256,11 +2927,123 @@
     IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
     IL_0010:  ret
-  } // end of method TestCases::'<Bug270_NestedInitialisers>b__1c'
+  } // end of method TestCases::'<Issue270_NestedInitialisers>b__19'
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases
+
+.class private auto ansi '<PrivateImplementationDetails>'
+       extends [mscorlib]System.Object
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=40'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 40
+  } // end of class '__StaticArrayInitTypeSize=40'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=24'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 24
+  } // end of class '__StaticArrayInitTypeSize=24'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=10'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 10
+  } // end of class '__StaticArrayInitTypeSize=10'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=12'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 12
+  } // end of class '__StaticArrayInitTypeSize=12'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=80'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 80
+  } // end of class '__StaticArrayInitTypeSize=80'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=48'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 48
+  } // end of class '__StaticArrayInitTypeSize=48'
+
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000a-1' at I_00002070
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000c-1' at I_000020E8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x600000c-2' at I_00002110
+  .field static assembly int64 '$$method0x600000f-1' at I_000023D0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000010-1' at I_000023F8
+  .field static assembly int64 '$$method0x6000011-1' at I_00002420
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000012-1' at I_00002448
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000013-1' at I_00002470
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000014-1' at I_000024A0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000015-1' at I_000024E8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000016-1' at I_00002530
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '$$method0x6000017-1' at I_00002578
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x6000018-1' at I_000025E8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '$$method0x6000019-1' at I_00002620
+} // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
+.data cil I_00002070 = bytearray (
+                 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+                 05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
+                 09 00 00 00 0A 00 00 00) 
+.data cil I_000020E8 = bytearray (
+                 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+                 05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
+                 09 00 00 00 0A 00 00 00) 
+.data cil I_00002110 = bytearray (
+                 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+                 05 00 00 00 06 00 00 00) 
+.data cil I_00002128 = int8[8]
+.data cil I_000023D0 = bytearray (
+                 01 00 01 00 00 00 01 01) 
+.data cil I_000023F8 = bytearray (
+                 01 02 03 04 05 06 07 08 FE FF) 
+.data cil I_00002402 = int8[30]
+.data cil I_00002420 = bytearray (
+                 80 81 00 01 02 03 04 7F) 
+.data cil I_00002448 = bytearray (
+                 00 80 FF FF 00 00 01 00 FF 7F) 
+.data cil I_00002452 = int8[14]
+.data cil I_00002470 = bytearray (
+                 00 00 01 00 FF 7F 00 80 FE FF FF FF) 
+.data cil I_0000247C = int8[4]
+.data cil I_000024A0 = bytearray (
+                 01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
+                 05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
+                 09 00 00 00 0A 00 00 00) 
+.data cil I_000024E8 = bytearray (
+                 01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
+                 05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
+                 09 00 00 00 0A 00 00 00) 
+.data cil I_00002530 = bytearray (
+                 01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 FF FF F3 44 82 91 63 45)                         // ...D..cE
+.data cil I_00002578 = bytearray (
+                 01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
+                 00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
+                 05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
+                 07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
+                 FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
+.data cil I_000025E8 = bytearray (
+                 00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
+                 00 00 80 7F 00 00 C0 FF) 
+.data cil I_00002620 = bytearray (
+                 00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
+                 00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

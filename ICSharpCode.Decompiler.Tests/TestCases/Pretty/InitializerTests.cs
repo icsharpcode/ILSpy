@@ -279,8 +279,371 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			return c;
 		}
+
+		private static int GetInt()
+		{
+			return 1;
+		}
+
+		private static string GetString()
+		{
+			return "Test";
+		}
+
+		private static void NoOp(Guid?[] array)
+		{
+
+		}
+
+		private void Data_TestEvent(object sender, EventArgs e)
+		{
+			throw new NotImplementedException();
+		}
 		#endregion
 
+		#region Array initializers
+		public static void Array1()
+		{
+			X(Y(), new int[10] {
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10
+			});
+		}
+
+		public static void Array2(int a, int b, int c)
+		{
+			X(Y(), new int[5] {
+				a,
+				0,
+				b,
+				0,
+				c
+			});
+		}
+
+		public static void NestedArray(int a, int b, int c)
+		{
+			X(Y(), new int[3][] {
+				new int[10] {
+					1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					7,
+					8,
+					9,
+					10
+				},
+				new int[3] {
+					a,
+					b,
+					c
+				},
+				new int[6] {
+					1,
+					2,
+					3,
+					4,
+					5,
+					6
+				}
+			});
+		}
+
+		public static void NestedNullableArray(int a, int b, int c)
+		{
+			X(Y(), new int?[3][] {
+				new int?[11] {
+					1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					7,
+					8,
+					9,
+					10,
+					null
+				},
+				new int?[4] {
+						a,
+					b,
+					c,
+					null
+				},
+				new int?[7] {
+					1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					null
+				}
+			  });
+		}
+		public unsafe static void NestedPointerArray(int a, int b, int c)
+		{
+			X(Y(), new void*[3][] {
+				new void*[1] {
+					null
+				},
+				new void*[2] {
+					(void*)200,
+					null
+				},
+				new void*[2] {
+					(void*)100,
+					null
+				}
+			});
+		}
+
+		public static void ArrayBoolean()
+		{
+			X(Y(), new bool[8] {
+				true,
+				false,
+				true,
+				false,
+				false,
+				false,
+				true,
+				true
+			});
+		}
+
+		public static void ArrayByte()
+		{
+			X(Y(), new byte[10] {
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				254,
+				byte.MaxValue
+			});
+		}
+
+		public static void ArraySByte()
+		{
+			X(Y(), new sbyte[8] {
+				sbyte.MinValue,
+				-127,
+				0,
+				1,
+				2,
+				3,
+				4,
+				sbyte.MaxValue
+			});
+		}
+
+		public static void ArrayShort()
+		{
+			X(Y(), new short[5] {
+				short.MinValue,
+				-1,
+				0,
+				1,
+				short.MaxValue
+			});
+		}
+
+		public static void ArrayUShort()
+		{
+			X(Y(), new ushort[6] {
+				0,
+				1,
+				32767,
+				32768,
+				65534,
+				ushort.MaxValue
+			});
+		}
+
+		public static void ArrayInt()
+		{
+			X(Y(), new int[10] {
+				1,
+				-2,
+				2000000000,
+				4,
+				5,
+				-6,
+				7,
+				8,
+				9,
+				10
+			});
+		}
+
+		public static void ArrayUInt()
+		{
+			X(Y(), new uint[10] {
+				1u,
+				2000000000u,
+				3000000000u,
+				4u,
+				5u,
+				6u,
+				7u,
+				8u,
+				9u,
+				10u
+			});
+		}
+
+		public static void ArrayLong()
+		{
+			X(Y(), new long[5] {
+				-4999999999999999999L,
+				-1L,
+				0L,
+				1L,
+				4999999999999999999L
+			});
+		}
+
+		public static void ArrayULong()
+		{
+			X(Y(), new ulong[10] {
+				1uL,
+				2000000000uL,
+				3000000000uL,
+				4uL,
+				5uL,
+				6uL,
+				7uL,
+				8uL,
+				4999999999999999999uL,
+				9999999999999999999uL
+			});
+		}
+
+		public static void ArrayFloat()
+		{
+			X(Y(), new float[6] {
+				-1.5f,
+				0f,
+				1.5f,
+				float.NegativeInfinity,
+				float.PositiveInfinity,
+				float.NaN
+			});
+		}
+
+		public static void ArrayDouble()
+		{
+			X(Y(), new double[6] {
+				-1.5,
+				0.0,
+				1.5,
+				double.NegativeInfinity,
+				double.PositiveInfinity,
+				double.NaN
+			});
+		}
+
+		public static void ArrayDecimal()
+		{
+			X(Y(), new decimal[6] {
+				-100m,
+				0m,
+				100m,
+				decimal.MinValue,
+				decimal.MaxValue,
+				0.0000001m
+			});
+		}
+
+		public static void ArrayString()
+		{
+			X(Y(), new string[4] {
+				"",
+				null,
+				"Hello",
+				"World"
+			});
+		}
+
+		public static void ArrayEnum()
+		{
+			X(Y(), new MyEnum[4] {
+				MyEnum.a,
+				MyEnum.b,
+				MyEnum.a,
+				MyEnum.b
+			});
+		}
+
+		public static void RecursiveArrayInitializer()
+		{
+			int[] array = new int[3];
+			array[0] = 1;
+			array[1] = 2;
+			array[2] = array[1] + 1;
+			array[0] = 0;
+		}
+
+		public static void InvalidIndices(int a)
+		{
+			int[] array = new int[1];
+			array[1] = a;
+			X(Y(), array);
+		}
+
+		public static void InvalidIndices2(int a)
+		{
+#pragma warning disable 251
+			int[] array = new int[1];
+			array[-1] = a;
+			X(Y(), array);
+#pragma warning restore
+		}
+
+		public static void IndicesInWrongOrder(int a, int b)
+		{
+			int[] array = new int[5];
+			array[2] = b;
+			array[1] = a;
+			X(Y(), array);
+		}
+
+		public static void Issue953_MissingNullableSpecifierForArrayInitializer()
+		{
+			NoOp(new Guid?[1] {
+				Guid.Empty
+			});
+		}
+
+		private void Issue907_Test3(string text)
+		{
+			X(Y(), new Dictionary<string, object> {
+				{
+					"",
+					text
+				}
+			});
+		}
+		#endregion
+
+		#region Object initializers
 		public C Test1()
 		{
 			C c = new C();
@@ -333,29 +696,259 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			return c;
 		}
 
-		public static void InvalidIndices(int a)
+		public static void ObjectInitializer()
 		{
-			int[] array = new int[1];
-			array[1] = a;
-			X(Y(), array);
+			X(Y(), new Data {
+				a = MyEnum.a
+			});
 		}
 
-		public static void InvalidIndices2(int a)
+		public static void NotAnObjectInitializer()
 		{
-#pragma warning disable 251
-			int[] array = new int[1];
-			array[-1] = a;
-			X(Y(), array);
-#pragma warning restore
+			Data data = new Data();
+			data.a = MyEnum.a;
+			X(Y(), data);
 		}
 
-		public static void IndicesInWrongOrder(int a, int b)
+		public static void NotAnObjectInitializerWithEvent()
 		{
-			int[] array = new int[5];
-			array[2] = b;
-			array[1] = a;
-			X(Y(), array);
+			Data data = new Data();
+			data.TestEvent += delegate {
+				Console.WriteLine();
+			};
+			X(Y(), data);
 		}
+
+		public static void ObjectInitializerAssignCollectionToField()
+		{
+			X(Y(), new Data {
+				a = MyEnum.a,
+				FieldList = new List<MyEnum2> {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			});
+		}
+
+		public static void ObjectInitializerAddToCollectionInField()
+		{
+			X(Y(), new Data {
+				a = MyEnum.a,
+				FieldList = {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			});
+		}
+
+		public static void ObjectInitializerAssignCollectionToProperty()
+		{
+			X(Y(), new Data {
+				a = MyEnum.a,
+				PropertyList = new List<MyEnum2> {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			});
+		}
+
+		public static void ObjectInitializerAddToCollectionInProperty()
+		{
+			X(Y(), new Data {
+				a = MyEnum.a,
+				PropertyList = {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			});
+		}
+
+		public static void ObjectInitializerWithInitializationOfNestedObjects()
+		{
+			X(Y(), new Data {
+				MoreData = {
+					a = MyEnum.a,
+					MoreData = {
+						a = MyEnum.b
+					}
+				}
+			});
+		}
+
+		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()
+		{
+			X(Y(), new Data {
+				a = MyEnum.b,
+				MoreData = {
+				  a = MyEnum.a,
+				  MoreData = {
+						MoreData = {
+							MoreData = {
+								MoreData = {
+									MoreData = {
+										MoreData = {
+											a = MyEnum.b
+										}
+									}
+								}
+							}
+						}
+					}
+			  }
+			});
+		}
+
+		public static void CollectionInitializerInsideObjectInitializers()
+		{
+			X(Y(), new Data {
+				MoreData = new Data {
+					a = MyEnum.a,
+					b = MyEnum.b,
+					PropertyList = {
+						MyEnum2.c
+					}
+				}
+			});
+		}
+
+		public static void NotAStructInitializer_DefaultConstructor()
+		{
+			StructData structData = default(StructData);
+			structData.Field = 1;
+			structData.Property = 2;
+			X(Y(), structData);
+		}
+
+		public static void StructInitializer_DefaultConstructor()
+		{
+			X(Y(), new StructData {
+				Field = 1,
+				Property = 2
+			});
+		}
+
+		public static void NotAStructInitializer_ExplicitConstructor()
+		{
+			StructData structData = new StructData(0);
+			structData.Field = 1;
+			structData.Property = 2;
+			X(Y(), structData);
+		}
+
+		public static void StructInitializer_ExplicitConstructor()
+		{
+			X(Y(), new StructData(0) {
+				Field = 1,
+				Property = 2
+			});
+		}
+
+		public static void StructInitializerWithInitializationOfNestedObjects()
+		{
+			X(Y(), new StructData {
+				MoreData = {
+					a = MyEnum.a,
+					FieldList = {
+						MyEnum2.c,
+						MyEnum2.d
+					}
+				}
+			});
+		}
+
+		public static void StructInitializerWithinObjectInitializer()
+		{
+			X(Y(), new Data {
+				NestedStruct = new StructData(2) {
+					Field = 1,
+					Property = 2
+				}
+			});
+		}
+
+		public static void Issue270_NestedInitialisers()
+		{
+			NumberFormatInfo[] source = null;
+
+			TestCall(0, new Thread(Issue270_NestedInitialisers) {
+				Priority = ThreadPriority.BelowNormal,
+				CurrentCulture = new CultureInfo(0) {
+					DateTimeFormat = new DateTimeFormatInfo {
+						ShortDatePattern = "ddmmyy"
+					},
+					NumberFormat = (from format in source
+									where format.CurrencySymbol == "$"
+									select format).First()
+				}
+			});
+		}
+
+		public OtherItem2 Issue1345()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data.Nullable = 3m;
+			return otherItem;
+		}
+
+		public OtherItem2 Issue1345b()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data2.Nullable = 3m;
+			return otherItem;
+		}
+#if CS60
+		public OtherItem2 Issue1345c()
+		{
+			OtherItem2 otherItem = new OtherItem2();
+			otherItem.Data3.Nullable = 3m;
+			return otherItem;
+		}
+
+		private Data Issue1345_FalsePositive()
+		{
+			return new Data {
+				ReadOnlyPropertyList = {
+					MyEnum2.c,
+					MyEnum2.d
+				}
+			};
+		}
+#endif
+
+		private void Issue1250_Test1(MyEnum value)
+		{
+			X(Y(), new C {
+				Z = (int)value
+			});
+		}
+
+		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
+		{
+			list.Add(new Item {
+				Text = "Text",
+				Value = otherItem.Value,
+				Value2 = otherItem.Value2,
+				Value3 = otherItem.Nullable.ToString(),
+				Value4 = otherItem.Nullable2.ToString(),
+				Value5 = otherItem.Nullable3.ToString(),
+				Value6 = otherItem.Nullable4.ToString()
+			});
+		}
+
+		private Data Issue1279(int p)
+		{
+			if (p == 1) {
+				Data data = new Data();
+				data.a = MyEnum.a;
+				data.TestEvent += Data_TestEvent;
+				return data;
+			}
+			return null;
+		}
+
+		#endregion
+
+		#region Collection initializer
 
 		public static void ExtensionMethodInCollectionInitializer()
 		{
@@ -455,100 +1048,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), list);
 		}
 
-		public static void ObjectInitializer()
-		{
-			X(Y(), new Data {
-				a = MyEnum.a
-			});
-		}
-
-		public static void NotAnObjectInitializer()
-		{
-			Data data = new Data();
-			data.a = MyEnum.a;
-			X(Y(), data);
-		}
-
-		public static void NotAnObjectInitializerWithEvent()
-		{
-			Data data = new Data();
-			data.TestEvent += delegate {
-				Console.WriteLine();
-			};
-			X(Y(), data);
-		}
-
-		public static void ObjectInitializerAssignCollectionToField()
-		{
-			X(Y(), new Data {
-				a = MyEnum.a,
-				FieldList = new List<MyEnum2> {
-					MyEnum2.c,
-					MyEnum2.d
-				}
-			});
-		}
-
-		public static void ObjectInitializerAddToCollectionInField()
-		{
-			X(Y(), new Data {
-				a = MyEnum.a,
-				FieldList = {
-					MyEnum2.c,
-					MyEnum2.d
-				}
-			});
-		}
-
-		public static void ObjectInitializerAssignCollectionToProperty()
-		{
-			X(Y(), new Data {
-				a = MyEnum.a,
-				PropertyList = new List<MyEnum2> {
-					MyEnum2.c,
-					MyEnum2.d
-				}
-			});
-		}
-
-		public static void ObjectInitializerAddToCollectionInProperty()
-		{
-			X(Y(), new Data {
-				a = MyEnum.a,
-				PropertyList = {
-					MyEnum2.c,
-					MyEnum2.d
-				}
-			});
-		}
-
-		public static void ObjectInitializerWithInitializationOfNestedObjects()
-		{
-			X(Y(), new Data {
-				MoreData = {
-					a = MyEnum.a,
-					MoreData = {
-						a = MyEnum.b
-					}
-				}
-			});
-		}
-
-		private static int GetInt()
-		{
-			return 1;
-		}
-
-		private static string GetString()
-		{
-			return "Test";
-		}
-
-		private static void NoOp(Guid?[] array)
-		{
-
-		}
-
 #if CS60
 		public static void SimpleDictInitializer()
 		{
@@ -594,142 +1093,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			};
 		}
-#endif
 
-		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()
-		{
-			X(Y(), new Data {
-				a = MyEnum.b,
-				MoreData = {
-				  a = MyEnum.a,
-				  MoreData = {
-						MoreData = {
-							MoreData = {
-								MoreData = {
-									MoreData = {
-										MoreData = {
-											a = MyEnum.b
-										}
-									}
-								}
-							}
-						}
-					}
-			  }
-			});
-		}
-
-		public static void CollectionInitializerInsideObjectInitializers()
-		{
-			X(Y(), new Data {
-				MoreData = new Data {
-					a = MyEnum.a,
-					b = MyEnum.b,
-					PropertyList = {
-						MyEnum2.c
-					}
-				}
-			});
-		}
-
-		public static void NotAStructInitializer_DefaultConstructor()
-		{
-			StructData structData = default(StructData);
-			structData.Field = 1;
-			structData.Property = 2;
-			X(Y(), structData);
-		}
-
-		public static void StructInitializer_DefaultConstructor()
-		{
-			X(Y(), new StructData {
-				Field = 1,
-				Property = 2
-			});
-		}
-
-		public static void NotAStructInitializer_ExplicitConstructor()
-		{
-			StructData structData = new StructData(0);
-			structData.Field = 1;
-			structData.Property = 2;
-			X(Y(), structData);
-		}
-
-		public static void StructInitializer_ExplicitConstructor()
-		{
-			X(Y(), new StructData(0) {
-				Field = 1,
-				Property = 2
-			});
-		}
-
-		public static void StructInitializerWithInitializationOfNestedObjects()
-		{
-			X(Y(), new StructData {
-				MoreData = {
-					a = MyEnum.a,
-					FieldList = {
-						MyEnum2.c,
-						MyEnum2.d
-					}
-				}
-			});
-		}
-
-		public static void StructInitializerWithinObjectInitializer()
-		{
-			X(Y(), new Data {
-				NestedStruct = new StructData(2) {
-					Field = 1,
-					Property = 2
-				}
-			});
-		}
-
-		public static void Bug270_NestedInitialisers()
-		{
-			NumberFormatInfo[] source = null;
-
-			TestCall(0, new Thread(Bug270_NestedInitialisers) {
-				Priority = ThreadPriority.BelowNormal,
-				CurrentCulture = new CultureInfo(0) {
-					DateTimeFormat = new DateTimeFormatInfo {
-						ShortDatePattern = "ddmmyy"
-					},
-					NumberFormat = (from format in source
-									where format.CurrencySymbol == "$"
-									select format).First()
-				}
-			});
-		}
-
-		public static void Bug953_MissingNullableSpecifierForArrayInitializer()
-		{
-			NoOp(new Guid?[1] {
-				Guid.Empty
-			});
-		}
-
-
-		private void Issue907_Test3(string text)
-		{
-			X(Y(), new Dictionary<string, object> {
-				{
-					"",
-					text
-				}
-			});
-		}
-
-		private void Issue1250_Test1(MyEnum value)
-		{
-			X(Y(), new C {
-				Z = (int)value
-			});
-		}
-
-#if CS60
 		private void Issue1250_Test2(MyEnum value)
 		{
 			X(Y(), new C {
@@ -751,66 +1115,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 #endif
-
-		private void Issue1251_Test(List<Item> list, OtherItem otherItem)
-		{
-			list.Add(new Item {
-				Text = "Text",
-				Value = otherItem.Value,
-				Value2 = otherItem.Value2,
-				Value3 = otherItem.Nullable.ToString(),
-				Value4 = otherItem.Nullable2.ToString(),
-				Value5 = otherItem.Nullable3.ToString(),
-				Value6 = otherItem.Nullable4.ToString()
-			});
-		}
-
-		private Data Issue1279(int p)
-		{
-			if (p == 1) {
-				Data data = new Data();
-				data.a = MyEnum.a;
-				data.TestEvent += Data_TestEvent;
-				return data;
-			}
-			return null;
-		}
-
-		private void Data_TestEvent(object sender, EventArgs e)
-		{
-			throw new NotImplementedException();
-		}
-
-		public OtherItem2 Issue1345()
-		{
-			OtherItem2 otherItem = new OtherItem2();
-			otherItem.Data.Nullable = 3m;
-			return otherItem;
-		}
-
-		public OtherItem2 Issue1345b()
-		{
-			OtherItem2 otherItem = new OtherItem2();
-			otherItem.Data2.Nullable = 3m;
-			return otherItem;
-		}
-#if CS60
-		public OtherItem2 Issue1345c()
-		{
-			OtherItem2 otherItem = new OtherItem2();
-			otherItem.Data3.Nullable = 3m;
-			return otherItem;
-		}
-
-		private Data Issue1345_FalsePositive()
-		{
-			return new Data {
-				ReadOnlyPropertyList = {
-					MyEnum2.c,
-					MyEnum2.d
-				}
-			};
-		}
-#endif
+		#endregion
 	}
 }
