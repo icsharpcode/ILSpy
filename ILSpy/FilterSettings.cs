@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy
 	{
 		public FilterSettings(XElement element)
 		{
-			this.ShowInternalApi = (bool?)element.Element("ShowInternalAPI") ?? true;
+			this.ShowApiLevel = (ApiVisibility?)(int?)element.Element("ShowAPILevel") ?? ApiVisibility.PublicOnly;
 			this.Language = Languages.GetLanguage((string)element.Element("Language"));
 			this.LanguageVersion = Language.LanguageVersions.FirstOrDefault(v => v.Version == (string)element.Element("LanguageVersion"));
 			if (this.LanguageVersion == default(LanguageVersion))
@@ -47,7 +47,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return new XElement(
 				"FilterSettings",
-				new XElement("ShowInternalAPI", this.ShowInternalApi),
+				new XElement("ShowAPILevel", (int)this.ShowApiLevel),
 				new XElement("Language", this.Language.Name),
 				new XElement("LanguageVersion", this.LanguageVersion.Version)
 			);
@@ -78,22 +78,48 @@ namespace ICSharpCode.ILSpy
 				return true;
 			return text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-		
-		bool showInternalApi;
-		
+
+		ApiVisibility showApiLevel;
+
 		/// <summary>
-		/// Gets/Sets whether internal API members should be shown.
+		/// Gets/Sets whether public, internal or all API members should be shown.
 		/// </summary>
-		public bool ShowInternalApi {
-			get { return showInternalApi; }
+		public ApiVisibility ShowApiLevel {
+			get { return showApiLevel; }
 			set {
-				if (showInternalApi != value) {
-					showInternalApi = value;
-					OnPropertyChanged("ShowInternalAPI");
+				if (showApiLevel != value) {
+					showApiLevel = value;
+					OnPropertyChanged("ShowApiLevel");
 				}
 			}
 		}
-		
+
+		public bool ShowInternalApi {
+			get { return ShowApiLevel == ApiVisibility.PublicAndInternal; }
+			set {
+				if (ShowApiLevel == ApiVisibility.PublicAndInternal) {
+					ShowApiLevel = ApiVisibility.PublicOnly;
+				} else {
+					ShowApiLevel = ApiVisibility.PublicAndInternal;
+				}
+				OnPropertyChanged("ShowInternalApi");
+				OnPropertyChanged("ShowAllApi");
+			}
+		}
+
+		public bool ShowAllApi {
+			get { return ShowApiLevel == ApiVisibility.All; }
+			set {
+				if (ShowApiLevel == ApiVisibility.All) {
+					ShowApiLevel = ApiVisibility.PublicOnly;
+				} else {
+					ShowApiLevel = ApiVisibility.All;
+				}
+				OnPropertyChanged("ShowInternalApi");
+				OnPropertyChanged("ShowAllApi");
+			}
+		}
+
 		Language language;
 		
 		/// <summary>
@@ -148,5 +174,12 @@ namespace ICSharpCode.ILSpy
 			f.PropertyChanged = null;
 			return f;
 		}
+	}
+
+	public enum ApiVisibility
+	{
+		PublicOnly,
+		PublicAndInternal,
+		All
 	}
 }

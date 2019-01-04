@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string ISymbol.Name => baseParameter.Name;
 		IType IVariable.Type => newType;
 		bool IVariable.IsConst => baseParameter.IsConst;
-		object IVariable.ConstantValue => baseParameter.ConstantValue;
+		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => baseParameter.GetConstantValue(throwOnInvalidMetadata);
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 
 		public override string ToString()

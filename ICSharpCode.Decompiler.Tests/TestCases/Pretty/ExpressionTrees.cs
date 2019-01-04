@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 using System.Xml;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -317,6 +318,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, () => ((IEnumerable<object>)null).Aggregate(null, (object o1, object o2) => null)),
 			ToCode(null, () => ((IEnumerable<object>)null).Aggregate((object)null, (Func<object, object, object>)((object o1, object o2) => null), (Func<object, object>)((object o) => null)))
 		};
+
+		public static void TestCall(object a)
+		{
+
+		}
+
+		public static void TestCall(ref object a)
+		{
+
+		}
 
 		private void Issue1249(int ID)
 		{
@@ -948,6 +959,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Test<Func<int, string>>((int a) => a.ToString(), (int a) => a.ToString());
 			Test<Func<string, char[]>>((string a) => a.ToArray(), (string a) => a.ToArray());
 			Test<Func<bool>>(() => 'a'.CompareTo('b') < 0, () => 'a'.CompareTo('b') < 0);
+			Test<Action<object, bool>>(delegate(object lockObj, bool lockTaken) {
+				Monitor.Enter(lockObj, ref lockTaken);
+			}, (object lockObj, bool lockTaken) => Monitor.Enter(lockObj, ref lockTaken));
+			Test<Func<string, int, bool>>((string str, int num) => int.TryParse(str, out num), (string str, int num) => int.TryParse(str, out num));
+			Test<Func<string, SimpleType, bool>>((string str, SimpleType t) => int.TryParse(str, out t.Field), (string str, SimpleType t) => int.TryParse(str, out t.Field));
+			Test<Action<object>>(delegate(object o) {
+				TestCall(o);
+			}, (object o) => TestCall(o));
+			Test<Action<object>>(delegate(object o) {
+				TestCall(ref o);
+			}, (object o) => TestCall(ref o));
 		}
 
 		public static void Quote()

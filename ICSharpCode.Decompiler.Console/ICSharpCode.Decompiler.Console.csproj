@@ -9,7 +9,7 @@
     <ToolCommandName>ilspycmd</ToolCommandName>
     <Version>3.5.0</Version>
     <Description>Command-line decompiler using the ILSpy decompilation engine</Description>
-    <Copyright>Copyright 2011-2018 AlphaSierraPapa</Copyright>
+    <Copyright>Copyright 2011-2019 AlphaSierraPapa</Copyright>
     <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIconUrl>https://ilspy.net/images/icon32.png</PackageIconUrl>

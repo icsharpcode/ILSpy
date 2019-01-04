@@ -526,7 +526,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!processedMethods.Add(part))
 						continue;
 					try {
-						ReadCodeMappingInfo(module, declaringType, info, parent, part, connectedMethods, processedNestedTypes);
+						ReadCodeMappingInfo(module, info, parent, part, connectedMethods, processedNestedTypes);
 					} catch (BadImageFormatException) {
 						// ignore invalid IL
 					}
@@ -536,14 +536,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return info;
 		}
 
-		private static void ReadCodeMappingInfo(PEFile module, TypeDefinitionHandle declaringType, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
+		private static void ReadCodeMappingInfo(PEFile module, CodeMappingInfo info, MethodDefinitionHandle parent, MethodDefinitionHandle part, Queue<MethodDefinitionHandle> connectedMethods, HashSet<TypeDefinitionHandle> processedNestedTypes)
 		{
 			var md = module.Metadata.GetMethodDefinition(part);
 
 			if (!md.HasBody()) {
 				info.AddMapping(parent, part);
 				return;
-			} 
+			}
+
+			var declaringType = md.GetDeclaringType();
 
 			var blob = module.Reader.GetMethodBody(md.RelativeVirtualAddress).GetILReader();
 			while (blob.RemainingBytes > 0) {
@@ -996,7 +998,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						case EnumValueDisplayMode.None:
 							foreach (var enumMember in typeDecl.Members.OfType<EnumMemberDeclaration>()) {
 								enumMember.Initializer = null;
-								if (enumMember.GetSymbol() is IField f && f.ConstantValue == null) {
+								if (enumMember.GetSymbol() is IField f && f.GetConstantValue() == null) {
 									typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
 								}
 							}
@@ -1028,8 +1030,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool first = true;
 			long firstValue = 0, previousValue = 0;
 			foreach (var field in typeDef.Fields) {
-				if (MemberIsHidden(module, field.MetadataToken, settings) || field.ConstantValue == null) continue;
-				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+				if (MemberIsHidden(module, field.MetadataToken, settings))
+					continue;
+				object constantValue = field.GetConstantValue();
+				if (constantValue == null)
+					continue;
+				long currentValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
 				if (first) {
 					firstValue = currentValue;
 					first = false;
@@ -1258,9 +1264,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 				if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
 					var enumDec = new EnumMemberDeclaration { Name = field.Name };
-					if (field.ConstantValue != null) {
-						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
-						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+					object constantValue = field.GetConstantValue();
+					if (constantValue != null) {
+						long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, constantValue);
 						if (enumDec.Initializer is PrimitiveExpression primitive
 							&& initValue >= 0 && (decompilationContext.CurrentTypeDefinition.HasAttribute(KnownAttribute.Flags)
 								|| (initValue > 9 && (unchecked(initValue & (initValue - 1)) == 0 || unchecked(initValue & (initValue + 1)) == 0)))) {

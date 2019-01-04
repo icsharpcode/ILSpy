@@ -684,7 +684,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return new MemberResolveResult(
 							targetResolveResult, field,
 							field.DeclaringTypeDefinition.EnumUnderlyingType,
-							field.IsConst, field.ConstantValue);
+							field.IsConst, field.GetConstantValue());
 					}
 				}
 				return new MemberResolveResult(targetResolveResult, resultGroup.NonMethod);

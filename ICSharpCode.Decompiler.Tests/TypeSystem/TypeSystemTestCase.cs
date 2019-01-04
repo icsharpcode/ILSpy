@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void Method() { }
 
 		public SimplePublicClass() { }
+		[Double(1)]
 		~SimplePublicClass() { }
 	}
 

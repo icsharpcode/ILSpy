@@ -130,8 +130,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		bool IVariable.IsConst => false;
 
-		public object ConstantValue {
-			get {
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
+			try {
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
 				if (IsDecimalConstant)
@@ -143,7 +144,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 				var constant = metadata.GetConstant(constantHandle);
 				var blobReader = metadata.GetBlobReader(constant.Value);
-				return blobReader.ReadConstant(constant.TypeCode);
+				try {
+					return blobReader.ReadConstant(constant.TypeCode);
+				} catch (ArgumentOutOfRangeException) {
+					throw new BadImageFormatException($"Constant with invalid typecode: {constant.TypeCode}");
+				}
+			} catch (BadImageFormatException) when (!throwOnInvalidMetadata) {
+				return null;
 			}
 		}
 

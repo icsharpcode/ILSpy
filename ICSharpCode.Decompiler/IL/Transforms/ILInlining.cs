@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return modified;
 		}
 
-		static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst, ref int? ctorCallStart)
+		internal static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst, ref int? ctorCallStart)
 		{
 			if (ctorCallStart == null) {
 				if (function == null || !function.Method.IsConstructor)
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return topLevelInst.ILRange.InclusiveEnd < ctorCallStart.GetValueOrDefault();
 		}
 
-		static bool IsCatchWhenBlock(Block block)
+		internal static bool IsCatchWhenBlock(Block block)
 		{
 			var container = BlockContainer.FindClosestContainer(block);
 			return container?.Parent is TryCatchHandler handler

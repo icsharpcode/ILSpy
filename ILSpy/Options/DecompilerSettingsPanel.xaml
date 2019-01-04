@@ -11,11 +11,9 @@
 		<CheckBox IsChecked="{Binding UseDebugSymbols}">Use variable names from debug symbols, if available</CheckBox>
 		<CheckBox IsChecked="{Binding ShowDebugInfo}">Show info from debug symbols, if available</CheckBox>
 		<CheckBox IsChecked="{Binding ShowXmlDocumentation}">Show XML documentation in decompiled code</CheckBox>
-		<CheckBox IsChecked="{Binding FoldBraces}">Enable folding on all blocks in braces</CheckBox>
 		<CheckBox IsChecked="{Binding RemoveDeadCode}">Remove dead and side effect free code</CheckBox>
 		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
 		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
-		<CheckBox IsChecked="{Binding ExpandMemberDefinitions}">Expand member definitions after decompilation</CheckBox>
 		<CheckBox IsChecked="{Binding ApplyWindowsRuntimeProjections}">Apply Windows Runtime projections on loaded assemblies</CheckBox>
 	</StackPanel>
 </UserControl>

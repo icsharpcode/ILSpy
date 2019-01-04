@@ -708,6 +708,9 @@ namespace ICSharpCode.Decompiler.IL
 	
 	static Action<OpCode> MayThrowIfNotDelayed = HasFlag("(DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow)") + (opCode => {
 		opCode.Members.Add("public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (DelayExceptions)" + Environment.NewLine + "\toutput.Write(\"delayex.\");");
+		opCode.PerformMatchConditions.Add("DelayExceptions == o.DelayExceptions");
 	});
 	
 	static Action<OpCode> BaseClass(string name)

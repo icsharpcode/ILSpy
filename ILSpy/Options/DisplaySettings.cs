@@ -83,12 +83,23 @@ namespace ICSharpCode.ILSpy.Options
 
 		bool showMetadataTokens;
 
-		public bool ShowMetadataTokens
-		{
+		public bool ShowMetadataTokens {
 			get { return showMetadataTokens; }
 			set {
 				if (showMetadataTokens != value) {
 					showMetadataTokens = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool showMetadataTokensInBase10;
+
+		public bool ShowMetadataTokensInBase10 {
+			get { return showMetadataTokensInBase10; }
+			set {
+				if (showMetadataTokensInBase10 != value) {
+					showMetadataTokensInBase10 = value;
 					OnPropertyChanged();
 				}
 			}
@@ -120,14 +131,41 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool foldBraces = false;
+
+		public bool FoldBraces {
+			get { return foldBraces; }
+			set {
+				if (foldBraces != value) {
+					foldBraces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool expandMemberDefinitions = false;
+
+		public bool ExpandMemberDefinitions {
+			get { return expandMemberDefinitions; }
+			set {
+				if (expandMemberDefinitions != value) {
+					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
 			this.SelectedFontSize = s.selectedFontSize;
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
+			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;
+			this.FoldBraces = s.foldBraces;
+			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
 		}
 	}
 }

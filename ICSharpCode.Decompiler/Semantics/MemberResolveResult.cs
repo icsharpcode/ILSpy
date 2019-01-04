@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			if (field != null) {
 				isConstant = field.IsConst;
 				if (isConstant)
-					constantValue = field.ConstantValue;
+					constantValue = field.GetConstantValue();
 			}
 		}
 		
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			if (field != null) {
 				isConstant = field.IsConst;
 				if (isConstant)
-					constantValue = field.ConstantValue;
+					constantValue = field.GetConstantValue();
 			}
 		}
 		

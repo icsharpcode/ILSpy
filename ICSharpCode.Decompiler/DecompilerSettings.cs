@@ -795,7 +795,7 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>
 		/// Gets/Sets whether C# 7.0 local functions should be used.
-		/// Note: this language feature is currenly not implemented and this setting is always false.
+		/// Note: this language feature is currently not implemented and this setting is always false.
 		/// </summary>
 		public bool LocalFunctions {
 			get { return localFunctions; }

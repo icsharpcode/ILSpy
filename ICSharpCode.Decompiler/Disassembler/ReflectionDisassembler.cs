@@ -56,6 +56,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
+		public bool ShowMetadataTokensInBase10 {
+			get => methodBodyDisassembler.ShowMetadataTokensInBase10;
+			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
+		}
+
 		public IDebugInfoProvider DebugInfo {
 			get => methodBodyDisassembler.DebugInfo;
 			set => methodBodyDisassembler.DebugInfo = value;
@@ -1025,7 +1030,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				default:
 					var blob = metadata.GetBlobReader(constant.Value);
-					var value = blob.ReadConstant(constant.TypeCode);
+					object value;
+					try {
+						value = blob.ReadConstant(constant.TypeCode);
+					} catch (ArgumentOutOfRangeException) {
+						output.Write($"/* Constant with invalid typecode: {constant.TypeCode} */");
+						return;
+					}
 					if (value is string) {
 						DisassemblerHelpers.WriteOperand(output, value);
 					} else {

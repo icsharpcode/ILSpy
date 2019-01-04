@@ -60,8 +60,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return isConst; }
 		}
 		
-		public object ConstantValue {
-			get { return constantValue; }
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
+			return constantValue;
 		}
 		
 		public SymbolKind SymbolKind {

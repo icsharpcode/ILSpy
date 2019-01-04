@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						var attrValue = attr.DecodeValue(this.TypeProvider);
 						if (attrValue.FixedArguments.Length == 1) {
 							if (attrValue.FixedArguments[0].Value is string s) {
-								list.Add(s);
+								list.Add(GetShortName(s));
 							}
 						}
 					}
@@ -151,6 +151,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				result = Empty<string>.Array;
 			}
 			return LazyInit.GetOrSet(ref this.internalsVisibleTo, result);
+		}
+
+		static string GetShortName(string fullAssemblyName)
+		{
+			if (fullAssemblyName == null)
+				return null;
+			int pos = fullAssemblyName.IndexOf(',');
+			if (pos < 0)
+				return fullAssemblyName;
+			else
+				return fullAssemblyName.Substring(0, pos);
 		}
 		#endregion
 

@@ -111,8 +111,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return IsOptional; }
 		}
 		
-		public object ConstantValue {
-			get { return defaultValue; }
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
+			return defaultValue;
 		}
 		
 		public override string ToString()
@@ -134,8 +135,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			b.Append(parameter.Type.ReflectionName);
 			if (parameter.IsOptional && parameter.HasConstantValueInSignature) {
 				b.Append(" = ");
-				if (parameter.ConstantValue != null)
-					b.Append(parameter.ConstantValue.ToString());
+				object val = parameter.GetConstantValue(throwOnInvalidMetadata: false);
+				if (val != null)
+					b.Append(val.ToString());
 				else
 					b.Append("null");
 			}

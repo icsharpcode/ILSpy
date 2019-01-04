@@ -374,7 +374,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (DetectMono()) {
 				path = GetMonoMscorlibBasePath(version);
 			} else {
-				path = GetMscorlibBasePath(version);
+				path = GetMscorlibBasePath(version, reference.PublicKeyToken.ToHexString(8));
 			}
 
 			if (path == null)
@@ -387,26 +387,8 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
-		string GetMscorlibBasePath(Version version)
+		string GetMscorlibBasePath(Version version, string publicKeyToken)
 		{
-			string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
-			string[] frameworkPaths = new[] {
-				Path.Combine(rootPath, "Framework"),
-				Path.Combine(rootPath, "Framework64")
-			};
-
-			string folder = GetSubFolderForVersion();
-
-			foreach (var path in frameworkPaths) {
-				var basePath = Path.Combine(path, folder);
-				if (Directory.Exists(basePath))
-					return basePath;
-			}
-
-			if (throwOnError)
-				throw new NotSupportedException("Version not supported: " + version);
-			return null;
-
 			string GetSubFolderForVersion()
 			{
 				switch (version.Major) {
@@ -424,6 +406,36 @@ namespace ICSharpCode.Decompiler.Metadata
 						return null;
 				}
 			}
+
+			if (publicKeyToken == "969db8053d3322ac") {
+				string programFiles = Environment.Is64BitOperatingSystem ?
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) :
+					Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+				string cfPath = $@"Microsoft.NET\SDK\CompactFramework\v{version.Major}.{version.Minor}\WindowsCE\";
+				string cfBasePath = Path.Combine(programFiles, cfPath);
+				if (Directory.Exists(cfBasePath))
+					return cfBasePath;
+			} else {
+				string rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Microsoft.NET");
+				string[] frameworkPaths = new[] {
+					Path.Combine(rootPath, "Framework"),
+					Path.Combine(rootPath, "Framework64")
+				};
+
+				string folder = GetSubFolderForVersion();
+
+				if (folder != null) {
+					foreach (var path in frameworkPaths) {
+						var basePath = Path.Combine(path, folder);
+						if (Directory.Exists(basePath))
+							return basePath;
+					}
+				}
+			}
+
+			if (throwOnError)
+				throw new NotSupportedException("Version not supported: " + version);
+			return null;
 		}
 
 		string GetMonoMscorlibBasePath(Version version)

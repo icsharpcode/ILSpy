@@ -53,6 +53,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public bool ShowMetadataTokens { get; set; }
 
 		/// <summary>
+		/// Show metadata tokens for instructions with token operands in base 10.
+		/// </summary>
+		public bool ShowMetadataTokensInBase10 { get; set; }
+
+		/// <summary>
 		/// Optional provider for sequence points.
 		/// </summary>
 		public IDebugInfoProvider DebugInfo { get; set; }
@@ -453,7 +458,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (spaceBefore) {
 					output.Write(' ');
 				}
-				output.Write("/* {0:X8} */", metadataToken);
+				if (ShowMetadataTokensInBase10) {
+					output.Write("/* {0} */", metadataToken);
+				} else {
+					output.Write("/* {0:X8} */", metadataToken);
+				}
 			}
 		}
 	}
