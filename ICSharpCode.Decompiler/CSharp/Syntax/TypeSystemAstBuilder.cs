@@ -932,6 +932,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Math.Abs(num) < den && new int[] { 2, 3, 5 }.Any(x => den % x == 0);
 		}
 
+		static bool IsEqual(long num, long den, object constantValue, bool isDouble)
+		{
+			if (isDouble) {
+				return (double)constantValue == num / (double)den;
+			} else {
+				return (float)constantValue == num / (float)den;
+			}
+		}
+
 		const int MAX_DENOMINATOR = 1000;
 
 		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
@@ -967,7 +976,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					? FractionApprox((double)constantValue, MAX_DENOMINATOR)
 					: FractionApprox((float)constantValue, MAX_DENOMINATOR);
 
-				if (IsValidFraction(num, den) && Math.Abs(num) != 1 && Math.Abs(den) != 1) {
+				if (IsValidFraction(num, den) && IsEqual(num, den, constantValue, isDouble) && Math.Abs(num) != 1 && Math.Abs(den) != 1) {
 					var left = MakeConstant(type, num);
 					var right = MakeConstant(type, den);
 					return new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
