@@ -1020,48 +1020,60 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				Expression fieldReference = MakeFieldReference();
 
+				// Math.PI or Math.E or (float)Math.PI or (float)Math.E or MathF.PI or MathF.E
 				Expression expr = fieldReference;
 
 				if (n != 1) {
 					if (n == -1) {
+						// -field
 						expr = new UnaryOperatorExpression(UnaryOperatorType.Minus, expr);
 					} else {
+						// field * n
 						expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Multiply, MakeConstant(type, n));
 					}
 				}
 
 				if (d != 1) {
+					// field * n / d or -field / d or field / d
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Divide, MakeConstant(type, d));
 				}
-#pragma warning disable IDE0004
+
 				if (isDouble) {
-					double approxValue = (double)n / (double)d * (memberName == "PI" ? Math.PI : Math.E);
+					double field = memberName == "PI" ? Math.PI : Math.E;
+					double approxValue = field * n / d;
 					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
-					float approxValue = (float)n / (float)d * (memberName == "PI" ? MathF_PI : MathF_E);
+					float field = memberName == "PI" ? MathF_PI : MathF_E;
+					float approxValue = field * n / d;
 					if (approxValue == (float)literalValue)
 						return expr;
 				}
-#pragma warning restore IDE0004
 
+				// Math.PI or Math.E or (float)Math.PI or (float)Math.E or MathF.PI or MathF.E
 				expr = fieldReference.Detach();
-				expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
 
-				if (d != 1) {
+				if (d == 1) {
+					// n / field
+					expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
+				} else {
+					// n / (d * field)
 					expr = new BinaryOperatorExpression(MakeConstant(type, d), BinaryOperatorType.Multiply, expr);
+					expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
 				}
-#pragma warning disable IDE0004
+
 				if (isDouble) {
-					double approxValue = (double)n / ((double)d * (memberName == "PI" ? Math.PI : Math.E));
+					double field = memberName == "PI" ? Math.PI : Math.E;
+					double approxValue = (double)n / ((double)d * field);
 					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
-					float approxValue = (float)n / ((float)d * (memberName == "PI" ? MathF_PI : MathF_E));
+					float field = memberName == "PI" ? MathF_PI : MathF_E;
+					float approxValue = (float)n / ((float)d * field);
 					if (approxValue == (float)literalValue)
 						return expr;
 				}
-#pragma warning restore IDE0004
+
 				return null;
 			}
 
