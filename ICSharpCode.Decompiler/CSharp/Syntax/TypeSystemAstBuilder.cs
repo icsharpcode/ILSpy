@@ -958,19 +958,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					expr = new PrimitiveExpression(constantValue);
 				}
 			}
-			
-			if (expr == null && UseSpecialConstants) {
-				IType mathType;
-				if (isDouble)
-					mathType = compilation.FindType(typeof(Math));
-				else
-					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
-						?? compilation.FindType(typeof(Math));
 
-				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
-					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
-			}
-			
 			if (expr == null) {
 				(long num, long den) = isDouble
 					? FractionApprox((double)constantValue, MAX_DENOMINATOR)
@@ -982,6 +970,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
 						.WithRR(new ConstantResolveResult(type, constantValue));
 				}
+			}
+
+			if (expr == null && UseSpecialConstants) {
+				IType mathType;
+				if (isDouble)
+					mathType = compilation.FindType(typeof(Math));
+				else
+					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
+						?? compilation.FindType(typeof(Math));
+
+				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
+					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
 			}
 
 			if (expr == null)
