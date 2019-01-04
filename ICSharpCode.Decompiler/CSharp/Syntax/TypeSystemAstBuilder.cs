@@ -1033,16 +1033,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (d != 1) {
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Divide, MakeConstant(type, d));
 				}
-
+#pragma warning disable IDE0004
 				if (isDouble) {
-					double approxValue = n / (double)d * (memberName == "PI" ? Math.PI : Math.E);
+					double approxValue = (double)n / (double)d * (memberName == "PI" ? Math.PI : Math.E);
 					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
-					float approxValue = n / (float)d * (memberName == "PI" ? MathF_PI : MathF_E);
+					float approxValue = (float)n / (float)d * (memberName == "PI" ? MathF_PI : MathF_E);
 					if (approxValue == (float)literalValue)
 						return expr;
 				}
+#pragma warning restore IDE0004
 
 				expr = fieldReference.Detach();
 				expr = new BinaryOperatorExpression(MakeConstant(type, n), BinaryOperatorType.Divide, expr);
@@ -1050,17 +1051,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (d != 1) {
 					expr = new BinaryOperatorExpression(MakeConstant(type, d), BinaryOperatorType.Multiply, expr);
 				}
-
+#pragma warning disable IDE0004
 				if (isDouble) {
-					double approxValue = n / (d * (memberName == "PI" ? Math.PI : Math.E));
+					double approxValue = (double)n / ((double)d * (memberName == "PI" ? Math.PI : Math.E));
 					if (approxValue == (double)literalValue)
 						return expr;
 				} else {
-					float approxValue = n / (d * (memberName == "PI" ? MathF_PI : MathF_E));
+					float approxValue = (float)n / ((float)d * (memberName == "PI" ? MathF_PI : MathF_E));
 					if (approxValue == (float)literalValue)
 						return expr;
 				}
-
+#pragma warning restore IDE0004
 				return null;
 			}
 
