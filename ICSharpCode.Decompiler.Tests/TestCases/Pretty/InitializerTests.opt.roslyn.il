@@ -1154,13 +1154,42 @@
     } // end of property OtherItem2::Data3
   } // end of class OtherItem2
 
+  .class auto ansi nested public beforefieldinit V3f
+         extends [mscorlib]System.Object
+  {
+    .field private float32 x
+    .field private float32 y
+    .field private float32 z
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor(float32 _x,
+                                 float32 _y,
+                                 float32 _z) cil managed
+    {
+      // Code size       28 (0x1c)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ldarg.0
+      IL_0007:  ldarg.1
+      IL_0008:  stfld      float32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::x
+      IL_000d:  ldarg.0
+      IL_000e:  ldarg.2
+      IL_000f:  stfld      float32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::y
+      IL_0014:  ldarg.0
+      IL_0015:  ldarg.3
+      IL_0016:  stfld      float32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::z
+      IL_001b:  ret
+    } // end of method V3f::.ctor
+
+  } // end of class V3f
+
   .class auto ansi serializable sealed nested private beforefieldinit '<>c'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' '<>9'
-    .field public static class [mscorlib]System.EventHandler '<>9__51_0'
-    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__65_0'
+    .field public static class [mscorlib]System.EventHandler '<>9__61_0'
+    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__75_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -1182,17 +1211,17 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<NotAnObjectInitializerWithEvent>b__51_0'(object '<p0>',
+            '<NotAnObjectInitializerWithEvent>b__61_0'(object '<p0>',
                                                        class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       6 (0x6)
       .maxstack  8
       IL_0000:  call       void [mscorlib]System.Console::WriteLine()
       IL_0005:  ret
-    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__51_0'
+    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__61_0'
 
     .method assembly hidebysig instance bool 
-            '<Issue270_NestedInitialisers>b__65_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
+            '<Issue270_NestedInitialisers>b__75_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
     {
       // Code size       17 (0x11)
       .maxstack  8
@@ -1202,10 +1231,16 @@
       IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                      string)
       IL_0010:  ret
-    } // end of method '<>c'::'<Issue270_NestedInitialisers>b__65_0'
+    } // end of method '<>c'::'<Issue270_NestedInitialisers>b__75_0'
 
   } // end of class '<>c'
 
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[] Issue1336_rg0
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...] Issue1336_rg1
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][] Issue1336_rg1b
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...] Issue1336_rg1c
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...][] Issue1336_rg1d
+  .field private static int32[0...,0...] Issue1336_rg2
   .method private hidebysig static void  X(object a,
                                            object b) cil managed
   {
@@ -1826,6 +1861,112 @@
     IL_0018:  ret
   } // end of method TestCases::ArrayEnum
 
+  .method public hidebysig instance int32[0...,0...] 
+          MultidimensionalInit() cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  8
+    IL_0000:  ldc.i4.s   16
+    IL_0002:  ldc.i4.4
+    IL_0003:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_0008:  dup
+    IL_0009:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '<PrivateImplementationDetails>'::A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB
+    IL_000e:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0013:  ret
+  } // end of method TestCases::MultidimensionalInit
+
+  .method public hidebysig instance int32[0...,0...][] 
+          MultidimensionalInit2() cil managed
+  {
+    // Code size       91 (0x5b)
+    .maxstack  6
+    IL_0000:  ldc.i4.4
+    IL_0001:  newarr     int32[0...,0...]
+    IL_0006:  dup
+    IL_0007:  ldc.i4.0
+    IL_0008:  ldc.i4.4
+    IL_0009:  ldc.i4.4
+    IL_000a:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_000f:  dup
+    IL_0010:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3
+    IL_0015:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_001a:  stelem.ref
+    IL_001b:  dup
+    IL_001c:  ldc.i4.1
+    IL_001d:  ldc.i4.4
+    IL_001e:  ldc.i4.4
+    IL_001f:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_0024:  dup
+    IL_0025:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'7C39B7B06DD624A17F875AB8E9651554BE6E74D2'
+    IL_002a:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_002f:  stelem.ref
+    IL_0030:  dup
+    IL_0031:  ldc.i4.2
+    IL_0032:  ldc.i4.4
+    IL_0033:  ldc.i4.4
+    IL_0034:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_0039:  dup
+    IL_003a:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3
+    IL_003f:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0044:  stelem.ref
+    IL_0045:  dup
+    IL_0046:  ldc.i4.3
+    IL_0047:  ldc.i4.4
+    IL_0048:  ldc.i4.4
+    IL_0049:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_004e:  dup
+    IL_004f:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'7C39B7B06DD624A17F875AB8E9651554BE6E74D2'
+    IL_0054:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0059:  stelem.ref
+    IL_005a:  ret
+  } // end of method TestCases::MultidimensionalInit2
+
+  .method public hidebysig instance int32[0...,0...,0...][] 
+          ArrayOfArrayOfArrayInit() cil managed
+  {
+    // Code size       51 (0x33)
+    .maxstack  8
+    IL_0000:  ldc.i4.2
+    IL_0001:  newarr     int32[0...,0...,0...]
+    IL_0006:  dup
+    IL_0007:  ldc.i4.0
+    IL_0008:  ldc.i4.2
+    IL_0009:  ldc.i4.3
+    IL_000a:  ldc.i4.3
+    IL_000b:  newobj     instance void int32[0...,0...,0...]::.ctor(int32,
+                                                                    int32,
+                                                                    int32)
+    IL_0010:  dup
+    IL_0011:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'1535117EC92E41D4A6B7CA00F965357B05B5DC35'
+    IL_0016:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_001b:  stelem.ref
+    IL_001c:  dup
+    IL_001d:  ldc.i4.1
+    IL_001e:  ldc.i4.2
+    IL_001f:  ldc.i4.3
+    IL_0020:  ldc.i4.3
+    IL_0021:  newobj     instance void int32[0...,0...,0...]::.ctor(int32,
+                                                                    int32,
+                                                                    int32)
+    IL_0026:  dup
+    IL_0027:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'39E94835525CF7B71CD4595742EF462642FBF1B2'
+    IL_002c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0031:  stelem.ref
+    IL_0032:  ret
+  } // end of method TestCases::ArrayOfArrayOfArrayInit
+
   .method public hidebysig static void  RecursiveArrayInitializer() cil managed
   {
     // Code size       28 (0x1c)
@@ -2097,18 +2238,18 @@
     IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
-    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__51_0'
+    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__61_0'
     IL_000c:  dup
     IL_000d:  brtrue.s   IL_0026
 
     IL_000f:  pop
     IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9'
-    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<NotAnObjectInitializerWithEvent>b__51_0'(object,
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<NotAnObjectInitializerWithEvent>b__61_0'(object,
                                                                                                                                                                   class [mscorlib]System.EventArgs)
     IL_001b:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
                                                                             native int)
     IL_0020:  dup
-    IL_0021:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__51_0'
+    IL_0021:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__61_0'
     IL_0026:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
     IL_002b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
     IL_0030:  ldloc.0
@@ -2445,17 +2586,17 @@
     IL_0033:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_DateTimeFormat(class [mscorlib]System.Globalization.DateTimeFormatInfo)
     IL_0038:  dup
     IL_0039:  ldloc.0
-    IL_003a:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__65_0'
+    IL_003a:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__75_0'
     IL_003f:  dup
     IL_0040:  brtrue.s   IL_0059
 
     IL_0042:  pop
     IL_0043:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9'
-    IL_0048:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<Issue270_NestedInitialisers>b__65_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_0048:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<Issue270_NestedInitialisers>b__75_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
     IL_004e:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
                                                                                                                                         native int)
     IL_0053:  dup
-    IL_0054:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__65_0'
+    IL_0054:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__75_0'
     IL_0059:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,bool>)
     IL_005e:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
@@ -2967,6 +3108,818 @@
     IL_0006:  ret
   } // end of method TestCases::.ctor
 
+  .method private hidebysig specialname rtspecialname static 
+          void  .cctor() cil managed
+  {
+    // Code size       1907 (0x773)
+    .maxstack  10
+    IL_0000:  ldc.i4.3
+    IL_0001:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_0006:  dup
+    IL_0007:  ldc.i4.0
+    IL_0008:  ldc.r4     1.
+    IL_000d:  ldc.r4     1.
+    IL_0012:  ldc.r4     1.
+    IL_0017:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_001c:  stelem.ref
+    IL_001d:  dup
+    IL_001e:  ldc.i4.1
+    IL_001f:  ldc.r4     2.
+    IL_0024:  ldc.r4     2.
+    IL_0029:  ldc.r4     2.
+    IL_002e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0033:  stelem.ref
+    IL_0034:  dup
+    IL_0035:  ldc.i4.2
+    IL_0036:  ldc.r4     3.
+    IL_003b:  ldc.r4     3.
+    IL_0040:  ldc.r4     3.
+    IL_0045:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_004a:  stelem.ref
+    IL_004b:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg0
+    IL_0050:  ldc.i4.3
+    IL_0051:  ldc.i4.3
+    IL_0052:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::.ctor(int32,
+                                                                                                                                            int32)
+    IL_0057:  dup
+    IL_0058:  ldc.i4.0
+    IL_0059:  ldc.i4.0
+    IL_005a:  ldc.r4     1.
+    IL_005f:  ldc.r4     1.
+    IL_0064:  ldc.r4     1.
+    IL_0069:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_006e:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0073:  dup
+    IL_0074:  ldc.i4.0
+    IL_0075:  ldc.i4.1
+    IL_0076:  ldc.r4     2.
+    IL_007b:  ldc.r4     2.
+    IL_0080:  ldc.r4     2.
+    IL_0085:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_008a:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_008f:  dup
+    IL_0090:  ldc.i4.0
+    IL_0091:  ldc.i4.2
+    IL_0092:  ldc.r4     3.
+    IL_0097:  ldc.r4     3.
+    IL_009c:  ldc.r4     3.
+    IL_00a1:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_00a6:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_00ab:  dup
+    IL_00ac:  ldc.i4.1
+    IL_00ad:  ldc.i4.0
+    IL_00ae:  ldc.r4     2.
+    IL_00b3:  ldc.r4     2.
+    IL_00b8:  ldc.r4     2.
+    IL_00bd:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_00c2:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_00c7:  dup
+    IL_00c8:  ldc.i4.1
+    IL_00c9:  ldc.i4.1
+    IL_00ca:  ldc.r4     3.
+    IL_00cf:  ldc.r4     3.
+    IL_00d4:  ldc.r4     3.
+    IL_00d9:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_00de:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_00e3:  dup
+    IL_00e4:  ldc.i4.1
+    IL_00e5:  ldc.i4.2
+    IL_00e6:  ldc.r4     4.
+    IL_00eb:  ldc.r4     4.
+    IL_00f0:  ldc.r4     4.
+    IL_00f5:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_00fa:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_00ff:  dup
+    IL_0100:  ldc.i4.2
+    IL_0101:  ldc.i4.0
+    IL_0102:  ldc.r4     3.
+    IL_0107:  ldc.r4     3.
+    IL_010c:  ldc.r4     3.
+    IL_0111:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0116:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_011b:  dup
+    IL_011c:  ldc.i4.2
+    IL_011d:  ldc.i4.1
+    IL_011e:  ldc.r4     4.
+    IL_0123:  ldc.r4     4.
+    IL_0128:  ldc.r4     4.
+    IL_012d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0132:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0137:  dup
+    IL_0138:  ldc.i4.2
+    IL_0139:  ldc.i4.2
+    IL_013a:  ldc.r4     5.
+    IL_013f:  ldc.r4     5.
+    IL_0144:  ldc.r4     5.
+    IL_0149:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_014e:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0153:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg1
+    IL_0158:  ldc.i4.3
+    IL_0159:  newarr     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[]
+    IL_015e:  dup
+    IL_015f:  ldc.i4.0
+    IL_0160:  ldc.i4.3
+    IL_0161:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_0166:  dup
+    IL_0167:  ldc.i4.0
+    IL_0168:  ldc.r4     1.
+    IL_016d:  ldc.r4     1.
+    IL_0172:  ldc.r4     1.
+    IL_0177:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_017c:  stelem.ref
+    IL_017d:  dup
+    IL_017e:  ldc.i4.1
+    IL_017f:  ldc.r4     2.
+    IL_0184:  ldc.r4     2.
+    IL_0189:  ldc.r4     2.
+    IL_018e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0193:  stelem.ref
+    IL_0194:  dup
+    IL_0195:  ldc.i4.2
+    IL_0196:  ldc.r4     3.
+    IL_019b:  ldc.r4     3.
+    IL_01a0:  ldc.r4     3.
+    IL_01a5:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_01aa:  stelem.ref
+    IL_01ab:  stelem.ref
+    IL_01ac:  dup
+    IL_01ad:  ldc.i4.1
+    IL_01ae:  ldc.i4.3
+    IL_01af:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_01b4:  dup
+    IL_01b5:  ldc.i4.0
+    IL_01b6:  ldc.r4     2.
+    IL_01bb:  ldc.r4     2.
+    IL_01c0:  ldc.r4     2.
+    IL_01c5:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_01ca:  stelem.ref
+    IL_01cb:  dup
+    IL_01cc:  ldc.i4.1
+    IL_01cd:  ldc.r4     3.
+    IL_01d2:  ldc.r4     3.
+    IL_01d7:  ldc.r4     3.
+    IL_01dc:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_01e1:  stelem.ref
+    IL_01e2:  dup
+    IL_01e3:  ldc.i4.2
+    IL_01e4:  ldc.r4     4.
+    IL_01e9:  ldc.r4     4.
+    IL_01ee:  ldc.r4     4.
+    IL_01f3:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_01f8:  stelem.ref
+    IL_01f9:  stelem.ref
+    IL_01fa:  dup
+    IL_01fb:  ldc.i4.2
+    IL_01fc:  ldc.i4.3
+    IL_01fd:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_0202:  dup
+    IL_0203:  ldc.i4.0
+    IL_0204:  ldc.r4     3.
+    IL_0209:  ldc.r4     3.
+    IL_020e:  ldc.r4     3.
+    IL_0213:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0218:  stelem.ref
+    IL_0219:  dup
+    IL_021a:  ldc.i4.1
+    IL_021b:  ldc.r4     4.
+    IL_0220:  ldc.r4     4.
+    IL_0225:  ldc.r4     4.
+    IL_022a:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_022f:  stelem.ref
+    IL_0230:  dup
+    IL_0231:  ldc.i4.2
+    IL_0232:  ldc.r4     5.
+    IL_0237:  ldc.r4     5.
+    IL_023c:  ldc.r4     5.
+    IL_0241:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0246:  stelem.ref
+    IL_0247:  stelem.ref
+    IL_0248:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg1b
+    IL_024d:  ldc.i4.3
+    IL_024e:  ldc.i4.3
+    IL_024f:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::.ctor(int32,
+                                                                                                                                              int32)
+    IL_0254:  dup
+    IL_0255:  ldc.i4.0
+    IL_0256:  ldc.i4.0
+    IL_0257:  ldc.i4.3
+    IL_0258:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_025d:  dup
+    IL_025e:  ldc.i4.0
+    IL_025f:  ldc.r4     1.
+    IL_0264:  ldc.r4     1.
+    IL_0269:  ldc.r4     1.
+    IL_026e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0273:  stelem.ref
+    IL_0274:  dup
+    IL_0275:  ldc.i4.1
+    IL_0276:  ldc.r4     2.
+    IL_027b:  ldc.r4     2.
+    IL_0280:  ldc.r4     2.
+    IL_0285:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_028a:  stelem.ref
+    IL_028b:  dup
+    IL_028c:  ldc.i4.2
+    IL_028d:  ldc.r4     3.
+    IL_0292:  ldc.r4     3.
+    IL_0297:  ldc.r4     3.
+    IL_029c:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_02a1:  stelem.ref
+    IL_02a2:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_02a7:  dup
+    IL_02a8:  ldc.i4.0
+    IL_02a9:  ldc.i4.1
+    IL_02aa:  ldc.i4.3
+    IL_02ab:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_02b0:  dup
+    IL_02b1:  ldc.i4.0
+    IL_02b2:  ldc.r4     2.
+    IL_02b7:  ldc.r4     2.
+    IL_02bc:  ldc.r4     2.
+    IL_02c1:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_02c6:  stelem.ref
+    IL_02c7:  dup
+    IL_02c8:  ldc.i4.1
+    IL_02c9:  ldc.r4     3.
+    IL_02ce:  ldc.r4     3.
+    IL_02d3:  ldc.r4     3.
+    IL_02d8:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_02dd:  stelem.ref
+    IL_02de:  dup
+    IL_02df:  ldc.i4.2
+    IL_02e0:  ldc.r4     4.
+    IL_02e5:  ldc.r4     4.
+    IL_02ea:  ldc.r4     4.
+    IL_02ef:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_02f4:  stelem.ref
+    IL_02f5:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_02fa:  dup
+    IL_02fb:  ldc.i4.0
+    IL_02fc:  ldc.i4.2
+    IL_02fd:  ldc.i4.3
+    IL_02fe:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_0303:  dup
+    IL_0304:  ldc.i4.0
+    IL_0305:  ldc.r4     3.
+    IL_030a:  ldc.r4     3.
+    IL_030f:  ldc.r4     3.
+    IL_0314:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0319:  stelem.ref
+    IL_031a:  dup
+    IL_031b:  ldc.i4.1
+    IL_031c:  ldc.r4     4.
+    IL_0321:  ldc.r4     4.
+    IL_0326:  ldc.r4     4.
+    IL_032b:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0330:  stelem.ref
+    IL_0331:  dup
+    IL_0332:  ldc.i4.2
+    IL_0333:  ldc.r4     5.
+    IL_0338:  ldc.r4     5.
+    IL_033d:  ldc.r4     5.
+    IL_0342:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0347:  stelem.ref
+    IL_0348:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_034d:  dup
+    IL_034e:  ldc.i4.1
+    IL_034f:  ldc.i4.0
+    IL_0350:  ldc.i4.3
+    IL_0351:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_0356:  dup
+    IL_0357:  ldc.i4.0
+    IL_0358:  ldc.r4     1.
+    IL_035d:  ldc.r4     1.
+    IL_0362:  ldc.r4     1.
+    IL_0367:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_036c:  stelem.ref
+    IL_036d:  dup
+    IL_036e:  ldc.i4.1
+    IL_036f:  ldc.r4     2.
+    IL_0374:  ldc.r4     2.
+    IL_0379:  ldc.r4     2.
+    IL_037e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0383:  stelem.ref
+    IL_0384:  dup
+    IL_0385:  ldc.i4.2
+    IL_0386:  ldc.r4     3.
+    IL_038b:  ldc.r4     3.
+    IL_0390:  ldc.r4     3.
+    IL_0395:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_039a:  stelem.ref
+    IL_039b:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_03a0:  dup
+    IL_03a1:  ldc.i4.1
+    IL_03a2:  ldc.i4.1
+    IL_03a3:  ldc.i4.3
+    IL_03a4:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_03a9:  dup
+    IL_03aa:  ldc.i4.0
+    IL_03ab:  ldc.r4     2.
+    IL_03b0:  ldc.r4     2.
+    IL_03b5:  ldc.r4     2.
+    IL_03ba:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_03bf:  stelem.ref
+    IL_03c0:  dup
+    IL_03c1:  ldc.i4.1
+    IL_03c2:  ldc.r4     3.
+    IL_03c7:  ldc.r4     3.
+    IL_03cc:  ldc.r4     3.
+    IL_03d1:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_03d6:  stelem.ref
+    IL_03d7:  dup
+    IL_03d8:  ldc.i4.2
+    IL_03d9:  ldc.r4     4.
+    IL_03de:  ldc.r4     4.
+    IL_03e3:  ldc.r4     4.
+    IL_03e8:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_03ed:  stelem.ref
+    IL_03ee:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_03f3:  dup
+    IL_03f4:  ldc.i4.1
+    IL_03f5:  ldc.i4.2
+    IL_03f6:  ldc.i4.3
+    IL_03f7:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_03fc:  dup
+    IL_03fd:  ldc.i4.0
+    IL_03fe:  ldc.r4     3.
+    IL_0403:  ldc.r4     3.
+    IL_0408:  ldc.r4     3.
+    IL_040d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0412:  stelem.ref
+    IL_0413:  dup
+    IL_0414:  ldc.i4.1
+    IL_0415:  ldc.r4     4.
+    IL_041a:  ldc.r4     4.
+    IL_041f:  ldc.r4     4.
+    IL_0424:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0429:  stelem.ref
+    IL_042a:  dup
+    IL_042b:  ldc.i4.2
+    IL_042c:  ldc.r4     5.
+    IL_0431:  ldc.r4     5.
+    IL_0436:  ldc.r4     5.
+    IL_043b:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0440:  stelem.ref
+    IL_0441:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_0446:  dup
+    IL_0447:  ldc.i4.2
+    IL_0448:  ldc.i4.0
+    IL_0449:  ldc.i4.3
+    IL_044a:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_044f:  dup
+    IL_0450:  ldc.i4.0
+    IL_0451:  ldc.r4     1.
+    IL_0456:  ldc.r4     1.
+    IL_045b:  ldc.r4     1.
+    IL_0460:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0465:  stelem.ref
+    IL_0466:  dup
+    IL_0467:  ldc.i4.1
+    IL_0468:  ldc.r4     2.
+    IL_046d:  ldc.r4     2.
+    IL_0472:  ldc.r4     2.
+    IL_0477:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_047c:  stelem.ref
+    IL_047d:  dup
+    IL_047e:  ldc.i4.2
+    IL_047f:  ldc.r4     3.
+    IL_0484:  ldc.r4     3.
+    IL_0489:  ldc.r4     3.
+    IL_048e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0493:  stelem.ref
+    IL_0494:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_0499:  dup
+    IL_049a:  ldc.i4.2
+    IL_049b:  ldc.i4.1
+    IL_049c:  ldc.i4.3
+    IL_049d:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_04a2:  dup
+    IL_04a3:  ldc.i4.0
+    IL_04a4:  ldc.r4     2.
+    IL_04a9:  ldc.r4     2.
+    IL_04ae:  ldc.r4     2.
+    IL_04b3:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_04b8:  stelem.ref
+    IL_04b9:  dup
+    IL_04ba:  ldc.i4.1
+    IL_04bb:  ldc.r4     3.
+    IL_04c0:  ldc.r4     3.
+    IL_04c5:  ldc.r4     3.
+    IL_04ca:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_04cf:  stelem.ref
+    IL_04d0:  dup
+    IL_04d1:  ldc.i4.2
+    IL_04d2:  ldc.r4     4.
+    IL_04d7:  ldc.r4     4.
+    IL_04dc:  ldc.r4     4.
+    IL_04e1:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_04e6:  stelem.ref
+    IL_04e7:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_04ec:  dup
+    IL_04ed:  ldc.i4.2
+    IL_04ee:  ldc.i4.2
+    IL_04ef:  ldc.i4.3
+    IL_04f0:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f
+    IL_04f5:  dup
+    IL_04f6:  ldc.i4.0
+    IL_04f7:  ldc.r4     3.
+    IL_04fc:  ldc.r4     3.
+    IL_0501:  ldc.r4     3.
+    IL_0506:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_050b:  stelem.ref
+    IL_050c:  dup
+    IL_050d:  ldc.i4.1
+    IL_050e:  ldc.r4     4.
+    IL_0513:  ldc.r4     4.
+    IL_0518:  ldc.r4     4.
+    IL_051d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0522:  stelem.ref
+    IL_0523:  dup
+    IL_0524:  ldc.i4.2
+    IL_0525:  ldc.r4     5.
+    IL_052a:  ldc.r4     5.
+    IL_052f:  ldc.r4     5.
+    IL_0534:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0539:  stelem.ref
+    IL_053a:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...]::Set(int32,
+                                                                                                                                            int32,
+                                                                                                                                            class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[])
+    IL_053f:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[][0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg1c
+    IL_0544:  ldc.i4.2
+    IL_0545:  newarr     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]
+    IL_054a:  dup
+    IL_054b:  ldc.i4.0
+    IL_054c:  ldc.i4.3
+    IL_054d:  ldc.i4.3
+    IL_054e:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::.ctor(int32,
+                                                                                                                                            int32)
+    IL_0553:  dup
+    IL_0554:  ldc.i4.0
+    IL_0555:  ldc.i4.0
+    IL_0556:  ldc.r4     1.
+    IL_055b:  ldc.r4     1.
+    IL_0560:  ldc.r4     1.
+    IL_0565:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_056a:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_056f:  dup
+    IL_0570:  ldc.i4.0
+    IL_0571:  ldc.i4.1
+    IL_0572:  ldc.r4     2.
+    IL_0577:  ldc.r4     2.
+    IL_057c:  ldc.r4     2.
+    IL_0581:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0586:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_058b:  dup
+    IL_058c:  ldc.i4.0
+    IL_058d:  ldc.i4.2
+    IL_058e:  ldc.r4     3.
+    IL_0593:  ldc.r4     3.
+    IL_0598:  ldc.r4     3.
+    IL_059d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_05a2:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_05a7:  dup
+    IL_05a8:  ldc.i4.1
+    IL_05a9:  ldc.i4.0
+    IL_05aa:  ldc.r4     2.
+    IL_05af:  ldc.r4     2.
+    IL_05b4:  ldc.r4     2.
+    IL_05b9:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_05be:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_05c3:  dup
+    IL_05c4:  ldc.i4.1
+    IL_05c5:  ldc.i4.1
+    IL_05c6:  ldc.r4     3.
+    IL_05cb:  ldc.r4     3.
+    IL_05d0:  ldc.r4     3.
+    IL_05d5:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_05da:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_05df:  dup
+    IL_05e0:  ldc.i4.1
+    IL_05e1:  ldc.i4.2
+    IL_05e2:  ldc.r4     4.
+    IL_05e7:  ldc.r4     4.
+    IL_05ec:  ldc.r4     4.
+    IL_05f1:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_05f6:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_05fb:  dup
+    IL_05fc:  ldc.i4.2
+    IL_05fd:  ldc.i4.0
+    IL_05fe:  ldc.r4     3.
+    IL_0603:  ldc.r4     3.
+    IL_0608:  ldc.r4     3.
+    IL_060d:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0612:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0617:  dup
+    IL_0618:  ldc.i4.2
+    IL_0619:  ldc.i4.1
+    IL_061a:  ldc.r4     4.
+    IL_061f:  ldc.r4     4.
+    IL_0624:  ldc.r4     4.
+    IL_0629:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_062e:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0633:  dup
+    IL_0634:  ldc.i4.2
+    IL_0635:  ldc.i4.2
+    IL_0636:  ldc.r4     5.
+    IL_063b:  ldc.r4     5.
+    IL_0640:  ldc.r4     5.
+    IL_0645:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_064a:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_064f:  stelem.ref
+    IL_0650:  dup
+    IL_0651:  ldc.i4.1
+    IL_0652:  ldc.i4.3
+    IL_0653:  ldc.i4.3
+    IL_0654:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::.ctor(int32,
+                                                                                                                                            int32)
+    IL_0659:  dup
+    IL_065a:  ldc.i4.0
+    IL_065b:  ldc.i4.0
+    IL_065c:  ldc.r4     1.
+    IL_0661:  ldc.r4     1.
+    IL_0666:  ldc.r4     1.
+    IL_066b:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0670:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0675:  dup
+    IL_0676:  ldc.i4.0
+    IL_0677:  ldc.i4.1
+    IL_0678:  ldc.r4     2.
+    IL_067d:  ldc.r4     2.
+    IL_0682:  ldc.r4     2.
+    IL_0687:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_068c:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0691:  dup
+    IL_0692:  ldc.i4.0
+    IL_0693:  ldc.i4.2
+    IL_0694:  ldc.r4     3.
+    IL_0699:  ldc.r4     3.
+    IL_069e:  ldc.r4     3.
+    IL_06a3:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_06a8:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_06ad:  dup
+    IL_06ae:  ldc.i4.1
+    IL_06af:  ldc.i4.0
+    IL_06b0:  ldc.r4     2.
+    IL_06b5:  ldc.r4     2.
+    IL_06ba:  ldc.r4     2.
+    IL_06bf:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_06c4:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_06c9:  dup
+    IL_06ca:  ldc.i4.1
+    IL_06cb:  ldc.i4.1
+    IL_06cc:  ldc.r4     3.
+    IL_06d1:  ldc.r4     3.
+    IL_06d6:  ldc.r4     3.
+    IL_06db:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_06e0:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_06e5:  dup
+    IL_06e6:  ldc.i4.1
+    IL_06e7:  ldc.i4.2
+    IL_06e8:  ldc.r4     4.
+    IL_06ed:  ldc.r4     4.
+    IL_06f2:  ldc.r4     4.
+    IL_06f7:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_06fc:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0701:  dup
+    IL_0702:  ldc.i4.2
+    IL_0703:  ldc.i4.0
+    IL_0704:  ldc.r4     3.
+    IL_0709:  ldc.r4     3.
+    IL_070e:  ldc.r4     3.
+    IL_0713:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0718:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_071d:  dup
+    IL_071e:  ldc.i4.2
+    IL_071f:  ldc.i4.1
+    IL_0720:  ldc.r4     4.
+    IL_0725:  ldc.r4     4.
+    IL_072a:  ldc.r4     4.
+    IL_072f:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0734:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0739:  dup
+    IL_073a:  ldc.i4.2
+    IL_073b:  ldc.i4.2
+    IL_073c:  ldc.r4     5.
+    IL_0741:  ldc.r4     5.
+    IL_0746:  ldc.r4     5.
+    IL_074b:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f::.ctor(float32,
+                                                                                                                           float32,
+                                                                                                                           float32)
+    IL_0750:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...]::Set(int32,
+                                                                                                                                          int32,
+                                                                                                                                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f)
+    IL_0755:  stelem.ref
+    IL_0756:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/V3f[0...,0...][] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg1d
+    IL_075b:  ldc.i4.3
+    IL_075c:  ldc.i4.3
+    IL_075d:  newobj     instance void int32[0...,0...]::.ctor(int32,
+                                                               int32)
+    IL_0762:  dup
+    IL_0763:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB
+    IL_0768:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_076d:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
+    IL_0772:  ret
+  } // end of method TestCases::.cctor
+
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases
 
 .class private auto ansi sealed '<PrivateImplementationDetails>'
@@ -2994,6 +3947,13 @@
     .size 24
   } // end of class '__StaticArrayInitTypeSize=24'
 
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=36'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 36
+  } // end of class '__StaticArrayInitTypeSize=36'
+
   .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=40'
          extends [mscorlib]System.ValueType
   {
@@ -3008,6 +3968,20 @@
     .size 48
   } // end of class '__StaticArrayInitTypeSize=48'
 
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=64'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 64
+  } // end of class '__StaticArrayInitTypeSize=64'
+
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=72'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 72
+  } // end of class '__StaticArrayInitTypeSize=72'
+
   .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=80'
          extends [mscorlib]System.ValueType
   {
@@ -3015,67 +3989,122 @@
     .size 80
   } // end of class '__StaticArrayInitTypeSize=80'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00005EF8
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00005F08
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00005F18
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00005F28
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00005F50
-  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00005FA0
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00005FA8
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00005FD0
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00005FE8
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00006018
-  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00006040
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00006048
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00006070
+  .class explicit ansi sealed nested private '__StaticArrayInitTypeSize=256'
+         extends [mscorlib]System.ValueType
+  {
+    .pack 1
+    .size 256
+  } // end of class '__StaticArrayInitTypeSize=256'
+
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00006B94
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00006BDC
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_00006BEC
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00006C34
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00006C44
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00006C54
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00006C94
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00006CBC
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00006D0C
+  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00006E0C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_00006E14
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00006E3C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00006E64
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00006E7C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_00006EAC
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00006EEC
+  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00006F14
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00006F1C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00006F44
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00005EF8 = bytearray (
+.data cil I_00006B94 = bytearray (
+                 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+                 05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
+                 09 00 00 00 0B 00 00 00 0C 00 00 00 0D 00 00 00
+                 0E 00 00 00 0F 00 00 00 10 00 00 00 11 00 00 00
+                 12 00 00 00 13 00 00 00) 
+.data cil I_00006BDC = bytearray (
                  01 02 03 04 05 06 07 08 FE FF) 
-.data cil I_00005F02 = int8[6]
-.data cil I_00005F08 = bytearray (
+.data cil I_00006BE6 = int8[2]
+.data cil I_00006BEC = bytearray (
+                 15 00 00 00 16 00 00 00 17 00 00 00 18 00 00 00
+                 19 00 00 00 1A 00 00 00 1B 00 00 00 1C 00 00 00
+                 1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
+                 22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
+                 26 00 00 00 27 00 00 00)                         // &...'...
+.data cil I_00006C34 = bytearray (
                  00 80 FF FF 00 00 01 00 FF 7F) 
-.data cil I_00005F12 = int8[6]
-.data cil I_00005F18 = bytearray (
+.data cil I_00006C3E = int8[2]
+.data cil I_00006C44 = bytearray (
                  00 00 01 00 FF 7F 00 80 FE FF FF FF) 
-.data cil I_00005F24 = int8[4]
-.data cil I_00005F28 = bytearray (
+.data cil I_00006C54 = bytearray (
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
+.data cil I_00006C94 = bytearray (
                  01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45)                         // ...D..cE
-.data cil I_00005F50 = bytearray (
+.data cil I_00006CBC = bytearray (
                  01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
                  00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
                  05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
                  07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
-.data cil I_00005FA0 = bytearray (
+.data cil I_00006D0C = bytearray (
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
+.data cil I_00006E0C = bytearray (
                  80 81 00 01 02 03 04 7F) 
-.data cil I_00005FA8 = bytearray (
+.data cil I_00006E14 = bytearray (
+                 01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
+                 01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
+                 01 00 00 00) 
+.data cil I_00006E3C = bytearray (
                  01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00005FD0 = bytearray (
+.data cil I_00006E64 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00) 
-.data cil I_00005FE8 = bytearray (
+.data cil I_00006E7C = bytearray (
                  00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
                  00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
-.data cil I_00006018 = bytearray (
+.data cil I_00006EAC = bytearray (
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
+.data cil I_00006EEC = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006040 = bytearray (
+.data cil I_00006F14 = bytearray (
                  01 00 01 00 00 00 01 01) 
-.data cil I_00006048 = bytearray (
+.data cil I_00006F1C = bytearray (
                  01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
                  05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006070 = bytearray (
+.data cil I_00006F44 = bytearray (
                  00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
                  00 00 80 7F 00 00 C0 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 	public class TestCases
 	{
-		#region Types and helpers
+		#region Types
 		public class CustomList<T> : IEnumerable<T>, IEnumerable
 		{
 			public IEnumerator<T> GetEnumerator()
@@ -260,7 +260,175 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 #endif
 		}
 
-		// Helper methods used to ensure initializers used within expressions work correctly
+		public class V3f
+		{
+			private float x;
+			private float y;
+			private float z;
+
+			public V3f(float _x, float _y, float _z)
+			{
+				x = _x;
+				y = _y;
+				z = _z;
+			}
+		}
+		#endregion
+
+		#region Field initializer tests
+		private static V3f[] Issue1336_rg0 = new V3f[3] {
+			new V3f(1f, 1f, 1f),
+			new V3f(2f, 2f, 2f),
+			new V3f(3f, 3f, 3f)
+		};
+
+		private static V3f[,] Issue1336_rg1 = new V3f[3, 3] {
+			{
+				new V3f(1f, 1f, 1f),
+				new V3f(2f, 2f, 2f),
+				new V3f(3f, 3f, 3f)
+			},
+			{
+				new V3f(2f, 2f, 2f),
+				new V3f(3f, 3f, 3f),
+				new V3f(4f, 4f, 4f)
+			},
+			{
+				new V3f(3f, 3f, 3f),
+				new V3f(4f, 4f, 4f),
+				new V3f(5f, 5f, 5f)
+			}
+		};
+
+		private static V3f[][] Issue1336_rg1b = new V3f[3][] {
+			new V3f[3] {
+				new V3f(1f, 1f, 1f),
+				new V3f(2f, 2f, 2f),
+				new V3f(3f, 3f, 3f)
+			},
+			new V3f[3] {
+				new V3f(2f, 2f, 2f),
+				new V3f(3f, 3f, 3f),
+				new V3f(4f, 4f, 4f)
+			},
+			new V3f[3] {
+				new V3f(3f, 3f, 3f),
+				new V3f(4f, 4f, 4f),
+				new V3f(5f, 5f, 5f)
+			}
+		};
+
+		private static V3f[,][] Issue1336_rg1c = new V3f[3, 3][] {
+			{
+				new V3f[3] {
+					new V3f(1f, 1f, 1f),
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f)
+				},
+				new V3f[3] {
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f)
+				},
+				new V3f[3] {
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f),
+					new V3f(5f, 5f, 5f)
+				}
+			},
+			{
+				new V3f[3] {
+					new V3f(1f, 1f, 1f),
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f)
+				},
+				new V3f[3] {
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f)
+				},
+				new V3f[3] {
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f),
+					new V3f(5f, 5f, 5f)
+				}
+			},
+			{
+				new V3f[3] {
+					new V3f(1f, 1f, 1f),
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f)
+				},
+				new V3f[3] {
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f)
+				},
+				new V3f[3] {
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f),
+					new V3f(5f, 5f, 5f)
+				}
+			}
+		};
+
+		private static V3f[][,] Issue1336_rg1d = new V3f[2][,] {
+			new V3f[3, 3] {
+				{
+					new V3f(1f, 1f, 1f),
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f)
+				},
+				{
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f)
+				},
+				{
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f),
+					new V3f(5f, 5f, 5f)
+				}
+			},
+			new V3f[3, 3] {
+				{
+					new V3f(1f, 1f, 1f),
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f)
+				},
+				{
+					new V3f(2f, 2f, 2f),
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f)
+				},
+				{
+					new V3f(3f, 3f, 3f),
+					new V3f(4f, 4f, 4f),
+					new V3f(5f, 5f, 5f)
+				}
+			}
+		};
+
+		private static int[,] Issue1336_rg2 = new int[3, 3] {
+			{
+				1,
+				1,
+				1
+			},
+			{
+				1,
+				1,
+				1
+			},
+			{
+				1,
+				1,
+				1
+			}
+		};
+		#endregion
+
+		#region Helper methods used to ensure initializers used within expressions work correctly
 		private static void X(object a, object b)
 		{
 		}
@@ -393,6 +561,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			  });
 		}
+
 		public unsafe static void NestedPointerArray(int a, int b, int c)
 		{
 			X(Y(), new void*[3][] {
@@ -590,6 +759,329 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				MyEnum.a,
 				MyEnum.b
 			});
+		}
+
+		public int[,] MultidimensionalInit()
+		{
+			return new int[16, 4] {
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					1,
+					1,
+					1,
+					1
+				},
+
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					1,
+					1,
+					1,
+					1
+				},
+
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					0,
+					0,
+					0,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				},
+
+				{
+					0,
+					0,
+					1,
+					0
+				}
+			};
+		}
+
+		public int[][,] MultidimensionalInit2()
+		{
+			return new int[4][,] {
+				new int[4, 4] {
+					{
+						0,
+						0,
+						0,
+						0
+					},
+
+					{
+						1,
+						1,
+						1,
+						1
+					},
+
+					{
+						0,
+						0,
+						0,
+						0
+					},
+
+					{
+						0,
+						0,
+						0,
+						0
+					}
+
+				},
+				new int[4, 4] {
+
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					}
+
+				},
+				new int[4, 4] {
+
+					{
+						0,
+						0,
+						0,
+						0
+					},
+
+					{
+						1,
+						1,
+						1,
+						1
+					},
+
+					{
+						0,
+						0,
+						0,
+						0
+					},
+
+					{
+						0,
+						0,
+						0,
+						0
+					}
+				},
+				new int[4, 4] {
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					},
+
+					{
+						0,
+						0,
+						1,
+						0
+					}
+
+				}
+			};
+		}
+
+		public int[][,,] ArrayOfArrayOfArrayInit()
+		{
+			return new int[2][,,] {
+				new int[2, 3, 3] {
+					{
+						{
+							1,
+							2,
+							3
+						},
+						{
+							4,
+							5,
+							6
+						},
+						{
+							7,
+							8,
+							9
+						}
+					},
+					{
+						{
+							11,
+							12,
+							13
+						},
+						{
+							14,
+							15,
+							16
+						},
+						{
+							17,
+							18,
+							19
+						}
+					}
+				},
+
+				new int[2, 3, 3] {
+					{
+						{
+							21,
+							22,
+							23
+						},
+						{
+							24,
+							25,
+							26
+						},
+						{
+							27,
+							28,
+							29
+						}
+					},
+					{
+						{
+							31,
+							32,
+							33
+						},
+						{
+							34,
+							35,
+							36
+						},
+						{
+							37,
+							38,
+							39
+						}
+					}
+				}
+			};
 		}
 
 		public static void RecursiveArrayInitializer()
