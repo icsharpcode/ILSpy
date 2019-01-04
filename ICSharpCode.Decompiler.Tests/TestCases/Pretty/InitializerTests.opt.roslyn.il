@@ -2684,6 +2684,20 @@
     IL_0016:  ret
   } // end of method TestCases::Issue1250_Test1
 
+  .method private hidebysig instance uint8[] 
+          Issue1314() cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  newarr     [mscorlib]System.Byte
+    IL_0006:  dup
+    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::C62C27924F4C967F5EDDB1850C091D54C7A2AB58
+    IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0011:  ret
+  } // end of method TestCases::Issue1314
+
   .method private hidebysig instance void 
           Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
@@ -3996,66 +4010,67 @@
     .size 256
   } // end of class '__StaticArrayInitTypeSize=256'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00006B94
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00006BDC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_00006BEC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00006C34
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00006C44
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00006C54
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00006C94
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00006CBC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00006D0C
-  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00006E0C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_00006E14
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00006E3C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00006E64
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00006E7C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_00006EAC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00006EEC
-  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00006F14
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00006F1C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00006F44
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00006BF4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00006C3C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_00006C4C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00006C94
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00006CA4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00006CB4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00006CF4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00006D1C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00006D6C
+  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00006E6C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_00006E74
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00006E9C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00006EC4
+  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_00006EDC
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00006EE4
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_00006F14
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00006F54
+  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00006F7C
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00006F84
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00006FAC
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00006B94 = bytearray (
+.data cil I_00006BF4 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0B 00 00 00 0C 00 00 00 0D 00 00 00
                  0E 00 00 00 0F 00 00 00 10 00 00 00 11 00 00 00
                  12 00 00 00 13 00 00 00) 
-.data cil I_00006BDC = bytearray (
+.data cil I_00006C3C = bytearray (
                  01 02 03 04 05 06 07 08 FE FF) 
-.data cil I_00006BE6 = int8[2]
-.data cil I_00006BEC = bytearray (
+.data cil I_00006C46 = int8[2]
+.data cil I_00006C4C = bytearray (
                  15 00 00 00 16 00 00 00 17 00 00 00 18 00 00 00
                  19 00 00 00 1A 00 00 00 1B 00 00 00 1C 00 00 00
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00006C34 = bytearray (
+.data cil I_00006C94 = bytearray (
                  00 80 FF FF 00 00 01 00 FF 7F) 
-.data cil I_00006C3E = int8[2]
-.data cil I_00006C44 = bytearray (
+.data cil I_00006C9E = int8[2]
+.data cil I_00006CA4 = bytearray (
                  00 00 01 00 FF 7F 00 80 FE FF FF FF) 
-.data cil I_00006C54 = bytearray (
+.data cil I_00006CB4 = bytearray (
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00006C94 = bytearray (
+.data cil I_00006CF4 = bytearray (
                  01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45)                         // ...D..cE
-.data cil I_00006CBC = bytearray (
+.data cil I_00006D1C = bytearray (
                  01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
                  00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
                  05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
                  07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
-.data cil I_00006D0C = bytearray (
+.data cil I_00006D6C = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -4072,39 +4087,41 @@
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00006E0C = bytearray (
+.data cil I_00006E6C = bytearray (
                  80 81 00 01 02 03 04 7F) 
-.data cil I_00006E14 = bytearray (
+.data cil I_00006E74 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 
-.data cil I_00006E3C = bytearray (
+.data cil I_00006E9C = bytearray (
                  01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006E64 = bytearray (
+.data cil I_00006EC4 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00) 
-.data cil I_00006E7C = bytearray (
+.data cil I_00006EDC = bytearray (
+                 00 01 02 FF) 
+.data cil I_00006EE4 = bytearray (
                  00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
                  00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
-.data cil I_00006EAC = bytearray (
+.data cil I_00006F14 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
-.data cil I_00006EEC = bytearray (
+.data cil I_00006F54 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006F14 = bytearray (
+.data cil I_00006F7C = bytearray (
                  01 00 01 00 00 00 01 01) 
-.data cil I_00006F1C = bytearray (
+.data cil I_00006F84 = bytearray (
                  01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
                  05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006F44 = bytearray (
+.data cil I_00006FAC = bytearray (
                  00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
                  00 00 80 7F 00 00 C0 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

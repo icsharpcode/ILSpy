@@ -2273,7 +2273,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				TranslatedExpression val;
 				var old = astBuilder.UseSpecialConstants;
 				try {
-					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType();
+					astBuilder.UseSpecialConstants = !type.IsCSharpPrimitiveIntegerType() && !type.IsKnownType(KnownTypeCode.Decimal);
 					val = Translate(value, typeHint: type).ConvertTo(type, this, allowImplicitConversion: true);
 				} finally {
 					astBuilder.UseSpecialConstants = old;

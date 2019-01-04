@@ -2733,6 +2733,20 @@
     IL_0018:  ret
   } // end of method TestCases::Issue1250_Test1
 
+  .method private hidebysig instance uint8[] 
+          Issue1314() cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  newarr     [mscorlib]System.Byte
+    IL_0006:  dup
+    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000040-1'
+    IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
+                                                                                                        valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0011:  ret
+  } // end of method TestCases::Issue1314
+
   .method private hidebysig instance void 
           Issue1251_Test(class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Item> list,
                          class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/OtherItem otherItem) cil managed
@@ -3938,7 +3952,7 @@
     IL_07df:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_07e4:  dup
-    IL_07e5:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x600008e-1'
+    IL_07e5:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x600008f-1'
     IL_07ea:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_07ef:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4042,7 +4056,8 @@
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_00002938
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_000029E8
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002A30
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x600008e-1' at I_00003450
+  .field static assembly int32 '$$method0x6000040-1' at I_000031D0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x600008f-1' at I_00003470
 } // end of class '<PrivateImplementationDetails>'
 
 
@@ -4149,7 +4164,10 @@
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
 .data cil I_00002A78 = int8[8]
-.data cil I_00003450 = bytearray (
+.data cil I_000031D0 = bytearray (
+                 00 01 02 FF) 
+.data cil I_000031D4 = int8[12]
+.data cil I_00003470 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 
