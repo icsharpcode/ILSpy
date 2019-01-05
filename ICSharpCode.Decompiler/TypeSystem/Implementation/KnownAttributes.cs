@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Marshalling attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(MarshalAsAttribute)),
 			// Security attributes:
-			new TopLevelTypeName("System.Security", "PermissionSetAttribute"),
+			new TopLevelTypeName("System.Security.Permissions", "PermissionSetAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)

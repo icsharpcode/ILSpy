@@ -245,16 +245,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				// for backward compatibility with .NET 1.0: XML-encoded attribute
 				reader.Reset();
-				ReadXmlSecurityAttribute(ref reader, securityAction);
+				Add(ReadXmlSecurityAttribute(ref reader, securityAction));
 			}
 		}
 
-		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
 			b.AddFixedArg(securityAction);
 			b.AddNamedArg("XML", KnownTypeCode.String, xml);
+			return b.Build();
 		}
 
 		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
