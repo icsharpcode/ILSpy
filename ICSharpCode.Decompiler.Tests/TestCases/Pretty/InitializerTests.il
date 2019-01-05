@@ -2306,6 +2306,51 @@
     IL_001c:  ret
   } // end of method TestCases::IndicesInWrongOrder
 
+  .method public hidebysig static uint8[] 
+          ReverseInitializer(int32 i) cil managed
+  {
+    // Code size       42 (0x2a)
+    .maxstack  4
+    .locals init (uint8[] V_0,
+             uint8[] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  newarr     [mscorlib]System.Byte
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.3
+    IL_000a:  ldarg.0
+    IL_000b:  conv.u1
+    IL_000c:  stelem.i1
+    IL_000d:  ldloc.0
+    IL_000e:  ldc.i4.2
+    IL_000f:  ldarg.0
+    IL_0010:  ldc.i4.8
+    IL_0011:  shr
+    IL_0012:  conv.u1
+    IL_0013:  stelem.i1
+    IL_0014:  ldloc.0
+    IL_0015:  ldc.i4.1
+    IL_0016:  ldarg.0
+    IL_0017:  ldc.i4.s   16
+    IL_0019:  shr
+    IL_001a:  conv.u1
+    IL_001b:  stelem.i1
+    IL_001c:  ldloc.0
+    IL_001d:  ldc.i4.0
+    IL_001e:  ldarg.0
+    IL_001f:  ldc.i4.s   24
+    IL_0021:  shr
+    IL_0022:  conv.u1
+    IL_0023:  stelem.i1
+    IL_0024:  ldloc.0
+    IL_0025:  stloc.1
+    IL_0026:  br.s       IL_0028
+
+    IL_0028:  ldloc.1
+    IL_0029:  ret
+  } // end of method TestCases::ReverseInitializer
+
   .method public hidebysig static void  Issue953_MissingNullableSpecifierForArrayInitializer() cil managed
   {
     // Code size       38 (0x26)
@@ -3125,7 +3170,7 @@
     IL_0001:  ldc.i4.4
     IL_0002:  newarr     [mscorlib]System.Byte
     IL_0007:  dup
-    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000040-1'
+    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000041-1'
     IL_000d:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0012:  stloc.0
@@ -4390,7 +4435,7 @@
     IL_0787:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_078c:  dup
-    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x600008f-1'
+    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000090-1'
     IL_0792:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0797:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4494,8 +4539,8 @@
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_000029A8
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_00002A58
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002AA0
-  .field static assembly int32 '$$method0x6000040-1' at I_000032E0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x600008f-1' at I_000035C8
+  .field static assembly int32 '$$method0x6000041-1' at I_00003318
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000090-1' at I_00003600
 } // end of class '<PrivateImplementationDetails>'
 
 
@@ -4603,11 +4648,10 @@
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00002AE8 = int8[24]
-.data cil I_000032E0 = bytearray (
+.data cil I_00003318 = bytearray (
                  00 01 02 FF) 
-.data cil I_000032E4 = int8[4]
-.data cil I_000035C8 = bytearray (
+.data cil I_0000331C = int8[228]
+.data cil I_00003600 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 

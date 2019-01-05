@@ -1117,6 +1117,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), array);
 		}
 
+		public static byte[] ReverseInitializer(int i)
+		{
+#if ROSLYN && OPT
+			byte[] obj = new byte[4];
+			obj[3] = (byte)i;
+			obj[2] = (byte)(i >> 8);
+			obj[1] = (byte)(i >> 16);
+			obj[0] = (byte)(i >> 24);
+			return obj;
+#else
+			byte[] array = new byte[4];
+			array[3] = (byte)i;
+			array[2] = (byte)(i >> 8);
+			array[1] = (byte)(i >> 16);
+			array[0] = (byte)(i >> 24);
+			return array;
+#endif
+		}
+
 		public static void Issue953_MissingNullableSpecifierForArrayInitializer()
 		{
 			NoOp(new Guid?[1] {
@@ -1133,9 +1152,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			});
 		}
-		#endregion
+#endregion
 
-		#region Object initializers
+#region Object initializers
 		public C Test1()
 		{
 			C c = new C();
@@ -1448,9 +1467,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			return null;
 		}
 
-		#endregion
+#endregion
 
-		#region Collection initializer
+#region Collection initializer
 
 		public static void ExtensionMethodInCollectionInitializer()
 		{
@@ -1617,6 +1636,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			});
 		}
 #endif
-		#endregion
+#endregion
 	}
 }
