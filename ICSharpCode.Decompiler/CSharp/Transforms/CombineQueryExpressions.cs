@@ -69,29 +69,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 		}
-		
+
 		static readonly QuerySelectClause selectTransparentIdentifierPattern = new QuerySelectClause {
-			Expression = new Choice {
-				new AnonymousTypeCreateExpression {
-					Initializers = {
-						new NamedExpression {
-							Name = Pattern.AnyString,
-							Expression = new IdentifierExpression(Pattern.AnyString)
-						}.WithName("nae1"),
-						new NamedExpression {
-							Name = Pattern.AnyString,
-							Expression = new AnyNode("nae2Expr")
-						}.WithName("nae2")
-					}
-				},
-				new AnonymousTypeCreateExpression {
-					Initializers = {
-						new NamedNode("identifier", new IdentifierExpression(Pattern.AnyString)),
-						new AnyNode("nae2Expr")
-					}
+			Expression = new AnonymousTypeCreateExpression {
+				Initializers = {
+					new Repeat(
+						new Choice {
+							new IdentifierExpression(Pattern.AnyString).WithName("expr"), // capture variable with same name
+							new NamedExpression {
+								Name = Pattern.AnyString,
+								Expression = new AnyNode()
+							}.WithName("expr")
+						}
+					) { MinCount = 1 }
 				}
-			}};
-		
+			}
+		};
+
 		bool IsTransparentIdentifier(string identifier)
 		{
 			return identifier.StartsWith("<>", StringComparison.Ordinal) && (identifier.Contains("TransparentIdentifier") || identifier.Contains("TranspIdent"));
@@ -101,48 +95,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!IsTransparentIdentifier(fromClause.Identifier))
 				return false;
-			Match match = selectTransparentIdentifierPattern.Match(innerQuery.Clauses.Last());
+			QuerySelectClause selectClause = innerQuery.Clauses.Last() as QuerySelectClause;
+			Match match = selectTransparentIdentifierPattern.Match(selectClause);
 			if (!match.Success)
 				return false;
-			QuerySelectClause selectClause = (QuerySelectClause)innerQuery.Clauses.Last();
-			NamedExpression nae1 = match.Get<NamedExpression>("nae1").SingleOrDefault();
-			NamedExpression nae2 = match.Get<NamedExpression>("nae2").SingleOrDefault();
-			if (nae1 != null && nae1.Name != ((IdentifierExpression)nae1.Expression).Identifier)
-				return false;
-			Expression nae2Expr = match.Get<Expression>("nae2Expr").Single();
-			IdentifierExpression nae2IdentExpr = nae2Expr as IdentifierExpression;
-			if (nae2IdentExpr != null && (nae2 == null || nae2.Name == nae2IdentExpr.Identifier)) {
-				// from * in (from x in ... select new { x = x, y = y }) ...
-				// =>
-				// from x in ... ...
-				fromClause.Remove();
-				selectClause.Remove();
-				// Move clauses from innerQuery to query
-				QueryClause insertionPos = null;
-				foreach (var clause in innerQuery.Clauses) {
-					query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
+
+			// from * in (from x in ... select new { members of anonymous type }) ...
+			// =>
+			// from x in ... { let x = ... } ...
+			fromClause.Remove();
+			selectClause.Remove();
+			// Move clauses from innerQuery to query
+			QueryClause insertionPos = null;
+			foreach (var clause in innerQuery.Clauses) {
+				query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
+			}
+
+			foreach (var expr in match.Get<Expression>("expr")) {
+				switch (expr) {
+					case IdentifierExpression identifier:
+						// nothing to add
+						continue;
+					case NamedExpression namedExpression:
+						if (namedExpression.Expression is IdentifierExpression identifierExpression && namedExpression.Name == identifierExpression.Identifier)
+							continue;
+						query.Clauses.InsertAfter(insertionPos, new QueryLetClause { Identifier = namedExpression.Name, Expression = namedExpression.Expression.Detach() });
+						break;
 				}
-			} else {
-				// from * in (from x in ... select new { x = x, y = expr }) ...
-				// =>
-				// from x in ... let y = expr ...
-				fromClause.Remove();
-				selectClause.Remove();
-				// Move clauses from innerQuery to query
-				QueryClause insertionPos = null;
-				foreach (var clause in innerQuery.Clauses) {
-					query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
-				}
-				string ident;
-				if (nae2 != null)
-					ident = nae2.Name;
-				else if (nae2Expr is IdentifierExpression)
-					ident = ((IdentifierExpression)nae2Expr).Identifier;
-				else if (nae2Expr is MemberReferenceExpression)
-					ident = ((MemberReferenceExpression)nae2Expr).MemberName;
-				else
-					throw new InvalidOperationException("Could not infer name from initializer in AnonymousTypeCreateExpression");
-				query.Clauses.InsertAfter(insertionPos, new QueryLetClause { Identifier = ident, Expression = nae2Expr.Detach() });
 			}
 			return true;
 		}
