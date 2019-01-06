@@ -74,7 +74,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			QueryExpression query = DecompileQuery(node as InvocationExpression);
 			if (query != null)
 				node.ReplaceWith(query);
-			for (AstNode child = (query ?? node).FirstChild; child != null; child = child.NextSibling) {
+			AstNode next;
+			for (AstNode child = (query ?? node).FirstChild; child != null; child = next) {
+				// store referece to next child before transformation
+				next = child.NextSibling;
 				DecompileQueries(child);
 			}
 		}
