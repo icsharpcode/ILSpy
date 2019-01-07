@@ -649,7 +649,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private BlockContainer ConvertBody(BlockContainer oldBody, StateRangeAnalysis rangeAnalysis)
 		{
 			var blockStateMap = rangeAnalysis.GetBlockStateSetMapping(oldBody);
-			BlockContainer newBody = new BlockContainer();
+			BlockContainer newBody = new BlockContainer() { ILRange = oldBody.ILRange };
 			// create all new blocks so that they can be referenced by gotos
 			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++) {
 				newBody.Blocks.Add(new Block { ILRange = oldBody.Blocks[blockIndex].ILRange });
