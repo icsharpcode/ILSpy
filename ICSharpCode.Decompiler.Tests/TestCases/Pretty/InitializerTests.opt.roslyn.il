@@ -1188,8 +1188,8 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' '<>9'
-    .field public static class [mscorlib]System.EventHandler '<>9__63_0'
-    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__77_0'
+    .field public static class [mscorlib]System.EventHandler '<>9__65_0'
+    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__79_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -1211,17 +1211,17 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance void 
-            '<NotAnObjectInitializerWithEvent>b__63_0'(object '<p0>',
+            '<NotAnObjectInitializerWithEvent>b__65_0'(object '<p0>',
                                                        class [mscorlib]System.EventArgs '<p1>') cil managed
     {
       // Code size       6 (0x6)
       .maxstack  8
       IL_0000:  call       void [mscorlib]System.Console::WriteLine()
       IL_0005:  ret
-    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__63_0'
+    } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__65_0'
 
     .method assembly hidebysig instance bool 
-            '<Issue270_NestedInitialisers>b__77_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
+            '<Issue270_NestedInitialisers>b__79_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
     {
       // Code size       17 (0x11)
       .maxstack  8
@@ -1231,7 +1231,7 @@
       IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                      string)
       IL_0010:  ret
-    } // end of method '<>c'::'<Issue270_NestedInitialisers>b__77_0'
+    } // end of method '<>c'::'<Issue270_NestedInitialisers>b__79_0'
 
   } // end of class '<>c'
 
@@ -2157,6 +2157,198 @@
     IL_001b:  ret
   } // end of method TestCases::Issue1383
 
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382a() cil managed
+  {
+    // Code size       164 (0xa4)
+    .maxstack  5
+    IL_0000:  ldc.i4.4
+    IL_0001:  ldc.i4.4
+    IL_0002:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0007:  dup
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldc.i4.1
+    IL_000a:  ldstr      "test"
+    IL_000f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0014:  dup
+    IL_0015:  ldc.i4.0
+    IL_0016:  ldc.i4.2
+    IL_0017:  ldstr      "hello"
+    IL_001c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0021:  dup
+    IL_0022:  ldc.i4.0
+    IL_0023:  ldc.i4.3
+    IL_0024:  ldstr      "world"
+    IL_0029:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_002e:  dup
+    IL_002f:  ldc.i4.1
+    IL_0030:  ldc.i4.0
+    IL_0031:  ldstr      "test"
+    IL_0036:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003b:  dup
+    IL_003c:  ldc.i4.1
+    IL_003d:  ldc.i4.2
+    IL_003e:  ldstr      "hello"
+    IL_0043:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0048:  dup
+    IL_0049:  ldc.i4.1
+    IL_004a:  ldc.i4.3
+    IL_004b:  ldstr      "world"
+    IL_0050:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0055:  dup
+    IL_0056:  ldc.i4.2
+    IL_0057:  ldc.i4.0
+    IL_0058:  ldstr      "test"
+    IL_005d:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0062:  dup
+    IL_0063:  ldc.i4.2
+    IL_0064:  ldc.i4.1
+    IL_0065:  ldstr      "hello"
+    IL_006a:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_006f:  dup
+    IL_0070:  ldc.i4.2
+    IL_0071:  ldc.i4.3
+    IL_0072:  ldstr      "world"
+    IL_0077:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007c:  dup
+    IL_007d:  ldc.i4.3
+    IL_007e:  ldc.i4.0
+    IL_007f:  ldstr      "test"
+    IL_0084:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0089:  dup
+    IL_008a:  ldc.i4.3
+    IL_008b:  ldc.i4.1
+    IL_008c:  ldstr      "hello"
+    IL_0091:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0096:  dup
+    IL_0097:  ldc.i4.3
+    IL_0098:  ldc.i4.2
+    IL_0099:  ldstr      "world"
+    IL_009e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a3:  ret
+  } // end of method TestCases::Issue1382a
+
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382b() cil managed
+  {
+    // Code size       164 (0xa4)
+    .maxstack  5
+    IL_0000:  ldc.i4.4
+    IL_0001:  ldc.i4.4
+    IL_0002:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0007:  dup
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldc.i4.0
+    IL_000a:  ldstr      "test"
+    IL_000f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0014:  dup
+    IL_0015:  ldc.i4.0
+    IL_0016:  ldc.i4.1
+    IL_0017:  ldstr      "hello"
+    IL_001c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0021:  dup
+    IL_0022:  ldc.i4.0
+    IL_0023:  ldc.i4.2
+    IL_0024:  ldstr      "world"
+    IL_0029:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_002e:  dup
+    IL_002f:  ldc.i4.1
+    IL_0030:  ldc.i4.0
+    IL_0031:  ldstr      "test"
+    IL_0036:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003b:  dup
+    IL_003c:  ldc.i4.1
+    IL_003d:  ldc.i4.1
+    IL_003e:  ldstr      "hello"
+    IL_0043:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0048:  dup
+    IL_0049:  ldc.i4.1
+    IL_004a:  ldc.i4.3
+    IL_004b:  ldstr      "world"
+    IL_0050:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0055:  dup
+    IL_0056:  ldc.i4.2
+    IL_0057:  ldc.i4.0
+    IL_0058:  ldstr      "test"
+    IL_005d:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0062:  dup
+    IL_0063:  ldc.i4.2
+    IL_0064:  ldc.i4.2
+    IL_0065:  ldstr      "hello"
+    IL_006a:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_006f:  dup
+    IL_0070:  ldc.i4.2
+    IL_0071:  ldc.i4.3
+    IL_0072:  ldstr      "world"
+    IL_0077:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007c:  dup
+    IL_007d:  ldc.i4.3
+    IL_007e:  ldc.i4.1
+    IL_007f:  ldstr      "test"
+    IL_0084:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0089:  dup
+    IL_008a:  ldc.i4.3
+    IL_008b:  ldc.i4.2
+    IL_008c:  ldstr      "hello"
+    IL_0091:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0096:  dup
+    IL_0097:  ldc.i4.3
+    IL_0098:  ldc.i4.3
+    IL_0099:  ldstr      "world"
+    IL_009e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a3:  ret
+  } // end of method TestCases::Issue1382b
+
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C 
           Test1() cil managed
   {
@@ -2303,18 +2495,18 @@
     IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
-    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__63_0'
+    IL_0007:  ldsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__65_0'
     IL_000c:  dup
     IL_000d:  brtrue.s   IL_0026
 
     IL_000f:  pop
     IL_0010:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9'
-    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<NotAnObjectInitializerWithEvent>b__63_0'(object,
+    IL_0015:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<NotAnObjectInitializerWithEvent>b__65_0'(object,
                                                                                                                                                                   class [mscorlib]System.EventArgs)
     IL_001b:  newobj     instance void [mscorlib]System.EventHandler::.ctor(object,
                                                                             native int)
     IL_0020:  dup
-    IL_0021:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__63_0'
+    IL_0021:  stsfld     class [mscorlib]System.EventHandler ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__65_0'
     IL_0026:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/Data::add_TestEvent(class [mscorlib]System.EventHandler)
     IL_002b:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
     IL_0030:  ldloc.0
@@ -2651,17 +2843,17 @@
     IL_0033:  callvirt   instance void [mscorlib]System.Globalization.CultureInfo::set_DateTimeFormat(class [mscorlib]System.Globalization.DateTimeFormatInfo)
     IL_0038:  dup
     IL_0039:  ldloc.0
-    IL_003a:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__77_0'
+    IL_003a:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__79_0'
     IL_003f:  dup
     IL_0040:  brtrue.s   IL_0059
 
     IL_0042:  pop
     IL_0043:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9'
-    IL_0048:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<Issue270_NestedInitialisers>b__77_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_0048:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<Issue270_NestedInitialisers>b__79_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
     IL_004e:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
                                                                                                                                         native int)
     IL_0053:  dup
-    IL_0054:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__77_0'
+    IL_0054:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/'<>c'::'<>9__79_0'
     IL_0059:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,bool>)
     IL_005e:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
@@ -4075,67 +4267,68 @@
     .size 256
   } // end of class '__StaticArrayInitTypeSize=256'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00006C8C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00006CD4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_00006CE4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00006D2C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00006D3C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00006D4C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00006D8C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00006DB4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00006E04
-  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00006F04
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_00006F0C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00006F34
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00006F5C
-  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_00006F74
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00006F7C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_00006FAC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_00006FEC
-  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00007014
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_0000701C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00007044
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00006E70
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_00006EB8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_00006EC8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00006F10
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00006F20
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00006F30
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00006F70
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_00006F98
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00006FE8
+  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_000070E8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_000070F0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00007118
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00007140
+  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_00007158
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00007160
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_00007190
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_000071D0
+  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_000071F8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00007200
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00007228
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00006C8C = bytearray (
+.data cil I_00006E70 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0B 00 00 00 0C 00 00 00 0D 00 00 00
                  0E 00 00 00 0F 00 00 00 10 00 00 00 11 00 00 00
                  12 00 00 00 13 00 00 00) 
-.data cil I_00006CD4 = bytearray (
+.data cil I_00006EB8 = bytearray (
                  01 02 03 04 05 06 07 08 FE FF) 
-.data cil I_00006CDE = int8[2]
-.data cil I_00006CE4 = bytearray (
+.data cil I_00006EC2 = int8[6]
+.data cil I_00006EC8 = bytearray (
                  15 00 00 00 16 00 00 00 17 00 00 00 18 00 00 00
                  19 00 00 00 1A 00 00 00 1B 00 00 00 1C 00 00 00
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00006D2C = bytearray (
+.data cil I_00006F10 = bytearray (
                  00 80 FF FF 00 00 01 00 FF 7F) 
-.data cil I_00006D36 = int8[2]
-.data cil I_00006D3C = bytearray (
+.data cil I_00006F1A = int8[6]
+.data cil I_00006F20 = bytearray (
                  00 00 01 00 FF 7F 00 80 FE FF FF FF) 
-.data cil I_00006D4C = bytearray (
+.data cil I_00006F2C = int8[4]
+.data cil I_00006F30 = bytearray (
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00006D8C = bytearray (
+.data cil I_00006F70 = bytearray (
                  01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45)                         // ...D..cE
-.data cil I_00006DB4 = bytearray (
+.data cil I_00006F98 = bytearray (
                  01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
                  00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
                  05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
                  07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
-.data cil I_00006E04 = bytearray (
+.data cil I_00006FE8 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -4152,41 +4345,43 @@
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00006F04 = bytearray (
+.data cil I_000070E8 = bytearray (
                  80 81 00 01 02 03 04 7F) 
-.data cil I_00006F0C = bytearray (
+.data cil I_000070F0 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 
-.data cil I_00006F34 = bytearray (
+.data cil I_00007114 = int8[4]
+.data cil I_00007118 = bytearray (
                  01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00006F5C = bytearray (
+.data cil I_00007140 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00) 
-.data cil I_00006F74 = bytearray (
+.data cil I_00007158 = bytearray (
                  00 01 02 FF) 
-.data cil I_00006F7C = bytearray (
+.data cil I_0000715C = int8[4]
+.data cil I_00007160 = bytearray (
                  00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
                  00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
-.data cil I_00006FAC = bytearray (
+.data cil I_00007190 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
-.data cil I_00006FEC = bytearray (
+.data cil I_000071D0 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00007014 = bytearray (
+.data cil I_000071F8 = bytearray (
                  01 00 01 00 00 00 01 01) 
-.data cil I_0000701C = bytearray (
+.data cil I_00007200 = bytearray (
                  01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
                  05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00007044 = bytearray (
+.data cil I_00007228 = bytearray (
                  00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
                  00 00 80 7F 00 00 C0 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

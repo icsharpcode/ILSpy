@@ -2430,6 +2430,216 @@
     IL_0020:  ret
   } // end of method TestCases::Issue1383
 
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382a() cil managed
+  {
+    // Code size       171 (0xab)
+    .maxstack  4
+    .locals init (string[0...,0...] V_0,
+             string[0...,0...] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  ldc.i4.4
+    IL_0003:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0008:  stloc.1
+    IL_0009:  ldloc.1
+    IL_000a:  ldc.i4.0
+    IL_000b:  ldc.i4.1
+    IL_000c:  ldstr      "test"
+    IL_0011:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.0
+    IL_0018:  ldc.i4.2
+    IL_0019:  ldstr      "hello"
+    IL_001e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0023:  ldloc.1
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.3
+    IL_0026:  ldstr      "world"
+    IL_002b:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0030:  ldloc.1
+    IL_0031:  ldc.i4.1
+    IL_0032:  ldc.i4.0
+    IL_0033:  ldstr      "test"
+    IL_0038:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003d:  ldloc.1
+    IL_003e:  ldc.i4.1
+    IL_003f:  ldc.i4.2
+    IL_0040:  ldstr      "hello"
+    IL_0045:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_004a:  ldloc.1
+    IL_004b:  ldc.i4.1
+    IL_004c:  ldc.i4.3
+    IL_004d:  ldstr      "world"
+    IL_0052:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0057:  ldloc.1
+    IL_0058:  ldc.i4.2
+    IL_0059:  ldc.i4.0
+    IL_005a:  ldstr      "test"
+    IL_005f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0064:  ldloc.1
+    IL_0065:  ldc.i4.2
+    IL_0066:  ldc.i4.1
+    IL_0067:  ldstr      "hello"
+    IL_006c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0071:  ldloc.1
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldc.i4.3
+    IL_0074:  ldstr      "world"
+    IL_0079:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007e:  ldloc.1
+    IL_007f:  ldc.i4.3
+    IL_0080:  ldc.i4.0
+    IL_0081:  ldstr      "test"
+    IL_0086:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_008b:  ldloc.1
+    IL_008c:  ldc.i4.3
+    IL_008d:  ldc.i4.1
+    IL_008e:  ldstr      "hello"
+    IL_0093:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0098:  ldloc.1
+    IL_0099:  ldc.i4.3
+    IL_009a:  ldc.i4.2
+    IL_009b:  ldstr      "world"
+    IL_00a0:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a5:  ldloc.1
+    IL_00a6:  stloc.0
+    IL_00a7:  br.s       IL_00a9
+
+    IL_00a9:  ldloc.0
+    IL_00aa:  ret
+  } // end of method TestCases::Issue1382a
+
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382b() cil managed
+  {
+    // Code size       171 (0xab)
+    .maxstack  4
+    .locals init (string[0...,0...] V_0,
+             string[0...,0...] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  ldc.i4.4
+    IL_0003:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0008:  stloc.1
+    IL_0009:  ldloc.1
+    IL_000a:  ldc.i4.0
+    IL_000b:  ldc.i4.0
+    IL_000c:  ldstr      "test"
+    IL_0011:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.0
+    IL_0018:  ldc.i4.1
+    IL_0019:  ldstr      "hello"
+    IL_001e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0023:  ldloc.1
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.2
+    IL_0026:  ldstr      "world"
+    IL_002b:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0030:  ldloc.1
+    IL_0031:  ldc.i4.1
+    IL_0032:  ldc.i4.0
+    IL_0033:  ldstr      "test"
+    IL_0038:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003d:  ldloc.1
+    IL_003e:  ldc.i4.1
+    IL_003f:  ldc.i4.1
+    IL_0040:  ldstr      "hello"
+    IL_0045:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_004a:  ldloc.1
+    IL_004b:  ldc.i4.1
+    IL_004c:  ldc.i4.3
+    IL_004d:  ldstr      "world"
+    IL_0052:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0057:  ldloc.1
+    IL_0058:  ldc.i4.2
+    IL_0059:  ldc.i4.0
+    IL_005a:  ldstr      "test"
+    IL_005f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0064:  ldloc.1
+    IL_0065:  ldc.i4.2
+    IL_0066:  ldc.i4.2
+    IL_0067:  ldstr      "hello"
+    IL_006c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0071:  ldloc.1
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldc.i4.3
+    IL_0074:  ldstr      "world"
+    IL_0079:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007e:  ldloc.1
+    IL_007f:  ldc.i4.3
+    IL_0080:  ldc.i4.1
+    IL_0081:  ldstr      "test"
+    IL_0086:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_008b:  ldloc.1
+    IL_008c:  ldc.i4.3
+    IL_008d:  ldc.i4.2
+    IL_008e:  ldstr      "hello"
+    IL_0093:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0098:  ldloc.1
+    IL_0099:  ldc.i4.3
+    IL_009a:  ldc.i4.3
+    IL_009b:  ldstr      "world"
+    IL_00a0:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a5:  ldloc.1
+    IL_00a6:  stloc.0
+    IL_00a7:  br.s       IL_00a9
+
+    IL_00a9:  ldloc.0
+    IL_00aa:  ret
+  } // end of method TestCases::Issue1382b
+
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C 
           Test1() cil managed
   {
@@ -3205,7 +3415,7 @@
     IL_0001:  ldc.i4.4
     IL_0002:  newarr     [mscorlib]System.Byte
     IL_0007:  dup
-    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000042-1'
+    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000044-1'
     IL_000d:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0012:  stloc.0
@@ -4470,7 +4680,7 @@
     IL_0787:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_078c:  dup
-    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000091-1'
+    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000093-1'
     IL_0792:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0797:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4574,8 +4784,8 @@
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_000029A8
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_00002A58
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002AA0
-  .field static assembly int32 '$$method0x6000042-1' at I_00003348
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000091-1' at I_00003630
+  .field static assembly int32 '$$method0x6000044-1' at I_000034B8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000093-1' at I_000037A0
 } // end of class '<PrivateImplementationDetails>'
 
 
@@ -4683,10 +4893,10 @@
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00003348 = bytearray (
+.data cil I_000034B8 = bytearray (
                  00 01 02 FF) 
-.data cil I_0000334C = int8[4]
-.data cil I_00003630 = bytearray (
+.data cil I_000034BC = int8[4]
+.data cil I_000037A0 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 

@@ -1160,6 +1160,66 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			array[i++] = 2;
 			return array;
 		}
+
+		private string[,] Issue1382a()
+		{
+			return new string[4, 4] {
+				{
+					null,
+					"test",
+					"hello",
+					"world"
+				},
+				{
+					"test",
+					null,
+					"hello",
+					"world"
+				},
+				{
+					"test",
+					"hello",
+					null,
+					"world"
+				},
+				{
+					"test",
+					"hello",
+					"world",
+					null
+				}
+			};
+		}
+
+		private string[,] Issue1382b()
+		{
+			return new string[4, 4] {
+				{
+					"test",
+					"hello",
+					"world",
+					null
+				},
+				{
+					"test",
+					"hello",
+					null,
+					"world"
+				},
+				{
+					"test",
+					null,
+					"hello",
+					"world"
+				},
+				{
+					null,
+					"test",
+					"hello",
+					"world"
+				}
+			};
+		}
 #endregion
 
 #region Object initializers

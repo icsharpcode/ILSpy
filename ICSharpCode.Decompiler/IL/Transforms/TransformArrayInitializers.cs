@@ -315,6 +315,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						nextIndices[k] = new LdcI4(nextMinimumIndex[k]);
 					}
 				} else {
+					bool previousComponentWasGreater = false;
 					for (int k = 0; k < indices.Count; k++) {
 						if (!indices[k].MatchLdcI4(out int index))
 							return null;
@@ -322,11 +323,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// to avoid running out of bounds or accidentally reordering instructions or overwriting previous instructions.
 						// However, leaving array slots empty is allowed, as those are filled with default values when the
 						// initializer block is generated.
-						if (index < 0 || index >= arrayLength[k] || index < nextMinimumIndex[k])
+						if (index < 0 || index >= arrayLength[k] || (!previousComponentWasGreater && index < nextMinimumIndex[k]))
 							return null;
 						nextIndices[k] = new LdcI4(nextMinimumIndex[k]);
 						if (index != nextMinimumIndex[k]) {
 							exactMatch = false;
+							// this flag allows us to check whether the whole set of indices is smaller:
+							// [3, 3] should be smaller than [4, 0] even though 3 > 0.
+							if (index > nextMinimumIndex[k])
+								previousComponentWasGreater = true;
 						}
 					}
 				}
