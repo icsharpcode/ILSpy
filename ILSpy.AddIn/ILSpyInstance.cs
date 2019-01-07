@@ -22,13 +22,9 @@ namespace ICSharpCode.ILSpy.AddIn
 
 	class ILSpyInstance
 	{
-		ILSpyParameters parameters;
+		readonly ILSpyParameters parameters;
 
-		public ILSpyInstance()
-		{
-		}
-
-		public ILSpyInstance(ILSpyParameters parameters)
+		public ILSpyInstance(ILSpyParameters parameters = null)
 		{
 			this.parameters = parameters;
 		}
@@ -41,7 +37,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public void Start()
 		{
-			var commandLineArguments = parameters.AssemblyFileNames?.Concat(parameters.Arguments);
+			var commandLineArguments = parameters?.AssemblyFileNames?.Concat(parameters.Arguments);
 
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {
