@@ -324,11 +324,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// initializer block is generated.
 						if (index < 0 || index >= arrayLength[k] || index < nextMinimumIndex[k])
 							return null;
+						nextIndices[k] = new LdcI4(nextMinimumIndex[k]);
 						if (index != nextMinimumIndex[k]) {
 							exactMatch = false;
-							nextIndices[k] = new LdcI4(nextMinimumIndex[k]);
-						} else {
-							nextIndices[k] = indices[k];
 						}
 					}
 				}
