@@ -317,7 +317,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					for (int k = 0; k < indices.Count; k++) {
 						if (!indices[k].MatchLdcI4(out int index))
-							return nextIndices;
+							return null;
 						// index must be in range [0..length[ and must be greater than or equal to nextMinimumIndex
 						// to avoid running out of bounds or accidentally reordering instructions or overwriting previous instructions.
 						// However, leaving array slots empty is allowed, as those are filled with default values when the

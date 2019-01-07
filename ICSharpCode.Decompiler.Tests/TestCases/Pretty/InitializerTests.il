@@ -2395,6 +2395,41 @@
     IL_0020:  ret
   } // end of method TestCases::Issue907_Test3
 
+  .method private hidebysig instance int32[] 
+          Issue1383(int32 i,
+                    int32[] 'array') cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  4
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  starg.s    'array'
+    IL_0009:  ldarg.2
+    IL_000a:  ldarg.1
+    IL_000b:  dup
+    IL_000c:  ldc.i4.1
+    IL_000d:  add
+    IL_000e:  starg.s    i
+    IL_0010:  ldc.i4.1
+    IL_0011:  stelem.i4
+    IL_0012:  ldarg.2
+    IL_0013:  ldarg.1
+    IL_0014:  dup
+    IL_0015:  ldc.i4.1
+    IL_0016:  add
+    IL_0017:  starg.s    i
+    IL_0019:  ldc.i4.2
+    IL_001a:  stelem.i4
+    IL_001b:  ldarg.2
+    IL_001c:  stloc.0
+    IL_001d:  br.s       IL_001f
+
+    IL_001f:  ldloc.0
+    IL_0020:  ret
+  } // end of method TestCases::Issue1383
+
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C 
           Test1() cil managed
   {
@@ -3170,7 +3205,7 @@
     IL_0001:  ldc.i4.4
     IL_0002:  newarr     [mscorlib]System.Byte
     IL_0007:  dup
-    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000041-1'
+    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000042-1'
     IL_000d:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0012:  stloc.0
@@ -4435,7 +4470,7 @@
     IL_0787:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_078c:  dup
-    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000090-1'
+    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000091-1'
     IL_0792:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0797:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4539,8 +4574,8 @@
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_000029A8
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_00002A58
   .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002AA0
-  .field static assembly int32 '$$method0x6000041-1' at I_00003318
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000090-1' at I_00003600
+  .field static assembly int32 '$$method0x6000042-1' at I_00003348
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000091-1' at I_00003630
 } // end of class '<PrivateImplementationDetails>'
 
 
@@ -4648,10 +4683,10 @@
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00003318 = bytearray (
+.data cil I_00003348 = bytearray (
                  00 01 02 FF) 
-.data cil I_0000331C = int8[228]
-.data cil I_00003600 = bytearray (
+.data cil I_0000334C = int8[4]
+.data cil I_00003630 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 

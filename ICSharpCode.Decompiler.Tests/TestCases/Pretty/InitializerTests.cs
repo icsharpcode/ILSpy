@@ -1152,6 +1152,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				}
 			});
 		}
+
+		private int[] Issue1383(int i, int[] array)
+		{
+			array = new int[4];
+			array[i++] = 1;
+			array[i++] = 2;
+			return array;
+		}
 #endregion
 
 #region Object initializers
