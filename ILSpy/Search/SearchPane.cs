@@ -200,7 +200,7 @@ namespace ICSharpCode.ILSpy
 			{
 				this.dispatcher = Dispatcher.CurrentDispatcher;
 				this.assemblies = assemblies;
-				this.searchTerm = searchTerm.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+				this.searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm);
 				this.language = language;
 				this.searchMode = searchMode;
 				
