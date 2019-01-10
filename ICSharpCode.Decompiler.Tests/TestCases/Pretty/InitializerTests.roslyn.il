@@ -44,10 +44,23 @@
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig static void  Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> inst,
-                                            int32 a,
-                                            int32 b) cil managed
+                                            string a,
+                                            string b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method Extensions::Add
+
+  .method public hidebysig static void  Add<T>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>> collection,
+                                               string key,
+                                               !!T 'value',
+                                               [opt] class [mscorlib]System.Func`2<!!T,string> convert) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    .param [4] = nullref
     // Code size       2 (0x2)
     .maxstack  8
     IL_0000:  nop
@@ -3429,31 +3442,22 @@
 
   .method public hidebysig static void  ExtensionMethodInCollectionInitializer() cil managed
   {
-    // Code size       41 (0x29)
-    .maxstack  6
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> V_0)
+    // Code size       35 (0x23)
+    .maxstack  8
     IL_0000:  nop
     IL_0001:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
     IL_0006:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::.ctor()
-    IL_000b:  stloc.0
-    IL_000c:  ldloc.0
-    IL_000d:  ldc.i4.2
-    IL_000e:  newarr     [mscorlib]System.Int32
-    IL_0013:  dup
-    IL_0014:  ldc.i4.0
-    IL_0015:  ldc.i4.1
-    IL_0016:  stelem.i4
-    IL_0017:  dup
-    IL_0018:  ldc.i4.1
-    IL_0019:  ldc.i4.2
-    IL_001a:  stelem.i4
-    IL_001b:  callvirt   instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::Add(int32[])
-    IL_0020:  nop
-    IL_0021:  ldloc.0
-    IL_0022:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    IL_000b:  dup
+    IL_000c:  ldstr      "1"
+    IL_0011:  ldstr      "2"
+    IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>,
+                                                                                                             string,
+                                                                                                             string)
+    IL_001b:  nop
+    IL_001c:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_0027:  nop
-    IL_0028:  ret
+    IL_0021:  nop
+    IL_0022:  ret
   } // end of method TestCases::ExtensionMethodInCollectionInitializer
 
   .method public hidebysig static void  NoCollectionInitializerBecauseOfTypeArguments() cil managed
@@ -3825,6 +3829,52 @@
     IL_0025:  nop
     IL_0026:  ret
   } // end of method TestCases::Issue1250_Test4
+
+  .method public hidebysig static void  Issue1390(class [mscorlib]System.Collections.Generic.IEnumerable`1<string> tokens,
+                                                  bool alwaysAllowAdministrators,
+                                                  char wireDelimiter) cil managed
+  {
+    // Code size       74 (0x4a)
+    .maxstack  5
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>> V_0)
+    IL_0000:  nop
+    IL_0001:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>>::.ctor()
+    IL_0006:  dup
+    IL_0007:  ldstr      "tokens"
+    IL_000c:  ldarga.s   wireDelimiter
+    IL_000e:  call       instance string [mscorlib]System.Char::ToString()
+    IL_0013:  ldarg.0
+    IL_0014:  call       string [mscorlib]System.String::Join(string,
+                                                              class [mscorlib]System.Collections.Generic.IEnumerable`1<string>)
+    IL_0019:  ldnull
+    IL_001a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add<string>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>>,
+                                                                                                                     string,
+                                                                                                                     !!0,
+                                                                                                                     class [mscorlib]System.Func`2<!!0,string>)
+    IL_001f:  nop
+    IL_0020:  dup
+    IL_0021:  ldstr      "alwaysAllowAdministrators"
+    IL_0026:  ldarga.s   alwaysAllowAdministrators
+    IL_0028:  call       instance string [mscorlib]System.Boolean::ToString()
+    IL_002d:  ldnull
+    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add<string>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>>,
+                                                                                                                     string,
+                                                                                                                     !!0,
+                                                                                                                     class [mscorlib]System.Func`2<!!0,string>)
+    IL_0033:  nop
+    IL_0034:  dup
+    IL_0035:  ldstr      "delimiter"
+    IL_003a:  ldarga.s   wireDelimiter
+    IL_003c:  call       instance string [mscorlib]System.Char::ToString()
+    IL_0041:  ldnull
+    IL_0042:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add<string>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>>,
+                                                                                                                     string,
+                                                                                                                     !!0,
+                                                                                                                     class [mscorlib]System.Func`2<!!0,string>)
+    IL_0047:  nop
+    IL_0048:  stloc.0
+    IL_0049:  ret
+  } // end of method TestCases::Issue1390
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -4725,67 +4775,68 @@
     .size 256
   } // end of class '__StaticArrayInitTypeSize=256'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_0000729C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_000072E4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_000072F4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_0000733C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_0000734C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_0000735C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_0000739C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_000073C4
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_00007414
-  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_00007514
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_0000751C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00007544
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_0000756C
-  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_00007584
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_0000758C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_000075BC
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_000075FC
-  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00007624
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_0000762C
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00007654
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '1535117EC92E41D4A6B7CA00F965357B05B5DC35' at I_00007480
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '20E3FF489634E18F3F7EB292AD504DBAE9519293' at I_000074C8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '39E94835525CF7B71CD4595742EF462642FBF1B2' at I_000074D8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '56D9EEC8EF899644C40B9BE9D886DF2367A5D078' at I_00007520
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '735E5A21849E86F68D220F06163E8C5C6376B9C9' at I_00007530
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '7C39B7B06DD624A17F875AB8E9651554BE6E74D2' at I_00007540
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '8D903ECAD8D9D75B3183B23AF79F6D2E607369E3' at I_00007580
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '9B1F6E56D755443CC39C1969CE38FD41FD4EF4B7' at I_000075A8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' A1EA7DC3FE43B3A54F5B729A92B92AF54181A3EB at I_000075F8
+  .field static assembly initonly int64 A6296CAC471BE2954899600137940479D8073C7C at I_000076F8
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' B62E59D20E3D69F06A6D9BD5E3C518FF7093EDAB at I_00007700
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' B9583930B842DBCEF0D7B8E57D4D3F1E8055C39E at I_00007728
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' C4E70AB31EF6C8908F896CAD1C6BC75F7FA65E27 at I_00007750
+  .field static assembly initonly int32 C62C27924F4C967F5EDDB1850C091D54C7A2AB58 at I_00007768
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' DC7043B0114737ACE19A23DD755893795FD48A23 at I_00007770
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' DCF557B883E6FE0AEC05B7F0290F0EF47D0AC2E3 at I_000077A0
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' E0D2592373A0C161E56E266306CD8405CD719D19 at I_000077E0
+  .field static assembly initonly int64 EB0715DBB235F3F696F2C404F5839C6650640898 at I_00007808
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' F514FF55B79BCAA2CEC9B56C062D976E45F89AB7 at I_00007810
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' FBCB49C1A244C1B5781AA1DB02C5A11F68908526 at I_00007838
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_0000729C = bytearray (
+.data cil I_00007480 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0B 00 00 00 0C 00 00 00 0D 00 00 00
                  0E 00 00 00 0F 00 00 00 10 00 00 00 11 00 00 00
                  12 00 00 00 13 00 00 00) 
-.data cil I_000072E4 = bytearray (
+.data cil I_000074C8 = bytearray (
                  01 02 03 04 05 06 07 08 FE FF) 
-.data cil I_000072EE = int8[2]
-.data cil I_000072F4 = bytearray (
+.data cil I_000074D2 = int8[6]
+.data cil I_000074D8 = bytearray (
                  15 00 00 00 16 00 00 00 17 00 00 00 18 00 00 00
                  19 00 00 00 1A 00 00 00 1B 00 00 00 1C 00 00 00
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_0000733C = bytearray (
+.data cil I_00007520 = bytearray (
                  00 80 FF FF 00 00 01 00 FF 7F) 
-.data cil I_00007346 = int8[2]
-.data cil I_0000734C = bytearray (
+.data cil I_0000752A = int8[6]
+.data cil I_00007530 = bytearray (
                  00 00 01 00 FF 7F 00 80 FE FF FF FF) 
-.data cil I_0000735C = bytearray (
+.data cil I_0000753C = int8[4]
+.data cil I_00007540 = bytearray (
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_0000739C = bytearray (
+.data cil I_00007580 = bytearray (
                  01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45)                         // ...D..cE
-.data cil I_000073C4 = bytearray (
+.data cil I_000075A8 = bytearray (
                  01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
                  00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
                  05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
                  07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
-.data cil I_00007414 = bytearray (
+.data cil I_000075F8 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -4802,41 +4853,43 @@
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00007514 = bytearray (
+.data cil I_000076F8 = bytearray (
                  80 81 00 01 02 03 04 7F) 
-.data cil I_0000751C = bytearray (
+.data cil I_00007700 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 
-.data cil I_00007544 = bytearray (
+.data cil I_00007724 = int8[4]
+.data cil I_00007728 = bytearray (
                  01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_0000756C = bytearray (
+.data cil I_00007750 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00) 
-.data cil I_00007584 = bytearray (
+.data cil I_00007768 = bytearray (
                  00 01 02 FF) 
-.data cil I_0000758C = bytearray (
+.data cil I_0000776C = int8[4]
+.data cil I_00007770 = bytearray (
                  00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
                  00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
-.data cil I_000075BC = bytearray (
+.data cil I_000077A0 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
-.data cil I_000075FC = bytearray (
+.data cil I_000077E0 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00007624 = bytearray (
+.data cil I_00007808 = bytearray (
                  01 00 01 00 00 00 01 01) 
-.data cil I_0000762C = bytearray (
+.data cil I_00007810 = bytearray (
                  01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
                  05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00007654 = bytearray (
+.data cil I_00007838 = bytearray (
                  00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
                  00 00 80 7F 00 00 C0 FF) 
 // *********** DISASSEMBLY COMPLETE ***********************

@@ -15,10 +15,10 @@
 }
 .assembly InitializerTests.opt
 {
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .permissionset reqmin
              = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
@@ -40,10 +40,22 @@
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig static void  Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> inst,
-                                            int32 a,
-                                            int32 b) cil managed
+                                            string a,
+                                            string b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method Extensions::Add
+
+  .method public hidebysig static void  Add<T>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>> collection,
+                                               string key,
+                                               !!T 'value',
+                                               [opt] class [mscorlib]System.Func`2<!!T,string> convert) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    .param [4] = nullref
     // Code size       1 (0x1)
     .maxstack  8
     IL_0000:  ret
@@ -1226,7 +1238,7 @@
     IL_0005:  ldc.i4.s   10
     IL_0007:  newarr     [mscorlib]System.Int32
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000a-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000b-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1280,7 +1292,7 @@
     IL_000e:  ldc.i4.s   10
     IL_0010:  newarr     [mscorlib]System.Int32
     IL_0015:  dup
-    IL_0016:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000c-1'
+    IL_0016:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000d-1'
     IL_001b:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0020:  stelem.ref
@@ -1308,7 +1320,7 @@
     IL_003a:  ldc.i4.6
     IL_003b:  newarr     [mscorlib]System.Int32
     IL_0040:  dup
-    IL_0041:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x600000c-2'
+    IL_0041:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x600000d-2'
     IL_0046:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_004b:  stelem.ref
@@ -1571,7 +1583,7 @@
     IL_0005:  ldc.i4.8
     IL_0006:  newarr     [mscorlib]System.Boolean
     IL_000b:  dup
-    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x600000f-1'
+    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000010-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1587,7 +1599,7 @@
     IL_0005:  ldc.i4.s   10
     IL_0007:  newarr     [mscorlib]System.Byte
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000010-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000011-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1603,7 +1615,7 @@
     IL_0005:  ldc.i4.8
     IL_0006:  newarr     [mscorlib]System.SByte
     IL_000b:  dup
-    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000011-1'
+    IL_000c:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000012-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1619,7 +1631,7 @@
     IL_0005:  ldc.i4.5
     IL_0006:  newarr     [mscorlib]System.Int16
     IL_000b:  dup
-    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000012-1'
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000013-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1635,7 +1647,7 @@
     IL_0005:  ldc.i4.6
     IL_0006:  newarr     [mscorlib]System.UInt16
     IL_000b:  dup
-    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000013-1'
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000014-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1651,7 +1663,7 @@
     IL_0005:  ldc.i4.s   10
     IL_0007:  newarr     [mscorlib]System.Int32
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000014-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000015-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1667,7 +1679,7 @@
     IL_0005:  ldc.i4.s   10
     IL_0007:  newarr     [mscorlib]System.UInt32
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000015-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000016-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1683,7 +1695,7 @@
     IL_0005:  ldc.i4.5
     IL_0006:  newarr     [mscorlib]System.Int64
     IL_000b:  dup
-    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000016-1'
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000017-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1699,7 +1711,7 @@
     IL_0005:  ldc.i4.s   10
     IL_0007:  newarr     [mscorlib]System.UInt64
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '<PrivateImplementationDetails>'::'$$method0x6000017-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '<PrivateImplementationDetails>'::'$$method0x6000018-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1715,7 +1727,7 @@
     IL_0005:  ldc.i4.6
     IL_0006:  newarr     [mscorlib]System.Single
     IL_000b:  dup
-    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x6000018-1'
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x6000019-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1731,7 +1743,7 @@
     IL_0005:  ldc.i4.6
     IL_0006:  newarr     [mscorlib]System.Double
     IL_000b:  dup
-    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+    IL_000c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '<PrivateImplementationDetails>'::'$$method0x600001a-1'
     IL_0011:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0016:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1868,7 +1880,7 @@
     IL_0003:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0008:  dup
-    IL_0009:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '<PrivateImplementationDetails>'::'$$method0x600001d-1'
+    IL_0009:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '<PrivateImplementationDetails>'::'$$method0x600001e-1'
     IL_000e:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0013:  ret
@@ -1890,7 +1902,7 @@
     IL_000b:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0010:  dup
-    IL_0011:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-1'
+    IL_0011:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-1'
     IL_0016:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001b:  stelem.ref
@@ -1901,7 +1913,7 @@
     IL_0020:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0025:  dup
-    IL_0026:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-2'
+    IL_0026:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-2'
     IL_002b:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0030:  stelem.ref
@@ -1912,7 +1924,7 @@
     IL_0035:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_003a:  dup
-    IL_003b:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-3'
+    IL_003b:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-3'
     IL_0040:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0045:  stelem.ref
@@ -1923,7 +1935,7 @@
     IL_004a:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_004f:  dup
-    IL_0050:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-4'
+    IL_0050:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-4'
     IL_0055:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_005a:  stelem.ref
@@ -1949,7 +1961,7 @@
                                                                     int32,
                                                                     int32)
     IL_0011:  dup
-    IL_0012:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x600001f-1'
+    IL_0012:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x6000020-1'
     IL_0017:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001c:  stelem.ref
@@ -1962,7 +1974,7 @@
                                                                     int32,
                                                                     int32)
     IL_0027:  dup
-    IL_0028:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x600001f-2'
+    IL_0028:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x6000020-2'
     IL_002d:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0032:  stelem.ref
@@ -3007,7 +3019,7 @@
     IL_0000:  ldc.i4.4
     IL_0001:  newarr     [mscorlib]System.Byte
     IL_0006:  dup
-    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000044-1'
+    IL_0007:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000045-1'
     IL_000c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0011:  ret
@@ -3106,31 +3118,22 @@
 
   .method public hidebysig static void  ExtensionMethodInCollectionInitializer() cil managed
   {
-    // Code size       40 (0x28)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> V_0,
-             int32[] V_1)
+    // Code size       34 (0x22)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> V_0)
     IL_0000:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::.ctor()
     IL_0005:  stloc.0
     IL_0006:  ldloc.0
-    IL_0007:  ldc.i4.2
-    IL_0008:  newarr     [mscorlib]System.Int32
-    IL_000d:  stloc.1
-    IL_000e:  ldloc.1
-    IL_000f:  ldc.i4.0
-    IL_0010:  ldc.i4.1
-    IL_0011:  stelem.i4
-    IL_0012:  ldloc.1
-    IL_0013:  ldc.i4.1
-    IL_0014:  ldc.i4.2
-    IL_0015:  stelem.i4
-    IL_0016:  ldloc.1
-    IL_0017:  callvirt   instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::Add(int32[])
-    IL_001c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0021:  ldloc.0
-    IL_0022:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    IL_0007:  ldstr      "1"
+    IL_000c:  ldstr      "2"
+    IL_0011:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>,
+                                                                                                             string,
+                                                                                                             string)
+    IL_0016:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_001b:  ldloc.0
+    IL_001c:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_0027:  ret
+    IL_0021:  ret
   } // end of method TestCases::ExtensionMethodInCollectionInitializer
 
   .method public hidebysig static void  NoCollectionInitializerBecauseOfTypeArguments() cil managed
@@ -4218,7 +4221,7 @@
     IL_07df:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_07e4:  dup
-    IL_07e5:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000093-1'
+    IL_07e5:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000094-1'
     IL_07ea:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_07ef:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4301,86 +4304,86 @@
     .size 36
   } // end of class '__StaticArrayInitTypeSize=36'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000a-1' at I_00002070
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000c-1' at I_000020E8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x600000c-2' at I_00002110
-  .field static assembly int64 '$$method0x600000f-1' at I_000023D0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000010-1' at I_000023F8
-  .field static assembly int64 '$$method0x6000011-1' at I_00002420
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000012-1' at I_00002448
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000013-1' at I_00002470
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000014-1' at I_000024A0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000015-1' at I_000024E8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000016-1' at I_00002530
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '$$method0x6000017-1' at I_00002578
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x6000018-1' at I_000025E8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '$$method0x6000019-1' at I_00002620
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '$$method0x600001d-1' at I_00002760
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-1' at I_00002878
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-2' at I_000028B8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-3' at I_000028F8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_00002938
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_000029E8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002A30
-  .field static assembly int32 '$$method0x6000044-1' at I_00003388
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000093-1' at I_00003628
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000b-1' at I_00002078
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000d-1' at I_000020F0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x600000d-2' at I_00002118
+  .field static assembly int64 '$$method0x6000010-1' at I_000023D8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000011-1' at I_00002400
+  .field static assembly int64 '$$method0x6000012-1' at I_00002428
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000013-1' at I_00002450
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000014-1' at I_00002478
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000015-1' at I_000024A8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000016-1' at I_000024F0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000017-1' at I_00002538
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '$$method0x6000018-1' at I_00002580
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x6000019-1' at I_000025F0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '$$method0x600001a-1' at I_00002628
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '$$method0x600001e-1' at I_00002768
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-1' at I_00002880
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-2' at I_000028C0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-3' at I_00002900
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-4' at I_00002940
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x6000020-1' at I_000029F0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x6000020-2' at I_00002A38
+  .field static assembly int32 '$$method0x6000045-1' at I_00003390
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000094-1' at I_00003628
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00002070 = bytearray (
+.data cil I_00002078 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_000020E8 = bytearray (
+.data cil I_000020F0 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00002110 = bytearray (
+.data cil I_00002118 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00) 
-.data cil I_00002128 = int8[8]
-.data cil I_000023D0 = bytearray (
+.data cil I_000023D8 = bytearray (
                  01 00 01 00 00 00 01 01) 
-.data cil I_000023F8 = bytearray (
+.data cil I_000023E0 = int8[32]
+.data cil I_00002400 = bytearray (
                  01 02 03 04 05 06 07 08 FE FF) 
-.data cil I_00002402 = int8[30]
-.data cil I_00002420 = bytearray (
+.data cil I_0000240A = int8[6]
+.data cil I_00002428 = bytearray (
                  80 81 00 01 02 03 04 7F) 
-.data cil I_00002448 = bytearray (
+.data cil I_00002450 = bytearray (
                  00 80 FF FF 00 00 01 00 FF 7F) 
-.data cil I_00002452 = int8[14]
-.data cil I_00002470 = bytearray (
+.data cil I_0000245A = int8[6]
+.data cil I_00002478 = bytearray (
                  00 00 01 00 FF 7F 00 80 FE FF FF FF) 
-.data cil I_0000247C = int8[4]
-.data cil I_000024A0 = bytearray (
+.data cil I_00002484 = int8[4]
+.data cil I_000024A8 = bytearray (
                  01 00 00 00 FE FF FF FF 00 94 35 77 04 00 00 00  // ..........5w....
                  05 00 00 00 FA FF FF FF 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_000024E8 = bytearray (
+.data cil I_000024F0 = bytearray (
                  01 00 00 00 00 94 35 77 00 5E D0 B2 04 00 00 00  // ......5w.^......
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0A 00 00 00) 
-.data cil I_00002530 = bytearray (
+.data cil I_00002538 = bytearray (
                  01 00 0C BB 7D 6E 9C BA FF FF FF FF FF FF FF FF  // ....}n..........
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45)                         // ...D..cE
-.data cil I_00002578 = bytearray (
+.data cil I_00002560 = int8[32]
+.data cil I_00002580 = bytearray (
                  01 00 00 00 00 00 00 00 00 94 35 77 00 00 00 00  // ..........5w....
                  00 5E D0 B2 00 00 00 00 04 00 00 00 00 00 00 00  // .^..............
                  05 00 00 00 00 00 00 00 06 00 00 00 00 00 00 00
                  07 00 00 00 00 00 00 00 08 00 00 00 00 00 00 00
                  FF FF F3 44 82 91 63 45 FF FF E7 89 04 23 C7 8A) // ...D..cE.....#..
-.data cil I_000025E8 = bytearray (
+.data cil I_000025F0 = bytearray (
                  00 00 C0 BF 00 00 00 00 00 00 C0 3F 00 00 80 FF  // ...........?....
                  00 00 80 7F 00 00 C0 FF) 
-.data cil I_00002620 = bytearray (
+.data cil I_00002628 = bytearray (
                  00 00 00 00 00 00 F8 BF 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 F8 3F 00 00 00 00 00 00 F0 FF  // .......?........
                  00 00 00 00 00 00 F0 7F 00 00 00 00 00 00 F8 FF) 
-.data cil I_00002650 = int8[16]
-.data cil I_00002760 = bytearray (
+.data cil I_00002768 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -4397,41 +4400,42 @@
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_00002878 = bytearray (
+.data cil I_00002868 = int8[24]
+.data cil I_00002880 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
-.data cil I_000028B8 = bytearray (
+.data cil I_000028C0 = bytearray (
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_000028F8 = bytearray (
+.data cil I_00002900 = bytearray (
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00) 
-.data cil I_00002938 = bytearray (
+.data cil I_00002940 = bytearray (
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00
                  00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00) 
-.data cil I_000029E8 = bytearray (
+.data cil I_000029F0 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
                  05 00 00 00 06 00 00 00 07 00 00 00 08 00 00 00
                  09 00 00 00 0B 00 00 00 0C 00 00 00 0D 00 00 00
                  0E 00 00 00 0F 00 00 00 10 00 00 00 11 00 00 00
                  12 00 00 00 13 00 00 00) 
-.data cil I_00002A30 = bytearray (
+.data cil I_00002A38 = bytearray (
                  15 00 00 00 16 00 00 00 17 00 00 00 18 00 00 00
                  19 00 00 00 1A 00 00 00 1B 00 00 00 1C 00 00 00
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00003388 = bytearray (
+.data cil I_00003390 = bytearray (
                  00 01 02 FF) 
-.data cil I_0000338C = int8[4]
+.data cil I_00003394 = int8[4]
 .data cil I_00003628 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00

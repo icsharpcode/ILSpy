@@ -27,7 +27,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 {
 	public static class Extensions
 	{
-		public static void Add(this TestCases.CustomList<int> inst, int a, int b)
+		public static void Add(this TestCases.CustomList<int> inst, string a, string b)
+		{
+		}
+
+		public static void Add<T>(this IList<KeyValuePair<string, string>> collection, string key, T value, Func<T, string> convert = null)
 		{
 		}
 	}
@@ -1544,13 +1548,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 #if CS60
 			X(Y(), new CustomList<int> {
 				{
-					1,
-					2
+					"1",
+					"2"
 				}
 			});
 #else
 			CustomList<int> customList = new CustomList<int>();
-			customList.Add(1, 2);
+			customList.Add("1", "2");
 			X(Y(), customList);
 #endif
 		}
@@ -1703,7 +1707,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				[(object)value] = new S(value)
 			});
 		}
+
+		public static void Issue1390(IEnumerable<string> tokens, bool alwaysAllowAdministrators, char wireDelimiter)
+		{
+#if OPT
+			List<KeyValuePair<string, string>> obj = new List<KeyValuePair<string, string>> {
+#else
+			List<KeyValuePair<string, string>> list = new List<KeyValuePair<string, string>> {
+#endif
+			{
+				"tokens",
+					string.Join(wireDelimiter.ToString(), tokens),
+					(Func<string, string>)null
+				},
+				{
+					"alwaysAllowAdministrators",
+					alwaysAllowAdministrators.ToString(),
+					(Func<string, string>)null
+				},
+				{
+					"delimiter",
+					wireDelimiter.ToString(),
+					(Func<string, string>)null
+				}
+			};
+		}
+
 #endif
 #endregion
-	}
+		}
 }
