@@ -1,6 +1,6 @@
 <updateInfo>
 	<band id="stable">
-		<latestVersion>4.0.0.4520-rc2</latestVersion>
+		<latestVersion>4.0.0.4520</latestVersion>
 		<downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v4.0-rc2</downloadUrl>
 	</band>
 	<!-- reenable when implemented
