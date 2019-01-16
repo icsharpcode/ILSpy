@@ -18,6 +18,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public OpenCodeItemCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenCodeItemInILSpy)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
 		protected override void OnBeforeQueryStatus(object sender, EventArgs e)
@@ -185,6 +186,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		internal static void Register(ILSpyAddInPackage owner)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			instance = new OpenCodeItemCommand(owner);
 		}
 	}

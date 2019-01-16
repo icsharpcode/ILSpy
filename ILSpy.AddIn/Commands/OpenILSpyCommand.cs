@@ -32,6 +32,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected ILSpyCommand(ILSpyAddInPackage owner, uint id)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			this.owner = owner;
 			CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)id);
 			OleMenuCommand menuItem = new OleMenuCommand(OnExecute, menuCommandID);
@@ -120,6 +122,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public OpenILSpyCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenILSpy)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
 		protected override void OnExecute(object sender, EventArgs e)
@@ -129,6 +132,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		internal static void Register(ILSpyAddInPackage owner)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			instance = new OpenILSpyCommand(owner);
 		}
 	}
