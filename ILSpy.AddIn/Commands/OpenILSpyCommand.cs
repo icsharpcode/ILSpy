@@ -6,9 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;
+using DTEConstants = EnvDTE.Constants;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
@@ -32,6 +32,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected ILSpyCommand(ILSpyAddInPackage owner, uint id)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			this.owner = owner;
 			CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)id);
 			OleMenuCommand menuItem = new OleMenuCommand(OnExecute, menuCommandID);
@@ -96,7 +98,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
 		{
 			foreach (var project in projects) {
-				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder) {
+				if (project.Kind == DTEConstants.vsProjectKindSolutionItems) {
 					// This is a solution folder -> search in sub-projects
 					var subProject = FindProject(
 						project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(), 
@@ -120,6 +122,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public OpenILSpyCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenILSpy)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
 		protected override void OnExecute(object sender, EventArgs e)
@@ -129,6 +132,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		internal static void Register(ILSpyAddInPackage owner)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			instance = new OpenILSpyCommand(owner);
 		}
 	}
