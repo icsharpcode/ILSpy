@@ -389,32 +389,6 @@
     <None Include="@(Resource)" />
   </ItemGroup>
 
-  <!--
-  Workaround: nuget packages do not get added to the vsix automatically.
-  Copy them to a local folder and then include them as Content-items in the AddIn.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
-  <Target Name="CopyNugetPackagesToAddIn" AfterTargets="PostBuildEvent">
-    <ItemGroup>
-      <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.AttributedModel.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Convention.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Hosting.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Runtime.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.TypedParts.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
-  </Target>
-
   <PropertyGroup>
     <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
     <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFile>
