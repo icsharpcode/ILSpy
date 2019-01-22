@@ -140,6 +140,10 @@ namespace ICSharpCode.Decompiler
 			if (variable != null)
 				return variable;
 
+			var letClauseVariable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
+			if (letClauseVariable != null)
+				return letClauseVariable;
+
 			var gotoStatement = node as GotoStatement;
 			if (gotoStatement != null)
 			{
@@ -159,6 +163,12 @@ namespace ICSharpCode.Decompiler
 
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is ForeachStatement) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+				if (variable != null)
+					return variable;
+			}
+
+			if (node is QueryLetClause) {
+				var variable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
 				if (variable != null)
 					return variable;
 			}
