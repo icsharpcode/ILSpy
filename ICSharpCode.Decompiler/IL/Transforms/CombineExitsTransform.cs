@@ -13,11 +13,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var block = container.EntryPoint;
 			if (block.Kind != BlockKind.ControlFlow)
 				return;
-			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leave))
+			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leave2))
 				return;
 			if (!ifInst.FalseInst.MatchNop())
 				return;
-			if (!(Block.Unwrap(ifInst.TrueInst) is Leave leave2))
+			if (!(Block.Unwrap(ifInst.TrueInst) is Leave leave))
 				return;
 			if (!(leave.IsLeavingFunction && leave2.IsLeavingFunction))
 				return;
