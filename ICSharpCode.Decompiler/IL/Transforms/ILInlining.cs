@@ -52,14 +52,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, OptionsForBlock(block), context: context);
+			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos), context: context);
 		}
 
-		internal static InliningOptions OptionsForBlock(Block block)
+		internal static InliningOptions OptionsForBlock(Block block, int pos)
 		{
 			InliningOptions options = InliningOptions.None;
 			if (IsCatchWhenBlock(block))
 				options |= InliningOptions.Aggressive;
+			else {
+				var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				var inst = block.Instructions[pos];
+				int? ctorCallStart = null;
+				if (IsInConstructorInitializer(function, inst, ref ctorCallStart))
+					options |= InliningOptions.Aggressive;
+			}
 			return options;
 		}
 
