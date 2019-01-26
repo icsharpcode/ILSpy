@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
 			((Block)otherStore.Parent).Instructions.Remove(otherStore);
-			inst.ReplaceWith(new StLoc(v, value));
+			inst.ReplaceWith(storeInst);
 			return true;
 		}
 
