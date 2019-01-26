@@ -970,9 +970,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				IType mathType;
 				if (isDouble)
 					mathType = compilation.FindType(typeof(Math));
-				else
-					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition()
-						?? compilation.FindType(typeof(Math));
+				else {
+					mathType = compilation.FindType(new TopLevelTypeName("System", "MathF")).GetDefinition();
+					if (mathType == null || !mathType.GetFields(f => f.Name == "PI" && f.IsConst).Any() || !mathType.GetFields(f => f.Name == "E" && f.IsConst).Any())
+						mathType = compilation.FindType(typeof(Math));
+				}
 
 				expr = TryExtractExpression(mathType, type, constantValue, "PI", isDouble)
 					?? TryExtractExpression(mathType, type, constantValue, "E", isDouble);
