@@ -858,12 +858,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!container.MatchConditionBlock(continueTarget, out condition, out _))
 						throw new NotSupportedException("Invalid condition block in do-while loop.");
 					blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.SkipLast(1), true);
-					if (continueTarget.IncomingEdgeCount == continueCount) {
-						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+					if (container.EntryPoint.IncomingEdgeCount == 2) {
+						// Remove the entry-point label, if there are only two jumps to the entry-point:
+						// from outside the loop and from the condition-block.
 						blockStatement.Statements.First().Remove();
 					}
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt3)
 						continueStmt3.Remove();
+					if (continueTarget.IncomingEdgeCount > continueCount) {
+						// if there are branches to the condition block, that were not converted
+						// to continue statements, we have to introduce an extra label.
+						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
+					}
 					if (blockStatement.Statements.Count == 0) {
 						return new WhileStatement {
 							Condition = exprBuilder.TranslateCondition(condition),
