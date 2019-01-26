@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
@@ -8,6 +8,9 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
     <EnableDefaultItems>false</EnableDefaultItems>
+    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
+    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
 
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
 
@@ -32,11 +35,6 @@
 
   <PropertyGroup>
     <CodeAnalysisRuleSet>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <!-- Workaround for lack of XAML support in the new project system -->
-    <LanguageTargets>$(MSBuildExtensionsPath)\$(VisualStudioVersion)\Bin\Microsoft.CSharp.targets</LanguageTargets>
   </PropertyGroup>
 
   <ItemGroup>
@@ -258,7 +256,6 @@
     <Resource Include="Images\Delete.png" />
     <Resource Include="Images\ILSpy.ico" />
     <Resource Include="Images\FindAssembly.png" />
-    <None Include="app.config" />
     <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
@@ -391,42 +388,6 @@
     <None Include="Search\SearchPane.xaml" />
     <None Include="@(Resource)" />
   </ItemGroup>
-
-  <!--
-     Work around to fix Intellisense file generation for XAML projects
-     https://github.com/dotnet/project-system/issues/2488
-  -->
-  <Target Name="WorkaroundForXAMLIntellisenseBuildIssue" AfterTargets="_CheckCompileDesignTimePrerequisite">
-    <PropertyGroup>
-      <BuildingProject>false</BuildingProject>
-    </PropertyGroup>
-  </Target>
-
-  <!--
-  Workaround: nuget packages do not get added to the vsix automatically.
-  Copy them to a local folder and then include them as Content-items in the AddIn.
-  (related to https://github.com/icsharpcode/ILSpy/issues/511)
-  -->
-  <Target Name="CopyNugetPackagesToAddIn" AfterTargets="PostBuildEvent">
-    <ItemGroup>
-      <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.AttributedModel.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Convention.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Hosting.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.Runtime.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Composition.TypedParts.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Threading.Tasks.Dataflow.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)System.Reflection.Metadata.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Composition.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Microsoft.VisualStudio.Validation.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
-      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.Pdb.dll" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
-  </Target>
 
   <PropertyGroup>
     <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>

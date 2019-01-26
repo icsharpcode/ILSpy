@@ -2068,6 +2068,94 @@
   } // end of method Loops::DoWhileLoop
 
   .method public hidebysig instance void 
+          Issue1395(int32 count) cil managed
+  {
+    // Code size       182 (0xb6)
+    .maxstack  2
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0005:  pop
+    IL_0006:  ldc.i4.0
+    IL_0007:  stloc.0
+    IL_0008:  br         IL_00a8
+
+    IL_000d:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0012:  pop
+    IL_0013:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0018:  pop
+    IL_0019:  ldarg.0
+    IL_001a:  ldstr      "part1"
+    IL_001f:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0024:  brfalse.s  IL_003b
+
+    IL_0026:  call       class [mscorlib]System.Collections.IDictionary [mscorlib]System.Environment::GetEnvironmentVariables()
+    IL_002b:  pop
+    IL_002c:  ldarg.0
+    IL_002d:  ldstr      "restart"
+    IL_0032:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0037:  brfalse.s  IL_0041
+
+    IL_0039:  br.s       IL_0013
+
+    IL_003b:  call       string[] [mscorlib]System.Environment::GetLogicalDrives()
+    IL_0040:  pop
+    IL_0041:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0046:  pop
+    IL_0047:  br.s       IL_0085
+
+    IL_0049:  ldarg.1
+    IL_004a:  stloc.1
+    IL_004b:  ldloc.1
+    IL_004c:  switch     ( 
+                          IL_006f,
+                          IL_006f,
+                          IL_006f,
+                          IL_0077,
+                          IL_007f,
+                          IL_0077,
+                          IL_0077)
+    IL_006d:  br.s       IL_007f
+
+    IL_006f:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0074:  pop
+    IL_0075:  br.s       IL_0085
+
+    IL_0077:  call       class [mscorlib]System.Collections.IDictionary [mscorlib]System.Environment::GetEnvironmentVariables()
+    IL_007c:  pop
+    IL_007d:  br.s       IL_0085
+
+    IL_007f:  call       string[] [mscorlib]System.Environment::GetLogicalDrives()
+    IL_0084:  pop
+    IL_0085:  ldarg.1
+    IL_0086:  ldc.i4.0
+    IL_0087:  bgt.s      IL_0049
+
+    IL_0089:  ldarg.1
+    IL_008a:  ldc.i4.1
+    IL_008b:  add
+    IL_008c:  starg.s    count
+    IL_008e:  ldarg.0
+    IL_008f:  ldstr      "do-while"
+    IL_0094:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0099:  brtrue     IL_0013
+
+    IL_009e:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_00a3:  pop
+    IL_00a4:  ldloc.0
+    IL_00a5:  ldc.i4.1
+    IL_00a6:  add
+    IL_00a7:  stloc.0
+    IL_00a8:  ldloc.0
+    IL_00a9:  ldarg.1
+    IL_00aa:  blt        IL_000d
+
+    IL_00af:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_00b4:  pop
+    IL_00b5:  ret
+  } // end of method Loops::Issue1395
+
+  .method public hidebysig instance void 
           ForLoop() cil managed
   {
     // Code size       124 (0x7c)

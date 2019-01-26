@@ -29,6 +29,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			compilationUnit.AcceptVisitor(this);
 		}
+
+		public static bool IsUnsafe(AstNode node)
+		{
+			return node.AcceptVisitor(new IntroduceUnsafeModifier());
+		}
 		
 		protected override bool VisitChildren(AstNode node)
 		{

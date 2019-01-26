@@ -54,18 +54,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			public bool IsExpandedForm;
 			public int Length => Arguments.Length;
 
-			public IEnumerable<ResolveResult> GetArgumentResolveResults()
+			public IEnumerable<ResolveResult> GetArgumentResolveResults(int skipCount = 0)
 			{
 				return FirstOptionalArgumentIndex < 0
-					? Arguments.Select(a => a.ResolveResult)
-					: Arguments.Take(FirstOptionalArgumentIndex).Select(a => a.ResolveResult);
+					? Arguments.Skip(skipCount).Select(a => a.ResolveResult)
+					: Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(a => a.ResolveResult);
 			}
 
-			public IEnumerable<Expression> GetArgumentExpressions()
+			public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
 			{
 				if (AddNamesToPrimitiveValues && IsPrimitiveValue.Any() && !IsExpandedForm
 					&& !ParameterNames.Any(p => string.IsNullOrEmpty(p)))
 				{
+					Debug.Assert(skipCount == 0);
 					if (ArgumentNames == null) {
 						ArgumentNames = new string[Arguments.Length];
 					}
@@ -78,9 +79,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (ArgumentNames == null) {
 					if (FirstOptionalArgumentIndex < 0)
-						return Arguments.Select(arg => arg.Expression);
-					return Arguments.Take(FirstOptionalArgumentIndex).Select(arg => arg.Expression);
+						return Arguments.Skip(skipCount).Select(arg => arg.Expression);
+					return Arguments.Skip(skipCount).Take(FirstOptionalArgumentIndex).Select(arg => arg.Expression);
 				} else {
+					Debug.Assert(skipCount == 0);
 					if (FirstOptionalArgumentIndex < 0) {
 						return Arguments.Zip(ArgumentNames,
 							(arg, name) => {
@@ -373,17 +375,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			// sure that the correct method is called by resolving any ambiguities by inserting casts, if necessary.
 
 			ExpectedTargetDetails expectedTargetDetails = new ExpectedTargetDetails { CallOpCode = callOpCode };
-
-			// Special case: only in this case, collection initializers, are extension methods already transformed on
-			// ILAst level, therefore we have to exclude the first argument.
-			int firstParamIndex = method.IsExtensionMethod ? 1 : 0;
+			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
+			var args = callArguments.ToList();
+			if (method.IsExtensionMethod)
+				args.Insert(0, new Nop());
 
 			var argumentList = BuildArgumentList(expectedTargetDetails, target, method,
-				firstParamIndex, callArguments, null);
+				firstParamIndex: 0, args, null);
 			argumentList.ArgumentNames = null;
 			argumentList.AddNamesToPrimitiveValues = false;
-
-			var unused = new IdentifierExpression("initializedObject").WithRR(target).WithoutILInstruction();
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
 				ref argumentList, CallTransformation.None, out IParameterizedMember foundMethod);
 			Debug.Assert(transform == CallTransformation.None || transform == CallTransformation.NoOptionalArgumentAllowed);
@@ -391,14 +391,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
 			// Note: we intentionally ignore the firstOptionalArgumentIndex in this case.
-			if (argumentList.Arguments.Length == 1)
-				return argumentList.Arguments[0];
+			int skipCount;
+			if (method.IsExtensionMethod) {
+				if (argumentList.Arguments.Length == 2)
+					return argumentList.Arguments[1];
+				skipCount = 1;
+			} else {
+				if (argumentList.Arguments.Length == 1)
+					return argumentList.Arguments[0];
+				skipCount = 0;
+			}
 
 			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
 				argumentList.FirstOptionalArgumentIndex = -1;
 
-			return new ArrayInitializerExpression(argumentList.GetArgumentExpressions())
-				.WithRR(new CSharpInvocationResolveResult(target, method, argumentList.GetArgumentResolveResults().ToArray(),
+			return new ArrayInitializerExpression(argumentList.GetArgumentExpressions(skipCount))
+				.WithRR(new CSharpInvocationResolveResult(target, method, argumentList.GetArgumentResolveResults(skipCount).ToArray(),
 					isExtensionMethodInvocation: method.IsExtensionMethod, isExpandedForm: argumentList.IsExpandedForm));
 		}
 

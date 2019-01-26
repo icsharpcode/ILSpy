@@ -51,9 +51,11 @@
     <PackageReference Include="Microsoft.VisualStudio.ComponentModelHost" Version="15.6.27413" />
     <PackageReference Include="Microsoft.VisualStudio.Editor" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="2.4.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.3.25407" />
+    <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="15.6.27413" />
+    <PackageReference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime" Version="14.3.26929" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI.Wpf" Version="15.6.27740" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
     <PackageReference Include="Mono.Cecil" Version="0.10.1" />
     <PackageReference Include="VSLangProj" Version="7.0.3301" />
   </ItemGroup>
@@ -101,13 +103,42 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <!--
+  BEGIN WORKAROUND:
+  Nuget packages do not get added to the vsix automatically.
+  (related to https://github.com/icsharpcode/ILSpy/issues/511)
+  -->
+  <PropertyGroup>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
+  </PropertyGroup>
+  
   <ItemGroup>
-	  <Content Include="Packages/*">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <VSIXSubPath>\</VSIXSubPath>
-	  </Content>
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.ValueTuple.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Collections.Immutable.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.AttributedModel.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Convention.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Hosting.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.Runtime.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Composition.TypedParts.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Threading.Tasks.Dataflow.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)ICSharpCode.AvalonEdit.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Humanizer.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)System.Reflection.Metadata.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Composition.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Microsoft.VisualStudio.Validation.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)Mono.Cecil.Pdb.dll" />
+    <AdditionalDependencies Include="$(ILSpyBuildPath)ILSpy.BamlDecompiler.Plugin.dll" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="@(AdditionalDependencies)">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\</VSIXSubPath>
+    </Content>
+  </ItemGroup>
+  <!-- END WORKAROUND -->
+  
   <ItemGroup>
     <None Include="ILSpyAddIn.vsct" />
     <None Include="source.extension.vsixmanifest.template" />
@@ -158,10 +189,6 @@
 
     <!-- https://github.com/Microsoft/extendvs/issues/57 -->
     <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Packages\" />
   </ItemGroup>
 
 </Project>

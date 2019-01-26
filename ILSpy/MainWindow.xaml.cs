@@ -381,9 +381,6 @@ namespace ICSharpCode.ILSpy
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
-#if DEBUG
-			this.Title = $"ILSpy {RevisionClass.FullVersion}";
-#endif
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)
@@ -508,11 +505,19 @@ namespace ICSharpCode.ILSpy
 			treeView.Root = assemblyListTreeNode;
 			
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
+#if DEBUG
+				this.Title = $"ILSpy {RevisionClass.FullVersion}";
+#else
 				this.Title = "ILSpy";
+#endif
 			else
+#if DEBUG
+				this.Title = $"ILSpy {RevisionClass.FullVersion} - " + assemblyList.ListName;
+#else
 				this.Title = "ILSpy - " + assemblyList.ListName;
+#endif
 		}
-		
+
 		void assemblyList_Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Reset) {

@@ -488,8 +488,16 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void EnumFieldsTest()
 		{
 			var e = GetTypeDefinition(typeof(MyEnum));
-			IField[] fields = e.Fields.ToArray();
+			IField valueField = e.Fields.First();
+			IField[] fields = e.Fields.Skip(1).ToArray();
 			Assert.AreEqual(5, fields.Length);
+
+			Assert.AreEqual("value__", valueField.Name);
+			Assert.AreEqual(GetTypeDefinition(typeof(short)), valueField.Type);
+			Assert.AreEqual(Accessibility.Public, valueField.Accessibility);
+			Assert.AreEqual(null, valueField.GetConstantValue());
+			Assert.IsFalse(valueField.IsConst);
+			Assert.IsFalse(valueField.IsStatic);
 
 			foreach (IField f in fields) {
 				Assert.IsTrue(f.IsStatic);

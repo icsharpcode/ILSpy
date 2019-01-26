@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				foreach (FieldDefinitionHandle h in fieldCollection) {
 					var field = metadata.GetFieldDefinition(h);
 					var attr = field.Attributes;
-					if (module.IsVisible(attr) && (attr & FieldAttributes.SpecialName) == 0) {
+					if (module.IsVisible(attr)) {
 						fieldList.Add(module.GetDefinition(h));
 					}
 				}

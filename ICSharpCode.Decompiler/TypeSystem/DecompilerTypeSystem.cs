@@ -205,10 +205,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			bool HasType(KnownTypeCode code)
 			{
 				TopLevelTypeName name = KnownTypeReference.Get(code).TypeName;
-				if (mainModule.GetTypeDefinition(name) != null)
+				if (!mainModule.GetTypeDefinition(name).IsNil)
 					return true;
 				foreach (var file in referencedAssemblies) {
-					if (file.GetTypeDefinition(name) != null)
+					if (!file.GetTypeDefinition(name).IsNil)
 						return true;
 				}
 				return false;

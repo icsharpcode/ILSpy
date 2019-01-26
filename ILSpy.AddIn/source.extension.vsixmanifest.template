@@ -9,10 +9,6 @@
     <Icon>ILSpy-Large.ico</Icon>
   </Metadata>
   <Installation>
-    <InstallationTarget Id="Microsoft.VisualStudio.Ultimate" Version="[15.0,17.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Premium" Version="[15.0,17.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[15.0,17.0)" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0,17.0)" />
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0,17.0)" />
   </Installation>
   <Dependencies>

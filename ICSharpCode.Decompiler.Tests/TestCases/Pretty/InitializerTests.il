@@ -15,10 +15,10 @@
 }
 .assembly InitializerTests
 {
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .permissionset reqmin
              = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
@@ -40,10 +40,23 @@
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig static void  Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> inst,
-                                            int32 a,
-                                            int32 b) cil managed
+                                            string a,
+                                            string b) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method Extensions::Add
+
+  .method public hidebysig static void  Add<T>(class [mscorlib]System.Collections.Generic.IList`1<valuetype [mscorlib]System.Collections.Generic.KeyValuePair`2<string,string>> collection,
+                                               string key,
+                                               !!T 'value',
+                                               [opt] class [mscorlib]System.Func`2<!!T,string> convert) cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
+    .param [4] = nullref
     // Code size       2 (0x2)
     .maxstack  8
     IL_0000:  nop
@@ -1413,7 +1426,7 @@
     IL_0006:  ldc.i4.s   10
     IL_0008:  newarr     [mscorlib]System.Int32
     IL_000d:  dup
-    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000a-1'
+    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000b-1'
     IL_0013:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1471,7 +1484,7 @@
     IL_000f:  ldc.i4.s   10
     IL_0011:  newarr     [mscorlib]System.Int32
     IL_0016:  dup
-    IL_0017:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000c-1'
+    IL_0017:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x600000d-1'
     IL_001c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0021:  stelem.ref
@@ -1499,7 +1512,7 @@
     IL_003b:  ldc.i4.6
     IL_003c:  newarr     [mscorlib]System.Int32
     IL_0041:  dup
-    IL_0042:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x600000c-2'
+    IL_0042:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x600000d-2'
     IL_0047:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_004c:  stelem.ref
@@ -1762,7 +1775,7 @@
     IL_0006:  ldc.i4.8
     IL_0007:  newarr     [mscorlib]System.Boolean
     IL_000c:  dup
-    IL_000d:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x600000f-1'
+    IL_000d:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000010-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1780,7 +1793,7 @@
     IL_0006:  ldc.i4.s   10
     IL_0008:  newarr     [mscorlib]System.Byte
     IL_000d:  dup
-    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000010-1'
+    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000011-1'
     IL_0013:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1798,7 +1811,7 @@
     IL_0006:  ldc.i4.8
     IL_0007:  newarr     [mscorlib]System.SByte
     IL_000c:  dup
-    IL_000d:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000011-1'
+    IL_000d:  ldtoken    field int64 '<PrivateImplementationDetails>'::'$$method0x6000012-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1816,7 +1829,7 @@
     IL_0006:  ldc.i4.5
     IL_0007:  newarr     [mscorlib]System.Int16
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000012-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '<PrivateImplementationDetails>'::'$$method0x6000013-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1834,7 +1847,7 @@
     IL_0006:  ldc.i4.6
     IL_0007:  newarr     [mscorlib]System.UInt16
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000013-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '<PrivateImplementationDetails>'::'$$method0x6000014-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1852,7 +1865,7 @@
     IL_0006:  ldc.i4.s   10
     IL_0008:  newarr     [mscorlib]System.Int32
     IL_000d:  dup
-    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000014-1'
+    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000015-1'
     IL_0013:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1870,7 +1883,7 @@
     IL_0006:  ldc.i4.s   10
     IL_0008:  newarr     [mscorlib]System.UInt32
     IL_000d:  dup
-    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000015-1'
+    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000016-1'
     IL_0013:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1888,7 +1901,7 @@
     IL_0006:  ldc.i4.5
     IL_0007:  newarr     [mscorlib]System.Int64
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000016-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '<PrivateImplementationDetails>'::'$$method0x6000017-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1906,7 +1919,7 @@
     IL_0006:  ldc.i4.s   10
     IL_0008:  newarr     [mscorlib]System.UInt64
     IL_000d:  dup
-    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '<PrivateImplementationDetails>'::'$$method0x6000017-1'
+    IL_000e:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '<PrivateImplementationDetails>'::'$$method0x6000018-1'
     IL_0013:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1924,7 +1937,7 @@
     IL_0006:  ldc.i4.6
     IL_0007:  newarr     [mscorlib]System.Single
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x6000018-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '<PrivateImplementationDetails>'::'$$method0x6000019-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -1942,7 +1955,7 @@
     IL_0006:  ldc.i4.6
     IL_0007:  newarr     [mscorlib]System.Double
     IL_000c:  dup
-    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '<PrivateImplementationDetails>'::'$$method0x6000019-1'
+    IL_000d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '<PrivateImplementationDetails>'::'$$method0x600001a-1'
     IL_0012:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0017:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
@@ -2088,7 +2101,7 @@
     IL_0004:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0009:  dup
-    IL_000a:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '<PrivateImplementationDetails>'::'$$method0x600001d-1'
+    IL_000a:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '<PrivateImplementationDetails>'::'$$method0x600001e-1'
     IL_000f:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0014:  stloc.0
@@ -2116,7 +2129,7 @@
     IL_000c:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0011:  dup
-    IL_0012:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-1'
+    IL_0012:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-1'
     IL_0017:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001c:  stelem.ref
@@ -2127,7 +2140,7 @@
     IL_0021:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0026:  dup
-    IL_0027:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-2'
+    IL_0027:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-2'
     IL_002c:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0031:  stelem.ref
@@ -2138,7 +2151,7 @@
     IL_0036:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_003b:  dup
-    IL_003c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-3'
+    IL_003c:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-3'
     IL_0041:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0046:  stelem.ref
@@ -2149,7 +2162,7 @@
     IL_004b:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_0050:  dup
-    IL_0051:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001e-4'
+    IL_0051:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '<PrivateImplementationDetails>'::'$$method0x600001f-4'
     IL_0056:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_005b:  stelem.ref
@@ -2181,7 +2194,7 @@
                                                                     int32,
                                                                     int32)
     IL_0012:  dup
-    IL_0013:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x600001f-1'
+    IL_0013:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x6000020-1'
     IL_0018:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_001d:  stelem.ref
@@ -2194,7 +2207,7 @@
                                                                     int32,
                                                                     int32)
     IL_0028:  dup
-    IL_0029:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x600001f-2'
+    IL_0029:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '<PrivateImplementationDetails>'::'$$method0x6000020-2'
     IL_002e:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0033:  stelem.ref
@@ -2394,6 +2407,251 @@
     IL_001f:  nop
     IL_0020:  ret
   } // end of method TestCases::Issue907_Test3
+
+  .method private hidebysig instance int32[] 
+          Issue1383(int32 i,
+                    int32[] 'array') cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  4
+    .locals init (int32[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  newarr     [mscorlib]System.Int32
+    IL_0007:  starg.s    'array'
+    IL_0009:  ldarg.2
+    IL_000a:  ldarg.1
+    IL_000b:  dup
+    IL_000c:  ldc.i4.1
+    IL_000d:  add
+    IL_000e:  starg.s    i
+    IL_0010:  ldc.i4.1
+    IL_0011:  stelem.i4
+    IL_0012:  ldarg.2
+    IL_0013:  ldarg.1
+    IL_0014:  dup
+    IL_0015:  ldc.i4.1
+    IL_0016:  add
+    IL_0017:  starg.s    i
+    IL_0019:  ldc.i4.2
+    IL_001a:  stelem.i4
+    IL_001b:  ldarg.2
+    IL_001c:  stloc.0
+    IL_001d:  br.s       IL_001f
+
+    IL_001f:  ldloc.0
+    IL_0020:  ret
+  } // end of method TestCases::Issue1383
+
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382a() cil managed
+  {
+    // Code size       171 (0xab)
+    .maxstack  4
+    .locals init (string[0...,0...] V_0,
+             string[0...,0...] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  ldc.i4.4
+    IL_0003:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0008:  stloc.1
+    IL_0009:  ldloc.1
+    IL_000a:  ldc.i4.0
+    IL_000b:  ldc.i4.1
+    IL_000c:  ldstr      "test"
+    IL_0011:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.0
+    IL_0018:  ldc.i4.2
+    IL_0019:  ldstr      "hello"
+    IL_001e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0023:  ldloc.1
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.3
+    IL_0026:  ldstr      "world"
+    IL_002b:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0030:  ldloc.1
+    IL_0031:  ldc.i4.1
+    IL_0032:  ldc.i4.0
+    IL_0033:  ldstr      "test"
+    IL_0038:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003d:  ldloc.1
+    IL_003e:  ldc.i4.1
+    IL_003f:  ldc.i4.2
+    IL_0040:  ldstr      "hello"
+    IL_0045:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_004a:  ldloc.1
+    IL_004b:  ldc.i4.1
+    IL_004c:  ldc.i4.3
+    IL_004d:  ldstr      "world"
+    IL_0052:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0057:  ldloc.1
+    IL_0058:  ldc.i4.2
+    IL_0059:  ldc.i4.0
+    IL_005a:  ldstr      "test"
+    IL_005f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0064:  ldloc.1
+    IL_0065:  ldc.i4.2
+    IL_0066:  ldc.i4.1
+    IL_0067:  ldstr      "hello"
+    IL_006c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0071:  ldloc.1
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldc.i4.3
+    IL_0074:  ldstr      "world"
+    IL_0079:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007e:  ldloc.1
+    IL_007f:  ldc.i4.3
+    IL_0080:  ldc.i4.0
+    IL_0081:  ldstr      "test"
+    IL_0086:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_008b:  ldloc.1
+    IL_008c:  ldc.i4.3
+    IL_008d:  ldc.i4.1
+    IL_008e:  ldstr      "hello"
+    IL_0093:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0098:  ldloc.1
+    IL_0099:  ldc.i4.3
+    IL_009a:  ldc.i4.2
+    IL_009b:  ldstr      "world"
+    IL_00a0:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a5:  ldloc.1
+    IL_00a6:  stloc.0
+    IL_00a7:  br.s       IL_00a9
+
+    IL_00a9:  ldloc.0
+    IL_00aa:  ret
+  } // end of method TestCases::Issue1382a
+
+  .method private hidebysig instance string[0...,0...] 
+          Issue1382b() cil managed
+  {
+    // Code size       171 (0xab)
+    .maxstack  4
+    .locals init (string[0...,0...] V_0,
+             string[0...,0...] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.4
+    IL_0002:  ldc.i4.4
+    IL_0003:  newobj     instance void string[0...,0...]::.ctor(int32,
+                                                                int32)
+    IL_0008:  stloc.1
+    IL_0009:  ldloc.1
+    IL_000a:  ldc.i4.0
+    IL_000b:  ldc.i4.0
+    IL_000c:  ldstr      "test"
+    IL_0011:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.0
+    IL_0018:  ldc.i4.1
+    IL_0019:  ldstr      "hello"
+    IL_001e:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0023:  ldloc.1
+    IL_0024:  ldc.i4.0
+    IL_0025:  ldc.i4.2
+    IL_0026:  ldstr      "world"
+    IL_002b:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0030:  ldloc.1
+    IL_0031:  ldc.i4.1
+    IL_0032:  ldc.i4.0
+    IL_0033:  ldstr      "test"
+    IL_0038:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_003d:  ldloc.1
+    IL_003e:  ldc.i4.1
+    IL_003f:  ldc.i4.1
+    IL_0040:  ldstr      "hello"
+    IL_0045:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_004a:  ldloc.1
+    IL_004b:  ldc.i4.1
+    IL_004c:  ldc.i4.3
+    IL_004d:  ldstr      "world"
+    IL_0052:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0057:  ldloc.1
+    IL_0058:  ldc.i4.2
+    IL_0059:  ldc.i4.0
+    IL_005a:  ldstr      "test"
+    IL_005f:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0064:  ldloc.1
+    IL_0065:  ldc.i4.2
+    IL_0066:  ldc.i4.2
+    IL_0067:  ldstr      "hello"
+    IL_006c:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0071:  ldloc.1
+    IL_0072:  ldc.i4.2
+    IL_0073:  ldc.i4.3
+    IL_0074:  ldstr      "world"
+    IL_0079:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_007e:  ldloc.1
+    IL_007f:  ldc.i4.3
+    IL_0080:  ldc.i4.1
+    IL_0081:  ldstr      "test"
+    IL_0086:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_008b:  ldloc.1
+    IL_008c:  ldc.i4.3
+    IL_008d:  ldc.i4.2
+    IL_008e:  ldstr      "hello"
+    IL_0093:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_0098:  ldloc.1
+    IL_0099:  ldc.i4.3
+    IL_009a:  ldc.i4.3
+    IL_009b:  ldstr      "world"
+    IL_00a0:  call       instance void string[0...,0...]::Set(int32,
+                                                              int32,
+                                                              string)
+    IL_00a5:  ldloc.1
+    IL_00a6:  stloc.0
+    IL_00a7:  br.s       IL_00a9
+
+    IL_00a9:  ldloc.0
+    IL_00aa:  ret
+  } // end of method TestCases::Issue1382b
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/C 
           Test1() cil managed
@@ -3170,7 +3428,7 @@
     IL_0001:  ldc.i4.4
     IL_0002:  newarr     [mscorlib]System.Byte
     IL_0007:  dup
-    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000041-1'
+    IL_0008:  ldtoken    field int32 '<PrivateImplementationDetails>'::'$$method0x6000045-1'
     IL_000d:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0012:  stloc.0
@@ -3295,34 +3553,25 @@
 
   .method public hidebysig static void  ExtensionMethodInCollectionInitializer() cil managed
   {
-    // Code size       43 (0x2b)
-    .maxstack  4
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> V_0,
-             int32[] V_1)
+    // Code size       37 (0x25)
+    .maxstack  3
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32> V_0)
     IL_0000:  nop
     IL_0001:  newobj     instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::.ctor()
     IL_0006:  stloc.0
     IL_0007:  ldloc.0
-    IL_0008:  ldc.i4.2
-    IL_0009:  newarr     [mscorlib]System.Int32
-    IL_000e:  stloc.1
-    IL_000f:  ldloc.1
-    IL_0010:  ldc.i4.0
-    IL_0011:  ldc.i4.1
-    IL_0012:  stelem.i4
-    IL_0013:  ldloc.1
-    IL_0014:  ldc.i4.1
-    IL_0015:  ldc.i4.2
-    IL_0016:  stelem.i4
-    IL_0017:  ldloc.1
-    IL_0018:  callvirt   instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>::Add(int32[])
-    IL_001d:  nop
-    IL_001e:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
-    IL_0023:  ldloc.0
-    IL_0024:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
+    IL_0008:  ldstr      "1"
+    IL_000d:  ldstr      "2"
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.Extensions::Add(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases/CustomList`1<int32>,
+                                                                                                             string,
+                                                                                                             string)
+    IL_0017:  nop
+    IL_0018:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Y()
+    IL_001d:  ldloc.0
+    IL_001e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::X(object,
                                                                                                           object)
-    IL_0029:  nop
-    IL_002a:  ret
+    IL_0023:  nop
+    IL_0024:  ret
   } // end of method TestCases::ExtensionMethodInCollectionInitializer
 
   .method public hidebysig static void  NoCollectionInitializerBecauseOfTypeArguments() cil managed
@@ -4435,7 +4684,7 @@
     IL_0787:  newobj     instance void int32[0...,0...]::.ctor(int32,
                                                                int32)
     IL_078c:  dup
-    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000090-1'
+    IL_078d:  ldtoken    field valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '<PrivateImplementationDetails>'::'$$method0x6000094-1'
     IL_0792:  call       void [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array,
                                                                                                         valuetype [mscorlib]System.RuntimeFieldHandle)
     IL_0797:  stsfld     int32[0...,0...] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests.TestCases::Issue1336_rg2
@@ -4518,29 +4767,29 @@
     .size 36
   } // end of class '__StaticArrayInitTypeSize=36'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000a-1' at I_000020C0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000c-1' at I_00002138
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x600000c-2' at I_00002160
-  .field static assembly int64 '$$method0x600000f-1' at I_00002418
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000010-1' at I_00002440
-  .field static assembly int64 '$$method0x6000011-1' at I_00002470
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000012-1' at I_00002498
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000013-1' at I_000024C8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000014-1' at I_000024F8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000015-1' at I_00002540
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000016-1' at I_00002588
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '$$method0x6000017-1' at I_000025D0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x6000018-1' at I_00002640
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '$$method0x6000019-1' at I_00002678
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '$$method0x600001d-1' at I_000027C0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-1' at I_000028E8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-2' at I_00002928
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-3' at I_00002968
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001e-4' at I_000029A8
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-1' at I_00002A58
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x600001f-2' at I_00002AA0
-  .field static assembly int32 '$$method0x6000041-1' at I_00003318
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000090-1' at I_00003600
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000b-1' at I_000020C0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x600000d-1' at I_00002138
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x600000d-2' at I_00002160
+  .field static assembly int64 '$$method0x6000010-1' at I_00002418
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000011-1' at I_00002440
+  .field static assembly int64 '$$method0x6000012-1' at I_00002470
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=10' '$$method0x6000013-1' at I_00002498
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000014-1' at I_000024C8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000015-1' at I_000024F8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000016-1' at I_00002540
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=40' '$$method0x6000017-1' at I_00002588
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=80' '$$method0x6000018-1' at I_000025D0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=24' '$$method0x6000019-1' at I_00002640
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=48' '$$method0x600001a-1' at I_00002678
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=256' '$$method0x600001e-1' at I_000027C0
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-1' at I_000028E8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-2' at I_00002928
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-3' at I_00002968
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=64' '$$method0x600001f-4' at I_000029A8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x6000020-1' at I_00002A58
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=72' '$$method0x6000020-2' at I_00002AA0
+  .field static assembly int32 '$$method0x6000045-1' at I_000034B8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=36' '$$method0x6000094-1' at I_000037A0
 } // end of class '<PrivateImplementationDetails>'
 
 
@@ -4648,10 +4897,10 @@
                  1D 00 00 00 1F 00 00 00 20 00 00 00 21 00 00 00  // ........ ...!...
                  22 00 00 00 23 00 00 00 24 00 00 00 25 00 00 00  // "...#...$...%...
                  26 00 00 00 27 00 00 00)                         // &...'...
-.data cil I_00003318 = bytearray (
+.data cil I_000034B8 = bytearray (
                  00 01 02 FF) 
-.data cil I_0000331C = int8[228]
-.data cil I_00003600 = bytearray (
+.data cil I_000034BC = int8[4]
+.data cil I_000037A0 = bytearray (
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00 01 00 00 00 01 00 00 00 01 00 00 00
                  01 00 00 00) 
