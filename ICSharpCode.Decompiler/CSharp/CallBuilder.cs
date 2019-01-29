@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
 				return new InvocationExpression(target, argumentList.GetArgumentExpressions())
 					.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, method,
-						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm));
+						argumentList.GetArgumentResolveResults().ToList(), isExpandedForm: argumentList.IsExpandedForm, isDelegateInvocation: true));
 			}
 
 			if (settings.StringInterpolation && IsInterpolatedStringCreation(method, argumentList) &&
