@@ -225,7 +225,7 @@ namespace ICSharpCode.ILSpy
 			public override IType VisitTypeParameter(ITypeParameter type)
 			{
 				base.VisitTypeParameter(type);
-				builder.Append(type.Name);
+				EscapeName(builder, type.Name);
 				return type;
 			}
 
@@ -257,9 +257,9 @@ namespace ICSharpCode.ILSpy
 			private void WriteType(IType type)
 			{
 				if (includeNamespace)
-					builder.Append(type.FullName);
+					EscapeName(builder, type.FullName);
 				else
-					builder.Append(type.Name);
+					EscapeName(builder, type.Name);
 				if (type.TypeParameterCount > 0) {
 					builder.Append('`');
 					builder.Append(type.TypeParameterCount);
@@ -361,7 +361,7 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(method));
 
 			int i = 0;
-			var buffer = new System.Text.StringBuilder();
+			var buffer = new StringBuilder();
 			buffer.Append(GetDisplayName(method, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			var typeParameters = method.TypeParameters;
 			if (typeParameters.Count > 0) {
@@ -398,7 +398,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (@event == null)
 				throw new ArgumentNullException(nameof(@event));
-			var buffer = new System.Text.StringBuilder();
+			var buffer = new StringBuilder();
 			buffer.Append(GetDisplayName(@event, includeDeclaringTypeName, includeNamespace, includeNamespaceOfDeclaringTypeName));
 			buffer.Append(" : ");
 			buffer.Append(TypeToString(@event.ReturnType, includeNamespace));
@@ -410,15 +410,15 @@ namespace ICSharpCode.ILSpy
 			if (includeDeclaringTypeName && entity.DeclaringTypeDefinition != null) {
 				string name;
 				if (includeNamespaceOfDeclaringTypeName) {
-					name = entity.DeclaringTypeDefinition.FullName;
+					name = EscapeName(entity.DeclaringTypeDefinition.FullName);
 				} else {
-					name = entity.DeclaringTypeDefinition.Name;
+					name = EscapeName(entity.DeclaringTypeDefinition.Name);
 				}
-				return name + "." + entity.Name;
+				return name + "." + EscapeName(entity.Name);
 			} else {
 				if (includeNamespace)
-					return entity.FullName;
-				return entity.Name;
+					return EscapeName(entity.FullName);
+				return EscapeName(entity.Name);
 			}
 		}
 
@@ -444,15 +444,15 @@ namespace ICSharpCode.ILSpy
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
 					if (fullName)
-						return ((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString();
+						return EscapeName(((TypeDefinitionHandle)handle).GetFullTypeName(metadata).ToILNameString());
 					var td = metadata.GetTypeDefinition((TypeDefinitionHandle)handle);
-					return metadata.GetString(td.Name);
+					return EscapeName(metadata.GetString(td.Name));
 				case HandleKind.FieldDefinition:
 					var fd = metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
 					var declaringType = fd.GetDeclaringType();
 					if (fullName)
-						return fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(fd.Name);
-					return metadata.GetString(fd.Name);
+						return EscapeName(fd.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(fd.Name));
+					return EscapeName(metadata.GetString(fd.Name));
 				case HandleKind.MethodDefinition:
 					var md = metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 					declaringType = md.GetDeclaringType();
@@ -461,20 +461,20 @@ namespace ICSharpCode.ILSpy
 					if (genericParamCount > 0)
 						methodName += "``" + genericParamCount;
 					if (fullName)
-						return md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + methodName;
-					return methodName;
+						return EscapeName(md.GetDeclaringType().GetFullTypeName(metadata).ToILNameString() + "." + methodName);
+					return EscapeName(methodName);
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(ed.Name);
-					return metadata.GetString(ed.Name);
+						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(ed.Name));
+					return EscapeName(metadata.GetString(ed.Name));
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
 					declaringType = metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
 					if (fullName)
-						return declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(pd.Name);
-					return metadata.GetString(pd.Name);
+						return EscapeName(declaringType.GetFullTypeName(metadata).ToILNameString() + "." + metadata.GetString(pd.Name));
+					return EscapeName(metadata.GetString(pd.Name));
 				default:
 					return null;
 			}
@@ -520,6 +520,28 @@ namespace ICSharpCode.ILSpy
 		public static string GetRuntimeDisplayName(PEFile module)
 		{
 			return module.Metadata.MetadataVersion;
+		}
+
+		/// <summary>
+		/// Escape characters that cannot be displayed in the UI.
+		/// </summary>
+		public static StringBuilder EscapeName(StringBuilder sb, string name)
+		{
+			foreach (char ch in name) {
+				if (char.IsWhiteSpace(ch) || char.IsControl(ch))
+					sb.AppendFormat("\\u{0:x4}", (int)ch);
+				else
+					sb.Append(ch);
+			}
+			return sb;
+		}
+
+		/// <summary>
+		/// Escape characters that cannot be displayed in the UI.
+		/// </summary>
+		public static string EscapeName(string name)
+		{
+			return EscapeName(new StringBuilder(name.Length), name).ToString();
 		}
 	}
 }
