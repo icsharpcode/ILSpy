@@ -1638,7 +1638,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				XmlBamlNode node = CurrentNode;
 				if (node is XmlBamlSimpleProperty)
 					return ((XmlBamlSimpleProperty)node).Value;
-				else if (node is XmlBamlProperty)
+				else if (node is XmlBamlProperty && ((XmlBamlProperty)node).Value != null)
 					return ((XmlBamlProperty)node).Value.ToString();
 				else if (node is XmlBamlText)
 					return ((XmlBamlText)node).Text;
