@@ -316,7 +316,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				field = (IField)field.MemberDefinition;
 				ILInstruction value;
 				if (initValues.TryGetValue(field, out DisplayClassVariable info)) {
-					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
+					inst.ReplaceWith(new StLoc(info.variable, inst.Value) { ILRange = inst.ILRange });
 				} else {
 					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 						// special case for parameters: remove copies of parameter values.
@@ -327,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 						v.CaptureScope = captureScope;
-						inst.ReplaceWith(new StLoc(v, inst.Value));
+						inst.ReplaceWith(new StLoc(v, inst.Value) { ILRange = inst.ILRange });
 						value = new LdLoc(v);
 					}
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
@@ -341,7 +341,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!initValues.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))
 					return;
-				inst.ReplaceWith(info.value.Clone());
+				var replacement = info.value.Clone();
+				replacement.ILRange = inst.ILRange;
+				inst.ReplaceWith(replacement);
 			}
 			
 			protected internal override void VisitLdFlda(LdFlda inst)
@@ -362,11 +364,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = captureScope;
-					inst.ReplaceWith(new LdLoca(v));
+					inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
 					var value = new LdLoc(v);
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
 				} else if (info.value is LdLoc l) {
-					inst.ReplaceWith(new LdLoca(l.Variable));
+					inst.ReplaceWith(new LdLoca(l.Variable) { ILRange = inst.ILRange });
 				} else {
 					Debug.Fail("LdFlda pattern not supported!");
 				}
@@ -376,7 +378,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				base.VisitNumericCompoundAssign(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
-					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
+					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign) { ILRange = inst.ILRange }));
 				}
 			}
 		}
