@@ -136,6 +136,7 @@ namespace ICSharpCode.Decompiler.Console
 				var name = new FullTypeName(typeName);
 				output.Write(decompiler.DecompileTypeAsString(name));
 			}
+			output.Flush();
 		}
 	}
 }
