@@ -53,8 +53,8 @@ If you want to decompile one single member (sample: first method)
 ```csharp
 var nameOfUniResolver =  new FullTypeName("ICSharpCode.Decompiler.Metadata.UniversalAssemblyResolver");
 ITypeDefinition typeInfo = decompiler.TypeSystem.FindType(nameOfUniResolver).GetDefinition();
-var tokenOfFirstProperty = typeInfo.Methods.First().MetadataToken;
-Console.WriteLine(decompiler.DecompileAsString(tokenOfFirstProperty));
+var tokenOfFirstMethod = typeInfo.Methods.First().MetadataToken;
+Console.WriteLine(decompiler.DecompileAsString(tokenOfFirstMethod));
 ```
 
 If you need access to low-level metadata tables
