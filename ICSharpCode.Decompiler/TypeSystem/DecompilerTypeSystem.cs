@@ -73,9 +73,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		Uncached = 0x10,
 		/// <summary>
-		/// Default settings: all features enabled.
+		/// If this option is active, [DecimalConstantAttribute] is removed and constant values are transformed into simple decimal literals.
 		/// </summary>
-		Default = Dynamic | Tuple | ExtensionMethods
+		DecimalConstants = 0x20,
+		/// <summary>
+		/// If this option is active, modopt and modreq types are preserved in the type system.
+		/// 
+		/// Note: the decompiler currently does not support handling modified types;
+		/// activating this option may lead to incorrect decompilation or internal errors.
+		/// </summary>
+		KeepModifiers = 0x40,
+		/// <summary>
+		/// If this option is active, [IsReadOnlyAttribute] is removed and parameters are marked as in, structs as readonly.
+		/// Otherwise, the attribute is preserved but the parameters and structs are not marked.
+		/// </summary>
+		ReadOnlyStructsAndParameters = 0x80,
+		/// <summary>
+		/// If this option is active, [IsByRefLikeAttribute] is removed and structs are marked as ref.
+		/// Otherwise, the attribute is preserved but the structs are not marked.
+		/// </summary>
+		RefStructs = 0x100,
+		/// <summary>
+		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
+		/// </summary>
+		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters | RefStructs
 	}
 
 	/// <summary>
@@ -95,6 +116,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.Tuple;
 			if (settings.ExtensionMethods)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMethods;
+			if (settings.DecimalConstants)
+				typeSystemOptions |= TypeSystemOptions.DecimalConstants;
+			if (settings.IntroduceRefModifiersOnStructs)
+				typeSystemOptions |= TypeSystemOptions.RefStructs;
+			if (settings.IntroduceReadonlyAndInModifiers)
+				typeSystemOptions |= TypeSystemOptions.ReadOnlyStructsAndParameters;
 			return typeSystemOptions;
 		}
 
@@ -178,10 +205,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			bool HasType(KnownTypeCode code)
 			{
 				TopLevelTypeName name = KnownTypeReference.Get(code).TypeName;
-				if (mainModule.GetTypeDefinition(name) != null)
+				if (!mainModule.GetTypeDefinition(name).IsNil)
 					return true;
 				foreach (var file in referencedAssemblies) {
-					if (file.GetTypeDefinition(name) != null)
+					if (!file.GetTypeDefinition(name).IsNil)
 						return true;
 				}
 				return false;

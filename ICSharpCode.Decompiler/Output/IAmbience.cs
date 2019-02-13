@@ -17,8 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.TypeSystem
+namespace ICSharpCode.Decompiler.Output
 {
 	[Flags]
 	public enum ConversionFlags
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		ShowDefinitionKeyword  = 8,
 		/// <summary>
-		/// Show the declaring type for the member
+		/// Show the declaring type for the type or member
 		/// </summary>
 		ShowDeclaringType = 0x10,
 		/// <summary>
@@ -69,22 +70,42 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// For properties: shows "{ get; }" or similar.
 		/// </summary>
 		ShowBody = 0x200,
-		
 		/// <summary>
 		/// Use fully qualified names for members.
 		/// </summary>
 		UseFullyQualifiedEntityNames = 0x400,
-		
+		/// <summary>
+		/// Instead of placing the return type before the entity name,
+		/// append it after the parameter list, preceeded by a colon.
+		/// </summary>
+		PlaceReturnTypeAfterParameterList = 0x800,
+		/// <summary>
+		/// Show the variance modifier of the type parameter.
+		/// If active, shows 'Func&lt;in T, out TResult&gt;' instead of 'Func&lt;T, TResult&gt;'.
+		/// </summary>
+		ShowTypeParameterVarianceModifier = 0x1000,
+		/// <summary>
+		/// Show modifiers of parameters, e.g. 'this', 'params', 'ref', 'out' and 'in'.
+		/// </summary>
+		ShowParameterModifiers = 0x2000,
+		/// <summary>
+		/// Show default values of parameters.
+		/// </summary>
+		ShowParameterDefaultValues = 0x4000,
+
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
 			ShowParameterList |
+			ShowParameterModifiers |
+			ShowParameterDefaultValues |
 			ShowReturnType |
 			ShowModifiers |
 			ShowTypeParameterList |
+			ShowTypeParameterVarianceModifier |
 			ShowDefinitionKeyword |
 			ShowBody,
 		
-		All = 0x7ff,
+		All = 0x7ffff,
 	}
 	
 	/// <summary>

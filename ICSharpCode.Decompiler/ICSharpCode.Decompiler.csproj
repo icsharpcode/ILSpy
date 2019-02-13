@@ -51,8 +51,8 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
-    <PackageReference Include="System.Reflection.Metadata" Version="1.4.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
 
@@ -74,9 +74,7 @@
     <Compile Include="CSharp\Syntax\ErrorNode.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousMethodExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousTypeCreateExpression.cs" />
-    <Compile Include="CSharp\Syntax\Expressions\ArrayCreateExpression.cs">
-      <DependentUpon>ArrayInitializerExpression.cs</DependentUpon>
-    </Compile>
+    <Compile Include="CSharp\Syntax\Expressions\ArrayCreateExpression.cs"  />
     <Compile Include="CSharp\Syntax\Expressions\ArrayInitializerExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AsExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AssignmentExpression.cs" />
@@ -269,6 +267,9 @@
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="DecompileRun.cs" />
     <Compile Include="Disassembler\ILParser.cs" />
+    <Compile Include="IL\Transforms\ReduceNestingTransform.cs" />
+    <Compile Include="IL\Transforms\LocalFunctionDecompiler.cs" />
+    <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
     <Compile Include="Metadata\AssemblyReferences.cs" />
     <Compile Include="Metadata\CodeMappingInfo.cs" />
     <Compile Include="Metadata\EnumUnderlyingTypeResolveException.cs" />
@@ -332,7 +333,7 @@
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
     <Compile Include="IL\Instructions\LockInstruction.cs" />
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
-    <Compile Include="IL\Instructions\ThreeValuedLogicInstructions.cs" />
+    <Compile Include="IL\Instructions\LogicInstructions.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />
@@ -344,12 +345,14 @@
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="DebugInfo\IDebugInfoProvider.cs" />
     <Compile Include="DebugInfo\PortablePdbWriter.cs" />
+    <Compile Include="Semantics\InterpolatedStringResolveResult.cs" />
     <Compile Include="SRMExtensions.cs" />
     <Compile Include="SRMHacks.cs" />
     <Compile Include="TypeSystem\ApplyAttributeTypeVisitor.cs" />
     <Compile Include="TypeSystem\GenericContext.cs" />
     <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
     <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
+    <Compile Include="TypeSystem\Implementation\DecimalConstantHelper.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
@@ -362,6 +365,7 @@
     <Compile Include="TypeSystem\Implementation\MetadataTypeDefinition.cs" />
     <Compile Include="TypeSystem\Implementation\MetadataTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\SpecializedParameter.cs" />
+    <Compile Include="TypeSystem\Implementation\ThreeState.cs" />
     <Compile Include="TypeSystem\MetadataModule.cs" />
     <Compile Include="TypeSystem\ModifiedType.cs" />
     <Compile Include="TypeSystem\Implementation\PinnedType.cs" />
@@ -485,7 +489,7 @@
     <Compile Include="TypeSystem\ComHelper.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
-    <Compile Include="TypeSystem\IAmbience.cs" />
+    <Compile Include="Output\IAmbience.cs" />
     <Compile Include="TypeSystem\IAssembly.cs" />
     <Compile Include="TypeSystem\IAttribute.cs" />
     <Compile Include="TypeSystem\ICodeContext.cs" />

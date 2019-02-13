@@ -39,7 +39,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// We exclude logic.and to avoid turning
 			// "logic.and(comp(interfaces != ldnull), call get_Count(interfaces))"
 			// into "if ((interfaces?.Count ?? 0) != 0)".
-			return (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
+			return ifInst != null
+				&& (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
 				&& IfInstruction.IsInConditionSlot(ifInst);
 		}
 
@@ -111,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!IsValidAccessChain(testedVar, mode, nonNullInst, out var varLoad))
 				return null;
 			// note: InferType will be accurate in this case because the access chain consists of calls and field accesses
-			IType returnType = nonNullInst.InferType();
+			IType returnType = nonNullInst.InferType(context.TypeSystem);
 			if (nullInst.MatchLdNull()) {
 				context.Step($"Null propagation (mode={mode}, output=reference type)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : null

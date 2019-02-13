@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp4) {
 				dynamic = false;
 				namedArguments = false;
-				// * optional arguments (not supported yet)
+				optionalArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp5) {
 				asyncAwait = false;
@@ -81,14 +81,41 @@ namespace ICSharpCode.Decompiler
 				tupleTypes = false;
 				tupleConversions = false;
 				discards = false;
+				localFunctions = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2) {
-				introduceRefAndReadonlyModifiersOnStructs = false;
+				introduceReadonlyAndInModifiers = false;
+				introduceRefModifiersOnStructs = false;
+				nonTrailingNamedArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
 				//introduceUnmanagedTypeConstraint = false;
+				stackAllocInitializers = false;
 				tupleComparisons = false;
 			}
+		}
+
+		public CSharp.LanguageVersion GetMinimumRequiredVersion()
+		{
+			if (tupleComparisons || stackAllocInitializers)
+				return CSharp.LanguageVersion.CSharp7_3;
+			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
+				return CSharp.LanguageVersion.CSharp7_2;
+			// C# 7.1 missing
+			if (outVariables || tupleTypes || tupleConversions || discards || localFunctions)
+				return CSharp.LanguageVersion.CSharp7;
+			if (awaitInCatchFinally || useExpressionBodyForCalculatedGetterOnlyProperties || nullPropagation
+				|| stringInterpolation || dictionaryInitializers || extensionMethodsInCollectionInitializers)
+				return CSharp.LanguageVersion.CSharp6;
+			if (asyncAwait)
+				return CSharp.LanguageVersion.CSharp5;
+			if (dynamic || namedArguments || optionalArguments)
+				return CSharp.LanguageVersion.CSharp4;
+			if (anonymousTypes || objectCollectionInitializers || automaticProperties || queryExpressions || expressionTrees)
+				return CSharp.LanguageVersion.CSharp3;
+			if (anonymousMethods || liftNullables || yieldReturn || useImplicitMethodGroupConversion)
+				return CSharp.LanguageVersion.CSharp2;
+			return CSharp.LanguageVersion.CSharp1;
 		}
 
 		bool anonymousMethods = true;
@@ -192,6 +219,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (awaitInCatchFinally != value) {
 					awaitInCatchFinally = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool decimalConstants = true;
+
+		/// <summary>
+		/// Decompile [DecimalConstant(...)] as simple literal values.
+		/// </summary>
+		public bool DecimalConstants {
+			get { return decimalConstants; }
+			set {
+				if (decimalConstants != value) {
+					decimalConstants = value;
 					OnPropertyChanged();
 				}
 			}
@@ -611,16 +653,47 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool introduceRefAndReadonlyModifiersOnStructs = true;
+		bool introduceRefModifiersOnStructs = true;
 
 		/// <summary>
-		/// Gets/Sets whether IsByRefLikeAttribute and IsReadOnlyAttribute should be replaced with 'ref' and 'readonly' modifiers on structs.
+		/// Gets/Sets whether IsByRefLikeAttribute should be replaced with 'ref' modifiers on structs.
 		/// </summary>
-		public bool IntroduceRefAndReadonlyModifiersOnStructs {
-			get { return introduceRefAndReadonlyModifiersOnStructs; }
+		public bool IntroduceRefModifiersOnStructs {
+			get { return introduceRefModifiersOnStructs; }
 			set {
-				if (introduceRefAndReadonlyModifiersOnStructs != value) {
-					introduceRefAndReadonlyModifiersOnStructs = value;
+				if (introduceRefModifiersOnStructs != value) {
+					introduceRefModifiersOnStructs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceReadonlyAndInModifiers = true;
+
+		/// <summary>
+		/// Gets/Sets whether IsReadOnlyAttribute should be replaced with 'readonly' modifiers on structs
+		/// and with the 'in' modifier on parameters.
+		/// </summary>
+		public bool IntroduceReadonlyAndInModifiers {
+			get { return introduceReadonlyAndInModifiers; }
+			set {
+				if (introduceReadonlyAndInModifiers != value) {
+					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool stackAllocInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.3 stackalloc initializers should be used.
+		/// </summary>
+		public bool StackAllocInitializers {
+			get { return stackAllocInitializers; }
+			set {
+				if (stackAllocInitializers != value) {
+					stackAllocInitializers = value;
 					OnPropertyChanged();
 				}
 			}
@@ -684,6 +757,53 @@ namespace ICSharpCode.Decompiler
 				if (namedArguments != value) {
 					namedArguments = value;
 					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool nonTrailingNamedArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.2 non-trailing named arguments should be used.
+		/// </summary>
+		public bool NonTrailingNamedArguments {
+			get { return nonTrailingNamedArguments; }
+			set {
+				if (nonTrailingNamedArguments != value) {
+					nonTrailingNamedArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool optionalArguments = true;
+
+		/// <summary>
+		/// Gets/Sets whether optional arguments should be removed, if possible.
+		/// </summary>
+		public bool OptionalArguments {
+			get { return optionalArguments; }
+			set {
+				if (optionalArguments != value) {
+					optionalArguments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool localFunctions = false;
+
+		/// <summary>
+		/// Gets/Sets whether C# 7.0 local functions should be used.
+		/// Note: this language feature is currently not implemented and this setting is always false.
+		/// </summary>
+		public bool LocalFunctions {
+			get { return localFunctions; }
+			set {
+				if (localFunctions != value) {
+					throw new NotImplementedException("C# 7.0 local functions are not implemented!");
+					//localFunctions = value;
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -798,6 +918,18 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (throwOnAssemblyResolveErrors != value) {
 					throwOnAssemblyResolveErrors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool applyWindowsRuntimeProjections = true;
+
+		public bool ApplyWindowsRuntimeProjections {
+			get { return applyWindowsRuntimeProjections; }
+			set {
+				if (applyWindowsRuntimeProjections != value) {
+					applyWindowsRuntimeProjections = value;
 					OnPropertyChanged();
 				}
 			}

@@ -420,6 +420,55 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	partial class DynamicLogicOperatorInstruction
+	{
+		public CSharpArgumentInfo LeftArgumentInfo { get; }
+		public CSharpArgumentInfo RightArgumentInfo { get; }
+		public ExpressionType Operation { get; }
+
+		public DynamicLogicOperatorInstruction(CSharpBinderFlags binderFlags, ExpressionType operation, IType context, CSharpArgumentInfo leftArgumentInfo, ILInstruction left, CSharpArgumentInfo rightArgumentInfo, ILInstruction right)
+			: base(OpCode.DynamicLogicOperatorInstruction, binderFlags, context)
+		{
+			Operation = operation;
+			LeftArgumentInfo = leftArgumentInfo;
+			Left = left;
+			RightArgumentInfo = rightArgumentInfo;
+			Right = right;
+		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			WriteBinderFlags(output, options);
+			output.Write(' ');
+			output.Write(Operation.ToString());
+			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
+		}
+
+		public override StackType ResultType => StackType.O;
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return DirectFlags | Left.Flags
+				| SemanticHelper.CombineBranches(Right.Flags, InstructionFlags.None);
+		}
+
+		public override InstructionFlags DirectFlags => InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.ControlFlow;
+
+		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftArgumentInfo;
+				case 1:
+					return RightArgumentInfo;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(index));
+			}
+		}
+	}
+
 	partial class DynamicUnaryOperatorInstruction
 	{
 		public CSharpArgumentInfo OperandArgumentInfo { get; }

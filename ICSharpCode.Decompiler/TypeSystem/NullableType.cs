@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			ParameterizedType pt = type as ParameterizedType;
+			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
 			return pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT);
 		}
 		
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			ParameterizedType pt = type as ParameterizedType;
+			ParameterizedType pt = type.SkipModifiers() as ParameterizedType;
 			if (pt != null && pt.TypeParameterCount == 1 && pt.GenericType.IsKnownType(KnownTypeCode.NullableOfT))
 				return pt.GetTypeArgument(0);
 			else

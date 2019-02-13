@@ -60,6 +60,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			this.symbolKind = SymbolKind.Method;
 			var (accessorOwner, semanticsAttribute) = module.PEFile.MethodSemanticsLookup.GetSemantics(handle);
+			const MethodAttributes finalizerAttributes = (MethodAttributes.Virtual | MethodAttributes.Family | MethodAttributes.HideBySig);
 			if (semanticsAttribute != 0) {
 				this.symbolKind = SymbolKind.Accessor;
 				this.accessorOwner = accessorOwner;
@@ -69,6 +70,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.symbolKind = SymbolKind.Constructor;
 				else if (name.StartsWith("op_", StringComparison.Ordinal))
 					this.symbolKind = SymbolKind.Operator;
+			} else if ((attributes & finalizerAttributes) == finalizerAttributes) {
+				string name = this.Name;
+				if (name == "Finalize" && Parameters.Count == 0) {
+					this.symbolKind = SymbolKind.Destructor;
+				}
 			}
 			this.typeParameters = MetadataTypeParameter.Create(module, this, def.GetGenericParameters());
 			this.IsExtensionMethod = (attributes & MethodAttributes.Static) == MethodAttributes.Static
@@ -326,7 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((implAttributes & MethodImplAttributes.PreserveSig) == MethodImplAttributes.PreserveSig) {
 					implAttributes &= ~MethodImplAttributes.PreserveSig;
 				} else {
-					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, true);
+					dllImport.AddNamedArg("PreserveSig", KnownTypeCode.Boolean, false);
 				}
 
 				if ((info.Attributes & MethodImportAttributes.SetLastError) == MethodImportAttributes.SetLastError)

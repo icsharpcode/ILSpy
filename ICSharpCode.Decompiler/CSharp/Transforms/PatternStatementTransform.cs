@@ -121,7 +121,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
 		}
-		
+
+		public override AstNode VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		{
+			return TransformDestructorBody(destructorDeclaration) ?? base.VisitDestructorDeclaration(destructorDeclaration);
+		}
+
 		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
 		{
 			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement);
@@ -560,6 +565,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitIdentifier(identifier);
 		}
 
+		internal static bool IsBackingFieldOfAutomaticProperty(IField field, out IProperty property)
+		{
+			property = null;
+			if (!(field.Name.StartsWith("<") && field.Name.EndsWith(">k__BackingField")))
+				return false;
+			if (!field.IsCompilerGenerated())
+				return false;
+			var propertyName = field.Name.Substring(1, field.Name.Length - 1 - ">k__BackingField".Length);
+			property = field.DeclaringTypeDefinition
+				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			return property != null;
+		}
+
 		Identifier ReplaceBackingFieldUsage(Identifier identifier)
 		{
 			if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
@@ -805,23 +823,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return ed;
 		}
 		#endregion
-		
+
 		#region Destructor
+		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
+			new TryCatchStatement {
+				TryBlock = new AnyNode("body"),
+				FinallyBlock = new BlockStatement {
+					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
+				}
+			}
+		};
+
 		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new PrimitiveType("void"),
 			Name = "Finalize",
-			Body = new BlockStatement {
-				new TryCatchStatement {
-					TryBlock = new AnyNode("body"),
-					FinallyBlock = new BlockStatement {
-						new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
-					}
-				}
-			}
+			Body = destructorBodyPattern
 		};
-		
+
 		DestructorDeclaration TransformDestructor(MethodDeclaration methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
@@ -837,8 +857,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return null;
 		}
+
+		DestructorDeclaration TransformDestructorBody(DestructorDeclaration dtorDef)
+		{
+			Match m = destructorBodyPattern.Match(dtorDef.Body);
+			if (m.Success) {
+				dtorDef.Body = m.Get<BlockStatement>("body").Single().Detach();
+				return dtorDef;
+			}
+			return null;
+		}
 		#endregion
-		
+
 		#region Try-Catch-Finally
 		static readonly TryCatchStatement tryCatchFinallyPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {

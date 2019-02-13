@@ -207,14 +207,17 @@ namespace ICSharpCode.ILSpy
 				case "by":
 				case "into":
 				case "from":
-				case "ascending":
-				case "descending":
 				case "orderby":
 				case "let":
 				case "join":
 				case "on":
 				case "equals":
 					if (nodeStack.PeekOrDefault() is QueryClause)
+						color = queryKeywordsColor;
+					break;
+				case "ascending":
+				case "descending":
+					if (nodeStack.PeekOrDefault() is QueryOrdering)
 						color = queryKeywordsColor;
 					break;
 				case "explicit":
@@ -270,6 +273,7 @@ namespace ICSharpCode.ILSpy
 				case "ulong":
 					color = valueTypeKeywordsColor;
 					break;
+				case "class":
 				case "object":
 				case "string":
 				case "void":

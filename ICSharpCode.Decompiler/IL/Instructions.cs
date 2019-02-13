@@ -103,9 +103,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 		AddressOf,
 		/// <summary>Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.</summary>
-		ThreeValuedLogicAnd,
+		ThreeValuedBoolAnd,
 		/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
-		ThreeValuedLogicOr,
+		ThreeValuedBoolOr,
 		/// <summary>The input operand must be one of:
 		///   1. a nullable value type
 		///   2. a reference type
@@ -141,6 +141,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
+		/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+		LocAllocSpan,
 		/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
 		Cpblk,
 		/// <summary>memset(address, value, size)</summary>
@@ -187,6 +189,10 @@ namespace ICSharpCode.Decompiler.IL
 		StringToInt,
 		/// <summary>ILAst representation of Expression.Convert.</summary>
 		ExpressionTreeCast,
+		/// <summary>Use of user-defined && or || operator.</summary>
+		UserDefinedLogicOperator,
+		/// <summary>ILAst representation of a short-circuiting binary operator inside a dynamic expression.</summary>
+		DynamicLogicOperatorInstruction,
 		/// <summary>ILAst representation of a binary operator inside a dynamic expression (maps to Binder.BinaryOperation).</summary>
 		DynamicBinaryOperatorInstruction,
 		/// <summary>ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).</summary>
@@ -2607,27 +2613,27 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.</summary>
-	public sealed partial class ThreeValuedLogicAnd : BinaryInstruction
+	public sealed partial class ThreeValuedBoolAnd : BinaryInstruction
 	{
-		public ThreeValuedLogicAnd(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedLogicAnd, left, right)
+		public ThreeValuedBoolAnd(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolAnd, left, right)
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitThreeValuedLogicAnd(this);
+			visitor.VisitThreeValuedBoolAnd(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitThreeValuedLogicAnd(this);
+			return visitor.VisitThreeValuedBoolAnd(this);
 		}
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
-			return visitor.VisitThreeValuedLogicAnd(this, context);
+			return visitor.VisitThreeValuedBoolAnd(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			var o = other as ThreeValuedLogicAnd;
+			var o = other as ThreeValuedBoolAnd;
 			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
 		}
 	}
@@ -2635,27 +2641,27 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
-	public sealed partial class ThreeValuedLogicOr : BinaryInstruction
+	public sealed partial class ThreeValuedBoolOr : BinaryInstruction
 	{
-		public ThreeValuedLogicOr(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedLogicOr, left, right)
+		public ThreeValuedBoolOr(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolOr, left, right)
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitThreeValuedLogicOr(this);
+			visitor.VisitThreeValuedBoolOr(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitThreeValuedLogicOr(this);
+			return visitor.VisitThreeValuedBoolOr(this);
 		}
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
-			return visitor.VisitThreeValuedLogicOr(this, context);
+			return visitor.VisitThreeValuedBoolOr(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			var o = other as ThreeValuedLogicOr;
+			var o = other as ThreeValuedBoolOr;
 			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
 		}
 	}
@@ -3189,6 +3195,60 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Allocates space in the stack frame and wraps it in a Span</summary>
+	public sealed partial class LocAllocSpan : UnaryInstruction
+	{
+		public LocAllocSpan(ILInstruction argument, IType type) : base(OpCode.LocAllocSpan, argument)
+		{
+			this.type = type;
+		}
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLocAllocSpan(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLocAllocSpan(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LocAllocSpan;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
 	public sealed partial class Cpblk : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
@@ -3557,6 +3617,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3579,7 +3641,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdFlda;
-			return o != null && this.target.PerformMatch(o.target, ref match) && field.Equals(o.field);
+			return o != null && this.target.PerformMatch(o.target, ref match) && DelayExceptions == o.DelayExceptions && field.Equals(o.field);
 		}
 	}
 }
@@ -4582,6 +4644,8 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
+			if (DelayExceptions)
+				output.Write("delayex.");
 			if (IsReadOnly)
 				output.Write("readonly.");
 			output.Write(OpCode);
@@ -4610,7 +4674,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdElema;
-			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && IsReadOnly == o.IsReadOnly;
+			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && DelayExceptions == o.DelayExceptions && IsReadOnly == o.IsReadOnly;
 		}
 	}
 }
@@ -4836,6 +4900,204 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as ExpressionTreeCast;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && this.IsChecked == o.IsChecked;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Use of user-defined && or || operator.</summary>
+	public sealed partial class UserDefinedLogicOperator : ILInstruction, IInstructionWithMethodOperand
+	{
+		public UserDefinedLogicOperator(IMethod method, ILInstruction left, ILInstruction right) : base(OpCode.UserDefinedLogicOperator)
+		{
+			this.method = method;
+			this.Left = left;
+			this.Right = right;
+		}
+		readonly IMethod method;
+		/// <summary>Returns the method operand.</summary>
+		public IMethod Method { get { return method; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		ILInstruction left;
+		public ILInstruction Left {
+			get { return this.left; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.left, value, 0);
+			}
+		}
+		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
+		ILInstruction right;
+		public ILInstruction Right {
+			get { return this.right; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.right, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.left;
+				case 1:
+					return this.right;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Left = value;
+					break;
+				case 1:
+					this.Right = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftSlot;
+				case 1:
+					return RightSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (UserDefinedLogicOperator)ShallowClone();
+			clone.Left = this.left.Clone();
+			clone.Right = this.right.Clone();
+			return clone;
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			method.WriteTo(output);
+			output.Write('(');
+			this.left.WriteTo(output, options);
+			output.Write(", ");
+			this.right.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitUserDefinedLogicOperator(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitUserDefinedLogicOperator(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitUserDefinedLogicOperator(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as UserDefinedLogicOperator;
+			return o != null && method.Equals(o.method) && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>ILAst representation of a short-circuiting binary operator inside a dynamic expression.</summary>
+	public sealed partial class DynamicLogicOperatorInstruction : DynamicInstruction
+	{
+		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
+		ILInstruction left;
+		public ILInstruction Left {
+			get { return this.left; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.left, value, 0);
+			}
+		}
+		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
+		ILInstruction right;
+		public ILInstruction Right {
+			get { return this.right; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.right, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.left;
+				case 1:
+					return this.right;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Left = value;
+					break;
+				case 1:
+					this.Right = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftSlot;
+				case 1:
+					return RightSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (DynamicLogicOperatorInstruction)ShallowClone();
+			clone.Left = this.left.Clone();
+			clone.Right = this.right.Clone();
+			return clone;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDynamicLogicOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDynamicLogicOperatorInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDynamicLogicOperatorInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DynamicLogicOperatorInstruction;
+			return o != null && this.left.PerformMatch(o.left, ref match) && this.right.PerformMatch(o.right, ref match);
 		}
 	}
 }
@@ -6231,11 +6493,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst)
+		protected internal virtual void VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst)
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitThreeValuedLogicOr(ThreeValuedLogicOr inst)
+		protected internal virtual void VisitThreeValuedBoolOr(ThreeValuedBoolOr inst)
 		{
 			Default(inst);
 		}
@@ -6292,6 +6554,10 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitLocAlloc(LocAlloc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLocAllocSpan(LocAllocSpan inst)
 		{
 			Default(inst);
 		}
@@ -6380,6 +6646,14 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitExpressionTreeCast(ExpressionTreeCast inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
 		{
 			Default(inst);
 		}
@@ -6601,11 +6875,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst)
+		protected internal virtual T VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitThreeValuedLogicOr(ThreeValuedLogicOr inst)
+		protected internal virtual T VisitThreeValuedBoolOr(ThreeValuedBoolOr inst)
 		{
 			return Default(inst);
 		}
@@ -6662,6 +6936,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLocAlloc(LocAlloc inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst)
 		{
 			return Default(inst);
 		}
@@ -6750,6 +7028,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitExpressionTreeCast(ExpressionTreeCast inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -6971,11 +7257,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst, C context)
+		protected internal virtual T VisitThreeValuedBoolAnd(ThreeValuedBoolAnd inst, C context)
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitThreeValuedLogicOr(ThreeValuedLogicOr inst, C context)
+		protected internal virtual T VisitThreeValuedBoolOr(ThreeValuedBoolOr inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -7032,6 +7318,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst, context);
 		}
 		protected internal virtual T VisitLocAlloc(LocAlloc inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLocAllocSpan(LocAllocSpan inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -7120,6 +7410,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst, context);
 		}
 		protected internal virtual T VisitExpressionTreeCast(ExpressionTreeCast inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -7228,8 +7526,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ldloca",
 			"stloc",
 			"addressof",
-			"3vl.logic.and",
-			"3vl.logic.or",
+			"3vl.bool.and",
+			"3vl.bool.or",
 			"nullable.unwrap",
 			"nullable.rewrap",
 			"ldstr",
@@ -7244,6 +7542,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
+			"localloc.span",
 			"cpblk",
 			"initblk",
 			"ldflda",
@@ -7266,6 +7565,8 @@ namespace ICSharpCode.Decompiler.IL
 			"array.to.pointer",
 			"string.to.int",
 			"expression.tree.cast",
+			"user.logic.operator",
+			"dynamic.logic.operator",
 			"dynamic.binary.operator",
 			"dynamic.unary.operator",
 			"dynamic.convert",
@@ -7434,9 +7735,9 @@ namespace ICSharpCode.Decompiler.IL
 			value = default(ILInstruction);
 			return false;
 		}
-		public bool MatchThreeValuedLogicAnd(out ILInstruction left, out ILInstruction right)
+		public bool MatchThreeValuedBoolAnd(out ILInstruction left, out ILInstruction right)
 		{
-			var inst = this as ThreeValuedLogicAnd;
+			var inst = this as ThreeValuedBoolAnd;
 			if (inst != null) {
 				left = inst.Left;
 				right = inst.Right;
@@ -7446,9 +7747,9 @@ namespace ICSharpCode.Decompiler.IL
 			right = default(ILInstruction);
 			return false;
 		}
-		public bool MatchThreeValuedLogicOr(out ILInstruction left, out ILInstruction right)
+		public bool MatchThreeValuedBoolOr(out ILInstruction left, out ILInstruction right)
 		{
-			var inst = this as ThreeValuedLogicOr;
+			var inst = this as ThreeValuedBoolOr;
 			if (inst != null) {
 				left = inst.Left;
 				right = inst.Right;
@@ -7586,6 +7887,18 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLocAllocSpan(out ILInstruction argument, out IType type)
+		{
+			var inst = this as LocAllocSpan;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 		public bool MatchCpblk(out ILInstruction destAddress, out ILInstruction sourceAddress, out ILInstruction size)
@@ -7792,6 +8105,20 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			array = default(ILInstruction);
+			return false;
+		}
+		public bool MatchUserDefinedLogicOperator(out IMethod method, out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as UserDefinedLogicOperator;
+			if (inst != null) {
+				method = inst.Method;
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			method = default(IMethod);
+			left = default(ILInstruction);
+			right = default(ILInstruction);
 			return false;
 		}
 		public bool MatchMakeRefAny(out ILInstruction argument, out IType type)

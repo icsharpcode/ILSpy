@@ -785,6 +785,77 @@
     IL_0009:  ret
   } // end of method TypeAnalysisTests::CompareStringWithNull
 
+  .method public hidebysig instance bool 
+          CompareType(class [mscorlib]System.Type a,
+                      class [mscorlib]System.Type b) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       bool [mscorlib]System.Type::op_Equality(class [mscorlib]System.Type,
+                                                                 class [mscorlib]System.Type)
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method TypeAnalysisTests::CompareType
+
+  .method public hidebysig instance bool 
+          CompareTypeByReference(class [mscorlib]System.Type a,
+                                 class [mscorlib]System.Type b) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  br.s       IL_0008
+
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method TypeAnalysisTests::CompareTypeByReference
+
+  .method public hidebysig instance bool 
+          CompareTypeWithNull(class [mscorlib]System.Type t) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldnull
+    IL_0003:  call       bool [mscorlib]System.Type::op_Equality(class [mscorlib]System.Type,
+                                                                 class [mscorlib]System.Type)
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method TypeAnalysisTests::CompareTypeWithNull
+
+  .method public hidebysig instance class [mscorlib]System.Attribute 
+          CallExtensionMethodViaBaseClass(class [mscorlib]System.Type 'type') cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (class [mscorlib]System.Attribute V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  call       !!0 [mscorlib]System.Reflection.CustomAttributeExtensions::GetCustomAttribute<class [mscorlib]System.AttributeUsageAttribute>(class [mscorlib]System.Reflection.MemberInfo)
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method TypeAnalysisTests::CallExtensionMethodViaBaseClass
+
   .method public hidebysig instance valuetype [mscorlib]System.Decimal 
           ImplicitConversionToDecimal(uint8 v) cil managed
   {

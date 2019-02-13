@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly TypeAttributes attributes;
 		public TypeKind Kind { get; }
 		public bool IsByRefLike { get; }
+		public bool IsReadOnly { get; }
 		public ITypeDefinition DeclaringTypeDefinition { get; }
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public KnownTypeCode KnownTypeCode { get; }
@@ -101,12 +102,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				} else {
 					this.Kind = TypeKind.Struct;
 					this.IsByRefLike = td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsByRefLike);
+					this.IsReadOnly = td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
 				}
 			} else if (td.IsDelegate(metadata)) {
 				this.Kind = TypeKind.Delegate;
 			} else {
 				this.Kind = TypeKind.Class;
 				this.HasExtensionMethods = this.IsStatic
+					&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 					&& td.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
 			}
 		}
@@ -159,7 +162,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				foreach (FieldDefinitionHandle h in fieldCollection) {
 					var field = metadata.GetFieldDefinition(h);
 					var attr = field.Attributes;
-					if (module.IsVisible(attr) && (attr & FieldAttributes.SpecialName) == 0) {
+					if (module.IsVisible(attr)) {
 						fieldList.Add(module.GetDefinition(h));
 					}
 				}
@@ -270,8 +273,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var context = new GenericContext(TypeParameters);
 				var interfaceImplCollection = td.GetInterfaceImplementations();
 				baseTypes = new List<IType>(1 + interfaceImplCollection.Count);
-				if (!td.BaseType.IsNil) {
-					baseTypes.Add(module.ResolveType(td.BaseType, context));
+				IType baseType = null;
+				try {
+					EntityHandle baseTypeHandle = td.BaseType;
+					if (!baseTypeHandle.IsNil) {
+						baseType = module.ResolveType(baseTypeHandle, context);
+					}
+				} catch (BadImageFormatException) {
+					baseType = SpecialType.UnknownType;
+				}
+				if (baseType != null) {
+					baseTypes.Add(baseType);
 				} else if (Kind == TypeKind.Interface) {
 					// td.BaseType.IsNil is always true for interfaces,
 					// but the type system expects every interface to derive from System.Object as well.

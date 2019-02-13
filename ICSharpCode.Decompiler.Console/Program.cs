@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +6,9 @@ using McMaster.Extensions.CommandLineUtils;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Disassembler;
+using System.Threading;
+using System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Console
 {
@@ -24,6 +27,7 @@ namespace ICSharpCode.Decompiler.Console
 			var outputOption = app.Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue);
 			var typeOption = app.Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue);
 			var listOption = app.Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue);
+			var ilViewerOption = app.Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue);
 			app.ExtendedHelpText = Environment.NewLine + "-o is valid with every option and required when using -p.";
 
 			app.ThrowOnUnexpectedArgument = false; // Ignore invalid arguments / options
@@ -48,27 +52,38 @@ namespace ICSharpCode.Decompiler.Console
 					app.Error.WriteLine($"ERROR: Output directory '{outputOption.Value()}' does not exist.");
 					return -1;
 				}
-				if (projectOption.HasValue()) {
-					DecompileAsProject(inputAssemblyFileName.Value, outputOption.Value());
-				} else if (listOption.HasValue()) {
-					var values = listOption.Values.SelectMany(v => v.Split(',', ';')).ToArray();
-					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
-					TextWriter output = System.Console.Out;
-					if (outputOption.HasValue()) {
-						string directory = outputOption.Value();
-						string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
-						output = File.CreateText(Path.Combine(directory, outputName) + ".list.txt");
+				TextWriter output = System.Console.Out;
+				try {
+					if (projectOption.HasValue()) {
+						DecompileAsProject(inputAssemblyFileName.Value, outputOption.Value());
+					} else if (listOption.HasValue()) {
+						var values = listOption.Values.SelectMany(v => v.Split(',', ';')).ToArray();
+						HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
+						if (outputOption.HasValue()) {
+							string directory = outputOption.Value();
+							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
+							output = File.CreateText(Path.Combine(directory, outputName) + ".list.txt");
+						}
+						ListContent(inputAssemblyFileName.Value, output, kinds);
+					} else if (ilViewerOption.HasValue()) {
+						if (outputOption.HasValue()) {
+							string directory = outputOption.Value();
+							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
+							output = File.CreateText(Path.Combine(directory, outputName) + ".il");
+						}
+						ShowIL(inputAssemblyFileName.Value, output);
+					} else {
+						if (outputOption.HasValue()) {
+							string directory = outputOption.Value();
+							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
+							output = File.CreateText(Path.Combine(directory, (typeOption.Value() ?? outputName) + ".decompiled.cs"));
+						}
+						Decompile(inputAssemblyFileName.Value, output, typeOption.Value());
 					}
-					ListContent(inputAssemblyFileName.Value, output, kinds);
-				} else {
-					TextWriter output = System.Console.Out;
-					if (outputOption.HasValue()) {
-						string directory = outputOption.Value();
-						string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
-						output = File.CreateText(Path.Combine(directory, (typeOption.Value() ?? outputName) + ".decompiled.cs"));
-					}
-					Decompile(inputAssemblyFileName.Value, output, typeOption.Value());
+				} finally {
+					output.Close();
 				}
+				// do not use Console here!
 				return 0;
 			});
 
@@ -77,7 +92,7 @@ namespace ICSharpCode.Decompiler.Console
 
 		static CSharpDecompiler GetDecompiler(string assemblyFileName)
 		{
-			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() {  ThrowOnAssemblyResolveErrors = false });
+			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false });
 		}
 
 		static void ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
@@ -91,10 +106,26 @@ namespace ICSharpCode.Decompiler.Console
 			}
 		}
 
+		static void ShowIL(string assemblyFileName, TextWriter output)
+		{
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			ITextOutput textOutput = new PlainTextOutput();
+			ReflectionDisassembler disassembler = new ReflectionDisassembler(textOutput, CancellationToken.None);
+
+			disassembler.DisassembleNamespace(decompiler.TypeSystem.MainModule.RootNamespace.Name,
+				decompiler.TypeSystem.MainModule.PEFile,
+				decompiler.TypeSystem.MainModule.TypeDefinitions.Select(x => (TypeDefinitionHandle)x.MetadataToken));
+
+			output.WriteLine($"// IL code: {decompiler.TypeSystem.MainModule.AssemblyName}");
+			output.WriteLine(textOutput.ToString());
+		}
+
 		static void DecompileAsProject(string assemblyFileName, string outputDirectory)
 		{
 			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
-			decompiler.DecompileProject(new PEFile(assemblyFileName), outputDirectory);
+			var module = new PEFile(assemblyFileName);
+			decompiler.AssemblyResolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			decompiler.DecompileProject(module, outputDirectory);
 		}
 
 		static void Decompile(string assemblyFileName, TextWriter output, string typeName = null)

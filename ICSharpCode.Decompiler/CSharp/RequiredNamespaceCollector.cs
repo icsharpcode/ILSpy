@@ -86,15 +86,23 @@ namespace ICSharpCode.Decompiler.CSharp
 						CollectNamespacesForTypeReference(param.Type, namespaces);
 					}
 					HandleTypeParameters(method.TypeParameters, namespaces);
-					if (!method.MetadataToken.IsNil && method.HasBody) {
+					if (!method.MetadataToken.IsNil) {
 						if (mappingInfo == null)
 							mappingInfo = CSharpDecompiler.GetCodeMappingInfo(entity.ParentModule.PEFile, entity.MetadataToken);
 						var reader = module.PEFile.Reader;
 						var parts = mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken).ToList();
 						foreach (var part in parts) {
+							HandleOverrides(part.GetMethodImplementations(module.metadata), module, namespaces);
 							var methodDef = module.metadata.GetMethodDefinition(part);
-							var body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
-							CollectNamespacesFromMethodBody(body, module, namespaces);
+							if (method.HasBody) {
+								MethodBodyBlock body;
+								try {
+									body = reader.GetMethodBody(methodDef.RelativeVirtualAddress);
+								} catch (BadImageFormatException) {
+									continue;
+								}
+								CollectNamespacesFromMethodBody(body, module, namespaces);
+							}
 						}
 					}
 					break;
@@ -108,6 +116,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					CollectNamespaces(@event.AddAccessor, module, namespaces);
 					CollectNamespaces(@event.RemoveAccessor, module, namespaces);
 					break;
+			}
+		}
+
+		static void HandleOverrides(ImmutableArray<MethodImplementationHandle> immutableArray, MetadataModule module, HashSet<string> namespaces)
+		{
+			foreach (var h in immutableArray) {
+				var methodImpl = module.metadata.GetMethodImplementation(h);
+				CollectNamespacesForTypeReference(module.ResolveType(methodImpl.Type, genericContext), namespaces);
+				CollectNamespacesForMemberReference(module.ResolveMethod(methodImpl.MethodBody, genericContext), module, namespaces);
+				CollectNamespacesForMemberReference(module.ResolveMethod(methodImpl.MethodDeclaration, genericContext), module, namespaces);
 			}
 		}
 

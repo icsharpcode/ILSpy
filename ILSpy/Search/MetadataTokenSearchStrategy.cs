@@ -25,11 +25,39 @@ namespace ICSharpCode.ILSpy.Search
 			if (searchTermToken.IsNil) return;
 			var typeSystem = module.GetTypeSystemOrNull();
 			if (typeSystem == null) return;
+			var metadataModule = (MetadataModule)typeSystem.MainModule;
+			int row = module.Metadata.GetRowNumber(searchTermToken);
 
 			switch (searchTermToken.Kind) {
 				case HandleKind.TypeDefinition:
-					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition((TypeDefinitionHandle)searchTermToken);
+					if (row < 1 || row > module.Metadata.TypeDefinitions.Count)
+						break;
+					var type = metadataModule.GetDefinition((TypeDefinitionHandle)searchTermToken);
 					addResult(ResultFromEntity(type));
+					break;
+				case HandleKind.MethodDefinition:
+					if (row < 1 || row > module.Metadata.MethodDefinitions.Count)
+						break;
+					var method = metadataModule.GetDefinition((MethodDefinitionHandle)searchTermToken);
+					addResult(ResultFromEntity(method));
+					break;
+				case HandleKind.FieldDefinition:
+					if (row < 1 || row > module.Metadata.FieldDefinitions.Count)
+						break;
+					var field = metadataModule.GetDefinition((FieldDefinitionHandle)searchTermToken);
+					addResult(ResultFromEntity(field));
+					break;
+				case HandleKind.PropertyDefinition:
+					if (row < 1 || row > module.Metadata.PropertyDefinitions.Count)
+						break;
+					var property = metadataModule.GetDefinition((PropertyDefinitionHandle)searchTermToken);
+					addResult(ResultFromEntity(property));
+					break;
+				case HandleKind.EventDefinition:
+					if (row < 1 || row > module.Metadata.EventDefinitions.Count)
+						break;
+					var @event = metadataModule.GetDefinition((EventDefinitionHandle)searchTermToken);
+					addResult(ResultFromEntity(@event));
 					break;
 			}
 		}

@@ -69,7 +69,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		public IType Type {
 			get { return ResolveResult.Type; }
 		}
-		
+
+		internal ExpressionWithResolveResult(Expression expression)
+		{
+			Debug.Assert(expression != null);
+			this.Expression = expression;
+			this.ResolveResult = expression.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
+		}
+
 		internal ExpressionWithResolveResult(Expression expression, ResolveResult resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);
@@ -178,11 +185,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (allowImplicitConversion) {
 					switch (ResolveResult) {
 						case ConversionResolveResult conversion: {
-							if (Expression is CastExpression cast
-							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-								|| conversion.Conversion.IsAnonymousFunctionConversion
-								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
-							)) {
+							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
+									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+									conversion.Conversion,
+									conversion.Input.Type,
+									type, targetType
+								)) {
 								return this.UnwrapChild(cast.Expression);
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
@@ -220,7 +228,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);
-			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 && conv.Conversion.IsBoxingConversion && conversions.IsBoxingConversion(conv.Input.Type, targetType)) {
+			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2 &&
+				CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
+			{
 				var unwrapped = this.UnwrapChild(cast2.Expression);
 				if (allowImplicitConversion)
 					return unwrapped;
@@ -338,9 +348,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
 			if (targetType.Kind == TypeKind.ByReference) {
+				var elementType = ((ByReferenceType)targetType).ElementType;
+				if (this.Expression is DirectionExpression thisDir && this.ILInstructions.Any(i => i.OpCode == OpCode.AddressOf)
+					&& thisDir.Expression.GetResolveResult()?.Type.GetStackType() == elementType.GetStackType()) {
+					// When converting a reference to a temporary to a different type,
+					// apply the cast to the temporary instead.
+					var convertedTemp = this.UnwrapChild(thisDir.Expression).ConvertTo(elementType, expressionBuilder, checkForOverflow);
+					return new DirectionExpression(FieldDirection.Ref, convertedTemp)
+						.WithILInstruction(this.ILInstructions)
+						.WithRR(new ByReferenceResolveResult(convertedTemp.ResolveResult, false));
+				}
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
-				var elementType = ((ByReferenceType)targetType).ElementType;
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				Expression expr;
 				ResolveResult elementRR;
@@ -378,11 +397,32 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
-			bool avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
-			if (!avoidCheckAnnotation) {
+			bool needsCheckAnnotation = targetUType.GetStackType().IsIntegerType();
+			if (needsCheckAnnotation) {
 				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
+		}
+		
+		/// <summary>
+		/// Gets whether an implicit conversion from 'inputType' to 'newTargetType'
+		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
+		/// The existing cast is classified in 'conversion'.
+		/// </summary>
+		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
+		{
+			if (!conversion.IsImplicit) {
+				// If the cast was required for the old conversion, avoid making it implicit.
+				return false;
+			}
+			if (conversion.IsBoxingConversion) {
+				return conversions.IsBoxingConversionOrInvolvingTypeParameter(inputType, newTargetType);
+			}
+			if (conversion.IsInterpolatedStringConversion) {
+				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
+					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
+			}
+			return oldTargetType.Equals(newTargetType);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)

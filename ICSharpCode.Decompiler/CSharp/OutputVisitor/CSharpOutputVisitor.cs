@@ -796,6 +796,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case FieldDirection.Ref:
 					WriteKeyword(DirectionExpression.RefKeywordRole);
 					break;
+				case FieldDirection.In:
+					WriteKeyword(DirectionExpression.InKeywordRole);
+					break;
 				default:
 					throw new NotSupportedException ("Invalid value for FieldDirection");
 			}
@@ -1045,6 +1048,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(StackAllocExpression.StackallocKeywordRole);
 			stackAllocExpression.Type.AcceptVisitor(this);
 			WriteCommaSeparatedListInBrackets(new[] { stackAllocExpression.CountExpression });
+			stackAllocExpression.Initializer.AcceptVisitor(this);
 			EndNode(stackAllocExpression);
 		}
 		
@@ -2169,6 +2173,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 				case ParameterModifier.This:
 					WriteKeyword(ParameterDeclaration.ThisModifierRole);
+					break;
+				case ParameterModifier.In:
+					WriteKeyword(ParameterDeclaration.InModifierRole);
 					break;
 			}
 			parameterDeclaration.Type.AcceptVisitor(this);

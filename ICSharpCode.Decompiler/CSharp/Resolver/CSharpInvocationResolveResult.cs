@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			for (int i = 0; i < results.Length; i++) {
 				if (results[i] == null) {
 					if (Member.Parameters[i].IsOptional) {
-						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].ConstantValue);
+						results[i] = new ConstantResolveResult(Member.Parameters[i].Type, Member.Parameters[i].GetConstantValue());
 					} else {
 						results[i] = ErrorResolveResult.UnknownError;
 					}

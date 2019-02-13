@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			type = NullableType.GetUnderlyingType(type);
 			while (type is ModifiedType || type is PinnedType) {
-				type = ((TypeWithElementType)type).ElementType;
+				type = NullableType.GetUnderlyingType(((TypeWithElementType)type).ElementType);
 			}
 
 			string name;
@@ -448,7 +448,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
 
-			IType inferredType = inst.InferType();
+			IType inferredType = inst.InferType(context.TypeSystem);
 			if (inferredType.Kind != TypeKind.Unknown)
 				return inferredType;
 			else
@@ -477,6 +477,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
+			if (existingVariable != null && !existingVariable.HasGeneratedName) {
+				return existingVariable.Name;
+			}
 			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
 			string baseName = GetNameFromInstruction(valueContext);

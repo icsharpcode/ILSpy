@@ -36,7 +36,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public static bool IsCompilerGeneratedStateMachine(TypeDefinitionHandle type, MetadataReader metadata)
 		{
 			TypeDefinition td;
-			if (type.IsNil || !type.IsCompilerGenerated(metadata) || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+			if (type.IsNil || (td = metadata.GetTypeDefinition(type)).GetDeclaringType().IsNil)
+				return false;
+			if (!(type.IsCompilerGenerated(metadata) || td.GetDeclaringType().IsCompilerGenerated(metadata)))
 				return false;
 			foreach (var i in td.GetInterfaceImplementations()) {
 				var tr = metadata.GetInterfaceImplementation(i).Interface.GetFullTypeName(metadata);
@@ -598,9 +600,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos--;
 			}
 
-			// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
-			if (!MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs))
+			if (MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs)) {
+				// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+			} else if (MatchCall(block.Instructions[pos], "AwaitOnCompleted", out callArgs)) {
+				// call AwaitOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+				// The C# compiler emits the non-unsafe call when the awaiter does not implement
+				// ICriticalNotifyCompletion.
+			} else {
 				return false;
+			}
 			if (callArgs.Count != 3)
 				return false;
 			if (!IsBuilderFieldOnThis(callArgs[0]))

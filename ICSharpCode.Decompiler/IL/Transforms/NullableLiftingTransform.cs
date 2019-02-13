@@ -56,9 +56,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public bool Run(IfInstruction ifInst)
 		{
-			var lifted = Lift(ifInst, ifInst.TrueInst, ifInst.FalseInst);
+			var lifted = Lift(ifInst, ifInst.Condition, ifInst.TrueInst, ifInst.FalseInst);
 			if (lifted != null) {
 				ifInst.ReplaceWith(lifted);
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// VS2017.8 / Roslyn 2.9 started optimizing some cases of
+		///   "a.GetValueOrDefault() == b.GetValueOrDefault() && (a.HasValue & b.HasValue)"
+		/// to
+		///   "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
+		/// so this secondary entry point analyses logic.and as-if it was a short-circuting &&.
+		/// </summary>
+		public bool Run(BinaryNumericInstruction bni)
+		{
+			Debug.Assert(!bni.IsLifted && bni.Operator == BinaryNumericOperator.BitAnd);
+			// caller ensures that bni.Left/bni.Right are booleans
+			var lifted = Lift(bni, bni.Left, bni.Right, new LdcI4(0));
+			if (lifted != null) {
+				bni.ReplaceWith(lifted);
 				return true;
 			}
 			return false;
@@ -85,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
 				return false;
 
-			var lifted = Lift(ifInst, thenLeave.Value, elseLeave.Value);
+			var lifted = Lift(ifInst, ifInst.Condition, thenLeave.Value, elseLeave.Value);
 			if (lifted != null) {
 				thenLeave.Value = lifted;
 				ifInst.ReplaceWith(thenLeave);
@@ -118,14 +137,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Main entry point for lifting; called by both the expression-transform
 		/// and the block transform.
 		/// </summary>
-		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction Lift(ILInstruction ifInst, ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
 		{
-			ILInstruction condition = ifInst.Condition;
+			// ifInst is usually the IfInstruction to which condition belongs;
+			// but can also be a BinaryNumericInstruction.
 			while (condition.MatchLogicNot(out var arg)) {
 				condition = arg;
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
-			if (context.Settings.NullPropagation && !NullPropagationTransform.IsProtectedIfInst(ifInst)) {
+			if (context.Settings.NullPropagation && !NullPropagationTransform.IsProtectedIfInst(ifInst as IfInstruction)) {
 				var nullPropagated = new NullPropagationTransform(context)
 					.Run(condition, trueInst, falseInst, ifInst.ILRange);
 				if (nullPropagated != null)
@@ -225,19 +245,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					// condition ? v : (bool?)false
 					// => condition & v
-					context.Step("NullableLiftingTransform: 3vl.logic.and(bool, bool?)", ifInst);
-					return new ThreeValuedLogicAnd(condition, trueInst) { ILRange = ifInst.ILRange };
+					context.Step("NullableLiftingTransform: 3vl.bool.and(bool, bool?)", ifInst);
+					return new ThreeValuedBoolAnd(condition, trueInst) { ILRange = ifInst.ILRange };
 				}
 				if (falseInst.MatchLdLoc(out var v2)) {
 					// condition ? v : v2
 					if (MatchThreeValuedLogicConditionPattern(condition, out var nullable1, out var nullable2)) {
 						// (nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)) ? v : v2
 						if (v == nullable1 && v2 == nullable2) {
-							context.Step("NullableLiftingTransform: 3vl.logic.or(bool?, bool?)", ifInst);
-							return new ThreeValuedLogicOr(trueInst, falseInst) { ILRange = ifInst.ILRange };
+							context.Step("NullableLiftingTransform: 3vl.bool.or(bool?, bool?)", ifInst);
+							return new ThreeValuedBoolOr(trueInst, falseInst) { ILRange = ifInst.ILRange };
 						} else if (v == nullable2 && v2 == nullable1) {
-							context.Step("NullableLiftingTransform: 3vl.logic.and(bool?, bool?)", ifInst);
-							return new ThreeValuedLogicAnd(falseInst, trueInst) { ILRange = ifInst.ILRange };
+							context.Step("NullableLiftingTransform: 3vl.bool.and(bool?, bool?)", ifInst);
+							return new ThreeValuedBoolAnd(falseInst, trueInst) { ILRange = ifInst.ILRange };
 						}
 					}
 				}
@@ -247,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// condition ? (bool?)true : v
 					// => condition | v
 					context.Step("NullableLiftingTransform: 3vl.logic.or(bool, bool?)", ifInst);
-					return new ThreeValuedLogicOr(condition, falseInst) { ILRange = ifInst.ILRange };
+					return new ThreeValuedBoolOr(condition, falseInst) { ILRange = ifInst.ILRange };
 				}
 			}
 			return null;

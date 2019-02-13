@@ -53,10 +53,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					var jumpTableBlock = (Block)result.JumpTableEntry.Parent;
 					jumpTableBlock.Instructions.RemoveAt(result.JumpTableEntry.ChildIndex);
 
-					if (result.NextBlock != null) {
-						foreach (var branch in tryCatch.Descendants.OfType<Branch>()) {
-							if (branch.TargetBlock == jumpTableBlock)
-								branch.ReplaceWith(new Branch(result.NextBlock));
+					foreach (var branch in tryCatch.Descendants.OfType<Branch>()) {
+						if (branch.TargetBlock == jumpTableBlock) {
+							if (result.NextBlockOrExitContainer is BlockContainer exitContainer) {
+								branch.ReplaceWith(new Leave(exitContainer));
+							} else {
+								branch.ReplaceWith(new Branch((Block)result.NextBlockOrExitContainer));
+							}
 						}
 					}
 
@@ -104,17 +107,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Analyzes all catch handlers and returns every handler that follows the await catch handler pattern.
 		/// </summary>
-		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable catchHandlerIdentifier, out List<(int Id, TryCatchHandler Handler, Block RealCatchBlockEntryPoint, Block NextBlock, IfInstruction JumpTableEntry, StLoc ObjectVariableStore)> transformableCatchBlocks)
+		static bool AnalyzeHandlers(InstructionCollection<TryCatchHandler> handlers, out ILVariable catchHandlerIdentifier, out List<(int Id, TryCatchHandler Handler, Block RealCatchBlockEntryPoint, ILInstruction NextBlockOrExitContainer, IfInstruction JumpTableEntry, StLoc ObjectVariableStore)> transformableCatchBlocks)
 		{
-			transformableCatchBlocks = new List<(int Id, TryCatchHandler Handler, Block RealCatchBlockEntryPoint, Block NextBlock, IfInstruction JumpTableEntry, StLoc ObjectVariableStore)>();
+			transformableCatchBlocks = new List<(int Id, TryCatchHandler Handler, Block RealCatchBlockEntryPoint, ILInstruction NextBlockOrExitContainer, IfInstruction JumpTableEntry, StLoc ObjectVariableStore)>();
 			catchHandlerIdentifier = null;
 			foreach (var handler in handlers) {
-				if (!MatchAwaitCatchHandler((BlockContainer)handler.Body, out int id, out var identifierVariable, out var realEntryPoint, out var nextBlock, out var jumpTableEntry, out var objectVariableStore))
+				if (!MatchAwaitCatchHandler((BlockContainer)handler.Body, out int id, out var identifierVariable, out var realEntryPoint, out var nextBlockOrExitContainer, out var jumpTableEntry, out var objectVariableStore))
 					continue;
 				if (id < 1 || (catchHandlerIdentifier != null && identifierVariable != catchHandlerIdentifier))
 					continue;
 				catchHandlerIdentifier = identifierVariable;
-				transformableCatchBlocks.Add((id, handler, realEntryPoint, nextBlock, jumpTableEntry, objectVariableStore));
+				transformableCatchBlocks.Add((id, handler, realEntryPoint, nextBlockOrExitContainer, jumpTableEntry, objectVariableStore));
 			}
 			return transformableCatchBlocks.Count > 0;
 		}
@@ -126,14 +129,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// stloc V_5(ldc.i4 2)		- store id of catch block in 'identifierVariable'
 		/// br IL_0075				- jump out of catch block to the head of the catch-handler jump table
 		/// </summary>
-		static bool MatchAwaitCatchHandler(BlockContainer container, out int id, out ILVariable identifierVariable, out Block realEntryPoint, out Block nextBlock, out IfInstruction jumpTableEntry, out StLoc objectVariableStore)
+		static bool MatchAwaitCatchHandler(BlockContainer container, out int id, out ILVariable identifierVariable, out Block realEntryPoint, out ILInstruction nextBlockOrExitContainer, out IfInstruction jumpTableEntry, out StLoc objectVariableStore)
 		{
 			id = default(int);
 			identifierVariable = null;
 			realEntryPoint = null;
 			jumpTableEntry = null;
 			objectVariableStore = null;
-			nextBlock = null;
+			nextBlockOrExitContainer = null;
 			var catchBlock = container.EntryPoint;
 			if (catchBlock.Instructions.Count < 2 || catchBlock.Instructions.Count > 4)
 				return false;
@@ -181,7 +184,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!left.MatchLdLoc(identifierVariableCopy))
 					return false;
 				if (right.MatchLdcI4(id)) {
-					nextBlock = jumpTableEntryBlock;
+					nextBlockOrExitContainer = jumpTableEntryBlock ?? lastInst.Parent.Parent;
 					jumpTableEntry = ifInst;
 					return true;
 				}
@@ -265,6 +268,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var outer = BlockContainer.FindClosestContainer(container.Parent);
 				if (outer != null) changedContainers.Add(outer);
 				finallyContainer.Blocks.Add(entryPointOfFinally);
+				finallyContainer.ILRange = entryPointOfFinally.ILRange;
 				exitOfFinally.Instructions.RemoveRange(tempStore.ChildIndex, 3);
 				exitOfFinally.Instructions.Add(new Leave(finallyContainer));
 				foreach (var branchToFinally in container.Descendants.OfType<Branch>()) {
@@ -274,8 +278,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				foreach (var newBlock in additionalBlocksInFinally) {
 					newBlock.Remove();
 					finallyContainer.Blocks.Add(newBlock);
+					finallyContainer.AddILRange(newBlock.ILRange);
 				}
-				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer));
+				tryCatch.ReplaceWith(new TryFinally(tryCatch.TryBlock, finallyContainer) {ILRange = tryCatch.TryBlock.ILRange});
 			}
 
 			// clean up all modified containers

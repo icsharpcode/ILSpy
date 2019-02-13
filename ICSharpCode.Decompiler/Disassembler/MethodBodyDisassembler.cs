@@ -53,6 +53,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public bool ShowMetadataTokens { get; set; }
 
 		/// <summary>
+		/// Show metadata tokens for instructions with token operands in base 10.
+		/// </summary>
+		public bool ShowMetadataTokensInBase10 { get; set; }
+
+		/// <summary>
 		/// Optional provider for sequence points.
 		/// </summary>
 		public IDebugInfoProvider DebugInfo { get; set; }
@@ -88,7 +93,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 				return;
 			}
-			var body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			MethodBodyBlock body;
+			try {
+				body = module.Reader.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+			} catch (BadImageFormatException ex) {
+				output.WriteLine("// {0}", ex.Message);
+				return;
+			}
 			var blob = body.GetILReader();
 			output.WriteLine("// Code size {0} (0x{0:x})", blob.Length);
 			output.WriteLine(".maxstack {0}", body.MaxStack);
@@ -450,7 +461,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (spaceBefore) {
 					output.Write(' ');
 				}
-				output.Write("/* {0:X8} */", metadataToken);
+				if (ShowMetadataTokensInBase10) {
+					output.Write("/* {0} */", metadataToken);
+				} else {
+					output.Write("/* {0:X8} */", metadataToken);
+				}
 			}
 		}
 	}

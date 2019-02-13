@@ -122,6 +122,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsReferenceType == false)
 					return;
+
+				bool ctorIsUnsafe = instanceCtorsNotChainingWithThis.All(c => c.HasModifier(Modifiers.Unsafe));
 				
 				// Recognize field or property initializers:
 				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
@@ -133,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
 					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
-					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
+					var fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent) as EntityDeclaration;
 					// Cannot transform if member is not found or if it is a custom event.
 					if (fieldOrPropertyOrEventDecl == null || fieldOrPropertyOrEventDecl is CustomEventDeclaration)
 						break;
@@ -158,6 +160,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (allSame) {
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
 							ctor.Body.First().Remove();
+						if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer)) {
+							fieldOrPropertyOrEventDecl.Modifiers |= Modifiers.Unsafe;
+						}
 						if (fieldOrPropertyOrEventDecl is PropertyDeclaration pd) {
 							pd.Initializer = initializer.Detach();
 						} else {
@@ -175,6 +180,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (instanceCtors.Length == 1 && (members.Skip(1).Any() || instanceCtors[0].Parent is TypeDeclaration)) {
 				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
 				emptyCtor.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
+				if (instanceCtors[0].HasModifier(Modifiers.Unsafe))
+					emptyCtor.Modifiers |= Modifiers.Unsafe;
 				emptyCtor.Body = new BlockStatement();
 				if (emptyCtor.IsMatch(instanceCtors[0]))
 					instanceCtors[0].Remove();
@@ -186,6 +193,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
+				bool ctorIsUnsafe = staticCtor.HasModifier(Modifiers.Unsafe);
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
 				if (!ctorMethod.MetadataToken.IsNil) {
 					var metadata = context.TypeSystem.MainModule.PEFile.Metadata;
@@ -202,9 +210,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
 							if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
 								break;
-							AstNode fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
+							var fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty) as EntityDeclaration;
 							if (fieldOrPropertyDecl == null)
 								break;
+							if (ctorIsUnsafe && IntroduceUnsafeModifier.IsUnsafe(assignment.Right)) {
+								fieldOrPropertyDecl.Modifiers |= Modifiers.Unsafe;
+							}
 							if (fieldOrPropertyDecl is FieldDeclaration fd)
 								fd.Variables.Single().Initializer = assignment.Right.Detach();
 							else if (fieldOrPropertyDecl is PropertyDeclaration pd)

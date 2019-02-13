@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IField.IsVolatile => false;
 
 		bool IVariable.IsConst => false;
-		object IVariable.ConstantValue => null;
+		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => null;
 		IType IVariable.Type => ReturnType;
 
 		public override SymbolKind SymbolKind => SymbolKind.Field;

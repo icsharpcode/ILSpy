@@ -199,7 +199,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return true;
+							return (options & TypeSystemOptions.DecimalConstants) != 0;
+						case "IsReadOnlyAttribute":
+							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
+						case "IsByRefLikeAttribute":
+							return (options & TypeSystemOptions.RefStructs) != 0;
 						default:
 							return false;
 					}
@@ -241,16 +245,17 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				// for backward compatibility with .NET 1.0: XML-encoded attribute
 				reader.Reset();
-				ReadXmlSecurityAttribute(ref reader, securityAction);
+				Add(ReadXmlSecurityAttribute(ref reader, securityAction));
 			}
 		}
 
-		private void ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
+		private IAttribute ReadXmlSecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)
 		{
 			string xml = reader.ReadUTF16(reader.RemainingBytes);
 			var b = new AttributeBuilder(module, KnownAttribute.PermissionSet);
 			b.AddFixedArg(securityAction);
 			b.AddNamedArg("XML", KnownTypeCode.String, xml);
+			return b.Build();
 		}
 
 		private IAttribute ReadBinarySecurityAttribute(ref SRM.BlobReader reader, CustomAttributeTypedArgument<IType> securityAction)

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.ComponentModel.Design;
+using System.Threading;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
@@ -11,6 +13,7 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using EnvDTE;
 using System.Collections.Generic;
+using Task = System.Threading.Tasks.Task;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -26,15 +29,15 @@ namespace ICSharpCode.ILSpy.AddIn
 	/// </summary>
 	// This attribute tells the PkgDef creation utility (CreatePkgDef.exe) that this class is
 	// a package.
-	[PackageRegistration(UseManagedResourcesOnly = true)]
+	[PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
 	// This attribute is used to register the information needed to show this package
 	// in the Help/About dialog of Visual Studio.
 	[InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
 	// This attribute is needed to let the shell know that this package exposes some menus.
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[Guid(GuidList.guidILSpyAddInPkgString)]
-	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string)]
-	public sealed class ILSpyAddInPackage : Package
+	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+	public sealed class ILSpyAddInPackage : AsyncPackage
 	{
 		/// <summary>
 		/// Default constructor of the package.
@@ -65,19 +68,24 @@ namespace ICSharpCode.ILSpy.AddIn
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
 		/// </summary>
-		protected override void Initialize()
+		protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
 		{
-			Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
-			base.Initialize();
+			Debug.WriteLine($"Entering {nameof(InitializeAsync)}() of: {this}");
+
+			await base.InitializeAsync(cancellationToken, progress);
+
+			await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var componentModel = (IComponentModel)await GetServiceAsync(typeof(SComponentModel));
+			Assumes.Present(componentModel);
 
 			// Add our command handlers for menu (commands must exist in the .vsct file)
-			this.menuService = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+			this.menuService = (OleMenuCommandService)await GetServiceAsync(typeof(IMenuCommandService));
+			Assumes.Present(menuService);
 
-			var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
 			this.workspace = componentModel.GetService<VisualStudioWorkspace>();
-
-			if (menuService == null || workspace == null)
-				return;
+			Assumes.Present(workspace);
 
 			OpenILSpyCommand.Register(this);
 			OpenProjectOutputCommand.Register(this);
@@ -88,16 +96,22 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public void ShowMessage(string format, params object[] items)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, OLEMSGICON.OLEMSGICON_INFO, format, items);
 		}
 
 		public void ShowMessage(OLEMSGICON icon, string format, params object[] items)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			ShowMessage(OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST, icon, format, items);
 		}
 
 		public int ShowMessage(OLEMSGBUTTON buttons, OLEMSGDEFBUTTON defaultButton, OLEMSGICON icon, string format, params object[] items)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
 			Guid clsid = Guid.Empty;
 			int result;

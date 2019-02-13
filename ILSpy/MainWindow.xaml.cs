@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -48,6 +49,7 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	partial class MainWindow : Window
 	{
+		bool refreshInProgress;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
 		ILSpySettings spySettings;
 		internal SessionSettings sessionSettings;
@@ -286,12 +288,25 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 				} else {
+					ITypeReference typeRef = null;
+					IMemberReference memberRef = null;
+					if (args.NavigateTo.StartsWith("T:", StringComparison.Ordinal)) {
+						typeRef = IdStringProvider.ParseTypeName(args.NavigateTo);
+					} else {
+						memberRef = IdStringProvider.ParseMemberIdString(args.NavigateTo);
+						typeRef = memberRef.DeclaringTypeReference;
+					}
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						var def = asm.GetPEFileOrNull();
-						if (def != null) {
-							var compilation = new SimpleCompilation(def, MinimalCorlib.Instance);
-							var mr = IdStringProvider.FindEntity(args.NavigateTo, new SimpleTypeResolveContext(compilation));
-							if (mr != null) {
+						var module = asm.GetPEFileOrNull();
+						if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
+							IEntity mr = null;
+							ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
+								? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
+								: new SimpleCompilation(module, MinimalCorlib.Instance);
+							mr = memberRef == null
+								? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
+								: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
+							if (mr != null && mr.ParentModule.PEFile != null) {
 								found = true;
 								// Defer JumpToReference call to allow an assembly that was loaded while
 								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
@@ -319,19 +334,50 @@ namespace ICSharpCode.ILSpy
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 		}
 
+		private bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		{
+			switch (typeRef) {
+				case GetPotentiallyNestedClassTypeReference topLevelType:
+					typeHandle = topLevelType.ResolveInPEFile(module);
+					return !typeHandle.IsNil;
+				case NestedTypeReference nestedType:
+					if (!CanResolveTypeInPEFile(module, nestedType.DeclaringTypeReference, out typeHandle))
+						return false;
+					if (typeHandle.Kind == HandleKind.ExportedType)
+						return true;
+					var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
+					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(t => {
+						var td = module.Metadata.GetTypeDefinition(t);
+						var typeName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(module.Metadata.GetString(td.Name), out int typeParameterCount);
+						return nestedType.AdditionalTypeParameterCount == typeParameterCount && nestedType.Name == typeName;
+					});
+					return !typeHandle.IsNil;
+				default:
+					typeHandle = default;
+					return false;
+			}
+		}
+
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			ILSpySettings spySettings = this.spySettings;
 			this.spySettings = null;
+			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
 
-			// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
-			// This makes the UI come up a bit faster.
-			this.assemblyList = assemblyListManager.LoadList(spySettings, sessionSettings.ActiveAssemblyList);
+			if (loadPreviousAssemblies) {
+				// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
+				// This makes the UI come up a bit faster.
+				this.assemblyList = assemblyListManager.LoadList(spySettings, sessionSettings.ActiveAssemblyList);
+			} else {
+				this.assemblyList = new AssemblyList(AssemblyListManager.DefaultListName);
+				assemblyListManager.ClearAll();
+			}
 
 			HandleCommandLineArguments(App.CommandLineArguments);
 
 			if (assemblyList.GetAssemblies().Length == 0
-				&& assemblyList.ListName == AssemblyListManager.DefaultListName) {
+				&& assemblyList.ListName == AssemblyListManager.DefaultListName
+				&& loadPreviousAssemblies) {
 				LoadInitialAssemblies();
 			}
 
@@ -342,9 +388,6 @@ namespace ICSharpCode.ILSpy
 			}
 
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
-#if DEBUG
-			this.Title = $"ILSpy {RevisionClass.FullVersion}";
-#endif
 		}
 
 		void OpenAssemblies(ILSpySettings spySettings)
@@ -469,11 +512,19 @@ namespace ICSharpCode.ILSpy
 			treeView.Root = assemblyListTreeNode;
 			
 			if (assemblyList.ListName == AssemblyListManager.DefaultListName)
+#if DEBUG
+				this.Title = $"ILSpy {RevisionClass.FullVersion}";
+#else
 				this.Title = "ILSpy";
+#endif
 			else
+#if DEBUG
+				this.Title = $"ILSpy {RevisionClass.FullVersion} - " + assemblyList.ListName;
+#else
 				this.Title = "ILSpy - " + assemblyList.ListName;
+#endif
 		}
-		
+
 		void assemblyList_Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.Action == NotifyCollectionChangedAction.Reset) {
@@ -661,8 +712,20 @@ namespace ICSharpCode.ILSpy
 				// just ignore all of them.
 			}
 		}
+
+		public static void ExecuteCommand(string fileName, string arguments)
+		{
+			try {
+				Process.Start(fileName, arguments);
+#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
+			} catch (Exception) {
+#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
+		}
 		#endregion
-		
+
 		#region Open/Refresh
 		void OpenCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
@@ -675,7 +738,7 @@ namespace ICSharpCode.ILSpy
 				OpenFiles(dlg.FileNames);
 			}
 		}
-		
+
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
 			if (fileNames == null)
@@ -736,9 +799,14 @@ namespace ICSharpCode.ILSpy
 		
 		void RefreshCommandExecuted(object sender, ExecutedRoutedEventArgs e)
 		{
-			var path = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
-			ShowAssemblyList(assemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
-			SelectNode(FindNodeByPath(path, true));
+			try {
+				refreshInProgress = true;
+				var path = GetPathForNode(treeView.SelectedItem as SharpTreeNode);
+				ShowAssemblyList(assemblyListManager.LoadList(ILSpySettings.Load(), assemblyList.ListName));
+				SelectNode(FindNodeByPath(path, true));
+			} finally {
+				refreshInProgress = false;
+			}
 		}
 		
 		void SearchCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -762,6 +830,9 @@ namespace ICSharpCode.ILSpy
 		void DecompileSelectedNodes(DecompilerTextViewState state = null, bool recordHistory = true)
 		{
 			if (ignoreDecompilationRequests)
+				return;
+
+			if (treeView.SelectedItems.Count == 0 && refreshInProgress)
 				return;
 			
 			if (recordHistory) {
@@ -792,7 +863,12 @@ namespace ICSharpCode.ILSpy
 		
 		public void RefreshDecompiledView()
 		{
-			DecompileSelectedNodes();
+			try {
+				refreshInProgress = true;
+				DecompileSelectedNodes();
+			} finally {
+				refreshInProgress = false;
+			}
 		}
 		
 		public DecompilerTextView TextView {

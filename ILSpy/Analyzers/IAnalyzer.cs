@@ -68,7 +68,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 				return null;
 			var module = method.ParentModule.PEFile;
 			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			return module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+			try {
+				return module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+			} catch (BadImageFormatException) {
+				return null;
+			}
 		}
 
 		public AnalyzerScope GetScopeOf(IEntity entity)

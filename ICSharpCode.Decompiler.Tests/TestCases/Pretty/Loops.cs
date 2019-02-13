@@ -591,7 +591,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 				num++;
 			}
-			return -2147483648;
+			return int.MinValue;
 		}
 
 		//public int InterestingLoop()
@@ -615,7 +615,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		//			num++;
 		//		}
 		//		// This instruction is still dominated by the loop header
-		//		num = -2147483648;//int.MinValue;
+		//		num = int.MinValue;
 		//	}
 		//	return num;
 		//}
@@ -638,7 +638,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						num++;
 					}
 				}
-				num = -2147483648;
+				num = int.MinValue;
 			}
 			return num;
 		}
@@ -713,6 +713,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("After loop");
 			}
 			Console.WriteLine("End of method");
+		}
+
+		public void Issue1395(int count)
+		{
+			Environment.GetCommandLineArgs();
+			for (int i = 0; i < count; i++) {
+				Environment.GetCommandLineArgs();
+				do {
+#if OPT || MCS
+					IL_0013:
+#else
+					IL_0016:
+#endif
+					Environment.GetCommandLineArgs();
+					if (Condition("part1")) {
+						Environment.GetEnvironmentVariables();
+						if (Condition("restart")) {
+#if OPT || MCS
+							goto IL_0013;
+#else
+							goto IL_0016;
+#endif
+						}
+					} else {
+						Environment.GetLogicalDrives();
+					}
+					Environment.GetCommandLineArgs();
+					while (count > 0) {
+						switch (count) {
+							case 0:
+							case 1:
+							case 2:
+								Environment.GetCommandLineArgs();
+								break;
+							case 3:
+							case 5:
+							case 6:
+								Environment.GetEnvironmentVariables();
+								break;
+							default:
+								Environment.GetLogicalDrives();
+								break;
+						}
+					}
+					count++;
+				} while (Condition("do-while"));
+				Environment.GetCommandLineArgs();
+			}
+			Environment.GetCommandLineArgs();
 		}
 
 		public void ForLoop()

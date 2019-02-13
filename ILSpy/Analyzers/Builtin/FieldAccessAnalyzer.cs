@@ -119,7 +119,13 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			foreach (var part in mappingInfo.GetMethodParts((MethodDefinitionHandle)method.MetadataToken)) {
 				var md = module.Metadata.GetMethodDefinition(part);
 				if (!md.HasBody()) continue;
-				if (ScanMethodBody(analyzedField, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress)))
+				MethodBodyBlock body;
+				try {
+					body = module.Reader.GetMethodBody(md.RelativeVirtualAddress);
+				} catch (BadImageFormatException) {
+					return false;
+				}
+				if (ScanMethodBody(analyzedField, method, body))
 					return true;
 			}
 			return false;
@@ -135,15 +141,25 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0) {
-				var opCode = blob.DecodeOpCode();
-				if (!CanBeReference(opCode)) {
-					blob.SkipOperand(opCode);
-					continue;
+				ILOpCode opCode;
+				try {
+					opCode = blob.DecodeOpCode();
+					if (!CanBeReference(opCode)) {
+						blob.SkipOperand(opCode);
+						continue;
+					}
+				} catch (BadImageFormatException) {
+					return false;
 				}
 				EntityHandle fieldHandle = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (!fieldHandle.Kind.IsMemberKind())
 					continue;
-				var field = mainModule.ResolveEntity(fieldHandle, genericContext) as IField;
+				IField field;
+				try {
+					field = mainModule.ResolveEntity(fieldHandle, genericContext) as IField;
+				} catch (BadImageFormatException) {
+					continue;
+				}
 				if (field == null)
 					continue;
 

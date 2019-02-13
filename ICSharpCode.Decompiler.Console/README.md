@@ -1,8 +1,13 @@
-# ICSharpCode.Decompiler.Console
-netcoreapp 2.0 console application using ICSharpCode.Decompiler
+# ilspycmd
 
 ```
-./ilspycmd -h
+dotnet tool install ilspycmd -g
+```
+
+.NET Core 2.1 Tool 
+
+```
+ilspycmd -h
 
 Usage:  [arguments] [options]
 
@@ -16,6 +21,7 @@ Options:
   -t|--type <type-name>       The fully qualified name of the type to decompile.
   -l|--list <entity-type(s)>  Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct),
  d(elegate), e(num)
+  -il|--ilcode				  Show IL code.	
 
 -o is valid with every option and required when using -p.
 ```

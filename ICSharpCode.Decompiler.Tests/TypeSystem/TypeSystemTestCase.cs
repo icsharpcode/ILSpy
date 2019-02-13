@@ -33,11 +33,22 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	public class SimplePublicClass
 	{
 		public void Method() { }
+
+		public SimplePublicClass() { }
+		[Double(1)]
+		~SimplePublicClass() { }
 	}
 
 	public class TypeTestAttribute : Attribute
 	{
 		public TypeTestAttribute(int a1, Type a2, Type a3) { }
+
+#pragma warning disable CS0465
+		private void Finalize()
+		{
+
+		}
+#pragma warning restore CS0465
 	}
 
 	[Params(1, StringComparison.CurrentCulture, null, 4.0, "Test")]
@@ -114,10 +125,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	{
 		public class Nested<X> { }
 
+		~Base() { }
+
 		public virtual void GenericMethodWithConstraints<X>(T a) where X : IComparer<T>, new() { }
 	}
 	public class Derived<A, B> : Base<B>
 	{
+		~Derived() { }
 		public override void GenericMethodWithConstraints<Y>(B a) { }
 	}
 
@@ -140,6 +154,14 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[DllImport("unmanaged.dll", CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool DllMethod([In, Out] ref int p);
+
+		[DllImport("unmanaged.dll", PreserveSig = false)]
+		public static extern bool DoNotPreserveSig();
+
+		[PreserveSig]
+		public static void PreserveSigAsAttribute()
+		{
+		}
 	}
 
 	[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode, Pack = 8)]
@@ -158,10 +180,13 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void MethodWithParamsArray(params object[] x) { }
 		public void MethodWithOptionalParameter(int x = 4) { }
 		public void MethodWithExplicitOptionalParameter([Optional] int x) { }
+		public void MethodWithRefParameter(ref int x) { }
+		public void MethodWithInParameter(in int x) { }
 		public void MethodWithEnumOptionalParameter(StringComparison x = StringComparison.OrdinalIgnoreCase) { }
 		public void MethodWithOptionalNullableParameter(int? x = null) { }
 		public void MethodWithOptionalLongParameter(long x = 1) { }
 		public void MethodWithOptionalNullableLongParameter(long? x = 1) { }
+		public void MethodWithOptionalDecimalParameter(decimal x = 1) { }
 		public void VarArgsMethod(__arglist) { }
 	}
 

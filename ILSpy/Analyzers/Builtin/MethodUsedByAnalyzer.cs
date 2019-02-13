@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -80,12 +81,7 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 
 		bool IsUsedInMethod(IMethod analyzedEntity, IMethod method, CodeMappingInfo mappingInfo, AnalyzerContext context)
 		{
-			if (method.MetadataToken.IsNil)
-				return false;
-			var module = method.ParentModule.PEFile;
-			var md = module.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-			if (!md.HasBody()) return false;
-			return ScanMethodBody(analyzedEntity, method, module.Reader.GetMethodBody(md.RelativeVirtualAddress));
+			return ScanMethodBody(analyzedEntity, method, context.GetMethodBody(method));
 		}
 
 		static bool ScanMethodBody(IMethod analyzedMethod, IMethod method, MethodBodyBlock methodBody)
@@ -100,31 +96,55 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 			var genericContext = new Decompiler.TypeSystem.GenericContext(); // type parameters don't matter for this analyzer
 
 			while (blob.RemainingBytes > 0) {
-				var opCode = blob.DecodeOpCode();
-				if (opCode != ILOpCode.Call && opCode != ILOpCode.Callvirt) {
-					ILParser.SkipOperand(ref blob, opCode);
-					continue;
+				ILOpCode opCode;
+				try {
+					opCode = blob.DecodeOpCode();
+					if (!IsSupportedOpCode(opCode)) {
+						ILParser.SkipOperand(ref blob, opCode);
+						continue;
+					}
+				} catch (BadImageFormatException) {
+					return false; // unexpected end of blob
 				}
 				var member = MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32());
 				if (member.IsNil || !member.Kind.IsMemberKind()) continue;
 
-				var m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
-				if (m == null) continue;
-
-				if (opCode == ILOpCode.Call) {
-					if (IsSameMember(analyzedMethod, m)) {
-						return true;
-					}
+				IMember m;
+				try {
+					m = (mainModule.ResolveEntity(member, genericContext) as IMember)?.MemberDefinition;
+				} catch (BadImageFormatException) {
+					continue;
 				}
+				if (m == null)
+					continue;
 
 				if (opCode == ILOpCode.Callvirt && baseMethod != null) {
 					if (IsSameMember(baseMethod, m)) {
+						return true;
+					}
+				} else {
+					if (IsSameMember(analyzedMethod, m)) {
 						return true;
 					}
 				}
 			}
 
 			return false;
+		}
+
+		static bool IsSupportedOpCode(ILOpCode opCode)
+		{
+			switch (opCode) {
+				case ILOpCode.Call:
+				case ILOpCode.Callvirt:
+				case ILOpCode.Ldtoken:
+				case ILOpCode.Ldftn:
+				case ILOpCode.Ldvirtftn:
+				case ILOpCode.Newobj:
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		static bool IsSameMember(IMember analyzedMethod, IMember m)

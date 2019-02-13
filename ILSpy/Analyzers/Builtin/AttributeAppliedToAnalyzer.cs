@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.Builtin
@@ -31,10 +32,116 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 	{
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			if (!(analyzedSymbol is IEntity attributeEntity))
-				yield break;
+			if (!(analyzedSymbol is ITypeDefinition attributeType))
+				return Array.Empty<ISymbol>();
 
-			var scope = context.GetScopeOf(attributeEntity);
+			var scope = context.GetScopeOf(attributeType);
+			// TODO: DeclSecurity attributes are not supported.
+			if (!IsBuiltinAttribute(attributeType, out var knownAttribute)) {
+				return HandleCustomAttribute(attributeType, scope);
+			} else {
+				return HandleBuiltinAttribute(knownAttribute, scope).SelectMany(s => s);
+			}
+		}
+
+		bool IsBuiltinAttribute(ITypeDefinition attributeType, out KnownAttribute knownAttribute)
+		{
+			knownAttribute = attributeType.IsBuiltinAttribute();
+			switch (knownAttribute) {
+				case KnownAttribute.Serializable:
+				case KnownAttribute.ComImport:
+				case KnownAttribute.StructLayout:
+				case KnownAttribute.DllImport:
+				case KnownAttribute.PreserveSig:
+				case KnownAttribute.MethodImpl:
+				case KnownAttribute.FieldOffset:
+				case KnownAttribute.NonSerialized:
+				case KnownAttribute.MarshalAs:
+				case KnownAttribute.PermissionSet:
+				case KnownAttribute.Optional:
+				case KnownAttribute.In:
+				case KnownAttribute.Out:
+				case KnownAttribute.IndexerName:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		IEnumerable<IEnumerable<ISymbol>> HandleBuiltinAttribute(KnownAttribute attribute, AnalyzerScope scope)
+		{
+			IEnumerable<ISymbol> ScanTypes(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.Where(t => t.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanMethods(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Members.OfType<IMethod>())
+					.Where(m => m.HasAttribute(attribute))
+					.Select(m => m.AccessorOwner ?? m);
+			}
+
+			IEnumerable<ISymbol> ScanFields(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Fields)
+					.Where(f => f.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanProperties(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Properties)
+					.Where(p => p.HasAttribute(attribute));
+			}
+
+			IEnumerable<ISymbol> ScanParameters(DecompilerTypeSystem ts)
+			{
+				return ts.MainModule.TypeDefinitions
+					.SelectMany(t => t.Members.OfType<IMethod>())
+					.Where(m => m.Parameters.Any(p => p.HasAttribute(attribute)))
+					.Select(m => m.AccessorOwner ?? m);
+			}
+
+			foreach (Decompiler.Metadata.PEFile module in scope.GetAllModules()) {
+				var ts = new DecompilerTypeSystem(module, module.GetAssemblyResolver());
+
+				switch (attribute) {
+					case KnownAttribute.Serializable:
+					case KnownAttribute.ComImport:
+					case KnownAttribute.StructLayout:
+						yield return ScanTypes(ts);
+						break;
+					case KnownAttribute.DllImport:
+					case KnownAttribute.PreserveSig:
+					case KnownAttribute.MethodImpl:
+						yield return ScanMethods(ts);
+						break;
+					case KnownAttribute.FieldOffset:
+					case KnownAttribute.NonSerialized:
+						yield return ScanFields(ts);
+						break;
+					case KnownAttribute.MarshalAs:
+						yield return ScanFields(ts);
+						yield return ScanParameters(ts);
+						goto case KnownAttribute.Out;
+					case KnownAttribute.Optional:
+					case KnownAttribute.In:
+					case KnownAttribute.Out:
+						yield return ScanParameters(ts);
+						break;
+					case KnownAttribute.IndexerName:
+						yield return ScanProperties(ts);
+						break;
+				}
+			}
+		}
+
+		IEnumerable<ISymbol> HandleCustomAttribute(ITypeDefinition attributeType, AnalyzerScope scope)
+		{
 			var genericContext = new GenericContext(); // type arguments do not matter for this analyzer.
 
 			foreach (var module in scope.GetAllModules()) {
@@ -44,8 +151,8 @@ namespace ICSharpCode.ILSpy.Analyzers.Builtin
 					var customAttribute = module.Metadata.GetCustomAttribute(h);
 					var attributeCtor = ts.MainModule.ResolveMethod(customAttribute.Constructor, genericContext);
 					if (attributeCtor.DeclaringTypeDefinition != null
-						&& attributeCtor.ParentModule.PEFile == attributeEntity.ParentModule.PEFile
-						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeEntity.MetadataToken) {
+						&& attributeCtor.ParentModule.PEFile == attributeType.ParentModule.PEFile
+						&& attributeCtor.DeclaringTypeDefinition.MetadataToken == attributeType.MetadataToken) {
 						if (customAttribute.Parent.Kind == HandleKind.Parameter) {
 							referencedParameters.Add((ParameterHandle)customAttribute.Parent);
 						} else {

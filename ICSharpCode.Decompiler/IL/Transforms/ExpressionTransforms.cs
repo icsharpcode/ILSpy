@@ -131,6 +131,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.InputType = StackType.I4;
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
 					inst.Right = rightWithoutConv;
+				} else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.O) {
+					// C++/CLI sometimes uses this weird comparison with null:
+					context.Step("comp(conv o->i (ldloc obj) == conv i4->i <sign extend>(ldc.i4 0))", inst);
+					// -> comp(ldloc obj == ldnull)
+					inst.InputType = StackType.O;
+					inst.Left = conv.Argument;
+					inst.Right = new LdNull { ILRange = inst.Right.ILRange };
+					inst.Right.AddILRange(rightWithoutConv.ILRange);
 				}
 			}
 
@@ -254,15 +262,92 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		protected internal override void VisitNewObj(NewObj inst)
 		{
-			LdcDecimal decimalConstant;
-			if (TransformDecimalCtorToConstant(inst, out decimalConstant)) {
+			if (TransformDecimalCtorToConstant(inst, out LdcDecimal decimalConstant)) {
 				context.Step("TransformDecimalCtorToConstant", inst);
 				inst.ReplaceWith(decimalConstant);
 				return;
 			}
+			if (TransformSpanTCtorContainingStackAlloc(inst, out ILInstruction locallocSpan)) {
+				inst.ReplaceWith(locallocSpan);
+				Block block = null;
+				ILInstruction stmt = locallocSpan;
+				while (stmt.Parent != null) {
+					if (stmt.Parent is Block b) {
+						block = b;
+						break;
+					}
+					stmt = stmt.Parent;
+				}
+				//ILInlining.InlineIfPossible(block, stmt.ChildIndex - 1, context);
+				return;
+			}
 			base.VisitNewObj(inst);
 		}
-		
+
+		/// <summary>
+		/// newobj Span..ctor(localloc(conv i4->u &lt;zero extend&gt;(ldc.i4 sizeInBytes)), numberOfElementsExpr)
+		/// =>
+		/// localloc.span T(numberOfElementsExpr)
+		/// 
+		/// -or-
+		/// 
+		/// newobj Span..ctor(Block IL_0000 (StackAllocInitializer) {
+		///		stloc I_0(localloc(conv i4->u&lt;zero extend>(ldc.i4 sizeInBytes)))
+		///		...
+		///		final: ldloc I_0
+		///	}, numberOfElementsExpr)
+		/// =>
+		/// Block IL_0000 (StackAllocInitializer) {
+		///		stloc I_0(localloc.span T(numberOfElementsExpr))
+		///		...
+		///		final: ldloc I_0
+		/// }
+		/// </summary>
+		bool TransformSpanTCtorContainingStackAlloc(NewObj newObj, out ILInstruction locallocSpan)
+		{
+			locallocSpan = null;
+			IType type = newObj.Method.DeclaringType;
+			if (!type.IsKnownType(KnownTypeCode.SpanOfT) && !type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				return false;
+			if (newObj.Arguments.Count != 2 || type.TypeArguments.Count != 1)
+				return false;
+			IType elementType = type.TypeArguments[0];
+			if (newObj.Arguments[0].MatchLocAlloc(out var sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])) {
+				locallocSpan = new LocAllocSpan(newObj.Arguments[1], type);
+				return true;
+			}
+			if (newObj.Arguments[0] is Block initializer && initializer.Kind == BlockKind.StackAllocInitializer) {
+				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
+					return false;
+				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
+					return false;
+				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
+				foreach (var load in initializerVariable.LoadInstructions.ToArray()) {
+					ILInstruction newInst = new LdLoc(newVariable);
+					newInst.AddILRange(load.ILRange);
+					if (load.Parent != initializer)
+						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
+					load.ReplaceWith(newInst);
+				}
+				foreach (var store in initializerVariable.StoreInstructions.ToArray()) {
+					store.Variable = newVariable;
+				}
+				value.ReplaceWith(new LocAllocSpan(newObj.Arguments[1], type));
+				locallocSpan = initializer;
+				return true;
+			}
+			return false;
+		}
+
+		bool MatchesElementCount(ILInstruction sizeInBytesInstr, IType elementType, ILInstruction elementCountInstr2)
+		{
+			var pointerType = new PointerType(elementType);
+			var elementCountInstr = PointerArithmeticOffset.Detect(sizeInBytesInstr, pointerType, checkForOverflow: true, unwrapZeroExtension: true);
+			if (!elementCountInstr.Match(elementCountInstr2).Success)
+				return false;
+			return true;
+		}
+
 		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
 		{
 			IType t = inst.Method.DeclaringType;
@@ -333,6 +418,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (TransformDynamicAddAssignOrRemoveAssign(inst))
 				return;
+			if (inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst)) {
+				ILInstruction transformed = UserDefinedLogicTransform.Transform(condition, trueInst, falseInst);
+				if (transformed == null) {
+					transformed = UserDefinedLogicTransform.TransformDynamic(condition, trueInst, falseInst);
+				}
+				if (transformed != null) {
+					context.Step("User-defined short-circuiting logic operator (roslyn pattern)", condition);
+					transformed.AddILRange(inst.ILRange);
+					inst.ReplaceWith(transformed);
+					return;
+				}
+			}
 		}
 
 		/// <summary>
@@ -478,21 +575,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 				case BinaryNumericOperator.BitAnd:
-					if (IsBoolean(inst.Left) && IsBoolean(inst.Right) && SemanticHelper.IsPure(inst.Right.Flags))
+					if (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
+						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
 					{
-						context.Step("Replace bit.and with logic.and", inst);
-						var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
-						inst.ReplaceWith(expr);
-						expr.AcceptVisitor(this);
+						if (new NullableLiftingTransform(context).Run(inst)) {
+							// e.g. "(a.GetValueOrDefault() == b.GetValueOrDefault()) & (a.HasValue & b.HasValue)"
+						} else if (SemanticHelper.IsPure(inst.Right.Flags)) {
+							context.Step("Replace bit.and with logic.and", inst);
+							var expr = IfInstruction.LogicAnd(inst.Left, inst.Right);
+							inst.ReplaceWith(expr);
+							expr.AcceptVisitor(this);
+						}
 					}
 					break;
 			}
 		}
-
-		private static bool IsBoolean(ILInstruction inst) => 
-			inst is Comp c && c.ResultType == StackType.I4 || 
-			inst.InferType().IsKnownType(KnownTypeCode.Boolean);
-
+		
 		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
 			base.VisitTryCatchHandler(inst);

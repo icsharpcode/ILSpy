@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 		private bool useLogicOperationSugar;
 		private bool useFieldSugar;
 		private bool showILRanges;
+		private bool showChildIndexInBlock;
 
 		/// <summary>
 		/// Sugar for logic.not/and/or.
@@ -61,6 +62,19 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				if (showILRanges != value) {
 					showILRanges = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Show the child index of the instruction in ILAst output.
+		/// </summary>
+		public bool ShowChildIndexInBlock {
+			get { return showChildIndexInBlock; }
+			set {
+				if (showChildIndexInBlock != value) {
+					showChildIndexInBlock = value;
 					OnPropertyChanged();
 				}
 			}

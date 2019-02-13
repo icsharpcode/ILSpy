@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.PdbProvider.Cecil;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpy.DebugInfo;
@@ -111,7 +112,7 @@ namespace ICSharpCode.ILSpy
 			if (module == null)
 				return null;
 			return typeSystem = new SimpleCompilation(
-				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached),
+				module.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.Uncached | TypeSystemOptions.KeepModifiers),
 				MinimalCorlib.Instance);
 		}
 
@@ -152,12 +153,13 @@ namespace ICSharpCode.ILSpy
 			if (stream != null)
 			{
 				// Read the module from a precrafted stream
-				module = new PEFile(fileName, stream);
+				module = new PEFile(fileName, stream, metadataOptions: DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			}
 			else
 			{
 				// Read the module from disk (by default)
-				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), PEStreamOptions.PrefetchEntireImage);
+				module = new PEFile(fileName, new FileStream(fileName, FileMode.Open, FileAccess.Read), PEStreamOptions.PrefetchEntireImage,
+					metadataOptions: DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None);
 			}
 
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
@@ -187,7 +189,7 @@ namespace ICSharpCode.ILSpy
 					string pdbDirectory = Path.GetDirectoryName(fileName);
 					pdbFileName = Path.Combine(pdbDirectory, Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 					if (File.Exists(pdbFileName)) {
-						debugInfoProvider = new DiaSymNativeDebugInfoProvider(module, pdbFileName, OpenStream(pdbFileName));
+						debugInfoProvider = new MonoCecilDebugInfoProvider(module, pdbFileName);
 						return;
 					}
 
@@ -321,7 +323,7 @@ namespace ICSharpCode.ILSpy
 		class MyUniversalResolver : UniversalAssemblyResolver
 		{
 			public MyUniversalResolver(LoadedAssembly assembly)
-				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage)
+				: base(assembly.FileName, false, assembly.GetTargetFrameworkIdAsync().Result, PEStreamOptions.PrefetchEntireImage, DecompilerSettingsPanel.CurrentDecompilerSettings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None)
 			{
 			}
 		}
@@ -346,12 +348,8 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				if (isWinRT) {
-					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", fullName.Name + ".winmd");
-				} else {
-					var resolver = new MyUniversalResolver(this);
-					file = resolver.FindAssemblyFile(fullName);
-				}
+				var resolver = new MyUniversalResolver(this);
+				file = resolver.FindAssemblyFile(fullName);
 
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
 					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {

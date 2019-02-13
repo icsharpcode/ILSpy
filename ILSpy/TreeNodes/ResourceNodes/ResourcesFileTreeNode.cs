@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.Metadata;
@@ -68,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (s == null) return;
 			s.Position = 0;
 			try {
-				foreach (var entry in new ResourcesFile(s)) {
+				foreach (var entry in new ResourcesFile(s).OrderBy(e => e.Key, NaturalStringComparer.Instance)) {
 					ProcessResourceEntry(entry);
 				}
 			} catch (BadImageFormatException) {
@@ -78,7 +79,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		private void ProcessResourceEntry(KeyValuePair<string, object> entry)
 		{
-			if (entry.Value is String) {
+			if (entry.Value is string) {
 				stringTableEntries.Add(new KeyValuePair<string, string>(entry.Key, (string)entry.Value));
 				return;
 			}

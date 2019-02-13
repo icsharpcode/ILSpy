@@ -52,14 +52,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			InlineOneIfPossible(block, pos, OptionsForBlock(block), context: context);
+			InlineOneIfPossible(block, pos, OptionsForBlock(block, pos), context: context);
 		}
 
-		internal static InliningOptions OptionsForBlock(Block block)
+		internal static InliningOptions OptionsForBlock(Block block, int pos)
 		{
 			InliningOptions options = InliningOptions.None;
 			if (IsCatchWhenBlock(block))
 				options |= InliningOptions.Aggressive;
+			else {
+				var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				var inst = block.Instructions[pos];
+				int? ctorCallStart = null;
+				if (IsInConstructorInitializer(function, inst, ref ctorCallStart))
+					options |= InliningOptions.Aggressive;
+			}
 			return options;
 		}
 
@@ -90,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return modified;
 		}
 
-		static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst, ref int? ctorCallStart)
+		internal static bool IsInConstructorInitializer(ILFunction function, ILInstruction inst, ref int? ctorCallStart)
 		{
 			if (ctorCallStart == null) {
 				if (function == null || !function.Method.IsConstructor)
@@ -109,7 +116,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return topLevelInst.ILRange.InclusiveEnd < ctorCallStart.GetValueOrDefault();
 		}
 
-		static bool IsCatchWhenBlock(Block block)
+		internal static bool IsCatchWhenBlock(Block block)
 		{
 			var container = BlockContainer.FindClosestContainer(block);
 			return container?.Parent is TryCatchHandler handler
@@ -343,6 +350,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (parent is ILiftableInstruction liftable && liftable.IsLifted) {
 				return true; // inline into lifted operators
 			}
+			// decide based on the new parent into which we are inlining:
 			switch (parent.OpCode) {
 				case OpCode.NullCoalescingInstruction:
 					if (NullableType.IsNullable(v.Type))
@@ -350,16 +358,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				case OpCode.NullableUnwrap:
 					return true; // inline into ?. operator
+				case OpCode.UserDefinedLogicOperator:
+				case OpCode.DynamicLogicOperatorInstruction:
+					return true; // inline into (left slot of) user-defined && or || operator
 				case OpCode.DynamicGetMemberInstruction:
 				case OpCode.DynamicGetIndexInstruction:
 				case OpCode.LdObj:
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.LocAllocSpan:
+					return true; // inline size-expressions into localloc.span
 			}
-			// decide based on the target into which we are inlining
+			// decide based on the top-level target instruction into which we are inlining:
 			switch (next.OpCode) {
 				case OpCode.Leave:
+				case OpCode.YieldReturn:
 					return parent == next;
 				case OpCode.IfInstruction:
 					while (parent.MatchLogicNot(out _)) {

@@ -286,7 +286,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
 					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
-					return new ReturnStatement(exprBuilder.Translate(inst.Value, typeHint: targetType).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+					var expr = exprBuilder.Translate(inst.Value, typeHint: targetType)
+						.ConvertTo(targetType, exprBuilder, allowImplicitConversion: true);
+					return new ReturnStatement(expr);
 				} else
 					return new ReturnStatement();
 			}
@@ -311,8 +313,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
 			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
+				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
-				Expression = exprBuilder.Translate(inst.Value, typeHint: elementType).ConvertTo(elementType, exprBuilder)
+				Expression = expr
 			};
 		}
 
@@ -566,9 +570,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool EqualErasedType(IType a, IType b)
 		{
-			a = a.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
-			b = b.AcceptVisitor(NormalizeTypeVisitor.TypeErasure);
-			return a.Equals(b);
+			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(a, b);
 		}
 
 		private bool IsDynamicCastToIEnumerable(Expression expr, out Expression dynamicExpr)
@@ -856,12 +858,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!container.MatchConditionBlock(continueTarget, out condition, out _))
 						throw new NotSupportedException("Invalid condition block in do-while loop.");
 					blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.SkipLast(1), true);
-					if (continueTarget.IncomingEdgeCount == continueCount) {
-						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+					if (container.EntryPoint.IncomingEdgeCount == 2) {
+						// Remove the entry-point label, if there are only two jumps to the entry-point:
+						// from outside the loop and from the condition-block.
 						blockStatement.Statements.First().Remove();
 					}
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt3)
 						continueStmt3.Remove();
+					if (continueTarget.IncomingEdgeCount > continueCount) {
+						// if there are branches to the condition block, that were not converted
+						// to continue statements, we have to introduce an extra label.
+						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
+					}
 					if (blockStatement.Statements.Count == 0) {
 						return new WhileStatement {
 							Condition = exprBuilder.TranslateCondition(condition),
@@ -930,7 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			string label;
 			if (endContainerLabels.TryGetValue(container, out label)) {
-				if (isLoop) {
+				if (isLoop && !(blockStatement.LastOrDefault() is ContinueStatement)) {
 					blockStatement.Add(new ContinueStatement());
 				}
 				blockStatement.Add(new LabelStatement { Label = label });
@@ -963,7 +971,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL initblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
 			return stmt;
 		}
 
@@ -977,7 +985,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					exprBuilder.Translate(inst.Size)
 				}
 			});
-			stmt.AddChild(new Comment(" IL cpblk instruction"), Roles.Comment);
+			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
 			return stmt;
 		}
 	}

@@ -68,28 +68,29 @@ namespace ICSharpCode.ILSpy
 		internal bool IsDebug = false;
 
 		public DecompilationOptions()
-			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings)
+			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
 		{
 		}
 
 		public DecompilationOptions(LanguageVersion version)
-			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings)
+			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
 		{
 		}
 
-		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings)
+		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings, Options.DisplaySettings displaySettings)
 		{
 			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
 			this.DecompilerSettings = new Decompiler.DecompilerSettings(languageVersion) {
 				AlwaysUseBraces = settings.AlwaysUseBraces,
-				ExpandMemberDefinitions = settings.ExpandMemberDefinitions,
-				FoldBraces = settings.FoldBraces,
+				ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions,
+				FoldBraces = displaySettings.FoldBraces,
 				RemoveDeadCode = settings.RemoveDeadCode,
 				ShowDebugInfo = settings.ShowDebugInfo,
 				ShowXmlDocumentation = settings.ShowXmlDocumentation,
 				UseDebugSymbols = settings.UseDebugSymbols,
 				UsingDeclarations = settings.UsingDeclarations,
+				ApplyWindowsRuntimeProjections = settings.ApplyWindowsRuntimeProjections,
 			};
 		}
 	}

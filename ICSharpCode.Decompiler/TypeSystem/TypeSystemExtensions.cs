@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		/// <summary>
 		/// Gets whether the type is the specified known type.
-		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
 		/// </summary>
 		public static bool IsKnownType(this IType type, KnownTypeCode knownType)
 		{
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// Gets whether the type is the specified known type.
-		/// For generic known types, this returns true any parameterization of the type (and also for the definition itself).
+		/// For generic known types, this returns true for any parameterization of the type (and also for the definition itself).
 		/// </summary>
 		internal static bool IsKnownType(this IType type, KnownAttribute knownType)
 		{
@@ -439,6 +439,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
+		#region IParameter.GetAttribute
+		/// <summary>
+		/// Gets whether the parameter has an attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="parameter">The parameter on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		public static bool HasAttribute(this IParameter parameter, KnownAttribute attrType)
+		{
+			return GetAttribute(parameter, attrType) != null;
+		}
+
+		/// <summary>
+		/// Gets the attribute of the specified attribute type (or derived attribute types).
+		/// </summary>
+		/// <param name="parameter">The parameter on which the attributes are declared.</param>
+		/// <param name="attributeType">The attribute type to look for.</param>
+		/// <returns>
+		/// Returns the attribute that was found; or <c>null</c> if none was found.
+		/// </returns>
+		public static IAttribute GetAttribute(this IParameter parameter, KnownAttribute attributeType)
+		{
+			return parameter.GetAttributes().FirstOrDefault(a => a.AttributeType.IsKnownType(attributeType));
+		}
+		#endregion
+
 		#region IAssembly.GetTypeDefinition(string,string,int)
 		/// <summary>
 		/// Gets the type definition for a top-level type.
@@ -499,6 +524,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static bool FullNameIs(this IMethod method, string type, string name)
 		{
 			return method.Name == name && method.DeclaringType?.FullName == type;
+		}
+
+		public static KnownAttribute IsBuiltinAttribute(this ITypeDefinition type)
+		{
+			return KnownAttributes.IsKnownAttributeType(type);
 		}
 	}
 }

@@ -50,6 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
+			if (!context.Settings.DecimalConstants)
+				return;
 			rootNode.AcceptVisitor(this);
 		}
 	}

@@ -76,7 +76,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						if (IsSameType(metadata, ifaceImpl.Interface, definitionMetadata, metadataToken))
 							yield return new DerivedTypesEntryNode(list, assembly.GetDefinition(h));
 					}
-					if (!td.BaseType.IsNil && IsSameType(metadata, td.BaseType, definitionMetadata, metadataToken)) {
+					SRM.EntityHandle baseType = td.GetBaseTypeOrNil();
+					if (!baseType.IsNil && IsSameType(metadata, baseType, definitionMetadata, metadataToken)) {
 						yield return new DerivedTypesEntryNode(list, assembly.GetDefinition(h));
 					}
 				}

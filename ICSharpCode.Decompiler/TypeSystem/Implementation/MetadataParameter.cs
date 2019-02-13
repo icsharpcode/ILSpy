@@ -37,6 +37,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		string name;
+		// these can't be bool? as bool? is not thread-safe from torn reads
+		byte constantValueInSignatureState;
+		byte decimalConstantState;
 
 		internal MetadataParameter(MetadataModule module, IParameterizedMember owner, IType type, ParameterHandle handle)
 		{
@@ -47,6 +50,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			var param = module.metadata.GetParameter(handle);
 			this.attributes = param.Attributes;
+			if (!IsOptional)
+				decimalConstantState = ThreeState.False; // only optional parameters can be constants
 		}
 
 		public EntityHandle MetadataToken => handle;
@@ -58,7 +63,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var parameter = metadata.GetParameter(handle);
 
-			if (!IsOut) {
+			if (IsOptional && !HasConstantValueInSignature)
+				b.Add(KnownAttribute.Optional);
+
+			if (!IsOut && !IsIn) {
 				if ((attributes & ParameterAttributes.In) == ParameterAttributes.In)
 					b.Add(KnownAttribute.In);
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
@@ -72,17 +80,40 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		#endregion
 
 		const ParameterAttributes inOut = ParameterAttributes.In | ParameterAttributes.Out;
-		public bool IsRef => Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out;
+
+		public bool IsRef {
+			get {
+				if (!(Type.Kind == TypeKind.ByReference && (attributes & inOut) != ParameterAttributes.Out))
+					return false;
+				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0)
+					return true;
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				return !parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+			}
+		}
+
 		public bool IsOut => Type.Kind == TypeKind.ByReference && (attributes & inOut) == ParameterAttributes.Out;
 		public bool IsOptional => (attributes & ParameterAttributes.Optional) != 0;
+
+		public bool IsIn {
+			get {
+				if ((module.TypeSystemOptions & TypeSystemOptions.ReadOnlyStructsAndParameters) == 0 ||
+					Type.Kind != TypeKind.ByReference || (attributes & inOut) != ParameterAttributes.In)
+					return false;
+				var metadata = module.metadata;
+				var parameterDef = metadata.GetParameter(handle);
+				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+			}
+		}
 
 		public bool IsParams {
 			get {
 				if (Type.Kind != TypeKind.Array)
 					return false;
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				return propertyDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
+				var parameterDef = metadata.GetParameter(handle);
+				return parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamArray);
 			}
 		}
 
@@ -92,23 +123,58 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if (name != null)
 					return name;
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				return LazyInit.GetOrSet(ref this.name, metadata.GetString(propertyDef.Name));
+				var parameterDef = metadata.GetParameter(handle);
+				return LazyInit.GetOrSet(ref this.name, metadata.GetString(parameterDef.Name));
 			}
 		}
 
 		bool IVariable.IsConst => false;
 
-		public object ConstantValue {
-			get {
+		public object GetConstantValue(bool throwOnInvalidMetadata)
+		{
+			try {
 				var metadata = module.metadata;
-				var propertyDef = metadata.GetParameter(handle);
-				var constantHandle = propertyDef.GetDefaultValue();
+				var parameterDef = metadata.GetParameter(handle);
+				if (IsDecimalConstant)
+					return DecimalConstantHelper.GetDecimalConstantValue(module, parameterDef.GetCustomAttributes());
+
+				var constantHandle = parameterDef.GetDefaultValue();
 				if (constantHandle.IsNil)
 					return null;
+
 				var constant = metadata.GetConstant(constantHandle);
 				var blobReader = metadata.GetBlobReader(constant.Value);
-				return blobReader.ReadConstant(constant.TypeCode);
+				try {
+					return blobReader.ReadConstant(constant.TypeCode);
+				} catch (ArgumentOutOfRangeException) {
+					throw new BadImageFormatException($"Constant with invalid typecode: {constant.TypeCode}");
+				}
+			} catch (BadImageFormatException) when (!throwOnInvalidMetadata) {
+				return null;
+			}
+		}
+
+		public bool HasConstantValueInSignature {
+			get {
+				if (constantValueInSignatureState == ThreeState.Unknown) {
+					if (IsDecimalConstant) {
+						constantValueInSignatureState = ThreeState.From(DecimalConstantHelper.AllowsDecimalConstants(module));
+					}
+					else {
+						constantValueInSignatureState = ThreeState.From(!module.metadata.GetParameter(handle).GetDefaultValue().IsNil);
+					}
+				}
+				return constantValueInSignatureState == ThreeState.True;
+			}
+		}
+
+		bool IsDecimalConstant {
+			get {
+				if (decimalConstantState == ThreeState.Unknown) {
+					var parameterDef = module.metadata.GetParameter(handle);
+					decimalConstantState = ThreeState.From(DecimalConstantHelper.IsDecimalConstant(module, parameterDef.GetCustomAttributes()));
+				}
+				return decimalConstantState == ThreeState.True;
 			}
 		}
 

@@ -85,7 +85,13 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				case HandleKind.TypeReference: {
 						var tr = metadata.GetTypeReference((TypeReferenceHandle)entity);
-						if (!tr.ResolutionScope.IsNil) {
+						EntityHandle resolutionScope;
+						try {
+							resolutionScope = tr.ResolutionScope;
+						} catch (BadImageFormatException) {
+							resolutionScope = default;
+						}
+						if (!resolutionScope.IsNil) {
 							output.Write("[");
 							var currentTypeRef = tr;
 							while (currentTypeRef.ResolutionScope.Kind == HandleKind.TypeReference) {

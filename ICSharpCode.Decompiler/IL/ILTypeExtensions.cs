@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// 
 		/// Returns SpecialType.UnknownType for unsupported instructions.
 		/// </summary>
-		public static IType InferType(this ILInstruction inst)
+		public static IType InferType(this ILInstruction inst, ICompilation compilation)
 		{
 			switch (inst) {
 				case NewObj newObj:
@@ -142,6 +142,8 @@ namespace ICSharpCode.Decompiler.IL
 					return callVirt.Method.ReturnType;
 				case CallIndirect calli:
 					return calli.ReturnType;
+				case UserDefinedLogicOperator logicOp:
+					return logicOp.Method.ReturnType;
 				case LdObj ldobj:
 					return ldobj.Type;
 				case StObj stobj:
@@ -151,19 +153,46 @@ namespace ICSharpCode.Decompiler.IL
 				case StLoc stloc:
 					return stloc.Variable.Type;
 				case LdLoca ldloca:
-					return new TypeSystem.ByReferenceType(ldloca.Variable.Type);
+					return new ByReferenceType(ldloca.Variable.Type);
 				case LdFlda ldflda:
-					return new TypeSystem.ByReferenceType(ldflda.Field.Type);
+					return new ByReferenceType(ldflda.Field.Type);
 				case LdsFlda ldsflda:
-					return new TypeSystem.ByReferenceType(ldsflda.Field.Type);
+					return new ByReferenceType(ldsflda.Field.Type);
 				case LdElema ldelema:
-					if (ldelema.Array.InferType() is TypeSystem.ArrayType arrayType) {
-						var refType = new TypeSystem.ByReferenceType(arrayType.ElementType);
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(refType, ldelema.Type)) {
-							return refType;
+					if (ldelema.Array.InferType(compilation) is ArrayType arrayType) {
+						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type)) {
+							return new ByReferenceType(arrayType.ElementType);
 						}
 					}
-					return new TypeSystem.ByReferenceType(ldelema.Type);
+					return new ByReferenceType(ldelema.Type);
+				case Comp comp:
+					if (compilation == null)
+						return SpecialType.UnknownType;
+					switch (comp.LiftingKind) {
+						case ComparisonLiftingKind.None:
+						case ComparisonLiftingKind.CSharp:
+							return compilation.FindType(KnownTypeCode.Boolean);
+						case ComparisonLiftingKind.ThreeValuedLogic:
+							return NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
+						default:
+							return SpecialType.UnknownType;
+					}
+				case BinaryNumericInstruction bni:
+					if (bni.IsLifted)
+						return SpecialType.UnknownType;
+					switch (bni.Operator) {
+						case BinaryNumericOperator.BitAnd:
+						case BinaryNumericOperator.BitOr:
+						case BinaryNumericOperator.BitXor:
+							var left = bni.Left.InferType(compilation);
+							var right = bni.Right.InferType(compilation);
+							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
+								return left;
+							else
+								return SpecialType.UnknownType;
+						default:
+							return SpecialType.UnknownType;
+					}
 				default:
 					return SpecialType.UnknownType;
 			}

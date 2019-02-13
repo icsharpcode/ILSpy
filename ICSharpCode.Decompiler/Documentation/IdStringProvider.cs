@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Documentation
 				AppendTypeName(b, member.ExplicitlyImplementedInterfaceMembers.First().DeclaringType, true);
 				b.Append('#');
 			}
-			b.Append(member.Name.Replace('.', '#'));
+			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
 			IMethod method = member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0) {
 				b.Append("``");
@@ -352,7 +352,6 @@ namespace ICSharpCode.Decompiler.Documentation
 				typeParameterCount = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
 			} else if (pos < typeName.Length && typeName[pos] == '{') {
 				// bound generic type
-				typeArguments = new List<ITypeReference>();
 				do {
 					pos++;
 					typeArguments.Add(ParseTypeName(typeName, ref pos));

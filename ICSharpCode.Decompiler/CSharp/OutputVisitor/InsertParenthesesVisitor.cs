@@ -329,6 +329,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		// Conditional operator
 		public override void VisitConditionalExpression(ConditionalExpression conditionalExpression)
 		{
+			// Inside of string interpolation ?: always needs parentheses.
+			if (conditionalExpression.Parent is Interpolation) {
+				Parenthesize(conditionalExpression);
+			}
+
 			// Associativity here is a bit tricky:
 			// (a ? b : c ? d : e) == (a ? b : (c ? d : e))
 			// (a ? b ? c : d : e) == (a ? (b ? c : d) : e)

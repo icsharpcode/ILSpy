@@ -38,14 +38,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IEnumerable<IAttribute> IParameter.GetAttributes() => baseParameter.GetAttributes();
 		bool IParameter.IsRef => baseParameter.IsRef;
 		bool IParameter.IsOut => baseParameter.IsOut;
+		bool IParameter.IsIn => baseParameter.IsIn;
 		bool IParameter.IsParams => baseParameter.IsParams;
 		bool IParameter.IsOptional => baseParameter.IsOptional;
+		bool IParameter.HasConstantValueInSignature => baseParameter.HasConstantValueInSignature;
 		IParameterizedMember IParameter.Owner => newOwner;
 		string IVariable.Name => baseParameter.Name;
 		string ISymbol.Name => baseParameter.Name;
 		IType IVariable.Type => newType;
 		bool IVariable.IsConst => baseParameter.IsConst;
-		object IVariable.ConstantValue => baseParameter.ConstantValue;
+		object IVariable.GetConstantValue(bool throwOnInvalidMetadata) => baseParameter.GetConstantValue(throwOnInvalidMetadata);
 		SymbolKind ISymbol.SymbolKind => SymbolKind.Parameter;
 
 		public override string ToString()

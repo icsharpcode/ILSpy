@@ -89,14 +89,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			if (IsLocal) {
 				var typeSystem = new DecompilerTypeSystem(TypeScope.ParentModule.PEFile, TypeScope.ParentModule.PEFile.GetAssemblyResolver());
-				if (memberAccessibility == Accessibility.Private) {
-					foreach (var type in TreeTraversal.PreOrder(typeScope, t => t.NestedTypes)) {
-						yield return type;
-					}
-				} else {
-					foreach (var type in TreeTraversal.PreOrder(typeScope.DeclaringTypeDefinition, t => t.NestedTypes)) {
-						yield return type;
-					}
+				ITypeDefinition scope = typeScope;
+				if (memberAccessibility != Accessibility.Private && typeScope.DeclaringTypeDefinition != null) {
+					scope = typeScope.DeclaringTypeDefinition;
+				}
+				foreach (var type in TreeTraversal.PreOrder(scope, t => t.NestedTypes)) {
+					yield return type;
 				}
 			} else {
 				foreach (var module in GetModulesInScope(ct)) {

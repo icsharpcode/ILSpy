@@ -1149,7 +1149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#endregion
 		
 		#region Get user-defined operator candidates
-		IEnumerable<IParameterizedMember> GetUserDefinedOperatorCandidates(IType type, string operatorName)
+		public IEnumerable<IParameterizedMember> GetUserDefinedOperatorCandidates(IType type, string operatorName)
 		{
 			if (operatorName == null)
 				return EmptyList<IMethod>.Instance;

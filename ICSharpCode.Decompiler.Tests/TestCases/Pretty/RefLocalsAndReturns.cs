@@ -11,5 +11,10 @@
 		{
 			private readonly int dummy;
 		}
+
+		public readonly struct ReadOnlyStruct
+		{
+			private readonly int dummy;
+		}
 	}
 }

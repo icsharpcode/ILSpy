@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017 Daniel Grunwald
+﻿// Copyright (c) 2018 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,34 +16,27 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Diagnostics;
+using System;
+using System.Collections.Generic;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.Semantics
 {
-	// Note: The comp instruction also supports three-valued logic via ComparisonLiftingKind.ThreeValuedLogic.
-	// comp.i4.lifted[3VL](x == ldc.i4 0) is used to represent a lifted logic.not.
-
-	partial class ThreeValuedLogicAnd : ILiftableInstruction
+	public class InterpolatedStringResolveResult : ResolveResult
 	{
-		bool ILiftableInstruction.IsLifted => true;
-		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
+		public readonly string FormatString;
+		public readonly ResolveResult[] Arguments;
 
-		internal override void CheckInvariant(ILPhase phase)
+		public InterpolatedStringResolveResult(IType stringType, string formatString, params ResolveResult[] arguments)
+			: base(stringType)
 		{
-			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			FormatString = formatString;
+			Arguments = arguments;
 		}
-	}
 
-	partial class ThreeValuedLogicOr : ILiftableInstruction
-	{
-		bool ILiftableInstruction.IsLifted => true;
-		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
-
-		internal override void CheckInvariant(ILPhase phase)
+		public override IEnumerable<ResolveResult> GetChildResults()
 		{
-			base.CheckInvariant(phase);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			return Arguments;
 		}
 	}
 }

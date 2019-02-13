@@ -11,6 +11,7 @@
 			<CheckBox Margin="3" Content="UseFieldSugar" IsChecked="{Binding UseFieldSugar, Source={x:Static local:DebugSteps.Options}}" />
 			<CheckBox Margin="3" Content="UseLogicOperationSugar"  IsChecked="{Binding UseLogicOperationSugar, Source={x:Static local:DebugSteps.Options}}" />
 			<CheckBox Margin="3" Content="ShowILRanges"  IsChecked="{Binding ShowILRanges, Source={x:Static local:DebugSteps.Options}}" />
+			<CheckBox Margin="3" Content="ShowChildIndexInBlock"  IsChecked="{Binding ShowChildIndexInBlock, Source={x:Static local:DebugSteps.Options}}" />
 		</StackPanel>
 		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click" KeyDown="tree_KeyDown">
 			<TreeView.ItemTemplate>

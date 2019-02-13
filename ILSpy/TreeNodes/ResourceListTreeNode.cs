@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			foreach (Resource r in module.Resources.OrderBy(m => m.Name))
+			foreach (Resource r in module.Resources.OrderBy(m => m.Name, NaturalStringComparer.Instance))
 				this.Children.Add(ResourceTreeNode.Create(r));
 		}
 		

@@ -56,6 +56,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowMetadataTokens = value;
 		}
 
+		public bool ShowMetadataTokensInBase10 {
+			get => methodBodyDisassembler.ShowMetadataTokensInBase10;
+			set => methodBodyDisassembler.ShowMetadataTokensInBase10 = value;
+		}
+
 		public IDebugInfoProvider DebugInfo {
 			get => methodBodyDisassembler.DebugInfo;
 			set => methodBodyDisassembler.DebugInfo = value;
@@ -666,7 +671,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					}
 					break;
 				default:
-					output.Write(value.ToString());
+					DisassemblerHelpers.WriteOperand(output, value);
 					break;
 			}
 		}
@@ -1025,7 +1030,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					break;
 				default:
 					var blob = metadata.GetBlobReader(constant.Value);
-					var value = blob.ReadConstant(constant.TypeCode);
+					object value;
+					try {
+						value = blob.ReadConstant(constant.TypeCode);
+					} catch (ArgumentOutOfRangeException) {
+						output.Write($"/* Constant with invalid typecode: {constant.TypeCode} */");
+						return;
+					}
 					if (value is string) {
 						DisassemblerHelpers.WriteOperand(output, value);
 					} else {
@@ -1150,9 +1161,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteAttributes(module, propertyDefinition.GetCustomAttributes());
 			WriteNestedMethod(".get", module, accessors.Getter);
 			WriteNestedMethod(".set", module, accessors.Setter);
-			/*foreach (var method in property.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 
@@ -1213,9 +1224,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteNestedMethod(".addon", module, accessors.Adder);
 			WriteNestedMethod(".removeon", module, accessors.Remover);
 			WriteNestedMethod(".fire", module, accessors.Raiser);
-			/*foreach (var method in ev.OtherMethods) {
-				WriteNestedMethod(".other", method);
-			}*/
+			foreach (var method in accessors.Others) {
+				WriteNestedMethod(".other", module, method);
+			}
 			CloseBlock();
 		}
 		#endregion
@@ -1274,13 +1285,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType);
 			output.WriteLine();
 
-			if (!typeDefinition.BaseType.IsNil) {
+			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+			if (!baseType.IsNil) {
 				output.Indent();
 				output.Write("extends ");
-				typeDefinition.BaseType.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
+				baseType.WriteTo(module, output, genericContext, ILNameSyntax.TypeName);
 				output.WriteLine();
 				output.Unindent();
 			}
+
 			var interfaces = typeDefinition.GetInterfaceImplementations();
 			if (interfaces.Count > 0) {
 				output.Indent();

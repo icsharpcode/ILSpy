@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -48,6 +49,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		AssemblyVersion,
 		InternalsVisibleTo,
 		TypeForwardedTo,
+		ReferenceAssembly,
 		
 		// Type attributes:
 		Serializable,
@@ -78,6 +80,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		ParamArray,
 		In,
 		Out,
+		Optional,
+		CallerMemberName,
+		CallerFilePath,
+		CallerLineNumber,
 
 		// Marshalling attributes:
 		MarshalAs,
@@ -105,6 +111,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Reflection", nameof(AssemblyVersionAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(InternalsVisibleToAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(TypeForwardedToAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(ReferenceAssemblyAttribute)),
 			// Type attributes:
 			new TopLevelTypeName("System", nameof(SerializableAttribute)),
 			new TopLevelTypeName("System", nameof(FlagsAttribute)),
@@ -130,10 +137,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System", nameof(ParamArrayAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(InAttribute)),
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OutAttribute)),
+			new TopLevelTypeName("System.Runtime.InteropServices", nameof(OptionalAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
+			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
 			// Marshalling attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(MarshalAsAttribute)),
 			// Security attributes:
-			new TopLevelTypeName("System.Security", "PermissionSetAttribute"),
+			new TopLevelTypeName("System.Security.Permissions", "PermissionSetAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)
@@ -145,6 +156,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType FindType(this ICompilation compilation, KnownAttribute attrType)
 		{
 			return compilation.FindType(attrType.GetTypeName());
+		}
+
+		public static KnownAttribute IsKnownAttributeType(this ITypeDefinition attributeType)
+		{
+			if (!attributeType.GetNonInterfaceBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.Attribute)))
+				return KnownAttribute.None;
+			for (int i = 1; i < typeNames.Length; i++) {
+				if (typeNames[i] == attributeType.FullTypeName)
+					return (KnownAttribute)i;
+			}
+			return KnownAttribute.None;
 		}
 	}
 }

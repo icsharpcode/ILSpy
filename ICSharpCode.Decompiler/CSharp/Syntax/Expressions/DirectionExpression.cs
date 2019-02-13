@@ -31,7 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		None,
 		Out,
-		Ref
+		Ref,
+		In
 	}
 	
 	/// <summary>
@@ -40,15 +41,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class DirectionExpression : Expression
 	{
 		public readonly static TokenRole RefKeywordRole = new TokenRole ("ref");
-		public readonly static TokenRole OutKeywordRole = new TokenRole ("out");
-		
+		public readonly static TokenRole OutKeywordRole = new TokenRole("out");
+		public readonly static TokenRole InKeywordRole = new TokenRole("in");
+
 		public FieldDirection FieldDirection {
 			get;
 			set;
 		}
 		
 		public CSharpTokenNode FieldDirectionToken {
-			get { return FieldDirection == FieldDirection.Ref ? GetChildByRole (RefKeywordRole) : GetChildByRole (OutKeywordRole); }
+			get {
+				switch (FieldDirection) {
+					case FieldDirection.Ref:
+						return GetChildByRole(RefKeywordRole);
+					case FieldDirection.In:
+						return GetChildByRole(InKeywordRole);
+					default:
+						return GetChildByRole(OutKeywordRole);
+				}
+			}
 		}
 		
 		public Expression Expression {

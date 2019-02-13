@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				$"PublicKeyToken={publicKey}{properties}";
 		}
 
-		static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
+		public static string ToHexString(this IEnumerable<byte> bytes, int estimatedLength)
 		{
 			StringBuilder sb = new StringBuilder(estimatedLength * 2);
 			foreach (var b in bytes)
@@ -149,6 +149,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// that only mention built-in types.
 		/// </summary>
 		public static ICustomAttributeTypeProvider<IType> MinimalAttributeTypeProvider {
+			get => minimalCorlibTypeProvider;
+		}
+
+		public static ISignatureTypeProvider<IType, TypeSystem.GenericContext> MinimalSignatureTypeProvider {
 			get => minimalCorlibTypeProvider;
 		}
 

@@ -145,7 +145,7 @@ namespace ICSharpCode.Decompiler.Tests
 					Stopwatch w = Stopwatch.StartNew();
 					using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read)) {
 						PEFile module = new PEFile(file, fileStream, PEStreamOptions.PrefetchEntireImage);
-						UniversalAssemblyResolver resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
+						var resolver = new UniversalAssemblyResolver(file, false, module.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchMetadata);
 						resolver.AddSearchDirectory(inputDir);
 						resolver.RemoveSearchDirectory(".");
 						var decompiler = new TestProjectDecompiler(inputDir);

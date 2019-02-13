@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
 			if (r.IsWindowsRuntime) {
-				language.WriteCommentLine(output, r.Name + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
+				language.WriteCommentLine(output, r.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			} else {
 				language.WriteCommentLine(output, r.FullName + (!loaded ? " (unresolved)" : ""));
 			}

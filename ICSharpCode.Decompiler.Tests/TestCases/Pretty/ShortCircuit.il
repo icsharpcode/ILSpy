@@ -1257,6 +1257,45 @@
     IL_003d:  ret
   } // end of method ShortCircuit::StmtComplex6
 
+  .method public hidebysig instance int32 
+          InferCorrectOrder() cil managed
+  {
+    // Code size       39 (0x27)
+    .maxstack  2
+    .locals init (int32 V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.1
+    IL_0003:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0008:  brtrue.s   IL_0016
+
+    IL_000a:  ldarg.0
+    IL_000b:  ldc.i4.2
+    IL_000c:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::F(int32)
+    IL_0011:  ldc.i4.0
+    IL_0012:  ceq
+    IL_0014:  br.s       IL_0017
+
+    IL_0016:  ldc.i4.0
+    IL_0017:  nop
+    IL_0018:  stloc.1
+    IL_0019:  ldloc.1
+    IL_001a:  brtrue.s   IL_0021
+
+    IL_001c:  nop
+    IL_001d:  ldc.i4.1
+    IL_001e:  stloc.0
+    IL_001f:  br.s       IL_0025
+
+    IL_0021:  ldc.i4.2
+    IL_0022:  stloc.0
+    IL_0023:  br.s       IL_0025
+
+    IL_0025:  ldloc.0
+    IL_0026:  ret
+  } // end of method ShortCircuit::InferCorrectOrder
+
   .method public hidebysig instance void 
           EmptyIf() cil managed
   {

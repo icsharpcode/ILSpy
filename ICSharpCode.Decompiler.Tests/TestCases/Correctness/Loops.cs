@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(NoForeachDueToMultipleCurrentAccess(new List<int> { 1, 2, 3, 4, 5 }));
 			Console.WriteLine(NoForeachCallWithSideEffect(new CustomClassEnumeratorWithIDisposable<int>()));
 			LoopWithGotoRepeat();
+			Console.WriteLine("LoopFollowedByIf: {0}", LoopFollowedByIf());
 		}
 
 		public static void ForWithMultipleVariables()
@@ -245,6 +246,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("finally");
 			}
 			Console.WriteLine("after finally");
+		}
+		
+		private static int LoopFollowedByIf()
+		{
+			int num = 0;
+			while (num == 0) {
+				num++;
+			}
+			if (num == 0) {
+				return -1;
+			}
+			return num;
 		}
 	}
 }

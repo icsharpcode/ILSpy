@@ -60,13 +60,13 @@ namespace ICSharpCode.Decompiler.IL
 				handlerBlock.Blocks.Add(new Block());
 				handlerContainers.Add(handlerBlock.ILRange.Start, handlerBlock);
 				
-				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Fault || eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally) {
+				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally) {
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
-					if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Finally)
-						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock));
+					if (eh.Kind == ExceptionRegionKind.Finally)
+						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock) { ILRange = tryRange });
 					else
-						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock));
+						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock) { ILRange = tryRange });
 					continue;
 				}
 				// 
@@ -75,6 +75,7 @@ namespace ICSharpCode.Decompiler.IL
 					var tryBlock = new BlockContainer();
 					tryBlock.ILRange = tryRange;
 					tryCatch = new TryCatch(tryBlock);
+					tryCatch.ILRange = tryRange;
 					tryCatchList.Add(tryCatch);
 					tryInstructionList.Add(tryCatch);
 				}
@@ -90,7 +91,11 @@ namespace ICSharpCode.Decompiler.IL
 					filter = new LdcI4(1);
 				}
 
-				tryCatch.Handlers.Add(new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]));
+				var handler = new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]);
+				handler.AddILRange(filter.ILRange);
+				handler.AddILRange(handlerBlock.ILRange);
+				tryCatch.Handlers.Add(handler);
+				tryCatch.AddILRange(handler.ILRange);
 			}
 			if (tryInstructionList.Count > 0) {
 				tryInstructionList = tryInstructionList.OrderBy(tc => tc.TryBlock.ILRange.Start).ThenByDescending(tc => tc.TryBlock.ILRange.End).ToList();
@@ -128,6 +133,13 @@ namespace ICSharpCode.Decompiler.IL
 					// Leave nested containers if necessary
 					while (start >= currentContainer.ILRange.End) {
 						currentContainer = containerStack.Pop();
+						currentBlock = currentContainer.Blocks.Last();
+						// this container is skipped (i.e. the loop will execute again)
+						// set ILRange to the last instruction offset inside the block.
+						if (start >= currentContainer.ILRange.End) {
+							Debug.Assert(currentBlock.ILRange.IsEmpty);
+							currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, start);
+						}
 					}
 					// Enter a handler if necessary
 					BlockContainer handlerContainer;
@@ -136,6 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 						currentContainer = handlerContainer;
 						currentBlock = handlerContainer.EntryPoint;
 					} else {
+						FinalizeCurrentBlock(start, fallthrough: false);
 						// Create the new block
 						currentBlock = new Block();
 						currentContainer.Blocks.Add(currentBlock);
@@ -159,7 +172,12 @@ namespace ICSharpCode.Decompiler.IL
 					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: true);
 			}
 			FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
-			containerStack.Clear();
+			// Finish up all containers
+			while (containerStack.Count > 0) {
+				currentContainer = containerStack.Pop();
+				currentBlock = currentContainer.Blocks.Last();
+				FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
+			}
 			ConnectBranches(mainContainer, cancellationToken);
 		}
 
@@ -172,6 +190,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (currentBlock == null)
 				return;
+			Debug.Assert(currentBlock.ILRange.IsEmpty);
 			currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, currentILOffset);
 			if (fallthrough) {
 				if (currentBlock.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop()) {
@@ -205,6 +224,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (leave.TargetContainer == null) {
 						// assign the finally/filter container
 						leave.TargetContainer = containerStack.Peek();
+						leave.Value = ILReader.Cast(leave.Value, leave.TargetContainer.ExpectedResultType, null, leave.ILRange.Start);
 					}
 					break;
 				case BlockContainer container:

@@ -76,6 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 		BitArray isBranchTarget;
 		BlockContainer mainContainer;
 		List<ILInstruction> instructionBuilder;
+		int currentInstructionStart;
 
 		// Dictionary that stores stacks for each IL instruction
 		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
@@ -202,7 +203,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(int index, IType type)
 		{
 			VariableKind kind;
-			if (type is PinnedType pinned) {
+			if (type.SkipModifiers() is PinnedType pinned) {
 				kind = VariableKind.PinnedLocal;
 				type = pinned.ElementType;
 			} else {
@@ -251,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Warnings.Add(string.Format("IL_{0:x4}: {1}", reader.Offset, message));
+			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstructionStart, message));
 		}
 
 		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -382,6 +383,7 @@ namespace ICSharpCode.Decompiler.IL
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Offset;
 				StoreStackForOffset(start, ref currentStack);
+				currentInstructionStart = start;
 				ILInstruction decodedInstruction;
 				try {
 					decodedInstruction = DecodeInstruction();
@@ -935,7 +937,7 @@ namespace ICSharpCode.Decompiler.IL
 						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(PopFieldTarget(field), field) { DelayExceptions = true }, type: field.Type);
 					}
 				case ILOpCode.Ldlen:
-					return Push(new LdLen(StackType.I, Pop()));
+					return Push(new LdLen(StackType.I, Pop(StackType.O)));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
@@ -1085,6 +1087,11 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Pop(StackType expectedType)
 		{
 			ILInstruction inst = Pop();
+			return Cast(inst, expectedType, Warnings, reader.Offset);
+		}
+
+		internal static ILInstruction Cast(ILInstruction inst, StackType expectedType, List<string> warnings, int ilOffset)
+		{
 			if (expectedType != inst.ResultType) {
 				if (inst is InvalidExpression) {
 					((InvalidExpression)inst).ExpectedResultType = expectedType;
@@ -1134,6 +1141,13 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return inst;
+
+			void Warn(string message)
+			{
+				if (warnings != null) {
+					warnings.Add(string.Format("IL_{0:x4}: {1}", ilOffset, message));
+				}
+			}
 		}
 		
 		ILInstruction PopPointer()
@@ -1363,12 +1377,12 @@ namespace ICSharpCode.Decompiler.IL
 						var target = arguments[0];
 						var value = arguments.Last();
 						var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
-						return new StObj(new LdElema(elementType, target, indices), value, elementType);
+						return new StObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, value, elementType);
 					}
 					if (method.Name == "Get") {
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
-						return Push(new LdObj(new LdElema(elementType, target, indices), elementType));
+						return Push(new LdObj(new LdElema(elementType, target, indices) { DelayExceptions = true }, elementType));
 					}
 					if (method.Name == "Address") {
 						var target = arguments[0];
@@ -1415,22 +1429,31 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
-			// make the implicit I4->I conversion explicit:
-			if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
-				left = new Conv(left, PrimitiveType.I, false, Sign.None);
-			} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
-				right = new Conv(right, PrimitiveType.I, false, Sign.None);
+
+			if (left.ResultType == StackType.O && right.ResultType.IsIntegerType()) {
+				// C++/CLI sometimes compares object references with integers.
+				if (right.ResultType == StackType.I4) {
+					// ensure we compare at least native integer size
+					right = new Conv(right, PrimitiveType.I, false, Sign.None);
+				}
+				left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.None);
+			} else if (right.ResultType == StackType.O && left.ResultType.IsIntegerType()) {
+				if (left.ResultType == StackType.I4) {
+					left = new Conv(left, PrimitiveType.I, false, Sign.None);
+				}
+				right = new Conv(right, left.ResultType.ToPrimitiveType(), false, Sign.None);
 			}
-			
+
+			// make implicit integer conversions explicit:
+			MakeExplicitConversion(sourceType: StackType.I4, targetType: StackType.I, conversionType: PrimitiveType.I);
+			MakeExplicitConversion(sourceType: StackType.I4, targetType: StackType.I8, conversionType: PrimitiveType.I8);
+			MakeExplicitConversion(sourceType: StackType.I, targetType: StackType.I8, conversionType: PrimitiveType.I8);
+
 			// Based on Table 4: Binary Comparison or Branch Operation
 			if (left.ResultType.IsFloatType() && right.ResultType.IsFloatType()) {
 				if (left.ResultType != right.ResultType) {
 					// make the implicit F4->F8 conversion explicit:
-					if (left.ResultType == StackType.F4) {
-						left = new Conv(left, PrimitiveType.R8, false, Sign.Signed);
-					} else if (right.ResultType == StackType.F4) {
-						right = new Conv(right, PrimitiveType.R8, false, Sign.Signed);
-					}
+					MakeExplicitConversion(StackType.F4, StackType.F8, PrimitiveType.R8);
 				}
 				if (un) {
 					// for floats, 'un' means 'unordered'
@@ -1453,6 +1476,15 @@ namespace ICSharpCode.Decompiler.IL
 					right = new Conv(right, left.ResultType.ToPrimitiveType(), false, Sign.Signed);
 				}
 				return new Comp(kind, Sign.None, left, right);
+			}
+
+			void MakeExplicitConversion(StackType sourceType, StackType targetType, PrimitiveType conversionType)
+			{
+				if (left.ResultType == sourceType && right.ResultType == targetType) {
+					left = new Conv(left, conversionType, false, Sign.None);
+				} else if (left.ResultType == targetType && right.ResultType == sourceType) {
+					right = new Conv(right, conversionType, false, Sign.None);
+				}
 			}
 		}
 

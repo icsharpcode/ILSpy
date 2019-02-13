@@ -60,8 +60,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public object ConstantValue {
-			get { return fieldDefinition.ConstantValue; }
+		public object GetConstantValue(bool throwOnInvalidMetadata) {
+			return fieldDefinition.GetConstantValue(throwOnInvalidMetadata);
 		}
 	}
 }

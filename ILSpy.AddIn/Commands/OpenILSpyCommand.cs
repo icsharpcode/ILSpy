@@ -6,24 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Mono.Cecil;
+using DTEConstants = EnvDTE.Constants;
 
 namespace ICSharpCode.ILSpy.AddIn.Commands
 {
-	public class ILSpyParameters
-	{
-		public ILSpyParameters(IEnumerable<string> assemblyFileNames, params string[] arguments)
-		{
-			this.AssemblyFileNames = assemblyFileNames;
-			this.Arguments = arguments;
-		}
-
-		public IEnumerable<string> AssemblyFileNames { get; private set; }
-		public string[] Arguments { get; private set; }
-	}
-
 	public class DetectedReference
 	{
 		public DetectedReference(string name, string assemblyFile, bool isProjectReference)
@@ -44,6 +32,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 
 		protected ILSpyCommand(ILSpyAddInPackage owner, uint id)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			this.owner = owner;
 			CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)id);
 			OleMenuCommand menuItem = new OleMenuCommand(OnExecute, menuCommandID);
@@ -75,12 +65,8 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(parameters.AssemblyFileNames.ToArray());
-			if (parameters.Arguments != null) {
-				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(parameters.Arguments));
-			}
-
-			System.Diagnostics.Process.Start(GetILSpyPath(), commandLineArguments);
+			var ilspyExe = new ILSpyInstance(parameters);
+			ilspyExe.Start();
 		}
 
 		protected Dictionary<string, DetectedReference> GetReferences(Microsoft.CodeAnalysis.Project parentProject)
@@ -112,7 +98,7 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		protected EnvDTE.Project FindProject(IEnumerable<EnvDTE.Project> projects, string projectFile)
 		{
 			foreach (var project in projects) {
-				if (project.Kind == ProjectKinds.vsProjectKindSolutionFolder) {
+				if (project.Kind == DTEConstants.vsProjectKindSolutionItems) {
 					// This is a solution folder -> search in sub-projects
 					var subProject = FindProject(
 						project.ProjectItems.OfType<EnvDTE.ProjectItem>().Select(pi => pi.SubProject).OfType<EnvDTE.Project>(), 
@@ -136,15 +122,18 @@ namespace ICSharpCode.ILSpy.AddIn.Commands
 		public OpenILSpyCommand(ILSpyAddInPackage owner)
 			: base(owner, PkgCmdIDList.cmdidOpenILSpy)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
 		}
 
 		protected override void OnExecute(object sender, EventArgs e)
 		{
-			System.Diagnostics.Process.Start(GetILSpyPath());
+			new ILSpyInstance().Start();
 		}
 
 		internal static void Register(ILSpyAddInPackage owner)
 		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
 			instance = new OpenILSpyCommand(owner);
 		}
 	}

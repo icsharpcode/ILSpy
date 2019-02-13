@@ -125,6 +125,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		ICriticalNotifyCompletion,
 		/// <summary><c>System.TypedReference</c></summary>
 		TypedReference,
+		/// <summary><c>System.IFormattable</c></summary>
+		IFormattable,
+		/// <summary><c>System.FormattableString</c></summary>
+		FormattableString,
+		/// <summary><c>System.Span{T}</c></summary>
+		SpanOfT,
+		/// <summary><c>System.ReadOnlySpan{T}</c></summary>
+		ReadOnlySpanOfT,
+		/// <summary><c>System.Memory{T}</c></summary>
+		MemoryOfT,
 	}
 	
 	/// <summary>
@@ -133,7 +143,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.TypedReference + 1;
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.MemoryOfT + 1;
 
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
@@ -184,7 +194,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.INotifyCompletion, TypeKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion"),
 			new KnownTypeReference(KnownTypeCode.ICriticalNotifyCompletion, TypeKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion"),
 
-			new KnownTypeReference(KnownTypeCode.TypedReference, TypeKind.Struct, "System", "TypedReference"), 
+			new KnownTypeReference(KnownTypeCode.TypedReference, TypeKind.Struct, "System", "TypedReference"),
+			new KnownTypeReference(KnownTypeCode.IFormattable, TypeKind.Interface, "System", "IFormattable"),
+			new KnownTypeReference(KnownTypeCode.FormattableString, TypeKind.Class, "System", "FormattableString", baseType: KnownTypeCode.IFormattable),
+			new KnownTypeReference(KnownTypeCode.SpanOfT, TypeKind.Struct, "System", "Span", 1),
+			new KnownTypeReference(KnownTypeCode.ReadOnlySpanOfT, TypeKind.Struct, "System", "ReadOnlySpan", 1),
+			new KnownTypeReference(KnownTypeCode.MemoryOfT, TypeKind.Struct, "System", "Memory", 1),
 		};
 		
 		/// <summary>

@@ -39,15 +39,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TypeSystemOptions options,
 			bool typeChildrenOnly = false)
 		{
-			if ((options & (TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple)) == TypeSystemOptions.None) {
-				return inputType;
-			}
 			bool useDynamicType = (options & TypeSystemOptions.Dynamic) != 0;
 			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			bool hasDynamicAttribute = false;
 			bool[] dynamicAttributeData = null;
 			string[] tupleElementNames = null;
-			if (attributes != null) {
+			if (attributes != null && (useDynamicType || useTupleTypes)) {
 				foreach (var attrHandle in attributes.Value) {
 					var attr = metadata.GetCustomAttribute(attrHandle);
 					var attrType = attr.GetAttributeType(metadata);
@@ -73,9 +70,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					}
 				}
 			}
-			if (hasDynamicAttribute || useTupleTypes) {
+			if (hasDynamicAttribute || (options & (TypeSystemOptions.Tuple | TypeSystemOptions.KeepModifiers)) != TypeSystemOptions.KeepModifiers) {
 				var visitor = new ApplyAttributeTypeVisitor(
-					compilation, hasDynamicAttribute, dynamicAttributeData, useTupleTypes, tupleElementNames
+					compilation, hasDynamicAttribute, dynamicAttributeData, options, tupleElementNames
 				);
 				if (typeChildrenOnly) {
 					return inputType.VisitChildren(visitor);
@@ -90,18 +87,34 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly ICompilation compilation;
 		readonly bool hasDynamicAttribute;
 		readonly bool[] dynamicAttributeData;
-		readonly bool useTupleTypes;
+		readonly TypeSystemOptions options;
 		readonly string[] tupleElementNames;
 		int dynamicTypeIndex = 0;
 		int tupleTypeIndex = 0;
 
-		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, bool useTupleTypes, string[] tupleElementNames)
+		private ApplyAttributeTypeVisitor(ICompilation compilation, bool hasDynamicAttribute, bool[] dynamicAttributeData, TypeSystemOptions options, string[] tupleElementNames)
 		{
 			this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
 			this.hasDynamicAttribute = hasDynamicAttribute;
 			this.dynamicAttributeData = dynamicAttributeData;
-			this.useTupleTypes = useTupleTypes;
+			this.options = options;
 			this.tupleElementNames = tupleElementNames;
+		}
+
+		public override IType VisitModOpt(ModifiedType type)
+		{
+			if ((options & TypeSystemOptions.KeepModifiers) != 0)
+				return base.VisitModOpt(type);
+			else
+				return type.ElementType.AcceptVisitor(this);
+		}
+
+		public override IType VisitModReq(ModifiedType type)
+		{
+			if ((options & TypeSystemOptions.KeepModifiers) != 0)
+				return base.VisitModReq(type);
+			else
+				return type.ElementType.AcceptVisitor(this);
 		}
 
 		public override IType VisitPointerType(PointerType type)
@@ -124,6 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public override IType VisitParameterizedType(ParameterizedType type)
 		{
+			bool useTupleTypes = (options & TypeSystemOptions.Tuple) != 0;
 			if (useTupleTypes && TupleType.IsTupleCompatible(type, out int tupleCardinality)) {
 				if (tupleCardinality > 1) {
 					var valueTupleAssembly = type.GetDefinition()?.ParentModule;
@@ -168,7 +182,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			// Visit generic type and type arguments.
-			// Like base implementation, except that it increments typeIndex.
+			// Like base implementation, except that it increments dynamicTypeIndex.
 			var genericType = type.GenericType.AcceptVisitor(this);
 			bool changed = type.GenericType != genericType;
 			var arguments = new IType[type.TypeArguments.Count];
