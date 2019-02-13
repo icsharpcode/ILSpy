@@ -156,6 +156,11 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			return name;
 		}
+
+		public override string ToString()
+		{
+			return FullName;
+		}
 	}
 
 	public class AssemblyReference : IAssemblyReference
