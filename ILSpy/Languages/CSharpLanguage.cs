@@ -393,7 +393,7 @@ namespace ICSharpCode.ILSpy
 							output.Write("// Public key: ");
 							var reader = metadata.GetBlobReader(asm.PublicKey);
 							while (reader.RemainingBytes > 0)
-								output.Write(reader.ReadByte().ToString("x"));
+								output.Write(reader.ReadByte().ToString("x2"));
 							output.WriteLine();
 						}
 					}
