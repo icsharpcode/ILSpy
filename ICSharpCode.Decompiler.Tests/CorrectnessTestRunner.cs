@@ -167,6 +167,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Uninit([ValueSource("noMonoOptions")] CompilerOptions options)
+		{
+			RunVB(options: options);
+		}
+
+		[Test]
 		public void MemberLookup([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);

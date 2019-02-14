@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.CompilerOptions = "/o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.CompilerOptions += "/optioninfer+ /optionexplicit+";
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(",", preprocessorSymbols.Select(p => $"{p.Key}={p.Value}"));
 				}

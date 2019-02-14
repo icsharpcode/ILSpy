@@ -187,10 +187,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		private static bool IsValidInStatementExpression(Expression expr)
 		{
 			switch (expr) {
-				case InvocationExpression ie:
-				case ObjectCreateExpression oce:
-				case AssignmentExpression ae:
-				case ErrorExpression ee:
+				case InvocationExpression _:
+				case ObjectCreateExpression _:
+				case AssignmentExpression _:
+				case ErrorExpression _:
 					return true;
 				case UnaryOperatorExpression uoe:
 					switch (uoe.Operator) {
@@ -249,12 +249,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							newPoint = scopeTracking[startIndex + 1].InsertionPoint;
 						} else {
 							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
+							if (variable.HasInitialValue) {
+								// Uninitialized variables are logically initialized at the beginning of the functin
+								// Because it's possible that the variable has a loop-carried dependency,
+								// declare it outside of any loops.
+								while (startIndex >= 0) {
+									if (scopeTracking[startIndex].Scope.EntryPoint.IncomingEdgeCount > 1) {
+										// declare variable outside of loop
+										newPoint = scopeTracking[startIndex].InsertionPoint;
+									} else if (scopeTracking[startIndex].Scope.Parent is ILFunction) {
+										// stop at beginning of function
+										break;
+									}
+									startIndex--;
+								}
+							}
 						}
 						VariableToDeclare v;
-						if (variableDict.TryGetValue(rr.Variable, out v)) {
+						if (variableDict.TryGetValue(variable, out v)) {
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
 						} else {
-							v = new VariableToDeclare(rr.Variable, rr.Variable.HasInitialValue,
+							v = new VariableToDeclare(variable, variable.HasInitialValue,
 								newPoint, identExpr, sourceOrder: variableDict.Count);
 							variableDict.Add(rr.Variable, v);
 						}
