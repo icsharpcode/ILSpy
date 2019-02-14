@@ -1,14 +1,18 @@
-﻿<UserControl x:Class="BamlTest.UserControl1" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<UserControl.Resources>
-		<Style x:Key="baseStyle" TargetType="{x:Type Control}" />
-	</UserControl.Resources>
+﻿<UserControl x:Class="BamlTest.UserControl1" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:bamltest="clr-namespace:BamlTest">
+	<FrameworkElement.Resources>
+		<ResourceDictionary>
+			<Style x:Key="baseStyle" TargetType="{x:Type Control}" />
+		</ResourceDictionary>
+	</FrameworkElement.Resources>
 	<Grid>
-		<Grid.ContextMenu>
+		<FrameworkElement.ContextMenu>
 			<ContextMenu>
-				<ContextMenu.Resources>
-					<Style TargetType="{x:Type Control}" BasedOn="{StaticResource baseStyle}" />
-				</ContextMenu.Resources>
+				<FrameworkElement.Resources>
+					<ResourceDictionary>
+						<Style x:Key="{x:Type Control}" BasedOn="{StaticResource baseStyle}" TargetType="{x:Type Control}" />
+					</ResourceDictionary>
+				</FrameworkElement.Resources>
 			</ContextMenu>
-		</Grid.ContextMenu>
+		</FrameworkElement.ContextMenu>
 	</Grid>
 </UserControl>

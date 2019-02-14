@@ -5,17 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SRM = System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using Ricciolo.StylesExplorer.MarkupReflection;
+using ILSpy.BamlDecompiler.Baml;
 
 namespace ILSpy.BamlDecompiler
 {
@@ -59,105 +62,107 @@ namespace ILSpy.BamlDecompiler
 			Stream stream, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			XDocument xamlDocument;
-			using (XmlBamlReader reader = new XmlBamlReader(stream, new NRTypeResolver(module, assemblyResolver))) {
-				xamlDocument = XDocument.Load(reader);
-				ConvertConnectionIds(xamlDocument, module, assemblyResolver, cancellationToken);
-				ConvertToEmptyElements(xamlDocument.Root);
-				MoveNamespacesToRoot(xamlDocument, reader.XmlnsDefinitions);
-				return xamlDocument;
-			}
+			var document = BamlReader.ReadDocument(stream, cancellationToken);
+			var xaml = new XamlDecompiler().Decompile(new BamlDecompilerTypeSystem(module, assemblyResolver), document, cancellationToken, new BamlDecompilerOptions(), null);
+			return xaml;
 		}
 
-		static void ConvertConnectionIds(XDocument xamlDocument, PEFile asm, IAssemblyResolver assemblyResolver,
-			CancellationToken cancellationToken)
+		class BamlDecompilerTypeSystem : SimpleCompilation, IDecompilerTypeSystem
 		{
-			var attr = xamlDocument.Root.Attribute(XName.Get("Class", XmlBamlReader.XWPFNamespace));
-			if (attr != null) {
-				string fullTypeName = attr.Value;
-				var mappings = new ConnectMethodDecompiler().DecompileEventMappings(asm, assemblyResolver, fullTypeName, cancellationToken);
-				RemoveConnectionIds(xamlDocument.Root, mappings);
-			}
-		}
-
-		class XAttributeComparer : IEqualityComparer<XAttribute>
-		{
-			public bool Equals(XAttribute x, XAttribute y)
-			{
-				if (ReferenceEquals(x, y))
-					return true;
-				if (x == null || y == null)
-					return false;
-				return x.ToString() == y.ToString();
-			}
-
-			public int GetHashCode(XAttribute obj)
-			{
-				return obj.ToString().GetHashCode();
-			}
-		}
-
-		static void MoveNamespacesToRoot(XDocument xamlDocument, IEnumerable<XmlNamespace> missingXmlns)
-		{
-			var additionalXmlns = new HashSet<XAttribute>(new XAttributeComparer()) {
-				new XAttribute("xmlns", XmlBamlReader.DefaultWPFNamespace),
-				new XAttribute(XName.Get("x", XNamespace.Xmlns.NamespaceName), XmlBamlReader.XWPFNamespace)
+			string[] defaultBamlReferences = new[] {
+				"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+				"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+				"WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+				"PresentationCore, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+				"PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+				"PresentationUI, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35",
+				"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 			};
 
-			additionalXmlns.AddRange(
-				missingXmlns
-					.Where(ns => !string.IsNullOrWhiteSpace(ns.Prefix))
-					.Select(ns => new XAttribute(XName.Get(ns.Prefix, XNamespace.Xmlns.NamespaceName), ns.Namespace))
-			);
-			
-			foreach (var element in xamlDocument.Root.DescendantsAndSelf()) {
-				if (element.Name.NamespaceName != XmlBamlReader.DefaultWPFNamespace && !additionalXmlns.Any(ka => ka.Value == element.Name.NamespaceName)) {
-					string newPrefix = new string(element.Name.LocalName.Where(c => char.IsUpper(c)).ToArray()).ToLowerInvariant();
-					int current = additionalXmlns.Count(ka => ka.Name.Namespace == XNamespace.Xmlns && ka.Name.LocalName.TrimEnd(ch => char.IsNumber(ch)) == newPrefix);
-					if (current > 0)
-						newPrefix += (current + 1).ToString();
-					XName defaultXmlns = XName.Get(newPrefix, XNamespace.Xmlns.NamespaceName);
-					if (element.Name.NamespaceName != XmlBamlReader.DefaultWPFNamespace)
-						additionalXmlns.Add(new XAttribute(defaultXmlns, element.Name.NamespaceName));
-				}
-			}
-			
-			foreach (var xmlns in additionalXmlns.Except(xamlDocument.Root.Attributes())) {
-				xamlDocument.Root.Add(xmlns);
-			}
-		}
-		
-		static void ConvertToEmptyElements(XElement element)
-		{
-			foreach (var el in element.Elements()) {
-				if (!el.IsEmpty && !el.HasElements && el.Value == "") {
-					el.RemoveNodes();
-					continue;
-				}
-				ConvertToEmptyElements(el);
-			}
-		}
-		
-		static void RemoveConnectionIds(XElement element, List<(LongSet key, EventRegistration[] value)> eventMappings)
-		{
-			foreach (var child in element.Elements())
-				RemoveConnectionIds(child, eventMappings);
-			
-			var removableAttrs = new List<XAttribute>();
-			var addableAttrs = new List<XAttribute>();
-			foreach (var attr in element.Attributes(XName.Get("ConnectionId", XmlBamlReader.XWPFNamespace))) {
-				int id, index;
-				if (int.TryParse(attr.Value, out id) && (index = eventMappings.FindIndex(item => item.key.Contains(id))) > -1) {
-					foreach (var entry in eventMappings[index].value) {
-						string xmlns = ""; // TODO : implement xmlns resolver!
-						addableAttrs.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
+			public BamlDecompilerTypeSystem(PEFile mainModule, IAssemblyResolver assemblyResolver)
+			{
+				if (mainModule == null)
+					throw new ArgumentNullException(nameof(mainModule));
+				if (assemblyResolver == null)
+					throw new ArgumentNullException(nameof(assemblyResolver));
+				// Load referenced assemblies and type-forwarder references.
+				// This is necessary to make .NET Core/PCL binaries work better.
+				var referencedAssemblies = new List<PEFile>();
+				var assemblyReferenceQueue = new Queue<(bool IsAssembly, PEFile MainModule, object Reference)>();
+				var mainMetadata = mainModule.Metadata;
+				foreach (var h in mainMetadata.GetModuleReferences()) {
+					var moduleRef = mainMetadata.GetModuleReference(h);
+					var moduleName = mainMetadata.GetString(moduleRef.Name);
+					foreach (var fileHandle in mainMetadata.AssemblyFiles) {
+						var file = mainMetadata.GetAssemblyFile(fileHandle);
+						if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata) {
+							assemblyReferenceQueue.Enqueue((false, mainModule, moduleName));
+							break;
+						}
 					}
-					removableAttrs.Add(attr);
+				}
+				foreach (var refs in mainModule.AssemblyReferences) {
+					assemblyReferenceQueue.Enqueue((true, mainModule, refs));
+				}
+				foreach (var bamlReference in defaultBamlReferences) {
+					assemblyReferenceQueue.Enqueue((true, mainModule, AssemblyNameReference.Parse(bamlReference)));
+				}
+				var comparer = KeyComparer.Create(((bool IsAssembly, PEFile MainModule, object Reference) reference) =>
+					reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
+										   "M:" + reference.Reference);
+				var processedAssemblyReferences = new HashSet<(bool IsAssembly, PEFile Parent, object Reference)>(comparer);
+				while (assemblyReferenceQueue.Count > 0) {
+					var asmRef = assemblyReferenceQueue.Dequeue();
+					if (!processedAssemblyReferences.Add(asmRef))
+						continue;
+					PEFile asm;
+					if (asmRef.IsAssembly) {
+						asm = assemblyResolver.Resolve((IAssemblyReference)asmRef.Reference);
+					} else {
+						asm = assemblyResolver.ResolveModule(asmRef.MainModule, (string)asmRef.Reference);
+					}
+					if (asm != null) {
+						referencedAssemblies.Add(asm);
+						var metadata = asm.Metadata;
+						foreach (var h in metadata.ExportedTypes) {
+							var exportedType = metadata.GetExportedType(h);
+							switch (exportedType.Implementation.Kind) {
+								case SRM.HandleKind.AssemblyReference:
+									assemblyReferenceQueue.Enqueue((true, asm, new AssemblyReference(asm, (SRM.AssemblyReferenceHandle)exportedType.Implementation)));
+									break;
+								case SRM.HandleKind.AssemblyFile:
+									var file = metadata.GetAssemblyFile((SRM.AssemblyFileHandle)exportedType.Implementation);
+									assemblyReferenceQueue.Enqueue((false, asm, metadata.GetString(file.Name)));
+									break;
+							}
+						}
+					}
+				}
+				var mainModuleWithOptions = mainModule.WithOptions(TypeSystemOptions.Default);
+				var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(TypeSystemOptions.Default));
+				// Primitive types are necessary to avoid assertions in ILReader.
+				// Fallback to MinimalCorlib to provide the primitive types.
+				if (!HasType(KnownTypeCode.Void) || !HasType(KnownTypeCode.Int32)) {
+					Init(mainModule.WithOptions(TypeSystemOptions.Default), referencedAssembliesWithOptions.Concat(new[] { MinimalCorlib.Instance }));
+				} else {
+					Init(mainModuleWithOptions, referencedAssembliesWithOptions);
+				}
+				this.MainModule = (MetadataModule)base.MainModule;
+
+				bool HasType(KnownTypeCode code)
+				{
+					TopLevelTypeName name = KnownTypeReference.Get(code).TypeName;
+					if (mainModule.GetTypeDefinition(name) != null)
+						return true;
+					foreach (var file in referencedAssemblies) {
+						if (file.GetTypeDefinition(name) != null)
+							return true;
+					}
+					return false;
 				}
 			}
-			foreach (var attr in removableAttrs)
-				attr.Remove();
-			element.Add(addableAttrs);
+
+			public new MetadataModule MainModule { get; }
 		}
 	}
 }
