@@ -111,7 +111,7 @@
   <PropertyGroup>
     <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\$(TargetFramework)\</ILSpyBuildPath>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.ValueTuple.dll" />
     <AdditionalDependencies Include="$(ILSpyBuildPath)System.Collections.Immutable.dll" />
@@ -138,7 +138,7 @@
     </Content>
   </ItemGroup>
   <!-- END WORKAROUND -->
-  
+
   <ItemGroup>
     <None Include="ILSpyAddIn.vsct" />
     <None Include="source.extension.vsixmanifest.template" />
@@ -182,13 +182,5 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
-
-  <ItemGroup>
-    <!-- https://github.com/dotnet/sdk/issues/433 -->
-    <ProjectReference Update="@(ProjectReference)" AdditionalProperties="TargetFramework=net462" />
-
-    <!-- https://github.com/Microsoft/extendvs/issues/57 -->
-    <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
-  </ItemGroup>
 
 </Project>
