@@ -1141,7 +1141,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			StartNode(queryExpression);
-			writer.Indent();
+			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
+				writer.Indent();
 			bool first = true;
 			foreach (var clause in queryExpression.Clauses) {
 				if (first) {
@@ -1153,7 +1154,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				clause.AcceptVisitor(this);
 			}
-			writer.Unindent();
+			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
+				writer.Unindent();
 			EndNode(queryExpression);
 		}
 		
