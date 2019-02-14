@@ -6,6 +6,7 @@
     <OutputType>WinExe</OutputType>
     <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 
     <EnableDefaultItems>false</EnableDefaultItems>
     <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
@@ -260,6 +261,9 @@
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />
+    <None Include="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="app.manifest" />
     <None Include="Images\ResourceXsl.png" />
     <None Include="Properties\app.config.template" />
