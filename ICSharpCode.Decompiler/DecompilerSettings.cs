@@ -93,6 +93,9 @@ namespace ICSharpCode.Decompiler
 				stackAllocInitializers = false;
 				tupleComparisons = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp8_0) {
+				nullableReferenceTypes = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
@@ -745,7 +748,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-
+		
 		bool namedArguments = true;
 
 		/// <summary>
@@ -804,6 +807,21 @@ namespace ICSharpCode.Decompiler
 					throw new NotImplementedException("C# 7.0 local functions are not implemented!");
 					//localFunctions = value;
 					//OnPropertyChanged();
+				}
+			}
+		}
+
+		bool nullableReferenceTypes = true;
+
+		/// <summary>
+		/// Gets/Sets whether C# 8.0 nullable reference types are enabled.
+		/// </summary>
+		public bool NullableReferenceTypes {
+			get { return nullableReferenceTypes; }
+			set {
+				if (nullableReferenceTypes != value) {
+					nullableReferenceTypes = value;
+					OnPropertyChanged();
 				}
 			}
 		}

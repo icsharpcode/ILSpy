@@ -1754,6 +1754,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
 							.WithoutILInstruction();
 					}
+					if (translatedTarget.Type.Nullability == Nullability.Nullable) {
+						translatedTarget = new UnaryOperatorExpression(UnaryOperatorType.SuppressNullableWarning, translatedTarget)
+							.WithRR(new ResolveResult(translatedTarget.Type.ChangeNullability(Nullability.Oblivious)))
+							.WithoutILInstruction();
+					}
 					return translatedTarget;
 				}
 			} else {

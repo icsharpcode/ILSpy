@@ -94,6 +94,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		RefStructs = 0x100,
 		/// <summary>
+		/// If this option is active, [NullableAttribute] is removed and reference types with
+		/// nullability annotations are used instead.
+		/// </summary>
+		NullabilityAnnotations = 0x200,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# languages features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters | RefStructs
@@ -122,6 +127,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.RefStructs;
 			if (settings.IntroduceReadonlyAndInModifiers)
 				typeSystemOptions |= TypeSystemOptions.ReadOnlyStructsAndParameters;
+			if (settings.NullableReferenceTypes)
+				typeSystemOptions |= TypeSystemOptions.NullabilityAnnotations;
 			return typeSystemOptions;
 		}
 

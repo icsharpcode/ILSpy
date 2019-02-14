@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			// resolve without substituting dynamic/tuple types
 			var ty = ResolveType(declaringTypeReference, context,
-				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple));
+				options & ~(TypeSystemOptions.Dynamic | TypeSystemOptions.Tuple | TypeSystemOptions.NullabilityAnnotations));
 			// but substitute tuple types in type arguments:
 			ty = ApplyAttributeTypeVisitor.ApplyAttributesToType(ty, Compilation, null, metadata, options, typeChildrenOnly: true);
 			return ty;

@@ -351,6 +351,7 @@
     <Compile Include="TypeSystem\Implementation\AttributeListBuilder.cs" />
     <Compile Include="TypeSystem\Implementation\CustomAttribute.cs" />
     <Compile Include="TypeSystem\Implementation\DecimalConstantHelper.cs" />
+    <Compile Include="TypeSystem\Implementation\DecoratedType.cs" />
     <Compile Include="TypeSystem\Implementation\DefaultTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\FakeMember.cs" />
     <Compile Include="TypeSystem\Implementation\KnownAttributes.cs" />
@@ -370,6 +371,8 @@
     <Compile Include="Metadata\MetadataExtensions.cs" />
     <Compile Include="Semantics\TupleResolveResult.cs" />
     <Compile Include="TypeSystem\NormalizeTypeVisitor.cs" />
+    <Compile Include="TypeSystem\Nullability.cs" />
+    <Compile Include="TypeSystem\Implementation\NullabilityAnnotatedType.cs" />
     <Compile Include="TypeSystem\TupleType.cs" />
     <Compile Include="TypeSystem\TypeProvider.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
@@ -480,7 +483,6 @@
     <Compile Include="Semantics\TypeResolveResult.cs" />
     <Compile Include="Semantics\UnknownMemberResolveResult.cs" />
     <Compile Include="TypeSystem\Accessibility.cs" />
-    <Compile Include="TypeSystem\AnonymousType.cs" />
     <Compile Include="TypeSystem\ArrayType.cs" />
     <Compile Include="TypeSystem\AssemblyQualifiedTypeName.cs" />
     <Compile Include="TypeSystem\ByReferenceType.cs" />

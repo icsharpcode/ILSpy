@@ -176,6 +176,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			bool IType.IsByRefLike => false;
+			Nullability IType.Nullability => Nullability.Oblivious;
+
+			IType IType.ChangeNullability(Nullability nullability)
+			{
+				if (nullability == Nullability.Oblivious)
+					return this;
+				else
+					return new NullabilityAnnotatedType(this, nullability);
+			}
 
 			int IType.TypeParameterCount => KnownTypeReference.Get(typeCode).TypeParameterCount;
 

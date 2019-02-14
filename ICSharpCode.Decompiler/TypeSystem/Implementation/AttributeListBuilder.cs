@@ -204,6 +204,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
 						case "IsByRefLikeAttribute":
 							return (options & TypeSystemOptions.RefStructs) != 0;
+						case "NullableAttribute":
+							return (options & TypeSystemOptions.NullabilityAnnotations) != 0;
 						default:
 							return false;
 					}

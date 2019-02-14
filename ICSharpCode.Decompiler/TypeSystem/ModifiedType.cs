@@ -42,6 +42,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override bool? IsReferenceType => elementType.IsReferenceType;
 		public override bool IsByRefLike => elementType.IsByRefLike;
+		public override Nullability Nullability => elementType.Nullability;
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			IType newElementType = elementType.ChangeNullability(nullability);
+			if (newElementType == elementType)
+				return this;
+			else
+				return new ModifiedType(modifier, newElementType, kind == TypeKind.ModReq);
+		}
 
 		public override ITypeDefinition GetDefinition()
 		{

@@ -101,6 +101,7 @@ namespace ICSharpCode.ILSpy
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_1.ToString(), "C# 7.1 / VS 2017.3"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_2.ToString(), "C# 7.2 / VS 2017.4"),
 						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp7_3.ToString(), "C# 7.3 / VS 2017.7"),
+						new LanguageVersion(Decompiler.CSharp.LanguageVersion.CSharp8_0.ToString(), "C# 8.0 / VS 2019"),
 					};
 				}
 				return versions;

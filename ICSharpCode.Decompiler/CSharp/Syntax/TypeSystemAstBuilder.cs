@@ -251,6 +251,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
+			if (type is NullabilityAnnotatedType nat) {
+				var astType = ConvertType(nat.ElementType);
+				if (nat.Nullability == Nullability.Nullable)
+					astType = astType.MakeNullableType();
+				return astType;
+			}
 			if (type is TupleType tuple) {
 				var astType = new TupleAstType();
 				foreach (var (etype, ename) in tuple.ElementTypes.Zip(tuple.ElementNames)) {
@@ -278,14 +284,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
+			ITypeDefinition typeDef = genericType.GetDefinition();
+			Debug.Assert(typeDef != null || genericType.Kind == TypeKind.Unknown);
 			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
-			Debug.Assert(genericType is ITypeDefinition || genericType.Kind == TypeKind.Unknown);
 
-			ITypeDefinition typeDef = genericType as ITypeDefinition;
 			if (AlwaysUseBuiltinTypeNames && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
-				if (keyword != null)
-					return new PrimitiveType(keyword);
+				if (keyword != null) {
+					if (genericType.Nullability == Nullability.Nullable) {
+						return new PrimitiveType(keyword).MakeNullableType();
+					} else {
+						return new PrimitiveType(keyword);
+					}
+				}
 			}
 			
 			// The number of type parameters belonging to outer classes
@@ -328,7 +339,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
 				var shortResult = new SimpleType(genericType.Name);
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
-				return shortResult;
+				if (genericType.Nullability == Nullability.Nullable) {
+					return shortResult.MakeNullableType();
+				} else {
+					return shortResult;
+				}
 			}
 			MemberType result = new MemberType();
 			if (genericType.DeclaringType != null) {
@@ -347,7 +362,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			result.MemberName = genericType.Name;
 			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
-			return result;
+			if (genericType.Nullability == Nullability.Nullable) {
+				return result.MakeNullableType();
+			} else {
+				return result;
+			}
 		}
 		
 		/// <summary>

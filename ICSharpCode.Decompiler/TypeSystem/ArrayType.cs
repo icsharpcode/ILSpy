@@ -56,7 +56,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public int Dimensions {
 			get { return dimensions; }
 		}
-		
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious)
+				return this;
+			else
+				return new NullabilityAnnotatedType(this, nullability);
+		}
+
 		public override string NameSuffix {
 			get {
 				return "[" + new string(',', dimensions-1) + "]";
