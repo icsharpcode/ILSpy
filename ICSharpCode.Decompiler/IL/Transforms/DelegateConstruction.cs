@@ -105,13 +105,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
-			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
+			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$") || ContainsAnonymousType(method)))
 				return false;
 			if (!(method.IsCompilerGeneratedOrIsInCompilerGeneratedClass() || IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)))
 				return false;
 			return true;
 		}
-		
+
+		static bool ContainsAnonymousType(IMethod method)
+		{
+			if (method.ReturnType.ContainsAnonymousType())
+				return true;
+			foreach (var p in method.Parameters) {
+				if (p.Type.ContainsAnonymousType())
+					return true;
+			}
+			return false;
+		}
+
 		static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
@@ -178,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			var nestedContext = new ILTransformContext(context, function);
-			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
+			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
 			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
@@ -186,7 +197,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.AddILRange(value.Arguments[1].ILRange);
 			return function;
 		}
-		
+
+		private IEnumerable<IILTransform> GetTransforms()
+		{
+			yield return new CombineExitsTransform();
+		}
+
 		/// <summary>
 		/// Replaces loads of 'this' with the target expression.
 		/// Async delegates use: ldobj(ldloca this).
