@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type.KnownTypeCode == KnownTypeCode.Object && hasDynamicAttribute) {
 				if (dynamicAttributeData == null || dynamicTypeIndex >= dynamicAttributeData.Length)
 					newType = SpecialType.Dynamic;
-				if (dynamicAttributeData[dynamicTypeIndex])
+				else if (dynamicAttributeData[dynamicTypeIndex])
 					newType = SpecialType.Dynamic;
 			}
 			Nullability nullability = GetNullability();
