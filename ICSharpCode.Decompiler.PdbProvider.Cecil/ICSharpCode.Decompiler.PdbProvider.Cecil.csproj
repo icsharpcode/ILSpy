@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
 
   <ItemGroup>

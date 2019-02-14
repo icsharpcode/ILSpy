@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
 
     <Company>IC#Code</Company>
@@ -56,7 +56,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Text.UI" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI.Wpf" Version="15.6.27740" />
     <PackageReference Include="Microsoft.VisualStudio.Threading" Version="15.6.56" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     <PackageReference Include="VSLangProj" Version="7.0.3301" />
   </ItemGroup>
 
