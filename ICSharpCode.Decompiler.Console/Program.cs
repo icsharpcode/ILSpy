@@ -9,6 +9,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Disassembler;
 using System.Threading;
 using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using ICSharpCode.Decompiler.DebugInfo;
 
 namespace ICSharpCode.Decompiler.Console
 {
@@ -28,6 +30,7 @@ namespace ICSharpCode.Decompiler.Console
 			var typeOption = app.Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue);
 			var listOption = app.Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue);
 			var ilViewerOption = app.Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue);
+			var pdbGeneration = app.Option("-d|--debuginfo", "Generate PDB.", CommandOptionType.NoValue);
 			app.ExtendedHelpText = Environment.NewLine + "-o is valid with every option and required when using -p.";
 
 			app.ThrowOnUnexpectedArgument = false; // Ignore invalid arguments / options
@@ -72,7 +75,18 @@ namespace ICSharpCode.Decompiler.Console
 							output = File.CreateText(Path.Combine(directory, outputName) + ".il");
 						}
 						ShowIL(inputAssemblyFileName.Value, output);
-					} else {
+					} else if (pdbGeneration.HasValue()) {
+						string pdbFileName = null;
+						if (outputOption.HasValue()) {
+							string directory = outputOption.Value();
+							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
+							pdbFileName = Path.Combine(directory, outputName) + ".pdb";
+						} else {
+							pdbFileName = Path.ChangeExtension(inputAssemblyFileName.Value, ".pdb");
+						}
+						GeneratePdbForAssembly(inputAssemblyFileName.Value, pdbFileName, app);
+					}
+					else {
 						if (outputOption.HasValue()) {
 							string directory = outputOption.Value();
 							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
@@ -137,6 +151,29 @@ namespace ICSharpCode.Decompiler.Console
 			} else {
 				var name = new FullTypeName(typeName);
 				output.Write(decompiler.DecompileTypeAsString(name));
+			}
+		}
+
+		static void GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
+		{
+			var module = new PEFile(assemblyFileName, 
+				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read), 
+				PEStreamOptions.PrefetchEntireImage,
+				metadataOptions: MetadataReaderOptions.None);
+
+			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module)) {
+				app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
+				return;
+			}
+
+			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
+				try {
+					var decompiler = GetDecompiler(assemblyFileName);
+					PortablePdbWriter.WritePdb(module, decompiler, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false }, stream);
+				} catch (Exception ex) {
+					app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}");
+					app.Error.WriteLine(ex.ToString());
+				}
 			}
 		}
 	}
