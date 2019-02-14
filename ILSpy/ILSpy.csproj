@@ -2,7 +2,7 @@
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <OutputType>WinExe</OutputType>
     <LangVersion>7.2</LangVersion>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
@@ -49,7 +49,7 @@
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
 
   <ItemGroup>
