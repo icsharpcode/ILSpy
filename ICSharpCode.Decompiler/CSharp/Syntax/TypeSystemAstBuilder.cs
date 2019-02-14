@@ -742,7 +742,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			expression = null;
 			if (!specialConstants.TryGetValue(constant, out var info))
 				return false;
-			if (!UseSpecialConstants) {
+			// if the field definition cannot be found, do not generate a reference to the field.
+			var field = type.GetFields(p => p.Name == info.Member).SingleOrDefault();
+			if (!UseSpecialConstants || field == null) {
 				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
 				// Use an equivalent arithmetic expression instead.
 				if (info.Type == KnownTypeCode.Double) {
@@ -800,7 +802,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			expression = new MemberReferenceExpression(expression, info.Member);
 
 			if (AddResolveResultAnnotations)
-				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), type.GetFields(p => p.Name == info.Member).Single()));
+				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), field));
 
 			return true;
 		}
