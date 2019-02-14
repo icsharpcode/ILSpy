@@ -25,8 +25,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(function.Body is BlockContainer container && container.Blocks.Count == 1))
 				return;
 			var block = container.EntryPoint;
-			if (block.Kind != BlockKind.ControlFlow)
-				return;
 			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst && block.Instructions.LastOrDefault() is Leave leaveElse))
 				return;
 			if (!ifInst.FalseInst.MatchNop())
@@ -45,6 +43,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// leave (if (cond) value else elseValue)
 			IfInstruction value = new IfInstruction(ifInst.Condition, leave.Value, leaveElse.Value) { ILRange = ifInst.ILRange };
 			Leave combinedLeave = new Leave(leave.TargetContainer, value) { ILRange = leaveElse.ILRange };
+			combinedLeave.AddILRange(leave.ILRange);
 			ifInst.ReplaceWith(combinedLeave);
 			block.Instructions.RemoveAt(combinedLeave.ChildIndex + 1);
 		}
