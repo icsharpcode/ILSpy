@@ -446,6 +446,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool IsPrintableIdentifierChar(string identifier, int index)
 		{
+			switch (identifier[index]) {
+				case '\\':
+					return false;
+				case ' ':
+				case '_':
+				case '`':
+				case '^':
+					return true;
+			}
 			switch (char.GetUnicodeCategory(identifier, index)) {
 				case UnicodeCategory.ModifierLetter:
 				case UnicodeCategory.NonSpacingMark:
