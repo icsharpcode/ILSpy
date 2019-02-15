@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -33,7 +34,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 {
 	class ScopesGenerator : DepthFirstAstVisitor<ImportScopeInfo, ImportScopeInfo>
 	{
-		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new KeyComparer<ILVariable, int>(l => l.Index, Comparer<int>.Default, EqualityComparer<int>.Default);
+		static readonly KeyComparer<ILVariable, int> ILVariableKeyComparer = new KeyComparer<ILVariable, int>(l => l.Index.Value, Comparer<int>.Default, EqualityComparer<int>.Default);
 
 		IDecompilerTypeSystem typeSystem;
 		ImportScopeInfo currentImportScope;
@@ -59,7 +60,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				var firstLocalVariable = MetadataTokens.LocalVariableHandle(nextRow);
 				
 				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
-					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index, metadata.GetOrAddString(local.Name));
+					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index.Value, metadata.GetOrAddString(local.Name));
 				}
 
 				metadata.AddLocalScope(localScope.Method, localScope.Import.Handle, firstLocalVariable,
@@ -191,14 +192,15 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					new TypeSystem.GenericContext(function.Method));
 
 				foreach (var v in function.Variables) {
+					if (v.Index == null)
+						continue;
 					switch (v.Kind) {
 						case VariableKind.Local:
 						case VariableKind.PinnedLocal:
 						case VariableKind.UsingLocal:
 						case VariableKind.ForeachLocal:
-							if (v.Index < types.Length && v.Type.Equals(types[v.Index])) {
-								localVariables.Add(v);
-							}
+							Debug.Assert(v.Index < types.Length && v.Type.Equals(types[v.Index.Value]));
+							localVariables.Add(v);
 							break;
 						default:
 							continue;

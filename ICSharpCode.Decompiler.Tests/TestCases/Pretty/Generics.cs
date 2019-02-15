@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -95,6 +96,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public T[,] NewArray<T>(int size1, int size2)
 		{
 			return new T[size1, size2];
+		}
+
+		public Type[] TestTypeOf()
+		{
+			return new Type[8] {
+				typeof(int),
+				typeof(int[]),
+				typeof(GenericClass<>),
+				typeof(GenericClass<int>),
+				typeof(GenericClass<int[]>),
+				typeof(Dictionary<, >),
+				typeof(List<int>.Enumerator),
+				typeof(List<>.Enumerator)
+			};
 		}
 	}
 }

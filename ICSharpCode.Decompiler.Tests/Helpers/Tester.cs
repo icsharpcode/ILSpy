@@ -42,7 +42,7 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	[Flags]
-	public enum CSharpCompilerOptions
+	public enum CompilerOptions
 	{
 		None,
 		Optimize = 0x1,
@@ -189,36 +189,41 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, @"Facades\System.Runtime.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Xml.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.CSharp.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "Microsoft.VisualBasic.dll")),
 					MetadataReference.CreateFromFile(typeof(ValueTuple).Assembly.Location),
 					MetadataReference.CreateFromFile(typeof(Span<>).Assembly.Location),
 			};
 		});
-		
 
-		public static List<string> GetPreprocessorSymbols(CSharpCompilerOptions flags)
+		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
 		{
 			var preprocessorSymbols = new List<string>();
-			if (flags.HasFlag(CSharpCompilerOptions.UseDebug)) {
+			if (flags.HasFlag(CompilerOptions.UseDebug)) {
 				preprocessorSymbols.Add("DEBUG");
 			}
-			if (flags.HasFlag(CSharpCompilerOptions.Optimize)) {
+			if (flags.HasFlag(CompilerOptions.Optimize)) {
 				preprocessorSymbols.Add("OPT");
 			}
-			if (flags.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				preprocessorSymbols.Add("ROSLYN");
 				preprocessorSymbols.Add("CS60");
 				preprocessorSymbols.Add("CS70");
 				preprocessorSymbols.Add("CS71");
 				preprocessorSymbols.Add("CS72");
-			} else if (flags.HasFlag(CSharpCompilerOptions.UseMcs)) {
+				preprocessorSymbols.Add("CS73");
+				preprocessorSymbols.Add("VB11");
+				preprocessorSymbols.Add("VB14");
+				preprocessorSymbols.Add("VB15");
+			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
 				preprocessorSymbols.Add("MCS");
 			} else {
 				preprocessorSymbols.Add("LEGACY_CSC");
+				preprocessorSymbols.Add("LEGACY_VBC");
 			}
 			return preprocessorSymbols;
 		}
 
-		public static CompilerResults CompileCSharp(string sourceFileName, CSharpCompilerOptions flags = CSharpCompilerOptions.UseDebug, string outputFileName = null)
+		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
@@ -227,15 +232,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
-			if (flags.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,
 					new CSharpCompilationOptions(
-						flags.HasFlag(CSharpCompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
-						platform: flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
-						optimizationLevel: flags.HasFlag(CSharpCompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
+						flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
+						platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
+						optimizationLevel: flags.HasFlag(CompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
 						allowUnsafe: true,
 						deterministic: true
 					));
@@ -250,7 +255,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					throw new Exception(b.ToString());
 				}
 				return results;
-			} else if (flags.HasFlag(CSharpCompilerOptions.UseMcs)) {
+			} else if (flags.HasFlag(CompilerOptions.UseMcs)) {
 				CompilerResults results = new CompilerResults(new TempFileCollection());
 				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				string testBasePath = RoundtripAssembly.TestDir;
@@ -259,19 +264,19 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
 				string mcsPath = Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat");
-				string otherOptions = " -unsafe -o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+ " : "- ");
+				string otherOptions = " -unsafe -o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ");
 
-				if (flags.HasFlag(CSharpCompilerOptions.Library)) {
+				if (flags.HasFlag(CompilerOptions.Library)) {
 					otherOptions += "-t:library ";
 				} else {
 					otherOptions += "-t:exe ";
 				}
 
-				if (flags.HasFlag(CSharpCompilerOptions.UseDebug)) {
+				if (flags.HasFlag(CompilerOptions.UseDebug)) {
 					otherOptions += "-g ";
 				}
 
-				if (flags.HasFlag(CSharpCompilerOptions.Force32Bit)) {
+				if (flags.HasFlag(CompilerOptions.Force32Bit)) {
 					otherOptions += "-platform:x86 ";
 				} else {
 					otherOptions += "-platform:anycpu ";
@@ -303,10 +308,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			} else {
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
-				options.GenerateExecutable = !flags.HasFlag(CSharpCompilerOptions.Library);
-				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CSharpCompilerOptions.Optimize) ? "+" : "-");
-				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.UseDebug) ? " /debug" : "");
-				options.CompilerOptions += (flags.HasFlag(CSharpCompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
+				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}
@@ -318,6 +323,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
 				options.ReferencedAssemblies.Add("Microsoft.CSharp.dll");
+				options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");
@@ -330,9 +336,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		internal static DecompilerSettings GetSettings(CSharpCompilerOptions cscOptions)
+		internal static DecompilerSettings GetSettings(CompilerOptions cscOptions)
 		{
-			if (cscOptions.HasFlag(CSharpCompilerOptions.UseRoslyn)) {
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn)) {
 				return new DecompilerSettings(CSharp.LanguageVersion.Latest);
 			} else {
 				return new DecompilerSettings(CSharp.LanguageVersion.CSharp5);
@@ -358,18 +364,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return decompiler;
 		}
 
-		internal static string GetSuffix(CSharpCompilerOptions cscOptions)
+		internal static string GetSuffix(CompilerOptions cscOptions)
 		{
 			string suffix = "";
-			if ((cscOptions & CSharpCompilerOptions.Optimize) != 0)
+			if ((cscOptions & CompilerOptions.Optimize) != 0)
 				suffix += ".opt";
-			if ((cscOptions & CSharpCompilerOptions.Force32Bit) != 0)
+			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
 				suffix += ".32";
-			if ((cscOptions & CSharpCompilerOptions.UseDebug) != 0)
+			if ((cscOptions & CompilerOptions.UseDebug) != 0)
 				suffix += ".dbg";
-			if ((cscOptions & CSharpCompilerOptions.UseRoslyn) != 0)
+			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
 				suffix += ".roslyn";
-			if ((cscOptions & CSharpCompilerOptions.UseMcs) != 0)
+			if ((cscOptions & CompilerOptions.UseMcs) != 0)
 				suffix += ".mcs";
 			return suffix;
 		}

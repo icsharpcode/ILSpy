@@ -47,28 +47,28 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CSharpCompilerOptions[] noRoslynOptions =
+		static readonly CompilerOptions[] noRoslynOptions =
 		{
-			CSharpCompilerOptions.None,
-			CSharpCompilerOptions.Optimize
+			CompilerOptions.None,
+			CompilerOptions.Optimize
 		};
 
-		static readonly CSharpCompilerOptions[] roslynOnlyOptions =
+		static readonly CompilerOptions[] roslynOnlyOptions =
 		{
-			CSharpCompilerOptions.UseRoslyn,
-			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
-		static readonly CSharpCompilerOptions[] defaultOptions =
+		static readonly CompilerOptions[] defaultOptions =
 		{
-			CSharpCompilerOptions.None,
-			CSharpCompilerOptions.Optimize,
-			CSharpCompilerOptions.UseRoslyn,
-			CSharpCompilerOptions.Optimize | CSharpCompilerOptions.UseRoslyn
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
 		[Test]
-		public void NoArrayInitializers([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
+		public void NoArrayInitializers([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				ArrayInitializers = false
@@ -76,19 +76,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void NoDecimalConstants([ValueSource("roslynOnlyOptions")] CSharpCompilerOptions cscOptions)
+		public void NoDecimalConstants([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				DecimalConstants = false
 			});
 		}
 
-		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
-			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CSharpCompilerOptions.Library, decompilerSettings);
+			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
 		}
 
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CSharpCompilerOptions cscOptions = CSharpCompilerOptions.None, DecompilerSettings decompilerSettings = null)
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");

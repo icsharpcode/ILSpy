@@ -2,7 +2,7 @@ platform: Any CPU
 configuration:
 - Debug
 - Release
-image: Visual Studio 2017
+image: Visual Studio 2019 Preview
 install:
 - git submodule update --init --recursive
 - ps: .\BuildTools\appveyor-install.ps1
@@ -15,12 +15,12 @@ before_build:
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
-- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.config
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net462\*.config
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net46\ICSharpCode.Decompiler.Tests.exe'
-    - 'ILSpy.Tests\bin\%configuration%\net46\ILSpy.Tests.exe'
-    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net46\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net462\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.Tests\bin\%configuration%\net462\ILSpy.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net462\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
 for:

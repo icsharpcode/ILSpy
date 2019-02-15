@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -52,6 +52,7 @@
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
+    <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />

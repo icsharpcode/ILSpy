@@ -98,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < Variables.Count; i++) {
 				Debug.Assert(Variables[i].Function == this);
 				Debug.Assert(Variables[i].IndexInFunction == i);
+				Variables[i].CheckInvariant();
 			}
 			base.CheckInvariant(phase);
 		}
@@ -213,32 +214,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		int helperVariableCount;
+
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
 		{
-			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
-			var variable = new ILVariable(kind, type, index);
+			var variable = new ILVariable(kind, type);
 			if (string.IsNullOrWhiteSpace(name)) {
-				switch (kind) {
-					case VariableKind.Local:
-					case VariableKind.ForeachLocal:
-						name = "V_";
-						break;
-					case VariableKind.Parameter:
-						name = "P_";
-						break;
-					case VariableKind.Exception:
-						name = "E_";
-						break;
-					case VariableKind.StackSlot:
-						name = "S_";
-						break;
-					case VariableKind.InitializerTarget:
-						name = "I_";
-						break;
-					default:
-						throw new ArgumentOutOfRangeException(nameof(kind));
-				}
-				name += index;
+				name = "I_" + (helperVariableCount++);
 				variable.HasGeneratedName = true;
 			}
 			variable.Name = name;

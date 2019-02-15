@@ -63,34 +63,35 @@ namespace ICSharpCode.Decompiler
 			}
 			
 			var definition = GetCurrentDefinition();
+			string name = TextWriterTokenWriter.EscapeIdentifier(identifier.Name);
 			switch (definition) {
 				case IType t:
-					output.WriteReference(t, identifier.Name, true);
+					output.WriteReference(t, name, true);
 					return;
 				case IMember m:
-					output.WriteReference(m, identifier.Name, true);
+					output.WriteReference(m, name, true);
 					return;
 			}
 			
 			var member = GetCurrentMemberReference();
 			switch (member) {
 				case IType t:
-					output.WriteReference(t, identifier.Name, false);
+					output.WriteReference(t, name, false);
 					return;
 				case IMember m:
-					output.WriteReference(m, identifier.Name, false);
+					output.WriteReference(m, name, false);
 					return;
 			}
 
 			var localDefinition = GetCurrentLocalDefinition();
 			if (localDefinition != null) {
-				output.WriteLocalReference(identifier.Name, localDefinition, isDefinition: true);
+				output.WriteLocalReference(name, localDefinition, isDefinition: true);
 				return;
 			}
 
 			var localRef = GetCurrentLocalReference();
 			if (localRef != null) {
-				output.WriteLocalReference(identifier.Name, localRef);
+				output.WriteLocalReference(name, localRef);
 				return;
 			}
 
@@ -99,7 +100,7 @@ namespace ICSharpCode.Decompiler
 				firstUsingDeclaration = false;
 			}
 
-			output.Write(identifier.Name);
+			output.Write(name);
 		}
 
 		ISymbol GetCurrentMemberReference()
@@ -140,6 +141,10 @@ namespace ICSharpCode.Decompiler
 			if (variable != null)
 				return variable;
 
+			var letClauseVariable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
+			if (letClauseVariable != null)
+				return letClauseVariable;
+
 			var gotoStatement = node as GotoStatement;
 			if (gotoStatement != null)
 			{
@@ -159,6 +164,12 @@ namespace ICSharpCode.Decompiler
 
 			if (node is ParameterDeclaration || node is VariableInitializer || node is CatchClause || node is ForeachStatement) {
 				var variable = node.Annotation<ILVariableResolveResult>()?.Variable;
+				if (variable != null)
+					return variable;
+			}
+
+			if (node is QueryLetClause) {
+				var variable = node.Annotation<CSharp.Transforms.LetIdentifierAnnotation>();
 				if (variable != null)
 					return variable;
 			}
