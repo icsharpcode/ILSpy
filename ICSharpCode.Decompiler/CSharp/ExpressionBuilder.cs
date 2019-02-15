@@ -532,6 +532,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		internal ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
+			// "!expr" implicitly converts to bool so we can remove the cast;
+			// but only if doing so wouldn't cause us to call a user-defined "operator !"
+			expr = expr.UnwrapImplicitBoolConversion(type => !type.GetMethods(m => m.IsOperator && m.Name == "op_LogicalNot").Any());
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
 				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not, expr.ResolveResult));
 		}
@@ -2476,6 +2479,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 			}
 
+			condition = condition.UnwrapImplicitBoolConversion();
 			trueBranch = AdjustConstantExpressionToType(trueBranch, falseBranch.Type);
 			falseBranch = AdjustConstantExpressionToType(falseBranch, trueBranch.Type);
 
@@ -2522,7 +2526,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(rr);
 			}
 		}
-		
+
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
 			IType targetTypeHint = null;
