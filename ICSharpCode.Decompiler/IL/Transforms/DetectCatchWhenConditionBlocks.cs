@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var catchBlock in function.Descendants.OfType<TryCatchHandler>()) {
-				if (catchBlock.Filter is BlockContainer container && MatchCatchWhenEntryPoint(container, container.EntryPoint, out var exceptionType, out var exceptionSlot, out var whenConditionBlock)) {
+				if (catchBlock.Filter is BlockContainer container && MatchCatchWhenEntryPoint(catchBlock.Variable, container, container.EntryPoint, out var exceptionType, out var exceptionSlot, out var whenConditionBlock)) {
 					// set exceptionType
 					catchBlock.Variable.Type = exceptionType;
 					// Block entryPoint (incoming: 1)  {
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   br falseBlock
 		/// }
 		/// </summary>
-		bool MatchCatchWhenEntryPoint(BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
+		bool MatchCatchWhenEntryPoint(ILVariable exceptionVar, BlockContainer container, Block entryPoint, out IType exceptionType, out ILInstruction exceptionSlot, out Block whenConditionBlock)
 		{
 			exceptionType = null;
 			exceptionSlot = null;
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!entryPoint.Instructions[0].MatchStLoc(out var temp, out var isinst) ||
 					temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
 					return false;
-				if (!exceptionSlot.MatchLdLoc(out var exceptionVar) || exceptionVar.Kind != VariableKind.Exception)
+				if (!exceptionSlot.MatchLdLoc(exceptionVar))
 					return false;
 				if (!entryPoint.Instructions[1].MatchIfInstruction(out var condition, out var branch))
 					return false;
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!left.MatchIsInst(out exceptionSlot, out exceptionType))
 					return false;
-				if (!exceptionSlot.MatchLdLoc(out var exceptionVar) || exceptionVar.Kind != VariableKind.Exception)
+				if (!exceptionSlot.MatchLdLoc(exceptionVar))
 					return false;
 				if (right.MatchLdNull()) {
 					return branch.MatchBranch(out whenConditionBlock);

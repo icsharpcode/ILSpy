@@ -565,7 +565,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							}
 							awaitBlocks.Add(block, (awaiterVar, awaiterField));
 							if (awaiterVar.Index < smallestAwaiterVarIndex) {
-								smallestAwaiterVarIndex = awaiterVar.Index;
+								smallestAwaiterVarIndex = awaiterVar.Index.Value;
 							}
 						}
 					}

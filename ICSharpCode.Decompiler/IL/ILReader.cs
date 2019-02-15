@@ -225,11 +225,6 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(int index, IType parameterType, string name)
 		{
 			Debug.Assert(!parameterType.IsUnbound());
-			if (parameterType.IsUnbound()) {
-				// parameter types should not be unbound, the only known cause for these is a Cecil bug:
-				Debug.Assert(index < 0); // cecil bug occurs only for "this"
-				parameterType = new ParameterizedType(parameterType.GetDefinition(), parameterType.TypeArguments);
-			}
 			ITypeDefinition def = parameterType.GetDefinition();
 			if (def != null && index < 0 && def.IsReferenceType == false) {
 				parameterType = new ByReferenceType(parameterType);
@@ -352,14 +347,14 @@ namespace ICSharpCode.Decompiler.IL
 				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.Kind == ExceptionRegionKind.Catch) {
 					var catchType = module.ResolveType(eh.CatchType, genericContext);
-					var v = new ILVariable(VariableKind.Exception, catchType, eh.HandlerOffset) {
+					var v = new ILVariable(VariableKind.ExceptionStackSlot, catchType, eh.HandlerOffset) {
 						Name = "E_" + eh.HandlerOffset,
 						HasGeneratedName = true
 					};
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else if (eh.Kind == ExceptionRegionKind.Filter) {
-					var v = new ILVariable(VariableKind.Exception, compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
+					var v = new ILVariable(VariableKind.ExceptionStackSlot, compilation.FindType(KnownTypeCode.Object), eh.HandlerOffset) {
 						Name = "E_" + eh.HandlerOffset,
 						HasGeneratedName = true
 					};
@@ -1060,7 +1055,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
 			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
-			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType, inst.ILRange.Start);
+			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
 			v.HasGeneratedName = true;
 			currentStack = currentStack.Push(v);
 			return new StLoc(v, inst);

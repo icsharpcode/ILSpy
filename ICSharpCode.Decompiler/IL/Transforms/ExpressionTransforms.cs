@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return;
 			handler.Variable = exceptionVar;
-			exceptionVar.Kind = VariableKind.Exception;
+			exceptionVar.Kind = VariableKind.ExceptionLocal;
 			entryPoint.Instructions.RemoveAt(0);
 		}
 
