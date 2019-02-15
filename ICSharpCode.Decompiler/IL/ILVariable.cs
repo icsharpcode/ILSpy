@@ -443,7 +443,14 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			if (x.Kind == VariableKind.StackSlot || y.Kind == VariableKind.StackSlot)
 				return false;
-			return x.Index != null && x.Function == y.Function && x.Kind == y.Kind && x.Index == y.Index;
+			if (!(x.Function == y.Function && x.Kind == y.Kind))
+				return false;
+			if (x.Index != null)
+				return x.Index == y.Index;
+			else if (x.StateMachineField != null)
+				return x.StateMachineField.Equals(y.StateMachineField);
+			else
+				return false;
 		}
 
 		public int GetHashCode(ILVariable obj)
