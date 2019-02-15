@@ -240,6 +240,8 @@
     <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
     <Compile Include="CSharp\TypeSystem\UsingScope.cs" />
+    <Compile Include="DebugInfo\ImportScopeInfo.cs" />
+    <Compile Include="DebugInfo\ScopesGenerator.cs" />
     <Compile Include="DecompilerException.cs" />
     <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
