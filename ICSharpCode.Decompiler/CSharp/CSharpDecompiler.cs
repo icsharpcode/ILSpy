@@ -729,13 +729,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree Decompile(params EntityHandle[] definitions)
 		{
-			return Decompile((IList<EntityHandle>)definitions);
+			return Decompile((IEnumerable<EntityHandle>)definitions);
 		}
 
 		/// <summary>
 		/// Decompile the specified types and/or members.
 		/// </summary>
-		public SyntaxTree Decompile(IList<EntityHandle> definitions)
+		public SyntaxTree Decompile(IEnumerable<EntityHandle> definitions)
 		{
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
@@ -825,7 +825,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Decompile the specified types and/or members.
 		/// </summary>
-		public string DecompileAsString(IList<EntityHandle> definitions)
+		public string DecompileAsString(IEnumerable<EntityHandle> definitions)
 		{
 			return SyntaxTreeToString(Decompile(definitions));
 		}
