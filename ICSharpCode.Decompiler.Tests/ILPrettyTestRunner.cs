@@ -137,6 +137,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void SequenceOfNestedIfs()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpLoops_Debug()
 		{
 			CopyFSharpCoreDll();
