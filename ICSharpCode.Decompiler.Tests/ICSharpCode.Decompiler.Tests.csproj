@@ -51,6 +51,7 @@
 
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
+    <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />

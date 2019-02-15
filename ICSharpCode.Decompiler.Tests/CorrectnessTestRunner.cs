@@ -221,6 +221,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void StackTests()
+		{
+			RunIL("StackTests.il");
+		}
+
+		[Test]
 		public void StackTypes([Values(false, true)] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseRoslyn | CompilerOptions.UseDebug;
