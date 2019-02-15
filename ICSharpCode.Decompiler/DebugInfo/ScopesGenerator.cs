@@ -55,13 +55,11 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			}
 
 			foreach (var localScope in generator.localScopes) {
-				LocalVariableHandle firstLocalVariable = default;
-
-				// TODO : indices of local variables must be contiguous
+				int nextRow = metadata.GetRowCount(TableIndex.LocalVariable) + 1;
+				var firstLocalVariable = MetadataTokens.LocalVariableHandle(nextRow);
+				
 				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
-					var h = metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index, metadata.GetOrAddString(local.Name));
-					if (firstLocalVariable.IsNil)
-						firstLocalVariable = h;
+					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index, metadata.GetOrAddString(local.Name));
 				}
 
 				metadata.AddLocalScope(localScope.Method, localScope.Import.Handle, firstLocalVariable,
