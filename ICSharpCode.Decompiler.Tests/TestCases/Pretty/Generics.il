@@ -304,6 +304,65 @@
     IL_000c:  ret
   } // end of method Generics::NewArray
 
+  .method public hidebysig instance class [mscorlib]System.Type[] 
+          TestTypeOf() cil managed
+  {
+    // Code size       118 (0x76)
+    .maxstack  3
+    .locals init (class [mscorlib]System.Type[] V_0,
+             class [mscorlib]System.Type[] V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.8
+    IL_0002:  newarr     [mscorlib]System.Type
+    IL_0007:  stloc.1
+    IL_0008:  ldloc.1
+    IL_0009:  ldc.i4.0
+    IL_000a:  ldtoken    [mscorlib]System.Int32
+    IL_000f:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0014:  stelem.ref
+    IL_0015:  ldloc.1
+    IL_0016:  ldc.i4.1
+    IL_0017:  ldtoken    int32[]
+    IL_001c:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0021:  stelem.ref
+    IL_0022:  ldloc.1
+    IL_0023:  ldc.i4.2
+    IL_0024:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/GenericClass`1
+    IL_0029:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_002e:  stelem.ref
+    IL_002f:  ldloc.1
+    IL_0030:  ldc.i4.3
+    IL_0031:  ldtoken    class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/GenericClass`1<int32>
+    IL_0036:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_003b:  stelem.ref
+    IL_003c:  ldloc.1
+    IL_003d:  ldc.i4.4
+    IL_003e:  ldtoken    class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/GenericClass`1<int32[]>
+    IL_0043:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0048:  stelem.ref
+    IL_0049:  ldloc.1
+    IL_004a:  ldc.i4.5
+    IL_004b:  ldtoken    [mscorlib]System.Collections.Generic.Dictionary`2
+    IL_0050:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0055:  stelem.ref
+    IL_0056:  ldloc.1
+    IL_0057:  ldc.i4.6
+    IL_0058:  ldtoken    valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>
+    IL_005d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0062:  stelem.ref
+    IL_0063:  ldloc.1
+    IL_0064:  ldc.i4.7
+    IL_0065:  ldtoken    [mscorlib]System.Collections.Generic.List`1/Enumerator
+    IL_006a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_006f:  stelem.ref
+    IL_0070:  ldloc.1
+    IL_0071:  stloc.0
+    IL_0072:  br.s       IL_0074
+
+    IL_0074:  ldloc.0
+    IL_0075:  ret
+  } // end of method Generics::TestTypeOf
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
