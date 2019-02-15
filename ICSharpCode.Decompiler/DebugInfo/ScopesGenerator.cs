@@ -51,12 +51,13 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			syntaxTree.AcceptVisitor(generator, new ImportScopeInfo());
 			foreach (var scope in generator.importScopes) {
 				var blob = EncodeImports(metadata, scope);
-				var importScope = scope.Handle = metadata.AddImportScope(scope.Parent == null ? globalImportScope : scope.Parent.Handle, blob);
+				scope.Handle = metadata.AddImportScope(scope.Parent == null ? globalImportScope : scope.Parent.Handle, blob);
 			}
 
 			foreach (var localScope in generator.localScopes) {
 				LocalVariableHandle firstLocalVariable = default;
 
+				// TODO : indices of local variables must be contiguous
 				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
 					var h = metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index, metadata.GetOrAddString(local.Name));
 					if (firstLocalVariable.IsNil)
@@ -197,7 +198,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 						case VariableKind.PinnedLocal:
 						case VariableKind.UsingLocal:
 						case VariableKind.ForeachLocal:
-						case VariableKind.Exception:
 							if (v.Index < types.Length && v.Type.Equals(types[v.Index])) {
 								localVariables.Add(v);
 							}
