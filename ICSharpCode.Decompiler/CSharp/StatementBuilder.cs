@@ -66,6 +66,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionStatement(exprBuilder.Translate(inst));
 		}
 
+		protected internal override Statement VisitIsInst(IsInst inst)
+		{
+			// isinst on top-level (unused result) can be translated in general
+			// (even for value types) by using "is" instead of "as"
+			// This can happen when the result of "expr is T" is unused
+			// and the C# compiler optimizes away the null check portion of the "is" operator.
+			return new ExpressionStatement(
+				new IsExpression(
+					exprBuilder.Translate(inst.Argument),
+					exprBuilder.ConvertType(inst.Type)
+				)
+				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
+				.WithILInstruction(inst)
+			);
+		}
+
 		protected internal override Statement VisitStLoc(StLoc inst)
 		{
 			var expr = exprBuilder.Translate(inst);

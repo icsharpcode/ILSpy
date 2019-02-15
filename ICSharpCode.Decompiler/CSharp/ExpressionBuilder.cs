@@ -265,6 +265,25 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			if (inst.Type.IsReferenceType == false) {
+				// isinst with a value type results in an expression of "boxed value type",
+				// which is not supported in C#.
+				// Note that several other instructions special-case isinst arguments:
+				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types
+				//  comp(isinst T(expr) != null) ==> "expr is T"
+				//  on block level (StatementBuilder.VisitIsInst) => "expr is T"
+				if (SemanticHelper.IsPure(inst.Argument.Flags)) {
+					// We can emulate isinst using
+					//   expr is T ? expr : null
+					return new ConditionalExpression(
+						new IsExpression(arg, ConvertType(inst.Type)).WithILInstruction(inst),
+						arg.Expression.Clone(),
+						new NullReferenceExpression()
+					).WithoutILInstruction().WithRR(new ResolveResult(arg.Type));
+				} else {
+					return ErrorExpression("isinst with value type is only supported in some contexts");
+				}
+			}
 			arg = UnwrapBoxingConversion(arg);
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
@@ -1948,12 +1967,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
 		{
-			var arg = Translate(inst.Argument);
-			if (arg.Type.Equals(inst.Type) && inst.Argument.OpCode == OpCode.IsInst) {
-				// isinst followed by unbox.any of the same type is used for as-casts to generic types
-				return arg.WithILInstruction(inst);
+			TranslatedExpression arg;
+			if (inst.Argument is IsInst isInst && inst.Type.Equals(isInst.Type)) {
+				// unbox.any T(isinst T(expr)) ==> expr as T
+				// This is used for generic types and nullable value types
+				arg = UnwrapBoxingConversion(Translate(isInst.Argument));
+				return new AsExpression(arg, ConvertType(inst.Type))
+					.WithILInstruction(inst)
+					.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
 			}
 
+			arg = Translate(inst.Argument);
 			IType targetType = inst.Type;
 			if (targetType.Kind == TypeKind.TypeParameter) {
 				var rr = resolver.ResolveCast(targetType, arg.ResolveResult);
