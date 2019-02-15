@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				DetectNullSafeArrayToPointer(container);
 				SplitBlocksAtWritesToPinnedLocals(container);
 				foreach (var block in container.Blocks)
-					CreatePinnedRegion(block);
+					DetectPinnedRegion(block);
 				container.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 			}
 			// Sometimes there's leftover writes to the original pinned locals
@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#endregion
 
 		#region CreatePinnedRegion
-		bool CreatePinnedRegion(Block block)
+		bool DetectPinnedRegion(Block block)
 		{
 			// After SplitBlocksAtWritesToPinnedLocals(), only the second-to-last instruction in each block
 			// can be a write to a pinned local.
@@ -274,10 +274,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (stLoc == null || stLoc.Variable.Kind != VariableKind.PinnedLocal)
 				return false;
 			// stLoc is a store to a pinned local.
-			if (IsNullOrZero(stLoc.Value))
+			if (IsNullOrZero(stLoc.Value)) {
 				return false; // ignore unpin instructions
+			}
 			// stLoc is a store that starts a new pinned region
-			
+
+			context.StepStartGroup($"DetectPinnedRegion {stLoc.Variable.Name}", block);
+			try {
+				return CreatePinnedRegion(block, stLoc);
+			} finally {
+				context.StepEndGroup(keepIfEmpty: true);
+			}
+		}
+
+		bool CreatePinnedRegion(Block block, StLoc stLoc)
+		{
 			// Collect the blocks to be moved into the region:
 			BlockContainer sourceContainer = (BlockContainer)block.Parent;
 			int[] reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
@@ -324,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			context.StepStartGroup($"CreatePinnedRegion {stLoc.Variable.Name}", block);
+			context.Step("CreatePinnedRegion", block);
 			BlockContainer body = new BlockContainer();
 			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
 				if (reachedEdgesPerBlock[i] > 0) {
@@ -350,7 +361,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
 			CleanUpTryFinallyAroundPinnedRegion(pinnedRegion);
 			ProcessPinnedRegion(pinnedRegion);
-			context.StepEndGroup(keepIfEmpty: true);
 			return true;
 		}
 
@@ -403,7 +413,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Detect nested pinned regions:
 			BlockContainer body = (BlockContainer)pinnedRegion.Body;
 			foreach (var block in body.Blocks)
-				CreatePinnedRegion(block);
+				DetectPinnedRegion(block);
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 			body.ILRange = body.EntryPoint.ILRange;
 		}
