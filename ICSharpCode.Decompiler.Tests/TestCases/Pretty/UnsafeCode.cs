@@ -28,7 +28,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int X;
 			public double Y;
 		}
-		
+
+		public struct ResultStruct
+		{
+			public unsafe byte* ptr1;
+			public unsafe byte* ptr2;
+
+			public unsafe ResultStruct(byte* ptr1, byte* ptr2)
+			{
+				this.ptr1 = ptr1;
+				this.ptr2 = ptr2;
+			}
+		}
+
 		public struct StructWithFixedSizeMembers
 		{
 			public unsafe fixed int Integers[100];
@@ -386,6 +398,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			shortPtr += 2;
 			bytePtr -= 4;
 			shortPtr = (short*)((byte*)shortPtr - 3);
+		}
+
+		private static T Get<T>()
+		{
+			return default(T);
+		}
+
+		private unsafe static ResultStruct NestedFixedBlocks(byte[] array)
+		{
+			try {
+				fixed (byte* ptr = array) {
+					fixed (byte* ptr2 = Get<byte[]>()) {
+						return new ResultStruct(ptr, ptr2);
+					}
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
 		}
 	}
 }

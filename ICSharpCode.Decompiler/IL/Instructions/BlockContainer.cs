@@ -317,6 +317,20 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 			return true;
 		}
+
+		/// <summary>
+		/// If the container consists of a single block with a single instruction,
+		/// returns that instruction.
+		/// Otherwise returns the block, or the container itself if it has multiple blocks.
+		/// </summary>
+		public ILInstruction SingleInstruction()
+		{
+			if (Blocks.Count != 1)
+				return this;
+			if (Blocks[0].Instructions.Count != 1)
+				return Blocks[0];
+			return Blocks[0].Instructions[0];
+		}
 	}
 
 	public enum ContainerKind

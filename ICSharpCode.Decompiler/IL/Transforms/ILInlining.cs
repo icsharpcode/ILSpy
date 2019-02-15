@@ -367,6 +367,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (parent.Parent.OpCode == OpCode.DynamicCompoundAssign)
 						return true; // inline into dynamic compound assignments
 					break;
+				case OpCode.ArrayToPointer:
 				case OpCode.LocAllocSpan:
 					return true; // inline size-expressions into localloc.span
 			}
