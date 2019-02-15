@@ -589,7 +589,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaiterField = null;
 			state = 0;
 			int pos = block.Instructions.Count - 2;
-			if (doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
+			if (pos >= 0 && doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
 				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
 					  && storeDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
 					  && storeDoFinallyBodies.Variable.Index == doFinallyBodies.Index)) {
@@ -600,9 +600,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos--;
 			}
 
-			if (MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs)) {
+			if (pos >= 0 && MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs)) {
 				// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
-			} else if (MatchCall(block.Instructions[pos], "AwaitOnCompleted", out callArgs)) {
+			} else if (pos >= 0 && MatchCall(block.Instructions[pos], "AwaitOnCompleted", out callArgs)) {
 				// call AwaitOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
 				// The C# compiler emits the non-unsafe call when the awaiter does not implement
 				// ICriticalNotifyCompletion.
