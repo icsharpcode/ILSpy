@@ -1123,21 +1123,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static byte[] ReverseInitializer(int i)
 		{
-#if ROSLYN && OPT
-			byte[] obj = new byte[4];
-			obj[3] = (byte)i;
-			obj[2] = (byte)(i >> 8);
-			obj[1] = (byte)(i >> 16);
-			obj[0] = (byte)(i >> 24);
-			return obj;
-#else
 			byte[] array = new byte[4];
 			array[3] = (byte)i;
 			array[2] = (byte)(i >> 8);
 			array[1] = (byte)(i >> 16);
 			array[0] = (byte)(i >> 24);
 			return array;
-#endif
 		}
 
 		public static void Issue953_MissingNullableSpecifierForArrayInitializer()

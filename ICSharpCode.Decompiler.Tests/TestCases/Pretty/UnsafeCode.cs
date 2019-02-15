@@ -417,5 +417,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Finally");
 			}
 		}
+
+		private unsafe static object CreateBuffer(int length, byte* ptr)
+		{
+			throw new NotImplementedException();
+		}
+
+		private unsafe static object Issue1386(int arraySize, bool createFirstBuffer)
+		{
+			if (createFirstBuffer) {
+				byte[] array = new byte[arraySize];
+				Console.WriteLine("first fixed");
+				fixed (byte* ptr = array) {
+					return CreateBuffer(array.Length, ptr);
+				}
+			}
+
+			byte[] array2 = new byte[arraySize];
+			Console.WriteLine("second fixed");
+			fixed (byte* ptr2 = array2) {
+				return CreateBuffer(array2.Length, ptr2);
+			}
+		}
 	}
 }

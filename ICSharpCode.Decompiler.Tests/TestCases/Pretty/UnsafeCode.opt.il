@@ -1289,6 +1289,104 @@
     IL_0055:  ret
   } // end of method UnsafeCode::NestedFixedBlocks
 
+  .method private hidebysig static object 
+          CreateBuffer(int32 length,
+                       uint8* ptr) cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0005:  throw
+  } // end of method UnsafeCode::CreateBuffer
+
+  .method private hidebysig static object 
+          Issue1386(int32 arraySize,
+                    bool createFirstBuffer) cil managed
+  {
+    // Code size       120 (0x78)
+    .maxstack  2
+    .locals init (uint8[] V_0,
+             uint8& pinned V_1,
+             uint8[] V_2,
+             uint8& pinned V_3,
+             object V_4,
+             uint8[] V_5,
+             uint8[] V_6)
+    IL_0000:  ldarg.1
+    IL_0001:  brfalse.s  IL_003c
+
+    IL_0003:  ldarg.0
+    IL_0004:  newarr     [mscorlib]System.Byte
+    IL_0009:  stloc.0
+    IL_000a:  ldstr      "first fixed"
+    IL_000f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0014:  ldloc.0
+    IL_0015:  dup
+    IL_0016:  stloc.s    V_5
+    IL_0018:  brfalse.s  IL_0020
+
+    IL_001a:  ldloc.s    V_5
+    IL_001c:  ldlen
+    IL_001d:  conv.i4
+    IL_001e:  brtrue.s   IL_0025
+
+    IL_0020:  ldc.i4.0
+    IL_0021:  conv.u
+    IL_0022:  stloc.1
+    IL_0023:  br.s       IL_002e
+
+    IL_0025:  ldloc.s    V_5
+    IL_0027:  ldc.i4.0
+    IL_0028:  ldelema    [mscorlib]System.Byte
+    IL_002d:  stloc.1
+    IL_002e:  ldloc.0
+    IL_002f:  ldlen
+    IL_0030:  conv.i4
+    IL_0031:  ldloc.1
+    IL_0032:  conv.i
+    IL_0033:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::CreateBuffer(int32,
+                                                                                                       uint8*)
+    IL_0038:  stloc.s    V_4
+    IL_003a:  leave.s    IL_0075
+
+    IL_003c:  ldarg.0
+    IL_003d:  newarr     [mscorlib]System.Byte
+    IL_0042:  stloc.2
+    IL_0043:  ldstr      "second fixed"
+    IL_0048:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004d:  ldloc.2
+    IL_004e:  dup
+    IL_004f:  stloc.s    V_6
+    IL_0051:  brfalse.s  IL_0059
+
+    IL_0053:  ldloc.s    V_6
+    IL_0055:  ldlen
+    IL_0056:  conv.i4
+    IL_0057:  brtrue.s   IL_005e
+
+    IL_0059:  ldc.i4.0
+    IL_005a:  conv.u
+    IL_005b:  stloc.3
+    IL_005c:  br.s       IL_0067
+
+    IL_005e:  ldloc.s    V_6
+    IL_0060:  ldc.i4.0
+    IL_0061:  ldelema    [mscorlib]System.Byte
+    IL_0066:  stloc.3
+    IL_0067:  ldloc.2
+    IL_0068:  ldlen
+    IL_0069:  conv.i4
+    IL_006a:  ldloc.3
+    IL_006b:  conv.i
+    IL_006c:  call       object ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::CreateBuffer(int32,
+                                                                                                       uint8*)
+    IL_0071:  stloc.s    V_4
+    IL_0073:  leave.s    IL_0075
+
+    IL_0075:  ldloc.s    V_4
+    IL_0077:  ret
+  } // end of method UnsafeCode::Issue1386
+
   .property instance int32* NullPointer()
   {
     .get instance int32* ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::get_NullPointer()

@@ -359,7 +359,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body) { ILRange = stLoc.ILRange };
 			stLoc.ReplaceWith(pinnedRegion);
 			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
-			CleanUpTryFinallyAroundPinnedRegion(pinnedRegion);
 			ProcessPinnedRegion(pinnedRegion);
 			return true;
 		}
@@ -423,9 +422,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Roslyn started marking the array variable as pinned,
 			// and then uses array.to.pointer immediately within the region.
 			Debug.Assert(pinnedRegion.Variable.Type.Kind == TypeKind.Array);
-			if (pinnedRegion.Variable.StoreInstructions.Count != 1 || pinnedRegion.Variable.AddressCount != 0 || pinnedRegion.Variable.LoadCount != 1)
-				return;
-			var ldloc = pinnedRegion.Variable.LoadInstructions.Single();
+			// Find the single load of the variable within the pinnedRegion:
+			LdLoc ldloc = null;
+			foreach (var inst in pinnedRegion.Descendants.OfType<IInstructionWithVariableOperand>()) {
+				if (inst.Variable == pinnedRegion.Variable && inst != pinnedRegion) {
+					if (ldloc != null)
+						return; // more than 1 variable access
+					ldloc = inst as LdLoc;
+					if (ldloc == null)
+						return; // variable access that is not LdLoc
+				}
+			}
 			if (!(ldloc.Parent is ArrayToPointer arrayToPointer))
 				return;
 			if (!(arrayToPointer.Parent is Conv conv && conv.Kind == ConversionKind.StopGCTracking))
@@ -625,47 +632,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			v.Kind = VariableKind.PinnedLocal;
 			pinnedRegion.Variable = v;
 			body.EntryPoint.Instructions.RemoveAt(0);
-		}
-		#endregion
-
-		#region CleanUpTryFinallyAroundPinnedRegion
-		private void CleanUpTryFinallyAroundPinnedRegion(PinnedRegion pinnedRegion)
-		{
-			if (!(pinnedRegion.Parent is Block tryBlock))
-				return;
-			if (!(tryBlock.Parent is BlockContainer tryContainer))
-				return;
-			if (!(tryContainer.Parent is TryFinally tryFinally))
-				return;
-			//	.try BlockContainer {
-			//		Block IL_001b (incoming: 1) {
-			//			stloc S_11(call GetArray())
-			//			PinnedRegion V_3(ldloc S_11, BlockContainer {
-			//				Block IL_0022 (incoming: 1) {
-			//					stloc V_2(conv ref->i (array.to.pointer(ldloc V_3)))
-			//					...
-			//				}
-			//				...
-			//			})
-			//		}
-			//		...
-			//	} finally BlockContainer {
-			//		Block IL_0043 (incoming: 1) {
-			//			stloc V_3(ldnull)
-			//			leave IL_0043 (nop)
-			//		}
-			//	}
-			if (!(tryFinally.FinallyBlock is BlockContainer finallyContainer))
-				return;
-			if (finallyContainer.Blocks.Count != 1)
-				return;
-			var finallyBlock = finallyContainer.Blocks[0];
-			if (finallyBlock.Instructions[0].MatchStLoc(pinnedRegion.Variable, out var value)
-				&& value.MatchLdNull()) {
-				context.Step("Remove store in finally block", finallyBlock);
-				finallyBlock.Instructions.RemoveAt(0);
-			}
-			return;
 		}
 		#endregion
 	}
