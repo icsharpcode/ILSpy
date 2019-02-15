@@ -11,11 +11,18 @@ using System.Threading;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler.DebugInfo;
+// ReSharper disable InconsistentNaming
 
 namespace ICSharpCode.Decompiler.Console
 {
 	class Program
 	{
+		// https://www.freebsd.org/cgi/man.cgi?query=sysexits&apropos=0&sektion=0&manpath=FreeBSD+4.3-RELEASE&format=html
+		private const int EX_USAGE = 64;
+		private const int EX_DATAERR = 65;
+		private const int EX_NOINPUT = 66;
+		private const int EX_SOFTWARE = 70;
+
 		static int Main(string[] args)
 		{
 			// https://github.com/natemcmaster/CommandLineUtils/
@@ -45,15 +52,15 @@ namespace ICSharpCode.Decompiler.Console
 				}
 				if (!File.Exists(inputAssemblyFileName.Value)) {
 					app.Error.WriteLine($"ERROR: Input file not found.");
-					return -1;
+					return EX_NOINPUT;
 				}
 				if (!outputOption.HasValue() && projectOption.HasValue()) {
 					app.Error.WriteLine($"ERROR: Output directory not speciified.");
-					return -1;
+					return EX_USAGE;
 				}
 				if (outputOption.HasValue() && !Directory.Exists(outputOption.Value())) {
 					app.Error.WriteLine($"ERROR: Output directory '{outputOption.Value()}' does not exist.");
-					return -1;
+					return EX_NOINPUT;
 				}
 				TextWriter output = System.Console.Out;
 				try {
@@ -84,9 +91,8 @@ namespace ICSharpCode.Decompiler.Console
 						} else {
 							pdbFileName = Path.ChangeExtension(inputAssemblyFileName.Value, ".pdb");
 						}
-						GeneratePdbForAssembly(inputAssemblyFileName.Value, pdbFileName, app);
-					}
-					else {
+						return GeneratePdbForAssembly(inputAssemblyFileName.Value, pdbFileName, app);
+					} else {
 						if (outputOption.HasValue()) {
 							string directory = outputOption.Value();
 							string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
@@ -154,16 +160,16 @@ namespace ICSharpCode.Decompiler.Console
 			}
 		}
 
-		static void GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
+		static int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
 		{
-			var module = new PEFile(assemblyFileName, 
-				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read), 
+			var module = new PEFile(assemblyFileName,
+				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read),
 				PEStreamOptions.PrefetchEntireImage,
 				metadataOptions: MetadataReaderOptions.None);
 
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module)) {
 				app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
-				return;
+				return EX_DATAERR;
 			}
 
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
@@ -173,8 +179,11 @@ namespace ICSharpCode.Decompiler.Console
 				} catch (Exception ex) {
 					app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}");
 					app.Error.WriteLine(ex.ToString());
+					return EX_SOFTWARE;
 				}
 			}
+
+			return 0;
 		}
 	}
 }
