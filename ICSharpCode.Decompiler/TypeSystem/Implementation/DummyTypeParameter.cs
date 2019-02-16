@@ -174,5 +174,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasValueTypeConstraint {
 			get { return false; }
 		}
+
+		Nullability ITypeParameter.NullabilityConstraint {
+			get { return Nullability.Oblivious; }
+		}
 	}
 }

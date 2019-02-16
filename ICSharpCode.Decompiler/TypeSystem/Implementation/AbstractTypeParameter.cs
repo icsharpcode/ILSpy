@@ -158,7 +158,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public abstract bool HasDefaultConstructorConstraint { get; }
 		public abstract bool HasReferenceTypeConstraint { get; }
 		public abstract bool HasValueTypeConstraint { get; }
-		
+		public abstract Nullability NullabilityConstraint { get; }
+
 		public TypeKind Kind {
 			get { return TypeKind.TypeParameter; }
 		}

@@ -1724,7 +1724,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Constraint c = new Constraint();
 			c.TypeParameter = new SimpleType (tp.Name);
 			if (tp.HasReferenceTypeConstraint) {
-				c.BaseTypes.Add(new PrimitiveType("class"));
+				if (tp.NullabilityConstraint == Nullability.Nullable) {
+					c.BaseTypes.Add(new PrimitiveType("class").MakeNullableType());
+				} else {
+					c.BaseTypes.Add(new PrimitiveType("class"));
+				}
 			} else if (tp.HasValueTypeConstraint) {
 				c.BaseTypes.Add(new PrimitiveType("struct"));
 			}

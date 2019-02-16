@@ -86,6 +86,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets if the type parameter has the 'struct' constraint.
 		/// </summary>
 		bool HasValueTypeConstraint { get; }
+
+		/// <summary>
+		/// Nullability of the reference type constraint. (e.g. "where T : class?").
+		/// </summary>
+		Nullability NullabilityConstraint { get; }
 	}
 	
 	/// <summary>

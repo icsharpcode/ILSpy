@@ -253,7 +253,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			public override bool HasDefaultConstructorConstraint {
 				get { return baseTp.HasDefaultConstructorConstraint; }
 			}
-			
+
+			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
+
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

@@ -35,6 +35,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		IReadOnlyList<IType> constraints;
+		const byte nullabilityNotYetLoaded = 255;
+		byte nullabilityConstraint = nullabilityNotYetLoaded;
 
 		public static ITypeParameter[] Create(MetadataModule module, ITypeDefinition copyFromOuter, IEntity owner, GenericParameterHandleCollection handles)
 		{
@@ -111,6 +113,37 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool HasDefaultConstructorConstraint => (attr & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
 		public override bool HasReferenceTypeConstraint => (attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
 		public override bool HasValueTypeConstraint => (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
+
+		public override Nullability NullabilityConstraint {
+			get {
+				if (nullabilityConstraint == nullabilityNotYetLoaded) {
+					nullabilityConstraint = (byte)LoadNullabilityConstraint();
+				}
+				return (Nullability)nullabilityConstraint;
+			}
+		}
+
+		Nullability LoadNullabilityConstraint()
+		{
+			if ((module.TypeSystemOptions & TypeSystemOptions.NullabilityAnnotations) == 0)
+				return Nullability.Oblivious;
+
+			var metadata = module.metadata;
+			var gp = metadata.GetGenericParameter(handle);
+
+			foreach (var handle in gp.GetCustomAttributes()) {
+				var customAttribute = metadata.GetCustomAttribute(handle);
+				if (customAttribute.IsKnownAttribute(metadata, KnownAttribute.Nullable)) {
+					var attrVal = customAttribute.DecodeValue(module.TypeProvider);
+					if (attrVal.FixedArguments.Length == 1) {
+						if (attrVal.FixedArguments[0].Value is byte b && b <= 2) {
+							return (Nullability)b;
+						}
+					}
+				}
+			}
+			return Nullability.Oblivious;
+		}
 
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
