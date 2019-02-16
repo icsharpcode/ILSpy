@@ -205,6 +205,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
 			nestedContext.StepEndGroup();
 			function.AddILRange(target.ILRange);
+			function.AddILRange(value.ILRange);
 			function.AddILRange(value.Arguments[1].ILRange);
 			return function;
 		}
