@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			if (Method != null) {
 				output.Write(' ');
@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL
 			void MarkUsedILRanges(ILInstruction inst)
 			{
 				if (CSharp.SequencePointBuilder.HasUsableILRange(inst)) {
-					usedILRanges.Add(new LongInterval(inst.ILRange.Start, inst.ILRange.End));
+					usedILRanges.Add(new LongInterval(inst.StartILOffset, inst.EndILOffset));
 				}
 				if (!(inst is ILFunction)) {
 					foreach (var child in inst.Children) {

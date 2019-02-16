@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value) { ILRange = inst.ILRange });
+				inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 				return true;
 			}
 			return false;
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& !inst.IsVolatile)
 			{
 				context.Step($"ldobj(ldloca {v.Name}) => ldloc {v.Name}", inst);
-				inst.ReplaceWith(new LdLoc(v) { ILRange = inst.ILRange });
+				inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
 				return true;
 			}
 			return false;
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// call(ref, ...)
 				// => stobj(ref, newobj(...))
 				var newObj = new NewObj(inst.Method);
-				newObj.ILRange = inst.ILRange;
+				newObj.AddILRange(inst);
 				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
 				newObj.ILStackWasEmpty = inst.ILStackWasEmpty;
 				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);

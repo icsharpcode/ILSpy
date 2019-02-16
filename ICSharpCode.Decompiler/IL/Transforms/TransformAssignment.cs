@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return false;
 			}
-			newInst.AddILRange(setterValue.ILRange);
+			newInst.AddILRange(setterValue);
 			if (storeInSetter != null) {
 				storeInSetter.Value = newInst;
 				newInst = storeInSetter;

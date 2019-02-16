@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						for (int k = j + 1; k < block.Instructions.Count; k++) {
 							newBlock.Instructions.Add(block.Instructions[k]);
 						}
-						newBlock.ILRange = newBlock.Instructions[0].ILRange;
+						newBlock.AddILRange(newBlock.Instructions[0]);
 						block.Instructions.RemoveRange(j + 1, newBlock.Instructions.Count);
 						block.Instructions.Add(new Branch(newBlock));
 						container.Blocks.Insert(i + 1, newBlock);
@@ -147,9 +147,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (p.StackType != StackType.Ref) {
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
 					}
-					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer) {
-						ILRange = block.Instructions[block.Instructions.Count - 2].ILRange
-					};
+					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer)
+						.WithILRange(block.Instructions[block.Instructions.Count - 2]);
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
@@ -356,7 +355,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
-			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body) { ILRange = stLoc.ILRange };
+			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body).WithILRange(stLoc);
 			stLoc.ReplaceWith(pinnedRegion);
 			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
 			ProcessPinnedRegion(pinnedRegion);
@@ -414,7 +413,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var block in body.Blocks)
 				DetectPinnedRegion(block);
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
-			body.ILRange = body.EntryPoint.ILRange;
+			body.SetILRange(body.EntryPoint);
 		}
 
 		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)
@@ -447,8 +446,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newVar.HasGeneratedName = oldVar.HasGeneratedName;
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
-			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init) { ILRange = arrayToPointer.ILRange };
-			conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init).WithILRange(arrayToPointer);
+			conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 		}
 
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
@@ -457,8 +456,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar) && conv.ResultType == newVar.StackType) {
 				// conv ref->i (ldloc oldVar)
 				//  => ldloc newVar
-				conv.AddILRange(conv.Argument.ILRange);
-				conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+				conv.AddILRange(conv.Argument);
+				conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 				return;
 			}
 			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == oldVar) {

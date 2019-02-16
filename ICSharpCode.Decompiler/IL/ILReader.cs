@@ -389,8 +389,8 @@ namespace ICSharpCode.Decompiler.IL
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
 				int end = reader.Offset;
-				decodedInstruction.ILRange = new Interval(start, end);
-				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
+				decodedInstruction.AddILRange(new Interval(start, end));
+				UnpackPush(decodedInstruction).AddILRange(decodedInstruction);
 				instructionBuilder.Add(decodedInstruction);
 				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(end, out currentStack)) {
@@ -429,8 +429,7 @@ namespace ICSharpCode.Decompiler.IL
 						value = new Conv(value, additionalVar.StackType.ToPrimitiveType(), false, Sign.Signed);
 						newInstructions.Add(new StLoc(additionalVar, value) {
 							IsStackAdjustment = true,
-							ILRange = inst.ILRange
-						});
+						}.WithILRange(inst));
 					}
 				}
 			}
@@ -454,7 +453,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				output.Write("   [");
 				bool isFirstElement = true;
-				foreach (var element in stackByOffset[inst.ILRange.Start]) {
+				foreach (var element in stackByOffset[inst.StartILOffset]) {
 					if (isFirstElement)
 						isFirstElement = false;
 					else
@@ -465,11 +464,11 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				output.Write(']');
 				output.WriteLine();
-				if (isBranchTarget[inst.ILRange.Start])
+				if (isBranchTarget[inst.StartILOffset])
 					output.Write('*');
 				else
 					output.Write(' ');
-				output.WriteLocalReference("IL_" + inst.ILRange.Start.ToString("x4"), inst.ILRange.Start, isDefinition: true);
+				output.WriteLocalReference("IL_" + inst.StartILOffset.ToString("x4"), inst.StartILOffset, isDefinition: true);
 				output.Write(": ");
 				inst.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();
@@ -1033,7 +1032,7 @@ namespace ICSharpCode.Decompiler.IL
 					var variable = unionFind.Find(inst.Variable);
 					if (variables.Add(variable))
 						variable.Name = "S_" + (variables.Count - 1);
-					return new LdLoc(variable) { ILRange = inst.ILRange };
+					return new LdLoc(variable).WithILRange(inst);
 				}
 				return inst;
 			}
@@ -1045,7 +1044,7 @@ namespace ICSharpCode.Decompiler.IL
 					var variable = unionFind.Find(inst.Variable);
 					if (variables.Add(variable))
 						variable.Name = "S_" + (variables.Count - 1);
-					return new StLoc(variable, inst.Value) { ILRange = inst.ILRange };
+					return new StLoc(variable, inst.Value).WithILRange(inst);
 				}
 				return inst;
 			}
@@ -1064,7 +1063,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Peek()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidExpression("Stack underflow") { ILRange = new Interval(reader.Offset, reader.Offset) };
+				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
 			}
 			return new LdLoc(currentStack.Peek());
 		}
@@ -1072,7 +1071,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Pop()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidExpression("Stack underflow") { ILRange = new Interval(reader.Offset, reader.Offset) };
+				return new InvalidExpression("Stack underflow").WithILRange(new Interval(reader.Offset, reader.Offset));
 			}
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
@@ -1490,7 +1489,7 @@ namespace ICSharpCode.Decompiler.IL
 			int start = reader.Offset - 1; // opCode is always one byte in this case
 			int target = ILParser.DecodeBranchTarget(ref reader, opCode);
 			var condition = Comparison(kind, un);
-			condition.ILRange = new Interval(start, reader.Offset);
+			condition.AddILRange(new Interval(start, reader.Offset));
 			if (!IsInvalidBranch(target)) {
 				MarkBranchTarget(target);
 				return new IfInstruction(condition, new Branch(target));

@@ -40,11 +40,11 @@ namespace ICSharpCode.Decompiler.IL
 		public Branch(Block targetBlock) : base(OpCode.Branch)
 		{
 			this.targetBlock = targetBlock ?? throw new ArgumentNullException(nameof(targetBlock));
-			this.targetILOffset = targetBlock.ILRange.Start;
+			this.targetILOffset = targetBlock.StartILOffset;
 		}
 		
 		public int TargetILOffset {
-			get { return targetBlock != null ? targetBlock.ILRange.Start : targetILOffset; }
+			get { return targetBlock != null ? targetBlock.StartILOffset : targetILOffset; }
 		}
 		
 		public Block TargetBlock {
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			output.WriteLocalReference(TargetLabel, (object)targetBlock ?? TargetILOffset);

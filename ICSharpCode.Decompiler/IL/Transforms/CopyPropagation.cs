@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						} else {
 							// evaluate the value for its side-effects
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
-							copiedExpr.AddILRange(block.Instructions[i].ILRange);
+							copiedExpr.AddILRange(block.Instructions[i]);
 							block.Instructions[i] = copiedExpr;
 						}
 					} else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var arg = copiedExpr.Children[j];
 				var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType) {
-					Name = "C_" + arg.ILRange.Start,
+					Name = "C_" + arg.StartILOffset,
 					HasGeneratedName = true,
 				};
 				block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));

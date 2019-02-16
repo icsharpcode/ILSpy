@@ -649,10 +649,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private BlockContainer ConvertBody(BlockContainer oldBody, StateRangeAnalysis rangeAnalysis)
 		{
 			var blockStateMap = rangeAnalysis.GetBlockStateSetMapping(oldBody);
-			BlockContainer newBody = new BlockContainer() { ILRange = oldBody.ILRange };
+			BlockContainer newBody = new BlockContainer().WithILRange(oldBody);
 			// create all new blocks so that they can be referenced by gotos
 			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++) {
-				newBody.Blocks.Add(new Block { ILRange = oldBody.Blocks[blockIndex].ILRange });
+				newBody.Blocks.Add(new Block().WithILRange(oldBody.Blocks[blockIndex]));
 			}
 			// convert contents of blocks
 
@@ -670,14 +670,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								// We keep the state-changing instruction around (as first instruction of the new block)
 								// for reconstructing the try-finallys. 
 							} else {
-								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field") {
-									ILRange = oldInst.ILRange
-								});
+								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field").WithILRange(oldInst));
 								continue; // don't copy over this instruction, but continue with the basic block
 							}
 						} else if (field.MemberDefinition.Equals(currentField)) {
 							// create yield return
-							newBlock.Instructions.Add(new YieldReturn(value) { ILRange = oldInst.ILRange });
+							newBlock.Instructions.Add(new YieldReturn(value).WithILRange(oldInst));
 							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex + 1);
 							break; // we're done with this basic block
 						}
@@ -696,7 +694,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					// copy over the instruction to the new block
 					newBlock.Instructions.Add(oldInst);
-					newBlock.AddILRange(oldInst.ILRange);
+					newBlock.AddILRange(oldInst);
 					UpdateBranchTargets(oldInst);
 				}
 			}
@@ -781,7 +779,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				if (newBlock.Instructions.Count > 0) {
 					var newBlock2 = new Block();
-					newBlock2.ILRange = new Interval(oldInst.ILRange.Start, oldInst.ILRange.Start);
+					newBlock2.AddILRange(new Interval(oldInst.StartILOffset, oldInst.StartILOffset));
 					newBody.Blocks.Add(newBlock2);
 					newBlock.Instructions.Add(new Branch(newBlock2));
 					newBlock = newBlock2;
@@ -821,9 +819,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							}
 							if (value.MatchLdcI4(0)) {
 								// yield break
-								leave.ReplaceWith(new Leave(newBody) { ILRange = leave.ILRange });
+								leave.ReplaceWith(new Leave(newBody).WithILRange(leave));
 							} else {
-								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()") { ILRange = leave.ILRange });
+								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()").WithILRange(leave));
 							}
 						} else {
 							if (leave.TargetContainer == oldBody) {
@@ -861,25 +859,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (v.StackType == StackType.Ref) {
 					Debug.Assert(v.Kind == VariableKind.Parameter && v.Index < 0); // this pointer
-					inst.ReplaceWith(new LdLoc(v) { ILRange = inst.ILRange });
+					inst.ReplaceWith(new LdLoc(v).WithILRange(inst));
 				} else {
-					inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
+					inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 				}
 			} else if (!isCompiledWithMono && inst.MatchLdThis()) {
-				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType, ILRange = inst.ILRange });
+				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType }.WithILRange(inst));
 			} else {
 				foreach (var child in inst.Children) {
 					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap, isCompiledWithMono);
 				}
 				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null) {
 					LdLoc ldloc = new LdLoc(ldloca.Variable);
-					ldloc.AddILRange(ldobj.ILRange);
-					ldloc.AddILRange(ldloca.ILRange);
+					ldloc.AddILRange(ldobj);
+					ldloc.AddILRange(ldloca);
 					inst.ReplaceWith(ldloc);
 				} else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null) {
 					StLoc stloc = new StLoc(ldloca2.Variable, stobj.Value);
-					stloc.AddILRange(stobj.ILRange);
-					stloc.AddILRange(ldloca2.ILRange);
+					stloc.AddILRange(stobj);
+					stloc.AddILRange(ldloca2);
 					inst.ReplaceWith(stloc);
 				}
 			}
@@ -988,11 +986,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finallyMethodToStateRange.Remove(finallyMethod);
 
 				var tryBlock = new Block();
-				tryBlock.ILRange = block.ILRange;
+				tryBlock.AddILRange(block);
 				tryBlock.Instructions.AddRange(block.Instructions);
 				var tryBlockContainer = new BlockContainer();
 				tryBlockContainer.Blocks.Add(tryBlock);
-				tryBlockContainer.ILRange = tryBlock.ILRange;
+				tryBlockContainer.AddILRange(tryBlock);
 				stateToContainer.Add(state, tryBlockContainer);
 
 				ILInstruction finallyBlock;
@@ -1006,7 +1004,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				block.Instructions.Clear();
-				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock) { ILRange = tryBlockContainer.ILRange});
+				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock).WithILRange(tryBlockContainer));
 			}
 
 			IMethod FindFinallyMethod(int state)

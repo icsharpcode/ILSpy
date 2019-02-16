@@ -76,9 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return new CallIndirect(CallingConvention, ReturnType, ParameterTypes,
 				this.Arguments.Select(inst => inst.Clone()), functionPointer.Clone()
-			) {
-				ILRange = this.ILRange
-			};
+			).WithILRange(this);
 		}
 
 		public override StackType ResultType => ReturnType.GetStackType();
@@ -91,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write("call.indirect ");
 			ReturnType.WriteTo(output);
 			output.Write('(');

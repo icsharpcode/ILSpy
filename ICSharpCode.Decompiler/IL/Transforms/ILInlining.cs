@@ -106,14 +106,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ctorCallStart = function.Descendants.FirstOrDefault(d => d is CallInstruction call && !(call is NewObj)
 						&& call.Method.IsConstructor
 						&& call.Method.DeclaringType.IsReferenceType == true
-						&& call.Parent is Block)?.ILRange.Start ?? -1;
+						&& call.Parent is Block)?.StartILOffset ?? -1;
 			}
-			if (inst.ILRange.InclusiveEnd >= ctorCallStart.GetValueOrDefault())
+			if (inst.EndILOffset > ctorCallStart.GetValueOrDefault())
 				return false;
 			var topLevelInst = inst.Ancestors.LastOrDefault(instr => instr.Parent is Block);
 			if (topLevelInst == null)
 				return false;
-			return topLevelInst.ILRange.InclusiveEnd < ctorCallStart.GetValueOrDefault();
+			return topLevelInst.EndILOffset <= ctorCallStart.GetValueOrDefault();
 		}
 
 		internal static bool IsCatchWhenBlock(Block block)
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			int pos = stloc.ChildIndex;
 			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), options, context)) {
 				// Assign the ranges of the stloc instruction:
-				stloc.Value.AddILRange(stloc.ILRange);
+				stloc.Value.AddILRange(stloc);
 				// Remove the stloc instruction:
 				Debug.Assert(block.Instructions[pos] == stloc);
 				block.Instructions.RemoveAt(pos);
@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else if (v.Kind == VariableKind.StackSlot) {
 					context.Step("Remove dead store, but keep expression", stloc);
 					// Assign the ranges of the stloc instruction:
-					stloc.Value.AddILRange(stloc.ILRange);
+					stloc.Value.AddILRange(stloc);
 					// Remove the stloc, but keep the inner expression
 					stloc.ReplaceWith(stloc.Value);
 					return true;
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				context.Step($"Inline variable '{v.Name}'", inlinedExpression);
 				// Assign the ranges of the ldloc instruction:
-				inlinedExpression.AddILRange(loadInst.ILRange);
+				inlinedExpression.AddILRange(loadInst);
 				
 				if (loadInst.OpCode == OpCode.LdLoca) {
 					// it was an ldloca instruction, so we need to use the pseudo-opcode 'addressof'

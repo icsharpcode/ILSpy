@@ -136,9 +136,9 @@ namespace ICSharpCode.Decompiler.IL
 			
 			Debug.Assert(ifInst != block.Instructions.Last());
 
-			var trueRange = ConditionDetection.GetILRange(ifInst.TrueInst);
-			var falseRange = ConditionDetection.GetILRange(block.Instructions[block.Instructions.IndexOf(ifInst)+1]);
-			if (!trueRange.IsEmpty && !falseRange.IsEmpty && falseRange.Start < trueRange.Start)
+			var trueRangeStart = ConditionDetection.GetStartILOffset(ifInst.TrueInst, out bool trueRangeIsEmpty);
+			var falseRangeStart = ConditionDetection.GetStartILOffset(block.Instructions[block.Instructions.IndexOf(ifInst)+1], out bool falseRangeIsEmpty);
+			if (!trueRangeIsEmpty && !falseRangeIsEmpty && falseRangeStart < trueRangeStart)
 				ConditionDetection.InvertIf(block, ifInst, context);
 		}
 

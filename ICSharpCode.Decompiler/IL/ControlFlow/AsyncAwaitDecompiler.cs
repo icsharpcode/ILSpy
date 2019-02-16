@@ -504,9 +504,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == setResultAndExitBlock) {
-					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)) {
-						ILRange = branch.ILRange
-					});
+					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)).WithILRange(branch));
 				}
 			}
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
@@ -526,9 +524,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
 				if (moveNextLeaves.Contains(leave)) {
 					leave.ReplaceWith(new InvalidBranch {
-						Message = "leave MoveNext - await not detected correctly",
-						ILRange = leave.ILRange
-					});
+						Message = "leave MoveNext - await not detected correctly"
+					}.WithILRange(leave));
 				}
 			}
 			// Delete dead loads of the state cache variable:
@@ -951,7 +948,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// if there's any remaining loads (there shouldn't be), replace them with the constant 1
 			foreach (LdLoc load in doFinallyBodies.LoadInstructions.ToArray()) {
-				load.ReplaceWith(new LdcI4(1) { ILRange = load.ILRange });
+				load.ReplaceWith(new LdcI4(1).WithILRange(load));
 			}
 			context.StepEndGroup(keepIfEmpty: true);
 		}

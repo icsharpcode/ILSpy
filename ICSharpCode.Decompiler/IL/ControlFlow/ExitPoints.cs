@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				currentExit = ChooseExit(potentialExits);
 				foreach (var exit in potentialExits) {
 					if (CompatibleExitInstruction(currentExit, exit)) {
-						exit.ReplaceWith(new Leave(currentContainer) { ILRange = exit.ILRange });
+						exit.ReplaceWith(new Leave(currentContainer).WithILRange(exit));
 					}
 				}
 				Debug.Assert(!currentExit.MatchLeave(currentContainer));
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (currentExit == ExitNotYetDetermined && CanIntroduceAsExit(inst)) {
 				potentialExits.Add(inst);
 			} else if (CompatibleExitInstruction(inst, currentExit)) {
-				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
+				inst.ReplaceWith(new Leave(currentContainer).WithILRange(inst));
 			}
 		}
 

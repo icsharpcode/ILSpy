@@ -2917,8 +2917,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";
-			if (inst.ILRange.Start != 0) {
-				message += $" near IL_{inst.ILRange.Start:x4}";
+			if (inst.StartILOffset != 0) {
+				message += $" near IL_{inst.StartILOffset:x4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;
@@ -2929,8 +2929,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
 		{
 			string message = "Error";
-			if (inst.ILRange.Start != 0) {
-				message += $" near IL_{inst.ILRange.Start:x4}";
+			if (inst.StartILOffset != 0) {
+				message += $" near IL_{inst.StartILOffset:x4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;
