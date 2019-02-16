@@ -204,6 +204,7 @@
 
   <ItemGroup>
     <Content Include="TestCases\PdbGen\HelloWorld.xml" />
+    <Content Include="TestCases\PdbGen\LambdaCapturing.xml" />
   </ItemGroup>
 
   <ItemGroup>

@@ -29,6 +29,13 @@ namespace ICSharpCode.Decompiler.Tests
 			TestGeneratePdb();
 		}
 
+		[Test]
+		[Ignore("differences in il ranges")]
+		public void LambdaCapturing()
+		{
+			TestGeneratePdb();
+		}
+
 		private void TestGeneratePdb([CallerMemberName] string testName = null)
 		{
 			const PdbToXmlOptions options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.ThrowOnError | PdbToXmlOptions.IncludeTokens | PdbToXmlOptions.ResolveTokens | PdbToXmlOptions.IncludeMethodSpans;
@@ -59,20 +66,27 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 				}
 			}
-			ProcessXmlFile(Path.ChangeExtension(pdbFileName, ".xml"));
-			ProcessXmlFile(Path.ChangeExtension(xmlFile, ".generated.xml"));
-			Assert.AreEqual(File.ReadAllText(xmlFile), File.ReadAllText(Path.ChangeExtension(xmlFile, ".generated.xml")));
+			string expectedFileName = Path.ChangeExtension(xmlFile, ".expected.xml");
+			ProcessXmlFile(expectedFileName);
+			string generatedFileName = Path.ChangeExtension(xmlFile, ".generated.xml");
+			ProcessXmlFile(generatedFileName);
+			Assert.AreEqual(Normalize(expectedFileName), Normalize(generatedFileName));
 		}
 
-		private void ProcessXmlFile(string v)
+		private void ProcessXmlFile(string fileName)
 		{
-			var document = XDocument.Load(v);
+			var document = XDocument.Load(fileName);
 			foreach (var file in document.Descendants("file")) {
 				file.Attribute("checksum").Remove();
 				file.Attribute("embeddedSourceLength").Remove();
 				file.ReplaceNodes(new XCData(file.Value.Replace("\uFEFF", "")));
 			}
-			document.Save(v, SaveOptions.None);
+			document.Save(fileName, SaveOptions.None);
+		}
+
+		private string Normalize(string inputFileName)
+		{
+			return File.ReadAllText(inputFileName).Replace("\r\n", "\n").Replace("\r", "\n");
 		}
 	}
 
