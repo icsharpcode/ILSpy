@@ -49,7 +49,6 @@ Remarks:
 		public bool CreteDebugInfoFlag { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		[AllowedValues("c", "i", "s", "d", "e", "class", "interface", "struct", "delegate", "enum", IgnoreCase = true)]
 		public string[] EntityTypes { get; } = new string[0];
 
 		[Option("-v|--version", "Show version of ICSharpCode.Decompiler used.", CommandOptionType.NoValue)]
