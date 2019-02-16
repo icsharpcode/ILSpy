@@ -25,7 +25,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 	{
 		public readonly ImportScopeInfo Parent;
 		public ImportScopeHandle Handle;
-		public readonly HashSet<MethodDefinitionHandle> MethodDefinitions = new HashSet<MethodDefinitionHandle>();
 		public readonly HashSet<string> Imports = new HashSet<string>();
 
 		public ImportScopeInfo()

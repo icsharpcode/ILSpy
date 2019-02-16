@@ -17,11 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -94,6 +96,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		// across the yield point.
 		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
 
+		int catchHandlerOffset;
+		List<AsyncDebugInfo.Await> awaitDebugInfos = new List<AsyncDebugInfo.Await>();
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AsyncAwait)
@@ -102,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
+			awaitDebugInfos.Clear();
 			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function))
 				return;
@@ -135,6 +141,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			AwaitInCatchTransform.Run(function, context);
 			AwaitInFinallyTransform.Run(function, context);
+
+			awaitDebugInfos.SortBy(row => row.YieldOffset);
+			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
 		}
 
 		private void CleanUpBodyOfMoveNext(ILFunction function)
@@ -427,6 +436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
 			var catchBlock = YieldReturnDecompiler.SingleBlock(handler.Body);
+			catchHandlerOffset = catchBlock.ILRange.Start;
 			if (catchBlock?.Instructions.Count != 4)
 				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
@@ -488,6 +498,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Inline body of MoveNext()", function);
 			function.Body = mainTryCatch.TryBlock;
 			function.AsyncReturnType = underlyingReturnType;
+			function.MoveNextMethod = moveNextFunction.Method;
+			function.CodeSize = moveNextFunction.CodeSize;
 			moveNextFunction.Variables.Clear();
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
@@ -555,10 +567,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					context.CancellationToken.ThrowIfCancellationRequested();
 					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave)) {
 						// This is likely an 'await' block
-						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
+						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out int state, out int yieldOffset)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null) {
+								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.ILRange.Start));
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
 								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
@@ -583,11 +596,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state)
+		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
 		{
 			awaiter = null;
 			awaiterField = null;
 			state = 0;
+			yieldOffset = -1;
 			int pos = block.Instructions.Count - 2;
 			if (pos >= 0 && doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
 				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
@@ -638,6 +652,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!value.MatchLdLoc(awaiter))
 				return false;
 			pos--;
+			// Store IL offset for debug info:
+			yieldOffset = block.Instructions[pos].ILRange.End;
+
 			// stloc S_10(ldloc this)
 			// stloc S_11(ldc.i4 0)
 			// stloc cachedStateVar(ldloc S_11)
