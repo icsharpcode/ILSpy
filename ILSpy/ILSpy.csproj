@@ -49,6 +49,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
     <PackageReference Include="Mono.Cecil" Version="0.10.3" />
   </ItemGroup>
@@ -106,6 +107,7 @@
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\ILSpyCommands.cs" />
     <Compile Include="Commands\OpenListCommand.cs" />
+    <Compile Include="Commands\Pdb2XmlCommand.cs" />
     <Compile Include="Commands\RemoveAssembliesWithLoadErrors.cs" />
     <Compile Include="Commands\ShowDebugSteps.cs" />
     <Compile Include="Commands\SortAssemblyListCommand.cs" />
