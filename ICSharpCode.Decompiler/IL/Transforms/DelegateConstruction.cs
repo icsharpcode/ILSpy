@@ -46,10 +46,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (inst is NewObj call) {
 					context.StepStartGroup($"TransformDelegateConstruction {call.ILRange}", call);
 					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-					if (f != null) {
-						call.ReplaceWith(f);
-						if (target is IInstructionWithVariableOperand)
-							targetsToReplace.Add((IInstructionWithVariableOperand)target);
+					if (f != null && target is IInstructionWithVariableOperand instWithVar) {
+						if (instWithVar.Variable.Kind == VariableKind.Local) {
+							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
+						}
+						targetsToReplace.Add(instWithVar);
 					}
 					context.StepEndGroup();
 				}
@@ -186,6 +187,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
+			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
+			// how the lambda body is being transformed.
+			value.ReplaceWith(function);
 
 			var contextPrefix = targetMethod.Name;
 			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
@@ -194,6 +198,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
+			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);

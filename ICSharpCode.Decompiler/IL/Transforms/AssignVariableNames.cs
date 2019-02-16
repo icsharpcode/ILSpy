@@ -135,12 +135,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			// remove unused variables before assigning names
 			function.Variables.RemoveDead();
+			int numDisplayClassLocals = 0;
 			foreach (var v in function.Variables) {
 				switch (v.Kind) {
 					case VariableKind.Parameter: // ignore
 						break;
 					case VariableKind.InitializerTarget: // keep generated names
 						AddExistingName(reservedVariableNames, v.Name);
+						break;
+					case VariableKind.DisplayClassLocal:
+						v.Name = "CS$<>8__locals" + (numDisplayClassLocals++);
 						break;
 					default:
 						if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {

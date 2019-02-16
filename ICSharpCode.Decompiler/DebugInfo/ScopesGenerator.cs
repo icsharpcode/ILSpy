@@ -60,20 +60,13 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				var firstLocalVariable = MetadataTokens.LocalVariableHandle(nextRow);
 				
 				foreach (var local in localScope.Locals.OrderBy(l => l.Index)) {
-					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index.Value, metadata.GetOrAddString(local.Name));
+					var name = local.Name != null ? metadata.GetOrAddString(local.Name) : default;
+					metadata.AddLocalVariable(LocalVariableAttributes.None, local.Index.Value, name);
 				}
 
 				metadata.AddLocalScope(localScope.Method, localScope.Import.Handle, firstLocalVariable,
 					default, localScope.Offset, localScope.Length);
 			}
-		}
-
-		private static bool IsSupported(VariableKind kind)
-		{
-			return kind == VariableKind.Local
-				|| kind == VariableKind.PinnedLocal
-				|| kind == VariableKind.UsingLocal
-				|| kind == VariableKind.ForeachLocal;
 		}
 
 		static BlobHandle EncodeImports(MetadataBuilder metadata, ImportScopeInfo scope)
@@ -192,18 +185,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					new TypeSystem.GenericContext(function.Method));
 
 				foreach (var v in function.Variables) {
-					if (v.Index == null)
-						continue;
-					switch (v.Kind) {
-						case VariableKind.Local:
-						case VariableKind.PinnedLocal:
-						case VariableKind.UsingLocal:
-						case VariableKind.ForeachLocal:
-							Debug.Assert(v.Index < types.Length && v.Type.Equals(types[v.Index.Value]));
-							localVariables.Add(v);
-							break;
-						default:
-							continue;
+					if (v.Index != null && v.Kind.IsLocal()) {
+						Debug.Assert(v.Index < types.Length && v.Type.Equals(types[v.Index.Value]));
+						localVariables.Add(v);
 					}
 				}
 			}

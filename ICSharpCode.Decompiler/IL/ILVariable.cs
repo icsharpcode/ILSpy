@@ -66,6 +66,28 @@ namespace ICSharpCode.Decompiler.IL
 		/// Variable in BlockKind.CallWithNamedArgs
 		/// </summary>
 		NamedArgument,
+		/// <summary>
+		/// Local variable that holds the display class used for lambdas within this function.
+		/// </summary>
+		DisplayClassLocal,
+	}
+
+	static class VariableKindExtensions
+	{
+		public static bool IsLocal(this VariableKind kind)
+		{
+			switch (kind) {
+				case VariableKind.Local:
+				case VariableKind.ExceptionLocal:
+				case VariableKind.ForeachLocal:
+				case VariableKind.UsingLocal:
+				case VariableKind.PinnedLocal:
+				case VariableKind.DisplayClassLocal:
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 
 	[DebuggerDisplay("{Name} : {Type}")]
@@ -80,6 +102,8 @@ namespace ICSharpCode.Decompiler.IL
 			internal set {
 				if (kind == VariableKind.Parameter)
 					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
+				if (Index != null && value.IsLocal())
+					Debug.Assert(kind.IsLocal());
 				kind = value;
 			}
 		}
@@ -120,6 +144,7 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.PinnedLocal:
 				case VariableKind.UsingLocal:
 				case VariableKind.ExceptionLocal:
+				case VariableKind.DisplayClassLocal:
 					// in range of LocalVariableSignature
 					Debug.Assert(Index == null || Index >= 0);
 					break;
@@ -302,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Set when the variable is from a 'yield return' or 'async' state machine.
 		/// </summary>
 		public IField StateMachineField;
-		
+
 		public ILVariable(VariableKind kind, IType type, int? index = null)
 		{
 			if (type == null)
@@ -366,6 +391,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case VariableKind.NamedArgument:
 					output.Write("named_arg ");
+					break;
+				case VariableKind.DisplayClassLocal:
+					output.Write("display_class local ");
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
