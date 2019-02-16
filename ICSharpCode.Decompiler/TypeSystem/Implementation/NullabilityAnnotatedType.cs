@@ -1,22 +1,30 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
-	public sealed class NullabilityAnnotatedType : DecoratedType, IType
+	/// <summary>
+	/// A decorator that annotates the nullability status for a type.
+	/// Note: ArrayType does not use a decorator, but has direct support for nullability.
+	/// </summary>
+	public class NullabilityAnnotatedType : DecoratedType, IType
 	{
 		readonly Nullability nullability;
 
 		internal NullabilityAnnotatedType(IType type, Nullability nullability)
 			: base(type)
 		{
-			Debug.Assert(nullability != Nullability.Oblivious);
-			Debug.Assert(!(type is ParameterizedType || type is NullabilityAnnotatedType));
+			Debug.Assert(nullability != type.Nullability);
+			// Due to IType -> concrete type casts all over the type system, we can insert
+			// the NullabilityAnnotatedType wrapper only in some limited places.
+			Debug.Assert(type is ITypeDefinition
+				|| (type is ITypeParameter && this is ITypeParameter));
 			this.nullability = nullability;
 		}
 
 		public Nullability Nullability => nullability;
 
-		public IType ElementType => baseType;
+		public IType TypeWithoutAnnotation => baseType;
 
 		public override IType AcceptVisitor(TypeVisitor visitor)
 		{
@@ -42,14 +50,48 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			IType newBase = baseType.AcceptVisitor(visitor);
 			if (newBase != baseType)
-				return new NullabilityAnnotatedType(newBase, nullability);
+				return newBase.ChangeNullability(nullability);
 			else
 				return this;
 		}
 
 		public override string ToString()
 		{
-			return baseType.ToString() + (nullability == Nullability.Nullable ? "?" : "!");
+			switch (nullability) {
+				case Nullability.Nullable:
+					return $"{baseType.ToString()}?";
+				case Nullability.NotNullable:
+					return $"{baseType.ToString()}!";
+				default:
+					Debug.Assert(nullability == Nullability.Oblivious);
+					return $"{baseType.ToString()}~";
+			}
 		}
+	}
+
+	public sealed class NullabilityAnnotatedTypeParameter : NullabilityAnnotatedType, ITypeParameter
+	{
+		readonly new ITypeParameter baseType;
+
+		internal NullabilityAnnotatedTypeParameter(ITypeParameter type, Nullability nullability)
+			: base(type, nullability)
+		{
+			this.baseType = type;
+		}
+
+		SymbolKind ITypeParameter.OwnerType => baseType.OwnerType;
+		IEntity ITypeParameter.Owner => baseType.Owner;
+		int ITypeParameter.Index => baseType.Index;
+		string ITypeParameter.Name => baseType.Name;
+		string ISymbol.Name => baseType.Name;
+		VarianceModifier ITypeParameter.Variance => baseType.Variance;
+		IType ITypeParameter.EffectiveBaseClass => baseType.EffectiveBaseClass;
+		IReadOnlyCollection<IType> ITypeParameter.EffectiveInterfaceSet => baseType.EffectiveInterfaceSet;
+		bool ITypeParameter.HasDefaultConstructorConstraint => baseType.HasDefaultConstructorConstraint;
+		bool ITypeParameter.HasReferenceTypeConstraint => baseType.HasReferenceTypeConstraint;
+		bool ITypeParameter.HasValueTypeConstraint => baseType.HasValueTypeConstraint;
+		Nullability ITypeParameter.NullabilityConstraint => baseType.NullabilityConstraint;
+		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
+		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => baseType.GetAttributes();
 	}
 }

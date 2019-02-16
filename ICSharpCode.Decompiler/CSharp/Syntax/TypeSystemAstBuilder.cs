@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
 			}
 			if (type is NullabilityAnnotatedType nat) {
-				var astType = ConvertType(nat.ElementType);
+				var astType = ConvertType(nat.TypeWithoutAnnotation);
 				if (nat.Nullability == Nullability.Nullable)
 					astType = astType.MakeNullableType();
 				return astType;

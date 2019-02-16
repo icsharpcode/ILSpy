@@ -193,14 +193,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 
 		bool IType.IsByRefLike => false;
-		public Nullability Nullability => Nullability.Oblivious;
+		Nullability IType.Nullability => NullabilityConstraint;
 
 		public IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == Nullability.Oblivious)
+			if (nullability == NullabilityConstraint)
 				return this;
 			else
-				return new NullabilityAnnotatedType(this, nullability);
+				return new NullabilityAnnotatedTypeParameter(this, nullability);
 		}
 
 		IType IType.DeclaringType {

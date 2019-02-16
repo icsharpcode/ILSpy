@@ -72,9 +72,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 		{
 			if (RemoveNullability)
-				return type.ElementType.AcceptVisitor(this);
+				return base.VisitNullabilityAnnotatedType(type).ChangeNullability(Nullability.Oblivious);
 			else
 				return base.VisitNullabilityAnnotatedType(type);
+		}
+
+		public override IType VisitArrayType(ArrayType type)
+		{
+			if (RemoveNullability)
+				return base.VisitArrayType(type).ChangeNullability(Nullability.Oblivious);
+			else
+				return base.VisitArrayType(type);
 		}
 
 		public override IType VisitModOpt(ModifiedType type)

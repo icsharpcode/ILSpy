@@ -89,6 +89,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		/// <summary>
 		/// Nullability of the reference type constraint. (e.g. "where T : class?").
+		/// 
+		/// Note that the nullability of a use of the type parameter may differ from this.
+		/// E.g. "T? GetNull&lt;T&gt;() where T : class => null;"
 		/// </summary>
 		Nullability NullabilityConstraint { get; }
 	}

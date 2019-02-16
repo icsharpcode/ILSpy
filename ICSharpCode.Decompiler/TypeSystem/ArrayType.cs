@@ -30,8 +30,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	{
 		readonly int dimensions;
 		readonly ICompilation compilation;
-		
-		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1) : base(elementType)
+		readonly Nullability nullability;
+
+		public ArrayType(ICompilation compilation, IType elementType, int dimensions = 1, Nullability nullability = Nullability.Oblivious) : base(elementType)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
@@ -39,6 +40,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
 			this.compilation = compilation;
 			this.dimensions = dimensions;
+			this.nullability = nullability;
 			
 			ICompilationProvider p = elementType as ICompilationProvider;
 			if (p != null && p.Compilation != compilation)
@@ -57,12 +59,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return dimensions; }
 		}
 
+		public override Nullability Nullability => nullability;
+
 		public override IType ChangeNullability(Nullability nullability)
 		{
-			if (nullability == Nullability.Oblivious)
+			if (nullability == this.nullability)
 				return this;
 			else
-				return new NullabilityAnnotatedType(this, nullability);
+				return new ArrayType(compilation, elementType, dimensions, nullability);
 		}
 
 		public override string NameSuffix {
@@ -83,7 +87,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public override bool Equals(IType other)
 		{
 			ArrayType a = other as ArrayType;
-			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions;
+			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
 		}
 		
 		public override IEnumerable<IType> DirectBaseTypes {
@@ -152,7 +156,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (e == elementType)
 				return this;
 			else
-				return new ArrayType(compilation, e, dimensions);
+				return new ArrayType(compilation, e, dimensions, nullability);
 		}
 	}
 	
