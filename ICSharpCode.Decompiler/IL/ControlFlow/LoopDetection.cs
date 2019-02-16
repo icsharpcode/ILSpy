@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			void IncludeBlock(Block block)
 			{
-				if (block.Instructions[0] is BlockContainer nestedContainer) {
+				foreach (var nestedContainer in block.Instructions.OfType<BlockContainer>()) {
 					// Just in case the block has multiple nested containers (e.g. due to loop and switch),
 					// also check the entry point:
 					IncludeBlock(nestedContainer.EntryPoint);

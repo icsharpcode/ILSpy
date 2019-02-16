@@ -259,5 +259,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			return num;
 		}
+
+		static void Issue1392ForWithNestedSwitchPlusGoto()
+		{
+			for (int i = 0; i < 100; i++) {
+				again:
+				switch (i) {
+					case 10:
+						Console.WriteLine("10");
+						break;
+					case 25:
+						Console.WriteLine("25");
+						break;
+					case 50:
+						Console.WriteLine("50");
+						goto again;
+				}
+			}
+		}
 	}
 }
