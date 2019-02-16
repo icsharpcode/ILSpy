@@ -84,6 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var stmt in blockStatement.Statements) {
 				VisitAsSequencePoint(stmt);
 			}
+			var implicitReturn = blockStatement.Annotation<ImplicitReturnAnnotation>();
+			if (implicitReturn != null) {
+				StartSequencePoint(blockStatement.RBraceToken);
+				AddToSequencePoint(implicitReturn.Leave);
+				EndSequencePoint(blockStatement.RBraceToken.StartLocation, blockStatement.RBraceToken.EndLocation);
+			}
 		}
 
 		public override void VisitForStatement(ForStatement forStatement)

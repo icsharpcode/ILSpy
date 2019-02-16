@@ -936,8 +936,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(new LabelStatement { Label = block.Label });
 				}
 				foreach (var inst in block.Instructions) {
-					if (!isLoop && inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
+					if (!isLoop && inst is Leave leave && IsFinalLeave(leave)) {
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
+						blockStatement.AddAnnotation(new ImplicitReturnAnnotation(leave));
 						continue;
 					}
 					var stmt = Convert(inst);
