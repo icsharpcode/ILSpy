@@ -436,7 +436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!handler.Filter.MatchLdcI4(1))
 				throw new SymbolicAnalysisFailedException();
 			var catchBlock = YieldReturnDecompiler.SingleBlock(handler.Body);
-			catchHandlerOffset = catchBlock.ILRange.Start;
+			catchHandlerOffset = catchBlock.StartILOffset;
 			if (catchBlock?.Instructions.Count != 4)
 				throw new SymbolicAnalysisFailedException();
 			// stloc exception(ldloc E_143)
@@ -568,7 +568,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null) {
-								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.ILRange.Start));
+								awaitDebugInfos.Add(new AsyncDebugInfo.Await(yieldOffset, targetBlock.StartILOffset));
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
 								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
@@ -650,7 +650,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			pos--;
 			// Store IL offset for debug info:
-			yieldOffset = block.Instructions[pos].ILRange.End;
+			yieldOffset = block.Instructions[pos].EndILOffset;
 
 			// stloc S_10(ldloc this)
 			// stloc S_11(ldc.i4 0)
