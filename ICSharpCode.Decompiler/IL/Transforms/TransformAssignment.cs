@@ -248,6 +248,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		internal static bool HandleCompoundAssign(ILInstruction compoundStore, StatementTransformContext context)
 		{
+			if (!context.Settings.MakeAssignmentExpressions || !context.Settings.IntroduceIncrementAndDecrement)
+				return false;
 			if (compoundStore is CallInstruction && compoundStore.SlotInfo != Block.InstructionSlot) {
 				// replacing 'call set_Property' with a compound assignment instruction
 				// changes the return value of the expression, so this is only valid on block-level.
