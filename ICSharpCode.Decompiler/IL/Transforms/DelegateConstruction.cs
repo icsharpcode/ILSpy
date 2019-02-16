@@ -44,12 +44,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var inst in function.Descendants) {
 				cancellationToken.ThrowIfCancellationRequested();
 				if (inst is NewObj call) {
+					context.StepStartGroup($"TransformDelegateConstruction {call.ILRange}", call);
 					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
 					if (f != null) {
 						call.ReplaceWith(f);
 						if (target is IInstructionWithVariableOperand)
 							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
+					context.StepEndGroup();
 				}
 				if (inst.MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
 					var newObj = value as NewObj;
@@ -63,8 +65,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
+				context.Step($"TransformDisplayClassUsages {target.Variable}", (ILInstruction)target);
 				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits, translatedDisplayClasses));
 			}
+			context.Step($"Remove orphanedVariableInits", function);
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
 					containingBlock.Instructions.Remove(store);
@@ -192,7 +196,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
+			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
+			nestedContext.StepEndGroup();
 			function.AddILRange(target.ILRange);
 			function.AddILRange(value.Arguments[1].ILRange);
 			return function;
