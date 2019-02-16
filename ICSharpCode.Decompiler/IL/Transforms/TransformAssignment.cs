@@ -35,18 +35,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
-				// both inline assignments create a top-level stloc which might affect inlining
-				context.RequestRerun();
-				return;
+			if (context.Settings.MakeAssignmentExpressions) {
+				if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
+					// both inline assignments create a top-level stloc which might affect inlining
+					context.RequestRerun();
+					return;
+				} 
 			}
-			if (TransformPostIncDecOperatorWithInlineStore(block, pos)
-				|| TransformPostIncDecOperator(block, pos)
-				|| TransformPostIncDecOperatorLocal(block, pos))
-			{
-				// again, new top-level stloc might need inlining:
-				context.RequestRerun();
-				return;
+			if (context.Settings.IntroduceIncrementAndDecrement) {
+				if (TransformPostIncDecOperatorWithInlineStore(block, pos)
+					|| TransformPostIncDecOperator(block, pos)
+					|| TransformPostIncDecOperatorLocal(block, pos)) {
+					// again, new top-level stloc might need inlining:
+					context.RequestRerun();
+					return;
+				}
 			}
 		}
 
