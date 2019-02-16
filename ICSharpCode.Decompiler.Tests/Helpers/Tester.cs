@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
 			foreach (KeyValuePair<string, string> file in sourceFiles) {
-				var sourceText = SourceText.From(file.Value, Encoding.UTF8);
+				var sourceText = SourceText.From(file.Value, new UTF8Encoding(false), SourceHashAlgorithm.Sha256);
 				syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceText, parseOptions, file.Key));
 				embeddedTexts.Add(EmbeddedText.FromSource(file.Key, sourceText));
 			}
