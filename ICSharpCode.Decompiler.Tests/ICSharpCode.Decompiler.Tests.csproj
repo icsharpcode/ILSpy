@@ -39,6 +39,7 @@
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.10.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.10.0" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
@@ -125,7 +126,7 @@
     <Compile Include="TestCases\Pretty\NullPropagation.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
-    <Compile Include="DebugInfo\SequencePointTests.cs" />
+    <Compile Include="PdbGenerationTestRunner.cs" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
@@ -202,6 +203,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="TestCases\PdbGen\HelloWorld.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="TestCases\ILPretty\Issue646.il" />
     <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\ILPretty\Issue982.il" />
@@ -215,6 +220,10 @@
 
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DebugInfo\" />
   </ItemGroup>
 
 </Project>

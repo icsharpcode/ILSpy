@@ -36,7 +36,10 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.CSharp;
+using Microsoft.DiaSymReader.Tools;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
@@ -345,23 +348,39 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		public static CSharpDecompiler GetDecompilerForSnippet(string csharpText)
+		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles, PdbToXmlOptions options)
 		{
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpText);
-			var compilation = CSharpCompilation.Create(
-				"TestAssembly",
-				new[] { syntaxTree },
-				defaultReferences.Value,
-				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-			var peStream = new MemoryStream();
-			var emitResult = compilation.Emit(peStream);
-			peStream.Position = 0;
+			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 
-			var moduleDefinition = new PEFile("TestAssembly.dll", peStream, PEStreamOptions.PrefetchEntireImage);
-			var resolver = new UniversalAssemblyResolver("TestAssembly.dll", false, moduleDefinition.Reader.DetectTargetFrameworkId(), PEStreamOptions.PrefetchEntireImage);
-			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
+			List<EmbeddedText> embeddedTexts = new List<EmbeddedText>();
+			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
-			return decompiler;
+			foreach (KeyValuePair<string, string> file in sourceFiles) {
+				var sourceText = SourceText.From(file.Value, Encoding.UTF8);
+				syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceText, parseOptions, file.Key));
+				embeddedTexts.Add(EmbeddedText.FromSource(file.Key, sourceText));
+			}
+
+			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
+				syntaxTrees, defaultReferences.Value,
+				new CSharpCompilationOptions(
+					OutputKind.DynamicallyLinkedLibrary,
+					platform: Platform.AnyCpu,
+					optimizationLevel: OptimizationLevel.Debug,
+					allowUnsafe: true,
+					deterministic: true
+				));
+			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite)) {
+				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb), embeddedTexts: embeddedTexts);
+				if (!emitResult.Success) {
+					StringBuilder b = new StringBuilder("Compiler error:");
+					foreach (var diag in emitResult.Diagnostics) {
+						b.AppendLine(diag.ToString());
+					}
+					throw new Exception(b.ToString());
+				}
+			}
 		}
 
 		internal static string GetSuffix(CompilerOptions cscOptions)
