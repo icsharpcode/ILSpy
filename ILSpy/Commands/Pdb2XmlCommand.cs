@@ -18,8 +18,7 @@
 
 #if DEBUG
 
-using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,9 +42,12 @@ namespace ICSharpCode.ILSpy
 
 		public override void Execute(object parameter)
 		{
+			Execute(MainWindow.Instance.SelectedNodes.OfType<AssemblyTreeNode>());
+		}
+
+		internal static void Execute(IEnumerable<AssemblyTreeNode> nodes)
+		{
 			var highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
-			var language = MainWindow.Instance.CurrentLanguage;
-			var nodes = MainWindow.Instance.SelectedNodes.OfType<AssemblyTreeNode>();
 			var options = PdbToXmlOptions.IncludeEmbeddedSources | PdbToXmlOptions.IncludeMethodSpans | PdbToXmlOptions.IncludeTokens;
 			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
@@ -61,6 +63,25 @@ namespace ICSharpCode.ILSpy
 			}, ct)).Then(output => MainWindow.Instance.TextView.ShowNodes(output, null, highlighting)).HandleExceptions();
 		}
 	}
+
+	[ExportContextMenuEntry(Header = "DEBUG -- Dump PDB as XML")]
+	class Pdb2XmlCommandContextMenuEntry : IContextMenuEntry
+	{
+		public void Execute(TextViewContext context)
+		{
+			Pdb2XmlCommand.Execute(context.SelectedTreeNodes.OfType<AssemblyTreeNode>());
+		}
+
+		public bool IsEnabled(TextViewContext context) => true;
+
+		public bool IsVisible(TextViewContext context)
+		{
+			var selectedNodes = context.SelectedTreeNodes;
+			return selectedNodes?.Any() == true
+				&& selectedNodes.All(n => n is AssemblyTreeNode asm && !asm.LoadedAssembly.HasLoadError);
+		}
+	}
+
 }
 
 #endif
