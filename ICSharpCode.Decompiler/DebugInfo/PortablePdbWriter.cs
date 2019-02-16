@@ -49,7 +49,6 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		static readonly Guid HashAlgorithmSHA1 = new Guid("ff1816ec-aa5e-4d10-87f7-6f4963833460");
 		static readonly Guid HashAlgorithmSHA256 = new Guid("8829d00f-11b8-4213-878b-770e8597ac16");
 		static readonly FileVersionInfo decompilerVersion = FileVersionInfo.GetVersionInfo(typeof(CSharpDecompiler).Assembly.Location);
-		static readonly SHA256 hasher = SHA256.Create();
 
 		public static bool HasCodeViewDebugDirectoryEntry(PEFile file)
 		{
@@ -188,7 +187,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 				byte[] buffer = memory.ToArray();
 				builder.WriteInt32(bytes.Length); // compressed
 				builder.WriteBytes(buffer);
-				sourceCheckSum = hasher.ComputeHash(bytes);
+				using (var hasher = SHA256.Create()) {
+					sourceCheckSum = hasher.ComputeHash(bytes);
+				}
 			}
 
 			return metadata.GetOrAddBlob(builder);
