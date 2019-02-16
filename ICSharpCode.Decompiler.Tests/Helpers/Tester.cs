@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
-					optimizationLevel: OptimizationLevel.Debug,
+					optimizationLevel: OptimizationLevel.Release,
 					allowUnsafe: true,
 					deterministic: true
 				));

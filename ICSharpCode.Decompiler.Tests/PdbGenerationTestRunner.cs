@@ -24,7 +24,6 @@ namespace ICSharpCode.Decompiler.Tests
 		static readonly string TestCasePath = Tester.TestCasePath + "/PdbGen";
 
 		[Test]
-		[Ignore("Needs adjustments in generator")]
 		public void HelloWorld()
 		{
 			TestGeneratePdb();
