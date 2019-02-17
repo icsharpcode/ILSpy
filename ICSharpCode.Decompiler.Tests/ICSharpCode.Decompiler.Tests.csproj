@@ -91,6 +91,7 @@
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\ReduceNesting.cs" />
+    <Compile Include="TestCases\Pretty\InterfaceTests.cs" />
     <Compile Include="TestCases\Pretty\YieldReturn.cs" />
     <None Include="TestCases\ILPretty\Issue1256.il" />
     <None Include="TestCases\ILPretty\Issue1323.il" />
