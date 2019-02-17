@@ -200,7 +200,6 @@
     <Compile Include="TestCases\Pretty\AssemblyCustomAttributes.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributeSamples.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes.cs" />
-    <Compile Include="CodeSampleFileParser.cs" />
   </ItemGroup>
 
   <ItemGroup>
