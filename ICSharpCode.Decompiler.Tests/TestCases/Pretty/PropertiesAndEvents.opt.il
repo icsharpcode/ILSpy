@@ -66,8 +66,8 @@
 
     .event [mscorlib]System.Action Event
     {
-      .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event(class [mscorlib]System.Action)
       .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::remove_Event(class [mscorlib]System.Action)
+      .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IBase::add_Event(class [mscorlib]System.Action)
     } // end of event IBase::Event
     .property instance int32 GetterOnly()
     {
@@ -109,8 +109,8 @@
 
     .event [mscorlib]System.EventHandler ThisIsAnAbstractEvent
     {
-      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/BaseClass::remove_ThisIsAnAbstractEvent(class [mscorlib]System.EventHandler)
       .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/BaseClass::add_ThisIsAnAbstractEvent(class [mscorlib]System.EventHandler)
+      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/BaseClass::remove_ThisIsAnAbstractEvent(class [mscorlib]System.EventHandler)
     } // end of event BaseClass::ThisIsAnAbstractEvent
   } // end of class BaseClass
 
@@ -281,8 +281,8 @@
     } // end of event ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Event
     .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test()
     {
-      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test(int32)
       .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.get_Test()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.set_Test(int32)
     } // end of property ExplicitImpl::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.Test
     .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IBase.GetterOnly()
     {
@@ -415,8 +415,8 @@
 
     .event [mscorlib]System.Action Event
     {
-      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::remove_Event(class [mscorlib]System.Action)
       .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::add_Event(class [mscorlib]System.Action)
+      .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::remove_Event(class [mscorlib]System.Action)
     } // end of event Impl::Event
     .property instance int32 GetterOnly()
     {
@@ -428,8 +428,8 @@
     } // end of property Impl::SetterOnly
     .property instance int32 Test()
     {
-      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::set_Test(int32)
       .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::get_Test()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Impl::set_Test(int32)
     } // end of property Impl::Test
   } // end of class Impl
 
@@ -462,8 +462,8 @@
     } // end of event IChange::Changed
     .property instance int32 Property()
     {
-      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IChange::set_Property(int32)
       .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IChange::get_Property()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/IChange::set_Property(int32)
     } // end of property IChange::Property
   } // end of class IChange
 
@@ -550,8 +550,8 @@
     } // end of event Change::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.Changed
     .property instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.Property()
     {
-      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Change::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.get_Property()
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Change::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.set_Property(int32)
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents/Change::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.get_Property()
     } // end of property Change::ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents.IChange.Property
   } // end of class Change
 
@@ -560,6 +560,8 @@
   .field private class [mscorlib]System.EventHandler AutomaticEvent
   .field private notserialized class [mscorlib]System.EventHandler AutomaticEventWithInitializer
   .field private int32 '<Value>k__BackingField'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .field private int32 '<AutomaticProperty>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private static class [mscorlib]System.EventHandler 'CS$<>9__CachedAnonymousMethodDelegate1'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -585,6 +587,50 @@
     IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
     IL_0007:  ret
   } // end of method PropertiesAndEvents::set_Value
+
+  .method public hidebysig specialname instance int32 
+          get_AutomaticProperty() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<AutomaticProperty>k__BackingField'
+    IL_0006:  ret
+  } // end of method PropertiesAndEvents::get_AutomaticProperty
+
+  .method public hidebysig specialname instance void 
+          set_AutomaticProperty(int32 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<AutomaticProperty>k__BackingField'
+    IL_0007:  ret
+  } // end of method PropertiesAndEvents::set_AutomaticProperty
+
+  .method public hidebysig specialname instance int32 
+          get_CustomProperty() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_AutomaticProperty()
+    IL_0006:  ret
+  } // end of method PropertiesAndEvents::get_CustomProperty
+
+  .method public hidebysig specialname instance void 
+          set_CustomProperty(int32 'value') cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_AutomaticProperty(int32)
+    IL_0007:  ret
+  } // end of method PropertiesAndEvents::set_CustomProperty
 
   .method private hidebysig specialname instance void 
           set_Issue1221(object 'value') cil managed
@@ -782,6 +828,51 @@
     IL_0007:  ret
   } // end of method PropertiesAndEvents::remove_CustomEvent
 
+  .method public hidebysig instance int32 
+          Getter(class [mscorlib]System.Text.StringBuilder b) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance int32 [mscorlib]System.Text.StringBuilder::get_Length()
+    IL_0006:  ret
+  } // end of method PropertiesAndEvents::Getter
+
+  .method public hidebysig instance void 
+          Setter(class [mscorlib]System.Text.StringBuilder b) cil managed
+  {
+    // Code size       9 (0x9)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   100
+    IL_0003:  callvirt   instance void [mscorlib]System.Text.StringBuilder::set_Capacity(int32)
+    IL_0008:  ret
+  } // end of method PropertiesAndEvents::Setter
+
+  .method public hidebysig instance char 
+          IndexerGetter(class [mscorlib]System.Text.StringBuilder b) cil managed
+  {
+    // Code size       9 (0x9)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   50
+    IL_0003:  callvirt   instance char [mscorlib]System.Text.StringBuilder::get_Chars(int32)
+    IL_0008:  ret
+  } // end of method PropertiesAndEvents::IndexerGetter
+
+  .method public hidebysig instance void 
+          IndexerSetter(class [mscorlib]System.Text.StringBuilder b) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   42
+    IL_0003:  ldc.i4.s   98
+    IL_0005:  callvirt   instance void [mscorlib]System.Text.StringBuilder::set_Chars(int32,
+                                                                                      char)
+    IL_000a:  ret
+  } // end of method PropertiesAndEvents::IndexerSetter
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -815,32 +906,42 @@
 
   .event [mscorlib]System.EventHandler AutomaticEvent
   {
-    .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::remove_AutomaticEvent(class [mscorlib]System.EventHandler)
     .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::add_AutomaticEvent(class [mscorlib]System.EventHandler)
+    .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::remove_AutomaticEvent(class [mscorlib]System.EventHandler)
   } // end of event PropertiesAndEvents::AutomaticEvent
   .event [mscorlib]System.EventHandler AutomaticEventWithInitializer
   {
-    .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::add_AutomaticEventWithInitializer(class [mscorlib]System.EventHandler)
     .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::remove_AutomaticEventWithInitializer(class [mscorlib]System.EventHandler)
+    .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::add_AutomaticEventWithInitializer(class [mscorlib]System.EventHandler)
   } // end of event PropertiesAndEvents::AutomaticEventWithInitializer
   .event [mscorlib]System.EventHandler CustomEvent
   {
-    .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::add_CustomEvent(class [mscorlib]System.EventHandler)
     .removeon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::remove_CustomEvent(class [mscorlib]System.EventHandler)
+    .addon instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::add_CustomEvent(class [mscorlib]System.EventHandler)
   } // end of event PropertiesAndEvents::CustomEvent
   .property instance int32 Value()
   {
-    .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_Value()
     .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_Value(int32)
+    .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_Value()
   } // end of property PropertiesAndEvents::Value
+  .property instance int32 AutomaticProperty()
+  {
+    .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_AutomaticProperty(int32)
+    .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_AutomaticProperty()
+  } // end of property PropertiesAndEvents::AutomaticProperty
+  .property instance int32 CustomProperty()
+  {
+    .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_CustomProperty()
+    .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_CustomProperty(int32)
+  } // end of property PropertiesAndEvents::CustomProperty
   .property instance object Issue1221()
   {
     .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_Issue1221(object)
   } // end of property PropertiesAndEvents::Issue1221
   .property instance object Item()
   {
-    .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_Item()
     .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::set_Item(object)
+    .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::get_Item()
   } // end of property PropertiesAndEvents::Item
   .property instance int32 NotAnAutoProperty()
   {
