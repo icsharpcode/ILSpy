@@ -258,6 +258,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		[Ignore("Special cases not implemented in new decompiler.")]
+		public void ValueTypes([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void VariableNaming([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
