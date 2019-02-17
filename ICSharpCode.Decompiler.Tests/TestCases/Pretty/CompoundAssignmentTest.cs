@@ -4576,5 +4576,133 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			new CustomClass().StringProp += "a";
 			new CustomClass().StringProp += 1;
 		}
+
+#if false
+		public uint PreIncrementIndexer(string name)
+		{
+			return ++M()[name];
+		}
+#endif
+		public int PreIncrementByRef(ref int i)
+		{
+			return ++i;
+		}
+
+		public unsafe int PreIncrementByPointer()
+		{
+			return ++(*GetPointer());
+		}
+
+		public int PreIncrement2DArray()
+		{
+			return ++Array()[1, 2];
+		}
+
+		public int CompoundAssignInstanceField()
+		{
+			return M().Field *= 10;
+		}
+
+		public int CompoundAssignInstanceProperty()
+		{
+			return M().Property *= 10;
+		}
+
+		public int CompoundAssignStaticField()
+		{
+			return StaticField ^= 100;
+		}
+
+		public int CompoundAssignStaticProperty()
+		{
+			return StaticProperty &= 10;
+		}
+
+		public int CompoundAssignArrayElement1(int[] array, int pos)
+		{
+			return array[pos] *= 10;
+		}
+
+		public int CompoundAssignArrayElement2(int[] array)
+		{
+			return array[Environment.TickCount] *= 10;
+		}
+#if false
+		public uint CompoundAssignIndexer(string name)
+		{
+			return M()[name] -= 2;
+		}
+#endif
+		public int CompoundAssignIncrement2DArray()
+		{
+			return Array()[1, 2] %= 10;
+		}
+
+		public int CompoundAssignByRef(ref int i)
+		{
+			return i <<= 2;
+		}
+
+		public unsafe double CompoundAssignByPointer(double* ptr)
+		{
+			return *ptr /= 1.5;
+		}
+
+		public void CompoundAssignEnum()
+		{
+			enumField |= MyEnum.Two;
+			enumField &= ~MyEnum.Four;
+		}
+
+		public int PostIncrementInAddition(int i, int j)
+		{
+			return i++ + j;
+		}
+
+		public void PostIncrementInlineLocalVariable(Func<int, int> f)
+		{
+			int num = 0;
+			f(num++);
+		}
+
+		public int PostDecrementArrayElement(int[] array, int pos)
+		{
+			return array[pos]--;
+		}
+#if false
+		public uint PostIncrementIndexer(string name)
+		{
+			return M()[name]++;
+		}
+
+		public unsafe int PostIncrementOfPointer(int* ptr)
+		{
+			return *(ptr++);
+		}
+#endif
+		public int PostDecrementInstanceField()
+		{
+			return M().Field--;
+		}
+
+		public int PostDecrementInstanceProperty()
+		{
+			return M().Property--;
+		}
+
+		public int PostIncrement2DArray()
+		{
+			return Array()[StaticField, StaticProperty]++;
+		}
+
+		public int PostIncrementByRef(ref int i)
+		{
+			return i++;
+		}
+
+		public unsafe int PostIncrementByPointer()
+		{
+			return (*GetPointer())++;
+		}
 	}
 }
