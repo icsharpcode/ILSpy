@@ -30,7 +30,14 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("differences in il ranges")]
+		[Ignore("Missing nested local scopes for loops, differences in IL ranges")]
+		public void ForLoopTests()
+		{
+			TestGeneratePdb();
+		}
+
+		[Test]
+		[Ignore("Differences in IL ranges")]
 		public void LambdaCapturing()
 		{
 			TestGeneratePdb();
