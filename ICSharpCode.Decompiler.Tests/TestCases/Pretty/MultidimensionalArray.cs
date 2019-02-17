@@ -16,43 +16,41 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
-public class MultidimensionalArray
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal class Generic<T, S> where T : new()
+	public class MultidimensionalArray
 	{
-		private T[,] a = new T[20, 20];
-		private S[,][] b = new S[20, 20][];
+		internal class Generic<T, S> where T : new()
+		{
+			private T[,] a = new T[20, 20];
+			private S[,][] b = new S[20, 20][];
 
-		public T this[int i, int j]
-		{
-			get
-			{
-				return this.a[i, j];
+			public T this[int i, int j] {
+				get {
+					return a[i, j];
+				}
+				set {
+					a[i, j] = value;
+				}
 			}
-			set
+
+			public void TestB(S x, ref S y)
 			{
-				this.a[i, j] = value;
+				b[5, 3] = new S[10];
+				b[5, 3][0] = default(S);
+				b[5, 3][1] = x;
+				b[5, 3][2] = y;
+			}
+
+			public void PassByReference(ref T arr)
+			{
+				PassByReference(ref a[10, 10]);
 			}
 		}
-		
-		public void TestB(S x, ref S y)
+
+		public int[][,] MakeArray()
 		{
-			this.b[5, 3] = new S[10];
-			this.b[5, 3][0] = default(S);
-			this.b[5, 3][1] = x;
-			this.b[5, 3][2] = y;
+			return new int[10][,];
 		}
-		
-		public void PassByReference(ref T arr)
-		{
-			this.PassByReference(ref this.a[10, 10]);
-		}
-	}
-	
-	public int[][,] MakeArray()
-	{
-		return new int[10][,];
 	}
 }
