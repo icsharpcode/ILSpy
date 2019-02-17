@@ -360,6 +360,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void CustomAttributes2([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void CustomAttributeConflicts([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

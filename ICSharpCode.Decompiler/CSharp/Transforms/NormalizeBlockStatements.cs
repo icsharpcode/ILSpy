@@ -131,6 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		static readonly PropertyDeclaration CalculatedGetterOnlyPropertyPattern = new PropertyDeclaration() {
+			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			Name = Pattern.AnyString,
 			ReturnType = new AnyNode(),

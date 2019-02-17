@@ -1,32 +1,47 @@
 using System;
-namespace aa
+namespace CustomAttributes2
 {
 	public static class CustomAtributes
 	{
 		[Flags]
 		public enum EnumWithFlag
 		{
-			All = 15,
-			None = 0,
-			Item1 = 1,
-			Item2 = 2,
-			Item3 = 4,
-			Item4 = 8
+			All = 0xF,
+			None = 0x0,
+			Item1 = 0x1,
+			Item2 = 0x2,
+			Item3 = 0x4,
+			Item4 = 0x8
 		}
 		[AttributeUsage(AttributeTargets.All)]
 		public class MyAttribute : Attribute
 		{
-			public MyAttribute(CustomAtributes.EnumWithFlag en)
+			public MyAttribute(EnumWithFlag en)
 			{
 			}
 		}
-		[CustomAtributes.MyAttribute(CustomAtributes.EnumWithFlag.Item1 | CustomAtributes.EnumWithFlag.Item2)]
+		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
-		[CustomAtributes.MyAttribute(CustomAtributes.EnumWithFlag.All)]
-		public static string Property
-		{
-			get
-			{
+		[My(EnumWithFlag.All)]
+#if ROSLYN
+		public static string Property => "aa";
+#else
+		public static string Property {
+			get {
+				return "aa";
+			}
+		}
+#endif
+		public static string GetterOnlyPropertyWithAttributeOnGetter {
+			[My(EnumWithFlag.Item1)]
+			get {
+				return "aa";
+			}
+		}
+		[My(EnumWithFlag.All)]
+		public static string GetterOnlyPropertyWithAttributeOnGetter2 {
+			[My(EnumWithFlag.Item1)]
+			get {
 				return "aa";
 			}
 		}

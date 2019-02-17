@@ -74,11 +74,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 		public int Field;
 
 		[Obsolete("reason")]
+#if ROSLYN
+		public int Property => 0;
+#else
 		public int Property {
 			get {
 				return 0;
 			}
 		}
+#endif
 
 		public int PropertyAttributeOnGetter {
 			[MyAttribute]
