@@ -257,6 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression IsType(IsInst inst)
 		{
 			var arg = Translate(inst.Argument);
+			arg = UnwrapBoxingConversion(arg);
 			return new IsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new TypeIsResolveResult(arg.ResolveResult, inst.Type, compilation.FindType(TypeCode.Boolean)));
@@ -265,6 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			arg = UnwrapBoxingConversion(arg);
 			if (inst.Type.IsReferenceType == false) {
 				// isinst with a value type results in an expression of "boxed value type",
 				// which is not supported in C#.
@@ -284,7 +286,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					return ErrorExpression("isinst with value type is only supported in some contexts");
 				}
 			}
-			arg = UnwrapBoxingConversion(arg);
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
@@ -296,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					&& arg.Type.IsKnownType(KnownTypeCode.Object)
 					&& arg.ResolveResult is ConversionResolveResult crr
 					&& crr.Conversion.IsBoxingConversion) {
-				// When 'as' used with value type or type parameter,
+				// When 'is' or 'as' is used with a value type or type parameter,
 				// the C# compiler implicitly boxes the input.
 				arg = arg.UnwrapChild(cast.Expression);
 			}

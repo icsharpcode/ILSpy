@@ -576,6 +576,24 @@
     IL_0010:  ret
   } // end of method Generics::GetEnumerator
 
+  .method public hidebysig static bool  IsString<T>(!!T input) cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  box        !!T
+    IL_0007:  isinst     [mscorlib]System.String
+    IL_000c:  ldnull
+    IL_000d:  cgt.un
+    IL_000f:  stloc.0
+    IL_0010:  br.s       IL_0012
+
+    IL_0012:  ldloc.0
+    IL_0013:  ret
+  } // end of method Generics::IsString
+
   .method public hidebysig static string 
           AsString<T>(!!T input) cil managed
   {
@@ -625,6 +643,24 @@
     IL_000b:  ret
   } // end of method Generics::CastFromString
 
+  .method public hidebysig static bool  IsInt<T>(!!T input) cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  box        !!T
+    IL_0007:  isinst     [mscorlib]System.Int32
+    IL_000c:  ldnull
+    IL_000d:  cgt.un
+    IL_000f:  stloc.0
+    IL_0010:  br.s       IL_0012
+
+    IL_0012:  ldloc.0
+    IL_0013:  ret
+  } // end of method Generics::IsInt
+
   .method public hidebysig static int32  CastToInt<T>(!!T input) cil managed
   {
     // Code size       17 (0x11)
@@ -656,6 +692,24 @@
     IL_000f:  ldloc.0
     IL_0010:  ret
   } // end of method Generics::CastFromInt
+
+  .method public hidebysig static bool  IsNullableInt<T>(!!T input) cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  box        !!T
+    IL_0007:  isinst     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_000c:  ldnull
+    IL_000d:  cgt.un
+    IL_000f:  stloc.0
+    IL_0010:  br.s       IL_0012
+
+    IL_0012:  ldloc.0
+    IL_0013:  ret
+  } // end of method Generics::IsNullableInt
 
   .method public hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
           AsNullableInt<T>(!!T input) cil managed

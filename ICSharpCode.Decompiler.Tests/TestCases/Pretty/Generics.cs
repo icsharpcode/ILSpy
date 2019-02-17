@@ -198,12 +198,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return d.Keys.GetEnumerator();
 		}
 
-#if false
 		public static bool IsString<T>(T input)
 		{
 			return input is string;
 		}
-#endif
 
 		public static string AsString<T>(T input)
 		{
@@ -220,12 +218,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (T)(object)input;
 		}
 
-#if false
 		public static bool IsInt<T>(T input)
 		{
 			return input is int;
 		}
-#endif
 
 		public static int CastToInt<T>(T input)
 		{
@@ -236,12 +232,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (T)(object)input;
 		}
-#if false
+
 		public static bool IsNullableInt<T>(T input)
 		{
 			return input is int?;
 		}
-#endif
+
 		public static int? AsNullableInt<T>(T input)
 		{
 			return input as int?;

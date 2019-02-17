@@ -466,6 +466,18 @@
     IL_000b:  ret
   } // end of method Generics::GetEnumerator
 
+  .method public hidebysig static bool  IsString<T>(!!T input) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  isinst     [mscorlib]System.String
+    IL_000b:  ldnull
+    IL_000c:  cgt.un
+    IL_000e:  ret
+  } // end of method Generics::IsString
+
   .method public hidebysig static string 
           AsString<T>(!!T input) cil managed
   {
@@ -497,6 +509,18 @@
     IL_0006:  ret
   } // end of method Generics::CastFromString
 
+  .method public hidebysig static bool  IsInt<T>(!!T input) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  isinst     [mscorlib]System.Int32
+    IL_000b:  ldnull
+    IL_000c:  cgt.un
+    IL_000e:  ret
+  } // end of method Generics::IsInt
+
   .method public hidebysig static int32  CastToInt<T>(!!T input) cil managed
   {
     // Code size       12 (0xc)
@@ -516,6 +540,18 @@
     IL_0006:  unbox.any  !!T
     IL_000b:  ret
   } // end of method Generics::CastFromInt
+
+  .method public hidebysig static bool  IsNullableInt<T>(!!T input) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  isinst     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_000b:  ldnull
+    IL_000c:  cgt.un
+    IL_000e:  ret
+  } // end of method Generics::IsNullableInt
 
   .method public hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
           AsNullableInt<T>(!!T input) cil managed

@@ -72,9 +72,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			// (even for value types) by using "is" instead of "as"
 			// This can happen when the result of "expr is T" is unused
 			// and the C# compiler optimizes away the null check portion of the "is" operator.
+			var arg = exprBuilder.Translate(inst.Argument);
+			arg = ExpressionBuilder.UnwrapBoxingConversion(arg);
 			return new ExpressionStatement(
 				new IsExpression(
-					exprBuilder.Translate(inst.Argument),
+					arg,
 					exprBuilder.ConvertType(inst.Type)
 				)
 				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
