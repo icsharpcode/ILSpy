@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				));
 			using (FileStream peStream = File.Open(assemblyName + ".dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			using (FileStream pdbStream = File.Open(assemblyName + ".pdb", FileMode.OpenOrCreate, FileAccess.ReadWrite)) {
-				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb), embeddedTexts: embeddedTexts);
+				var emitResult = compilation.Emit(peStream, pdbStream, options: new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb, pdbFilePath: assemblyName + ".pdb"), embeddedTexts: embeddedTexts);
 				if (!emitResult.Success) {
 					StringBuilder b = new StringBuilder("Compiler error:");
 					foreach (var diag in emitResult.Diagnostics) {
