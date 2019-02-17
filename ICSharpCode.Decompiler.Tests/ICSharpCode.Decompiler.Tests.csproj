@@ -79,6 +79,7 @@
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
     <Compile Include="TestCases\Pretty\EnumTests.cs" />
+    <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
     <None Include="TestCases\ILPretty\SequenceOfNestedIfs.cs" />
     <Compile Include="TestCases\Pretty\ConstructorInitializers.cs" />
     <None Include="TestCases\ILPretty\SequenceOfNestedIfs.il" />
