@@ -88,6 +88,156 @@
 
   } // end of class DerivedClass
 
+  .class auto ansi nested public beforefieldinit MyArray`1<T>
+         extends [mscorlib]System.Object
+  {
+    .class auto ansi nested public beforefieldinit NestedClass`1<T,Y>
+           extends [mscorlib]System.Object
+    {
+      .field public !T Item1
+      .field public !Y Item2
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       7 (0x7)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  ret
+      } // end of method NestedClass`1::.ctor
+
+    } // end of class NestedClass`1
+
+    .class auto ansi sealed nested public NestedEnum<T>
+           extends [mscorlib]System.Enum
+    {
+      .field public specialname rtspecialname int32 value__
+      .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedEnum<!T> A = int32(0x00000000)
+      .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedEnum<!T> B = int32(0x00000001)
+    } // end of class NestedEnum
+
+    .field private !T[] arr
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor(int32 capacity) cil managed
+    {
+      // Code size       19 (0x13)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ldarg.0
+      IL_0007:  ldarg.1
+      IL_0008:  newarr     !T
+      IL_000d:  stfld      !0[] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1<!T>::arr
+      IL_0012:  ret
+    } // end of method MyArray`1::.ctor
+
+    .method public hidebysig instance void 
+            Size(int32 capacity) cil managed
+    {
+      // Code size       13 (0xd)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldflda     !0[] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1<!T>::arr
+      IL_0006:  ldarg.1
+      IL_0007:  call       void [mscorlib]System.Array::Resize<!T>(!!0[]&,
+                                                                   int32)
+      IL_000c:  ret
+    } // end of method MyArray`1::Size
+
+    .method public hidebysig instance void 
+            Grow(int32 capacity) cil managed
+    {
+      // Code size       19 (0x13)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  ldarg.0
+      IL_0002:  ldfld      !0[] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1<!T>::arr
+      IL_0007:  ldlen
+      IL_0008:  conv.i4
+      IL_0009:  blt.s      IL_0012
+
+      IL_000b:  ldarg.0
+      IL_000c:  ldarg.1
+      IL_000d:  call       instance void class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1<!T>::Size(int32)
+      IL_0012:  ret
+    } // end of method MyArray`1::Grow
+
+  } // end of class MyArray`1
+
+  .class interface abstract auto ansi nested public IInterface
+  {
+    .method public hidebysig newslot abstract virtual 
+            instance void  Method1<class T>() cil managed
+    {
+    } // end of method IInterface::Method1
+
+    .method public hidebysig newslot abstract virtual 
+            instance void  Method2<class T>() cil managed
+    {
+    } // end of method IInterface::Method2
+
+  } // end of class IInterface
+
+  .class abstract auto ansi nested public beforefieldinit Base
+         extends [mscorlib]System.Object
+         implements ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/IInterface
+  {
+    .method public hidebysig newslot abstract virtual 
+            instance void  Method1<class T>() cil managed
+    {
+    } // end of method Base::Method1
+
+    .method private hidebysig newslot virtual final 
+            instance void  ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics.IInterface.Method2<class T>() cil managed
+    {
+      .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/IInterface::Method2
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Base::ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics.IInterface.Method2
+
+    .method family hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method Base::.ctor
+
+  } // end of class Base
+
+  .class auto ansi nested public beforefieldinit Derived
+         extends ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/Base
+  {
+    .method public hidebysig virtual instance void 
+            Method1<class T>() cil managed
+    {
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method Derived::Method1
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/Base::.ctor()
+      IL_0006:  ret
+    } // end of method Derived::.ctor
+
+  } // end of class Derived
+
+  .field private static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedEnum<string> enumVal = int32(0x00000000)
+  .field private static class [mscorlib]System.Type type1
+  .field private static class [mscorlib]System.Type type2
+  .field private static class [mscorlib]System.Type type3
+  .field private static class [mscorlib]System.Type type4
+  .field private static class [mscorlib]System.Type type5
+  .field private static class [mscorlib]System.Type type6
   .method public hidebysig instance !!T  CastToTypeParameter<(ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/BaseClass) T>(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/DerivedClass d) cil managed
   {
     // Code size       7 (0x7)
@@ -284,6 +434,134 @@
     IL_0070:  ret
   } // end of method Generics::TestTypeOf
 
+  .method public hidebysig static void  MethodWithConstraint<class (!!S) T,.ctor ([mscorlib]System.ICloneable) S>() cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method Generics::MethodWithConstraint
+
+  .method public hidebysig static void  MethodWithStructConstraint<valuetype .ctor ([mscorlib]System.ValueType) T>() cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method Generics::MethodWithStructConstraint
+
+  .method private hidebysig static void  MultidimensionalArray<T>(!!T[0...,0...] 'array') cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldc.i4.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  ldarg.0
+    IL_0004:  ldc.i4.0
+    IL_0005:  ldc.i4.1
+    IL_0006:  call       instance !!T !!T[0...,0...]::Get(int32,
+                                                          int32)
+    IL_000b:  call       instance void !!T[0...,0...]::Set(int32,
+                                                           int32,
+                                                           !!T)
+    IL_0010:  ret
+  } // end of method Generics::MultidimensionalArray
+
+  .method public hidebysig static valuetype [mscorlib]System.Collections.Generic.Dictionary`2/KeyCollection/Enumerator<string,string> 
+          GetEnumerator(class [mscorlib]System.Collections.Generic.Dictionary`2<string,string> d,
+                        class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedClass`1<string,int32> nc) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.Dictionary`2/KeyCollection<!0,!1> class [mscorlib]System.Collections.Generic.Dictionary`2<string,string>::get_Keys()
+    IL_0006:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.Dictionary`2/KeyCollection/Enumerator<!0,!1> class [mscorlib]System.Collections.Generic.Dictionary`2/KeyCollection<string,string>::GetEnumerator()
+    IL_000b:  ret
+  } // end of method Generics::GetEnumerator
+
+  .method public hidebysig static string 
+          AsString<T>(!!T input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  isinst     [mscorlib]System.String
+    IL_000b:  ret
+  } // end of method Generics::AsString
+
+  .method public hidebysig static string 
+          CastToString<T>(!!T input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  castclass  [mscorlib]System.String
+    IL_000b:  ret
+  } // end of method Generics::CastToString
+
+  .method public hidebysig static !!T  CastFromString<T>(string input) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  unbox.any  !!T
+    IL_0006:  ret
+  } // end of method Generics::CastFromString
+
+  .method public hidebysig static int32  CastToInt<T>(!!T input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  unbox.any  [mscorlib]System.Int32
+    IL_000b:  ret
+  } // end of method Generics::CastToInt
+
+  .method public hidebysig static !!T  CastFromInt<T>(int32 input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        [mscorlib]System.Int32
+    IL_0006:  unbox.any  !!T
+    IL_000b:  ret
+  } // end of method Generics::CastFromInt
+
+  .method public hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
+          AsNullableInt<T>(!!T input) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  isinst     valuetype [mscorlib]System.Nullable`1<int32>
+    IL_000b:  unbox.any  valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0010:  ret
+  } // end of method Generics::AsNullableInt
+
+  .method public hidebysig static valuetype [mscorlib]System.Nullable`1<int32> 
+          CastToNullableInt<T>(!!T input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        !!T
+    IL_0006:  unbox.any  valuetype [mscorlib]System.Nullable`1<int32>
+    IL_000b:  ret
+  } // end of method Generics::CastToNullableInt
+
+  .method public hidebysig static !!T  CastFromNullableInt<T>(valuetype [mscorlib]System.Nullable`1<int32> input) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  box        valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0006:  unbox.any  !!T
+    IL_000b:  ret
+  } // end of method Generics::CastFromNullableInt
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -293,6 +571,32 @@
     IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
     IL_0006:  ret
   } // end of method Generics::.ctor
+
+  .method private hidebysig specialname rtspecialname static 
+          void  .cctor() cil managed
+  {
+    // Code size       91 (0x5b)
+    .maxstack  1
+    IL_0000:  ldtoken    [mscorlib]System.Collections.Generic.List`1
+    IL_0005:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_000a:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type1
+    IL_000f:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1
+    IL_0014:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0019:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type2
+    IL_001e:  ldtoken    [mscorlib]System.Collections.Generic.List`1/Enumerator
+    IL_0023:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0028:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type3
+    IL_002d:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedClass`1
+    IL_0032:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0037:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type4
+    IL_003c:  ldtoken    class [mscorlib]System.Collections.Generic.List`1<int32>[]
+    IL_0041:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0046:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type5
+    IL_004b:  ldtoken    ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics/MyArray`1/NestedEnum
+    IL_0050:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0055:  stsfld     class [mscorlib]System.Type ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics::type6
+    IL_005a:  ret
+  } // end of method Generics::.cctor
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics
 

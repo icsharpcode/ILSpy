@@ -38,6 +38,73 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		public class MyArray<T>
+		{
+			public class NestedClass<Y>
+			{
+				public T Item1;
+				public Y Item2;
+			}
+
+			public enum NestedEnum
+			{
+				A,
+				B
+			}
+
+			private T[] arr;
+
+			public MyArray(int capacity)
+			{
+				arr = new T[capacity];
+			}
+
+			public void Size(int capacity)
+			{
+				Array.Resize(ref arr, capacity);
+			}
+
+			public void Grow(int capacity)
+			{
+				if (capacity >= arr.Length) {
+					Size(capacity);
+				}
+			}
+		}
+
+		public interface IInterface
+		{
+			void Method1<T>() where T : class;
+			void Method2<T>() where T : class;
+		}
+
+		public abstract class Base : IInterface
+		{
+			// constraints must be repeated on implicit interface implementation
+			public abstract void Method1<T>() where T : class;
+
+			// constraints must not be specified on explicit interface implementation
+			void IInterface.Method2<T>()
+			{
+			}
+		}
+
+		public class Derived : Base
+		{
+			// constraints are inherited automatically and must not be specified
+			public override void Method1<T>()
+			{
+			}
+		}
+
+		private const MyArray<string>.NestedEnum enumVal = MyArray<string>.NestedEnum.A;
+		private static Type type1 = typeof(List<>);
+		private static Type type2 = typeof(MyArray<>);
+		private static Type type3 = typeof(List<>.Enumerator);
+		private static Type type4 = typeof(MyArray<>.NestedClass<>);
+		private static Type type5 = typeof(List<int>[]);
+		private static Type type6 = typeof(MyArray<>.NestedEnum);
+
 		public T CastToTypeParameter<T>(DerivedClass d) where T : BaseClass
 		{
 			return (T)(BaseClass)d;
@@ -110,6 +177,84 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				typeof(List<int>.Enumerator),
 				typeof(List<>.Enumerator)
 			};
+		}
+
+		public static void MethodWithConstraint<T, S>() where T : class, S where S : ICloneable, new()
+		{
+		}
+
+		public static void MethodWithStructConstraint<T>() where T : struct
+		{
+		}
+
+		private static void MultidimensionalArray<T>(T[,] array)
+		{
+			array[0, 0] = array[0, 1];
+		}
+
+		public static Dictionary<string, string>.KeyCollection.Enumerator GetEnumerator(Dictionary<string, string> d, MyArray<string>.NestedClass<int> nc)
+		{
+			// Tests references to inner classes in generic classes
+			return d.Keys.GetEnumerator();
+		}
+
+#if false
+		public static bool IsString<T>(T input)
+		{
+			return input is string;
+		}
+#endif
+
+		public static string AsString<T>(T input)
+		{
+			return input as string;
+		}
+
+		public static string CastToString<T>(T input)
+		{
+			return (string)(object)input;
+		}
+
+		public static T CastFromString<T>(string input)
+		{
+			return (T)(object)input;
+		}
+
+#if false
+		public static bool IsInt<T>(T input)
+		{
+			return input is int;
+		}
+#endif
+
+		public static int CastToInt<T>(T input)
+		{
+			return (int)(object)input;
+		}
+
+		public static T CastFromInt<T>(int input)
+		{
+			return (T)(object)input;
+		}
+#if false
+		public static bool IsNullableInt<T>(T input)
+		{
+			return input is int?;
+		}
+#endif
+		public static int? AsNullableInt<T>(T input)
+		{
+			return input as int?;
+		}
+
+		public static int? CastToNullableInt<T>(T input)
+		{
+			return (int?)(object)input;
+		}
+
+		public static T CastFromNullableInt<T>(int? input)
+		{
+			return (T)(object)input;
 		}
 	}
 }
