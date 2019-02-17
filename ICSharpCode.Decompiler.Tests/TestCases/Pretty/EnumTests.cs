@@ -20,16 +20,100 @@ using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal class TypeTests
+	internal class EnumTests
 	{
+		public enum SimpleEnum
+		{
+			Item1,
+			Item2
+		}
+
+		public enum LongBasedEnum : long
+		{
+			Item1,
+			Item2
+		}
+
+		public enum LongWithInitializers : long
+		{
+			Item1 = 0L,
+			Item2 = 20L,
+			Item3 = 21L
+		}
+
+		public enum ShortWithInitializers : short
+		{
+			Item1 = 0,
+			Item2 = 20,
+			Item3 = 21
+		}
+
+		public enum ByteWithInitializers : byte
+		{
+			Item1 = 0,
+			Item2 = 20,
+			Item3 = 21
+		}
+
+		[Flags]
+		public enum SimpleFlagsEnum
+		{
+			None = 0x0,
+			Item1 = 0x1,
+			Item2 = 0x2,
+			Item3 = 0x4,
+			All = 0x7
+		}
+
 		[Flags]
 		public enum NegativeValueWithFlags
 		{
 			Value = -2147483647
 		}
+
 		public enum NegativeValueWithoutFlags
 		{
 			Value = -2147483647
+		}
+
+		public AttributeTargets SingleEnumValue()
+		{
+			return AttributeTargets.Class;
+		}
+
+		public AttributeTargets TwoEnumValuesOr()
+		{
+			return AttributeTargets.Class | AttributeTargets.Method;
+		}
+
+		public AttributeTargets ThreeEnumValuesOr()
+		{
+			return AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Parameter;
+		}
+
+		public AttributeTargets UnknownEnumValue()
+		{
+			return (AttributeTargets)1000000;
+		}
+
+		public AttributeTargets EnumAllValue()
+		{
+			return AttributeTargets.All;
+		}
+
+		public AttributeTargets EnumZeroValue()
+		{
+			return (AttributeTargets)0;
+		}
+
+		public object PreservingTypeWhenBoxed()
+		{
+			return AttributeTargets.Delegate;
+		}
+
+		public object PreservingTypeWhenBoxedTwoEnum()
+		{
+			return AttributeTargets.Class | AttributeTargets.Delegate;
 		}
 	}
 }

@@ -384,7 +384,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void TypeTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
+		public void EnumTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
 		}
