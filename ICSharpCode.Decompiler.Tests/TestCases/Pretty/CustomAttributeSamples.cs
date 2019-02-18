@@ -101,12 +101,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 		}
 
 		[Obsolete("reason")]
+#if ROSLYN
+		public int this[int i] => 0;
+#else
 		public int this[int i] {
 			get {
 				return 0;
 			}
 		}
-
+#endif
 		[MyAttribute]
 		public event EventHandler MyEvent;
 
@@ -254,11 +257,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 
 	public class MyClass11
 	{
+#if ROSLYN
+		public int this[[MyAttribute] string s] => 3;
+#else
 		public int this[[MyAttribute] string s] {
 			get {
 				return 3;
 			}
 		}
+#endif
 	}
 
 	public class MyClass12
