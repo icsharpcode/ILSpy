@@ -2096,15 +2096,24 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(IndexerDeclaration.ThisKeywordRole);
 			Space(policy.SpaceBeforeMethodDeclarationParentheses);
 			WriteCommaSeparatedListInBrackets(indexerDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
-			OpenBrace(policy.PropertyBraceStyle);
-			// output get/set in their original order
-			foreach (AstNode node in indexerDeclaration.Children) {
-				if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
-					node.AcceptVisitor(this);
+
+			if (indexerDeclaration.ExpressionBody.IsNull) {
+				OpenBrace(policy.PropertyBraceStyle);
+				// output get/set in their original order
+				foreach (AstNode node in indexerDeclaration.Children) {
+					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole) {
+						node.AcceptVisitor(this);
+					}
 				}
+				CloseBrace(policy.PropertyBraceStyle);
+				NewLine();
+			} else {
+				Space();
+				WriteToken(Roles.Arrow);
+				Space();
+				indexerDeclaration.ExpressionBody.AcceptVisitor(this);
+				Semicolon();
 			}
-			CloseBrace(policy.PropertyBraceStyle);
-			NewLine();
 			EndNode(indexerDeclaration);
 		}
 		
