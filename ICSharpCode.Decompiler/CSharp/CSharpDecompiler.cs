@@ -889,34 +889,55 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <param name="member">The node of the member which new modifier state should be determined.</param>
 		void SetNewModifier(EntityDeclaration member)
 		{
-			bool addNewModifier = false;
 			var entity = (IEntity)member.GetSymbol();
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentModule);
 
-			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t);
-			if (entity is ITypeDefinition) {
-				addNewModifier = baseTypes.SelectMany(b => b.GetNestedTypes(t => t.Name == entity.Name && lookup.IsAccessible(t, true))).Any();
-			} else {
-				var members = baseTypes.SelectMany(b => b.GetMembers(m => m.Name == entity.Name).Where(m => lookup.IsAccessible(m, true)));
-				switch (entity.SymbolKind) {
-					case SymbolKind.Field:
-					case SymbolKind.Property:
-					case SymbolKind.Event:
-						addNewModifier = members.Any();
-						break;
-					case SymbolKind.Method:
-					case SymbolKind.Constructor:
-					case SymbolKind.Indexer:
-					case SymbolKind.Operator:
-						addNewModifier = members.Any(m => SignatureComparer.Ordinal.Equals(m, (IMember)entity));
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-			}
+			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t).ToList();
 
-			if (addNewModifier)
+			// A constant, field, property, event, or type introduced in a class or struct hides all base class members with the same name.
+			bool hideBasedOnSignature = !(entity is ITypeDefinition
+				|| entity.SymbolKind == SymbolKind.Field
+				|| entity.SymbolKind == SymbolKind.Property
+				|| entity.SymbolKind == SymbolKind.Event);
+
+			const GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+
+			if (HidesMemberOrTypeOfBaseType())
 				member.Modifiers |= Modifiers.New;
+
+			bool HidesMemberOrTypeOfBaseType()
+			{
+				var parameterListComparer = ParameterListComparer.WithOptions(includeModifiers: true);
+
+				foreach (IType baseType in baseTypes) {
+					if (!hideBasedOnSignature) {
+						if (baseType.GetNestedTypes(t => t.Name == entity.Name && lookup.IsAccessible(t, true), options).Any())
+							return true;
+						if (baseType.GetMembers(m => m.Name == entity.Name && m.SymbolKind != SymbolKind.Indexer && lookup.IsAccessible(m, true), options).Any())
+							return true;
+					} else {
+						if (entity.SymbolKind == SymbolKind.Indexer) {
+							// An indexer introduced in a class or struct hides all base class indexers with the same signature (parameter count and types).
+							if (baseType.GetProperties(p => p.SymbolKind == SymbolKind.Indexer && lookup.IsAccessible(p, true))
+									.Any(p => parameterListComparer.Equals(((IProperty)entity).Parameters, p.Parameters)))
+							{
+								return true;
+							}
+						} else if (entity.SymbolKind == SymbolKind.Method) {
+							// A method introduced in a class or struct hides all non-method base class members with the same name, and all
+							// base class methods with the same signature (method name and parameter count, modifiers, and types).
+							if (baseType.GetMembers(m => m.SymbolKind != SymbolKind.Indexer && m.Name == entity.Name && lookup.IsAccessible(m, true))
+									.Any(m => m.SymbolKind != SymbolKind.Method || (((IMethod)entity).TypeParameters.Count == ((IMethod)m).TypeParameters.Count
+																					&& parameterListComparer.Equals(((IMethod)entity).Parameters, ((IMethod)m).Parameters))))
+							{
+								return true;
+							}
+						}
+					}
+				}
+
+				return false;
+			}
 		}
 
 		void FixParameterNames(EntityDeclaration entity)

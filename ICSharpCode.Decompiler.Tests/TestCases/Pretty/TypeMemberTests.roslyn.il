@@ -40,16 +40,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 i) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.1
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ret
   } // end of method IndexerWithGetOnly::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -110,16 +104,10 @@
                    string s,
                    class [mscorlib]System.Type t) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method IndexerWithMoreParameters::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -150,16 +138,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(!T t) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method IndexerInGenericClass`1::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -186,16 +168,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 t) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method OverloadedIndexer::get_Item
 
   .method public hidebysig specialname instance int32 
@@ -296,16 +272,10 @@
           instance int32  ICSharpCode.Decompiler.Tests.TestCases.Pretty.IMyInterface_IndexerInterfaceExplicitImplementation.get_Item(string s) cil managed
   {
     .override ICSharpCode.Decompiler.Tests.TestCases.Pretty.IMyInterface_IndexerInterfaceExplicitImplementation::get_Item
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method MyClass_IndexerInterfaceExplicitImplementation::ICSharpCode.Decompiler.Tests.TestCases.Pretty.IMyInterface_IndexerInterfaceExplicitImplementation.get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -347,16 +317,10 @@
   .method public hidebysig newslot specialname virtual final 
           instance int32  get_Item(string s) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method MyClass_IndexerInterfaceImplementation::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -845,16 +809,10 @@
   .method public hidebysig specialname virtual 
           instance int32  get_MyProperty() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.4
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  ret
   } // end of method Derived_PropertyOverrideDefaultAccessorOnly::get_MyProperty
 
   .method public hidebysig specialname rtspecialname 
@@ -1292,31 +1250,19 @@
   .method public hidebysig specialname instance int32 
           get_Prop() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method A_HideMembers::get_Prop
 
   .method public hidebysig specialname instance int32 
           get_G() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method A_HideMembers::get_G
 
   .method public hidebysig specialname rtspecialname 
@@ -1346,31 +1292,19 @@
   .method public hidebysig specialname instance int32 
           get_F() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method B_HideMembers::get_F
 
   .method public hidebysig specialname instance string 
           get_Prop() cil managed
   {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldstr      "a"
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldstr      "a"
+    IL_0005:  ret
   } // end of method B_HideMembers::get_Prop
 
   .method public hidebysig specialname rtspecialname 
@@ -1491,16 +1425,10 @@
   .method public hidebysig specialname instance int32 
           get_Item() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.1
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.1
+    IL_0001:  ret
   } // end of method G_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1527,16 +1455,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 i) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.2
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.2
+    IL_0001:  ret
   } // end of method G2_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1562,16 +1484,10 @@
   .method public hidebysig specialname instance int32 
           get_Item() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.4
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.4
+    IL_0001:  ret
   } // end of method G3_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1598,16 +1514,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 j) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method H_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1633,16 +1543,10 @@
   .method public hidebysig specialname instance int32 
           get_Item() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.2
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.2
+    IL_0001:  ret
   } // end of method H2_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1669,16 +1573,10 @@
   .method public hidebysig specialname instance string 
           get_Item(int32 j) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldnull
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ret
   } // end of method H3_HideMembers2::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1751,16 +1649,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 i) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method A1_HideMembers2a::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -1903,16 +1795,10 @@
   .method public hidebysig specialname instance int32 
           get_P() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.2
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.2
+    IL_0001:  ret
   } // end of method J_HideMembers3::get_P
 
   .method public hidebysig specialname rtspecialname 
@@ -2263,16 +2149,10 @@
   .method family hidebysig specialname instance string 
           get_P() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldnull
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ret
   } // end of method A_HideMemberSkipNotVisible::get_P
 
   .method public hidebysig specialname rtspecialname 
@@ -2445,16 +2325,10 @@
   .method public hidebysig specialname instance int32 
           get_P() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.1
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.1
+    IL_0001:  ret
   } // end of method A_HidePropertyReservedMethod::get_P
 
   .method public hidebysig specialname rtspecialname 
@@ -2521,16 +2395,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 i) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.2
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.2
+    IL_0001:  ret
   } // end of method A_HideIndexerDiffAccessor::get_Item
 
   .method public hidebysig specialname rtspecialname 
@@ -3361,16 +3229,10 @@
   .method public hidebysig specialname instance int32 
           get_N() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method A_HideMethodStatic::get_N
 
   .method public hidebysig specialname rtspecialname 

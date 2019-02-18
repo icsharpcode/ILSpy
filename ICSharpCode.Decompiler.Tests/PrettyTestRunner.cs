@@ -409,7 +409,6 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("missing 'new' modifiers in a lot of contexts.")]
 		public void TypeMemberTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);

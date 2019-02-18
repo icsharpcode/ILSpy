@@ -22,11 +22,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class IndexerWithGetOnly
 	{
+#if ROSLYN
+		public int this[int i] => i;
+#else
 		public int this[int i] {
 			get {
 				return i;
 			}
 		}
+#endif
 	}
 	public class IndexerWithSetOnly
 	{
@@ -38,28 +42,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public class IndexerWithMoreParameters
 	{
+#if ROSLYN
+		public int this[int i, string s, Type t] => 0;
+#else
 		public int this[int i, string s, Type t] {
 			get {
 				return 0;
 			}
 		}
+#endif
 	}
 
 	public class IndexerInGenericClass<T>
 	{
+#if ROSLYN
+		public int this[T t] => 0;
+#else
 		public int this[T t] {
 			get {
 				return 0;
 			}
 		}
+#endif
 	}
 	public class OverloadedIndexer
-		{
+	{
+#if ROSLYN
+		public int this[int t] => 0;
+#else
 		public int this[int t] {
 			get {
 				return 0;
 			}
 		}
+#endif
 		public int this[string s] {
 			get {
 				return 0;
@@ -70,7 +86,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 	public interface IIndexerInInterface
-		{
+	{
 		int this[string s, string s2] {
 			set;
 		}
@@ -83,11 +99,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class MyClass_IndexerInterfaceExplicitImplementation : IMyInterface_IndexerInterfaceExplicitImplementation
 	{
+#if ROSLYN
+		int IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] => 3;
+#else
 		int IMyInterface_IndexerInterfaceExplicitImplementation.this[string s] {
 			get {
 				return 3;
 			}
 		}
+#endif
 	}
 	public interface IMyInterface_IndexerInterfaceImplementation
 	{
@@ -97,11 +117,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class MyClass_IndexerInterfaceImplementation : IMyInterface_IndexerInterfaceImplementation
 	{
+#if ROSLYN
+		public int this[string s] => 3;
+#else
 		public int this[string s] {
 			get {
 				return 3;
 			}
 		}
+#endif
 	}
 	public abstract class MyClass_IndexerAbstract
 	{
@@ -223,11 +247,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class Derived_PropertyOverrideDefaultAccessorOnly : MyClass_PropertyOverrideDefaultAccessorOnly
 	{
+#if ROSLYN
+		public override int MyProperty => 4;
+#else
 		public override int MyProperty {
 			get {
 				return 4;
 			}
 		}
+#endif
 	}
 	public class MyClass_PropertyOverrideRestrictedAccessorOnly
 	{
@@ -325,6 +353,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	public class A_HideMembers
 	{
 		public int F;
+#if ROSLYN
+		public int Prop => 3;
+		public int G => 3;
+#else
 		public int Prop {
 			get {
 				return 3;
@@ -335,9 +367,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return 3;
 			}
 		}
+#endif
 	}
 	public class B_HideMembers : A_HideMembers
 	{
+#if ROSLYN
+		public new int F => 3;
+		public new string Prop => "a";
+#else
 		public new int F {
 			get {
 				return 3;
@@ -348,6 +385,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return "a";
 			}
 		}
+#endif
 	}
 	public class C_HideMembers : A_HideMembers
 	{
@@ -371,51 +409,75 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class G_HideMembers2
 	{
+#if ROSLYN
+		public int Item => 1;
+#else
 		public int Item {
 			get {
 				return 1;
 			}
 		}
+#endif
 	}
 	public class G2_HideMembers2 : G_HideMembers2
 	{
+#if ROSLYN
+		public int this[int i] => 2;
+#else
 		public int this[int i] {
 			get {
 				return 2;
 			}
 		}
+#endif
 	}
 	public class G3_HideMembers2 : G2_HideMembers2
 	{
+#if ROSLYN
+		public new int Item => 4;
+#else
 		public new int Item {
 			get {
 				return 4;
 			}
 		}
+#endif
 	}
 	public class H_HideMembers2
 	{
+#if ROSLYN
+		public int this[int j] => 0;
+#else
 		public int this[int j] {
 			get {
 				return 0;
 			}
 		}
+#endif
 	}
 	public class H2_HideMembers2 : H_HideMembers2
 	{
+#if ROSLYN
+		public int Item => 2;
+#else
 		public int Item {
 			get {
 				return 2;
 			}
 		}
+#endif
 	}
 	public class H3_HideMembers2 : H2_HideMembers2
 	{
+#if ROSLYN
+		public new string this[int j] => null;
+#else
 		public new string this[int j] {
 			get {
 				return null;
 			}
 		}
+#endif
 	}
 	public interface IA_HideMembers2a
 	{
@@ -433,11 +495,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class A1_HideMembers2a : A_HideMembers2a
 	{
+#if ROSLYN
+		public int this[int i] => 3;
+#else
 		public int this[int i] {
 			get {
 				return 3;
 			}
 		}
+#endif
 	}
 	public class G_HideMembers3<T>
 	{
@@ -469,15 +535,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class J_HideMembers3
 	{
+#if ROSLYN
+		public int P => 2;
+#else
 		public int P {
 			get {
 				return 2;
 			}
 		}
+#endif
 	}
 	public class J2_HideMembers3 : J_HideMembers3
 	{
-#pragma warning disable 0108   // Deliberate bad code for test case
+#pragma warning disable 0108
+		// Deliberate bad code for test case
 		public int get_P;
 #pragma warning restore 0108
 	}
@@ -563,11 +634,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	public class A_HideMemberSkipNotVisible
 	{
 		protected int F;
+#if ROSLYN
+		protected string P => null;
+#else
 		protected string P {
 			get {
 				return null;
 			}
 		}
+#endif
 	}
 	public class B_HideMemberSkipNotVisible : A_HideMemberSkipNotVisible
 	{
@@ -605,11 +680,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class A_HidePropertyReservedMethod
 	{
+#if ROSLYN
+		public int P => 1;
+#else
 		public int P {
 			get {
 				return 1;
 			}
 		}
+#endif
 	}
 	public class B_HidePropertyReservedMethod : A_HidePropertyReservedMethod
 	{
@@ -623,11 +702,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class A_HideIndexerDiffAccessor
 	{
+#if ROSLYN
+		public int this[int i] => 2;
+#else
 		public int this[int i] {
 			get {
 				return 2;
 			}
 		}
+#endif
 	}
 	public class B_HideIndexerDiffAccessor : A_HideIndexerDiffAccessor
 	{
@@ -828,11 +911,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	}
 	public class A_HideMethodStatic
 	{
+#if ROSLYN
+		public int N => 0;
+#else
 		public int N {
 			get {
 				return 0;
 			}
 		}
+#endif
 	}
 	public class B_HideMethodStatic
 	{
