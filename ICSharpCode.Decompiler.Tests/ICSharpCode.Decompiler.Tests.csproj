@@ -67,6 +67,7 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
     <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="TestCases\Pretty\EnumTests.cs" />
     <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
     <Compile Include="TestCases\Pretty\ValueTypes.cs" />
+    <None Include="TestCases\ILPretty\Issue1389.il" />
     <None Include="TestCases\ILPretty\SequenceOfNestedIfs.cs" />
     <Compile Include="TestCases\Pretty\ConstructorInitializers.cs" />
     <None Include="TestCases\ILPretty\SequenceOfNestedIfs.il" />

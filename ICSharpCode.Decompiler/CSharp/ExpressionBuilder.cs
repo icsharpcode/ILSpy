@@ -266,7 +266,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
-			arg = UnwrapBoxingConversion(arg);
 			if (inst.Type.IsReferenceType == false) {
 				// isinst with a value type results in an expression of "boxed value type",
 				// which is not supported in C#.
@@ -286,6 +285,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return ErrorExpression("isinst with value type is only supported in some contexts");
 				}
 			}
+			arg = UnwrapBoxingConversion(arg);
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
