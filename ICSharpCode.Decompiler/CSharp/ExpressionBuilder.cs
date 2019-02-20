@@ -2263,6 +2263,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		class ArrayInitializer
+		{
+			public ArrayInitializer(ArrayInitializerExpression expression)
+			{
+				this.Expression = expression;
+				this.CurrentElementCount = 0;
+			}
+
+			public ArrayInitializerExpression Expression;
+			// HACK: avoid using Expression.Elements.Count: https://github.com/icsharpcode/ILSpy/issues/1202
+			public int CurrentElementCount;
+		}
+
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
@@ -2278,8 +2291,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentException("given Block is invalid!");
 			int dimensions = newArr.Indices.Count;
 			int[] dimensionSizes = translatedDimensions.Select(dim => (int)dim.ResolveResult.ConstantValue).ToArray();
-			var container = new Stack<ArrayInitializerExpression>();
-			var root = new ArrayInitializerExpression();
+			var container = new Stack<ArrayInitializer>();
+			var root = new ArrayInitializer(new ArrayInitializerExpression());
 			container.Push(root);
 			var elementResolveResults = new List<ResolveResult>();
 
@@ -2295,8 +2308,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					throw new ArgumentException("given Block is invalid!");
 				while (container.Count < dimensions) {
 					var aie = new ArrayInitializerExpression();
-					container.Peek().Elements.Add(aie);
-					container.Push(aie);
+					var parentInitializer = container.Peek();
+					if (parentInitializer.CurrentElementCount > 0)
+						parentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+					parentInitializer.Expression.Elements.Add(aie);
+					parentInitializer.CurrentElementCount++;
+					container.Push(new ArrayInitializer(aie));
 				}
 				TranslatedExpression val;
 				var old = astBuilder.UseSpecialConstants;
@@ -2306,9 +2323,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				} finally {
 					astBuilder.UseSpecialConstants = old;
 				}
-				container.Peek().Elements.Add(val);
+				var currentInitializer = container.Peek();
+				if (currentInitializer.CurrentElementCount > 0)
+					currentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+				currentInitializer.Expression.Elements.Add(val);
+				currentInitializer.CurrentElementCount++;
 				elementResolveResults.Add(val.ResolveResult);
-				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
+				while (container.Count > 0 && container.Peek().CurrentElementCount == dimensionSizes[container.Count - 1]) {
 					container.Pop();
 				}
 			}
@@ -2328,7 +2349,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var expr = new ArrayCreateExpression {
 				Type = typeExpression,
-				Initializer = root
+				Initializer = root.Expression
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			if (!type.ContainsAnonymousType())
