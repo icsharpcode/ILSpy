@@ -395,8 +395,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public static bool IsKeyword(string identifier, AstNode context)
 		{
 			// only 2-10 char lower-case identifiers can be keywords
-			if (identifier.Length > maxKeywordLength || identifier.Length < 2 || identifier[0] < 'a') {
+			if (identifier.Length > maxKeywordLength || identifier.Length == 0) {
 				return false;
+			}
+			if (identifier[0] < 'a') {
+				// we escape _ as identifier to avoid ambiguities with discard patterns
+				return identifier == "_";
 			}
 			if (unconditionalKeywords.Contains(identifier)) {
 				return true;

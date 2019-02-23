@@ -23,6 +23,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class TypeAnalysisTests
 	{
+		private class @_
+		{
+		}
+
 		private byte[] byteArray;
 
 		public byte SubtractFrom256(byte b)
@@ -123,6 +127,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine(o is Random);
 			Console.WriteLine(!(o is Random));
+			// If we didn't escape the '_' identifier here, this would look like a discard pattern
+			Console.WriteLine(o is @_);
 		}
 
 		public byte[] CreateArrayWithInt(int length)
