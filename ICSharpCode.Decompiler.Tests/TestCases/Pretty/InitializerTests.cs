@@ -430,6 +430,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				1
 			}
 		};
+
+#if ROSLYN
+		public static ReadOnlySpan<byte> StaticData1 => new byte[1] {
+			0
+		};
+
+		public static ReadOnlySpan<byte> StaticData3 => new byte[3] {
+			1,
+			2,
+			3
+		};
+
+		public static Span<byte> StaticData3Span => new byte[3] {
+			1,
+			2,
+			3
+		};
+#endif
 		#endregion
 
 		#region Helper methods used to ensure initializers used within expressions work correctly

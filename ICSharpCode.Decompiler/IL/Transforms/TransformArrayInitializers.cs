@@ -56,8 +56,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var elementType, out var arrayLength)) {
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out var values, out var initArrayPos)) {
-					context.Step("ForwardScanInitializeArrayRuntimeHelper: single-dim", inst);
+				if (HandleRuntimeHelperInitializeArray(body, pos + 1, v, elementType, arrayLength, out var values, out var initArrayPos)) {
+					context.Step("HandleRuntimeHelperInitializeArray: single-dim", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos] = new StLoc(v, block);
@@ -102,14 +102,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
+		internal static bool TransformSpanTArrayInitialization(NewObj inst, StatementTransformContext context, out Block block)
+		{
+			block = null;
+			if (MatchSpanTCtorWithPointerAndSize(inst, context, out var elementType, out var field, out var size)) {
+				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
+					var valuesList = new List<ILInstruction>();
+					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
+					if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList)) {
+						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
+						block = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		static bool MatchSpanTCtorWithPointerAndSize(NewObj newObj, StatementTransformContext context, out IType elementType, out FieldDefinition field, out int size)
+		{
+			field = default;
+			size = default;
+			elementType = null;
+			IType type = newObj.Method.DeclaringType;
+			if (!type.IsKnownType(KnownTypeCode.SpanOfT) && !type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				return false;
+			if (newObj.Arguments.Count != 2 || type.TypeArguments.Count != 1)
+				return false;
+			elementType = type.TypeArguments[0];
+			if (!newObj.Arguments[0].UnwrapConv(ConversionKind.StopGCTracking).MatchLdsFlda(out var member))
+				return false;
+			if (member.MetadataToken.IsNil)
+				return false;
+			if (!newObj.Arguments[1].MatchLdcI4(out size))
+				return false;
+			field = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)member.MetadataToken);
+			return true;
+		}
+
 		bool DoTransformMultiDim(ILFunction function, Block body, int pos)
 		{
 			if (pos >= body.Instructions.Count - 2)
 				return false;
 			ILInstruction inst = body.Instructions[pos];
 			if (inst.MatchStLoc(out var v, out var newarrExpr) && MatchNewArr(newarrExpr, out var elementType, out var length)) {
-				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, length, out var values, out var initArrayPos)) {
-					context.Step("ForwardScanInitializeArrayRuntimeHelper: multi-dim", inst);
+				if (HandleRuntimeHelperInitializeArray(body, pos + 1, v, elementType, length, out var values, out var initArrayPos)) {
+					context.Step("HandleRuntimeHelperInitializeArray: multi-dim", inst);
 					var block = BlockFromInitializer(v, elementType, length, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
@@ -463,7 +501,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& initializer.OpCode == OpCode.Block;
 		}
 		
-		Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
+		static Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
 		{
 			var block = new Block(BlockKind.ArrayInitializer);
 			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -496,15 +534,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return true;
 		}
-		
-		bool MatchInitializeArrayCall(ILInstruction instruction, out IMethod method, out ILVariable array, out FieldDefinition field)
+
+		bool MatchInitializeArrayCall(ILInstruction instruction, out ILVariable array, out FieldDefinition field)
 		{
-			method = null;
 			array = null;
 			field = default;
 			if (!(instruction is Call call) || call.Arguments.Count != 2)
 				return false;
-			method = call.Method;
+			IMethod method = call.Method;
 			if (!method.IsStatic || method.Name != "InitializeArray" || method.DeclaringTypeDefinition == null)
 				return false;
 			var declaringType = method.DeclaringTypeDefinition;
@@ -523,13 +560,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool ForwardScanInitializeArrayRuntimeHelper(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
+		bool HandleRuntimeHelperInitializeArray(Block body, int pos, ILVariable array, IType arrayType, int[] arrayLength, out ILInstruction[] values, out int foundPos)
 		{
-			if (MatchInitializeArrayCall(body.Instructions[pos], out var method, out var v2, out var field) && array == v2) {
+			if (MatchInitializeArrayCall(body.Instructions[pos], out var v2, out var field) && array == v2) {
 				if (field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA)) {
 					var valuesList = new List<ILInstruction>();
 					var initialValue = field.GetInitialValue(context.PEFile.Reader, context.TypeSystem);
-					if (DecodeArrayInitializer(arrayType, array, initialValue, arrayLength, valuesList)) {
+					if (DecodeArrayInitializer(arrayType, initialValue, arrayLength, valuesList)) {
 						values = valuesList.ToArray();
 						foundPos = pos;
 						return true;
@@ -541,35 +578,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool DecodeArrayInitializer(IType type, ILVariable array, BlobReader initialValue, int[] arrayLength, List<ILInstruction> output)
+		static bool DecodeArrayInitializer(IType type, BlobReader initialValue, int[] arrayLength, List<ILInstruction> output)
 		{
 			TypeCode typeCode = ReflectionHelper.GetTypeCode(type);
 			switch (typeCode) {
 				case TypeCode.Boolean:
 				case TypeCode.Byte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadByte()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadByte()));
 				case TypeCode.SByte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadSByte()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadSByte()));
 				case TypeCode.Int16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt16()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt16()));
 				case TypeCode.Char:
 				case TypeCode.UInt16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadUInt16()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadUInt16()));
 				case TypeCode.Int32:
 				case TypeCode.UInt32:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt32()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI4(r.ReadInt32()));
 				case TypeCode.Int64:
 				case TypeCode.UInt64:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI8(r.ReadInt64()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcI8(r.ReadInt64()));
 				case TypeCode.Single:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r)  => new LdcF4(r.ReadSingle()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r)  => new LdcF4(r.ReadSingle()));
 				case TypeCode.Double:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcF8(r.ReadDouble()));
+					return DecodeArrayInitializer(initialValue, arrayLength, output, typeCode, type, (ref BlobReader r) => new LdcF8(r.ReadDouble()));
 				case TypeCode.Object:
 				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();
 					if (typeDef != null && typeDef.Kind == TypeKind.Enum)
-						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, array, initialValue, arrayLength, output);
+						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, initialValue, arrayLength, output);
 					return false;
 				default:
 					return false;
@@ -578,7 +615,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		delegate ILInstruction ValueDecoder(ref BlobReader reader);
 
-		static bool DecodeArrayInitializer(BlobReader initialValue, ILVariable array, int[] arrayLength,
+		static bool DecodeArrayInitializer(BlobReader initialValue, int[] arrayLength,
 			List<ILInstruction> output, TypeCode elementType, IType type, ValueDecoder decoder)
 		{
 			int elementSize = ElementSizeOf(elementType);
