@@ -598,7 +598,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var b = new AttributeListBuilder(this);
 			if (metadata.IsAssembly) {
 				var assembly = metadata.GetAssemblyDefinition();
-				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition));
+				b.Add(metadata.GetCustomAttributes(Handle.AssemblyDefinition), SymbolKind.Module);
 				b.AddSecurityAttributes(assembly.GetDeclarativeSecurityAttributes());
 
 				// AssemblyVersionAttribute
@@ -617,7 +617,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public IEnumerable<IAttribute> GetModuleAttributes()
 		{
 			var b = new AttributeListBuilder(this);
-			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition));
+			b.Add(metadata.GetCustomAttributes(Handle.ModuleDefinition), SymbolKind.Module);
 			if (!metadata.IsAssembly) {
 				AddTypeForwarderAttributes(ref b);
 			}

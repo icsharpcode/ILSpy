@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool HasValueTypeConstraint => hasValueTypeConstraint;
 		public override bool HasReferenceTypeConstraint => hasReferenceTypeConstraint;
 		public override bool HasDefaultConstructorConstraint => hasDefaultConstructorConstraint;
+		public override bool HasUnmanagedConstraint => false;
 		public override Nullability NullabilityConstraint => nullabilityConstraint;
 
 		public override IEnumerable<IType> DirectBaseTypes {

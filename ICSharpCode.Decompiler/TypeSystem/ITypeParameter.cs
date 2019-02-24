@@ -83,9 +83,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool HasReferenceTypeConstraint { get; }
 		
 		/// <summary>
-		/// Gets if the type parameter has the 'struct' constraint.
+		/// Gets if the type parameter has the 'struct' or 'unmanaged' constraint.
 		/// </summary>
 		bool HasValueTypeConstraint { get; }
+
+		/// <summary>
+		/// Gets if the type parameter has the 'unmanaged' constraint.
+		/// </summary>
+		bool HasUnmanagedConstraint { get; }
 
 		/// <summary>
 		/// Nullability of the reference type constraint. (e.g. "where T : class?").

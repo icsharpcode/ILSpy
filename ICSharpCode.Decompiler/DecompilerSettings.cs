@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler
 				nonTrailingNamedArguments = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_3) {
-				//introduceUnmanagedTypeConstraint = false;
+				introduceUnmanagedConstraint = false;
 				stackAllocInitializers = false;
 				tupleComparisons = false;
 			}
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (tupleComparisons || stackAllocInitializers)
+			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
 				return CSharp.LanguageVersion.CSharp7_2;
@@ -682,6 +682,22 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceReadonlyAndInModifiers != value) {
 					introduceReadonlyAndInModifiers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool introduceUnmanagedConstraint = true;
+
+		/// <summary>
+		/// If this option is active, [IsUnmanagedAttribute] on type parameters
+		/// is replaced with "T : unmanaged" constraints.
+		/// </summary>
+		public bool IntroduceUnmanagedConstraint {
+			get { return introduceUnmanagedConstraint; }
+			set {
+				if (introduceUnmanagedConstraint != value) {
+					introduceUnmanagedConstraint = value;
 					OnPropertyChanged();
 				}
 			}

@@ -1730,7 +1730,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					c.BaseTypes.Add(new PrimitiveType("class"));
 				}
 			} else if (tp.HasValueTypeConstraint) {
-				c.BaseTypes.Add(new PrimitiveType("struct"));
+				if (tp.HasUnmanagedConstraint) {
+					c.BaseTypes.Add(new PrimitiveType("unmanaged"));
+				} else {
+					c.BaseTypes.Add(new PrimitiveType("struct"));
+				}
 			}
 			foreach (IType t in tp.DirectBaseTypes) {
 				if (!IsObjectOrValueType(t))

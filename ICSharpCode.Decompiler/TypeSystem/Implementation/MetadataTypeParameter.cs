@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		// lazy-loaded:
 		IReadOnlyList<IType> constraints;
+		byte unmanagedConstraint = ThreeState.Unknown;
 		const byte nullabilityNotYetLoaded = 255;
 		byte nullabilityConstraint = nullabilityNotYetLoaded;
 
@@ -106,13 +107,31 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 			var attributes = gp.GetCustomAttributes();
 			var b = new AttributeListBuilder(module, attributes.Count);
-			b.Add(attributes);
+			b.Add(attributes, SymbolKind.TypeParameter);
 			return b.Build();
 		}
 
 		public override bool HasDefaultConstructorConstraint => (attr & GenericParameterAttributes.DefaultConstructorConstraint) != 0;
 		public override bool HasReferenceTypeConstraint => (attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
 		public override bool HasValueTypeConstraint => (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
+
+		public override bool HasUnmanagedConstraint {
+			get {
+				if (unmanagedConstraint == ThreeState.Unknown) {
+					unmanagedConstraint = ThreeState.From(LoadUnmanagedConstraint());
+				}
+				return unmanagedConstraint == ThreeState.True;
+			}
+		}
+
+		private bool LoadUnmanagedConstraint()
+		{
+			if ((module.TypeSystemOptions & TypeSystemOptions.UnmanagedConstraints) == 0)
+				return false;
+			var metadata = module.metadata;
+			var gp = metadata.GetGenericParameter(handle);
+			return gp.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsUnmanaged);
+		}
 
 		public override Nullability NullabilityConstraint {
 			get {

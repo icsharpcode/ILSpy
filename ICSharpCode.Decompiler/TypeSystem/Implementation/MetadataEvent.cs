@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var b = new AttributeListBuilder(module);
 			var metadata = module.metadata;
 			var eventDef = metadata.GetEventDefinition(handle);
-			b.Add(eventDef.GetCustomAttributes());
+			b.Add(eventDef.GetCustomAttributes(), SymbolKind.Event);
 			return b.Build();
 		}
 		#endregion

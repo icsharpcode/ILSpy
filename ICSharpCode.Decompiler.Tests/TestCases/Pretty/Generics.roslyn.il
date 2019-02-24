@@ -33,6 +33,42 @@
 
 // =============== CLASS MEMBERS DECLARATION ===================
 
+.class private auto ansi sealed beforefieldinit Microsoft.CodeAnalysis.EmbeddedAttribute
+       extends [mscorlib]System.Attribute
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Attribute::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method EmbeddedAttribute::.ctor
+
+} // end of class Microsoft.CodeAnalysis.EmbeddedAttribute
+
+.class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.IsUnmanagedAttribute
+       extends [mscorlib]System.Attribute
+{
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Attribute::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method IsUnmanagedAttribute::.ctor
+
+} // end of class System.Runtime.CompilerServices.IsUnmanagedAttribute
+
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Generics
        extends [mscorlib]System.Object
 {
@@ -297,6 +333,58 @@
     IL_000b:  ldloc.0
     IL_000c:  ret
   } // end of method Generics::NewArray
+
+  .method public hidebysig static object 
+          CallDelegate<([mscorlib]System.Delegate) T>(!!T input) cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  2
+    .locals init (object V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  box        !!T
+    IL_0007:  ldc.i4.0
+    IL_0008:  newarr     [mscorlib]System.Object
+    IL_000d:  callvirt   instance object [mscorlib]System.Delegate::DynamicInvoke(object[])
+    IL_0012:  stloc.0
+    IL_0013:  br.s       IL_0015
+
+    IL_0015:  ldloc.0
+    IL_0016:  ret
+  } // end of method Generics::CallDelegate
+
+  .method public hidebysig static int32  CountEnumerators<([mscorlib]System.Enum) T>() cil managed
+  {
+    // Code size       26 (0x1a)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldtoken    !!T
+    IL_0006:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_000b:  callvirt   instance class [mscorlib]System.Array [mscorlib]System.Type::GetEnumValues()
+    IL_0010:  callvirt   instance int32 [mscorlib]System.Array::get_Length()
+    IL_0015:  stloc.0
+    IL_0016:  br.s       IL_0018
+
+    IL_0018:  ldloc.0
+    IL_0019:  ret
+  } // end of method Generics::CountEnumerators
+
+  .method public hidebysig static int32  UnmanagedConstraint<valuetype .ctor (class [mscorlib]System.ValueType modreq([mscorlib]System.Runtime.InteropServices.UnmanagedType)) T>() cil managed
+  {
+    .param type T 
+    .custom instance void System.Runtime.CompilerServices.IsUnmanagedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  sizeof     !!T
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method Generics::UnmanagedConstraint
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

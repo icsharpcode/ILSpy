@@ -90,6 +90,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasDefaultConstructorConstraint => baseType.HasDefaultConstructorConstraint;
 		bool ITypeParameter.HasReferenceTypeConstraint => baseType.HasReferenceTypeConstraint;
 		bool ITypeParameter.HasValueTypeConstraint => baseType.HasValueTypeConstraint;
+		bool ITypeParameter.HasUnmanagedConstraint => baseType.HasUnmanagedConstraint;
 		Nullability ITypeParameter.NullabilityConstraint => baseType.NullabilityConstraint;
 		SymbolKind ISymbol.SymbolKind => SymbolKind.TypeParameter;
 		IEnumerable<IAttribute> ITypeParameter.GetAttributes() => baseType.GetAttributes();

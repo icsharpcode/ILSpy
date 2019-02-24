@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((attributes & ParameterAttributes.Out) == ParameterAttributes.Out)
 					b.Add(KnownAttribute.Out);
 			}
-			b.Add(parameter.GetCustomAttributes());
+			b.Add(parameter.GetCustomAttributes(), SymbolKind.Parameter);
 			b.AddMarshalInfo(parameter.GetMarshallingDescriptor());
 
 			return b.Build();

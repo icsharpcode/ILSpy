@@ -372,7 +372,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			#endregion
 
-			b.Add(typeDefinition.GetCustomAttributes());
+			b.Add(typeDefinition.GetCustomAttributes(), SymbolKind.TypeDefinition);
 			b.AddSecurityAttributes(typeDefinition.GetDeclarativeSecurityAttributes());
 
 			return b.Build();

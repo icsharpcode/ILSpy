@@ -86,6 +86,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		CallerFilePath,
 		CallerLineNumber,
 
+		// Type parameter attributes:
+		IsUnmanaged,
+
 		// Marshalling attributes:
 		MarshalAs,
 
@@ -143,6 +146,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerMemberNameAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerFilePathAttribute)),
 			new TopLevelTypeName("System.Runtime.CompilerServices", nameof(CallerLineNumberAttribute)),
+			// Type parameter attributes:
+			new TopLevelTypeName("System.Runtime.CompilerServices", "IsUnmanagedAttribute"),
 			// Marshalling attributes:
 			new TopLevelTypeName("System.Runtime.InteropServices", nameof(MarshalAsAttribute)),
 			// Security attributes:
