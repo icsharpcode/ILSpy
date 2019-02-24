@@ -224,7 +224,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					newElementRRs.Add(newElementExpr.ResolveResult);
 				}
 				return newTupleExpr.WithILInstruction(this.ILInstructions)
-					.WithRR(new TupleResolveResult(expressionBuilder.compilation, newElementRRs.ToImmutableArray()));
+					.WithRR(new TupleResolveResult(
+						expressionBuilder.compilation, newElementRRs.ToImmutableArray(), 
+						valueTupleAssembly: targetTupleType.GetDefinition()?.ParentModule
+					));
 			}
 			var compilation = expressionBuilder.compilation;
 			var conversions = Resolver.CSharpConversions.Get(compilation);

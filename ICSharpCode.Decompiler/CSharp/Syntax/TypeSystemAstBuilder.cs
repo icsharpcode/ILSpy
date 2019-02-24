@@ -384,9 +384,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool TypeMatches(IType type, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
 		{
 			if (typeDef.TypeParameterCount == 0) {
-				return typeDef.Equals(type);
+				return TypeDefMatches(typeDef, type);
 			} else {
-				if (!typeDef.Equals(type.GetDefinition()))
+				if (!TypeDefMatches(typeDef, type.GetDefinition()))
 					return false;
 				ParameterizedType pt = type as ParameterizedType;
 				if (pt == null) {
@@ -399,6 +399,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				return true;
 			}
+		}
+
+		bool TypeDefMatches(ITypeDefinition typeDef, IType type)
+		{
+			if (type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
+				return false;
+			bool defIsNested = typeDef.DeclaringTypeDefinition != null;
+			bool typeIsNested = type.DeclaringType != null;
+			if (defIsNested && typeIsNested)
+				return TypeDefMatches(typeDef.DeclaringTypeDefinition, type.DeclaringType);
+			else
+				return defIsNested == typeIsNested;
 		}
 
 		/// <summary>
