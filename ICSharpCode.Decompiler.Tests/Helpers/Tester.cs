@@ -245,7 +245,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
-				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
+				var parseOptions = new CSharpParseOptions(
+					preprocessorSymbols: preprocessorSymbols.ToArray(),
+					languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp8
+				);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var references = defaultReferences.Value;
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {

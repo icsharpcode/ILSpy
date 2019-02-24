@@ -186,11 +186,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						int normalArgCount = Math.Min(type.TypeArguments.Count, TupleType.RestPosition - 1);
 						for (int i = 0; i < normalArgCount; i++) {
 							dynamicTypeIndex++;
+							nullabilityTypeIndex++;
 							elementTypes.Add(type.TypeArguments[i].AcceptVisitor(this));
 						}
 						if (type.TypeArguments.Count == TupleType.RestPosition) {
 							type = type.TypeArguments.Last() as ParameterizedType;
 							dynamicTypeIndex++;
+							nullabilityTypeIndex++;
 							if (type != null && TupleType.IsTupleCompatible(type, out int nestedCardinality)) {
 								tupleTypeIndex += nestedCardinality;
 							} else {

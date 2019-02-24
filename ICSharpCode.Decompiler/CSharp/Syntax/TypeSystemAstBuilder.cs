@@ -243,7 +243,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (typeWithElementType is PointerType) {
 					return ConvertType(typeWithElementType.ElementType).MakePointerType();
 				} else if (typeWithElementType is ArrayType) {
-					return ConvertType(typeWithElementType.ElementType).MakeArrayType(((ArrayType)type).Dimensions);
+					var astType = ConvertType(typeWithElementType.ElementType).MakeArrayType(((ArrayType)type).Dimensions);
+					if (type.Nullability == Nullability.Nullable)
+						return astType.MakeNullableType();
+					else
+						return astType;
 				} else if (typeWithElementType is ByReferenceType) {
 					return ConvertType(typeWithElementType.ElementType).MakeRefType();
 				} else {

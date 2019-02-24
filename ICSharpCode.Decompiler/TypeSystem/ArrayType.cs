@@ -89,7 +89,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			ArrayType a = other as ArrayType;
 			return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions && a.nullability == nullability;
 		}
-		
+
+		public override string ToString()
+		{
+			switch (nullability) {
+				case Nullability.Nullable:
+					return elementType.ToString() + NameSuffix + "?";
+				case Nullability.NotNullable:
+					return elementType.ToString() + NameSuffix + "!";
+				default:
+					return elementType.ToString() + NameSuffix;
+			}
+		}
+
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {
 				List<IType> baseTypes = new List<IType>();
@@ -125,7 +137,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			else
 				return compilation.FindType(KnownTypeCode.Array).GetMethods(typeArguments, filter, options);
 		}
-		
+
 		public override IEnumerable<IMethod> GetAccessors(Predicate<IMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)

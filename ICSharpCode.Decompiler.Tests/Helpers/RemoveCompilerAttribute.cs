@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			"System.Runtime.CompilerServices.IsReadOnlyAttribute",
 			"System.Runtime.CompilerServices.IsByRefLikeAttribute",
 			"System.Runtime.CompilerServices.IsUnmanagedAttribute",
+			"System.Runtime.CompilerServices.NullableAttribute",
 			"Microsoft.CodeAnalysis.EmbeddedAttribute",
 		};
 

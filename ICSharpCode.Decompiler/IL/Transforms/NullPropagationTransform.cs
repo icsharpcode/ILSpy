@@ -210,6 +210,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					if (ArgumentsAfterFirstMayUnwrapNull(call.Arguments))
 						return false;
+				} else if (inst is LdLen ldLen) {
+					inst = ldLen.Array;
 				} else if (inst is NullableUnwrap unwrap) {
 					inst = unwrap.Argument;
 				} else if (inst is DynamicGetMemberInstruction dynGetMember) {

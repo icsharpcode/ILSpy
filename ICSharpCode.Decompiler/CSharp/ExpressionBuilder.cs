@@ -1777,11 +1777,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithRR(new ResolveResult(NullableType.GetUnderlyingType(translatedTarget.Type)))
 							.WithoutILInstruction();
 					}
-					if (translatedTarget.Type.Nullability == Nullability.Nullable) {
-						translatedTarget = new UnaryOperatorExpression(UnaryOperatorType.SuppressNullableWarning, translatedTarget)
-							.WithRR(new ResolveResult(translatedTarget.Type.ChangeNullability(Nullability.Oblivious)))
-							.WithoutILInstruction();
-					}
+					translatedTarget = EnsureTargetNotNullable(translatedTarget);
 					return translatedTarget;
 				}
 			} else {
@@ -1790,7 +1786,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new TypeResolveResult(memberDeclaringType));
 			}
 		}
-		
+
+		private TranslatedExpression EnsureTargetNotNullable(TranslatedExpression expr)
+		{
+			if (expr.Type.Nullability == Nullability.Nullable) {
+				if (expr.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional) {
+					return expr;
+				}
+				return new UnaryOperatorExpression(UnaryOperatorType.SuppressNullableWarning, expr)
+					.WithRR(new ResolveResult(expr.Type.ChangeNullability(Nullability.Oblivious)))
+					.WithoutILInstruction();
+			}
+			return expr;
+		}
+
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
@@ -1875,6 +1884,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
 				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
 			}
+			arrayExpr = EnsureTargetNotNullable(arrayExpr);
 			if (inst.ResultType == StackType.I4) {
 				return new MemberReferenceExpression(arrayExpr.Expression, "Length")
 					.WithILInstruction(inst)
