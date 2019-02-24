@@ -42,6 +42,7 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <EmbedAllSources>true</EmbedAllSources>
+    <DocumentationFile>bin/Release/ICSharpCode.Decompiler.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
