@@ -172,10 +172,10 @@ public static class Program
 }
 namespace _003CStartupCode_0024ConsoleApplication1_003E
 {
-	internal static class _0024Program
+	internal static class _0024AssemblyInfo
 	{
 	}
-	internal static class _0024AssemblyInfo
+	internal static class _0024Program
 	{
 	}
 }
