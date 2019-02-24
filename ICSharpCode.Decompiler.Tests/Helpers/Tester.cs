@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
 			string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5");
+				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2");
 			string thisAsmPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			return new[]
 			{
