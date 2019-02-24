@@ -474,6 +474,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
+			return DecompileWholeModuleAsSingleFile(false);
+		}
+
+		/// <summary>
+		/// Decompiles the whole module into a single syntax tree.
+		/// </summary>
+		/// <param name="sortTypes">If true, top-level-types are emitted sorted by namespace/name.
+		/// If false, types are emitted in metadata order.</param>
+		public SyntaxTree DecompileWholeModuleAsSingleFile(bool sortTypes)
+		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainModule);
 			var decompileRun = new DecompileRun(settings) {
 				DocumentationProvider = DocumentationProvider ?? CreateDefaultDocumentationProvider(),
@@ -482,7 +492,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			syntaxTree = new SyntaxTree();
 			RequiredNamespaceCollector.CollectNamespaces(module, decompileRun.Namespaces);
 			DoDecompileModuleAndAssemblyAttributes(decompileRun, decompilationContext, syntaxTree);
-			DoDecompileTypes(metadata.GetTopLevelTypeDefinitions(), decompileRun, decompilationContext, syntaxTree);
+			var typeDefs = metadata.GetTopLevelTypeDefinitions();
+			if (sortTypes) {
+				typeDefs = typeDefs.OrderBy(td => {
+					var typeDef = module.metadata.GetTypeDefinition(td);
+					return (module.metadata.GetString(typeDef.Namespace), module.metadata.GetString(typeDef.Name));
+				});
+			}
+			DoDecompileTypes(typeDefs, decompileRun, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompileRun, decompilationContext);
 			return syntaxTree;
 		}

@@ -449,7 +449,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				decompiler.AstTransforms.Insert(0, new RemoveEmbeddedAttributes());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
+				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile(sortTypes: true);
 
 				StringWriter output = new StringWriter();
 				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());

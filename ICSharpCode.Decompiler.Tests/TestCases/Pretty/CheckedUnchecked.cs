@@ -20,6 +20,11 @@ using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal class Box<T>
+	{
+		public readonly T Value;
+	}
+
 	public class CheckedUnchecked
 	{
 		public int Operators(int a, int b)
@@ -122,10 +127,5 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
-	}
-
-	internal class Box<T>
-	{
-		public readonly T Value;
 	}
 }

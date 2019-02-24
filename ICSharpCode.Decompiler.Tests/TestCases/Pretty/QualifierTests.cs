@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 		}
 	}
 
-	internal static class Ext
+	internal static class ZExt
 	{
 		public static void Do(this int test)
 		{
