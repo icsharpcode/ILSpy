@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						case "ExtensionAttribute":
 							return (options & TypeSystemOptions.ExtensionMethods) != 0;
 						case "DecimalConstantAttribute":
-							return (options & TypeSystemOptions.DecimalConstants) != 0 && target == SymbolKind.Field;
+							return (options & TypeSystemOptions.DecimalConstants) != 0 && (target == SymbolKind.Field || target == SymbolKind.Parameter);
 						case "IsReadOnlyAttribute":
 							return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
 						case "IsByRefLikeAttribute":
