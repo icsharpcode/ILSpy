@@ -165,7 +165,6 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("broken by Roslyn upgrade")]
 		public void LiftedOperators([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions);
