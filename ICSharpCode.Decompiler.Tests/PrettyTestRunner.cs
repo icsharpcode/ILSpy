@@ -420,6 +420,12 @@ namespace ICSharpCode.Decompiler.Tests
 			RunForLibrary(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void Discards([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
 		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
