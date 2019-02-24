@@ -263,16 +263,10 @@
   .method public hidebysig specialname static 
           string  get_Property() cil managed
   {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldstr      "aa"
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldstr      "aa"
+    IL_0005:  ret
   } // end of method CustomAttributes::get_Property
 
   .method public hidebysig static void  ObsoletedMethod() cil managed

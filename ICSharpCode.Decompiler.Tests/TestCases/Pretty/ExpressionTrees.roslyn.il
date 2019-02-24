@@ -3721,23 +3721,25 @@
     .method assembly hidebysig instance void 
             '<Call>b__98_15'(object o) cil managed
     {
-      // Code size       8 (0x8)
+      // Code size       9 (0x9)
       .maxstack  8
-      IL_0000:  ldarg.1
-      IL_0001:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object)
-      IL_0006:  nop
-      IL_0007:  ret
+      IL_0000:  nop
+      IL_0001:  ldarg.1
+      IL_0002:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object)
+      IL_0007:  nop
+      IL_0008:  ret
     } // end of method '<>c'::'<Call>b__98_15'
 
     .method assembly hidebysig instance void 
             '<Call>b__98_17'(object o) cil managed
     {
-      // Code size       9 (0x9)
+      // Code size       10 (0xa)
       .maxstack  8
-      IL_0000:  ldarga.s   o
-      IL_0002:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object&)
-      IL_0007:  nop
-      IL_0008:  ret
+      IL_0000:  nop
+      IL_0001:  ldarga.s   o
+      IL_0003:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object&)
+      IL_0008:  nop
+      IL_0009:  ret
     } // end of method '<>c'::'<Call>b__98_17'
 
     .method assembly hidebysig instance bool 
@@ -14130,12 +14132,12 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00010694
+  .field static assembly initonly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' E429CCA3F703A39CC5954A6572FEC9086135B34E at I_00010698
 } // end of class '<PrivateImplementationDetails>'
 
 
 // =============================================================
 
-.data cil I_00010694 = bytearray (
+.data cil I_00010698 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************

@@ -43,16 +43,10 @@
     .method public hidebysig specialname 
             instance int32  get_Foo(int32 index) cil managed
     {
-      // Code size       7 (0x7)
-      .maxstack  1
-      .locals init (int32 V_0)
-      IL_0000:  nop
-      IL_0001:  ldc.i4.0
-      IL_0002:  stloc.0
-      IL_0003:  br.s       IL_0005
-
-      IL_0005:  ldloc.0
-      IL_0006:  ret
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldc.i4.0
+      IL_0001:  ret
     } // end of method IndexerNonDefaultName::get_Foo
 
     .method public hidebysig specialname rtspecialname 

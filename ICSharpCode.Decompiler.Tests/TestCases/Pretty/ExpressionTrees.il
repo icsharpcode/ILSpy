@@ -13193,23 +13193,25 @@
   .method private hidebysig static void  '<Call>b__92'(object o) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       8 (0x8)
+    // Code size       9 (0x9)
     .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object)
-    IL_0006:  nop
-    IL_0007:  ret
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object)
+    IL_0007:  nop
+    IL_0008:  ret
   } // end of method ExpressionTrees::'<Call>b__92'
 
   .method private hidebysig static void  '<Call>b__93'(object o) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       9 (0x9)
+    // Code size       10 (0xa)
     .maxstack  8
-    IL_0000:  ldarga.s   o
-    IL_0002:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object&)
-    IL_0007:  nop
-    IL_0008:  ret
+    IL_0000:  nop
+    IL_0001:  ldarga.s   o
+    IL_0003:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExpressionTrees::TestCall(object&)
+    IL_0008:  nop
+    IL_0009:  ret
   } // end of method ExpressionTrees::'<Call>b__93'
 
   .method private hidebysig static bool  '<Quote>b__9d'() cil managed
@@ -15184,8 +15186,8 @@
     .size 12
   } // end of class '__StaticArrayInitTypeSize=12'
 
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000114-1' at I_000094C0
-  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000118-1' at I_00009538
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000114-1' at I_000094C8
+  .field static assembly valuetype '<PrivateImplementationDetails>'/'__StaticArrayInitTypeSize=12' '$$method0x6000118-1' at I_00009540
 } // end of class '<PrivateImplementationDetails>'
 
 .class private auto ansi sealed beforefieldinit '<>f__AnonymousType3`2'<'<A>j__TPar','<B>j__TPar'>
@@ -15377,9 +15379,9 @@
 
 // =============================================================
 
-.data cil I_000094C0 = bytearray (
+.data cil I_000094C8 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
-.data cil I_000094CC = int8[4]
-.data cil I_00009538 = bytearray (
+.data cil I_000094D4 = int8[44]
+.data cil I_00009540 = bytearray (
                  01 00 00 00 02 00 00 00 03 00 00 00) 
 // *********** DISASSEMBLY COMPLETE ***********************

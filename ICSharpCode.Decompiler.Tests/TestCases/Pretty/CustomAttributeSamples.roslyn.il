@@ -189,16 +189,10 @@
   .method public hidebysig specialname instance int32 
           get_Property() cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method TestClass::get_Property
 
   .method public hidebysig specialname instance int32 
@@ -245,16 +239,10 @@
   .method public hidebysig specialname instance int32 
           get_Item(int32 i) cil managed
   {
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  ret
   } // end of method TestClass::get_Item
 
   .method public hidebysig specialname instance void 
@@ -957,16 +945,10 @@
   {
     .param [1]
     .custom instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples.MyAttributeAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       7 (0x7)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldc.i4.3
-    IL_0002:  stloc.0
-    IL_0003:  br.s       IL_0005
-
-    IL_0005:  ldloc.0
-    IL_0006:  ret
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  ldc.i4.3
+    IL_0001:  ret
   } // end of method MyClass11::get_Item
 
   .method public hidebysig specialname rtspecialname 

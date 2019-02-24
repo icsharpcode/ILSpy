@@ -8,6 +8,11 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
+.assembly extern System.ValueTuple
+{
+  .publickeytoken = (CC 7B 13 FF CD 2D DD 51 )                         // .{...-.Q
+  .ver 4:0:2:0
+}
 .assembly extern System.Core
 {
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
@@ -45,7 +50,7 @@
          extends [mscorlib]System.Object
   {
     .method public hidebysig newslot abstract virtual 
-            instance void  M1(valuetype [mscorlib]System.ValueTuple`2<int64,int64> a) cil managed
+            instance void  M1(valuetype [System.ValueTuple]System.ValueTuple`2<int64,int64> a) cil managed
     {
     } // end of method OverloadResolution::M1
 
@@ -55,13 +60,13 @@
     } // end of method OverloadResolution::M1
 
     .method public hidebysig instance void 
-            UseM1(valuetype [mscorlib]System.ValueTuple`2<int32,int32> a) cil managed
+            UseM1(valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> a) cil managed
     {
       // Code size       13 (0xd)
       .maxstack  8
       IL_0000:  ldarg.0
       IL_0001:  ldarg.1
-      IL_0002:  box        valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+      IL_0002:  box        valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>
       IL_0007:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/OverloadResolution::M1(object)
       IL_000c:  ret
     } // end of method OverloadResolution::UseM1
@@ -83,7 +88,7 @@
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' '<>9'
-    .field public static class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> '<>9__22_0'
+    .field public static class [mscorlib]System.Func`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,bool> '<>9__22_0'
     .field public static class [mscorlib]System.Action '<>9__48_0'
     .field public static class [mscorlib]System.Action '<>9__50_0'
     .method private hidebysig specialname rtspecialname static 
@@ -107,12 +112,12 @@
     } // end of method '<>c'::.ctor
 
     .method assembly hidebysig instance bool 
-            '<get_HasItems>b__22_0'(valuetype [mscorlib]System.ValueTuple`2<int32,string> a) cil managed
+            '<get_HasItems>b__22_0'(valuetype [System.ValueTuple]System.ValueTuple`2<int32,string> a) cil managed
     {
       // Code size       10 (0xa)
       .maxstack  8
       IL_0000:  ldarg.1
-      IL_0001:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0001:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::Item1
       IL_0006:  ldc.i4.0
       IL_0007:  cgt
       IL_0009:  ret
@@ -136,61 +141,61 @@
 
   } // end of class '<>c'
 
-  .field public valuetype [mscorlib]System.ValueTuple VT0
-  .field public valuetype [mscorlib]System.ValueTuple`1<int32> VT1
-  .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple> VT7EmptyRest
-  .field public valuetype [mscorlib]System.ValueTuple`2<int32,uint32> Unnamed2
-  .field public valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32> Unnamed3
-  .field public valuetype [mscorlib]System.ValueTuple`4<int32,int32,int32,int32> Unnamed4
-  .field public valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32> Unnamed5
-  .field public valuetype [mscorlib]System.ValueTuple`6<int32,int32,int32,int32,int32,int32> Unnamed6
-  .field public valuetype [mscorlib]System.ValueTuple`7<int32,int32,int32,int32,int32,int32,int32> Unnamed7
-  .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>> Unnamed8
-  .field public valuetype [mscorlib]System.ValueTuple`2<int32,uint32> Named2
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
-  .field public valuetype [mscorlib]System.ValueTuple`2<int32,uint32>[] Named2Array
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
-  .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>> Named8
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 09 00 00 00 01 61 01 62 01 63 01 64 01 65   // .......a.b.c.d.e
-                                                                                                                  01 66 01 67 01 68 FF 00 00 )                      // .f.g.h...
-  .field public valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32> PartiallyNamed
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 05 00 00 00 FF 01 61 FF 01 62 FF 00 00 )    // ........a..b...
-  .field public valuetype [mscorlib]System.ValueTuple`3<valuetype [mscorlib]System.ValueTuple`2<int32,int32>,valuetype [mscorlib]System.ValueTuple`2<int32,int32>,valuetype [mscorlib]System.ValueTuple`2<int32,int32>> Nested1
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 09 00 00 00 01 78 01 79 01 7A 01 61 01 62   // .......x.y.z.a.b
-                                                                                                                  FF FF 01 63 01 64 00 00 )                         // ...c.d..
-  .field public valuetype [mscorlib]System.ValueTuple`3<valuetype [mscorlib]System.ValueTuple`2<object,object>,object,valuetype [mscorlib]System.ValueTuple`2<object,object>> Nested2
+  .field public valuetype [System.ValueTuple]System.ValueTuple VT0
+  .field public valuetype [System.ValueTuple]System.ValueTuple`1<int32> VT1
+  .field public valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple> VT7EmptyRest
+  .field public valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> Unnamed2
+  .field public valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32> Unnamed3
+  .field public valuetype [System.ValueTuple]System.ValueTuple`4<int32,int32,int32,int32> Unnamed4
+  .field public valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32> Unnamed5
+  .field public valuetype [System.ValueTuple]System.ValueTuple`6<int32,int32,int32,int32,int32,int32> Unnamed6
+  .field public valuetype [System.ValueTuple]System.ValueTuple`7<int32,int32,int32,int32,int32,int32,int32> Unnamed7
+  .field public valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>> Unnamed8
+  .field public valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> Named2
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
+  .field public valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>[] Named2Array
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
+  .field public valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>> Named8
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 09 00 00 00 01 61 01 62 01 63 01 64 01 65   // .......a.b.c.d.e
+                                                                                                                           01 66 01 67 01 68 FF 00 00 )                      // .f.g.h...
+  .field public valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32> PartiallyNamed
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 05 00 00 00 FF 01 61 FF 01 62 FF 00 00 )    // ........a..b...
+  .field public valuetype [System.ValueTuple]System.ValueTuple`3<valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>> Nested1
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 09 00 00 00 01 78 01 79 01 7A 01 61 01 62   // .......x.y.z.a.b
+                                                                                                                           FF FF 01 63 01 64 00 00 )                         // ...c.d..
+  .field public valuetype [System.ValueTuple]System.ValueTuple`3<valuetype [System.ValueTuple]System.ValueTuple`2<object,object>,object,valuetype [System.ValueTuple]System.ValueTuple`2<object,object>> Nested2
   .custom instance void [System.Core]System.Runtime.CompilerServices.DynamicAttribute::.ctor(bool[]) = ( 01 00 08 00 00 00 00 00 00 01 01 00 01 00 00 00 ) 
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 07 00 00 00 FF FF FF 01 61 01 62 01 63 01   // ..........a.b.c.
-                                                                                                                  64 00 00 )                                        // d..
-  .field public valuetype [mscorlib]System.ValueTuple`5<valuetype [mscorlib]System.ValueTuple,valuetype [mscorlib]System.ValueTuple`2<int32,int32>,valuetype [mscorlib]System.ValueTuple`1<int32>,valuetype [mscorlib]System.ValueTuple`2<int32,int32>,valuetype [mscorlib]System.ValueTuple`2<int32,int32>> Nested3
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 0C 00 00 00 01 61 FF 01 62 FF 01 63 02 78   // .......a..b..c.x
-                                                                                                                  31 02 78 32 FF 02 79 31 02 79 32 FF FF 00 00 )    // 1.x2..y1.y2....
-  .field public valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`2<int32,valuetype [mscorlib]System.ValueTuple`2<int32,int32>>> Nested4
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 0D 00 00 00 01 61 01 62 01 63 01 64 01 65   // .......a.b.c.d.e
-                                                                                                                  01 66 01 67 01 68 FF FF FF 01 69 01 6A 00 00 )    // .f.g.h....i.j..
-  .field public class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> TupleDict
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 04 00 00 00 01 61 01 62 01 63 01 64 00 00 ) // .......a.b.c.d..
-  .field public class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> List
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 07 00 00 00 FF FF FF 01 61 01 62 01 63 01   // ..........a.b.c.
+                                                                                                                           64 00 00 )                                        // d..
+  .field public valuetype [System.ValueTuple]System.ValueTuple`5<valuetype [System.ValueTuple]System.ValueTuple,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>,valuetype [System.ValueTuple]System.ValueTuple`1<int32>,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>> Nested3
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 0C 00 00 00 01 61 FF 01 62 FF 01 63 02 78   // .......a..b..c.x
+                                                                                                                           31 02 78 32 FF 02 79 31 02 79 32 FF FF 00 00 )    // 1.x2..y1.y2....
+  .field public valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`2<int32,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>>> Nested4
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 0D 00 00 00 01 61 01 62 01 63 01 64 01 65   // .......a.b.c.d.e
+                                                                                                                           01 66 01 67 01 68 FF FF FF 01 69 01 6A 00 00 )    // .f.g.h....i.j..
+  .field public class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>> TupleDict
+  .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 04 00 00 00 01 61 01 62 01 63 01 64 00 00 ) // .......a.b.c.d..
+  .field public class [mscorlib]System.Collections.Generic.List`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> List
   .method public hidebysig specialname instance bool 
           get_HasItems() cil managed
   {
     // Code size       43 (0x2b)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::List
-    IL_0006:  ldsfld     class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
+    IL_0001:  ldfld      class [mscorlib]System.Collections.Generic.List`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::List
+    IL_0006:  ldsfld     class [mscorlib]System.Func`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
     IL_000b:  dup
     IL_000c:  brtrue.s   IL_0025
 
     IL_000e:  pop
     IL_000f:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9'
-    IL_0014:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_HasItems>b__22_0'(valuetype [mscorlib]System.ValueTuple`2<int32,string>)
-    IL_001a:  newobj     instance void class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool>::.ctor(object,
-                                                                                                                                        native int)
+    IL_0014:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<get_HasItems>b__22_0'(valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>)
+    IL_001a:  newobj     instance void class [mscorlib]System.Func`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,bool>::.ctor(object,
+                                                                                                                                                 native int)
     IL_001f:  dup
-    IL_0020:  stsfld     class [mscorlib]System.Func`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
-    IL_0025:  call       bool [System.Core]System.Linq.Enumerable::Any<valuetype [mscorlib]System.ValueTuple`2<int32,string>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
-                                                                                                                              class [mscorlib]System.Func`2<!!0,bool>)
+    IL_0020:  stsfld     class [mscorlib]System.Func`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__22_0'
+    IL_0025:  call       bool [System.Core]System.Linq.Enumerable::Any<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
+                                                                                                                                       class [mscorlib]System.Func`2<!!0,bool>)
     IL_002a:  ret
   } // end of method TupleTests::get_HasItems
 
@@ -200,8 +205,8 @@
     // Code size       12 (0xc)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::VT1
-    IL_0006:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`1<int32>::Item1
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::VT1
+    IL_0006:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`1<int32>::Item1
     IL_000b:  ret
   } // end of method TupleTests::get_VT1Member
 
@@ -211,9 +216,9 @@
     // Code size       17 (0x11)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed8
-    IL_0006:  ldflda     !7 valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>>::Rest
-    IL_000b:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`1<int32>::Item1
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed8
+    IL_0006:  ldflda     !7 valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>>::Rest
+    IL_000b:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`1<int32>::Item1
     IL_0010:  ret
   } // end of method TupleTests::get_AccessUnnamed8
 
@@ -223,9 +228,9 @@
     // Code size       17 (0x11)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named8
-    IL_0006:  ldflda     !7 valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`1<int32>>::Rest
-    IL_000b:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`1<int32>::Item1
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named8
+    IL_0006:  ldflda     !7 valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`1<int32>>::Rest
+    IL_000b:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`1<int32>::Item1
     IL_0010:  ret
   } // end of method TupleTests::get_AccessNamed8
 
@@ -235,36 +240,36 @@
     // Code size       24 (0x18)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::PartiallyNamed
-    IL_0006:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32>::Item2
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::PartiallyNamed
+    IL_0006:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32>::Item2
     IL_000b:  ldarg.0
-    IL_000c:  ldflda     valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::PartiallyNamed
-    IL_0011:  ldfld      !2 valuetype [mscorlib]System.ValueTuple`5<int32,int32,int32,int32,int32>::Item3
+    IL_000c:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::PartiallyNamed
+    IL_0011:  ldfld      !2 valuetype [System.ValueTuple]System.ValueTuple`5<int32,int32,int32,int32,int32>::Item3
     IL_0016:  add
     IL_0017:  ret
   } // end of method TupleTests::get_AccessPartiallyNamed
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`1<int32> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`1<int32> 
           get_NewTuple1() cil managed
   {
     // Code size       7 (0x7)
     .maxstack  8
     IL_0000:  ldc.i4.1
-    IL_0001:  newobj     instance void valuetype [mscorlib]System.ValueTuple`1<int32>::.ctor(!0)
+    IL_0001:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`1<int32>::.ctor(!0)
     IL_0006:  ret
   } // end of method TupleTests::get_NewTuple1
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> 
           get_NewTuple2() cil managed
   {
     .param [0]
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
+    .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
     // Code size       8 (0x8)
     .maxstack  8
     IL_0000:  ldc.i4.1
     IL_0001:  ldc.i4.2
-    IL_0002:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,int32>::.ctor(!0,
-                                                                                                   !1)
+    IL_0002:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::.ctor(!0,
+                                                                                                            !1)
     IL_0007:  ret
   } // end of method TupleTests::get_NewTuple2
 
@@ -283,50 +288,50 @@
     IL_0007:  ldc.i4.8
     IL_0008:  ldc.i4.s   9
     IL_000a:  ldc.i4.s   10
-    IL_000c:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
-                                                                                                         !1,
-                                                                                                         !2)
-    IL_0011:  newobj     instance void valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>>::.ctor(!0,
-                                                                                                                                                                                            !1,
-                                                                                                                                                                                            !2,
-                                                                                                                                                                                            !3,
-                                                                                                                                                                                            !4,
-                                                                                                                                                                                            !5,
-                                                                                                                                                                                            !6,
-                                                                                                                                                                                            !7)
-    IL_0016:  box        valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>>
+    IL_000c:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
+                                                                                                                  !1,
+                                                                                                                  !2)
+    IL_0011:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>>::.ctor(!0,
+                                                                                                                                                                                                              !1,
+                                                                                                                                                                                                              !2,
+                                                                                                                                                                                                              !3,
+                                                                                                                                                                                                              !4,
+                                                                                                                                                                                                              !5,
+                                                                                                                                                                                                              !6,
+                                                                                                                                                                                                              !7)
+    IL_0016:  box        valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>>
     IL_001b:  ret
   } // end of method TupleTests::get_BoxedTuple10
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32> 
           get_SwapUnnamed() cil managed
   {
     // Code size       28 (0x1c)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed2
-    IL_0006:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,uint32>::Item2
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed2
+    IL_0006:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>::Item2
     IL_000b:  ldarg.0
-    IL_000c:  ldflda     valuetype [mscorlib]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed2
-    IL_0011:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,uint32>::Item1
-    IL_0016:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<uint32,int32>::.ctor(!0,
-                                                                                                    !1)
+    IL_000c:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Unnamed2
+    IL_0011:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>::Item1
+    IL_0016:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32>::.ctor(!0,
+                                                                                                             !1)
     IL_001b:  ret
   } // end of method TupleTests::get_SwapUnnamed
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32> 
           get_SwapNamed2() cil managed
   {
     // Code size       28 (0x1c)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
-    IL_0006:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,uint32>::Item2
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
+    IL_0006:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>::Item2
     IL_000b:  ldarg.0
-    IL_000c:  ldflda     valuetype [mscorlib]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
-    IL_0011:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,uint32>::Item1
-    IL_0016:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<uint32,int32>::.ctor(!0,
-                                                                                                    !1)
+    IL_000c:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
+    IL_0011:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>::Item1
+    IL_0016:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32>::.ctor(!0,
+                                                                                                             !1)
     IL_001b:  ret
   } // end of method TupleTests::get_SwapNamed2
 
@@ -335,16 +340,16 @@
   {
     // Code size       23 (0x17)
     .maxstack  3
-    .locals init (valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32> V_0)
+    .locals init (valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32> V_0)
     IL_0000:  ldc.i4.1
     IL_0001:  ldc.i4.2
     IL_0002:  ldc.i4.3
-    IL_0003:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
-                                                                                                         !1,
-                                                                                                         !2)
+    IL_0003:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
+                                                                                                                  !1,
+                                                                                                                  !2)
     IL_0008:  stloc.0
     IL_0009:  ldloca.s   V_0
-    IL_000b:  constrained. valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>
+    IL_000b:  constrained. valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>
     IL_0011:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
     IL_0016:  ret
   } // end of method TupleTests::get_TupleHash
@@ -355,13 +360,13 @@
     // Code size       18 (0x12)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  ldflda     valuetype [mscorlib]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
-    IL_0006:  constrained. valuetype [mscorlib]System.ValueTuple`2<int32,uint32>
+    IL_0001:  ldflda     valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Named2
+    IL_0006:  constrained. valuetype [System.ValueTuple]System.ValueTuple`2<int32,uint32>
     IL_000c:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
     IL_0011:  ret
   } // end of method TupleTests::get_TupleHash2
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> 
           get_AccessRest() cil managed
   {
     // Code size       26 (0x1a)
@@ -375,21 +380,21 @@
     IL_0006:  ldc.i4.7
     IL_0007:  ldc.i4.8
     IL_0008:  ldc.i4.s   9
-    IL_000a:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,int32>::.ctor(!0,
-                                                                                                   !1)
-    IL_000f:  newobj     instance void valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`2<int32,int32>>::.ctor(!0,
-                                                                                                                                                                                      !1,
-                                                                                                                                                                                      !2,
-                                                                                                                                                                                      !3,
-                                                                                                                                                                                      !4,
-                                                                                                                                                                                      !5,
-                                                                                                                                                                                      !6,
-                                                                                                                                                                                      !7)
-    IL_0014:  ldfld      !7 valuetype [mscorlib]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [mscorlib]System.ValueTuple`2<int32,int32>>::Rest
+    IL_000a:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::.ctor(!0,
+                                                                                                            !1)
+    IL_000f:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>>::.ctor(!0,
+                                                                                                                                                                                                        !1,
+                                                                                                                                                                                                        !2,
+                                                                                                                                                                                                        !3,
+                                                                                                                                                                                                        !4,
+                                                                                                                                                                                                        !5,
+                                                                                                                                                                                                        !6,
+                                                                                                                                                                                                        !7)
+    IL_0014:  ldfld      !7 valuetype [System.ValueTuple]System.ValueTuple`8<int32,int32,int32,int32,int32,int32,int32,valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>>::Rest
     IL_0019:  ret
   } // end of method TupleTests::get_AccessRest
 
-  .method public hidebysig specialname instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action> 
+  .method public hidebysig specialname instance valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action> 
           get_TargetTyping() cil managed
   {
     // Code size       44 (0x2c)
@@ -408,9 +413,9 @@
                                                                       native int)
     IL_0020:  dup
     IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__48_0'
-    IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
-                                                                                                                                   !1,
-                                                                                                                                   !2)
+    IL_0026:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
+                                                                                                                                            !1,
+                                                                                                                                            !2)
     IL_002b:  ret
   } // end of method TupleTests::get_TargetTyping
 
@@ -433,10 +438,10 @@
                                                                       native int)
     IL_0020:  dup
     IL_0021:  stsfld     class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests/'<>c'::'<>9__50_0'
-    IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
-                                                                                                                                   !1,
-                                                                                                                                   !2)
-    IL_002b:  box        valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
+    IL_0026:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action>::.ctor(!0,
+                                                                                                                                            !1,
+                                                                                                                                            !2)
+    IL_002b:  box        valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
     IL_0030:  ret
   } // end of method TupleTests::get_NotTargetTyping
 
@@ -446,31 +451,31 @@
     // Code size       96 (0x60)
     .maxstack  3
     IL_0000:  ldarg.0
-    IL_0001:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
-    IL_0006:  callvirt   instance int32 class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>>::get_Count()
+    IL_0001:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
+    IL_0006:  callvirt   instance int32 class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>::get_Count()
     IL_000b:  ldc.i4.s   10
     IL_000d:  ble.s      IL_001a
 
     IL_000f:  ldarg.0
-    IL_0010:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
-    IL_0015:  callvirt   instance void class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>>::Clear()
+    IL_0010:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
+    IL_0015:  callvirt   instance void class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>::Clear()
     IL_001a:  ldarg.0
-    IL_001b:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
+    IL_001b:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
     IL_0020:  ldc.i4.1
     IL_0021:  ldstr      "abc"
-    IL_0026:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,string>::.ctor(!0,
-                                                                                                    !1)
-    IL_002b:  callvirt   instance !1 class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>>::get_Item(!0)
-    IL_0030:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<string,int32>::Item1
+    IL_0026:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::.ctor(!0,
+                                                                                                             !1)
+    IL_002b:  callvirt   instance !1 class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>::get_Item(!0)
+    IL_0030:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>::Item1
     IL_0035:  dup
     IL_0036:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_003b:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0040:  ldarg.0
-    IL_0041:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
-    IL_0046:  callvirt   instance class [mscorlib]System.Collections.Generic.Dictionary`2/ValueCollection<!0,!1> class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [mscorlib]System.ValueTuple`2<int32,string>,valuetype [mscorlib]System.ValueTuple`2<string,int32>>::get_Values()
-    IL_004b:  call       class [mscorlib]System.Collections.Generic.List`1<!!0> [System.Core]System.Linq.Enumerable::ToList<valuetype [mscorlib]System.ValueTuple`2<string,int32>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
-    IL_0050:  call       !!0 [System.Core]System.Linq.Enumerable::First<valuetype [mscorlib]System.ValueTuple`2<string,int32>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
-    IL_0055:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<string,int32>::Item2
+    IL_0041:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::TupleDict
+    IL_0046:  callvirt   instance class [mscorlib]System.Collections.Generic.Dictionary`2/ValueCollection<!0,!1> class [mscorlib]System.Collections.Generic.Dictionary`2<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>,valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>::get_Values()
+    IL_004b:  call       class [mscorlib]System.Collections.Generic.List`1<!!0> [System.Core]System.Linq.Enumerable::ToList<valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
+    IL_0050:  call       !!0 [System.Core]System.Linq.Enumerable::First<valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
+    IL_0055:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>::Item2
     IL_005a:  call       void [mscorlib]System.Console::WriteLine(int32)
     IL_005f:  ret
   } // end of method TupleTests::UseDict
@@ -480,46 +485,46 @@
   {
     // Code size       28 (0x1c)
     .maxstack  3
-    .locals init (valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32> V_0)
+    .locals init (valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32> V_0)
     IL_0000:  ldc.i4.1
     IL_0001:  ldc.i4.2
     IL_0002:  ldc.i4.3
-    IL_0003:  newobj     instance void valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
-                                                                                                         !1,
-                                                                                                         !2)
+    IL_0003:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>::.ctor(!0,
+                                                                                                                  !1,
+                                                                                                                  !2)
     IL_0008:  stloc.0
     IL_0009:  ldloca.s   V_0
-    IL_000b:  constrained. valuetype [mscorlib]System.ValueTuple`3<int32,int32,int32>
+    IL_000b:  constrained. valuetype [System.ValueTuple]System.ValueTuple`3<int32,int32,int32>
     IL_0011:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
     IL_0016:  call       void [mscorlib]System.Console::WriteLine(int32)
     IL_001b:  ret
   } // end of method TupleTests::Issue1174
 
   .method public hidebysig instance void 
-          LocalVariables(valuetype [mscorlib]System.ValueTuple`2<int32,int32> a) cil managed
+          LocalVariables(valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> a) cil managed
   {
     // Code size       73 (0x49)
     .maxstack  4
-    .locals init (valuetype [mscorlib]System.ValueTuple`2<int32,int32> V_0)
+    .locals init (valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> V_0)
     IL_0000:  ldloca.s   V_0
     IL_0002:  ldarg.1
-    IL_0003:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item1
+    IL_0003:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::Item1
     IL_0008:  ldarg.1
-    IL_0009:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item2
+    IL_0009:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::Item2
     IL_000e:  add
     IL_000f:  ldarg.1
-    IL_0010:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item1
+    IL_0010:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::Item1
     IL_0015:  ldarg.1
-    IL_0016:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,int32>::Item2
+    IL_0016:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::Item2
     IL_001b:  mul
-    IL_001c:  call       instance void valuetype [mscorlib]System.ValueTuple`2<int32,int32>::.ctor(!0,
-                                                                                                   !1)
+    IL_001c:  call       instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>::.ctor(!0,
+                                                                                                            !1)
     IL_0021:  ldloca.s   V_0
-    IL_0023:  constrained. valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+    IL_0023:  constrained. valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>
     IL_0029:  callvirt   instance string [mscorlib]System.Object::ToString()
     IL_002e:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0033:  ldloc.0
-    IL_0034:  box        valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+    IL_0034:  box        valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>
     IL_0039:  call       instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
     IL_003e:  callvirt   instance string [mscorlib]System.Type::get_FullName()
     IL_0043:  call       void [mscorlib]System.Console::WriteLine(string)
@@ -527,28 +532,28 @@
   } // end of method TupleTests::LocalVariables
 
   .method public hidebysig instance void 
-          Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> input) cil managed
+          Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> input) cil managed
   {
     // Code size       69 (0x45)
     .maxstack  3
-    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> V_0,
-             valuetype [mscorlib]System.ValueTuple`2<int32,string> V_1)
+    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> V_0,
+             valuetype [System.ValueTuple]System.ValueTuple`2<int32,string> V_1)
     IL_0000:  ldarg.1
-    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::GetEnumerator()
+    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::GetEnumerator()
     IL_0006:  stloc.0
     .try
     {
       IL_0007:  br.s       IL_0030
 
       IL_0009:  ldloc.0
-      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::get_Current()
+      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::get_Current()
       IL_000f:  stloc.1
       IL_0010:  ldstr      "{0}: {1}"
       IL_0015:  ldloc.1
-      IL_0016:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0016:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::Item1
       IL_001b:  box        [mscorlib]System.Int32
       IL_0020:  ldloc.1
-      IL_0021:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item2
+      IL_0021:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::Item2
       IL_0026:  call       string [mscorlib]System.String::Format(string,
                                                                   object,
                                                                   object)
@@ -573,31 +578,31 @@
   } // end of method TupleTests::Foreach
 
   .method public hidebysig instance void 
-          ForeachNamedElements(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> input) cil managed
+          ForeachNamedElements(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> input) cil managed
   {
     .param [1]
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 05 49 6E 64 65 78 04 44 61 74   // .......Index.Dat
-                                                                                                                    61 00 00 )                                        // a..
+    .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 05 49 6E 64 65 78 04 44 61 74   // .......Index.Dat
+                                                                                                                             61 00 00 )                                        // a..
     // Code size       69 (0x45)
     .maxstack  3
-    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>> V_0,
-             valuetype [mscorlib]System.ValueTuple`2<int32,string> V_1)
+    .locals init (class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>> V_0,
+             valuetype [System.ValueTuple]System.ValueTuple`2<int32,string> V_1)
     IL_0000:  ldarg.1
-    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::GetEnumerator()
+    IL_0001:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::GetEnumerator()
     IL_0006:  stloc.0
     .try
     {
       IL_0007:  br.s       IL_0030
 
       IL_0009:  ldloc.0
-      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::get_Current()
+      IL_000a:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::get_Current()
       IL_000f:  stloc.1
       IL_0010:  ldstr      "{0}: {1}"
       IL_0015:  ldloc.1
-      IL_0016:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item1
+      IL_0016:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::Item1
       IL_001b:  box        [mscorlib]System.Int32
       IL_0020:  ldloc.1
-      IL_0021:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<int32,string>::Item2
+      IL_0021:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::Item2
       IL_0026:  call       string [mscorlib]System.String::Format(string,
                                                                   object,
                                                                   object)
@@ -627,7 +632,7 @@
     // Code size       81 (0x51)
     .maxstack  3
     .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
-             valuetype [mscorlib]System.ValueTuple`2<string,int32> V_1,
+             valuetype [System.ValueTuple]System.ValueTuple`2<string,int32> V_1,
              class [mscorlib]System.IDisposable V_2)
     IL_0000:  ldarg.1
     IL_0001:  callvirt   instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Collections.IEnumerable::GetEnumerator()
@@ -638,13 +643,13 @@
 
       IL_0009:  ldloc.0
       IL_000a:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
-      IL_000f:  unbox.any  valuetype [mscorlib]System.ValueTuple`2<string,int32>
+      IL_000f:  unbox.any  valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>
       IL_0014:  stloc.1
       IL_0015:  ldstr      "{0}: {1}"
       IL_001a:  ldloc.1
-      IL_001b:  ldfld      !0 valuetype [mscorlib]System.ValueTuple`2<string,int32>::Item1
+      IL_001b:  ldfld      !0 valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>::Item1
       IL_0020:  ldloc.1
-      IL_0021:  ldfld      !1 valuetype [mscorlib]System.ValueTuple`2<string,int32>::Item2
+      IL_0021:  ldfld      !1 valuetype [System.ValueTuple]System.ValueTuple`2<string,int32>::Item2
       IL_0026:  box        [mscorlib]System.Int32
       IL_002b:  call       string [mscorlib]System.String::Format(string,
                                                                   object,
@@ -678,20 +683,20 @@
     // Code size       46 (0x2e)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::.ctor()
+    IL_0001:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::.ctor()
     IL_0006:  dup
     IL_0007:  ldc.i4.1
     IL_0008:  ldstr      "a"
-    IL_000d:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,string>::.ctor(!0,
-                                                                                                    !1)
-    IL_0012:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::Add(!0)
+    IL_000d:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::.ctor(!0,
+                                                                                                             !1)
+    IL_0012:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::Add(!0)
     IL_0017:  dup
     IL_0018:  ldc.i4.2
     IL_0019:  ldstr      "b"
-    IL_001e:  newobj     instance void valuetype [mscorlib]System.ValueTuple`2<int32,string>::.ctor(!0,
-                                                                                                    !1)
-    IL_0023:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>::Add(!0)
-    IL_0028:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [mscorlib]System.ValueTuple`2<int32,string>>)
+    IL_001e:  newobj     instance void valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>::.ctor(!0,
+                                                                                                             !1)
+    IL_0023:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>::Add(!0)
+    IL_0028:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::Foreach(class [mscorlib]System.Collections.Generic.IEnumerable`1<valuetype [System.ValueTuple]System.ValueTuple`2<int32,string>>)
     IL_002d:  ret
   } // end of method TupleTests::CallForeach
 
@@ -725,30 +730,30 @@
   {
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_AccessPartiallyNamed()
   } // end of property TupleTests::AccessPartiallyNamed
-  .property instance valuetype [mscorlib]System.ValueTuple`1<int32>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`1<int32>
           NewTuple1()
   {
-    .get instance valuetype [mscorlib]System.ValueTuple`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_NewTuple1()
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`1<int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_NewTuple1()
   } // end of property TupleTests::NewTuple1
-  .property instance valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>
           NewTuple2()
   {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
-    .get instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_NewTuple2()
+    .custom instance void [System.ValueTuple]System.Runtime.CompilerServices.TupleElementNamesAttribute::.ctor(string[]) = ( 01 00 02 00 00 00 01 61 01 62 00 00 )             // .......a.b..
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_NewTuple2()
   } // end of property TupleTests::NewTuple2
   .property instance object BoxedTuple10()
   {
     .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_BoxedTuple10()
   } // end of property TupleTests::BoxedTuple10
-  .property instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32>
           SwapUnnamed()
   {
-    .get instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_SwapUnnamed()
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_SwapUnnamed()
   } // end of property TupleTests::SwapUnnamed
-  .property instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32>
           SwapNamed2()
   {
-    .get instance valuetype [mscorlib]System.ValueTuple`2<uint32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_SwapNamed2()
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`2<uint32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_SwapNamed2()
   } // end of property TupleTests::SwapNamed2
   .property instance int32 TupleHash()
   {
@@ -758,15 +763,15 @@
   {
     .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_TupleHash2()
   } // end of property TupleTests::TupleHash2
-  .property instance valuetype [mscorlib]System.ValueTuple`2<int32,int32>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32>
           AccessRest()
   {
-    .get instance valuetype [mscorlib]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_AccessRest()
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`2<int32,int32> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_AccessRest()
   } // end of property TupleTests::AccessRest
-  .property instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
+  .property instance valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action>
           TargetTyping()
   {
-    .get instance valuetype [mscorlib]System.ValueTuple`3<string,object,class [mscorlib]System.Action> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_TargetTyping()
+    .get instance valuetype [System.ValueTuple]System.ValueTuple`3<string,object,class [mscorlib]System.Action> ICSharpCode.Decompiler.Tests.TestCases.Pretty.TupleTests::get_TargetTyping()
   } // end of property TupleTests::TargetTyping
   .property instance object NotTargetTyping()
   {
