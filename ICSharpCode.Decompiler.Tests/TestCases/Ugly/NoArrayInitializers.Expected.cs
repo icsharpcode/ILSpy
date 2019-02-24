@@ -7,17 +7,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 	{
 		public int[] LiteralArray()
 		{
-			int[] obj = new int[3];
-			RuntimeHelpers.InitializeArray(obj, (RuntimeFieldHandle)/*OpCode not supported: LdMemberToken*/);
-			return obj;
+			int[] array = new int[3];
+			RuntimeHelpers.InitializeArray(array, (RuntimeFieldHandle)/*OpCode not supported: LdMemberToken*/);
+			return array;
 		}
 
 		public int[] VariableArray(int a, int b)
 		{
-			int[] obj = new int[2];
-			obj[0] = a;
-			obj[1] = b;
-			return obj;
+			int[] array = new int[2];
+			array[0] = a;
+			array[1] = b;
+			return array;
 		}
 	}
 }

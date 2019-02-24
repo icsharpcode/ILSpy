@@ -35,18 +35,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
-				// both inline assignments create a top-level stloc which might affect inlining
-				context.RequestRerun();
-				return;
+			if (context.Settings.MakeAssignmentExpressions) {
+				if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
+					// both inline assignments create a top-level stloc which might affect inlining
+					context.RequestRerun();
+					return;
+				} 
 			}
-			if (TransformPostIncDecOperatorWithInlineStore(block, pos)
-				|| TransformPostIncDecOperator(block, pos)
-				|| TransformPostIncDecOperatorLocal(block, pos))
-			{
-				// again, new top-level stloc might need inlining:
-				context.RequestRerun();
-				return;
+			if (context.Settings.IntroduceIncrementAndDecrement) {
+				if (TransformPostIncDecOperatorWithInlineStore(block, pos)
+					|| TransformPostIncDecOperator(block, pos)
+					|| TransformPostIncDecOperatorLocal(block, pos)) {
+					// again, new top-level stloc might need inlining:
+					context.RequestRerun();
+					return;
+				}
 			}
 		}
 
@@ -245,6 +248,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		internal static bool HandleCompoundAssign(ILInstruction compoundStore, StatementTransformContext context)
 		{
+			if (!context.Settings.MakeAssignmentExpressions || !context.Settings.IntroduceIncrementAndDecrement)
+				return false;
 			if (compoundStore is CallInstruction && compoundStore.SlotInfo != Block.InstructionSlot) {
 				// replacing 'call set_Property' with a compound assignment instruction
 				// changes the return value of the expression, so this is only valid on block-level.
@@ -321,7 +326,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return false;
 			}
-			newInst.AddILRange(setterValue.ILRange);
+			newInst.AddILRange(setterValue);
 			if (storeInSetter != null) {
 				storeInSetter.Value = newInst;
 				newInst = storeInSetter;

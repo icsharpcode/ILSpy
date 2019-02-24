@@ -46,6 +46,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.context = context;
 			Visit((BlockContainer)function.Body, null);
+
+			foreach (var node in function.Descendants.OfType<TryFinally>()) {
+				EliminateRedundantTryFinally(node, context);
+			}
 		}
 
 		private void Visit(BlockContainer container, Block continueTarget)
@@ -132,9 +136,9 @@ namespace ICSharpCode.Decompiler.IL
 			
 			Debug.Assert(ifInst != block.Instructions.Last());
 
-			var trueRange = ConditionDetection.GetILRange(ifInst.TrueInst);
-			var falseRange = ConditionDetection.GetILRange(block.Instructions[block.Instructions.IndexOf(ifInst)+1]);
-			if (!trueRange.IsEmpty && !falseRange.IsEmpty && falseRange.Start < trueRange.Start)
+			var trueRangeStart = ConditionDetection.GetStartILOffset(ifInst.TrueInst, out bool trueRangeIsEmpty);
+			var falseRangeStart = ConditionDetection.GetStartILOffset(block.Instructions[block.Instructions.IndexOf(ifInst)+1], out bool falseRangeIsEmpty);
+			if (!trueRangeIsEmpty && !falseRangeIsEmpty && falseRangeStart < trueRangeStart)
 				ConditionDetection.InvertIf(block, ifInst, context);
 		}
 
@@ -413,6 +417,34 @@ namespace ICSharpCode.Decompiler.IL
 				block.Instructions.Insert(insertAt++, falseBlock.Instructions[i]);
 
 			ifInst.FalseInst = new Nop();
+		}
+
+		private void EliminateRedundantTryFinally(TryFinally tryFinally, ILTransformContext context)
+		{
+			/* The C# compiler sometimes generates try-finally structures for fixed statements.
+				After our transforms runs, these are redundant and can be removed.
+				.try BlockContainer {
+					Block IL_001a (incoming: 1) {
+						PinnedRegion ...
+					}
+				} finally BlockContainer {
+					Block IL_003e (incoming: 1) {
+						leave IL_003e (nop)
+					}
+				}
+				==> PinnedRegion
+			*/
+			if (!(tryFinally.FinallyBlock is BlockContainer finallyContainer))
+				return;
+			if (!finallyContainer.SingleInstruction().MatchLeave(finallyContainer))
+				return;
+			// Finally is empty and redundant. But we'll delete the block only if there's a PinnedRegion.
+			if (!(tryFinally.TryBlock is BlockContainer tryContainer))
+				return;
+			if (tryContainer.SingleInstruction() is PinnedRegion pinnedRegion) {
+				context.Step("Removing try-finally around PinnedRegion", pinnedRegion);
+				tryFinally.ReplaceWith(pinnedRegion);
+			}
 		}
 	}
 }

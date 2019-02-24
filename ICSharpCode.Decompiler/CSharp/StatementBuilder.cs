@@ -66,6 +66,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionStatement(exprBuilder.Translate(inst));
 		}
 
+		protected internal override Statement VisitIsInst(IsInst inst)
+		{
+			// isinst on top-level (unused result) can be translated in general
+			// (even for value types) by using "is" instead of "as"
+			// This can happen when the result of "expr is T" is unused
+			// and the C# compiler optimizes away the null check portion of the "is" operator.
+			var arg = exprBuilder.Translate(inst.Argument);
+			arg = ExpressionBuilder.UnwrapBoxingConversion(arg);
+			return new ExpressionStatement(
+				new IsExpression(
+					arg,
+					exprBuilder.ConvertType(inst.Type)
+				)
+				.WithRR(new ResolveResult(exprBuilder.compilation.FindType(KnownTypeCode.Boolean)))
+				.WithILInstruction(inst)
+			);
+		}
+
 		protected internal override Statement VisitStLoc(StLoc inst)
 		{
 			var expr = exprBuilder.Translate(inst);
@@ -920,8 +938,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(new LabelStatement { Label = block.Label });
 				}
 				foreach (var inst in block.Instructions) {
-					if (!isLoop && inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
+					if (!isLoop && inst is Leave leave && IsFinalLeave(leave)) {
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
+						blockStatement.AddAnnotation(new ImplicitReturnAnnotation(leave));
 						continue;
 					}
 					var stmt = Convert(inst);

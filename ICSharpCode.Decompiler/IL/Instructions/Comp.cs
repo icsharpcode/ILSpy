@@ -175,7 +175,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg)) {
 				output.Write("logic.not(");
 				arg.WriteTo(output, options);
@@ -213,11 +213,6 @@ namespace ICSharpCode.Decompiler.IL
 		public static Comp LogicNot(ILInstruction arg)
 		{
 			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0));
-		}
-
-		public static Comp LogicNot(ILInstruction arg, Interval ilrange)
-		{
-			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0)) { ILRange = ilrange };
 		}
 	}
 }

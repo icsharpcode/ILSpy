@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write("switch");
 			if (IsLifted)
 				output.Write(".lifted");
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override ILInstruction Clone()
 		{
 			var clone = new SwitchInstruction(value.Clone());
-			clone.ILRange = this.ILRange;
+			clone.AddILRange(this);
 			clone.Value = value.Clone();
 			clone.Sections.AddRange(this.Sections.Select(h => (SwitchSection)h.Clone()));
 			return clone;
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.WriteLocalReference("case", this, isDefinition: true);
 			output.Write(' ');
 			if (HasNullLabel) {

@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						} else {
 							// evaluate the value for its side-effects
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
-							copiedExpr.AddILRange(block.Instructions[i].ILRange);
+							copiedExpr.AddILRange(block.Instructions[i]);
 							block.Instructions[i] = copiedExpr;
 						}
 					} else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// note: the initialization by the caller is the first store -> StoreCount must be 1
 							return v.IsSingleDefinition;
 						case VariableKind.StackSlot:
-						case VariableKind.Exception: // Exception variables are normally generated as well.
+						case VariableKind.ExceptionStackSlot:
 							// Variables are be copied only if both they and the target copy variable are generated,
 							// and if the variable has only a single assignment
 							return v.IsSingleDefinition && target.Kind == VariableKind.StackSlot;
@@ -110,8 +110,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int j = 0; j < uninlinedArgs.Length; j++) {
 				var arg = copiedExpr.Children[j];
 				var type = context.TypeSystem.FindType(arg.ResultType.ToKnownTypeCode());
-				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
-					Name = "C_" + arg.ILRange.Start
+				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType) {
+					Name = "C_" + arg.StartILOffset,
+					HasGeneratedName = true,
 				};
 				block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
 			}

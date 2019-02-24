@@ -186,9 +186,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// combine all conditions and the exit instruction into one IfInstruction:
 			IfInstruction condition = null;
-			conditionBlock.AddILRange(exit.ILRange);
+			conditionBlock.AddILRange(exit);
 			foreach (var inst in conditions) {
-				conditionBlock.AddILRange(inst.ILRange);
+				conditionBlock.AddILRange(inst);
 				if (condition == null) {
 					condition = inst;
 					if (swap) {
@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// move the increment instruction:
 				newIncremenBlock.Instructions.Add(secondToLast);
 				newIncremenBlock.Instructions.Add(last);
-				newIncremenBlock.AddILRange(secondToLast.ILRange);
+				newIncremenBlock.AddILRange(secondToLast);
 				whileLoopBody.Instructions.RemoveRange(secondToLastIndex, 2);
 				whileLoopBody.Instructions.Add(new Branch(newIncremenBlock));
 				// complete transform.

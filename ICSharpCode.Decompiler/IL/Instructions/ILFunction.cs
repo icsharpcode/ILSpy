@@ -30,7 +30,11 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly IMethod Method;
 		public readonly GenericContext GenericContext;
-		public readonly int CodeSize;
+		/// <summary>
+		/// Size of the IL code in this function.
+		/// Note: after async/await transform, this is the code size of the MoveNext function.
+		/// </summary>
+		public int CodeSize;
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
@@ -60,6 +64,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the async method returns Task or void, this field stores void.
 		/// </summary>
 		public IType AsyncReturnType;
+
+		/// <summary>
+		/// If this function is an iterator/async, this field stores the compiler-generated MoveNext() method.
+		/// </summary>
+		public IMethod MoveNextMethod;
+
+		internal DebugInfo.AsyncDebugInfo AsyncDebugInfo;
 
 		/// <summary>
 		/// If this is an expression tree or delegate, returns the expression tree type Expression{T} or T.
@@ -98,6 +109,7 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < Variables.Count; i++) {
 				Debug.Assert(Variables[i].Function == this);
 				Debug.Assert(Variables[i].IndexInFunction == i);
+				Variables[i].CheckInvariant();
 			}
 			base.CheckInvariant(phase);
 		}
@@ -109,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			if (Method != null) {
 				output.Write(' ');
@@ -171,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL
 			void MarkUsedILRanges(ILInstruction inst)
 			{
 				if (CSharp.SequencePointBuilder.HasUsableILRange(inst)) {
-					usedILRanges.Add(new LongInterval(inst.ILRange.Start, inst.ILRange.End));
+					usedILRanges.Add(new LongInterval(inst.StartILOffset, inst.EndILOffset));
 				}
 				if (!(inst is ILFunction)) {
 					foreach (var child in inst.Children) {
@@ -213,32 +225,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		int helperVariableCount;
+
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
 		{
-			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
-			var variable = new ILVariable(kind, type, index);
+			var variable = new ILVariable(kind, type);
 			if (string.IsNullOrWhiteSpace(name)) {
-				switch (kind) {
-					case VariableKind.Local:
-					case VariableKind.ForeachLocal:
-						name = "V_";
-						break;
-					case VariableKind.Parameter:
-						name = "P_";
-						break;
-					case VariableKind.Exception:
-						name = "E_";
-						break;
-					case VariableKind.StackSlot:
-						name = "S_";
-						break;
-					case VariableKind.InitializerTarget:
-						name = "I_";
-						break;
-					default:
-						throw new ArgumentOutOfRangeException(nameof(kind));
-				}
-				name += index;
+				name = "I_" + (helperVariableCount++);
 				variable.HasGeneratedName = true;
 			}
 			variable.Name = name;

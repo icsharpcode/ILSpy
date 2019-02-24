@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="ICSharpCode\Decompiler\Tests\TestCases\PdbGen\LambdaCapturing.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen
+{
+	public class LambdaCapturing
+	{
+		public static void Main(string[] args)
+		{
+			int num = 4;
+			int captured = Environment.TickCount + num;
+			Test((int a, int b) => a + b + captured);
+		}
+
+		private static void Test(Func<int, int, int> p)
+		{
+			p(1, 2);
+		}
+	}
+}
+]]></file>
+  </files>
+  <methods>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing" name="Main" parameterNames="args" token="0x6000001">
+      <sequencePoints>
+        <entry offset="0x0" hidden="true" document="1" />
+        <entry offset="0x5" startLine="9" startColumn="13" endLine="9" endColumn="27" document="1" />
+        <entry offset="0x7" startLine="10" startColumn="13" endLine="10" endColumn="58" document="1" />
+        <entry offset="0x14" startLine="11" startColumn="13" endLine="11" endColumn="46" document="1" />
+        <entry offset="0x24" startLine="12" startColumn="9" endLine="12" endColumn="10" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0x25">
+        <local name="local" il_index="0" il_start="0x0" il_end="0x25" attributes="0" />
+      </scope>
+    </method>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing" name="Test" parameterNames="p" token="0x6000002">
+      <sequencePoints>
+        <entry offset="0x0" startLine="16" startColumn="13" endLine="16" endColumn="21" document="1" />
+        <entry offset="0x9" startLine="17" startColumn="9" endLine="17" endColumn="10" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0xa" />
+    </method>
+    <method containingType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing+&lt;&gt;c__DisplayClass0_0" name="&lt;Main&gt;b__0" parameterNames="a, b" token="0x6000005">
+      <sequencePoints>
+        <entry offset="0x0" startLine="11" startColumn="28" endLine="11" endColumn="44" document="1" />
+      </sequencePoints>
+      <scope startOffset="0x0" endOffset="0xb" />
+    </method>
+  </methods>
+  <method-spans>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing" methodName="Main" parameterNames="args" token="0x6000001">
+      <document startLine="9" endLine="12" />
+    </method>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing" methodName="Test" parameterNames="p" token="0x6000002">
+      <document startLine="16" endLine="17" />
+    </method>
+    <method declaringType="ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing+&lt;&gt;c__DisplayClass0_0" methodName="&lt;Main&gt;b__0" parameterNames="a, b" token="0x6000005">
+      <document startLine="11" endLine="11" />
+    </method>
+  </method-spans>
+</symbols>

@@ -44,12 +44,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var inst in function.Descendants) {
 				cancellationToken.ThrowIfCancellationRequested();
 				if (inst is NewObj call) {
+					context.StepStartGroup($"TransformDelegateConstruction {call.StartILOffset}", call);
 					ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
-					if (f != null) {
-						call.ReplaceWith(f);
-						if (target is IInstructionWithVariableOperand)
-							targetsToReplace.Add((IInstructionWithVariableOperand)target);
+					if (f != null && target is IInstructionWithVariableOperand instWithVar) {
+						if (instWithVar.Variable.Kind == VariableKind.Local) {
+							instWithVar.Variable.Kind = VariableKind.DisplayClassLocal;
+						}
+						targetsToReplace.Add(instWithVar);
 					}
+					context.StepEndGroup();
 				}
 				if (inst.MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
 					var newObj = value as NewObj;
@@ -62,9 +65,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
+			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).StartILOffset)) {
+				context.Step($"TransformDisplayClassUsages {target.Variable}", (ILInstruction)target);
 				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits, translatedDisplayClasses));
 			}
+			context.Step($"Remove orphanedVariableInits", function);
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
 					containingBlock.Instructions.Remove(store);
@@ -182,6 +187,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, context.CancellationToken);
 			function.DelegateType = value.Method.DeclaringType;
 			function.CheckInvariant(ILPhase.Normal);
+			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
+			// how the lambda body is being transformed.
+			value.ReplaceWith(function);
 
 			var contextPrefix = targetMethod.Name;
 			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
@@ -190,11 +198,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var nestedContext = new ILTransformContext(context, function);
 			function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)).Concat(GetTransforms()), nestedContext);
+			nestedContext.Step("DelegateConstruction (ReplaceDelegateTargetVisitor)", function);
 			function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 			// handle nested lambdas
+			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
-			function.AddILRange(target.ILRange);
-			function.AddILRange(value.Arguments[1].ILRange);
+			nestedContext.StepEndGroup();
+			function.AddILRange(target);
+			function.AddILRange(value);
+			function.AddILRange(value.Arguments[1]);
 			return function;
 		}
 
@@ -310,7 +322,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				field = (IField)field.MemberDefinition;
 				ILInstruction value;
 				if (initValues.TryGetValue(field, out DisplayClassVariable info)) {
-					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
+					inst.ReplaceWith(new StLoc(info.variable, inst.Value).WithILRange(inst));
 				} else {
 					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 						// special case for parameters: remove copies of parameter values.
@@ -321,7 +333,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 						v.CaptureScope = captureScope;
-						inst.ReplaceWith(new StLoc(v, inst.Value));
+						inst.ReplaceWith(new StLoc(v, inst.Value).WithILRange(inst));
 						value = new LdLoc(v);
 					}
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
@@ -335,7 +347,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!initValues.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))
 					return;
-				inst.ReplaceWith(info.value.Clone());
+				var replacement = info.value.Clone();
+				replacement.SetILRange(inst);
+				inst.ReplaceWith(replacement);
 			}
 			
 			protected internal override void VisitLdFlda(LdFlda inst)
@@ -344,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (inst.Target.MatchLdThis() && inst.Field.Name == "$this"
 					&& inst.Field.MemberDefinition.ReflectionName.Contains("c__Iterator")) {
 					var variable = currentFunction.Variables.First((f) => f.Index == -1);
-					inst.ReplaceWith(new LdLoca(variable) { ILRange = inst.ILRange });
+					inst.ReplaceWith(new LdLoca(variable).WithILRange(inst));
 				}
 				if (inst.Parent is LdObj || inst.Parent is StObj)
 					return;
@@ -356,11 +370,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return;
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = captureScope;
-					inst.ReplaceWith(new LdLoca(v));
+					inst.ReplaceWith(new LdLoca(v).WithILRange(inst));
 					var value = new LdLoc(v);
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
 				} else if (info.value is LdLoc l) {
-					inst.ReplaceWith(new LdLoca(l.Variable));
+					inst.ReplaceWith(new LdLoca(l.Variable).WithILRange(inst));
 				} else {
 					Debug.Fail("LdFlda pattern not supported!");
 				}
@@ -370,7 +384,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				base.VisitNumericCompoundAssign(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
-					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
+					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign).WithILRange(inst)));
 				}
 			}
 		}

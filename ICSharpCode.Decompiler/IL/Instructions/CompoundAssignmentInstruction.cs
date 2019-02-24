@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Operator = binary.Operator;
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
-			this.ILRange = binary.ILRange;
+			this.AddILRange(binary);
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
 		}
@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			
 			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.Write(OpCode);
 			output.Write("." + Operation.ToString().ToLower());
 			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);

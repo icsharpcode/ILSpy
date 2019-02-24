@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// Compares parameter lists by comparing the types of all parameters.
 	/// </summary>
 	/// <remarks>
-	/// 'ref int' and 'out int' are considered to be equal.
+	/// 'ref int' and 'out int' are considered to be equal - unless <see cref="includeModifiers" /> is set to true.
 	/// 'object' and 'dynamic' are also equal.
 	/// For generic methods, "Method{T}(T a)" and "Method{S}(S b)" are considered equal.
 	/// However, "Method(T a)" and "Method(S b)" are not considered equal when the type parameters T and S belong to classes.
@@ -41,6 +41,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			DynamicAndObject = true,
 			TupleToUnderlyingType = true,
 		};
+
+		bool includeModifiers;
+
+		public static ParameterListComparer WithOptions(bool includeModifiers = false)
+		{
+			return new ParameterListComparer() {
+				includeModifiers = includeModifiers
+			};
+		}
 		
 		public bool Equals(IReadOnlyList<IParameter> x, IReadOnlyList<IParameter> y)
 		{
@@ -55,6 +64,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					continue;
 				if (a == null || b == null)
 					return false;
+
+				if (includeModifiers) {
+					if (a.IsIn != b.IsIn)
+						return false;
+					if (a.IsOut != b.IsOut)
+						return false;
+					if (a.IsRef != b.IsRef)
+						return false;
+					if (a.IsParams != b.IsParams)
+						return false;
+				}
 				
 				// We want to consider the parameter lists "Method<T>(T a)" and "Method<S>(S b)" as equal.
 				// However, the parameter types are not considered equal, as T is a different type parameter than S.

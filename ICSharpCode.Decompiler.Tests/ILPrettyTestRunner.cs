@@ -83,6 +83,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1389()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpUsing_Debug()
 		{
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
@@ -132,6 +138,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void Issue1325()
+		{
+			Run();
+		}
+
+		[Test]
+		public void SequenceOfNestedIfs()
 		{
 			Run();
 		}

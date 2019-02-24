@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			void IncludeBlock(Block block)
 			{
-				if (block.Instructions[0] is BlockContainer nestedContainer) {
+				foreach (var nestedContainer in block.Instructions.OfType<BlockContainer>()) {
 					// Just in case the block has multiple nested containers (e.g. due to loop and switch),
 					// also check the entry point:
 					IncludeBlock(nestedContainer.EntryPoint);
@@ -425,7 +425,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 
 			Block block = (Block)node.UserData;
-			if (block.ILRange.Start > exitPointILOffset
+			if (block.StartILOffset > exitPointILOffset
 				&& !HasReachableExit(node)
 				&& ((Block)node.UserData).Parent == currentBlockContainer)
 			{
@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// that prevents us from finding a nice exit for the inner loops, causing
 				// unnecessary gotos.
 				exitPoint = node;
-				exitPointILOffset = block.ILRange.Start;
+				exitPointILOffset = block.StartILOffset;
 				return; // don't visit children, they are likely to have even later IL offsets and we'd end up
 				// moving almost all of the code into the loop.
 			}
@@ -641,12 +641,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
 			newEntryPoint.Instructions.ReplaceList(oldEntryPoint.Instructions);
-			newEntryPoint.ILRange = oldEntryPoint.ILRange;
+			newEntryPoint.AddILRange(oldEntryPoint);
 			oldEntryPoint.Instructions.ReplaceList(new[] { loopContainer });
 			if (exitTargetBlock != null)
 				oldEntryPoint.Instructions.Add(new Branch(exitTargetBlock));
 
-			loopContainer.ILRange = newEntryPoint.ILRange;
+			loopContainer.AddILRange(newEntryPoint);
 			MoveBlocksIntoContainer(loop, loopContainer);
 
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
@@ -654,7 +654,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (branch.TargetBlock == oldEntryPoint) {
 					branch.TargetBlock = newEntryPoint;
 				} else if (branch.TargetBlock == exitTargetBlock) {
-					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+					branch.ReplaceWith(new Leave(loopContainer).WithILRange(branch));
 				}
 			}
 		}
@@ -723,7 +723,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			BlockContainer switchContainer = new BlockContainer(ContainerKind.Switch);
 			Block newEntryPoint = new Block();
-			newEntryPoint.ILRange = switchInst.ILRange;
+			newEntryPoint.AddILRange(switchInst);
 			switchContainer.Blocks.Add(newEntryPoint);
 			newEntryPoint.Instructions.Add(switchInst);
 			block.Instructions[block.Instructions.Count - 1] = switchContainer;
@@ -733,13 +733,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.Add(new Branch(exitTargetBlock));
 			}
 			
-			switchContainer.ILRange = newEntryPoint.ILRange;
+			switchContainer.AddILRange(newEntryPoint);
 			MoveBlocksIntoContainer(nodesInSwitch, switchContainer);
 
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
 			foreach (var branch in switchContainer.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == exitTargetBlock) {
-					branch.ReplaceWith(new Leave(switchContainer) { ILRange = branch.ILRange });
+					branch.ReplaceWith(new Leave(switchContainer).WithILRange(branch));
 				}
 			}
 

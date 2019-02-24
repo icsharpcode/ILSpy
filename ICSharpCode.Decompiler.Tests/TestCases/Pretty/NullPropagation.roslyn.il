@@ -84,16 +84,10 @@
             instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass 
             get_Item(int32 index) cil managed
     {
-      // Code size       7 (0x7)
-      .maxstack  1
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass V_0)
-      IL_0000:  nop
-      IL_0001:  ldnull
-      IL_0002:  stloc.0
-      IL_0003:  br.s       IL_0005
-
-      IL_0005:  ldloc.0
-      IL_0006:  ret
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldnull
+      IL_0001:  ret
     } // end of method MyClass::get_Item
 
     .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass 
@@ -180,19 +174,13 @@
             instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> 
             get_Item(int32 index) cil managed
     {
-      // Code size       15 (0xf)
+      // Code size       10 (0xa)
       .maxstack  1
-      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0,
-               valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_1)
-      IL_0000:  nop
-      IL_0001:  ldloca.s   V_0
-      IL_0003:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>
-      IL_0009:  ldloc.0
-      IL_000a:  stloc.1
-      IL_000b:  br.s       IL_000d
-
-      IL_000d:  ldloc.1
-      IL_000e:  ret
+      .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> V_0)
+      IL_0000:  ldloca.s   V_0
+      IL_0002:  initobj    valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct>
+      IL_0008:  ldloc.0
+      IL_0009:  ret
     } // end of method MyStruct::get_Item
 
     .method public hidebysig instance valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyStruct> 

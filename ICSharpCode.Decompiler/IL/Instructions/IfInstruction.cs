@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			if (options.UseLogicOperationSugar) {
 				if (MatchLogicAnd(out var lhs, out var rhs)) {
 					output.Write("logic.and(");

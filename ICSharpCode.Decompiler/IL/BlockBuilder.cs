@@ -56,26 +56,26 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var eh in body.ExceptionRegions) {
 				var tryRange = new Interval(eh.TryOffset, eh.TryOffset + eh.TryLength);
 				var handlerBlock = new BlockContainer();
-				handlerBlock.ILRange = new Interval(eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength);
+				handlerBlock.AddILRange(new Interval(eh.HandlerOffset, eh.HandlerOffset + eh.HandlerLength));
 				handlerBlock.Blocks.Add(new Block());
-				handlerContainers.Add(handlerBlock.ILRange.Start, handlerBlock);
+				handlerContainers.Add(handlerBlock.StartILOffset, handlerBlock);
 				
 				if (eh.Kind == ExceptionRegionKind.Fault || eh.Kind == ExceptionRegionKind.Finally) {
 					var tryBlock = new BlockContainer();
-					tryBlock.ILRange = tryRange;
+					tryBlock.AddILRange(tryRange);
 					if (eh.Kind == ExceptionRegionKind.Finally)
-						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock) { ILRange = tryRange });
+						tryInstructionList.Add(new TryFinally(tryBlock, handlerBlock).WithILRange(tryRange));
 					else
-						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock) { ILRange = tryRange });
+						tryInstructionList.Add(new TryFault(tryBlock, handlerBlock).WithILRange(tryRange));
 					continue;
 				}
 				// 
-				var tryCatch = tryCatchList.FirstOrDefault(tc => tc.TryBlock.ILRange == tryRange);
+				var tryCatch = tryCatchList.FirstOrDefault(tc => tc.TryBlock.ILRanges.SingleOrDefault() == tryRange);
 				if (tryCatch == null) {
 					var tryBlock = new BlockContainer();
-					tryBlock.ILRange = tryRange;
+					tryBlock.AddILRange(tryRange);
 					tryCatch = new TryCatch(tryBlock);
-					tryCatch.ILRange = tryRange;
+					tryCatch.AddILRange(tryRange);
 					tryCatchList.Add(tryCatch);
 					tryInstructionList.Add(tryCatch);
 				}
@@ -83,22 +83,22 @@ namespace ICSharpCode.Decompiler.IL
 				ILInstruction filter;
 				if (eh.Kind == System.Reflection.Metadata.ExceptionRegionKind.Filter) {
 					var filterBlock = new BlockContainer(expectedResultType: StackType.I4);
-					filterBlock.ILRange = new Interval(eh.FilterOffset, eh.HandlerOffset);
+					filterBlock.AddILRange(new Interval(eh.FilterOffset, eh.HandlerOffset));
 					filterBlock.Blocks.Add(new Block());
-					handlerContainers.Add(filterBlock.ILRange.Start, filterBlock);
+					handlerContainers.Add(filterBlock.StartILOffset, filterBlock);
 					filter = filterBlock;
 				} else {
 					filter = new LdcI4(1);
 				}
 
 				var handler = new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]);
-				handler.AddILRange(filter.ILRange);
-				handler.AddILRange(handlerBlock.ILRange);
+				handler.AddILRange(filter);
+				handler.AddILRange(handlerBlock);
 				tryCatch.Handlers.Add(handler);
-				tryCatch.AddILRange(handler.ILRange);
+				tryCatch.AddILRange(handler);
 			}
 			if (tryInstructionList.Count > 0) {
-				tryInstructionList = tryInstructionList.OrderBy(tc => tc.TryBlock.ILRange.Start).ThenByDescending(tc => tc.TryBlock.ILRange.End).ToList();
+				tryInstructionList = tryInstructionList.OrderBy(tc => tc.TryBlock.StartILOffset).ThenByDescending(tc => tc.TryBlock.EndILOffset).ToList();
 				nextTry = tryInstructionList[0];
 			}
 		}
@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL
 		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
-			mainContainer.ILRange = new Interval(0, body.GetCodeSize());
+			mainContainer.SetILRange(new Interval(0, body.GetCodeSize()));
 			currentContainer = mainContainer;
 			if (instructions.Count == 0) {
 				currentContainer.Blocks.Add(new Block {
@@ -126,19 +126,19 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in instructions) {
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = inst.ILRange.Start;
+				int start = inst.StartILOffset;
 				if (currentBlock == null || (incomingBranches[start] && !IsStackAdjustment(inst))) {
 					// Finish up the previous block
 					FinalizeCurrentBlock(start, fallthrough: true);
 					// Leave nested containers if necessary
-					while (start >= currentContainer.ILRange.End) {
+					while (start >= currentContainer.EndILOffset) {
 						currentContainer = containerStack.Pop();
 						currentBlock = currentContainer.Blocks.Last();
 						// this container is skipped (i.e. the loop will execute again)
 						// set ILRange to the last instruction offset inside the block.
-						if (start >= currentContainer.ILRange.End) {
-							Debug.Assert(currentBlock.ILRange.IsEmpty);
-							currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, start);
+						if (start >= currentContainer.EndILOffset) {
+							Debug.Assert(currentBlock.HasILRange);
+							currentBlock.AddILRange(new Interval(currentBlock.StartILOffset, start));
 						}
 					}
 					// Enter a handler if necessary
@@ -153,30 +153,30 @@ namespace ICSharpCode.Decompiler.IL
 						currentBlock = new Block();
 						currentContainer.Blocks.Add(currentBlock);
 					}
-					currentBlock.ILRange = new Interval(start, start);
+					currentBlock.SetILRange(new Interval(start, start));
 				}
-				while (nextTry != null && start == nextTry.TryBlock.ILRange.Start) {
+				while (nextTry != null && start == nextTry.TryBlock.StartILOffset) {
 					currentBlock.Instructions.Add(nextTry);
 					containerStack.Push(currentContainer);
 					currentContainer = (BlockContainer)nextTry.TryBlock;
 					currentBlock = new Block();
 					currentContainer.Blocks.Add(currentBlock);
-					currentBlock.ILRange = new Interval(start, start);
+					currentBlock.SetILRange(new Interval(start, start));
 					
 					nextTry = tryInstructionList.ElementAtOrDefault(++currentTryIndex);
 				}
 				currentBlock.Instructions.Add(inst);
 				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
-					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: false);
+					FinalizeCurrentBlock(inst.EndILOffset, fallthrough: false);
 				else if (!CreateExtendedBlocks && inst.HasFlag(InstructionFlags.MayBranch))
-					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: true);
+					FinalizeCurrentBlock(inst.EndILOffset, fallthrough: true);
 			}
-			FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
+			FinalizeCurrentBlock(mainContainer.EndILOffset, fallthrough: false);
 			// Finish up all containers
 			while (containerStack.Count > 0) {
 				currentContainer = containerStack.Pop();
 				currentBlock = currentContainer.Blocks.Last();
-				FinalizeCurrentBlock(mainContainer.ILRange.End, fallthrough: false);
+				FinalizeCurrentBlock(mainContainer.EndILOffset, fallthrough: false);
 			}
 			ConnectBranches(mainContainer, cancellationToken);
 		}
@@ -190,8 +190,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (currentBlock == null)
 				return;
-			Debug.Assert(currentBlock.ILRange.IsEmpty);
-			currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, currentILOffset);
+			Debug.Assert(currentBlock.HasILRange);
+			currentBlock.SetILRange(new Interval(currentBlock.StartILOffset, currentILOffset));
 			if (fallthrough) {
 				if (currentBlock.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop()) {
 					// Instead of putting the default branch after the switch instruction
@@ -213,9 +213,7 @@ namespace ICSharpCode.Decompiler.IL
 					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
 					if (branch.TargetBlock == null) {
 						branch.ReplaceWith(new InvalidBranch("Could not find block for branch target "
-							+ Disassembler.DisassemblerHelpers.OffsetToString(branch.TargetILOffset)) {
-							ILRange = branch.ILRange
-						});
+							+ Disassembler.DisassemblerHelpers.OffsetToString(branch.TargetILOffset)).WithILRange(branch));
 					}
 					break;
 				case Leave leave:
@@ -224,7 +222,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (leave.TargetContainer == null) {
 						// assign the finally/filter container
 						leave.TargetContainer = containerStack.Peek();
-						leave.Value = ILReader.Cast(leave.Value, leave.TargetContainer.ExpectedResultType, null, leave.ILRange.Start);
+						leave.Value = ILReader.Cast(leave.Value, leave.TargetContainer.ExpectedResultType, null, leave.StartILOffset);
 					}
 					break;
 				case BlockContainer container:
@@ -249,7 +247,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			foreach (var container in containerStack) {
 				foreach (var block in container.Blocks) {
-					if (block.ILRange.Start == targetILOffset)
+					if (block.StartILOffset == targetILOffset)
 						return block;
 				}
 			}

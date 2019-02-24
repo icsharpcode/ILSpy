@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override ILInstruction Clone()
 		{
 			BlockContainer clone = new BlockContainer();
-			clone.ILRange = this.ILRange;
+			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
 			foreach (var branch in clone.Descendants.OfType<Branch>()) {
@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			ILRange.WriteTo(output, options);
+			WriteILRange(output, options);
 			output.WriteLocalReference("BlockContainer", this, isDefinition: true);
 			output.Write(' ');
 			switch (Kind) {
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(Blocks.Count > 0 && EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint?.IncomingEdgeCount >= 1);
-			Debug.Assert(EntryPoint == null || Parent is ILFunction || !ILRange.IsEmpty);
+			Debug.Assert(EntryPoint == null || Parent is ILFunction || !HasILRange);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
 			Debug.Assert(Blocks.All(b => b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 			Block bodyStartBlock;
@@ -316,6 +316,20 @@ namespace ICSharpCode.Decompiler.IL
 			if (!block.Instructions.Last().MatchBranch(EntryPoint))
 				return false;
 			return true;
+		}
+
+		/// <summary>
+		/// If the container consists of a single block with a single instruction,
+		/// returns that instruction.
+		/// Otherwise returns the block, or the container itself if it has multiple blocks.
+		/// </summary>
+		public ILInstruction SingleInstruction()
+		{
+			if (Blocks.Count != 1)
+				return this;
+			if (Blocks[0].Instructions.Count != 1)
+				return Blocks[0];
+			return Blocks[0].Instructions[0];
 		}
 	}
 

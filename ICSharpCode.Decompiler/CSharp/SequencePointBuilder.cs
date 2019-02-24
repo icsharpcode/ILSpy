@@ -84,6 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var stmt in blockStatement.Statements) {
 				VisitAsSequencePoint(stmt);
 			}
+			var implicitReturn = blockStatement.Annotation<ImplicitReturnAnnotation>();
+			if (implicitReturn != null) {
+				StartSequencePoint(blockStatement.RBraceToken);
+				AddToSequencePoint(implicitReturn.Leave);
+				EndSequencePoint(blockStatement.RBraceToken.StartLocation, blockStatement.RBraceToken.EndLocation);
+			}
 		}
 
 		public override void VisitForStatement(ForStatement forStatement)
@@ -250,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			// Add the IL range associated with this instruction to the current sequence point.
 			if (HasUsableILRange(inst) && current.Intervals != null) {
-				current.Intervals.Add(inst.ILRange);
+				current.Intervals.AddRange(inst.ILRanges);
 				var function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				Debug.Assert(current.Function == null || current.Function == function);
 				current.Function = function;
@@ -269,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static bool HasUsableILRange(ILInstruction inst)
 		{
-			if (inst.ILRange.IsEmpty)
+			if (inst.HasILRange)
 				return false;
 			return !(inst is BlockContainer || inst is Block);
 		}

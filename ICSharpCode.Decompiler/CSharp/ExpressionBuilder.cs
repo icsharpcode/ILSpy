@@ -257,6 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression IsType(IsInst inst)
 		{
 			var arg = Translate(inst.Argument);
+			arg = UnwrapBoxingConversion(arg);
 			return new IsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new TypeIsResolveResult(arg.ResolveResult, inst.Type, compilation.FindType(TypeCode.Boolean)));
@@ -265,6 +266,25 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst, TranslationContext context)
 		{
 			var arg = Translate(inst.Argument);
+			if (inst.Type.IsReferenceType == false) {
+				// isinst with a value type results in an expression of "boxed value type",
+				// which is not supported in C#.
+				// Note that several other instructions special-case isinst arguments:
+				//  unbox.any T(isinst T(expr)) ==> "expr as T" for nullable value types
+				//  comp(isinst T(expr) != null) ==> "expr is T"
+				//  on block level (StatementBuilder.VisitIsInst) => "expr is T"
+				if (SemanticHelper.IsPure(inst.Argument.Flags)) {
+					// We can emulate isinst using
+					//   expr is T ? expr : null
+					return new ConditionalExpression(
+						new IsExpression(arg, ConvertType(inst.Type)).WithILInstruction(inst),
+						arg.Expression.Clone(),
+						new NullReferenceExpression()
+					).WithoutILInstruction().WithRR(new ResolveResult(arg.Type));
+				} else {
+					return ErrorExpression("isinst with value type is only supported in some contexts");
+				}
+			}
 			arg = UnwrapBoxingConversion(arg);
 			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
@@ -277,7 +297,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					&& arg.Type.IsKnownType(KnownTypeCode.Object)
 					&& arg.ResolveResult is ConversionResolveResult crr
 					&& crr.Conversion.IsBoxingConversion) {
-				// When 'as' used with value type or type parameter,
+				// When 'is' or 'as' is used with a value type or type parameter,
 				// the C# compiler implicitly boxes the input.
 				arg = arg.UnwrapChild(cast.Expression);
 			}
@@ -532,6 +552,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		internal ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
+			// "!expr" implicitly converts to bool so we can remove the cast;
+			// but only if doing so wouldn't cause us to call a user-defined "operator !"
+			expr = expr.UnwrapImplicitBoolConversion(type => !type.GetMethods(m => m.IsOperator && m.Name == "op_LogicalNot").Any());
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
 				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not, expr.ResolveResult));
 		}
@@ -1950,12 +1973,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
 		{
-			var arg = Translate(inst.Argument);
-			if (arg.Type.Equals(inst.Type) && inst.Argument.OpCode == OpCode.IsInst) {
-				// isinst followed by unbox.any of the same type is used for as-casts to generic types
-				return arg.WithILInstruction(inst);
+			TranslatedExpression arg;
+			if (inst.Argument is IsInst isInst && inst.Type.Equals(isInst.Type)) {
+				// unbox.any T(isinst T(expr)) ==> expr as T
+				// This is used for generic types and nullable value types
+				arg = UnwrapBoxingConversion(Translate(isInst.Argument));
+				return new AsExpression(arg, ConvertType(inst.Type))
+					.WithILInstruction(inst)
+					.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
 			}
 
+			arg = Translate(inst.Argument);
 			IType targetType = inst.Type;
 			if (targetType.Kind == TypeKind.TypeParameter) {
 				var rr = resolver.ResolveCast(targetType, arg.ResolveResult);
@@ -2240,6 +2268,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		class ArrayInitializer
+		{
+			public ArrayInitializer(ArrayInitializerExpression expression)
+			{
+				this.Expression = expression;
+				this.CurrentElementCount = 0;
+			}
+
+			public ArrayInitializerExpression Expression;
+			// HACK: avoid using Expression.Elements.Count: https://github.com/icsharpcode/ILSpy/issues/1202
+			public int CurrentElementCount;
+		}
+
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
@@ -2255,8 +2296,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentException("given Block is invalid!");
 			int dimensions = newArr.Indices.Count;
 			int[] dimensionSizes = translatedDimensions.Select(dim => (int)dim.ResolveResult.ConstantValue).ToArray();
-			var container = new Stack<ArrayInitializerExpression>();
-			var root = new ArrayInitializerExpression();
+			var container = new Stack<ArrayInitializer>();
+			var root = new ArrayInitializer(new ArrayInitializerExpression());
 			container.Push(root);
 			var elementResolveResults = new List<ResolveResult>();
 
@@ -2272,8 +2313,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					throw new ArgumentException("given Block is invalid!");
 				while (container.Count < dimensions) {
 					var aie = new ArrayInitializerExpression();
-					container.Peek().Elements.Add(aie);
-					container.Push(aie);
+					var parentInitializer = container.Peek();
+					if (parentInitializer.CurrentElementCount > 0)
+						parentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+					parentInitializer.Expression.Elements.Add(aie);
+					parentInitializer.CurrentElementCount++;
+					container.Push(new ArrayInitializer(aie));
 				}
 				TranslatedExpression val;
 				var old = astBuilder.UseSpecialConstants;
@@ -2283,9 +2328,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				} finally {
 					astBuilder.UseSpecialConstants = old;
 				}
-				container.Peek().Elements.Add(val);
+				var currentInitializer = container.Peek();
+				if (currentInitializer.CurrentElementCount > 0)
+					currentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
+				currentInitializer.Expression.Elements.Add(val);
+				currentInitializer.CurrentElementCount++;
 				elementResolveResults.Add(val.ResolveResult);
-				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
+				while (container.Count > 0 && container.Peek().CurrentElementCount == dimensionSizes[container.Count - 1]) {
 					container.Pop();
 				}
 			}
@@ -2305,7 +2354,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var expr = new ArrayCreateExpression {
 				Type = typeExpression,
-				Initializer = root
+				Initializer = root.Expression
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			if (!type.ContainsAnonymousType())
@@ -2481,6 +2530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 			}
 
+			condition = condition.UnwrapImplicitBoolConversion();
 			trueBranch = AdjustConstantExpressionToType(trueBranch, falseBranch.Type);
 			falseBranch = AdjustConstantExpressionToType(falseBranch, trueBranch.Type);
 
@@ -2527,7 +2577,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(rr);
 			}
 		}
-		
+
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
 		{
 			IType targetTypeHint = null;
@@ -2894,8 +2944,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";
-			if (inst.ILRange.Start != 0) {
-				message += $" near IL_{inst.ILRange.Start:x4}";
+			if (inst.StartILOffset != 0) {
+				message += $" near IL_{inst.StartILOffset:x4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;
@@ -2906,8 +2956,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
 		{
 			string message = "Error";
-			if (inst.ILRange.Start != 0) {
-				message += $" near IL_{inst.ILRange.Start:x4}";
+			if (inst.StartILOffset != 0) {
+				message += $" near IL_{inst.StartILOffset:x4}";
 			}
 			if (!string.IsNullOrEmpty(inst.Message)) {
 				message += ": " + inst.Message;

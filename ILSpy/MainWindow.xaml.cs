@@ -51,7 +51,7 @@ namespace ICSharpCode.ILSpy
 	{
 		bool refreshInProgress;
 		readonly NavigationHistory<NavigationState> history = new NavigationHistory<NavigationState>();
-		ILSpySettings spySettings;
+		ILSpySettings spySettingsForMainWindow_Loaded;
 		internal SessionSettings sessionSettings;
 		
 		internal AssemblyListManager assemblyListManager;
@@ -73,7 +73,8 @@ namespace ICSharpCode.ILSpy
 		public MainWindow()
 		{
 			instance = this;
-			spySettings = ILSpySettings.Load();
+			var spySettings = ILSpySettings.Load();
+			this.spySettingsForMainWindow_Loaded = spySettings;
 			this.sessionSettings = new SessionSettings(spySettings);
 			this.assemblyListManager = new AssemblyListManager(spySettings);
 			
@@ -266,72 +267,116 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 		
-		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
+		/// <summary>
+		/// Called on startup or when passed arguments via WndProc from a second instance.
+		/// In the format case, spySettings is non-null; in the latter it is null.
+		/// </summary>
+		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args, ILSpySettings spySettings = null)
 		{
 			if (nugetPackagesToLoad.Count > 0) {
 				LoadAssemblies(nugetPackagesToLoad, commandLineLoadedAssemblies, focusNode: false);
 				nugetPackagesToLoad.Clear();
 			}
-			if (args.NavigateTo != null) {
-				bool found = false;
-				if (args.NavigateTo.StartsWith("N:", StringComparison.Ordinal)) {
-					string namespaceName = args.NavigateTo.Substring(2);
-					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
-						if (asmNode != null) {
-							NamespaceTreeNode nsNode = asmNode.FindNamespaceNode(namespaceName);
-							if (nsNode != null) {
-								found = true;
-								SelectNode(nsNode);
-								break;
-							}
-						}
-					}
-				} else {
-					ITypeReference typeRef = null;
-					IMemberReference memberRef = null;
-					if (args.NavigateTo.StartsWith("T:", StringComparison.Ordinal)) {
-						typeRef = IdStringProvider.ParseTypeName(args.NavigateTo);
-					} else {
-						memberRef = IdStringProvider.ParseMemberIdString(args.NavigateTo);
-						typeRef = memberRef.DeclaringTypeReference;
-					}
-					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						var module = asm.GetPEFileOrNull();
-						if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
-							IEntity mr = null;
-							ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
-								? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
-								: new SimpleCompilation(module, MinimalCorlib.Instance);
-							mr = memberRef == null
-								? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
-								: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
-							if (mr != null && mr.ParentModule.PEFile != null) {
-								found = true;
-								// Defer JumpToReference call to allow an assembly that was loaded while
-								// resolving a type-forwarder in FindMemberByKey to appear in the assembly list.
-								Dispatcher.BeginInvoke(new Action(() => JumpToReference(mr)), DispatcherPriority.Loaded);
-								break;
-							}
-						}
-					}
-				}
-				if (!found) {
-					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", args.NavigateTo));
-					decompilerTextView.ShowText(output);
-				}
-			} else if (commandLineLoadedAssemblies.Count == 1) {
-				// NavigateTo == null and an assembly was given on the command-line:
-				// Select the newly loaded assembly
-				JumpToReference(commandLineLoadedAssemblies[0].GetPEFileOrNull());
-			}
+			NavigateOnLaunch(args.NavigateTo, sessionSettings.ActiveTreeViewPath, spySettings);
 			if (args.Search != null)
 			{
 				SearchPane.Instance.SearchTerm = args.Search;
 				SearchPane.Instance.Show();
 			}
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
+		}
+
+		async void NavigateOnLaunch(string navigateTo, string[] activeTreeViewPath, ILSpySettings spySettings)
+		{
+			var initialSelection = treeView.SelectedItem;
+			if (navigateTo != null) {
+				bool found = false;
+				if (navigateTo.StartsWith("N:", StringComparison.Ordinal)) {
+					string namespaceName = navigateTo.Substring(2);
+					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
+						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
+						if (asmNode != null) {
+							// FindNamespaceNode() blocks the UI if the assembly is not yet loaded,
+							// so use an async wait instead.
+							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
+							NamespaceTreeNode nsNode = asmNode.FindNamespaceNode(namespaceName);
+							if (nsNode != null) {
+								found = true;
+								if (treeView.SelectedItem == initialSelection) {
+									SelectNode(nsNode);
+								}
+								break;
+							}
+						}
+					}
+				} else {
+					IEntity mr = await Task.Run(() => FindEntityInCommandLineLoadedAssemblies(navigateTo));
+					if (mr != null && mr.ParentModule.PEFile != null) {
+						found = true;
+						if (treeView.SelectedItem == initialSelection) {
+							JumpToReference(mr);
+						}
+					}
+				}
+				if (!found && treeView.SelectedItem == initialSelection) {
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", navigateTo));
+					decompilerTextView.ShowText(output);
+				}
+			} else if (commandLineLoadedAssemblies.Count == 1) {
+				// NavigateTo == null and an assembly was given on the command-line:
+				// Select the newly loaded assembly
+				AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(commandLineLoadedAssemblies[0]);
+				if (asmNode != null && treeView.SelectedItem == initialSelection) {
+					SelectNode(asmNode);
+				}
+			} else if (spySettings != null) {
+				SharpTreeNode node = null;
+				if (sessionSettings.ActiveTreeViewPath?.Length > 0) {
+					foreach (var asm in assemblyList.GetAssemblies()) {
+						if (asm.FileName == sessionSettings.ActiveTreeViewPath[0]) {
+							// FindNodeByPath() blocks the UI if the assembly is not yet loaded,
+							// so use an async wait instead.
+							await asm.GetPEFileAsync().Catch<Exception>(ex => { });
+						}
+					}
+					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
+				}
+				if (treeView.SelectedItem == initialSelection) {
+					if (node != null) {
+						SelectNode(node);
+
+						// only if not showing the about page, perform the update check:
+						ShowMessageIfUpdatesAvailableAsync(spySettings);
+					} else {
+						AboutPage.Display(decompilerTextView);
+					}
+				}
+			}
+		}
+
+		private IEntity FindEntityInCommandLineLoadedAssemblies(string navigateTo)
+		{
+			ITypeReference typeRef = null;
+			IMemberReference memberRef = null;
+			if (navigateTo.StartsWith("T:", StringComparison.Ordinal)) {
+				typeRef = IdStringProvider.ParseTypeName(navigateTo);
+			} else {
+				memberRef = IdStringProvider.ParseMemberIdString(navigateTo);
+				typeRef = memberRef.DeclaringTypeReference;
+			}
+			foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
+				var module = asm.GetPEFileOrNull();
+				if (CanResolveTypeInPEFile(module, typeRef, out var typeHandle)) {
+					ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
+						? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
+						: new SimpleCompilation(module, MinimalCorlib.Instance);
+					return memberRef == null
+						? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
+						: (IEntity)memberRef.Resolve(new SimpleTypeResolveContext(compilation));
+				}
+			}
+			return null;
 		}
 
 		private bool CanResolveTypeInPEFile(PEFile module, ITypeReference typeRef, out EntityHandle typeHandle)
@@ -360,8 +405,8 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			ILSpySettings spySettings = this.spySettings;
-			this.spySettings = null;
+			ILSpySettings spySettings = this.spySettingsForMainWindow_Loaded;
+			this.spySettingsForMainWindow_Loaded = null;
 			var loadPreviousAssemblies = Options.MiscSettingsPanel.CurrentMiscSettings.LoadPreviousAssemblies;
 
 			if (loadPreviousAssemblies) {
@@ -392,24 +437,7 @@ namespace ICSharpCode.ILSpy
 
 		void OpenAssemblies(ILSpySettings spySettings)
 		{
-			HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments);
-			if (App.CommandLineArguments.NavigateTo == null && App.CommandLineArguments.AssembliesToLoad.Count != 1) {
-				SharpTreeNode node = null;
-				if (sessionSettings.ActiveTreeViewPath != null) {
-					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
-					if (node == this.assemblyListTreeNode && sessionSettings.ActiveAutoLoadedAssembly != null) {
-						node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
-					}
-				}
-				if (node != null) {
-					SelectNode(node);
-					
-					// only if not showing the about page, perform the update check:
-					ShowMessageIfUpdatesAvailableAsync(spySettings);
-				} else {
-					AboutPage.Display(decompilerTextView);
-				}
-			}
+			HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments, spySettings);
 			
 			AvalonEditTextOutput output = new AvalonEditTextOutput();
 			if (FormatExceptions(App.StartupExceptions.ToArray(), output))
@@ -465,7 +493,7 @@ namespace ICSharpCode.ILSpy
 				MainWindow.OpenLink(updateAvailableDownloadUrl);
 			} else {
 				updatePanel.Visibility = Visibility.Collapsed;
-				AboutPage.CheckForUpdatesAsync(spySettings ?? ILSpySettings.Load())
+				AboutPage.CheckForUpdatesAsync(ILSpySettings.Load())
 					.ContinueWith(task => AdjustUpdateUIAfterCheck(task, true), TaskScheduler.FromCurrentSynchronizationContext());
 			}
 		}
@@ -486,11 +514,7 @@ namespace ICSharpCode.ILSpy
 		
 		public void ShowAssemblyList(string name)
 		{
-			ILSpySettings settings = this.spySettings;
-			if (settings == null)
-			{
-				settings = ILSpySettings.Load();
-			}
+			ILSpySettings settings = ILSpySettings.Load();
 			AssemblyList list = this.assemblyListManager.LoadList(settings, name);
 			//Only load a new list when it is a different one
 			if (list.ListName != CurrentAssemblyList.ListName)

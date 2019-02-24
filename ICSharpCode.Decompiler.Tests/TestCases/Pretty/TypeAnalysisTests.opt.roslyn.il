@@ -36,6 +36,21 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests
        extends [mscorlib]System.Object
 {
+  .class auto ansi nested private beforefieldinit _
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method _::.ctor
+
+  } // end of class _
+
   .field private uint8[] byteArray
   .method public hidebysig instance uint8 
           SubtractFrom256(uint8 b) cil managed
@@ -282,7 +297,7 @@
   .method public hidebysig instance void 
           OperatorIs(object o) cil managed
   {
-    // Code size       32 (0x20)
+    // Code size       46 (0x2e)
     .maxstack  8
     IL_0000:  ldarg.1
     IL_0001:  isinst     [mscorlib]System.Random
@@ -296,7 +311,12 @@
     IL_0017:  ldc.i4.0
     IL_0018:  ceq
     IL_001a:  call       void [mscorlib]System.Console::WriteLine(bool)
-    IL_001f:  ret
+    IL_001f:  ldarg.1
+    IL_0020:  isinst     ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests/_
+    IL_0025:  ldnull
+    IL_0026:  cgt.un
+    IL_0028:  call       void [mscorlib]System.Console::WriteLine(bool)
+    IL_002d:  ret
   } // end of method TypeAnalysisTests::OperatorIs
 
   .method public hidebysig instance uint8[] 

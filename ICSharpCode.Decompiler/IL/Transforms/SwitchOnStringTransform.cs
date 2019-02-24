@@ -219,17 +219,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			if (extraLoad) {
-				inst.ILRange = instructions[i - 2].ILRange;
+				inst.AddILRange(instructions[i - 2]);
 				instructions[i - 2].ReplaceWith(inst);
 				instructions.RemoveRange(i - 1, 3);
 				i -= 2;
 			} else {
 				if (keepAssignmentBefore) {
-					inst.ILRange = instructions[i].ILRange;
+					inst.AddILRange(instructions[i]);
 					instructions[i].ReplaceWith(inst);
 					instructions.RemoveAt(i + 1);
 				} else {
-					inst.ILRange = instructions[i - 1].ILRange;
+					inst.AddILRange(instructions[i - 1]);
 					instructions[i - 1].ReplaceWith(inst);
 					instructions.RemoveRange(i, 2);
 					i--;
@@ -308,7 +308,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			
-			inst.ILRange = instructions[i - 1].ILRange;
+			inst.AddILRange(instructions[i - 1]);
 			instructions[i].ReplaceWith(inst);
 			instructions.RemoveAt(i + 1);
 			instructions.RemoveAt(i - 1);
@@ -477,8 +477,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!right.MatchLdcI4(0))
 						return false;
-					sections.Add(new SwitchSection() { Body = ifInst.TrueInst, Labels = new LongSet(0), ILRange = ifInst.ILRange });
-					sections.Add(new SwitchSection() { Body = switchBlock.Instructions[1], Labels = new LongSet(0).Invert(), ILRange = switchBlock.Instructions[1].ILRange });
+					sections.Add(new SwitchSection() { Body = ifInst.TrueInst, Labels = new LongSet(0) }.WithILRange(ifInst));
+					sections.Add(new SwitchSection() { Body = switchBlock.Instructions[1], Labels = new LongSet(0).Invert() }.WithILRange(switchBlock.Instructions[1]));
 					break;
 			}
 			// mcs: map sections without a value to the default section, if possible
@@ -501,12 +501,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructions[i + 1].ReplaceWith(inst);
 			if (keepAssignmentBefore) {
 				// delete if (comp(ldloc switchValueVar == ldnull))
-				inst.ILRange = instructions[i].ILRange;
+				inst.AddILRange(instructions[i]);
 				instructions.RemoveAt(i);
 				i--;
 			} else {
 				// delete both the if and the assignment before
-				inst.ILRange = instructions[i - 1].ILRange;
+				inst.AddILRange(instructions[i - 1]);
 				instructions.RemoveRange(i - 1, 2);
 				i -= 2;
 			}
@@ -721,7 +721,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stringToInt = new StringToInt(switchValue, stringValues);
 			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
-			inst.ILRange = block.Instructions[i].ILRange;
+			inst.AddILRange(block.Instructions[i]);
 			block.Instructions[i].ReplaceWith(inst);
 			block.Instructions.RemoveRange(i + 1, 3);
 			info.Transformed = true;
@@ -819,11 +819,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultSection.Body });
 			instructions[i].ReplaceWith(newSwitch);
 			if (keepAssignmentBefore) {
-				newSwitch.ILRange = instructions[i - 1].ILRange;
+				newSwitch.AddILRange(instructions[i - 1]);
 				instructions.RemoveAt(i - 1);
 				i--;
 			} else {
-				newSwitch.ILRange = instructions[i - 2].ILRange;
+				newSwitch.AddILRange(instructions[i - 2]);
 				instructions.RemoveRange(i - 2, 2);
 				i -= 2;
 			}

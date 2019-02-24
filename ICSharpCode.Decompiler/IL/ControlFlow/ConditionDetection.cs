@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (DetectExitPoints.CompatibleExitInstruction(ifInst.TrueInst, exitInst)) {
 						// if (...) exitInst; exitInst;
 						context.Step("Use empty block as then-branch", ifInst.TrueInst);
-						ifInst.TrueInst = new Nop() { ILRange = ifInst.TrueInst.ILRange };
+						ifInst.TrueInst = new Nop().WithILRange(ifInst.TrueInst);
 						// false, because we didn't inline a real block
 						// this will cause HandleIfInstruction() to attempt to inline the exitInst.
 						return false;
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// -> if (...) { ... } else { ... } blockExit;
 			context.Step("Remove redundant 'goto blockExit;' in then-branch", ifInst);
 			if (!(ifInst.TrueInst is Block trueBlock) || trueBlock.Instructions.Count == 1)
-				ifInst.TrueInst = new Nop { ILRange = ifInst.TrueInst.ILRange };
+				ifInst.TrueInst = new Nop().WithILRange(ifInst.TrueInst);
 			else
 				trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
 
@@ -396,7 +396,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Swap empty then-branch with else-branch", ifInst);
 			var oldTrue = ifInst.TrueInst;
 			ifInst.TrueInst = ifInst.FalseInst;
-			ifInst.FalseInst = new Nop { ILRange = oldTrue.ILRange };
+			ifInst.FalseInst = new Nop().WithILRange(oldTrue);
 			ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 		}
 
@@ -425,7 +425,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		private void OrderIfBlocks(IfInstruction ifInst)
 		{
-			if (IsEmpty(ifInst.FalseInst) || GetILRange(ifInst.TrueInst).Start <= GetILRange(ifInst.FalseInst).Start)
+			if (IsEmpty(ifInst.FalseInst) || GetStartILOffset(ifInst.TrueInst, out _) <= GetStartILOffset(ifInst.FalseInst, out _))
 				return;
 
 			context.Step("Swap then-branch with else-branch to match IL order", ifInst);
@@ -437,14 +437,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 		}
 
-		public static Interval GetILRange(ILInstruction inst)
+		public static int GetStartILOffset(ILInstruction inst, out bool isEmpty)
 		{
 			// some compilers merge the leave instructions for different arguments using stack variables
 			// these get split and inlined, but the ILRange of the value remains a better indicator of the actual location
-			if (inst is Leave leave && !leave.Value.MatchNop())
-				return leave.Value.ILRange;
+			if (inst is Leave leave && !leave.Value.MatchNop()) {
+				isEmpty = leave.Value.HasILRange;
+				return leave.Value.StartILOffset;
+			}
 
-			return inst.ILRange;
+			isEmpty = inst.HasILRange;
+			return inst.StartILOffset;
 		}
 
 		/// <summary>
@@ -524,13 +527,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			
 			// prefer arranging stuff in IL order
 			if (exit1.MatchBranch(out var block1) && exit2.MatchBranch(out var block2))
-				return block1.ILRange.Start.CompareTo(block2.ILRange.Start);
+				return block1.StartILOffset.CompareTo(block2.StartILOffset);
 
 			// use the IL offsets of the arguments of leave instructions instead of the leaves themselves if possible
 			if (exit1.MatchLeave(out var _, out var arg1) && exit2.MatchLeave(out var _, out var arg2))
-				return arg1.ILRange.Start.CompareTo(arg2.ILRange.Start);
+				return arg1.StartILOffset.CompareTo(arg2.StartILOffset);
 				
-			return exit1.ILRange.Start.CompareTo(exit2.ILRange.Start);
+			return exit1.StartILOffset.CompareTo(exit2.StartILOffset);
 		}
 
 		/// <summary>
@@ -630,7 +633,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			for (int i = startIndex; i < endIndex; i++) {
 				var inst = block.Instructions[i];
 				extractedBlock.Instructions.Add(inst);
-				extractedBlock.AddILRange(inst.ILRange);
+				extractedBlock.AddILRange(inst);
 			}
 			block.Instructions.RemoveRange(startIndex, endIndex - startIndex);
 

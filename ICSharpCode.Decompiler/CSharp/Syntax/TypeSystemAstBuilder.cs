@@ -111,6 +111,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowTypeParameters { get; set; }
+
+		/// <summary>
+		/// Controls whether type parameter names are shown for unbound types.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool ShowTypeParametersForUnboundTypes { get; set; }
 		
 		/// <summary>
 		/// Controls whether constraints on type parameter declarations are shown.
@@ -220,12 +226,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			TopLevelTypeName top = fullTypeName.TopLevelTypeName;
 			AstType type;
 			if (string.IsNullOrEmpty(top.Namespace)) {
-				type = new SimpleType(top.Name);
+				type = MakeSimpleType(top.Name);
 			} else {
-				type = new SimpleType(top.Namespace).MemberType(top.Name);
+				type = MakeMemberType(MakeSimpleType(top.Namespace), top.Name);
 			}
 			for (int i = 0; i < fullTypeName.NestingLevel; i++) {
-				type = type.MemberType(fullTypeName.GetNestedTypeName(i));
+				type = MakeMemberType(type, fullTypeName.GetNestedTypeName(i));
 			}
 			return type;
 		}
@@ -268,6 +274,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return astType;
 			}
 			if (type is ITypeDefinition typeDef) {
+				if (ShowTypeParametersForUnboundTypes)
+					return ConvertTypeHelper(typeDef, typeDef.TypeArguments);
 				if (typeDef.TypeParameterCount > 0) {
 					// Unbound type
 					IType[] typeArguments = new IType[typeDef.TypeParameterCount];
@@ -278,8 +286,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				} else {
 					return ConvertTypeHelper(typeDef, EmptyList<IType>.Instance);
 				}
+
 			}
-			return new SimpleType(type.Name);
+			return MakeSimpleType(type.Name);
 		}
 		
 		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
@@ -309,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						foreach (var pair in usingScope.UsingAliases) {
 							if (pair.Value is TypeResolveResult) {
 								if (TypeMatches(pair.Value.Type, typeDef, typeArguments))
-									return new SimpleType(pair.Key);
+									return MakeSimpleType(pair.Key);
 							}
 						}
 					}
@@ -329,7 +338,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (trr != null || (localTypeArguments.Length == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
 					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
 						// We can use the short type name
-						SimpleType shortResult = new SimpleType(typeDef.Name);
+						SimpleType shortResult = MakeSimpleType(typeDef.Name);
 						AddTypeArguments(shortResult, typeDef.TypeParameters, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 						return shortResult;
 					}
@@ -337,7 +346,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			
 			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
-				var shortResult = new SimpleType(genericType.Name);
+				var shortResult = MakeSimpleType(genericType.Name);
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
 				if (genericType.Nullability == Nullability.Nullable) {
 					return shortResult.MakeNullableType();
@@ -405,7 +414,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Debug.Assert(endIndex <= typeParameters.Count);
 			for (int i = startIndex; i < endIndex; i++) {
 				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument) {
-					result.AddChild(new SimpleType(typeParameters[i].Name), Roles.TypeArgument);
+					result.AddChild(MakeSimpleType(typeParameters[i].Name), Roles.TypeArgument);
 				} else {
 					result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
 				}
@@ -421,7 +430,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						foreach (var pair in usingScope.UsingAliases) {
 							nrr = pair.Value as NamespaceResolveResult;
 							if (nrr != null && nrr.NamespaceName == namespaceName) {
-								var ns = new SimpleType(pair.Key);
+								var ns = MakeSimpleType(pair.Key);
 								if (AddResolveResultAnnotations)
 									ns.AddAnnotation(nrr);
 								return ns;
@@ -434,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			int pos = namespaceName.LastIndexOf('.');
 			if (pos < 0) {
 				if (IsValidNamespace(namespaceName, out nrr)) {
-					var ns = new SimpleType(namespaceName);
+					var ns = MakeSimpleType(namespaceName);
 					if (AddResolveResultAnnotations && nrr != null)
 						ns.AddAnnotation(nrr);
 					return ns;
@@ -481,8 +490,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			nrr = resolver.ResolveSimpleName(firstNamespacePart, EmptyList<IType>.Instance) as NamespaceResolveResult;
 			return nrr != null && !nrr.IsError && nrr.NamespaceName == firstNamespacePart;
 		}
+
+		static SimpleType MakeSimpleType(string name)
+		{
+			if (name == "_")
+				return new SimpleType("@_");
+			return new SimpleType(name);
+		}
+
+		static MemberType MakeMemberType(AstType target, string name)
+		{
+			if (name == "_")
+				return new MemberType(target, "@_");
+			return new MemberType(target, name);
+		}
 		#endregion
-		
+
 		#region Convert Attribute
 		public Attribute ConvertAttribute(IAttribute attribute)
 		{
@@ -761,7 +784,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			expression = null;
 			if (!specialConstants.TryGetValue(constant, out var info))
 				return false;
-			if (!UseSpecialConstants) {
+			// if the field definition cannot be found, do not generate a reference to the field.
+			var field = type.GetFields(p => p.Name == info.Member).SingleOrDefault();
+			if (!UseSpecialConstants || field == null) {
 				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
 				// Use an equivalent arithmetic expression instead.
 				if (info.Type == KnownTypeCode.Double) {
@@ -819,7 +844,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			expression = new MemberReferenceExpression(expression, info.Member);
 
 			if (AddResolveResultAnnotations)
-				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), type.GetFields(p => p.Name == info.Member).Single()));
+				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), field));
 
 			return true;
 		}
@@ -1342,7 +1367,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AddResolveResultAnnotations) {
 				decl.AddAnnotation(new TypeResolveResult(typeDefinition));
 			}
-			decl.Name = typeDefinition.Name;
+			decl.Name = typeDefinition.Name == "_" ? "@_" : typeDefinition.Name;
 			
 			int outerTypeParameterCount = (typeDefinition.DeclaringTypeDefinition == null) ? 0 : typeDefinition.DeclaringTypeDefinition.TypeParameterCount;
 			
@@ -1722,7 +1747,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return null;
 			}
 			Constraint c = new Constraint();
-			c.TypeParameter = new SimpleType (tp.Name);
+			c.TypeParameter = MakeSimpleType(tp.Name);
 			if (tp.HasReferenceTypeConstraint) {
 				if (tp.NullabilityConstraint == Nullability.Nullable) {
 					c.BaseTypes.Add(new PrimitiveType("class").MakeNullableType());

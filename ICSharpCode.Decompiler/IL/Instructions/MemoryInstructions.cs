@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (options.UseFieldSugar) {
 				if (this.MatchLdFld(out var target, out var field)) {
-					ILRange.WriteTo(output, options);
+					WriteILRange(output, options);
 					output.Write("ldfld ");
 					field.WriteTo(output);
 					output.Write('(');
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(')');
 					return;
 				} else if (this.MatchLdsFld(out field)) {
-					ILRange.WriteTo(output, options);
+					WriteILRange(output, options);
 					output.Write("ldsfld ");
 					field.WriteTo(output);
 					return;
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (options.UseFieldSugar) {
 				if (this.MatchStFld(out var target, out var field, out var value)) {
-					ILRange.WriteTo(output, options);
+					WriteILRange(output, options);
 					output.Write("stfld ");
 					field.WriteTo(output);
 					output.Write('(');
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(')');
 					return;
 				} else if (this.MatchStsFld(out field, out value)) {
-					ILRange.WriteTo(output, options);
+					WriteILRange(output, options);
 					output.Write("stsfld ");
 					field.WriteTo(output);
 					output.Write('(');

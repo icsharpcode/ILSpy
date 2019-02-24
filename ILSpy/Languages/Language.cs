@@ -407,18 +407,20 @@ namespace ICSharpCode.ILSpy
 
 		protected string GetDisplayName(IEntity entity, bool includeDeclaringTypeName, bool includeNamespace, bool includeNamespaceOfDeclaringTypeName)
 		{
-			if (includeDeclaringTypeName && entity.DeclaringTypeDefinition != null) {
-				string name;
-				if (includeNamespaceOfDeclaringTypeName) {
-					name = EscapeName(entity.DeclaringTypeDefinition.FullName);
-				} else {
-					name = EscapeName(entity.DeclaringTypeDefinition.Name);
-				}
-				return name + "." + EscapeName(entity.Name);
+			string entityName;
+			if (entity is ITypeDefinition t && !t.MetadataToken.IsNil) {
+				MetadataReader metadata = t.ParentModule.PEFile.Metadata;
+				var typeDef = metadata.GetTypeDefinition((TypeDefinitionHandle)t.MetadataToken);
+				entityName = EscapeName(metadata.GetString(typeDef.Name));
 			} else {
-				if (includeNamespace)
-					return EscapeName(entity.FullName);
-				return EscapeName(entity.Name);
+				entityName = EscapeName(entity.Name);
+			}
+			if (includeNamespace || includeDeclaringTypeName) {
+				if (entity.DeclaringTypeDefinition != null)
+					return TypeToString(entity.DeclaringTypeDefinition, includeNamespaceOfDeclaringTypeName) + "." + entityName;
+				return EscapeName(entity.Namespace) + "." + entityName;
+			} else {
+				return entityName;
 			}
 		}
 
@@ -528,7 +530,7 @@ namespace ICSharpCode.ILSpy
 		public static StringBuilder EscapeName(StringBuilder sb, string name)
 		{
 			foreach (char ch in name) {
-				if (char.IsWhiteSpace(ch) || char.IsControl(ch))
+				if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch))
 					sb.AppendFormat("\\u{0:x4}", (int)ch);
 				else
 					sb.Append(ch);

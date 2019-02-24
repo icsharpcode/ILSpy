@@ -43,6 +43,7 @@
     <PackageReference Include="DiffLib" Version="2017.7.26.1241" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.10.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="2.10.0" />
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta1-63314-01" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.2" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
@@ -55,6 +56,7 @@
 
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
+    <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
@@ -69,6 +71,9 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1389.cs" />
+    <Compile Include="TestCases\Pretty\Discards.cs" />
+    <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
     <Compile Include="Output\CSharpAmbienceTests.cs" />
     <Compile Include="Semantics\ConversionTests.cs" />
     <Compile Include="Semantics\ExplicitConversionTest.cs" />
@@ -78,7 +83,14 @@
     <Compile Include="TestCases\Correctness\RefLocalsAndReturns.cs" />
     <Compile Include="TestCases\ILPretty\Issue1256.cs" />
     <Compile Include="TestCases\ILPretty\Issue1323.cs" />
+    <Compile Include="TestCases\Pretty\CustomAttributes2.cs" />
+    <Compile Include="TestCases\Pretty\EnumTests.cs" />
+    <Compile Include="TestCases\Pretty\TypeMemberTests.cs" />
+    <Compile Include="TestCases\Pretty\ValueTypes.cs" />
+    <None Include="TestCases\ILPretty\Issue1389.il" />
+    <None Include="TestCases\ILPretty\SequenceOfNestedIfs.cs" />
     <Compile Include="TestCases\Pretty\ConstructorInitializers.cs" />
+    <None Include="TestCases\ILPretty\SequenceOfNestedIfs.il" />
     <None Include="TestCases\Pretty\AsyncMain.cs" />
     <None Include="TestCases\ILPretty\Issue1325.cs" />
     <Compile Include="TestCases\Pretty\ConstantsTests.cs" />
@@ -86,7 +98,7 @@
     <Compile Include="TestCases\Pretty\OptionalArguments.cs" />
     <Compile Include="TestCases\Pretty\CustomShortCircuitOperators.cs" />
     <Compile Include="TestCases\Pretty\ReduceNesting.cs" />
-    <Compile Include="TestCases\Pretty\TypeTests.cs" />
+    <Compile Include="TestCases\Pretty\InterfaceTests.cs" />
     <Compile Include="TestCases\Pretty\YieldReturn.cs" />
     <None Include="TestCases\ILPretty\Issue1256.il" />
     <None Include="TestCases\ILPretty\Issue1323.il" />
@@ -126,7 +138,7 @@
     <Compile Include="TestCases\Pretty\NullPropagation.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
-    <Compile Include="Util\SequencePointTests.cs" />
+    <Compile Include="PdbGenerationTestRunner.cs" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
@@ -199,7 +211,12 @@
     <Compile Include="TestCases\Pretty\AssemblyCustomAttributes.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributeSamples.cs" />
     <Compile Include="TestCases\Pretty\CustomAttributes.cs" />
-    <Compile Include="CodeSampleFileParser.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
+    <Content Include="TestCases\PdbGen\HelloWorld.xml" />
+    <Content Include="TestCases\PdbGen\LambdaCapturing.xml" />
   </ItemGroup>
 
   <ItemGroup>

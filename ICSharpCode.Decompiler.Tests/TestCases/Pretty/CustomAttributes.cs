@@ -91,11 +91,15 @@ namespace CustomAttributes
 		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
 		[My(EnumWithFlag.All)]
+#if ROSLYN
+		public static string Property => "aa";
+#else
 		public static string Property {
 			get {
 				return "aa";
 			}
 		}
+#endif
 		[Obsolete("some message")]
 		public static void ObsoletedMethod()
 		{

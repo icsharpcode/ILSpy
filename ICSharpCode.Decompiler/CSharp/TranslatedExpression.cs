@@ -431,7 +431,27 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction()
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
 		}
-		
+
+		/// <summary>
+		/// In conditional contexts, remove the bool-cast emitted when converting
+		/// an "implicit operator bool" invocation.
+		/// </summary>
+		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool> typeFilter = null)
+		{
+			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
+				return this;
+			if (!(this.ResolveResult is ConversionResolveResult rr))
+				return this;
+			if (!(rr.Conversion.IsUserDefined && rr.Conversion.IsImplicit))
+				return this;
+			if (typeFilter != null && !typeFilter(rr.Input.Type))
+				return this;
+			if (this.Expression is CastExpression cast) {
+				return this.UnwrapChild(cast.Expression);
+			}
+			return this;
+		}
+
 		/// <summary>
 		/// Converts this expression to a boolean expression.
 		/// 

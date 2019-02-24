@@ -430,6 +430,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 				1
 			}
 		};
+
+#if ROSLYN
+		public static ReadOnlySpan<byte> StaticData1 => new byte[1] {
+			0
+		};
+
+		public static ReadOnlySpan<byte> StaticData3 => new byte[3] {
+			1,
+			2,
+			3
+		};
+
+		public static Span<byte> StaticData3Span => new byte[3] {
+			1,
+			2,
+			3
+		};
+#endif
 		#endregion
 
 		#region Helper methods used to ensure initializers used within expressions work correctly
@@ -1123,21 +1141,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		public static byte[] ReverseInitializer(int i)
 		{
-#if ROSLYN && OPT
-			byte[] obj = new byte[4];
-			obj[3] = (byte)i;
-			obj[2] = (byte)(i >> 8);
-			obj[1] = (byte)(i >> 16);
-			obj[0] = (byte)(i >> 24);
-			return obj;
-#else
 			byte[] array = new byte[4];
 			array[3] = (byte)i;
 			array[2] = (byte)(i >> 8);
 			array[1] = (byte)(i >> 16);
 			array[0] = (byte)(i >> 24);
 			return array;
-#endif
 		}
 
 		public static void Issue953_MissingNullableSpecifierForArrayInitializer()

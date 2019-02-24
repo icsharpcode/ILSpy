@@ -286,7 +286,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			switch (kind) {
 				case VariableKind.PinnedLocal:
 				case VariableKind.Parameter:
-				case VariableKind.Exception:
+				case VariableKind.ExceptionLocal:
+				case VariableKind.ExceptionStackSlot:
 				case VariableKind.UsingLocal:
 				case VariableKind.ForeachLocal:
 					return false;

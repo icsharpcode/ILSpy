@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					SwitchInstruction newSwitch;
 					if (MatchSwitchOnNullable(block.Instructions, i, out newSwitch)) {
-						newSwitch.ILRange = block.Instructions[i - 2].ILRange;
+						newSwitch.AddILRange(block.Instructions[i - 2]);
 						block.Instructions[i + 1].ReplaceWith(newSwitch);
 						block.Instructions.RemoveRange(i - 2, 3);
 						i -= 2;
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 					if (MatchRoslynSwitchOnNullable(block.Instructions, i, out newSwitch)) {
-						newSwitch.ILRange = block.Instructions[i - 1].ILRange;
+						newSwitch.AddILRange(block.Instructions[i - 1]);
 						block.Instructions[i - 1].ReplaceWith(newSwitch);
 						block.Instructions.RemoveRange(i, 2);
 						i--;

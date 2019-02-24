@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				DetectNullSafeArrayToPointer(container);
 				SplitBlocksAtWritesToPinnedLocals(container);
 				foreach (var block in container.Blocks)
-					CreatePinnedRegion(block);
+					DetectPinnedRegion(block);
 				container.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 			}
 			// Sometimes there's leftover writes to the original pinned locals
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						for (int k = j + 1; k < block.Instructions.Count; k++) {
 							newBlock.Instructions.Add(block.Instructions[k]);
 						}
-						newBlock.ILRange = newBlock.Instructions[0].ILRange;
+						newBlock.AddILRange(newBlock.Instructions[0]);
 						block.Instructions.RemoveRange(j + 1, newBlock.Instructions.Count);
 						block.Instructions.Add(new Branch(newBlock));
 						container.Blocks.Insert(i + 1, newBlock);
@@ -147,9 +147,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (p.StackType != StackType.Ref) {
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
 					}
-					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer) {
-						ILRange = block.Instructions[block.Instructions.Count - 2].ILRange
-					};
+					block.Instructions[block.Instructions.Count - 2] = new StLoc(p, arrayToPointer)
+						.WithILRange(block.Instructions[block.Instructions.Count - 2]);
 					((Branch)block.Instructions.Last()).TargetBlock = targetBlock;
 					modified = true;
 				}
@@ -266,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#endregion
 
 		#region CreatePinnedRegion
-		bool CreatePinnedRegion(Block block)
+		bool DetectPinnedRegion(Block block)
 		{
 			// After SplitBlocksAtWritesToPinnedLocals(), only the second-to-last instruction in each block
 			// can be a write to a pinned local.
@@ -274,10 +273,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (stLoc == null || stLoc.Variable.Kind != VariableKind.PinnedLocal)
 				return false;
 			// stLoc is a store to a pinned local.
-			if (IsNullOrZero(stLoc.Value))
+			if (IsNullOrZero(stLoc.Value)) {
 				return false; // ignore unpin instructions
+			}
 			// stLoc is a store that starts a new pinned region
-			
+
+			context.StepStartGroup($"DetectPinnedRegion {stLoc.Variable.Name}", block);
+			try {
+				return CreatePinnedRegion(block, stLoc);
+			} finally {
+				context.StepEndGroup(keepIfEmpty: true);
+			}
+		}
+
+		bool CreatePinnedRegion(Block block, StLoc stLoc)
+		{
 			// Collect the blocks to be moved into the region:
 			BlockContainer sourceContainer = (BlockContainer)block.Parent;
 			int[] reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
@@ -344,10 +354,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// we'll delete the dummy block later
 				}
 			}
-			
-			stLoc.ReplaceWith(new PinnedRegion(stLoc.Variable, stLoc.Value, body) { ILRange = stLoc.ILRange });
+
+			var pinnedRegion = new PinnedRegion(stLoc.Variable, stLoc.Value, body).WithILRange(stLoc);
+			stLoc.ReplaceWith(pinnedRegion);
 			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
-			ProcessPinnedRegion((PinnedRegion)block.Instructions.Last());
+			ProcessPinnedRegion(pinnedRegion);
 			return true;
 		}
 
@@ -400,9 +411,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Detect nested pinned regions:
 			BlockContainer body = (BlockContainer)pinnedRegion.Body;
 			foreach (var block in body.Blocks)
-				CreatePinnedRegion(block);
+				DetectPinnedRegion(block);
 			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
-			body.ILRange = body.EntryPoint.ILRange;
+			body.SetILRange(body.EntryPoint);
 		}
 
 		private void MoveArrayToPointerToPinnedRegionInit(PinnedRegion pinnedRegion)
@@ -410,9 +421,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Roslyn started marking the array variable as pinned,
 			// and then uses array.to.pointer immediately within the region.
 			Debug.Assert(pinnedRegion.Variable.Type.Kind == TypeKind.Array);
-			if (pinnedRegion.Variable.StoreInstructions.Count != 1 || pinnedRegion.Variable.AddressCount != 0 || pinnedRegion.Variable.LoadCount != 1)
-				return;
-			var ldloc = pinnedRegion.Variable.LoadInstructions.Single();
+			// Find the single load of the variable within the pinnedRegion:
+			LdLoc ldloc = null;
+			foreach (var inst in pinnedRegion.Descendants.OfType<IInstructionWithVariableOperand>()) {
+				if (inst.Variable == pinnedRegion.Variable && inst != pinnedRegion) {
+					if (ldloc != null)
+						return; // more than 1 variable access
+					ldloc = inst as LdLoc;
+					if (ldloc == null)
+						return; // variable access that is not LdLoc
+				}
+			}
 			if (!(ldloc.Parent is ArrayToPointer arrayToPointer))
 				return;
 			if (!(arrayToPointer.Parent is Conv conv && conv.Kind == ConversionKind.StopGCTracking))
@@ -427,8 +446,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newVar.HasGeneratedName = oldVar.HasGeneratedName;
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
-			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init) { ILRange = arrayToPointer.ILRange };
-			conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+			pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init).WithILRange(arrayToPointer);
+			conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 		}
 
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
@@ -437,8 +456,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar) && conv.ResultType == newVar.StackType) {
 				// conv ref->i (ldloc oldVar)
 				//  => ldloc newVar
-				conv.AddILRange(conv.Argument.ILRange);
-				conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+				conv.AddILRange(conv.Argument);
+				conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 				return;
 			}
 			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == oldVar) {

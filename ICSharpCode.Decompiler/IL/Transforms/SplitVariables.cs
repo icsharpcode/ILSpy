@@ -47,7 +47,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (v.Kind) {
 				case VariableKind.Local:
-				case VariableKind.Exception:
 					foreach (var ldloca in v.AddressInstructions) {
 						if (DetermineAddressUse(ldloca, ldloca.Variable) == AddressUse.Unknown) {
 							// If we don't understand how the address is being used,

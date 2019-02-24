@@ -842,6 +842,18 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#region Options to aid VB decompilation
 		bool assumeArrayLengthFitsIntoInt32 = true;
 
@@ -883,33 +895,6 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (makeAssignmentExpressions != value) {
 					makeAssignmentExpressions = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool alwaysGenerateExceptionVariableForCatchBlocks = false;
-
-		/// <summary>
-		/// Gets/Sets whether to always generate exception variables in catch blocks
-		/// </summary>
-		public bool AlwaysGenerateExceptionVariableForCatchBlocks {
-			get { return alwaysGenerateExceptionVariableForCatchBlocks; }
-			set {
-				if (alwaysGenerateExceptionVariableForCatchBlocks != value) {
-					alwaysGenerateExceptionVariableForCatchBlocks = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool showDebugInfo;
-
-		public bool ShowDebugInfo {
-			get { return showDebugInfo; }
-			set {
-				if (showDebugInfo != value) {
-					showDebugInfo = value;
 					OnPropertyChanged();
 				}
 			}

@@ -27,11 +27,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public class IndexerNonDefaultName
 		{
 			[IndexerName("Foo")]
+#if ROSLYN
+			public int this[int index] => 0;
+#else
 			public int this[int index] {
 				get {
 					return 0;
 				}
 			}
+#endif
 		}
 
 		[DefaultMember("Bar")]
