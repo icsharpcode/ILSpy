@@ -26,8 +26,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new VisualBasicParseOptions(preprocessorSymbols: preprocessorSymbols, languageVersion: LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
+				var references = defaultReferences.Value;
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					references = references.Concat(visualBasic.Value);
+				}
 				var compilation = VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
-					syntaxTrees, defaultReferences.Value,
+					syntaxTrees, references,
 					new VisualBasicCompilationOptions(
 					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
 					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
@@ -65,7 +69,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				options.ReferencedAssemblies.Add("System.dll");
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				options.ReferencedAssemblies.Add("System.Xml.dll");
-				options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic)) {
+					options.ReferencedAssemblies.Add("Microsoft.VisualBasic.dll");
+				}
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 					StringBuilder b = new StringBuilder("Compiler error:");
