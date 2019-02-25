@@ -499,7 +499,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitDynamicSetMemberInstruction(DynamicSetMemberInstruction inst)
 		{
 			base.VisitDynamicSetMemberInstruction(inst);
+			TransformDynamicSetMemberInstruction(inst, context);
+		}
 
+		internal static void TransformDynamicSetMemberInstruction(DynamicSetMemberInstruction inst, StatementTransformContext context)
+		{
 			if (!inst.BinderFlags.HasFlag(CSharpBinderFlags.ValueFromCompoundAssignment))
 				return;
 			if (!(inst.Value is DynamicBinaryOperatorInstruction binaryOp))

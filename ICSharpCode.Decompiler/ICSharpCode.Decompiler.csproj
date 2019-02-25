@@ -269,6 +269,7 @@
     <Compile Include="Disassembler\ILParser.cs" />
     <Compile Include="IL\ILInstructionExtensions.cs" />
     <Compile Include="IL\Transforms\CombineExitsTransform.cs" />
+    <Compile Include="IL\Transforms\DynamicIsEventAssignmentTransform.cs" />
     <Compile Include="IL\Transforms\ReduceNestingTransform.cs" />
     <Compile Include="IL\Transforms\LocalFunctionDecompiler.cs" />
     <Compile Include="IL\Transforms\UserDefinedLogicTransform.cs" />
