@@ -36,11 +36,11 @@ namespace ILSpy.BamlDecompiler.Xaml {
 
 		public NamespaceMap(string prefix, IModule asm, string xmlNs, string clrNs) {
 			XmlnsPrefix = prefix;
-			Assembly = asm ?? throw new ArgumentNullException(nameof(asm));
+			Assembly = asm;
 			XMLNamespace = xmlNs;
 			CLRNamespace = clrNs;
 		}
 
-		public override string ToString() => $"{XmlnsPrefix}:[{Assembly.Name}|{CLRNamespace ?? XMLNamespace}]";
+		public override string ToString() => $"{XmlnsPrefix}:[{Assembly?.Name}|{CLRNamespace ?? XMLNamespace}]";
 	}
 }

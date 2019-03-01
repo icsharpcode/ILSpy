@@ -37,7 +37,7 @@ namespace ILSpy.BamlDecompiler {
 
 		public string LookupXmlns(IModule asm, string clrNs) {
 			foreach (var ns in this) {
-				if (asm.FullAssemblyName == ns.Assembly.FullAssemblyName && ns.CLRNamespace == clrNs)
+				if (asm.FullAssemblyName == ns.Assembly?.FullAssemblyName && ns.CLRNamespace == clrNs)
 					return ns.XMLNamespace;
 			}
 
@@ -103,14 +103,14 @@ namespace ILSpy.BamlDecompiler {
 
 		public string LookupXmlns(IModule asm, string clrNs) {
 			foreach (var map in piMappings) {
-				if (asm.FullAssemblyName == map.Value.Assembly.FullAssemblyName && map.Value.CLRNamespace == clrNs)
+				if (asm.FullAssemblyName == map.Value.Assembly?.FullAssemblyName && map.Value.CLRNamespace == clrNs)
 					return map.Key;
 			}
 
 			var scope = CurrentScope;
 			while (scope != null) {
 				foreach (var ns in scope) {
-					if (asm.FullAssemblyName == ns.Assembly.FullAssemblyName && ns.CLRNamespace == clrNs)
+					if (asm.FullAssemblyName == ns.Assembly?.FullAssemblyName && ns.CLRNamespace == clrNs)
 						return ns.XMLNamespace;
 				}
 
