@@ -46,13 +46,17 @@ Remarks:
 		public bool ShowILCodeFlag { get; }
 
 		[Option("-d|--debuginfo", "Generate PDB.", CommandOptionType.NoValue)]
-		public bool CreteDebugInfoFlag { get; }
+		public bool CreateDebugInfoFlag { get; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(interface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
 		public string[] EntityTypes { get; } = new string[0];
 
 		[Option("-v|--version", "Show version of ICSharpCode.Decompiler used.", CommandOptionType.NoValue)]
 		public bool ShowVersion { get; }
+
+		[DirectoryExists]
+		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
+		public string[] ReferencePaths { get; } = new string[0];
 
 		private int OnExecute(CommandLineApplication app)
 		{
@@ -61,7 +65,7 @@ Remarks:
 
 			try {
 				if (CreateCompilableProjectFlag) {
-					DecompileAsProject(InputAssemblyName, OutputDirectory);
+					DecompileAsProject(InputAssemblyName, OutputDirectory, ReferencePaths);
 				} else if (EntityTypes.Any()) {
 					var values = EntityTypes.SelectMany(v => v.Split(',', ';')).ToArray();
 					HashSet<TypeKind> kinds = TypesParser.ParseSelection(values);
@@ -70,15 +74,15 @@ Remarks:
 						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".list.txt");
 					}
 
-					ListContent(InputAssemblyName, output, kinds);
+					ListContent(InputAssemblyName, output, kinds, ReferencePaths);
 				} else if (ShowILCodeFlag) {
 					if (outputDirectorySpecified) {
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
 						output = File.CreateText(Path.Combine(OutputDirectory, outputName) + ".il");
 					}
 
-					ShowIL(InputAssemblyName, output);
-				} else if (CreteDebugInfoFlag) {
+					ShowIL(InputAssemblyName, output, ReferencePaths);
+				} else if (CreateDebugInfoFlag) {
 					string pdbFileName = null;
 					if (outputDirectorySpecified) {
 						string outputName = Path.GetFileNameWithoutExtension(InputAssemblyName);
@@ -87,7 +91,7 @@ Remarks:
 						pdbFileName = Path.ChangeExtension(InputAssemblyName, ".pdb");
 					}
 
-					return GeneratePdbForAssembly(InputAssemblyName, pdbFileName, app);
+					return GeneratePdbForAssembly(InputAssemblyName, pdbFileName, ReferencePaths, app);
 				} else if (ShowVersion) {
 					string vInfo = "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 					               Environment.NewLine
@@ -101,7 +105,7 @@ Remarks:
 							(String.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
 					}
 
-					Decompile(InputAssemblyName, output, TypeName);
+					Decompile(InputAssemblyName, output, ReferencePaths, TypeName);
 				}
 			} catch (Exception ex) {
 				app.Error.WriteLine(ex.ToString());
@@ -113,14 +117,19 @@ Remarks:
 			return 0;
 		}
 
-		static CSharpDecompiler GetDecompiler(string assemblyFileName)
+		static CSharpDecompiler GetDecompiler(string assemblyFileName, string[] referencePaths)
 		{
-			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false });
+			var module = new PEFile(assemblyFileName);
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			foreach (var path in referencePaths) {
+				resolver.AddSearchDirectory(path);
+			}
+			return new CSharpDecompiler(assemblyFileName, resolver, new DecompilerSettings());
 		}
 
-		static void ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
+		static void ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds, string[] referencePaths)
 		{
-			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, referencePaths);
 
 			foreach (var type in decompiler.TypeSystem.MainModule.TypeDefinitions) {
 				if (!kinds.Contains(type.Kind))
@@ -129,9 +138,9 @@ Remarks:
 			}
 		}
 
-		static void ShowIL(string assemblyFileName, TextWriter output)
+		static void ShowIL(string assemblyFileName, TextWriter output, string[] referencePaths)
 		{
-			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, referencePaths);
 			ITextOutput textOutput = new PlainTextOutput();
 			ReflectionDisassembler disassembler = new ReflectionDisassembler(textOutput, CancellationToken.None);
 
@@ -143,17 +152,21 @@ Remarks:
 			output.WriteLine(textOutput.ToString());
 		}
 
-		static void DecompileAsProject(string assemblyFileName, string outputDirectory)
+		static void DecompileAsProject(string assemblyFileName, string outputDirectory, string[] referencePaths)
 		{
-			WholeProjectDecompiler decompiler = new WholeProjectDecompiler();
+			var decompiler = new WholeProjectDecompiler();
 			var module = new PEFile(assemblyFileName);
-			decompiler.AssemblyResolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Reader.DetectTargetFrameworkId());
+			foreach (var path in referencePaths) {
+				resolver.AddSearchDirectory(path);
+			}
+			decompiler.AssemblyResolver = resolver;
 			decompiler.DecompileProject(module, outputDirectory);
 		}
 
-		static void Decompile(string assemblyFileName, TextWriter output, string typeName = null)
+		static void Decompile(string assemblyFileName, TextWriter output, string[] referencePaths, string typeName = null)
 		{
-			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, referencePaths);
 
 			if (typeName == null) {
 				output.Write(decompiler.DecompileWholeModuleAsString());
@@ -163,7 +176,7 @@ Remarks:
 			}
 		}
 
-		static int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
+		static int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, string[] referencePaths, CommandLineApplication app)
 		{
 			var module = new PEFile(assemblyFileName,
 				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read),
@@ -176,7 +189,7 @@ Remarks:
 			}
 
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.OpenOrCreate, FileAccess.Write)) {
-				var decompiler = GetDecompiler(assemblyFileName);
+				var decompiler = GetDecompiler(assemblyFileName, referencePaths);
 				PortablePdbWriter.WritePdb(module, decompiler, new DecompilerSettings() { ThrowOnAssemblyResolveErrors = false }, stream);
 			}
 
