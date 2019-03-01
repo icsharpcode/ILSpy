@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp3) {
 				anonymousTypes = false;
+				useLambdaSyntax = false;
 				objectCollectionInitializers = false;
 				automaticProperties = false;
 				extensionMethods = false;
@@ -143,6 +144,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (anonymousTypes != value) {
 					anonymousTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool useLambdaSyntax = true;
+
+		/// <summary>
+		/// Use C# 3 lambda syntax if possible.
+		/// </summary>
+		public bool UseLambdaSyntax {
+			get { return useLambdaSyntax; }
+			set {
+				if (useLambdaSyntax != value) {
+					useLambdaSyntax = value;
 					OnPropertyChanged();
 				}
 			}

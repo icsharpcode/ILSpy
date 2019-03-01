@@ -1633,7 +1633,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (ame.Parameters.Any(p => p.Type.IsNull)) {
 				// if there is an anonymous type involved, we are forced to use a lambda expression.
 				isLambda = true;
-			} else if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
+			} else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
 				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
