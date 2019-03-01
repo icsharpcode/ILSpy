@@ -101,6 +101,12 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/escapesequence");
 		}
 
+		[Test]
+		public void Issue1435()
+		{
+			RunTest("cases/issue1435");
+		}
+
 		#region RunTest
 		void RunTest(string name)
 		{
