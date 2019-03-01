@@ -505,9 +505,11 @@ namespace ICSharpCode.ILSpy
 				case Machine.I386:
 					if ((corflags & CorFlags.Prefers32Bit) != 0)
 						return "AnyCPU (32-bit preferred)";
+					if ((corflags & CorFlags.Requires32Bit) != 0)
+						return "x86";
 					// According to ECMA-335, II.25.3.3.1 CorFlags.Requires32Bit and Characteristics.Bit32Machine must be in sync
 					// for assemblies containing managed code. However, this is not true for C++/CLI assemblies.
-					if ((corflags & CorFlags.Requires32Bit) != 0 || (characteristics & Characteristics.Bit32Machine) != 0)
+					if ((corflags & CorFlags.ILOnly) == 0 && (characteristics & Characteristics.Bit32Machine) != 0)
 						return "x86";
 					return "AnyCPU (64-bit preferred)";
 				case Machine.Amd64:
