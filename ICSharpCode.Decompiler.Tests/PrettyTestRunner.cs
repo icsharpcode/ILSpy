@@ -119,7 +119,6 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		[Ignore("broken by Roslyn upgrade")]
 		public void Switch([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {

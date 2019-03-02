@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Null
 		}
 
+#if !ROSLYN
 		public static State SwitchOverNullableBool(bool? value)
 		{
 			switch (value) {
@@ -60,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					throw new InvalidOperationException();
 			}
 		}
+#endif
 
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
@@ -361,6 +363,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !ROSLYN
 		public static string SwitchOverBool(bool b)
 		{
 			Console.WriteLine("SwitchOverBool: " + b.ToString());
@@ -373,6 +376,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					return null;
 			}
 		}
+#endif
 
 		public static void SwitchInLoop(int i)
 		{
@@ -914,9 +918,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		// These decompile poorly into switch statements and should be left as is
-		#region Overagressive Switch Use
+#region Overagressive Switch Use
 
-		#if ROSLYN || OPT
+#if ROSLYN || OPT
 		public static void SingleIf1(int i, bool a)
 		{
 			if (i == 1 || (i == 2 && a)) {
@@ -924,7 +928,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine(2);
 		}
-		#endif
+#endif
 		
 		public static void SingleIf2(int i, bool a, bool b)
 		{
@@ -1067,7 +1071,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				c = getChar();
 			} while (c != -1 && c != '\n' && c != '\u2028' && c != '\u2029');
 		}
-		#endregion
+#endregion
 		
 		// Ensure correctness of SwitchDetection.UseCSharpSwitch control flow heuristics
 		public static void SwitchWithBreakCase(int i, bool b)
