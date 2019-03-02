@@ -45,6 +45,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 		
 		public string IndentationString { get; set; }
+
+		public string NonPrintingCharacterReplacement { get; set; }
 		
 		public TextWriterTokenWriter(TextWriter textWriter)
 		{
@@ -52,6 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				throw new ArgumentNullException("textWriter");
 			this.textWriter = textWriter;
 			this.IndentationString = "\t";
+			this.NonPrintingCharacterReplacement = "_";
 			this.line = 1;
 			this.column = 1;
 		}
@@ -63,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				textWriter.Write('@');
 				column++;
 			}
-			string name = EscapeIdentifier(identifier.Name);
+			string name = ReplaceNonPrintingCharacters(identifier.Name, NonPrintingCharacterReplacement);
 			textWriter.Write(name);
 			column += name.Length;
 			isAtStartOfLine = false;
@@ -419,25 +422,22 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			return sb.ToString();
 		}
 
-		public static string EscapeIdentifier(string identifier)
+		public static string ReplaceNonPrintingCharacters(string identifier, string replacement)
 		{
 			if (string.IsNullOrEmpty(identifier))
 				return identifier;
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < identifier.Length; i++) {
-				if (IsPrintableIdentifierChar(identifier, i)) {
-					if (char.IsSurrogatePair(identifier, i)) {
-						sb.Append(identifier.Substring(i, 2));
-						i++;
-					} else {
-						sb.Append(identifier[i]);
-					}
+				if (char.IsSurrogatePair(identifier, i)) {
+					// Theoretically supported, but practically problematic, see:
+					// https://github.com/dotnet/roslyn/issues/9731
+					sb.Append(replacement);
+					i++;
 				} else {
-					if (char.IsSurrogatePair(identifier, i)) {
-						sb.AppendFormat("\\U{0:x8}", char.ConvertToUtf32(identifier, i));
-						i++;
+					if (IsPrintableIdentifierChar(identifier, i)) {
+						sb.Append(identifier[i]);
 					} else {
-						sb.AppendFormat("\\u{0:x4}", (int)identifier[i]);
+						sb.Append(replacement);
 					}
 				}
 			}
@@ -446,33 +446,28 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool IsPrintableIdentifierChar(string identifier, int index)
 		{
-			switch (identifier[index]) {
-				case '\\':
-					return false;
-				case ' ':
-				case '_':
-				case '`':
-				case '^':
+			switch (char.GetUnicodeCategory(identifier, index)) {
+				case UnicodeCategory.UppercaseLetter:
+				case UnicodeCategory.LowercaseLetter:
+				case UnicodeCategory.TitlecaseLetter:
+				case UnicodeCategory.ModifierLetter:
+				case UnicodeCategory.OtherLetter:
+				case UnicodeCategory.LetterNumber:
 					return true;
 			}
+
+			if (index == 0)
+				return identifier[0] == '_';
+
 			switch (char.GetUnicodeCategory(identifier, index)) {
-				case UnicodeCategory.ModifierLetter:
 				case UnicodeCategory.NonSpacingMark:
 				case UnicodeCategory.SpacingCombiningMark:
-				case UnicodeCategory.EnclosingMark:
-				case UnicodeCategory.LineSeparator:
-				case UnicodeCategory.ParagraphSeparator:
-				case UnicodeCategory.Control:
-				case UnicodeCategory.Format:
-				case UnicodeCategory.Surrogate:
-				case UnicodeCategory.PrivateUse:
+				case UnicodeCategory.DecimalDigitNumber:
 				case UnicodeCategory.ConnectorPunctuation:
-				case UnicodeCategory.ModifierSymbol:
-				case UnicodeCategory.OtherNotAssigned:
-				case UnicodeCategory.SpaceSeparator:
-					return false;
-				default:
+				case UnicodeCategory.Format:
 					return true;
+				default:
+					return false;
 			}
 		}
 		

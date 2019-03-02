@@ -42,7 +42,8 @@ namespace ICSharpCode.Decompiler
 		
 		public bool FoldBraces = false;
 		public bool ExpandMemberDefinitions = false;
-		
+		public string NonPrintingCharacterReplacement = "_";
+
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
 			if (output == null)
@@ -63,7 +64,7 @@ namespace ICSharpCode.Decompiler
 			}
 			
 			var definition = GetCurrentDefinition();
-			string name = TextWriterTokenWriter.EscapeIdentifier(identifier.Name);
+			string name = TextWriterTokenWriter.ReplaceNonPrintingCharacters(identifier.Name, NonPrintingCharacterReplacement);
 			switch (definition) {
 				case IType t:
 					output.WriteReference(t, name, true);
