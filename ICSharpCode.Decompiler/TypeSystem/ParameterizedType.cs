@@ -84,7 +84,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public bool? IsReferenceType => genericType.IsReferenceType;
 		public bool IsByRefLike => genericType.IsByRefLike;
-		
+		public Nullability Nullability => genericType.Nullability;
+
+		public IType ChangeNullability(Nullability nullability)
+		{
+			IType newGenericType = genericType.ChangeNullability(nullability);
+			if (newGenericType == genericType)
+				return this;
+			else
+				return new ParameterizedType(newGenericType, typeArguments);
+		}
+
 		public IType DeclaringType {
 			get {
 				IType declaringType = genericType.DeclaringType;
@@ -154,7 +164,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public ITypeDefinition GetDefinition()
 		{
-			return genericType as ITypeDefinition;
+			return genericType.GetDefinition();
 		}
 		
 		/// <summary>

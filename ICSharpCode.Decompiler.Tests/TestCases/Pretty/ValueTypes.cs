@@ -51,8 +51,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if ROSLYN && OPT
+		// Roslyn optimizes out the explicit default-initialization
+		private static readonly S ReadOnlyS;
+		private static S MutableS;
+#else
 		private static readonly S ReadOnlyS = default(S);
 		private static S MutableS = default(S);
+#endif
 		private static volatile int VolatileInt;
 
 		public static void CallMethodViaField()
@@ -63,12 +69,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			mutableS.SetField();
 		}
 
+#if !(ROSLYN && OPT) || COPY_PROPAGATION_FIXED
 		public static S InitObj1()
 		{
 			S result = default(S);
 			MakeArray();
 			return result;
 		}
+#endif
 
 		public static S InitObj2()
 		{
@@ -80,17 +88,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			p = default(S);
 		}
 
-		public static S CallValueTypeCtor1()
+		public static S CallValueTypeCtor()
 		{
 			return new S(10);
 		}
-
-		public static S CallValueTypeCtor2()
-		{
-			S result = new S(10);
-			return result;
-		}
-
+		
 		public static S Copy1(S p)
 		{
 			return p;

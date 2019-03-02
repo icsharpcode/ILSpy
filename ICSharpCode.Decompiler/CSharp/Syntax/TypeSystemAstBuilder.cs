@@ -243,7 +243,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (typeWithElementType is PointerType) {
 					return ConvertType(typeWithElementType.ElementType).MakePointerType();
 				} else if (typeWithElementType is ArrayType) {
-					return ConvertType(typeWithElementType.ElementType).MakeArrayType(((ArrayType)type).Dimensions);
+					var astType = ConvertType(typeWithElementType.ElementType).MakeArrayType(((ArrayType)type).Dimensions);
+					if (type.Nullability == Nullability.Nullable)
+						return astType.MakeNullableType();
+					else
+						return astType;
 				} else if (typeWithElementType is ByReferenceType) {
 					return ConvertType(typeWithElementType.ElementType).MakeRefType();
 				} else {
@@ -256,6 +260,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 				}
 				return ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
+			}
+			if (type is NullabilityAnnotatedType nat) {
+				var astType = ConvertType(nat.TypeWithoutAnnotation);
+				if (nat.Nullability == Nullability.Nullable)
+					astType = astType.MakeNullableType();
+				return astType;
 			}
 			if (type is TupleType tuple) {
 				var astType = new TupleAstType();
@@ -287,14 +297,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		AstType ConvertTypeHelper(IType genericType, IReadOnlyList<IType> typeArguments)
 		{
+			ITypeDefinition typeDef = genericType.GetDefinition();
+			Debug.Assert(typeDef != null || genericType.Kind == TypeKind.Unknown);
 			Debug.Assert(typeArguments.Count >= genericType.TypeParameterCount);
-			Debug.Assert(genericType is ITypeDefinition || genericType.Kind == TypeKind.Unknown);
 
-			ITypeDefinition typeDef = genericType as ITypeDefinition;
 			if (AlwaysUseBuiltinTypeNames && typeDef != null) {
 				string keyword = KnownTypeReference.GetCSharpNameByTypeCode(typeDef.KnownTypeCode);
-				if (keyword != null)
-					return new PrimitiveType(keyword);
+				if (keyword != null) {
+					if (genericType.Nullability == Nullability.Nullable) {
+						return new PrimitiveType(keyword).MakeNullableType();
+					} else {
+						return new PrimitiveType(keyword);
+					}
+				}
 			}
 			
 			// The number of type parameters belonging to outer classes
@@ -337,7 +352,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AlwaysUseShortTypeNames || (typeDef == null && genericType.DeclaringType == null)) {
 				var shortResult = MakeSimpleType(genericType.Name);
 				AddTypeArguments(shortResult, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
-				return shortResult;
+				if (genericType.Nullability == Nullability.Nullable) {
+					return shortResult.MakeNullableType();
+				} else {
+					return shortResult;
+				}
 			}
 			MemberType result = new MemberType();
 			if (genericType.DeclaringType != null) {
@@ -356,7 +375,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			result.MemberName = genericType.Name;
 			AddTypeArguments(result, genericType.TypeParameters, typeArguments, outerTypeParameterCount, genericType.TypeParameterCount);
-			return result;
+			if (genericType.Nullability == Nullability.Nullable) {
+				return result.MakeNullableType();
+			} else {
+				return result;
+			}
 		}
 		
 		/// <summary>
@@ -365,9 +388,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool TypeMatches(IType type, ITypeDefinition typeDef, IReadOnlyList<IType> typeArguments)
 		{
 			if (typeDef.TypeParameterCount == 0) {
-				return typeDef.Equals(type);
+				return TypeDefMatches(typeDef, type);
 			} else {
-				if (!typeDef.Equals(type.GetDefinition()))
+				if (!TypeDefMatches(typeDef, type.GetDefinition()))
 					return false;
 				ParameterizedType pt = type as ParameterizedType;
 				if (pt == null) {
@@ -380,6 +403,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 				return true;
 			}
+		}
+
+		bool TypeDefMatches(ITypeDefinition typeDef, IType type)
+		{
+			if (type.Name != typeDef.Name || type.Namespace != typeDef.Namespace || type.TypeParameterCount != typeDef.TypeParameterCount)
+				return false;
+			bool defIsNested = typeDef.DeclaringTypeDefinition != null;
+			bool typeIsNested = type.DeclaringType != null;
+			if (defIsNested && typeIsNested)
+				return TypeDefMatches(typeDef.DeclaringTypeDefinition, type.DeclaringType);
+			else
+				return defIsNested == typeIsNested;
 		}
 
 		/// <summary>
@@ -1730,9 +1765,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Constraint c = new Constraint();
 			c.TypeParameter = MakeSimpleType(tp.Name);
 			if (tp.HasReferenceTypeConstraint) {
-				c.BaseTypes.Add(new PrimitiveType("class"));
+				if (tp.NullabilityConstraint == Nullability.Nullable) {
+					c.BaseTypes.Add(new PrimitiveType("class").MakeNullableType());
+				} else {
+					c.BaseTypes.Add(new PrimitiveType("class"));
+				}
 			} else if (tp.HasValueTypeConstraint) {
-				c.BaseTypes.Add(new PrimitiveType("struct"));
+				if (tp.HasUnmanagedConstraint) {
+					c.BaseTypes.Add(new PrimitiveType("unmanaged"));
+				} else {
+					c.BaseTypes.Add(new PrimitiveType("struct"));
+				}
 			}
 			foreach (IType t in tp.DirectBaseTypes) {
 				if (!IsObjectOrValueType(t))

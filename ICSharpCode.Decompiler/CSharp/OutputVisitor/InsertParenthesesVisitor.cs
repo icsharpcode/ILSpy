@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					case UnaryOperatorType.PostDecrement:
 					case UnaryOperatorType.PostIncrement:
 					case UnaryOperatorType.NullConditional:
+					case UnaryOperatorType.SuppressNullableWarning:
 						return Primary;
 					case UnaryOperatorType.NullConditionalRewrap:
 						return NullableRewrap;

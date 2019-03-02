@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 
 			b.AddMarshalInfo(fieldDef.GetMarshallingDescriptor());
-			b.Add(fieldDef.GetCustomAttributes());
+			b.Add(fieldDef.GetCustomAttributes(), SymbolKind.Field);
 
 			return b.Build();
 		}

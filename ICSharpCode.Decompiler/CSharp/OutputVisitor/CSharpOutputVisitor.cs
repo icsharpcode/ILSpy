@@ -1120,7 +1120,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			return op == UnaryOperatorType.PostIncrement
 				|| op == UnaryOperatorType.PostDecrement
-				|| op == UnaryOperatorType.NullConditional;
+				|| op == UnaryOperatorType.NullConditional
+				|| op == UnaryOperatorType.SuppressNullableWarning;
 		}
 
 		public virtual void VisitUncheckedExpression(UncheckedExpression uncheckedExpression)

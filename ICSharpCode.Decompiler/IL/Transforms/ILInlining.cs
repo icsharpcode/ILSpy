@@ -389,7 +389,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					}
 				case OpCode.SwitchInstruction:
-					return parent == next || (parent.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub) && parent.Parent == next);
+					if (parent == next)
+						return true;
+					if (parent.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub) && parent.Parent == next)
+						return true;
+					if (parent is StringToInt stringToInt && stringToInt.Parent == next)
+						return true;
+					return false;
 				default:
 					return false;
 			}

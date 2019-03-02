@@ -341,6 +341,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void RunVB([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
+			options |= CompilerOptions.ReferenceVisualBasic;
 			string testFileName = testName + ".vb";
 			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
 			CompilerResults outputFile = null, decompiledOutputFile = null;

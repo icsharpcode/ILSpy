@@ -252,5 +252,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (T)(object)input;
 		}
+
+#if CS73
+		public static object CallDelegate<T>(T input) where T : Delegate
+		{
+			return input.DynamicInvoke();
+		}
+
+		public static int CountEnumerators<T>() where T : Enum
+		{
+			return typeof(T).GetEnumValues().Length;
+		}
+
+		public unsafe static int UnmanagedConstraint<T>() where T : unmanaged
+		{
+			return sizeof(T);
+		}
+#endif
 	}
 }

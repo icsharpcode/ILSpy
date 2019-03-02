@@ -70,6 +70,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		bool IsByRefLike { get; }
 
 		/// <summary>
+		/// Gets the nullability annotation on this type.
+		/// </summary>
+		Nullability Nullability { get; }
+
+		/// <summary>
+		/// Creates a new type that is a copy of this type, with the changed nullability annotation.
+		/// </summary>
+		IType ChangeNullability(Nullability newNullability);
+
+		/// <summary>
 		/// Gets the underlying type definition.
 		/// Can return null for types which do not have a type definition (for example arrays, pointers, type parameters).
 		/// </summary>

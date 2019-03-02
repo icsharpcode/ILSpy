@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly bool hasValueTypeConstraint;
 		readonly bool hasReferenceTypeConstraint;
 		readonly bool hasDefaultConstructorConstraint;
+		readonly Nullability nullabilityConstraint;
 		readonly IReadOnlyList<IType> constraints;
 		readonly IReadOnlyList<IAttribute> attributes;
 
@@ -35,12 +36,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IReadOnlyList<IType> constraints = null)
+			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(owner, index, name, variance)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
 			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.nullabilityConstraint = nullabilityConstraint;
 			this.constraints = constraints ?? EmptyList<IType>.Instance;
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
@@ -51,12 +53,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			VarianceModifier variance = VarianceModifier.Invariant,
 			IReadOnlyList<IAttribute> attributes = null,
 			bool hasValueTypeConstraint = false, bool hasReferenceTypeConstraint = false, bool hasDefaultConstructorConstraint = false,
-			IReadOnlyList<IType> constraints = null)
+			IReadOnlyList<IType> constraints = null, Nullability nullabilityConstraint = Nullability.Oblivious)
 			: base(compilation, ownerType, index, name, variance)
 		{
 			this.hasValueTypeConstraint = hasValueTypeConstraint;
 			this.hasReferenceTypeConstraint = hasReferenceTypeConstraint;
 			this.hasDefaultConstructorConstraint = hasDefaultConstructorConstraint;
+			this.nullabilityConstraint = nullabilityConstraint;
 			this.constraints = constraints ?? EmptyList<IType>.Instance;
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 		}
@@ -66,6 +69,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override bool HasValueTypeConstraint => hasValueTypeConstraint;
 		public override bool HasReferenceTypeConstraint => hasReferenceTypeConstraint;
 		public override bool HasDefaultConstructorConstraint => hasDefaultConstructorConstraint;
+		public override bool HasUnmanagedConstraint => false;
+		public override Nullability NullabilityConstraint => nullabilityConstraint;
 
 		public override IEnumerable<IType> DirectBaseTypes {
 			get {

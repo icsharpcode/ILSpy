@@ -21,6 +21,17 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal struct StructWithYieldReturn
+	{
+		private int val;
+
+		public IEnumerable<int> Count()
+		{
+			yield return val++;
+			yield return val++;
+		}
+	}
+
 	public class YieldReturnPrettyTest
 	{
 		private int fieldOnThis;
@@ -323,17 +334,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			for (int i = 0; i < 3; i++) {
 				yield return val;
 			}
-		}
-	}
-
-	internal struct StructWithYieldReturn
-	{
-		private int val;
-
-		public IEnumerable<int> Count()
-		{
-			yield return val++;
-			yield return val++;
 		}
 	}
 }

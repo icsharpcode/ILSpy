@@ -242,18 +242,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				return o != null && baseTp.Equals(o.baseTp) && this.Owner.Equals(o.Owner);
 			}
 			
-			public override bool HasValueTypeConstraint {
-				get { return baseTp.HasValueTypeConstraint; }
-			}
-			
-			public override bool HasReferenceTypeConstraint {
-				get { return baseTp.HasReferenceTypeConstraint; }
-			}
-			
-			public override bool HasDefaultConstructorConstraint {
-				get { return baseTp.HasDefaultConstructorConstraint; }
-			}
-			
+			public override bool HasValueTypeConstraint => baseTp.HasValueTypeConstraint;
+			public override bool HasReferenceTypeConstraint => baseTp.HasReferenceTypeConstraint;
+			public override bool HasDefaultConstructorConstraint => baseTp.HasDefaultConstructorConstraint;
+			public override bool HasUnmanagedConstraint => baseTp.HasUnmanagedConstraint;
+
+			public override Nullability NullabilityConstraint => baseTp.NullabilityConstraint;
+
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

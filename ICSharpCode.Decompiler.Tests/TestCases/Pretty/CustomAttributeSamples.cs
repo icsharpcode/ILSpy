@@ -45,13 +45,192 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 	{
 	}
 
-	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
-	public class MyMethodOrInterfaceAttributeAttribute : Attribute
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeNamedInitializerFieldEnumAttribute : Attribute
+	{
+		public AttributeTargets Field;
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeNamedInitializerPropertyEnumAttribute : Attribute
+	{
+		public AttributeTargets Prop {
+			get {
+				return AttributeTargets.All;
+			}
+			set {
+			}
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeOnReturnTypeOfDelegateAttribute : Attribute
 	{
 	}
 
-	[Obsolete("message")]
-	public class ObsoleteClass
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeTargetPropertyIndexSetMultiParamAttribute : Attribute
+	{
+		public int Field;
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeWithCustomPropertyAttribute : Attribute
+	{
+		public string Prop {
+			get {
+				return "";
+			}
+			set {
+			}
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+	public class MyAttributeWithNamedArgumentAppliedAttribute : Attribute
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyAttributeWithNamedInitializerPropertyTypeAttribute : Attribute
+	{
+		public Type Prop {
+			get {
+				return null;
+			}
+			set {
+			}
+		}
+	}
+
+	[MyAttributeWithCustomProperty(Prop = "value")]
+	public class MyClass
+	{
+	}
+
+	public class MyClass<[MyClassAttributeOnTypeParameter] T>
+	{
+	}
+
+	[MyAttributeWithNamedInitializerPropertyType(Prop = typeof(Enum))]
+	public class MyClass02
+	{
+	}
+
+	[MyAttributeNamedInitializerPropertyEnum(Prop = (AttributeTargets.Class | AttributeTargets.Method))]
+	public class MyClass03
+	{
+	}
+
+	[MyAttributeNamedInitializerFieldEnum(Field = (AttributeTargets.Class | AttributeTargets.Method))]
+	public class MyClass04
+	{
+	}
+
+	public class MyClass05
+	{
+		[return: MyAttribute]
+		public int MyMethod()
+		{
+			return 5;
+		}
+	}
+
+
+	public class MyClass06
+	{
+		public int Prop {
+			[return: MyAttribute]
+			get {
+				return 3;
+			}
+		}
+	}
+
+	public class MyClass07
+	{
+		public int Prop {
+			[param: MyAttribute]
+			set {
+			}
+		}
+	}
+
+
+	public class MyClass08
+	{
+		public int Prop {
+			get {
+				return 3;
+			}
+			[return: MyAttribute]
+			set {
+			}
+		}
+	}
+
+	public class MyClass09
+	{
+		public int this[string s] {
+			[return: MyAttribute]
+			get {
+				return 3;
+			}
+		}
+	}
+
+	public class MyClass10
+	{
+		public int this[[MyAttribute] string s] {
+			set {
+			}
+		}
+	}
+
+	public class MyClass11
+	{
+#if ROSLYN
+		public int this[[MyAttribute] string s] => 3;
+#else
+		public int this[[MyAttribute] string s] {
+			get {
+				return 3;
+			}
+		}
+#endif
+	}
+
+	public class MyClass12
+	{
+		public string this[int index] {
+			get {
+				return "";
+			}
+			[return: MyAttribute]
+			set {
+			}
+		}
+	}
+
+	public class MyClass13
+	{
+		public string this[[MyAttributeTargetPropertyIndexSetMultiParam(Field = 2)] int index1, [MyAttributeTargetPropertyIndexSetMultiParam(Field = 3)] int index2] {
+			get {
+				return "";
+			}
+			[param: MyAttribute]
+			set {
+			}
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.All)]
+	public class MyClassAttributeOnTypeParameterAttribute : Attribute
+	{
+	}
+
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+	public class MyMethodOrInterfaceAttributeAttribute : Attribute
 	{
 	}
 
@@ -63,10 +242,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 		}
 	}
 
+	[Obsolete("message")]
+	public class ObsoleteClass
+	{
+	}
+
 	[MyType(typeof(Attribute))]
 	public class SomeClass
 	{
 	}
+
+	[return: MyAttributeOnReturnTypeOfDelegate]
+	public delegate void Test();
 
 	public class TestClass
 	{
@@ -124,191 +311,5 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 		public void Method([MyAttribute] int val)
 		{
 		}
-	}
-
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-	public class MyAttributeWithNamedArgumentAppliedAttribute : Attribute
-	{
-	}
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeWithCustomPropertyAttribute : Attribute
-	{
-		public string Prop {
-			get {
-				return "";
-			}
-			set {
-			}
-		}
-	}
-
-	[MyAttributeWithCustomProperty(Prop = "value")]
-	public class MyClass
-	{
-	}
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeWithNamedInitializerPropertyTypeAttribute : Attribute
-	{
-		public Type Prop {
-			get {
-				return null;
-			}
-			set {
-			}
-		}
-	}
-
-	[MyAttributeWithNamedInitializerPropertyType(Prop = typeof(Enum))]
-	public class MyClass2
-	{
-	}
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeNamedInitializerPropertyEnumAttribute : Attribute
-	{
-		public AttributeTargets Prop {
-			get {
-				return AttributeTargets.All;
-			}
-			set {
-			}
-		}
-	}
-
-	[MyAttributeNamedInitializerPropertyEnum(Prop = (AttributeTargets.Class | AttributeTargets.Method))]
-	public class MyClass3
-	{
-	}
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeNamedInitializerFieldEnumAttribute : Attribute
-	{
-		public AttributeTargets Field;
-	}
-	[MyAttributeNamedInitializerFieldEnum(Field = (AttributeTargets.Class | AttributeTargets.Method))]
-	public class MyClass4
-	{
-	}
-
-	public class MyClass5
-	{
-		[return: MyAttribute]
-		public int MyMethod()
-		{
-			return 5;
-		}
-	}
-
-
-	public class MyClass6
-	{
-		public int Prop {
-			[return: MyAttribute]
-			get {
-				return 3;
-			}
-		}
-	}
-
-	public class MyClass7
-	{
-		public int Prop {
-			[param: MyAttribute]
-			set {
-			}
-		}
-	}
-
-
-	public class MyClass8
-	{
-		public int Prop {
-			get {
-				return 3;
-			}
-			[return: MyAttribute]
-			set {
-			}
-		}
-	}
-
-
-	public class MyClass9
-	{
-		public int this[string s] {
-			[return: MyAttribute]
-			get {
-				return 3;
-			}
-		}
-	}
-
-
-	public class MyClass10
-	{
-		public int this[[MyAttribute] string s] {
-			set {
-			}
-		}
-	}
-
-
-	public class MyClass11
-	{
-#if ROSLYN
-		public int this[[MyAttribute] string s] => 3;
-#else
-		public int this[[MyAttribute] string s] {
-			get {
-				return 3;
-			}
-		}
-#endif
-	}
-
-	public class MyClass12
-	{
-		public string this[int index] {
-			get {
-				return "";
-			}
-			[return: MyAttribute]
-			set {
-			}
-		}
-	}
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeTargetPropertyIndexSetMultiParamAttribute : Attribute
-	{
-		public int Field;
-	}
-	public class MyClass13
-	{
-		public string this[[MyAttributeTargetPropertyIndexSetMultiParam(Field = 2)] int index1, [MyAttributeTargetPropertyIndexSetMultiParam(Field = 3)] int index2] {
-			get {
-				return "";
-			}
-			[param: MyAttribute]
-			set {
-			}
-		}
-	}
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyAttributeOnReturnTypeOfDelegateAttribute : Attribute
-	{
-	}
-	[return: MyAttributeOnReturnTypeOfDelegate]
-	public delegate void Test();
-
-	[AttributeUsage(AttributeTargets.All)]
-	public class MyClassAttributeOnTypeParameterAttribute : Attribute
-	{
-	}
-
-	public class MyClass<[MyClassAttributeOnTypeParameter] T>
-	{
 	}
 }

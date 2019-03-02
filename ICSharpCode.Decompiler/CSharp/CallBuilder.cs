@@ -164,7 +164,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return tuple.WithRR(new TupleResolveResult(
 					expressionBuilder.compilation,
-					elementRRs.ToImmutableArray()
+					elementRRs.ToImmutableArray(),
+					valueTupleAssembly: inst.Method.DeclaringType.GetDefinition()?.ParentModule
 				)).WithILInstruction(inst);
 			}
 			return Build(inst.OpCode, inst.Method, inst.Arguments, constrainedTo: inst.ConstrainedTo)

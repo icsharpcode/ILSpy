@@ -75,5 +75,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return type.VisitChildren(this);
 		}
+
+		public virtual IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+		{
+			return type.VisitChildren(this);
+		}
 	}
 }

@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 			#endregion
 
-			b.Add(def.GetCustomAttributes());
+			b.Add(def.GetCustomAttributes(), symbolKind);
 			b.AddSecurityAttributes(def.GetDeclarativeSecurityAttributes());
 
 			return b.Build();
@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				var retParam = metadata.GetParameter(parameters.First());
 				if (retParam.SequenceNumber == 0) {
 					b.AddMarshalInfo(retParam.GetMarshallingDescriptor());
-					b.Add(retParam.GetCustomAttributes());
+					b.Add(retParam.GetCustomAttributes(), symbolKind);
 				}
 			}
 			return b.Build();
