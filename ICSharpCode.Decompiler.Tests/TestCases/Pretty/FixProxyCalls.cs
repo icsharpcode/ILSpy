@@ -92,9 +92,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 	internal class H : G
 	{
+		private Action<string> action;
+
 		protected internal override void Test(string test)
 		{
-			Action<string> action = delegate(string a) {
+			action = delegate(string a) {
 				base.Test(a);
 			};
 			if (test.Equals(1)) {
