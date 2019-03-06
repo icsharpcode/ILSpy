@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
@@ -59,6 +60,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			Func<string, string> func = (string a) => base.Test(a);
 			test = string.Join(test, "aa");
 			return func(test);
+		}
+	}
+
+	[CompilerGenerated]
+	internal class FalsePositive_Issue1443
+	{
+		private static void WrongMethod()
+		{
+			Console.WriteLine("Wrong!");
+		}
+
+		private void CorrectMethod()
+		{
+			WrongMethod();
+		}
+
+		private void Use()
+		{
+			CorrectMethod();
 		}
 	}
 

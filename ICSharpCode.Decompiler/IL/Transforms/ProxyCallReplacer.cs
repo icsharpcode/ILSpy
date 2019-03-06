@@ -57,11 +57,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!returnValue.MatchNop())
 					return;
 			}
-			if (call == null) {
+			if (call == null || call.Method.IsConstructor) {
 				return;
 			}
-			if (call.Method.IsConstructor)
+			if (call.Method.IsStatic != inst.Method.IsStatic || call.Method.Parameters.Count != inst.Method.Parameters.Count) {
 				return;
+			}
 
 			// check if original arguments are only correct ldloc calls
 			for (int i = 0; i < call.Arguments.Count; i++) {
@@ -72,7 +73,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			}
-
+			context.Step("Replace proxy: " + inst.Method.Name + " with " + call.Method.Name, inst);
 			Call newInst = (Call)call.Clone();
 
 			newInst.Arguments.ReplaceList(inst.Arguments);
