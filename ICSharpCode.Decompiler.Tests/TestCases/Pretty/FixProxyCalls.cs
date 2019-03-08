@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 				base.Test(a);
 			};
 			if (test.Equals(1)) {
-				throw new Exception("roslyn optimize is inlining the assignment which lets the test fail");
+				throw new Exception("roslyn optimizes is inlining the assignment which lets the test fail");
 			}
 			action(test);
 		}

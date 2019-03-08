@@ -649,7 +649,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			list.IsExpandedForm = isExpandedForm;
 			list.IsPrimitiveValue = isPrimitiveValue;
 			list.FirstOptionalArgumentIndex = firstOptionalArgumentIndex;
-			list.AddNamesToPrimitiveValues = expressionBuilder.settings.NonTrailingNamedArguments;
+			list.AddNamesToPrimitiveValues = expressionBuilder.settings.NamedArguments && expressionBuilder.settings.NonTrailingNamedArguments;
 			return list;
 		}
 

@@ -264,6 +264,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
+			// The ComponentResourceManager inside InitializeComponent must be named "resources",
+			// otherwise the WinForms designer won't load the Form.
+			if (CSharp.CSharpDecompiler.IsWindowsFormsInitializeComponentMethod(context.Function.Method) && variable.Type.FullName == "System.ComponentModel.ComponentResourceManager") {
+				proposedName = "resources";
+			}
 			if (string.IsNullOrEmpty(proposedName)) {
 				var proposedNameForAddress = variable.AddressInstructions.OfType<LdLoca>()
 					.Select(arg => arg.Parent is CallInstruction c ? c.GetParameter(arg.ChildIndex)?.Name : null)
