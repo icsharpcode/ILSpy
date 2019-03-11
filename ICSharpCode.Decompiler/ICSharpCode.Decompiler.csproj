@@ -424,7 +424,6 @@
     <Compile Include="IL\Instructions\SwitchInstruction.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
-    <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\Patterns\ListMatch.cs" />
     <Compile Include="IL\Patterns\Match.cs" />
     <Compile Include="IL\SlotInfo.cs" />
