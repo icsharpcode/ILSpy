@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -275,7 +276,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (ldloca.Parent.OpCode) {
 				case OpCode.Call:
 				case OpCode.CallVirt:
-					return !((CallInstruction)ldloca.Parent).Method.IsStatic;
+					var method = ((CallInstruction)ldloca.Parent).Method;
+					if (method.IsAccessor && method.AccessorKind != MethodSemanticsAttributes.Getter) {
+						// C# doesn't allow calling setters on temporary structs
+						return false;
+					}
+					return !method.IsStatic;
 				case OpCode.Await:
 					return true;
 				default:
