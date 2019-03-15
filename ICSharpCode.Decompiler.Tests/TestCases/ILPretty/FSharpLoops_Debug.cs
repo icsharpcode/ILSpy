@@ -36,11 +36,6 @@ public static class Program
 	[CompilationMapping(SourceConstructFlags.Closure)]
 	internal sealed class disposable_00403 : IDisposable
 	{
-		public disposable_00403()
-		{
-			((object)this)._002Ector();
-		}
-
 		private void System_002DIDisposable_002DDispose()
 		{
 		}

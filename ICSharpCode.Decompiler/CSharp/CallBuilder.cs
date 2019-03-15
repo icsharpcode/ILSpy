@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				target = expressionBuilder.TranslateTarget(
 					callArguments.FirstOrDefault(),
-					nonVirtualInvocation: callOpCode == OpCode.Call,
+					nonVirtualInvocation: callOpCode == OpCode.Call || method.IsConstructor,
 					memberStatic: method.IsStatic,
 					memberDeclaringType: constrainedTo ?? method.DeclaringType);
 				if (constrainedTo == null
