@@ -36,44 +36,72 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			);
 			var alignedDiff = Diff.AlignElements(collection1, collection2, diffSections, new StringSimilarityDiffElementAligner());
 			
-			bool result = true, ignoreChange;
-
+			bool result = true;
 			int line1 = 0, line2 = 0;
-
+			const int contextSize = 10;
+			int consecutiveMatches = contextSize;
+			var hiddenMatches = new List<string>();
+			
 			foreach (var change in alignedDiff) {
-				
 				switch (change.Operation) {
 					case DiffOperation.Match:
-						diff.Write("{0,4} {1,4} ", ++line1, ++line2);
-						diff.Write("  ");
-						diff.WriteLine(change.ElementFromCollection1.Value);
+						AppendMatch($"{++line1,4} {++line2,4} ", change.ElementFromCollection1.Value);
 						break;
 					case DiffOperation.Insert:
-						diff.Write("     {1,4} ", line1, ++line2);
-						result &= ignoreChange = ShouldIgnoreChange(change.ElementFromCollection2.Value);
-						diff.Write(ignoreChange ? "    " : " +  ");
-						diff.WriteLine(change.ElementFromCollection2.Value);
+						string pos = $"     {++line2,4} ";
+						if (ShouldIgnoreChange(change.ElementFromCollection2.Value)) {
+							AppendMatch(pos, change.ElementFromCollection2.Value);
+						} else {
+							AppendDelta(pos, " + ", change.ElementFromCollection2.Value);
+							result = false;
+						}
 						break;
 					case DiffOperation.Delete:
-						diff.Write("{0,4}      ", ++line1, line2);
-						result &= ignoreChange = ShouldIgnoreChange(change.ElementFromCollection1.Value);
-						diff.Write(ignoreChange ? "    " : " -  ");
-						diff.WriteLine(change.ElementFromCollection1.Value);
+						pos = $"{++line1,4}      ";
+						if (ShouldIgnoreChange(change.ElementFromCollection1.Value)) {
+							AppendMatch(pos, change.ElementFromCollection1.Value);
+						} else {
+							AppendDelta(pos, " - ", change.ElementFromCollection1.Value);
+							result = false;
+						}
 						break;
 					case DiffOperation.Modify:
 					case DiffOperation.Replace:
-						diff.Write("{0,4}      ", ++line1, line2);
+						AppendDelta($"{++line1,4}      ", "(-)", change.ElementFromCollection1.Value);
+						AppendDelta($"     {++line2,4} ", "(+)", change.ElementFromCollection2.Value);
 						result = false;
-						diff.Write("(-) ");
-						diff.WriteLine(change.ElementFromCollection1.Value);
-						diff.Write("     {1,4} ", line1, ++line2);
-						diff.Write("(+) ");
-						diff.WriteLine(change.ElementFromCollection2.Value);
 						break;
 				}
 			}
+			if (hiddenMatches.Count > 0) {
+				diff.WriteLine("  ...");
+			}
 
 			return result;
+
+			void AppendMatch(string pos, string code)
+			{
+				consecutiveMatches++;
+				if (consecutiveMatches > contextSize) {
+					// hide this match
+					hiddenMatches.Add(pos + "    " + code);
+				} else {
+					diff.WriteLine(pos + "    " + code);
+				}
+			}
+
+			void AppendDelta(string pos, string changeType, string code)
+			{
+				consecutiveMatches = 0;
+				if (hiddenMatches.Count > contextSize) {
+					diff.WriteLine("  ...");
+				}
+				for (int i = Math.Max(0, hiddenMatches.Count - contextSize); i < hiddenMatches.Count; i++) {
+					diff.WriteLine(hiddenMatches[i]);
+				}
+				hiddenMatches.Clear();
+				diff.WriteLine(pos + changeType + " " + code);
+			}
 		}
 
 		class CodeLineEqualityComparer : IEqualityComparer<string>
