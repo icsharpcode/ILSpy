@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using ICSharpCode.Decompiler.Util;
 
@@ -124,6 +125,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsAccessor {
 			get { return methodDefinition.IsAccessor; }
 		}
+
+		public MethodSemanticsAttributes AccessorKind => methodDefinition.AccessorKind;
 
 		public IMethod ReducedFrom {
 			get { return null; }

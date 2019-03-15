@@ -25,7 +25,6 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -40,6 +39,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		readonly SymbolKind symbolKind;
 		readonly ITypeParameter[] typeParameters;
 		readonly EntityHandle accessorOwner;
+		public MethodSemanticsAttributes AccessorKind { get; }
 		public bool IsExtensionMethod { get; }
 
 		// lazy-loaded fields:
@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (semanticsAttribute != 0) {
 				this.symbolKind = SymbolKind.Accessor;
 				this.accessorOwner = accessorOwner;
+				this.AccessorKind = semanticsAttribute;
 			} else if ((attributes & (MethodAttributes.SpecialName | MethodAttributes.RTSpecialName)) != 0) {
 				string name = this.Name;
 				if (name == ".cctor" || name == ".ctor")

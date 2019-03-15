@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Metadata;
 using ICSharpCode.Decompiler.Util;
 
@@ -144,6 +145,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool IMethod.HasBody => false;
 		bool IMethod.IsAccessor => false;
 		IMember IMethod.AccessorOwner => null;
+		MethodSemanticsAttributes IMethod.AccessorKind => 0;
 
 		IMethod IMethod.ReducedFrom => null;
 

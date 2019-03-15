@@ -25,6 +25,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public int Field;
 
+			public int Property {
+				get {
+					return Field;
+				}
+				set {
+					Field = value;
+				}
+			}
+
 			public S(int field)
 			{
 				Field = field;
@@ -183,6 +192,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (a.CompareTo(0) == 0) {
 				Console.WriteLine("true");
 			}
+		}
+
+		public static void CallOnTemporary()
+		{
+			// Method can be called directly on temporaries
+			//InitObj2().MethodCalls();
+
+			// Setting a property requires a temporary to avoid
+			// CS1612 Cannot modify the return value of 'InitObj2()' because it is not a variable
+			S s = InitObj2();
+			s.Property = 1;
 		}
 	}
 }

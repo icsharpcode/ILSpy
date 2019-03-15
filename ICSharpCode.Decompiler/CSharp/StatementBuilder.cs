@@ -763,7 +763,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					switch (targetMethod.AccessorOwner) {
 						case IProperty p:
-							return p.Setter == targetMethod;
+							return targetMethod.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter;
 						default:
 							return true;
 					}
