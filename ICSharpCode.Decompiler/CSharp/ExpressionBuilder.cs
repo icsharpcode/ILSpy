@@ -1326,14 +1326,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleCompoundAssignment(NumericCompoundAssign inst, AssignmentOperatorType op)
 		{
 			var target = Translate(inst.Target);
-			var value = Translate(inst.Value);
-			value = PrepareArithmeticArgument(value, inst.RightInputType, inst.Sign, inst.IsLifted);
-			
 
 			TranslatedExpression resultExpr;
 			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
-				Debug.Assert(value.ResolveResult.IsCompileTimeConstant && 1.Equals(value.ResolveResult.ConstantValue));
+				Debug.Assert(inst.Value.MatchLdcI(1));
 				UnaryOperatorType unary;
 				ExpressionType exprType;
 				if (op == AssignmentOperatorType.Add) {
@@ -1347,6 +1344,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(target.Type, exprType, target.ResolveResult));
 			} else {
+				var value = Translate(inst.Value);
+				value = PrepareArithmeticArgument(value, inst.RightInputType, inst.Sign, inst.IsLifted);
 				switch (op) {
 					case AssignmentOperatorType.Add:
 					case AssignmentOperatorType.Subtract:
