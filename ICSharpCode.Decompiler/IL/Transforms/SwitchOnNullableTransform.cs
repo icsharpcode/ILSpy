@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
 						return false;
-					if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction target2) && target2.Match(target).Success)
+					if (!(NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction target2) && target2.Match(target).Success))
 						return false;
 					if (!(switchBlock.Instructions[1] is SwitchInstruction si))
 						return false;
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// this is the special case where `call GetValueOrDefault(ldloca tmp)` is inlined into the switch.
 					if (!(switchBlock.Instructions[0] is SwitchInstruction si))
 						return false;
-					if (!NullableLiftingTransform.MatchGetValueOrDefault(si.Value, out ILInstruction target2) && target2.Match(target).Success)
+					if (!(NullableLiftingTransform.MatchGetValueOrDefault(si.Value, out ILInstruction target2) && target2.Match(target).Success))
 						return false;
 					switchInst = si;
 					break;
