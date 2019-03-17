@@ -610,6 +610,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public SlotInfo SlotInfo {
 			get {
+				if (parent == null)
+					return null;
 				Debug.Assert(parent.GetChild(this.ChildIndex) == this);
 				return parent.GetChildSlot(this.ChildIndex);
 			}
