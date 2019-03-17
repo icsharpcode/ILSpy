@@ -143,6 +143,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1454()
+		{
+			Run();
+		}
+
+		[Test]
 		public void SequenceOfNestedIfs()
 		{
 			Run();

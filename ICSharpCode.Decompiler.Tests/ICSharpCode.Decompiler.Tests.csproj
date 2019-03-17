@@ -72,6 +72,7 @@
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
+    <Compile Include="TestCases\ILPretty\Issue1454.cs" />
     <Compile Include="TestCases\Pretty\Discards.cs" />
     <Compile Include="TestCases\Pretty\MultidimensionalArray.cs" />
     <Compile Include="Output\CSharpAmbienceTests.cs" />

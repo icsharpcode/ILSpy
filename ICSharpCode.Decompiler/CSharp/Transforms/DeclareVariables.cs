@@ -101,6 +101,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public IdentifierExpression FirstUse;
 
 			public VariableToDeclare ReplacementDueToCollision;
+			public bool InvolvedInCollision;
 			public bool RemovedDueToCollision => ReplacementDueToCollision != null;
 
 			public VariableToDeclare(ILVariable variable, bool defaultInitialization, InsertionPoint insertionPoint, IdentifierExpression firstUse, int sourceOrder)
@@ -156,6 +157,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				v = v.ReplacementDueToCollision;
 			}
 			return v.InsertionPoint.nextNode;
+		}
+
+		/// <summary>
+		/// Determines whether a variable was merged with other variables.
+		/// </summary>
+		public bool WasMerged(ILVariable variable)
+		{
+			VariableToDeclare v = variableDict[variable];
+			return v.InvolvedInCollision || v.RemovedDueToCollision;
 		}
 
 		public void ClearAnalysisResults()
@@ -374,6 +384,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Debug.Assert(point1.level == point2.level);
 					if (point1.nextNode.Parent == point2.nextNode.Parent) {
 						// We found a collision!
+						v.InvolvedInCollision = true;
 						prev.ReplacementDueToCollision = v;
 						// Continue checking other entries in multiDict against the new position of `v`.
 						if (prev.SourceOrder < v.SourceOrder) {

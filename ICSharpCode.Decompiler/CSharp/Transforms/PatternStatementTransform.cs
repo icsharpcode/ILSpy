@@ -251,6 +251,53 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
+		bool VariableCanBeUsedAsForeachLocal(IL.ILVariable itemVar, Statement loop)
+		{
+			if (itemVar == null || !(itemVar.Kind == IL.VariableKind.Local || itemVar.Kind == IL.VariableKind.StackSlot)) {
+				// only locals/temporaries can be converted into foreach loop variable
+				return false;
+			}
+
+			var blockContainer = loop.Annotation<IL.BlockContainer>();
+
+			if (!itemVar.IsSingleDefinition) {
+				// foreach variable cannot be assigned to.
+				// As a special case, we accept taking the address for a method call,
+				// but only if the call is the only use, so that any mutation by the call
+				// cannot be observed.
+				if (!AddressUsedForSingleCall(itemVar, blockContainer)) {
+					return false;
+				}
+			}
+
+			if (itemVar.CaptureScope != null && itemVar.CaptureScope != blockContainer) {
+				// captured variables cannot be declared in the loop unless the loop is their capture scope
+				return false;
+			}
+
+			AstNode declPoint = declareVariables.GetDeclarationPoint(itemVar);
+			return declPoint.Ancestors.Contains(loop) && !declareVariables.WasMerged(itemVar);
+		}
+
+		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
+		{
+			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false) {
+				if (v.AddressInstructions[0].Parent is IL.Call call
+					&& v.AddressInstructions[0].ChildIndex == 0
+					&& !call.Method.IsStatic) {
+					// used as this pointer for a method call
+					// this is OK iff the call is not within a nested loop
+					for (var node = call.Parent; node != null; node = node.Parent) {
+						if (node == loop)
+							return true;
+						else if (node is IL.BlockContainer)
+							break;
+					}
+				}
+			}
+			return false;
+		}
+
 		Statement TransformForeachOnArray(ForStatement forStatement)
 		{
 			if (!context.Settings.ForEachStatement) return null;
@@ -262,7 +309,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
 			if (itemVariable == null || indexVariable == null || arrayVariable == null)
 				return null;
-			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
+			if (!VariableCanBeUsedAsForeachLocal(itemVariable, forStatement))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
 				return null;
