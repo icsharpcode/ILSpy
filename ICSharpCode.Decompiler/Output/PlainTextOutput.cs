@@ -104,7 +104,14 @@ namespace ICSharpCode.Decompiler
 
 		public void WriteReference(Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
 		{
-			Write(opCode.Name);
+			if (omitSuffix) {
+				int lastDot = opCode.Name.LastIndexOf('.');
+				if (lastDot > 0) {
+					Write(opCode.Name.Remove(lastDot + 1));
+				}
+			} else {
+				Write(opCode.Name);
+			}
 		}
 
 		public void WriteReference(PEFile module, EntityHandle handle, string text, bool isDefinition = false)
