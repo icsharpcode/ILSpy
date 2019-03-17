@@ -25,20 +25,26 @@ using System.Xml.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ILSpy.BamlDecompiler.Xaml {
-	internal class XamlType {
+	internal class XamlType
+	{
+		/// <summary>
+		/// Assembly that contains the type defintion. Can be null.
+		/// </summary>
 		public IModule Assembly { get; }
+		public string FullAssemblyName { get; }
 		public string TypeNamespace { get; }
 		public string TypeName { get; }
 
 		public XNamespace Namespace { get; private set; }
 		public IType ResolvedType { get; set; }
 
-		public XamlType(IModule assembly, string ns, string name)
-			: this(assembly, ns, name, null) {
+		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name)
+			: this(assembly, fullAssemblyName, ns, name, null) {
 		}
 
-		public XamlType(IModule assembly, string ns, string name, XNamespace xmlns) {
+		public XamlType(IModule assembly, string fullAssemblyName, string ns, string name, XNamespace xmlns) {
 			Assembly = assembly;
+			FullAssemblyName = fullAssemblyName;
 			TypeNamespace = ns;
 			TypeName = name;
 			Namespace = xmlns;
@@ -53,9 +59,9 @@ namespace ILSpy.BamlDecompiler.Xaml {
 
 			string xmlNs = null;
 			if (elem.Annotation<XmlnsScope>() != null)
-				xmlNs = elem.Annotation<XmlnsScope>().LookupXmlns(Assembly, TypeNamespace);
+				xmlNs = elem.Annotation<XmlnsScope>().LookupXmlns(FullAssemblyName, TypeNamespace);
 			if (xmlNs == null)
-				xmlNs = ctx.XmlNs.LookupXmlns(Assembly, TypeNamespace);
+				xmlNs = ctx.XmlNs.LookupXmlns(FullAssemblyName, TypeNamespace);
 			// Sometimes there's no reference to System.Xaml even if x:Type is used
 			if (xmlNs == null)
 				xmlNs = ctx.TryGetXmlNamespace(Assembly, TypeNamespace);

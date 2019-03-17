@@ -83,7 +83,7 @@ namespace ILSpy.BamlDecompiler {
 				if (piMap == null)
 					continue;
 
-				XmlNs.SetPIMapping(piMap.XmlNamespace, piMap.ClrNamespace, Baml.ResolveAssembly(piMap.AssemblyId));
+				XmlNs.SetPIMapping(piMap.XmlNamespace, piMap.ClrNamespace, Baml.ResolveAssembly(piMap.AssemblyId).FullAssemblyName);
 			}
 		}
 
@@ -93,21 +93,23 @@ namespace ILSpy.BamlDecompiler {
 
 			IType type;
 			IModule assembly;
+			string fullAssemblyName;
 
 			if (id > 0x7fff) {
 				type = Baml.KnownThings.Types((KnownTypes)(short)-unchecked((short)id));
 				assembly = type.GetDefinition().ParentModule;
+				fullAssemblyName = assembly.FullAssemblyName;
 			}
 			else {
 				var typeRec = Baml.TypeIdMap[id];
-				assembly = Baml.ResolveAssembly(typeRec.AssemblyId);
+				(fullAssemblyName, assembly) = Baml.ResolveAssembly(typeRec.AssemblyId);
 				type = ReflectionHelper.ParseReflectionName(typeRec.TypeFullName).Resolve(new SimpleTypeResolveContext(TypeSystem));
 			}
 
 			var clrNs = type.Namespace;
-			var xmlNs = XmlNs.LookupXmlns(assembly, clrNs);
+			var xmlNs = XmlNs.LookupXmlns(fullAssemblyName, clrNs);
 
-			typeMap[id] = xamlType = new XamlType(assembly, clrNs, type.Name, GetXmlNamespace(xmlNs)) {
+			typeMap[id] = xamlType = new XamlType(assembly, fullAssemblyName, clrNs, type.Name, GetXmlNamespace(xmlNs)) {
 				ResolvedType = type
 			};
 

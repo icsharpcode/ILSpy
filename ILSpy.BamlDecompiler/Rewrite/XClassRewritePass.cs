@@ -43,7 +43,7 @@ namespace ILSpy.BamlDecompiler.Rewrite {
 			var newType = typeDef.DirectBaseTypes.First().GetDefinition();
 			if (newType == null)
 				return;
-			var xamlType = new XamlType(newType.ParentModule, newType.Namespace, newType.Name);
+			var xamlType = new XamlType(newType.ParentModule, newType.ParentModule.FullAssemblyName, newType.Namespace, newType.Name);
 			xamlType.ResolveNamespace(elem, ctx);
 
 			elem.Name = xamlType.ToXName(ctx);
