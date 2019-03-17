@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler
 			column = 1;
 		}
 
-		public void WriteReference(Disassembler.OpCodeInfo opCode)
+		public void WriteReference(Disassembler.OpCodeInfo opCode, bool omitSuffix = false)
 		{
 			Write(opCode.Name);
 		}
@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.WriteLocalReference(text, reference, isDefinition));
 		}
 
-		public void WriteReference(OpCodeInfo opCode)
+		public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false)
 		{
 			actions.Add(target => target.WriteReference(opCode));
 		}

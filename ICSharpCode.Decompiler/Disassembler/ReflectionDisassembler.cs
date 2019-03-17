@@ -942,6 +942,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteParameters(MetadataReader metadata, IEnumerable<ParameterHandle> parameters, MethodSignature<Action<ILNameSyntax>> signature)
 		{
 			int i = 0;
+			int offset = signature.Header.IsInstance ? 1 : 0;
 
 			foreach (var h in parameters) {
 				var p = metadata.GetParameter(h);
@@ -955,7 +956,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.WriteLine();
 					}
 					signature.ParameterTypes[i](ILNameSyntax.Signature);
-					output.Write(" ''");
+					output.Write(' ');
+					output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 					i++;
 				}
 
@@ -978,7 +980,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (!md.IsNil) {
 					WriteMarshalInfo(metadata.GetBlobReader(md));
 				}
-				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), p, isDefinition: true);
+				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 
@@ -989,7 +991,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 				signature.ParameterTypes[i](ILNameSyntax.Signature);
-				output.Write(" ''");
+				output.Write(' ');
+				output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 				i++;
 			}
 

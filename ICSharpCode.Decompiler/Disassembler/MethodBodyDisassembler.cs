@@ -151,7 +151,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 			int index = 0;
 			foreach (var v in signature) {
-				output.WriteLocalReference("[" + index + "] ", v, isDefinition: true);
+				output.WriteLocalReference("[" + index + "]", "loc_" + index, isDefinition: true);
+				output.Write(' ');
 				v(ILNameSyntax.TypeName);
 				if (DebugInfo != null && DebugInfo.TryGetName(method, index, out var name)) {
 					output.Write(" " + DisassemblerHelpers.Escape(name));
@@ -317,7 +318,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLocalReference(DisassemblerHelpers.OffsetToString(offset), offset, isDefinition: true);
 			output.Write(": ");
 			if (opCode.IsDefined()) {
-				output.WriteReference(new OpCodeInfo(opCode, opCode.GetDisplayName()));
+				WriteOpCode(opCode);
 				switch (opCode.GetOperandType()) {
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
@@ -448,6 +449,37 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 			}
 			output.WriteLine();
+		}
+
+		private void WriteOpCode(ILOpCode opCode)
+		{
+			var opCodeInfo = new OpCodeInfo(opCode, opCode.GetDisplayName());
+			string index;
+			switch (opCode) {
+				case ILOpCode.Ldarg_0:
+				case ILOpCode.Ldarg_1:
+				case ILOpCode.Ldarg_2:
+				case ILOpCode.Ldarg_3:
+					output.WriteReference(opCodeInfo, omitSuffix: true);
+					index = opCodeInfo.Name.Substring(6);
+					output.WriteLocalReference(index, "param_" + index);
+					break;
+				case ILOpCode.Ldloc_0:
+				case ILOpCode.Ldloc_1:
+				case ILOpCode.Ldloc_2:
+				case ILOpCode.Ldloc_3:
+				case ILOpCode.Stloc_0:
+				case ILOpCode.Stloc_1:
+				case ILOpCode.Stloc_2:
+				case ILOpCode.Stloc_3:
+					output.WriteReference(opCodeInfo, omitSuffix: true);
+					index = opCodeInfo.Name.Substring(6);
+					output.WriteLocalReference(index, "loc_" + index);
+					break;
+				default:
+					output.WriteReference(opCodeInfo);
+					break;
+			}
 		}
 
 		private void WriteMetadataToken(EntityHandle handle, bool spaceBefore)
