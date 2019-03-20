@@ -19,8 +19,10 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
-
+using System.Windows.Input;
+using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
@@ -71,24 +73,64 @@ namespace ICSharpCode.ILSpy
 		/// Returns null, if TextView returns null;
 		/// </summary>
 		public TextViewPosition? Position { get; private set; }
-		
+
+		public Point MousePosition { get; private set; }
+
+		public (GridViewColumn, object) GetColumnAndRowFromMousePosition()
+		{
+			if (!(ListBox is ListView listView))
+				return (null, null);
+
+			GridViewColumn column = null;
+			var directChild = (FrameworkElement)listView.InputHitTest(listView.PointFromScreen(MousePosition));
+			var (presenter, previous) = GetAncestorOf<GridViewRowPresenter>(directChild);
+			if (presenter == null)
+				return (null, null);
+			(var container, _) = GetAncestorOf<ListViewItem>(presenter);
+			var item = listView.ItemContainerGenerator.ItemFromContainer(container);
+
+			int count = VisualTreeHelper.GetChildrenCount(presenter);
+			for (int i = 0; i < count; i++) {
+				if (VisualTreeHelper.GetChild(presenter, i) != previous)
+					continue;
+				column = presenter.Columns[i];
+				break;
+			}
+			return (column, item);
+
+			(T, FrameworkElement) GetAncestorOf<T>(FrameworkElement element) where T : FrameworkElement
+			{
+				var current = element;
+				FrameworkElement prev = null;
+				while (current != null && !(current is T)) {
+					prev = current;
+					current = (FrameworkElement)VisualTreeHelper.GetParent(current);
+				}
+				return (current as T, prev);
+			}
+		}
+
 		public static TextViewContext Create(SharpTreeView treeView = null, DecompilerTextView textView = null, ListBox listBox = null)
 		{
 			ReferenceSegment reference;
 			if (textView != null)
 				reference = textView.GetReferenceSegmentAtMousePosition();
-			else if (listBox?.SelectedItem is SearchResult result)
-				reference = new ReferenceSegment { Reference = result.Member };
+			else if (listBox?.SelectedItem is TreeNodes.IMemberTreeNode provider)
+				reference = new ReferenceSegment { Reference = provider.Member };
+			else if (listBox?.SelectedItem != null)
+				reference = new ReferenceSegment { Reference = listBox.SelectedItem };
 			else
 				reference = null;
 			var position = textView != null ? textView.GetPositionFromMousePosition() : null;
 			var selectedTreeNodes = treeView != null ? treeView.GetTopLevelSelection().ToArray() : null;
 			return new TextViewContext {
+				ListBox = listBox,
 				TreeView = treeView,
 				SelectedTreeNodes = selectedTreeNodes,
 				TextView = textView,
 				Reference = reference,
-				Position = position
+				Position = position,
+				MousePosition = ((Visual)textView ?? treeView ?? listBox).PointToScreen(Mouse.GetPosition((IInputElement)textView ?? treeView ?? listBox))
 			};
 		}
 	}
@@ -163,12 +205,12 @@ namespace ICSharpCode.ILSpy
 			this.treeView = treeView;
 			this.textView = textView;
 		}
-		
+
 		ContextMenuProvider(ListBox listBox) : this()
 		{
 			this.listBox = listBox;
 		}
-		
+
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)
 		{
 			TextViewContext context = TextViewContext.Create(treeView);
