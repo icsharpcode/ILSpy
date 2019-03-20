@@ -222,7 +222,7 @@
     <Compile Include="Analyzers\AnalyzerTreeNode.cs" />
     <Compile Include="Analyzers\RemoveAnalyzeContextMenuEntry.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
-    <Compile Include="TreeNodes\CopyFullyQualifiedNameContextMenuEntry.cs" />
+    <Compile Include="Commands\CopyFullyQualifiedNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />
     <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="Commands\GeneratePdbContextMenuEntry.cs" />
@@ -238,7 +238,7 @@
     <Compile Include="TreeNodes\ResourceNodes\ResourceTreeNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
-    <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
+    <Compile Include="Commands\SearchMsdnContextMenuEntry.cs" />
     <Compile Include="Analyzers\Builtin\TypeExtensionMethodsAnalyzer.cs" />
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>

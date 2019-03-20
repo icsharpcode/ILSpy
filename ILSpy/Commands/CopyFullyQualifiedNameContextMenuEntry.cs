@@ -3,8 +3,9 @@ using System.Windows;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy
 {
 	[ExportContextMenuEntry(Header = "Copy FQ Name", Icon = "images/Copy.png", Order = 9999)]
 	public class CopyFullyQualifiedNameContextMenuEntry : IContextMenuEntry
