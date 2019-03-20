@@ -116,6 +116,7 @@
     <Compile Include="Controls\CustomDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Controls\FilterableGridViewColumn.cs" />
     <Compile Include="Controls\GridViewColumnAutoSize.cs" />
     <Compile Include="Controls\MarkupExtensions.cs" />
     <Compile Include="Controls\ResourceObjectTable.xaml.cs">
