@@ -347,6 +347,9 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		public void ShowNodes(AvalonEditTextOutput textOutput, ILSpyTreeNode[] nodes, IHighlightingDefinition highlighting = null)
 		{
+			textEditor.Visibility = Visibility.Visible;
+			dynamicContent.Visibility = Visibility.Hidden;
+			dynamicContent.Content = null;
 			// Cancel the decompilation task:
 			if (currentCancellationTokenSource != null) {
 				currentCancellationTokenSource.Cancel();
@@ -366,6 +369,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		void ShowOutput(AvalonEditTextOutput textOutput, IHighlightingDefinition highlighting = null, DecompilerTextViewState state = null)
 		{
+			textEditor.Visibility = Visibility.Visible;
+			dynamicContent.Visibility = Visibility.Hidden;
+			dynamicContent.Content = null;
+
 			Debug.WriteLine("Showing {0} characters of output", textOutput.TextLength);
 			Stopwatch w = Stopwatch.StartNew();
 
@@ -412,6 +419,14 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
+		}
+		
+		public void ShowContent(ILSpyTreeNode[] nodes, object content)
+		{
+			textEditor.Visibility = Visibility.Collapsed;
+			dynamicContent.Visibility = Visibility.Visible;
+			dynamicContent.Content = content;
+			decompiledNodes = nodes;
 		}
 		#endregion
 		

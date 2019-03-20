@@ -16,6 +16,7 @@
 						<Style TargetType="{x:Type Button}" />
 					</ae:TextEditor.Resources>
 				</ae:TextEditor>
+				<ContentControl Name="dynamicContent" />
 				<Border Name="waitAdorner" Background="#C0FFFFFF" Visibility="Collapsed">
 					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 						<TextBlock FontSize="14pt">Decompiling...</TextBlock>
