@@ -142,7 +142,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			typeSystem = LoadedAssembly.GetTypeSystemOrNull();
 			var assembly = (MetadataModule)typeSystem.MainModule;
 			var metadata = module.Metadata;
-
+			this.Children.Add(new Metadata.MetadataTreeNode(module, this));
 			this.Children.Add(new ReferenceFolderTreeNode(module, this));
 			if (module.Resources.Any())
 				this.Children.Add(new ResourceListTreeNode(module));

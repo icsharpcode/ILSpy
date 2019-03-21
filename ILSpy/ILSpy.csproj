@@ -102,6 +102,7 @@
     <Compile Include="Commands\BrowseBackCommand.cs" />
     <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
+    <Compile Include="Commands\DecompileCommand.cs" />
     <Compile Include="Commands\DisassembleAllCommand.cs" />
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
@@ -159,6 +160,21 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Metadata\DataDirectoriesTreeNode.cs" />
+    <Compile Include="Metadata\DosHeaderTreeNode.cs" />
+    <Compile Include="Metadata\CoffHeaderTreeNode.cs" />
+    <Compile Include="Metadata\EntityHandleTemplate.cs" />
+    <Compile Include="Metadata\MethodTableTreeNode.cs" />
+    <Compile Include="Metadata\FieldTableTreeNode.cs" />
+    <Compile Include="Metadata\Helpers.cs" />
+    <Compile Include="Metadata\StringHandleTemplate.cs" />
+    <Compile Include="Metadata\TypeDefTableTreeNode.cs" />
+    <Compile Include="Metadata\TypeRefTableTreeNode.cs" />
+    <Compile Include="Metadata\ModuleTableTreeNode.cs" />
+    <Compile Include="Metadata\ExportedTypeTableTreeNode.cs" />
+    <Compile Include="Metadata\MetadataTableViews.xaml.cs" />
+    <Compile Include="Metadata\MetadataTreeNode.cs" />
+    <Compile Include="Metadata\OptionalHeaderTreeNode.cs" />
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
@@ -314,6 +330,7 @@
     <Page Include="CreateListDialog.xaml" />
     <Page Include="DebugSteps.xaml" />
     <Page Include="MainWindow.xaml" />
+    <Page Include="Metadata\MetadataTableViews.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
     <Page Include="NugetPackageBrowserDialog.xaml" />
@@ -390,6 +407,9 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Metadata\MetadataTableViews.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
