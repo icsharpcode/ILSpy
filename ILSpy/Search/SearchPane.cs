@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,6 +79,7 @@ namespace ICSharpCode.ILSpy
 
 			ContextMenuProvider.Add(listBox);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			CompositionTarget.Rendering += UpdateResults;
 
 			// This starts empty search right away, so do at the end (we're still in ctor)
@@ -91,6 +93,16 @@ namespace ICSharpCode.ILSpy
 			} else {
 				StartSearch(null);
 				runSearchOnNextShow = true;
+			}
+		}
+
+		void FilterSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName != nameof(FilterSettings.ShowApiLevel))
+				return;
+
+			if (IsVisible) {
+				StartSearch(this.SearchTerm);
 			}
 		}
 
@@ -212,7 +224,8 @@ namespace ICSharpCode.ILSpy
 
 				searchProgressBar.IsIndeterminate = true;
 				startedSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm,
-					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
+					(SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage, 
+					mainWindow.SessionSettings.FilterSettings.ShowApiLevel);
 				currentSearch = startedSearch;
 
 				await startedSearch.Run();
@@ -258,15 +271,16 @@ namespace ICSharpCode.ILSpy
 			readonly string[] searchTerm;
 			readonly SearchMode searchMode;
 			readonly Language language;
+			readonly ApiVisibility apiVisibility;
 			public readonly IProducerConsumerCollection<SearchResult> resultQueue = new ConcurrentQueue<SearchResult>(); 
 
-			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language)
+			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language, ApiVisibility apiVisibility)
 			{
 				this.assemblies = assemblies;
 				this.searchTerm = NativeMethods.CommandLineToArgumentArray(searchTerm);
 				this.language = language;
 				this.searchMode = searchMode;
-				
+				this.apiVisibility = apiVisibility;
 			}
 			
 			public void Cancel()
@@ -296,53 +310,53 @@ namespace ICSharpCode.ILSpy
 			{
 				if (searchTerm.Length == 1) {
 					if (searchTerm[0].StartsWith("tm:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(3), resultQueue);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue);
 
 					if (searchTerm[0].StartsWith("t:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Type);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Type);
 
 					if (searchTerm[0].StartsWith("m:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Member);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Member);
 
 					if (searchTerm[0].StartsWith("md:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(3), resultQueue, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(3), resultQueue, MemberSearchKind.Method);
 
 					if (searchTerm[0].StartsWith("f:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Field);
 
 					if (searchTerm[0].StartsWith("p:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Property);
 
 					if (searchTerm[0].StartsWith("e:", StringComparison.Ordinal))
-						return new MemberSearchStrategy(language, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, apiVisibility, searchTerm[0].Substring(2), resultQueue, MemberSearchKind.Event);
 
 					if (searchTerm[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(language, resultQueue, searchTerm[0].Substring(2));
+						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(2));
 
 					if (searchTerm[0].StartsWith("@", StringComparison.Ordinal))
-						return new MetadataTokenSearchStrategy(language, resultQueue, searchTerm[0].Substring(1));
+						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm[0].Substring(1));
 				}
 
 				switch (searchMode)
 				{
 					case SearchMode.TypeAndMember:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Type:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Type);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Type);
 					case SearchMode.Member:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Member);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Member);
 					case SearchMode.Literal:
-						return new LiteralSearchStrategy(language, resultQueue, searchTerm);
+						return new LiteralSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 					case SearchMode.Method:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Method);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Method);
 					case SearchMode.Field:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Field);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Field);
 					case SearchMode.Property:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Property);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Property);
 					case SearchMode.Event:
-						return new MemberSearchStrategy(language, resultQueue, searchTerm, MemberSearchKind.Event);
+						return new MemberSearchStrategy(language, apiVisibility, resultQueue, searchTerm, MemberSearchKind.Event);
 					case SearchMode.Token:
-						return new MetadataTokenSearchStrategy(language, resultQueue, searchTerm);
+						return new MetadataTokenSearchStrategy(language, apiVisibility, resultQueue, searchTerm);
 				}
 
 				return null;

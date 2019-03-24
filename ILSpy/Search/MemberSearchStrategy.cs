@@ -10,13 +10,13 @@ namespace ICSharpCode.ILSpy.Search
 	{
 		readonly MemberSearchKind searchKind;
 
-		public MemberSearchStrategy(Language language, string term, IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
-			: this(language, resultQueue, new[] { term }, searchKind)
+		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, string term, IProducerConsumerCollection<SearchResult> resultQueue, MemberSearchKind searchKind = MemberSearchKind.All)
+			: this(language, apiVisibility, resultQueue, new[] { term }, searchKind)
 		{
 		}
 
-		public MemberSearchStrategy(Language language, IProducerConsumerCollection<SearchResult> resultQueue, string[] terms, MemberSearchKind searchKind = MemberSearchKind.All)
-			: base(language, resultQueue, terms)
+		public MemberSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, string[] terms, MemberSearchKind searchKind = MemberSearchKind.All)
+			: base(language, apiVisibility, resultQueue, terms)
 		{
 			this.searchKind = searchKind;
 		}
@@ -35,6 +35,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var type = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+					if (!CheckVisibility(type)) continue;
 					OnFoundResult(type);
 				}
 			}
@@ -47,6 +48,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+					if (!CheckVisibility(method)) continue;
 					OnFoundResult(method);
 				}
 			}
@@ -58,6 +60,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+					if (!CheckVisibility(field)) continue;
 					OnFoundResult(field);
 				}
 			}
@@ -69,6 +72,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
 					var property = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+					if (!CheckVisibility(property)) continue;
 					OnFoundResult(property);
 				}
 			}
@@ -80,6 +84,7 @@ namespace ICSharpCode.ILSpy.Search
 					if (!IsMatch(languageSpecificName))
 						continue;
 					var @event = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+					if (!CheckVisibility(@event)) continue;
 					OnFoundResult(@event);
 				}
 			}

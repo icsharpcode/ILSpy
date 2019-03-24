@@ -20,8 +20,8 @@ namespace ICSharpCode.ILSpy.Search
 		readonly TypeCode searchTermLiteralType;
 		readonly object searchTermLiteralValue;
 
-		public LiteralSearchStrategy(Language language, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
-			: base(language, resultQueue, terms)
+		public LiteralSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
+			: base(language, apiVisibility, resultQueue, terms)
 		{
 			if (terms.Length == 1) {
 				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(terms[0])));
@@ -64,6 +64,7 @@ namespace ICSharpCode.ILSpy.Search
 				var md = metadata.GetMethodDefinition(handle);
 				if (!md.HasBody() || !MethodIsLiteralMatch(module, md)) continue;
 				var method = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+				if (!CheckVisibility(method)) continue;
 				OnFoundResult(method);
 			}
 
@@ -80,6 +81,7 @@ namespace ICSharpCode.ILSpy.Search
 				if (!IsLiteralMatch(metadata, blob.ReadConstant(constant.TypeCode)))
 					continue;
 				IField field = ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+				if (!CheckVisibility(field)) continue;
 				OnFoundResult(field);
 			}
 		}

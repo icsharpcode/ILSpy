@@ -15,11 +15,13 @@ namespace ICSharpCode.ILSpy.Search
 		protected readonly Regex regex;
 		protected readonly bool fullNameSearch;
 		protected readonly Language language;
+		protected readonly ApiVisibility apiVisibility;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
 
-		protected AbstractSearchStrategy(Language language, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
+		protected AbstractSearchStrategy(Language language, ApiVisibility apiVisibility, IProducerConsumerCollection<SearchResult> resultQueue, params string[] terms)
 		{
 			this.language = language;
+			this.apiVisibility = apiVisibility;
 			this.resultQueue = resultQueue;
 
 			if (terms.Length == 1 && terms[0].Length > 2) {
@@ -79,6 +81,28 @@ namespace ICSharpCode.ILSpy.Search
 						break;
 				}
 			}
+			return true;
+		}
+
+		protected bool CheckVisibility(IEntity entity)
+		{
+			if (apiVisibility == ApiVisibility.All)
+				return true;
+
+			do {
+				if (apiVisibility == ApiVisibility.PublicOnly) {
+					if (!(entity.Accessibility == Accessibility.Public ||
+						entity.Accessibility == Accessibility.Protected ||
+						entity.Accessibility == Accessibility.ProtectedOrInternal))
+						return false;
+				} else if (apiVisibility == ApiVisibility.PublicAndInternal) {
+					if (!language.ShowMember(entity))
+						return false;
+				}
+				entity = entity.DeclaringTypeDefinition;
+			}
+			while (entity != null);
+
 			return true;
 		}
 
