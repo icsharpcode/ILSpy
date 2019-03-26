@@ -264,7 +264,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Thus, we have to ensure we're operating on an r-value.
 			// Additionally, we cannot inline in cases where the C# compiler prohibits the direct use
 			// of the rvalue (e.g. M(ref (MyStruct)obj); is invalid).
-			return IsUsedAsThisPointerInCall(loadInst) && !IsLValue(inlinedExpression);
+			if (!IsUsedAsThisPointerInCall(loadInst))
+				return false;
+			switch (ClassifyExpression(inlinedExpression)) {
+				case ExpressionClassification.RValue:
+					// For struct method calls on rvalues, the C# compiler always generates temporaries.
+					return true;
+				case ExpressionClassification.MutableLValue:
+					// For struct method calls on mutable lvalues, the C# compiler never generates temporaries.
+					return false;
+				case ExpressionClassification.ReadonlyLValue:
+					// For struct method calls on readonly lvalues, the C# compiler
+					// only generates a temporary if it isn't a "readonly struct"
+					return !(v.Type.GetDefinition()?.IsReadOnly == true);
+				default:
+					throw new InvalidOperationException("invalid expression classification");
+			}
 		}
 
 		internal static bool IsUsedAsThisPointerInCall(LdLoca ldloca)
@@ -289,35 +304,85 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 		
+		internal enum ExpressionClassification
+		{
+			RValue,
+			MutableLValue,
+			ReadonlyLValue,
+		}
+
 		/// <summary>
 		/// Gets whether the instruction, when converted into C#, turns into an l-value that can
 		/// be used to mutate a value-type.
 		/// If this function returns false, the C# compiler would introduce a temporary copy
 		/// when calling a method on a value-type (and any mutations performed by the method will be lost)
 		/// </summary>
-		static bool IsLValue(ILInstruction inst)
+		internal static ExpressionClassification ClassifyExpression(ILInstruction inst)
 		{
 			switch (inst.OpCode) {
 				case OpCode.LdLoc:
 				case OpCode.StLoc:
-					return true;
+					if (IsReadonlyRefLocal(((IInstructionWithVariableOperand)inst).Variable)) {
+						return ExpressionClassification.ReadonlyLValue;
+					} else {
+						return ExpressionClassification.MutableLValue;
+					}
 				case OpCode.LdObj:
 					// ldobj typically refers to a storage location,
 					// but readonly fields are an exception.
-					IField f = (((LdObj)inst).Target as IInstructionWithFieldOperand)?.Field;
-					return !(f != null && f.IsReadOnly);
+					if (IsReadonlyReference(((LdObj)inst).Target)) {
+						return ExpressionClassification.ReadonlyLValue;
+					} else {
+						return ExpressionClassification.MutableLValue;
+					}
 				case OpCode.StObj:
 					// stobj is the same as ldobj.
-					f = (((StObj)inst).Target as IInstructionWithFieldOperand)?.Field;
-					return !(f != null && f.IsReadOnly);
+					if (IsReadonlyReference(((StObj)inst).Target)) {
+						return ExpressionClassification.ReadonlyLValue;
+					} else {
+						return ExpressionClassification.MutableLValue;
+					}
 				case OpCode.Call:
 					var m = ((CallInstruction)inst).Method;
 					// multi-dimensional array getters are lvalues,
 					// everything else is an rvalue.
-					return m.DeclaringType.Kind == TypeKind.Array;
+					if (m.DeclaringType.Kind == TypeKind.Array) {
+						return ExpressionClassification.MutableLValue;
+					} else {
+						return ExpressionClassification.RValue;
+					}
 				default:
-					return false; // most instructions result in an rvalue
+					return ExpressionClassification.RValue; // most instructions result in an rvalue
 			}
+		}
+
+		private static bool IsReadonlyReference(ILInstruction addr)
+		{
+			switch (addr) {
+				case LdFlda ldflda:
+					return ldflda.Field.IsReadOnly;
+				case LdsFlda ldsflda:
+					return ldsflda.Field.IsReadOnly;
+				case LdLoc ldloc:
+					return IsReadonlyRefLocal(ldloc.Variable);
+				case Call call:
+					// TODO: calls with 'readonly ref' return
+				default:
+					return false;
+			}
+		}
+
+		private static bool IsReadonlyRefLocal(ILVariable variable)
+		{
+			if (variable.Kind == VariableKind.Parameter) {
+				if (variable.Index == -1) {
+					// this parameter in readonly struct
+					return variable.Function.Method?.DeclaringTypeDefinition?.IsReadOnly == true;
+				} else {
+					return variable.Function.Parameters[variable.Index.Value].IsIn;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>

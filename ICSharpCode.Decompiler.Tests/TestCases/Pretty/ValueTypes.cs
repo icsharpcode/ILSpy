@@ -58,7 +58,43 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			private static void Test(ref S byRef)
 			{
 			}
+
+			public void CallOnThis()
+			{
+				// distinguish calls on 'this' from calls on a copy of 'this'
+				SetField();
+				S s = this;
+				s.SetField();
+			}
 		}
+
+#if CS72
+		public readonly struct R
+		{
+			public readonly int Field;
+
+			public int Property {
+				get {
+					return Field;
+				}
+				set {
+					Console.WriteLine("Setter on readonly struct");
+				}
+			}
+
+			public void Method()
+			{
+			}
+
+			public void CallOnThis()
+			{
+				// distinguish calls on 'this' from calls on a copy of 'this'
+				Method();
+				R r = this;
+				r.Method();
+			}
+		}
+#endif
 
 #if ROSLYN && OPT
 		// Roslyn optimizes out the explicit default-initialization
@@ -69,6 +105,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static S MutableS = default(S);
 #endif
 		private static volatile int VolatileInt;
+#if CS72
+		private static readonly R ReadOnlyR;
+		private static R MutableR;
+#endif
 
 		public static void CallMethodViaField()
 		{
@@ -76,6 +116,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			MutableS.SetField();
 			S mutableS = MutableS;
 			mutableS.SetField();
+
+#if CS72
+			ReadOnlyR.Method();
+			R readOnlyR = ReadOnlyR;
+			readOnlyR.Method();
+			R mutableR = MutableR;
+			mutableR.Method();
+#endif
 		}
 
 #if !(ROSLYN && OPT) || COPY_PROPAGATION_FIXED
@@ -194,15 +242,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static T Get<T>()
+		{
+			return default(T);
+		}
+
 		public static void CallOnTemporary()
 		{
 			// Method can be called directly on temporaries
-			//InitObj2().MethodCalls();
+			Get<S>().MethodCalls();
 
 			// Setting a property requires a temporary to avoid
 			// CS1612 Cannot modify the return value of 'InitObj2()' because it is not a variable
-			S s = InitObj2();
+			S s = Get<S>();
 			s.Property = 1;
+
+#if CS72
+			Get<R>().Method();
+			R r = Get<R>();
+			r.Property = 2;
+#endif
 		}
 	}
 }
