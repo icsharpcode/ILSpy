@@ -132,6 +132,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public override SymbolKind SymbolKind => symbolKind;
 		
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => EmptyList<IAttribute>.Instance;
+		bool IMethod.ReturnTypeIsRefReadOnly => false;
 
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; set; } = EmptyList<ITypeParameter>.Instance;
 

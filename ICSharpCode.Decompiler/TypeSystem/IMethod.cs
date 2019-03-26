@@ -36,6 +36,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IEnumerable<IAttribute> GetReturnTypeAttributes();
 
 		/// <summary>
+		/// Gets whether the return type is 'ref readonly'.
+		/// </summary>
+		bool ReturnTypeIsRefReadOnly { get; }
+
+		/// <summary>
 		/// Gets the type parameters of this method; or an empty list if the method is not generic.
 		/// </summary>
 		IReadOnlyList<ITypeParameter> TypeParameters { get; }

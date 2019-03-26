@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		string name;
 		IParameter[] parameters;
 		IType returnType;
+		byte returnTypeIsRefReadonly = ThreeState.Unknown;
 
 		internal MetadataMethod(MetadataModule module, MethodDefinitionHandle handle)
 		{
@@ -203,6 +204,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				i++;
 			}
 			Debug.Assert(i == parameters.Length);
+			bool isRefReadonly = false;
+			if (signature.ReturnType.Kind == TypeKind.ModReq && signature.ReturnType.SkipModifiers().Kind == TypeKind.ByReference) {
+				isRefReadonly = ((ModifiedType)signature.ReturnType).Modifier.IsKnownType(KnownAttribute.In);
+			}
 			var returnType = ApplyAttributeTypeVisitor.ApplyAttributesToType(signature.ReturnType,
 				module.Compilation, returnTypeAttributes, metadata, module.TypeSystemOptions);
 			return (returnType, parameters);
@@ -386,6 +391,26 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				}
 			}
 			return b.Build();
+		}
+
+		public bool ReturnTypeIsRefReadOnly {
+			get {
+				if (returnTypeIsRefReadonly != ThreeState.Unknown) {
+					return returnTypeIsRefReadonly == ThreeState.True;
+				}
+				var metadata = module.metadata;
+				var methodDefinition = metadata.GetMethodDefinition(handle);
+				var parameters = methodDefinition.GetParameters();
+				bool hasReadOnlyAttr = false;
+				if (parameters.Count > 0) {
+					var retParam = metadata.GetParameter(parameters.First());
+					if (retParam.SequenceNumber == 0) {
+						hasReadOnlyAttr = retParam.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.IsReadOnly);
+					}
+				}
+				this.returnTypeIsRefReadonly = ThreeState.From(hasReadOnlyAttr);
+				return hasReadOnlyAttr;
+			}
 		}
 		#endregion
 

@@ -232,6 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		IEnumerable<IAttribute> IEntity.GetAttributes() => baseMethod.GetAttributes();
 		IEnumerable<IAttribute> IMethod.GetReturnTypeAttributes() => baseMethod.GetReturnTypeAttributes();
+		bool IMethod.ReturnTypeIsRefReadOnly => baseMethod.ReturnTypeIsRefReadOnly;
 
 		public bool IsStatic {
 			get {

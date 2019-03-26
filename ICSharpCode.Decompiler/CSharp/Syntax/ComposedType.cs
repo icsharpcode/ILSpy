@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public class ComposedType : AstType
 	{
 		public static readonly TokenRole RefRole = new TokenRole("ref");
+		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
 		public static readonly TokenRole NullableRole = new TokenRole("?");
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier");
@@ -51,6 +52,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			set {
 				SetChildByRole(RefRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
+			}
+		}
+
+		/// <summary>
+		/// Gets/sets whether this type has a 'readonly' specifier.
+		/// This is used for C# 7.2 'ref readonly' locals/ref return.
+		/// Parameters use ParameterDeclaration.ParameterModifier instead.
+		/// </summary>
+		public bool HasReadOnlySpecifier {
+			get {
+				return !GetChildByRole(ReadonlyRole).IsNull;
+			}
+			set {
+				SetChildByRole(ReadonlyRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
 			}
 		}
 
@@ -123,6 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				&& this.HasNullableSpecifier == o.HasNullableSpecifier
 				&& this.PointerRank == o.PointerRank
 				&& this.HasRefSpecifier == o.HasRefSpecifier
+				&& this.HasReadOnlySpecifier == o.HasReadOnlySpecifier
 				&& this.BaseType.DoMatch(o.BaseType, match)
 				&& this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
 		}
@@ -132,6 +148,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			StringBuilder b = new StringBuilder();
 			if (this.HasRefSpecifier)
 				b.Append("ref ");
+			if (this.HasReadOnlySpecifier)
+				b.Append("readonly ");
 			b.Append(this.BaseType.ToString());
 			if (this.HasNullableSpecifier)
 				b.Append('?');

@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case LdLoc ldloc:
 					return IsReadonlyRefLocal(ldloc.Variable);
 				case Call call:
-					// TODO: calls with 'readonly ref' return
+					return call.Method.ReturnTypeIsRefReadOnly;
 				default:
 					return false;
 			}

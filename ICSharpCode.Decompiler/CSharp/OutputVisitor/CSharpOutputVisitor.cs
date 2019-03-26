@@ -2322,6 +2322,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (composedType.HasRefSpecifier) {
 				WriteKeyword(ComposedType.RefRole);
 			}
+			if (composedType.HasReadOnlySpecifier) {
+				WriteKeyword(ComposedType.ReadonlyRole);
+			}
 			composedType.BaseType.AcceptVisitor(this);
 			if (composedType.HasNullableSpecifier) {
 				WriteToken(ComposedType.NullableRole);
