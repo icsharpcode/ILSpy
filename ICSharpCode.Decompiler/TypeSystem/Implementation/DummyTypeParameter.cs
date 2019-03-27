@@ -168,5 +168,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		bool ITypeParameter.HasValueTypeConstraint => false;
 		bool ITypeParameter.HasUnmanagedConstraint => false;
 		Nullability ITypeParameter.NullabilityConstraint => Nullability.Oblivious;
+
+		public override IType ChangeNullability(Nullability nullability)
+		{
+			if (nullability == Nullability.Oblivious) {
+				return this;
+			} else {
+				return new NullabilityAnnotatedTypeParameter(this, nullability);
+			}
+		}
 	}
 }

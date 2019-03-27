@@ -7,6 +7,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private string field_string;
 		private string? field_nullable_string;
+		private dynamic? field_nullable_dynamic;
 
 		private Dictionary<string?, string> field_generic;
 		private (string, string?, string) field_tuple;
