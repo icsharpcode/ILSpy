@@ -498,9 +498,10 @@ namespace ICSharpCode.ILSpy
 
 		public static string GetPlatformDisplayName(PEFile module)
 		{
-			var architecture = module.Reader.PEHeaders.CoffHeader.Machine;
-			var characteristics = module.Reader.PEHeaders.CoffHeader.Characteristics;
-			var corflags = module.Reader.PEHeaders.CorHeader.Flags;
+			var headers = module.Reader.PEHeaders;
+			var architecture = headers.CoffHeader.Machine;
+			var characteristics = headers.CoffHeader.Characteristics;
+			var corflags = headers.CorHeader.Flags;
 			switch (architecture) {
 				case Machine.I386:
 					if ((corflags & CorFlags.Prefers32Bit) != 0)
