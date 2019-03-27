@@ -101,6 +101,8 @@ namespace ICSharpCode.Decompiler
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (nullableReferenceTypes)
+				return CSharp.LanguageVersion.CSharp8_0;
 			if (introduceUnmanagedConstraint || tupleComparisons || stackAllocInitializers)
 				return CSharp.LanguageVersion.CSharp7_3;
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers || nonTrailingNamedArguments)
