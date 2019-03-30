@@ -68,30 +68,43 @@ namespace ICSharpCode.ILSpy
 		internal bool IsDebug = false;
 
 		public DecompilationOptions()
-			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
+			: this(MainWindow.Instance.CurrentLanguageVersion, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings, CSharpDecompilerSettingsPanel.CurrentCSharpSettings)
 		{
 		}
 
 		public DecompilationOptions(LanguageVersion version)
-			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings)
+			: this(version, DecompilerSettingsPanel.CurrentDecompilerSettings, DisplaySettingsPanel.CurrentDisplaySettings, CSharpDecompilerSettingsPanel.CurrentCSharpSettings)
 		{
 		}
 
-		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings, Options.DisplaySettings displaySettings)
+		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings, Options.DisplaySettings displaySettings,  Decompiler.DecompilerSettings csharpSettings)
 		{
-			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
-				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
-			this.DecompilerSettings = new Decompiler.DecompilerSettings(languageVersion) {
-				AlwaysUseBraces = settings.AlwaysUseBraces,
-				ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions,
-				FoldBraces = displaySettings.FoldBraces,
-				RemoveDeadCode = settings.RemoveDeadCode,
-				ShowDebugInfo = settings.ShowDebugInfo,
-				ShowXmlDocumentation = settings.ShowXmlDocumentation,
-				UseDebugSymbols = settings.UseDebugSymbols,
-				UsingDeclarations = settings.UsingDeclarations,
-				ApplyWindowsRuntimeProjections = settings.ApplyWindowsRuntimeProjections,
-			};
+			if (version.Version == "Custom") {
+				var newSettings = this.DecompilerSettings = csharpSettings.Clone();
+				newSettings.AlwaysUseBraces = settings.AlwaysUseBraces;
+				newSettings.ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions;
+				newSettings.FoldBraces = displaySettings.FoldBraces;
+				newSettings.RemoveDeadCode = settings.RemoveDeadCode;
+				newSettings.ShowDebugInfo = settings.ShowDebugInfo;
+				newSettings.ShowXmlDocumentation = settings.ShowXmlDocumentation;
+				newSettings.UseDebugSymbols = settings.UseDebugSymbols;
+				newSettings.UsingDeclarations = settings.UsingDeclarations;
+				newSettings.ApplyWindowsRuntimeProjections = settings.ApplyWindowsRuntimeProjections;
+			} else {
+				if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion)) 
+					languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
+				this.DecompilerSettings = new Decompiler.DecompilerSettings(languageVersion) {
+					AlwaysUseBraces = settings.AlwaysUseBraces,
+					ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions,
+					FoldBraces = displaySettings.FoldBraces,
+					RemoveDeadCode = settings.RemoveDeadCode,
+					ShowDebugInfo = settings.ShowDebugInfo,
+					ShowXmlDocumentation = settings.ShowXmlDocumentation,
+					UseDebugSymbols = settings.UseDebugSymbols,
+					UsingDeclarations = settings.UsingDeclarations,
+					ApplyWindowsRuntimeProjections = settings.ApplyWindowsRuntimeProjections,
+				};
+			}
 		}
 	}
 }

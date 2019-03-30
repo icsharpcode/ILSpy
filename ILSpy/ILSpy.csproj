@@ -158,6 +158,7 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
+    <Compile Include="Options\CSharpDecompilerSettingsPanel.xaml.cs" />
     <Compile Include="Search\LiteralSearchStrategy.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="LoadedAssemblyExtensions.cs" />
@@ -316,6 +317,7 @@
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
     <Page Include="NugetPackageBrowserDialog.xaml" />
+    <Page Include="Options\CSharpDecompilerSettingsPanel.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\MiscSettingsPanel.xaml" />
@@ -389,6 +391,9 @@
 
   <ItemGroup>
     <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Update="Options\CSharpDecompilerSettingsPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>
