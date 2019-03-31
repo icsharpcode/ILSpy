@@ -24,7 +24,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!(function.Body is BlockContainer container && container.Blocks.Count == 1))
 				return;
-			CombineExits(container.EntryPoint);
+			var combinedExit = CombineExits(container.EntryPoint);
+			if (combinedExit == null)
+				return;
+			ExpressionTransforms.RunOnSingleStatement(combinedExit, context);
 		}
 
 		static Leave CombineExits(Block block)
