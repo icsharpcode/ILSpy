@@ -43,7 +43,6 @@ namespace ICSharpCode.ILSpy.Search
 			if (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Member || searchKind == MemberSearchKind.Method) {
 				foreach (var handle in metadata.MethodDefinitions) {
 					cancellationToken.ThrowIfCancellationRequested();
-					// TODO use method semantics to skip accessors
 					string languageSpecificName = language.GetEntityName(module, handle, fullNameSearch);
 					if (languageSpecificName != null && !IsMatch(languageSpecificName))
 						continue;
