@@ -103,6 +103,9 @@ namespace ICSharpCode.ILSpy
 
 			if (IsVisible) {
 				StartSearch(this.SearchTerm);
+			} else {
+				StartSearch(null);
+				runSearchOnNextShow = true;
 			}
 		}
 
