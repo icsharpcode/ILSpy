@@ -54,7 +54,7 @@
 			</ListBox.GroupStyle>
 			<ListBox.ItemTemplate>
 				<DataTemplate>
-					<CheckBox IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
+					<CheckBox Margin="19,0,0,0" IsChecked="{Binding IsEnabled}" Content="{Binding Description}" />
 				</DataTemplate>
 			</ListBox.ItemTemplate>
 		</ListBox>
