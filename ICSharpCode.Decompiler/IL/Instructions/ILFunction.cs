@@ -72,6 +72,27 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal DebugInfo.AsyncDebugInfo AsyncDebugInfo;
 
+		int ctorCallStart = int.MinValue;
+
+		/// <summary>
+		/// Returns the IL offset of the constructor call, -1 if this is not a constructor or no chained constructor call was found.
+		/// </summary>
+		internal int ChainedConstructorCallILOffset {
+			get {
+				if (ctorCallStart == int.MinValue) {
+					if (!this.Method.IsConstructor || this.Method.IsStatic)
+						ctorCallStart = -1;
+					else {
+						ctorCallStart = this.Descendants.FirstOrDefault(d => d is CallInstruction call && !(call is NewObj)
+							&& call.Method.IsConstructor
+							&& call.Method.DeclaringType.IsReferenceType == true
+							&& call.Parent is Block)?.StartILOffset ?? -1;
+					}
+				}
+				return ctorCallStart;
+			}
+		}
+
 		/// <summary>
 		/// If this is an expression tree or delegate, returns the expression tree type Expression{T} or T.
 		/// T is the delegate type that matches the signature of this method.

@@ -439,8 +439,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (elementCount >= length / 3 - 5)
 				return true;
-			int? unused = null;
-			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos], ref unused))
+			if (ILInlining.IsCatchWhenBlock(block) || ILInlining.IsInConstructorInitializer(function, block.Instructions[startPos]))
 				return true;
 			return false;
 		}
