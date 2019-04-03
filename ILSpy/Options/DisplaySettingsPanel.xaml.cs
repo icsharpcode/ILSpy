@@ -102,6 +102,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?)e.Attribute("ShowMetadataTokens") ?? false;
 			s.ShowMetadataTokensInBase10 = (bool?)e.Attribute("ShowMetadataTokensInBase10") ?? false;
+			s.ShowDebugInfo = (bool?)e.Attribute("ShowDebugInfo") ?? false;
 			s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
 			s.SortResults = (bool?)e.Attribute("SortResults") ?? true;
 			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
@@ -120,6 +121,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
 			section.SetAttributeValue("ShowMetadataTokensInBase10", s.ShowMetadataTokensInBase10);
+			section.SetAttributeValue("ShowDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
 			section.SetAttributeValue("SortResults", s.SortResults);
 			section.SetAttributeValue("FoldBraces", s.FoldBraces);

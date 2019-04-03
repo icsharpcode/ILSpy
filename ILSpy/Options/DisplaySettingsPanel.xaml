@@ -62,6 +62,7 @@
 				<CheckBox IsChecked="{Binding ShowLineNumbers}">Show line numbers</CheckBox>
 				<CheckBox IsChecked="{Binding ShowMetadataTokens}">Show metadata tokens</CheckBox>
 				<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}">Show metadata tokens in base 10</CheckBox>
+				<CheckBox IsChecked="{Binding ShowDebugInfo}">Show info from debug symbols, if available</CheckBox>
 				<CheckBox IsChecked="{Binding EnableWordWrap}">Enable word wrap</CheckBox>
 				<CheckBox IsChecked="{Binding FoldBraces}">Enable folding on all blocks in braces</CheckBox>
 				<CheckBox IsChecked="{Binding SortResults}">Sort results by fitness</CheckBox>

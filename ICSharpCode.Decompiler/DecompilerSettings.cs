@@ -40,9 +40,18 @@ namespace ICSharpCode.Decompiler
 		/// appropriate for the specified language version.
 		/// </summary>
 		/// <remarks>
-		/// This does not imply that the resulting
+		/// This does not imply that the resulting code strictly uses only language features from that version.
+		/// Language constructs like generics or ref locals cannot be removed from the compiled code.
 		/// </remarks>
 		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
+		{
+			SetLanguageVersion(languageVersion);
+		}
+
+		/// <summary>
+		/// Deactivates all language features from versions newer than <paramref name="languageVersion"/>.
+		/// </summary>
+		public void SetLanguageVersion(CSharp.LanguageVersion languageVersion)
 		{
 			// By default, all decompiler features are enabled.
 			// Disable some of them based on language version:
@@ -198,7 +207,7 @@ namespace ICSharpCode.Decompiler
 		/// Decompile enumerators.
 		/// </summary>
 		[Category("C# 2.0 / VS 2005")]
-		[Description("Decompile enumerators")]
+		[Description("Decompile enumerators (yield return)")]
 		public bool YieldReturn {
 			get { return yieldReturn; }
 			set {
@@ -266,6 +275,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile [DecimalConstant(...)] as simple literal values.
 		/// </summary>
+		[Category("C# 1.0 / VS .NET")]
 		[Description("Decompile [DecimalConstant(...)] as simple literal values")]
 		public bool DecimalConstants {
 			get { return decimalConstants; }
@@ -384,9 +394,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use braces for single-statement-blocks. 
 		/// </summary>
-		[Category("Formatting")]
+		[Category("Other")]
 		[Description("Always use braces")]
-		[Browsable(false)]
 		public bool AlwaysUseBraces {
 			get { return alwaysUseBraces; }
 			set {
@@ -448,7 +457,7 @@ namespace ICSharpCode.Decompiler
 		bool usingDeclarations = true;
 
 		[Category("C# 1.0 / VS .NET")]
-		[Browsable(false)]
+		[Description("Insert using declarations")]
 		public bool UsingDeclarations {
 			get { return usingDeclarations; }
 			set {
@@ -533,7 +542,6 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		[Category("Other")]
 		[Description("Use variable names from debug symbols, if available")]
-		[Browsable(false)]
 		public bool UseDebugSymbols {
 			get { return useDebugSymbols; }
 			set {
@@ -640,7 +648,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
-		[Browsable(false)]
+		[Category("Other")]
+		[Description("Include XML documentation comments in the decompiled code")]
 		public bool ShowXmlDocumentation {
 			get { return showXmlDocumentation; }
 			set {
@@ -1030,7 +1039,7 @@ namespace ICSharpCode.Decompiler
 		bool removeDeadCode = false;
 
 		[Category("F#-specific options")]
-		[Browsable(false)]
+		[Description("Remove dead and side effect free code (use with caution!)")]
 		public bool RemoveDeadCode {
 			get { return removeDeadCode; }
 			set {
@@ -1074,7 +1083,6 @@ namespace ICSharpCode.Decompiler
 
 		[Category("Other")]
 		[Description("Apply Windows Runtime projections on loaded assemblies")]
-		[Browsable(false)]
 		public bool ApplyWindowsRuntimeProjections {
 			get { return applyWindowsRuntimeProjections; }
 			set {

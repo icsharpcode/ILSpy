@@ -155,6 +155,18 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -162,6 +174,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
 			this.ShowMetadataTokensInBase10 = s.showMetadataTokensInBase10;
+			this.ShowDebugInfo = s.showDebugInfo;
 			this.EnableWordWrap = s.enableWordWrap;
 			this.SortResults = s.sortResults;
 			this.FoldBraces = s.foldBraces;
