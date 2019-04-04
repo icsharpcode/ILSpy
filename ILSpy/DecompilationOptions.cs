@@ -86,6 +86,17 @@ namespace ICSharpCode.ILSpy
 			newSettings.ExpandUsingDeclarations = displaySettings.ExpandUsingDeclarations;
 			newSettings.FoldBraces = displaySettings.FoldBraces;
 			newSettings.ShowDebugInfo = displaySettings.ShowDebugInfo;
+			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
+		}
+
+		private string GetIndentationString(DisplaySettings displaySettings)
+		{
+			if (displaySettings.IndentationUseTabs) {
+				int numberOfTabs = displaySettings.IndentationSize / displaySettings.IndentationTabSize;
+				int numberOfSpaces = displaySettings.IndentationSize % displaySettings.IndentationTabSize;
+				return new string('\t', numberOfTabs) + new string(' ', numberOfSpaces);
+			}
+			return new string(' ', displaySettings.IndentationSize);
 		}
 	}
 }

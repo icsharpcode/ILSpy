@@ -121,6 +121,7 @@ namespace ICSharpCode.ILSpy
 		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
 			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
 			if (output is ISmartTextOutput highlightingOutput) {
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, highlightingOutput);

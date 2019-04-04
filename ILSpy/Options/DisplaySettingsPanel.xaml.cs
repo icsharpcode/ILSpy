@@ -37,7 +37,10 @@ namespace ICSharpCode.ILSpy.Options
 		public DisplaySettingsPanel()
 		{
 			InitializeComponent();
-			
+
+			DataObject.AddPastingHandler(tabSizeTextBox, OnPaste);
+			DataObject.AddPastingHandler(indentSizeTextBox, OnPaste);
+
 			Task<FontFamily[]> task = new Task<FontFamily[]>(FontLoader);
 			task.Start();
 			task.ContinueWith(
@@ -57,7 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 				}
 			);
 		}
-		
+
 		public void Load(ILSpySettings settings)
 		{
 			this.DataContext = LoadDisplaySettings(settings);
@@ -108,6 +111,9 @@ namespace ICSharpCode.ILSpy.Options
 			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
 			s.ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false;
 			s.ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false;
+			s.IndentationUseTabs = (bool?)e.Attribute("IndentationUseTabs") ?? true;
+			s.IndentationSize = (int?)e.Attribute("IndentationSize") ?? 4;
+			s.IndentationTabSize = (int?)e.Attribute("IndentationTabSize") ?? 4;
 
 			return s;
 		}
@@ -127,7 +133,9 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("SortResults", s.SortResults);
 			section.SetAttributeValue("FoldBraces", s.FoldBraces);
 			section.SetAttributeValue("ExpandMemberDefinitions", s.ExpandMemberDefinitions);
-			section.SetAttributeValue("ExpandUsingDeclarations", s.ExpandUsingDeclarations);
+			section.SetAttributeValue("IndentationUseTabs", s.IndentationUseTabs);
+			section.SetAttributeValue("IndentationSize", s.IndentationSize);
+			section.SetAttributeValue("IndentationTabSize", s.IndentationTabSize);
 
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)
@@ -138,8 +146,23 @@ namespace ICSharpCode.ILSpy.Options
 			if (currentDisplaySettings != null)
 				currentDisplaySettings.CopyValues(s);
 		}
+
+		private void TextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+		{
+			if (!e.Text.All(char.IsDigit))
+				e.Handled = true;
+		}
+
+		private void OnPaste(object sender, DataObjectPastingEventArgs e)
+		{
+			if (!e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true))
+				return;
+			var text = (string)e.SourceDataObject.GetData(DataFormats.UnicodeText, true) ?? string.Empty;
+			if (!text.All(char.IsDigit))
+				e.CancelCommand();
+		}
 	}
-	
+
 	public class FontSizeConverter : IValueConverter
 	{
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

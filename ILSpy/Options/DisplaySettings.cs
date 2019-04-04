@@ -179,6 +179,42 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool indentationUseTabs = true;
+
+		public bool IndentationUseTabs {
+			get { return indentationUseTabs; }
+			set {
+				if (indentationUseTabs != value) {
+					indentationUseTabs = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationTabSize = 4;
+
+		public int IndentationTabSize {
+			get { return indentationTabSize; }
+			set {
+				if (indentationTabSize != value) {
+					indentationTabSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		int indentationSize = 4;
+
+		public int IndentationSize {
+			get { return indentationSize; }
+			set {
+				if (indentationSize != value) {
+					indentationSize = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -192,6 +228,9 @@ namespace ICSharpCode.ILSpy.Options
 			this.FoldBraces = s.foldBraces;
 			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
 			this.ExpandUsingDeclarations = s.expandUsingDeclarations;
+			this.IndentationUseTabs = s.indentationUseTabs;
+			this.IndentationTabSize = s.indentationTabSize;
+			this.IndentationSize = s.indentationSize;
 		}
 	}
 }
