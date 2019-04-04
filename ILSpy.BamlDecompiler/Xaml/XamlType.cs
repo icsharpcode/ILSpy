@@ -67,10 +67,12 @@ namespace ILSpy.BamlDecompiler.Xaml {
 				xmlNs = ctx.TryGetXmlNamespace(Assembly, TypeNamespace);
 
 			if (xmlNs == null) {
-				if (Assembly.FullAssemblyName == ctx.TypeSystem.MainModule.FullAssemblyName)
+				if (FullAssemblyName == ctx.TypeSystem.MainModule.FullAssemblyName)
 					xmlNs = $"clr-namespace:{TypeNamespace}";
-				else
-					xmlNs = $"clr-namespace:{TypeNamespace};assembly={Assembly.Name}";
+				else {
+					var name = ICSharpCode.Decompiler.Metadata.AssemblyNameReference.Parse(FullAssemblyName);
+					xmlNs = $"clr-namespace:{TypeNamespace};assembly={name.Name}";
+				}
 
 				var nsSeg = TypeNamespace.Split('.');	
 				var prefix = nsSeg[nsSeg.Length - 1].ToLowerInvariant();
