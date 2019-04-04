@@ -763,19 +763,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
-		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression operand, TranslatedExpression otherOperand)
+		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression left, TranslatedExpression right)
 		{
 			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
 			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
-			if (operand.ResolveResult.IsCompileTimeConstant &&
-				operand.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
-				(int)operand.ResolveResult.ConstantValue == 0 &&
-				NullableType.GetUnderlyingType(otherOperand.Type).Kind == TypeKind.Enum &&
-				otherOperand.Expression is BinaryOperatorExpression binaryExpr &&
+			if (left.ResolveResult.IsCompileTimeConstant &&
+				left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
+				(left.ResolveResult.ConstantValue as int?) == 0 &&
+				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
+				right.Expression is BinaryOperatorExpression binaryExpr &&
 				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
-				return AdjustConstantExpressionToType(operand, compilation.FindType(KnownTypeCode.Int32));
+				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
 			else
-				return AdjustConstantExpressionToType(operand, otherOperand.Type);
+				return AdjustConstantExpressionToType(left, right.Type);
 		}
 
 		bool IsSpecialCasedReferenceComparisonWithNull(TranslatedExpression lhs, TranslatedExpression rhs)
