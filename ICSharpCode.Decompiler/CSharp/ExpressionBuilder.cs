@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -699,8 +699,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			// Special case comparisons with enum and char literals
-			left = AdjustConstantExpressionToType(left, right.Type);
-			right = AdjustConstantExpressionToType(right, left.Type);
+			left = TryUniteEqualityOperandType(left, right);
+			right = TryUniteEqualityOperandType(right, left);
 			
 			if (IsSpecialCasedReferenceComparisonWithNull(left, right)) {
 				// When comparing a string/delegate with null, the C# compiler generates a reference comparison.
@@ -761,6 +761,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
+		}
+
+		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression operand, TranslatedExpression otherOperand)
+		{
+			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
+			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
+			if (operand.ResolveResult.IsCompileTimeConstant &&
+				operand.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
+				(int)operand.ResolveResult.ConstantValue == 0 &&
+				NullableType.GetUnderlyingType(otherOperand.Type).Kind == TypeKind.Enum &&
+				otherOperand.Expression is BinaryOperatorExpression binaryExpr &&
+				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+				return AdjustConstantExpressionToType(operand, compilation.FindType(KnownTypeCode.Int32));
+			else
+				return AdjustConstantExpressionToType(operand, otherOperand.Type);
 		}
 
 		bool IsSpecialCasedReferenceComparisonWithNull(TranslatedExpression lhs, TranslatedExpression rhs)
