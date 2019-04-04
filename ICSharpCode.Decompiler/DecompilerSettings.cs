@@ -686,6 +686,19 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandUsingDeclarations = false;
+
+		[Browsable(false)]
+		public bool ExpandUsingDeclarations {
+			get { return expandUsingDeclarations; }
+			set {
+				if (expandUsingDeclarations != value) {
+					expandUsingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool decompileMemberBodies = true;
 
 		/// <summary>

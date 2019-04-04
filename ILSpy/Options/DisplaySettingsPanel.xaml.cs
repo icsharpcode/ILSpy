@@ -107,6 +107,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.SortResults = (bool?)e.Attribute("SortResults") ?? true;
 			s.FoldBraces = (bool?)e.Attribute("FoldBraces") ?? false;
 			s.ExpandMemberDefinitions = (bool?)e.Attribute("ExpandMemberDefinitions") ?? false;
+			s.ExpandUsingDeclarations = (bool?)e.Attribute("ExpandUsingDeclarations") ?? false;
 
 			return s;
 		}
@@ -126,6 +127,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("SortResults", s.SortResults);
 			section.SetAttributeValue("FoldBraces", s.FoldBraces);
 			section.SetAttributeValue("ExpandMemberDefinitions", s.ExpandMemberDefinitions);
+			section.SetAttributeValue("ExpandUsingDeclarations", s.ExpandUsingDeclarations);
 
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)

@@ -121,7 +121,7 @@ namespace ICSharpCode.ILSpy
 		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
-			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem) { FoldBraces = settings.FoldBraces, ExpandMemberDefinitions = settings.ExpandMemberDefinitions };
+			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
 			if (output is ISmartTextOutput highlightingOutput) {
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, highlightingOutput);
 			}

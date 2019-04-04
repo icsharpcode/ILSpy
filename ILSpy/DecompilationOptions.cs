@@ -83,6 +83,7 @@ namespace ICSharpCode.ILSpy
 			var newSettings = this.DecompilerSettings = settings.Clone();
 			newSettings.SetLanguageVersion(languageVersion);
 			newSettings.ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions;
+			newSettings.ExpandUsingDeclarations = displaySettings.ExpandUsingDeclarations;
 			newSettings.FoldBraces = displaySettings.FoldBraces;
 			newSettings.ShowDebugInfo = displaySettings.ShowDebugInfo;
 		}

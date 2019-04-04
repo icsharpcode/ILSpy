@@ -155,6 +155,18 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool expandUsingDeclarations = false;
+
+		public bool ExpandUsingDeclarations {
+			get { return expandUsingDeclarations; }
+			set {
+				if (expandUsingDeclarations != value) {
+					expandUsingDeclarations = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool showDebugInfo;
 
 		public bool ShowDebugInfo {
@@ -179,6 +191,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.SortResults = s.sortResults;
 			this.FoldBraces = s.foldBraces;
 			this.ExpandMemberDefinitions = s.expandMemberDefinitions;
+			this.ExpandUsingDeclarations = s.expandUsingDeclarations;
 		}
 	}
 }
