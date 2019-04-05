@@ -4,7 +4,7 @@
         Style="{DynamicResource DialogWindow}"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
-        Title="Options" Height="400" Width="500">
+        Title="Options" Height="500" Width="600">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition

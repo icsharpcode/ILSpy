@@ -35,7 +35,9 @@ namespace ICSharpCode.Decompiler
 		
 		int line = 1;
 		int column = 1;
-		
+
+		public string IndentationString { get; set; } = "\t";
+
 		public PlainTextOutput(TextWriter writer)
 		{
 			if (writer == null)
@@ -74,7 +76,7 @@ namespace ICSharpCode.Decompiler
 			if (needsIndent) {
 				needsIndent = false;
 				for (int i = 0; i < indent; i++) {
-					writer.Write('\t');
+					writer.Write(IndentationString);
 				}
 				column += indent;
 			}
@@ -152,6 +154,15 @@ namespace ICSharpCode.Decompiler
 		{
 			this.target = target;
 			this.actions = new List<Action<ITextOutput>>();
+		}
+
+		string ITextOutput.IndentationString {
+			get {
+				return target.IndentationString;
+			}
+			set {
+				target.IndentationString = value;
+			}
 		}
 
 		public void Commit()

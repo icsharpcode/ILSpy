@@ -8,6 +8,7 @@
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
 			<RowDefinition/>
 		</Grid.RowDefinitions>
 		<GroupBox Header="Font">
@@ -57,15 +58,30 @@
 				</Border>
 			</Grid>
 		</GroupBox>
-		<GroupBox Header="Other options" Grid.Row="1">
+		<GroupBox Header="Indentation" Grid.Row="1">
+			<StackPanel Margin="3">
+				<CheckBox IsChecked="{Binding IndentationUseTabs}">Use tabs instead of spaces</CheckBox>
+				<StackPanel Orientation="Horizontal">
+					<Label>Tab size:</Label>
+					<TextBox x:Name="tabSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationTabSize}" PreviewTextInput="TextBox_PreviewTextInput" />
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+					<Label>Indent size:</Label>
+					<TextBox x:Name="indentSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationSize}" PreviewTextInput="TextBox_PreviewTextInput" />
+				</StackPanel>
+			</StackPanel>
+		</GroupBox>
+		<GroupBox Header="Other options" Grid.Row="2">
 			<StackPanel Margin="3">
 				<CheckBox IsChecked="{Binding ShowLineNumbers}">Show line numbers</CheckBox>
 				<CheckBox IsChecked="{Binding ShowMetadataTokens}">Show metadata tokens</CheckBox>
 				<CheckBox IsChecked="{Binding ShowMetadataTokensInBase10}">Show metadata tokens in base 10</CheckBox>
+				<CheckBox IsChecked="{Binding ShowDebugInfo}">Show info from debug symbols, if available</CheckBox>
 				<CheckBox IsChecked="{Binding EnableWordWrap}">Enable word wrap</CheckBox>
 				<CheckBox IsChecked="{Binding FoldBraces}">Enable folding on all blocks in braces</CheckBox>
 				<CheckBox IsChecked="{Binding SortResults}">Sort results by fitness</CheckBox>
 				<CheckBox IsChecked="{Binding ExpandMemberDefinitions}">Expand member definitions after decompilation</CheckBox>
+				<CheckBox IsChecked="{Binding ExpandUsingDeclarations}">Expand using declarations after decompilation</CheckBox>
 			</StackPanel>
 		</GroupBox>
 	</Grid>

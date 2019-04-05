@@ -18,7 +18,6 @@
 
 using System;
 using System.Threading;
-using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy
@@ -77,21 +76,27 @@ namespace ICSharpCode.ILSpy
 		{
 		}
 
-		public DecompilationOptions(LanguageVersion version, Options.DecompilerSettings settings, Options.DisplaySettings displaySettings)
+		public DecompilationOptions(LanguageVersion version, Decompiler.DecompilerSettings settings, Options.DisplaySettings displaySettings)
 		{
-			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
+			if (!Enum.TryParse(version.Version, out Decompiler.CSharp.LanguageVersion languageVersion)) 
 				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
-			this.DecompilerSettings = new Decompiler.DecompilerSettings(languageVersion) {
-				AlwaysUseBraces = settings.AlwaysUseBraces,
-				ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions,
-				FoldBraces = displaySettings.FoldBraces,
-				RemoveDeadCode = settings.RemoveDeadCode,
-				ShowDebugInfo = settings.ShowDebugInfo,
-				ShowXmlDocumentation = settings.ShowXmlDocumentation,
-				UseDebugSymbols = settings.UseDebugSymbols,
-				UsingDeclarations = settings.UsingDeclarations,
-				ApplyWindowsRuntimeProjections = settings.ApplyWindowsRuntimeProjections,
-			};
+			var newSettings = this.DecompilerSettings = settings.Clone();
+			newSettings.SetLanguageVersion(languageVersion);
+			newSettings.ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions;
+			newSettings.ExpandUsingDeclarations = displaySettings.ExpandUsingDeclarations;
+			newSettings.FoldBraces = displaySettings.FoldBraces;
+			newSettings.ShowDebugInfo = displaySettings.ShowDebugInfo;
+			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
+		}
+
+		private string GetIndentationString(DisplaySettings displaySettings)
+		{
+			if (displaySettings.IndentationUseTabs) {
+				int numberOfTabs = displaySettings.IndentationSize / displaySettings.IndentationTabSize;
+				int numberOfSpaces = displaySettings.IndentationSize % displaySettings.IndentationTabSize;
+				return new string('\t', numberOfTabs) + new string(' ', numberOfSpaces);
+			}
+			return new string(' ', displaySettings.IndentationSize);
 		}
 	}
 }
