@@ -59,6 +59,7 @@
     <None Include="TestCases\Correctness\StackTests.il" />
     <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\Correctness\Uninit.vb" />
+    <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
@@ -71,6 +72,7 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="TestCases\ILPretty\ConstantBlobs.cs" />
     <Compile Include="TestCases\ILPretty\Issue1389.cs" />
     <Compile Include="TestCases\ILPretty\Issue1454.cs" />
     <Compile Include="TestCases\Pretty\Discards.cs" />

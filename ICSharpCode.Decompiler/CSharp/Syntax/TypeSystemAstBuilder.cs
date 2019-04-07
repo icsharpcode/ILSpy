@@ -795,72 +795,78 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		bool IsSpecialConstant(IType type, object constant, out Expression expression)
+		bool IsSpecialConstant(IType expectedType, object constant, out Expression expression)
 		{
 			expression = null;
 			if (!specialConstants.TryGetValue(constant, out var info))
 				return false;
+			// find IType of constant in compilation.
+			var constantType = expectedType;
+			if (!expectedType.IsKnownType(info.Type)) {
+				var compilation = expectedType.GetDefinition().Compilation;
+				constantType = compilation.FindType(info.Type);
+			}
 			// if the field definition cannot be found, do not generate a reference to the field.
-			var field = type.GetFields(p => p.Name == info.Member).SingleOrDefault();
+			var field = constantType.GetFields(p => p.Name == info.Member).SingleOrDefault();
 			if (!UseSpecialConstants || field == null) {
 				// +Infty, -Infty and NaN, cannot be represented in their encoded form.
 				// Use an equivalent arithmetic expression instead.
 				if (info.Type == KnownTypeCode.Double) {
 					switch ((double)constant) {
 						case double.NegativeInfinity: // (-1.0 / 0.0)
-							var left = new PrimitiveExpression(-1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0));
-							var right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							var left = new PrimitiveExpression(-1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, -1.0));
+							var right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, double.NegativeInfinity));
+								.WithRR(new ConstantResolveResult(constantType, double.NegativeInfinity));
 							return true;
 						case double.PositiveInfinity: // (1.0 / 0.0)
-							left = new PrimitiveExpression(1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0));
-							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							left = new PrimitiveExpression(1.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 1.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, double.PositiveInfinity));
+								.WithRR(new ConstantResolveResult(constantType, double.PositiveInfinity));
 							return true;
 						case double.NaN: // (0.0 / 0.0)
-							left = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
-							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0));
+							left = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0));
+							right = new PrimitiveExpression(0.0).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, double.NaN));
+								.WithRR(new ConstantResolveResult(constantType, double.NaN));
 							return true;
 					}
 				}
 				if (info.Type == KnownTypeCode.Single) {
 					switch ((float)constant) {
 						case float.NegativeInfinity: // (-1.0f / 0.0f)
-							var left = new PrimitiveExpression(-1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, -1.0f));
-							var right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							var left = new PrimitiveExpression(-1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, -1.0f));
+							var right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, float.NegativeInfinity));
+								.WithRR(new ConstantResolveResult(constantType, float.NegativeInfinity));
 							return true;
 						case float.PositiveInfinity: // (1.0f / 0.0f)
-							left = new PrimitiveExpression(1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 1.0f));
-							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							left = new PrimitiveExpression(1.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 1.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, float.PositiveInfinity));
+								.WithRR(new ConstantResolveResult(constantType, float.PositiveInfinity));
 							return true;
 						case float.NaN: // (0.0f / 0.0f)
-							left = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
-							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(type, 0.0f));
+							left = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0f));
+							right = new PrimitiveExpression(0.0f).WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, 0.0f));
 							expression = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right).WithoutILInstruction()
-								.WithRR(new ConstantResolveResult(type, float.NaN));
+								.WithRR(new ConstantResolveResult(constantType, float.NaN));
 							return true;
 					}
 				}
 				return false;
 			}
 
-			expression = new TypeReferenceExpression(ConvertType(type));
+			expression = new TypeReferenceExpression(ConvertType(constantType));
 
 			if (AddResolveResultAnnotations)
-				expression.AddAnnotation(new TypeResolveResult(type));
+				expression.AddAnnotation(new TypeResolveResult(constantType));
 
 			expression = new MemberReferenceExpression(expression, info.Member);
 
 			if (AddResolveResultAnnotations)
-				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(type), field));
+				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(constantType), field));
 
 			return true;
 		}
@@ -1005,6 +1011,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
 		{
+			// Coerce constantValue to either float or double:
+			// There are compilers that embed 0 (and possible other values) as int into constant value signatures,
+			// even if the expected type is float or double.
+			constantValue = CSharpPrimitiveCast.Cast(type.GetTypeCode(), constantValue, false);
 			bool isDouble = type.IsKnownType(KnownTypeCode.Double);
 			ICompilation compilation = type.GetDefinition().Compilation;
 			Expression expr = null;

@@ -149,6 +149,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void ConstantBlobs()
+		{
+			Run();
+		}
+
+		[Test]
 		public void SequenceOfNestedIfs()
 		{
 			Run();
