@@ -98,7 +98,6 @@ namespace ILSpy.BamlDecompiler.Baml {
 			int size = reader.ReadEncodedInt();
 
 			ReadData(reader, size - (int)(reader.BaseStream.Position - pos));
-			Debug.Assert(reader.BaseStream.Position - pos == size);
 		}
 
 		int SizeofEncodedInt(int val) {
