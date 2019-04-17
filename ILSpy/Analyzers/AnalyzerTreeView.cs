@@ -114,7 +114,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 					ShowOrFocus(new AnalyzedTypeTreeNode(td));
 					break;
 				case IField fd:
-					ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+					if (!fd.IsConst)
+						ShowOrFocus(new AnalyzedFieldTreeNode(fd));
 					break;
 				case IMethod md:
 					ShowOrFocus(new AnalyzedMethodTreeNode(md));
