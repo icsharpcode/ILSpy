@@ -995,9 +995,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var converted = ConvertInstruction(invocation.Arguments[0]).Item1;
 			if (!MatchGetTypeFromHandle(invocation.Arguments[1], out var type))
 				return (null, SpecialType.UnknownType);
-			if (converted != null)
-				return (new IsInst(converted, type), type);
-			return (null, SpecialType.UnknownType);
+			if (converted == null)
+				return (null, SpecialType.UnknownType);
+
+			ILInstruction inst = new IsInst(converted, type);
+			// We must follow ECMA-335, III.4.6:
+			// If typeTok is a nullable type, Nullable<T>, it is interpreted as "boxed" T.
+			if (type.IsKnownType(KnownTypeCode.NullableOfT))
+				inst = new UnboxAny(inst, type);
+			return (inst, type);
 		}
 
 		(ILInstruction, IType) ConvertTypeIs(CallInstruction invocation)

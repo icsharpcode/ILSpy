@@ -836,12 +836,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void AsTypeExpr()
 		{
 			Test<Func<object, MyClass>>((object obj) => obj as MyClass, (object obj) => obj as MyClass);
+			Test<Func<object, int?>>((object obj) => obj as int?, (object obj) => obj as int?);
 			Test<Func<object, GenericClass<object>>>((object obj) => obj as GenericClass<object>, (object obj) => obj as GenericClass<object>);
 		}
 
 		public static void IsTypeExpr()
 		{
 			Test<Func<object, bool>>((object obj) => obj is MyClass, (object obj) => obj is MyClass);
+			Test<Func<object, bool>>((object obj) => obj is int?, (object obj) => obj is int?);
 		}
 
 		public static void UnaryLogicalOperators()
