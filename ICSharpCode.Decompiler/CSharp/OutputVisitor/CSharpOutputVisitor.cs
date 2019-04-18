@@ -903,6 +903,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
+			if (!(memberReferenceExpression.Parent is InvocationExpression)) {
+				if (GetCallChainLengthLimited(memberReferenceExpression) >= 3)
+					writer.Unindent();
+			}
 			EndNode(memberReferenceExpression);
 		}
 		
