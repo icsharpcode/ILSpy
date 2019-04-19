@@ -457,6 +457,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The settings selected below are applied to the decompiler output in combination with the selection in the language drop-down. Selecting a lower language version in the drop-down will deactivate all selected options of the higher versions. Note that some settings implicitly depend on each other, e.g.: LINQ expressions cannot be introduced without first transforming static calls to extension method calls. 的本地化字符串。
+        /// </summary>
+        public static string DecompilerSettingsPanelLongText {
+            get {
+                return ResourceManager.GetString("DecompilerSettingsPanelLongText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Decompiling... 的本地化字符串。
         /// </summary>
         public static string Decompiling {
@@ -655,6 +664,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Indent size: 的本地化字符串。
+        /// </summary>
+        public static string IndentSize {
+            get {
+                return ResourceManager.GetString("IndentSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Insert using declarations 的本地化字符串。
         /// </summary>
         public static string InsertUsingDeclarations {
@@ -826,6 +844,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Other 的本地化字符串。
+        /// </summary>
+        public static string Other {
+            get {
+                return ResourceManager.GetString("Other", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Other options 的本地化字符串。
         /// </summary>
         public static string OtherOptions {
@@ -961,6 +988,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Search (Ctrl+Shift+F or Ctrl+E) 的本地化字符串。
+        /// </summary>
+        public static string SearchCtrlShiftFOrCtrlE {
+            get {
+                return ResourceManager.GetString("SearchCtrlShiftFOrCtrlE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Searching... 的本地化字符串。
         /// </summary>
         public static string Searching {
@@ -1015,11 +1051,29 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Show _all types and members 的本地化字符串。
+        /// </summary>
+        public static string Show_allTypesAndMembers {
+            get {
+                return ResourceManager.GetString("Show_allTypesAndMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Show _internal types and members 的本地化字符串。
         /// </summary>
         public static string Show_internalTypesMembers {
             get {
                 return ResourceManager.GetString("Show_internalTypesMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Show all types and members 的本地化字符串。
+        /// </summary>
+        public static string ShowAllTypesAndMembers {
+            get {
+                return ResourceManager.GetString("ShowAllTypesAndMembers", resourceCulture);
             }
         }
         
@@ -1182,6 +1236,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string StringTable {
             get {
                 return ResourceManager.GetString("StringTable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Tab size: 的本地化字符串。
+        /// </summary>
+        public static string TabSize {
+            get {
+                return ResourceManager.GetString("TabSize", resourceCulture);
             }
         }
         

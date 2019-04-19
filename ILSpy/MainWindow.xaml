@@ -57,7 +57,7 @@
 						<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 					</MenuItem.Icon>
 				</MenuItem>
-				<MenuItem Header="Show _all types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowAllApi}">
+				<MenuItem Header="{x:Static properties:Resources.Show_allTypesAndMembers}" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowAllApi}">
 					<MenuItem.Icon>
 						<Image Width="16" Height="16" Source="Images/ShowAll.png" />
 					</MenuItem.Icon>
@@ -87,7 +87,7 @@
 			<CheckBox IsChecked="{Binding FilterSettings.ShowInternalApi}" ToolTip="{x:Static properties:Resources.ShowInternalTypesMembers}">
 				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 			</CheckBox>
-			<CheckBox IsChecked="{Binding FilterSettings.ShowAllApi}" ToolTip="Show all types and members">
+			<CheckBox IsChecked="{Binding FilterSettings.ShowAllApi}" ToolTip="{x:Static properties:Resources.ShowAllTypesAndMembers}">
 				<Image Width="16" Height="16" Source="Images/ShowAll.png" />
 			</CheckBox>
 			<Separator />

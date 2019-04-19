@@ -24,13 +24,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Xml.Linq;
+using ICSharpCode.ILSpy.Properties;
 
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Interaction logic for DecompilerSettingsPanel.xaml
 	/// </summary>
-	[ExportOptionPage(Title = "Decompiler", Order = 10)]
+	[ExportOptionPage(Title = nameof(Properties.Resources.Decompiler), Order = 10)]
 	internal partial class DecompilerSettingsPanel : UserControl, IOptionPage
 	{
 		public DecompilerSettingsPanel()
@@ -161,12 +162,16 @@ namespace ICSharpCode.ILSpy.Options
 	public class CSharpDecompilerSetting : INotifyPropertyChanged
 	{
 		bool isEnabled;
-
+		internal static string GetResourceString(string key)
+		{
+			var str = !string.IsNullOrEmpty(key) ? ICSharpCode.Decompiler.Properties. Resources.ResourceManager.GetString(key) : null;
+			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
+		}
 		public CSharpDecompilerSetting(PropertyInfo p)
 		{
 			this.Property = p;
-			this.Category = p.GetCustomAttribute<CategoryAttribute>()?.Category ?? "Other";
-			this.Description = p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name;
+			this.Category =  GetResourceString(  p.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
+			this.Description =  GetResourceString(p.GetCustomAttribute<DescriptionAttribute>()?.Description ?? p.Name);
 		}
 
 		public PropertyInfo Property { get; }

@@ -12,7 +12,7 @@
 			<RowDefinition Height="Auto"/>
 			<RowDefinition/>
 		</Grid.RowDefinitions>
-		<GroupBox Header="Font">
+		<GroupBox Header="{x:Static properties:Resources.Font}">
 			<Grid>
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
@@ -63,16 +63,16 @@
 			<StackPanel Margin="3">
 				<CheckBox IsChecked="{Binding IndentationUseTabs}" Content="{x:Static properties:Resources.UseTabsInsteadOfSpaces}"></CheckBox>
 				<StackPanel Orientation="Horizontal">
-					<Label>Tab size:</Label>
+					<Label Content="{x:Static properties:Resources.TabSize}"></Label>
 					<TextBox x:Name="tabSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationTabSize}" PreviewTextInput="TextBox_PreviewTextInput" />
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-					<Label>Indent size:</Label>
+					<Label Content="{x:Static properties:Resources.IndentSize}"></Label>
 					<TextBox x:Name="indentSizeTextBox" Width="50" Margin="3" Text="{Binding IndentationSize}" PreviewTextInput="TextBox_PreviewTextInput" />
 				</StackPanel>
 			</StackPanel>
 		</GroupBox>
-		<GroupBox Header="Other options" Grid.Row="2">
+		<GroupBox Header="{x:Static properties:Resources.OtherOptions}" Grid.Row="2">
 			<StackPanel Margin="3">
 				<CheckBox IsChecked="{Binding ShowLineNumbers}" Content="{x:Static properties:Resources.ShowLineNumbers}"></CheckBox>
 				<CheckBox IsChecked="{Binding ShowMetadataTokens}" Content="{x:Static properties:Resources.ShowMetadataTokens}"></CheckBox>

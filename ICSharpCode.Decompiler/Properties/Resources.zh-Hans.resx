@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DecompileEnumeratorsYieldReturn" xml:space="preserve">
+    <value>反编译枚举器 (yield return)</value>
+  </data>
+  <data name="DecompileAnonymousMethodsLambdas" xml:space="preserve">
+    <value>反编译匿名方法或lambdas</value>
+  </data>
+  <data name="DecompileAnonymousTypes" xml:space="preserve">
+    <value>反编译匿名类型</value>
+  </data>
+  <data name="UseLambdaSyntaxIfPossible" xml:space="preserve">
+    <value>如果可能, 请使用 lambda 语法</value>
+  </data>
+  <data name="DecompileExpressionTrees" xml:space="preserve">
+    <value>反编译表达树</value>
+  </data>
+  <data name="DecompileUseOfTheDynamicType" xml:space="preserve">
+    <value>反编译使用"dynamic" 类型</value>
+  </data>
+  <data name="DecompileAsyncMethods" xml:space="preserve">
+    <value>反编译异步方法</value>
+  </data>
+  <data name="DecompileAwaitInCatchFinallyBlocks" xml:space="preserve">
+    <value>反编译catch/finally内的await</value>
+  </data>
+  <data name="DecompileDecimalConstantAsSimpleLiteralValues" xml:space="preserve">
+    <value>反编译 [DecimalConstant(...)] 作为简单的文本值</value>
+  </data>
+  <data name="DecompileC10PublicUnsafeFixedIntArr10Members" xml:space="preserve">
+    <value>反编译 C# 1.0 "public unsafe fixed int arr[10];" 成员</value>
+  </data>
+  <data name="UseLiftedOperatorsForNullables" xml:space="preserve">
+    <value>对空变量使用提升运算符</value>
+  </data>
+  <data name="DecompileAndOperators" xml:space="preserve">
+    <value>反编译 ?. 和  ?[] 运算符</value>
+  </data>
+  <data name="DecompileAutomaticProperties" xml:space="preserve">
+    <value>反编译自动属性</value>
+  </data>
+  <data name="DecompileAutomaticEvents" xml:space="preserve">
+    <value>反编译自动事件</value>
+  </data>
+  <data name="DetectUsingStatements" xml:space="preserve">
+    <value>检测using语句</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="AlwaysUseBraces" xml:space="preserve">
+    <value>始终使用大括号</value>
+  </data>
+  <data name="DetectForeachStatements" xml:space="preserve">
+    <value>检测 foreach语句</value>
+  </data>
+  <data name="DetectLockStatements" xml:space="preserve">
+    <value>检测 lock语句</value>
+  </data>
+  <data name="DetectSwitchOnString" xml:space="preserve">
+    <value>检测switch 的字符串</value>
+  </data>
+  <data name="InsertUsingDeclarations" xml:space="preserve">
+    <value>插入using声明</value>
+  </data>
+  <data name="UseExtensionMethodSyntax" xml:space="preserve">
+    <value>使用扩展方法语法</value>
+  </data>
+  <data name="UseLINQExpressionSyntax" xml:space="preserve">
+    <value>使用 LINQ 表达式语法</value>
+  </data>
+  <data name="UseImplicitMethodGroupConversions" xml:space="preserve">
+    <value>使用隐式方法组转换</value>
+  </data>
+  <data name="AlwaysCastTargetsOfExplicitInterfaceImplementationCalls" xml:space="preserve">
+    <value>始终强制转换显式接口实现调用的目标</value>
+  </data>
+  <data name="UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>使用调试符号中的变量名 (如果可用)</value>
+  </data>
+  <data name="ArrayInitializerExpressions" xml:space="preserve">
+    <value>数组初始化器表达式</value>
+  </data>
+  <data name="ObjectCollectionInitializerExpressions" xml:space="preserve">
+    <value>对象或集合初始化器表达式</value>
+  </data>
+  <data name="DictionaryInitializerExpressions" xml:space="preserve">
+    <value>Dictionary初始值设定项表达式</value>
+  </data>
+  <data name="AllowExtensionAddMethodsInCollectionInitializerExpressions" xml:space="preserve">
+    <value>在集合初始化器表达式中允许扩展 "添加" 方法</value>
+  </data>
+  <data name="UseStringInterpolation" xml:space="preserve">
+    <value>使用字符串插值</value>
+  </data>
+  <data name="IncludeXMLDocumentationCommentsInTheDecompiledCode" xml:space="preserve">
+    <value>在反编译代码中包括 XML 文档注释</value>
+  </data>
+  <data name="UseExpressionBodiedMemberSyntaxForGetOnlyProperties" xml:space="preserve">
+    <value>对仅获取属性使用表达式内部成员语法</value>
+  </data>
+  <data name="UseOutVariableDeclarations" xml:space="preserve">
+    <value>使用外部变量声明</value>
+  </data>
+  <data name="UseDiscards" xml:space="preserve">
+    <value>使用丢弃物</value>
+  </data>
+  <data name="IsByRefLikeAttributeShouldBeReplacedWithRefModifiersOnStructs" xml:space="preserve">
+    <value>IsByRefLikeAttribute应替换为结构上的 "ref" 修饰符</value>
+  </data>
+  <data name="IsReadOnlyAttributeShouldBeReplacedWithReadonlyInModifiersOnStructsParameters" xml:space="preserve">
+    <value>IsReadOnlyAttribute 应替为结构参数上的 "readonly"/"中的修饰符</value>
+  </data>
+  <data name="IsUnmanagedAttributeOnTypeParametersShouldBeReplacedWithUnmanagedConstraints" xml:space="preserve">
+    <value>类型参数上的IsUnmanagedAttribute 应替换为 "非托管" 约束</value>
+  </data>
+  <data name="UseStackallocInitializerSyntax" xml:space="preserve">
+    <value>使用stackalloc 初始化器语法</value>
+  </data>
+  <data name="UseTupleTypeSyntax" xml:space="preserve">
+    <value>使用元组类型语法</value>
+  </data>
+  <data name="UseImplicitConversionsBetweenTupleTypes" xml:space="preserve">
+    <value>在元组类型之间使用隐式转换</value>
+  </data>
+  <data name="DetectTupleComparisons" xml:space="preserve">
+    <value>检测元组比较</value>
+  </data>
+  <data name="UseNamedArguments" xml:space="preserve">
+    <value>使用命名参数</value>
+  </data>
+  <data name="UseNonTrailingNamedArguments" xml:space="preserve">
+    <value>使用非尾随命名参数</value>
+  </data>
+  <data name="RemoveOptionalArgumentsIfPossible" xml:space="preserve">
+    <value>如果可能, 删除可选参数</value>
+  </data>
+  <data name="IntroduceLocalFunctionsNOTIMPLEMENTED" xml:space="preserve">
+    <value>引入本地功能 (未实现！)</value>
+  </data>
+  <data name="C70LocalFunctionsAreNotImplemented" xml:space="preserve">
+    <value>C# 7.0 本地函数未实现!</value>
+  </data>
+  <data name="NullableReferenceTypes" xml:space="preserve">
+    <value>可空引用类型</value>
+  </data>
+  <data name="ShowInfoFromDebugSymbolsIfAvailable" xml:space="preserve">
+    <value>显示调试符号中的信息 (如果可用)</value>
+  </data>
+  <data name="VBSpecificOptions" xml:space="preserve">
+    <value>Vb 特定选项</value>
+  </data>
+  <data name="FSpecificOptions" xml:space="preserve">
+    <value>F # 特定选项</value>
+  </data>
+  <data name="RemoveDeadAndSideEffectFreeCodeUseWithCaution" xml:space="preserve">
+    <value>删除死的和副作用免费的代码 (请谨慎使用)</value>
+  </data>
+  <data name="ApplyWindowsRuntimeProjectionsOnLoadedAssemblies" xml:space="preserve">
+    <value>在已加载的程序集上应用 Windows 运行时投影</value>
+  </data>
+</root>

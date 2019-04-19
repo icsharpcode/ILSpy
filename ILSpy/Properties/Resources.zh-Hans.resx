@@ -528,4 +528,43 @@
   <data name="ShowAssemblyLoad" xml:space="preserve">
     <value>显示程序集加载日志</value>
   </data>
+  <data name="OtherResources" xml:space="preserve">
+    <value>其他资源</value>
+  </data>
+  <data name="UseTabsInsteadOfSpaces" xml:space="preserve">
+    <value>使用Tab替代空格</value>
+  </data>
+  <data name="ShowMetadataTokensInBase10" xml:space="preserve">
+    <value>在基数10中显示元数据标记</value>
+  </data>
+  <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
+    <value>反编译后展开引用和声明</value>
+  </data>
+  <data name="LoadAssembliesThatWereLoadedInTheLastInstance" xml:space="preserve">
+    <value>加载在最后一个实例中加载的程序集。</value>
+  </data>
+  <data name="Indentation" xml:space="preserve">
+    <value>缩进</value>
+  </data>
+  <data name="IndentSize" xml:space="preserve">
+    <value>缩进长度:</value>
+  </data>
+  <data name="TabSize" xml:space="preserve">
+    <value>Tab长度:</value>
+  </data>
+  <data name="SearchCtrlShiftFOrCtrlE" xml:space="preserve">
+    <value>搜索 (Ctrl + Shift + F 或 Ctrl + E)</value>
+  </data>
+  <data name="ShowAllTypesAndMembers" xml:space="preserve">
+    <value>显示所有类型和成员</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="Show_allTypesAndMembers" xml:space="preserve">
+    <value>显示所有类型和成员(_A)</value>
+  </data>
+  <data name="DecompilerSettingsPanelLongText" xml:space="preserve">
+    <value>下面选择的设置将与语言下拉列表中的选择一起应用于反编译程序输出。在下拉列表中选择较低的语言版本将停用较高版本的所有选定选项。请注意, 某些设置隐式依赖于彼此, 例如: 如果不首先将静态调用转换为扩展方法调用, 则无法引入 LINQ 表达式。</value>
+  </data>
 </root>
